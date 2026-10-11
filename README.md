@@ -23,9 +23,11 @@ scripts/              link, certs, dev, typecheck helpers
 
 ## Prerequisites
 
-- [bun](https://bun.sh) >= 1.3, openssl, Keycloak (realm `vuu`) for portal login.
+- [bun](https://bun.sh) >= 1.3 (CI uses 1.3.14), openssl, Keycloak (realm `vuu`) for portal login.
 - A checkout of [heswell/vuu-websocket](https://github.com/heswell/vuu-websocket) **alongside this repo**
-  (`../vuu-websocket`) with dependencies installed (`npm install` there).
+  (`../vuu-websocket`) with dependencies installed. vuu-websocket uses `npm install` (its own convention).
+- **trader must be installed with `bun install` only.** npm, yarn and pnpm are unsupported (workspace protocol);
+  a `preinstall` guard fails fast with a clear message.
 
 `@heswell/vuu-server`, `@heswell/service-utils` and `@heswell/vuu-portal` are not published, so
 `bun install` runs `scripts/link-vuu-websocket.ts`, which symlinks them into `node_modules/@heswell/`
