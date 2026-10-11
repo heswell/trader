@@ -13,6 +13,7 @@ import {
 import { type SyntheticEvent, useEffect, useState } from "react";
 import "./ShowcaseApp.css";
 import { examples } from "./examples";
+import { ShowcaseTradingHost } from "./ShowcaseTradingHost";
 import {
   REMOTE_CONNECTION_ID,
   type ShowcaseDataMode,
@@ -90,7 +91,9 @@ export const ShowcaseApp = () => {
                 mode="local"
                 localServer={localServer}
               >
-                <Component key={example.id} />
+                <ShowcaseTradingHost>
+                  <Component key={example.id} />
+                </ShowcaseTradingHost>
               </TradingDataProvider>
             ) : (
               <TradingDataProvider
@@ -98,7 +101,9 @@ export const ShowcaseApp = () => {
                 mode="remote"
                 connectionId={REMOTE_CONNECTION_ID}
               >
-                <Component key={example.id} />
+                <ShowcaseTradingHost>
+                  <Component key={example.id} />
+                </ShowcaseTradingHost>
               </TradingDataProvider>
             )}
           </div>

@@ -1,0 +1,14 @@
+.tradingStaleIndicator {
+  border: var(--salt-size-border) var(--salt-borderStyle-solid)
+    var(--salt-status-warning-borderColor);
+  border-radius: var(--salt-palette-corner-weak, 2px);
+  color: var(--salt-status-warning-foreground-informative);
+  font-size: var(--salt-text-label-fontSize);
+  padding: 0 var(--salt-spacing-50);
+  white-space: nowrap;
+}
+
+.tradingStaleIndicator-disconnected {
+  border-color: var(--salt-status-error-borderColor);
+  color: var(--salt-status-error-foreground-informative);
+}

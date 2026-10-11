@@ -12,6 +12,16 @@ import {
 import { InstrumentPricesTicking } from "./InstrumentPricesTicking";
 import { MarketDepthExamples } from "./MarketDepthExamples";
 import { PriceLadderLive, PriceLadderStress } from "./PriceLadderExamples";
+import {
+  ConnectionStateExample,
+  NotificationSettingsExample,
+} from "./NotificationsExamples";
+import {
+  OrderTicketCompact,
+  OrderTicketDialogExample,
+  OrderTicketDocked,
+  OrderTicketLauncherExample,
+} from "./OrderTicketExamples";
 import { SideLabelExamples } from "./SideLabelExamples";
 import type { ShowcaseExample } from "./types";
 
@@ -108,5 +118,47 @@ export const examples: ShowcaseExample[] = [
     description:
       "PriceLadderView with a synthetic book at 10-200 updates/s; React Profiler and rAF FPS stats.",
     Component: PriceLadderStress,
+  },
+  {
+    id: "order-ticket-docked",
+    group: "OrderTicket",
+    title: "Docked panel + prefill",
+    description:
+      "Instrument picker, live quote, lot/tick validation, risk preview. Prefill buttons call useOrderTicketLauncher().openOrderTicket(), routed to the docked ticket.",
+    Component: OrderTicketDocked,
+  },
+  {
+    id: "order-ticket-dialog",
+    group: "OrderTicket",
+    title: "Dialog",
+    Component: OrderTicketDialogExample,
+  },
+  {
+    id: "order-ticket-compact",
+    group: "OrderTicket",
+    title: "Compact inline",
+    Component: OrderTicketCompact,
+  },
+  {
+    id: "order-ticket-launcher",
+    group: "OrderTicket",
+    title: "Launcher (dialog fallback)",
+    description:
+      "openOrderTicket({ ric, side }) with no docked ticket opens the dialog.",
+    Component: OrderTicketLauncherExample,
+  },
+  {
+    id: "notifications-settings",
+    group: "Notifications",
+    title: "Order toasts",
+    description:
+      "TradingNotificationsProvider toasts acks, rejects and fills from the parentOrders / fills streams (deduped, rate limited).",
+    Component: NotificationSettingsExample,
+  },
+  {
+    id: "notifications-connection",
+    group: "Notifications",
+    title: "Connection banner + stale",
+    Component: ConnectionStateExample,
   },
 ];
