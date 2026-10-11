@@ -59,6 +59,10 @@
     "packages/trading-schemas": {
       "name": "@heswell/trading-schemas",
       "version": "0.1.0",
+      "dependencies": {
+        "@vuu-ui/vuu-data-types": "4.0.0-alpha.20",
+        "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20",
+      },
     },
     "packages/trading-test-data": {
       "name": "@heswell/trading-test-data",
