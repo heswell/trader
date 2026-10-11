@@ -1,4 +1,4 @@
-import { Random } from "@heswell/exchange-sim";
+import { Random } from "@heswell/exchange-sim/engine";
 import {
   DEFAULT_OMS_CONFIG,
   type OmsConfig,

@@ -1,0 +1,55 @@
+.showcaseApp {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+  background: var(--salt-container-primary-background);
+  color: var(--salt-content-primary-foreground);
+  font-family: var(--salt-text-fontFamily);
+}
+
+.showcaseApp-header {
+  grid-column: 1 / 3;
+  display: flex;
+  align-items: center;
+  gap: var(--salt-spacing-200);
+  padding: var(--salt-spacing-100) var(--salt-spacing-200);
+  border-bottom: var(--salt-size-border) solid
+    var(--salt-separable-primary-borderColor);
+}
+
+.showcaseApp-title {
+  font-weight: var(--salt-text-fontWeight-strong);
+  margin-right: auto;
+}
+
+.showcaseApp-nav {
+  overflow: auto;
+  border-right: var(--salt-size-border) solid
+    var(--salt-separable-primary-borderColor);
+  padding: var(--salt-spacing-100);
+}
+
+.showcaseApp-group {
+  font-size: var(--salt-text-label-fontSize);
+  color: var(--salt-content-secondary-foreground);
+  margin: var(--salt-spacing-100) 0 var(--salt-spacing-50);
+  text-transform: uppercase;
+}
+
+.showcaseApp-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--salt-spacing-100);
+}
+
+.showcaseApp-description {
+  margin: 0 0 var(--salt-spacing-100);
+  color: var(--salt-content-secondary-foreground);
+}
+
+.showcaseApp-example {
+  flex: 1;
+  min-height: 0;
+}

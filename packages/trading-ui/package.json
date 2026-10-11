@@ -3,7 +3,34 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "description": "Reusable trading UI components (Vuu/Salt), data-source agnostic",
   "main": "src/index.ts",
   "types": "src/index.ts",
-  "license": "MIT"
+  "license": "MIT",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "dependencies": {
+    "@heswell/trading-schemas": "workspace:*",
+    "@salt-ds/core": "1.67.0",
+    "@salt-ds/styles": "0.2.1",
+    "@salt-ds/window": "0.1.1",
+    "@vuu-ui/core": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-data-remote": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-data-types": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-table-types": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-utils": "4.0.0-alpha.20"
+  },
+  "devDependencies": {
+    "@heswell/trading-test-data": "workspace:*",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/react": "16.3.0",
+    "@testing-library/user-event": "14.6.1"
+  },
+  "peerDependencies": {
+    "clsx": "^2.0.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  }
 }

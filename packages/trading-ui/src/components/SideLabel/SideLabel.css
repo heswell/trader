@@ -1,0 +1,30 @@
+.tradingSideLabel {
+  --tradingSideLabel-color: var(
+    --trading-neutral,
+    var(--salt-content-secondary-foreground)
+  );
+  color: var(--tradingSideLabel-color);
+  font-weight: var(--salt-text-fontWeight-strong);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tradingSideLabel-buy {
+  --tradingSideLabel-color: var(
+    --trading-buy,
+    var(--salt-sentiment-positive-foreground-informative)
+  );
+}
+
+.tradingSideLabel-sell {
+  --tradingSideLabel-color: var(
+    --trading-sell,
+    var(--salt-sentiment-negative-foreground-informative)
+  );
+}
+
+.tradingSideLabel-pill {
+  border: var(--salt-size-border) var(--salt-borderStyle-solid) currentColor;
+  border-radius: var(--salt-palette-corner-weak, 2px);
+  padding: 0 var(--salt-spacing-50);
+}
