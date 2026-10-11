@@ -12,12 +12,13 @@ packages/
   trading-schemas/    shared table defs, enums, RPC contracts, tick/lot utils
   exchange-sim/       exchange simulator: order books, bots, EXCHANGE module, OMS gateway (see its README)
   oms/                OMS module: orders, risk, routing, positions, background flow (see its README)
-  trading-ui/         shared React components (placeholder)
-  trading-test-data/  test data (placeholder)
+  trading-ui/         reusable React components, data hooks, instrument context, formatters (see docs/ui-guide.md)
+  trading-test-data/  in-browser EXCHANGE + OMS (real engines on @heswell/vuu-data-engine-local)
 apps/
   features/hello/     module-federation remote (rsbuild via @vuu-ui/portal-build), :5010; exchange prices grid
-  showcase/           placeholder
+  showcase/           rsbuild dev app: trading-ui examples on local data or a server, :5001
   portal-config/      application.conf, default-modules.yaml and launcher for vuu-portal
+docs/ui-guide.md      UI conventions (components, styling, data access, showcase, tests, MF features)
 docs/upstream-issues.md
 scripts/              link, certs, dev, typecheck helpers
 ```
@@ -62,7 +63,8 @@ already-running host on :5001. Create Keycloak users with vuu-websocket's `npm r
 and log in as `trader1`/`trader2`/`admin`; the "Exchange prices" module then appears in the nav.
 
 Other commands: `bun run build` (remotes), `bun run typecheck` (emits .d.ts for the linked vuu packages into `.vuu-types/`, then checks only trader code), `bun run lint`, `bun run format`,
-`bun test`. Stand-alone exchange-sim (permissive auth, TLS with the dev cert, `wss://localhost:8094/websocket-exchange-sim`): `bun run --filter @heswell/exchange-sim start`;
+`bun run test` (`test:server` + `test:ui`, the latter with a happy-dom preload). UI showcase: `bun run dev:showcase`
+(http://localhost:5001, local data; its "Remote server" toggle uses `bun run dev:trading-server`). Stand-alone exchange-sim (permissive auth, TLS with the dev cert, `wss://localhost:8094/websocket-exchange-sim`): `bun run --filter @heswell/exchange-sim start`;
 benchmark: `bun run --filter @heswell/exchange-sim bench`. Simulator knobs (`exchangeSim.*` / `EXCHANGE_SIM_*`)
 are documented in [packages/exchange-sim/README.md](packages/exchange-sim/README.md).
 Stand-alone EXCHANGE + OMS (permissive auth, `wss://localhost:8095/websocket-trading`): `bun run --filter @heswell/oms start`.

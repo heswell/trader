@@ -3,7 +3,36 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "description": "Server-free EXCHANGE + OMS Vuu modules running the real exchange-sim and OMS engines in the browser",
   "main": "src/index.ts",
   "types": "src/index.ts",
-  "license": "MIT"
+  "exports": {
+    ".": "./src/index.ts",
+    "./shims/node-crypto": "./src/shims/node-crypto.ts"
+  },
+  "license": "MIT",
+  "sideEffects": false,
+  "scripts": {
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@heswell/exchange-sim": "workspace:*",
+    "@heswell/oms": "workspace:*",
+    "@heswell/trading-schemas": "workspace:*",
+    "@heswell/vuu-data-engine-local": "2.0.0",
+    "@heswell/vuu-table": "1.0.1",
+    "@vuu-ui/core": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-data-types": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-filter-types": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-table-types": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-utils": "4.0.0-alpha.20"
+  },
+  "devDependencies": {
+    "@heswell/hft-limit-order-book": "1.0.0"
+  },
+  "peerDependencies": {
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  }
 }

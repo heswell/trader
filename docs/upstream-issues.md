@@ -69,3 +69,40 @@ vuu-websocket was not modified. Workarounds are noted.
     expire on their own. *Workaround:* `OmsEngine.endOfDay()` expires working DAY orders on demand. A scheduled
     close (and `MARKET_CLOSED` reject window) in exchange-sim would make this automatic. This is our own package, so
     it's for a later phase rather than upstream.
+
+## Found in Phase 3 wave 1 (UI foundation)
+
+20. **`@heswell/vuu-data-engine-local` has import-time side effects.** Importing it creates the SIMUL/TEST/BASKET
+    demo modules and starts their timers, although the package declares `sideEffects: false`. Bundlers may
+    tree-shake it unexpectedly. A Bun/Node script that imports it also never exits on its own, because the timers
+    keep the process alive, so the script needs `process.exit`. *Workaround:* none needed in the browser; `bun test`
+    exits normally. Creating the modules lazily upstream would fix both problems.
+21. **engine-local's `tableContainer` is global and keyed by bare table name**, and `getTableList` and modules
+    resolve tables through it. A second test-data instance (or another module with a `prices` table) replaces the
+    first instance's tables. *Workaround:* `createTradingTestData` documents "one live instance at a time". Tests
+    create one per test and `dispose()` it in `afterEach`. Keying by `{module, table}` upstream would allow
+    several instances.
+22. **engine-local's default edit-session RPC services cannot be overridden** per table, so saving a `parentOrders`
+    session would write rows directly instead of going through the OMS. *Workaround:* `TradingLocalModule` has a
+    `beforeSessionSave` hook. It turns quantity/price edits into `amendOrder` and deletes into `cancelOrder`, and
+    clears `vuuAction` on the rows it handled so the default write skips them. An overridable session-save service
+    upstream would be cleaner.
+23. **`@vuu-ui/portal-build` `cssInline` covers only vuu packages by default, and `pluginCssInline` is not
+    exported.** Components that inject CSS (`useComponentCssInjection` with `import css from "./X.css"`) need
+    `"cssInline": {"include": ["/packages/trading-ui/", "/apps/features/"]}` in every feature's
+    portal-build.json. Apps that don't use portal-build (the showcase) must reimplement the rewrite
+    (`apps/showcase/css-inline-loader.cjs`). Exporting the plugin would let other rsbuild apps reuse it.
+24. **`@heswell/hft-limit-order-book` imports `randomUUID` from `node:crypto`**, which breaks browser bundles of
+    exchange-sim. In rspack a `resolve.alias` does not apply to `node:` URIs. *Workaround:*
+    `@heswell/trading-test-data/shims/node-crypto` (it uses `globalThis.crypto.randomUUID`), mapped with
+    `rspack.NormalModuleReplacementPlugin`. Using `globalThis.crypto` upstream (available in Node ≥ 19 and in
+    browsers) would remove the need for the shim.
+25. **The REST auth CORS config allows a single origin** (`vuu.auth.cors.allowedOrigin`), so dev apps on other
+    ports cannot authenticate directly. *Workaround:* the showcase dev server proxies `/remote/trading/*` to the
+    trading server, which makes the requests same-origin. Allowing a list of origins would help.
+26. **engine-local `subscribe` requires a vuu-utils `Range` object** (`Range(0, 100)`), not a plain `{from, to}`
+    (`range.reset` is called), unlike the remote `VuuDataSource`. This is minor; tests use `Range` from
+    `@vuu-ui/vuu-utils`.
+27. **Permissive auth rejects an empty password** (HTTP 401). It returns the token both in the body and in a
+    `vuu-auth-token` header. Not a bug, but undocumented. `connectToVuuServer` requires a password and reads either
+    form.
