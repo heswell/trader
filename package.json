@@ -21,7 +21,7 @@
     "lint": "biome lint .",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "test": "bun test",
+    "test": "bun test ./packages ./apps",
     "types:vuu": "bun scripts/vuu-types.ts"
   },
   "devDependencies": {
