@@ -16,7 +16,6 @@ import {
 import cx from "clsx";
 import { memo, useEffect, useRef } from "react";
 import {
-  formatNotional,
   formatPercent,
   formatPrice,
   formatQuantity,
@@ -160,23 +159,6 @@ export const PriceMoveCell = memo(function PriceMoveCell({
   );
 }, cellUnchanged);
 
-/** `trading.grid-price`: static price (open / high / low / close / vwap) to instrument precision. */
-export const PriceCell = memo(function PriceCell({
-  column,
-  dataRow,
-}: TableCellRendererProps) {
-  useCellCss();
-  return (
-    <div className={cx(classBase, `${classBase}-price`)}>
-      <span className={`${classBase}-value`}>
-        {isGroupRow(dataRow)
-          ? ""
-          : formatPrice(cellValue(dataRow, column), priceFormatOf(dataRow))}
-      </span>
-    </div>
-  );
-}, cellUnchanged);
-
 // ------------------------------------------------------------ change
 
 /**
@@ -240,33 +222,6 @@ export const QuantityCell = memo(function QuantityCell({
   );
 }, cellUnchanged);
 
-/**
- * `trading.grid-notional`: turnover in the instrument's currency (GBX = pence). Compact by
- * default; the full amount with its currency is the tooltip.
- */
-export const NotionalCell = memo(function NotionalCell({
-  column,
-  dataRow,
-}: TableCellRendererProps) {
-  useCellCss();
-  const value = cellValue(dataRow, column);
-  const currency =
-    !isGroupRow(dataRow) && dataRow.hasColumn("currency")
-      ? String(dataRow.currency)
-      : undefined;
-  const compact = rendererProps(column).compact !== false;
-  return (
-    <div
-      className={cx(classBase, `${classBase}-notional`)}
-      title={formatNotional(value, { currency })}
-    >
-      <span className={`${classBase}-value`}>
-        {formatNotional(value, { compact })}
-      </span>
-    </div>
-  );
-}, cellUnchanged);
-
 // ------------------------------------------------------------- phase
 
 const PHASE_LABELS: Record<string, string> = {
@@ -324,10 +279,6 @@ export const registerInstrumentGridRenderers = () => {
     ),
     serverDataType: ["double"],
   });
-  registerComponent("trading.grid-price", PriceCell, "cell-renderer", {
-    ...options("Price", "Price to instrument precision"),
-    serverDataType: ["double"],
-  });
   registerComponent("trading.change", ChangeCell, "cell-renderer", {
     ...options("Change", "Signed change with arrow and colour"),
     serverDataType: ["double"],
@@ -335,10 +286,6 @@ export const registerInstrumentGridRenderers = () => {
   registerComponent("trading.quantity", QuantityCell, "cell-renderer", {
     ...options("Quantity", "Grouped / compact quantity"),
     serverDataType: ["long", "int"],
-  });
-  registerComponent("trading.grid-notional", NotionalCell, "cell-renderer", {
-    ...options("Notional", "Compact notional in the instrument currency"),
-    serverDataType: ["double"],
   });
   registerComponent("trading.phase", PhaseCell, "cell-renderer", {
     ...options("Trading phase", "Trading phase badge"),

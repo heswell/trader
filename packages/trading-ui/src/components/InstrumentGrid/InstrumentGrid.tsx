@@ -41,6 +41,8 @@ import {
   useSelectedInstrument,
 } from "../../instrument-context/InstrumentContext";
 import type { UserSettingsStorage } from "../../utils/userSettingsStorage";
+import { InstrumentLookupProvider } from "../InstrumentLookup";
+import { registerTradingCellRenderers } from "../TradingCellRenderers";
 import { registerInstrumentGridRenderers } from "./cellRenderers";
 import {
   GROUPABLE_COLUMNS,
@@ -52,6 +54,7 @@ import type { SparklineCellOptions } from "../Sparkline/Sparkline";
 import gridCss from "./InstrumentGrid.css";
 
 registerInstrumentGridRenderers();
+registerTradingCellRenderers();
 
 const classBase = "tradingInstrumentGrid";
 const SOURCE = "InstrumentGrid";
@@ -322,159 +325,164 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
     };
 
     return (
-      <div {...htmlAttributes} className={cx(classBase, className)} ref={ref}>
-        {showToolbar ? (
-          <div
-            className={`${classBase}-toolbar`}
-            role="toolbar"
-            aria-label="Instrument grid"
-          >
-            <Input
-              aria-label="Filter instruments"
-              className={`${classBase}-search`}
-              placeholder="Search ric / description"
-              value={text}
-              onChange={(e) => setText((e.target as HTMLInputElement).value)}
-            />
-            <Dropdown
-              aria-label="Watchlist"
-              className={`${classBase}-select`}
-              selected={[watchlistId]}
-              value={watchlist?.name ?? "All instruments"}
-              onSelectionChange={(_, [id]) => id && setWatchlistId(id)}
+      <InstrumentLookupProvider>
+        <div {...htmlAttributes} className={cx(classBase, className)} ref={ref}>
+          {showToolbar ? (
+            <div
+              className={`${classBase}-toolbar`}
+              role="toolbar"
+              aria-label="Instrument grid"
             >
-              <Option value={ALL}>All instruments</Option>
-              {watchlists.lists.map((l) => (
-                <Option key={l.id} value={l.id}>
-                  {`${l.name} (${l.rics.length})`}
-                </Option>
-              ))}
-            </Dropdown>
-            <Overlay placement="bottom">
-              <OverlayTrigger>
-                <Button aria-label="Manage watchlists" appearance="bordered">
-                  Watchlists
-                </Button>
-              </OverlayTrigger>
-              <OverlayPanel className={`${classBase}-popover`}>
-                <OverlayPanelContent>
-                  <div className={`${classBase}-watchlistForm`}>
-                    <Input
-                      aria-label="New watchlist name"
-                      placeholder="New watchlist"
-                      value={newName}
-                      onChange={(e) =>
-                        setNewName((e.target as HTMLInputElement).value)
-                      }
-                      onKeyDown={(e) => e.key === "Enter" && createFromInput()}
-                    />
-                    <Button onClick={createFromInput}>Create</Button>
-                  </div>
-                  {watchlist ? (
-                    <div className={`${classBase}-watchlistForm`}>
-                      <Button
-                        disabled={!selected}
-                        onClick={() =>
-                          selected && watchlists.add(watchlist.id, selected.ric)
-                        }
-                      >
-                        {`Add ${selected?.ric ?? "selected"} to ${watchlist.name}`}
-                      </Button>
-                      <Button
-                        disabled={!selected}
-                        onClick={() =>
-                          selected &&
-                          watchlists.removeRic(watchlist.id, selected.ric)
-                        }
-                      >
-                        Remove
-                      </Button>
-                      <Button
-                        sentiment="negative"
-                        onClick={() => watchlists.remove(watchlist.id)}
-                      >
-                        Delete list
-                      </Button>
-                    </div>
-                  ) : null}
-                </OverlayPanelContent>
-              </OverlayPanel>
-            </Overlay>
-            {groupable.length ? (
+              <Input
+                aria-label="Filter instruments"
+                className={`${classBase}-search`}
+                placeholder="Search ric / description"
+                value={text}
+                onChange={(e) => setText((e.target as HTMLInputElement).value)}
+              />
               <Dropdown
-                aria-label="Group by"
+                aria-label="Watchlist"
                 className={`${classBase}-select`}
-                selected={[groupBy]}
-                value={groupBy === NONE ? "No grouping" : `Group: ${groupBy}`}
-                onSelectionChange={(_, [g]) => g && setGroupBy(g)}
+                selected={[watchlistId]}
+                value={watchlist?.name ?? "All instruments"}
+                onSelectionChange={(_, [id]) => id && setWatchlistId(id)}
               >
-                <Option value={NONE}>No grouping</Option>
-                {groupable.map((c) => (
-                  <Option key={c} value={c}>{`Group by ${c}`}</Option>
+                <Option value={ALL}>All instruments</Option>
+                {watchlists.lists.map((l) => (
+                  <Option key={l.id} value={l.id}>
+                    {`${l.name} (${l.rics.length})`}
+                  </Option>
                 ))}
               </Dropdown>
-            ) : null}
-            <Overlay placement="bottom">
-              <OverlayTrigger>
-                <Button aria-label="Choose columns" appearance="bordered">
-                  Columns
-                </Button>
-              </OverlayTrigger>
-              <OverlayPanel className={`${classBase}-popover`}>
-                <OverlayPanelContent>
-                  <ColumnPicker
-                    className={`${classBase}-columnPicker`}
-                    columnModel={columnModel}
-                  />
-                </OverlayPanelContent>
-              </OverlayPanel>
-            </Overlay>
-            <span className={`${classBase}-actions`}>
-              {onBuy ? (
-                <Button
-                  appearance="solid"
-                  sentiment="positive"
-                  disabled={!selected}
-                  onClick={() => selected && onBuy(selected)}
+              <Overlay placement="bottom">
+                <OverlayTrigger>
+                  <Button aria-label="Manage watchlists" appearance="bordered">
+                    Watchlists
+                  </Button>
+                </OverlayTrigger>
+                <OverlayPanel className={`${classBase}-popover`}>
+                  <OverlayPanelContent>
+                    <div className={`${classBase}-watchlistForm`}>
+                      <Input
+                        aria-label="New watchlist name"
+                        placeholder="New watchlist"
+                        value={newName}
+                        onChange={(e) =>
+                          setNewName((e.target as HTMLInputElement).value)
+                        }
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && createFromInput()
+                        }
+                      />
+                      <Button onClick={createFromInput}>Create</Button>
+                    </div>
+                    {watchlist ? (
+                      <div className={`${classBase}-watchlistForm`}>
+                        <Button
+                          disabled={!selected}
+                          onClick={() =>
+                            selected &&
+                            watchlists.add(watchlist.id, selected.ric)
+                          }
+                        >
+                          {`Add ${selected?.ric ?? "selected"} to ${watchlist.name}`}
+                        </Button>
+                        <Button
+                          disabled={!selected}
+                          onClick={() =>
+                            selected &&
+                            watchlists.removeRic(watchlist.id, selected.ric)
+                          }
+                        >
+                          Remove
+                        </Button>
+                        <Button
+                          sentiment="negative"
+                          onClick={() => watchlists.remove(watchlist.id)}
+                        >
+                          Delete list
+                        </Button>
+                      </div>
+                    ) : null}
+                  </OverlayPanelContent>
+                </OverlayPanel>
+              </Overlay>
+              {groupable.length ? (
+                <Dropdown
+                  aria-label="Group by"
+                  className={`${classBase}-select`}
+                  selected={[groupBy]}
+                  value={groupBy === NONE ? "No grouping" : `Group: ${groupBy}`}
+                  onSelectionChange={(_, [g]) => g && setGroupBy(g)}
                 >
-                  Buy
-                </Button>
+                  <Option value={NONE}>No grouping</Option>
+                  {groupable.map((c) => (
+                    <Option key={c} value={c}>{`Group by ${c}`}</Option>
+                  ))}
+                </Dropdown>
               ) : null}
-              {onSell ? (
-                <Button
-                  appearance="solid"
-                  sentiment="negative"
-                  disabled={!selected}
-                  onClick={() => selected && onSell(selected)}
-                >
-                  Sell
-                </Button>
-              ) : null}
-              {onOpenDepth ? (
-                <Button
-                  disabled={!selected}
-                  onClick={() => selected && onOpenDepth(selected)}
-                >
-                  Depth
-                </Button>
-              ) : null}
-            </span>
+              <Overlay placement="bottom">
+                <OverlayTrigger>
+                  <Button aria-label="Choose columns" appearance="bordered">
+                    Columns
+                  </Button>
+                </OverlayTrigger>
+                <OverlayPanel className={`${classBase}-popover`}>
+                  <OverlayPanelContent>
+                    <ColumnPicker
+                      className={`${classBase}-columnPicker`}
+                      columnModel={columnModel}
+                    />
+                  </OverlayPanelContent>
+                </OverlayPanel>
+              </Overlay>
+              <span className={`${classBase}-actions`}>
+                {onBuy ? (
+                  <Button
+                    appearance="solid"
+                    sentiment="positive"
+                    disabled={!selected}
+                    onClick={() => selected && onBuy(selected)}
+                  >
+                    Buy
+                  </Button>
+                ) : null}
+                {onSell ? (
+                  <Button
+                    appearance="solid"
+                    sentiment="negative"
+                    disabled={!selected}
+                    onClick={() => selected && onSell(selected)}
+                  >
+                    Sell
+                  </Button>
+                ) : null}
+                {onOpenDepth ? (
+                  <Button
+                    disabled={!selected}
+                    onClick={() => selected && onOpenDepth(selected)}
+                  >
+                    Depth
+                  </Button>
+                ) : null}
+              </span>
+            </div>
+          ) : null}
+          <div className={`${classBase}-table`}>
+            <ContextMenuProvider
+              menuActionHandler={menuActionHandler}
+              menuBuilder={menuBuilder}
+            >
+              <Table
+                config={config}
+                dataSource={dataSource}
+                onSelect={handleSelect}
+                selectionModel="single"
+              />
+            </ContextMenuProvider>
           </div>
-        ) : null}
-        <div className={`${classBase}-table`}>
-          <ContextMenuProvider
-            menuActionHandler={menuActionHandler}
-            menuBuilder={menuBuilder}
-          >
-            <Table
-              config={config}
-              dataSource={dataSource}
-              onSelect={handleSelect}
-              selectionModel="single"
-            />
-          </ContextMenuProvider>
         </div>
-      </div>
+      </InstrumentLookupProvider>
     );
   },
 );

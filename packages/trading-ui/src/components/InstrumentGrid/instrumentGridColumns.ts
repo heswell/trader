@@ -2,6 +2,7 @@ import type {
   ColumnDescriptor,
   ColumnTypeRendering,
 } from "@vuu-ui/vuu-table-types";
+import { TradingRenderer } from "../TradingCellRenderers";
 import type { SparklineCellOptions } from "../Sparkline/Sparkline";
 
 export const SPARKLINE_COLUMN = "sparkline";
@@ -64,31 +65,31 @@ const presets: Record<string, ColumnDescriptor> = {
     name: "open",
     width: 90,
     ...right,
-    type: renderer("trading.grid-price"),
+    type: renderer(TradingRenderer.Price),
   },
   high: {
     name: "high",
     width: 90,
     ...right,
-    type: renderer("trading.grid-price"),
+    type: renderer(TradingRenderer.Price),
   },
   low: {
     name: "low",
     width: 90,
     ...right,
-    type: renderer("trading.grid-price"),
+    type: renderer(TradingRenderer.Price),
   },
   close: {
     name: "close",
     width: 90,
     ...right,
-    type: renderer("trading.grid-price"),
+    type: renderer(TradingRenderer.Price),
   },
   vwap: {
     name: "vwap",
     width: 90,
     ...right,
-    type: renderer("trading.grid-price"),
+    type: renderer(TradingRenderer.Price),
   },
   change: {
     name: "change",
@@ -113,7 +114,7 @@ const presets: Record<string, ColumnDescriptor> = {
     name: "turnover",
     width: 105,
     ...right,
-    type: renderer("trading.grid-notional"),
+    type: renderer(TradingRenderer.Notional),
   },
   tickSize: { name: "tickSize", width: 80, ...right },
   lotSize: { name: "lotSize", width: 80, ...right },
@@ -127,7 +128,7 @@ const presets: Record<string, ColumnDescriptor> = {
     name: "refPrice",
     width: 90,
     ...right,
-    type: renderer("trading.grid-price"),
+    type: renderer(TradingRenderer.Price),
   },
   phase: {
     name: "phase",
