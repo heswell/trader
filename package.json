@@ -17,11 +17,12 @@
     "certs": "bun ./scripts/make-certs.ts",
     "dev": "bun ./scripts/dev.ts",
     "build": "bun run --filter './apps/features/*' build",
-    "typecheck": "bun ./scripts/typecheck.ts",
+    "typecheck": "bun scripts/vuu-types.ts && tsc --noEmit -p tsconfig.typecheck.json",
     "lint": "biome lint .",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "test": "bun test"
+    "test": "bun test",
+    "types:vuu": "bun scripts/vuu-types.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",

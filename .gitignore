@@ -9,3 +9,5 @@ logs/
 *.tsbuildinfo
 apps/portal-config/certs/
 apps/portal-config/modules.yaml
+.vuu-types
+.vuu-types.tsconfig.json

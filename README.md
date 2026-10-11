@@ -58,7 +58,7 @@ REST `https://localhost:8443/api/authn`, ws `wss://localhost:8091/websocket-port
 already-running host on :5001. Create Keycloak users with vuu-websocket's `npm run keycloak:bootstrap`
 and log in as `trader1`/`trader2`/`admin`; the "Trading / Hello" module then appears in the nav.
 
-Other commands: `bun run build` (remotes), `bun run typecheck`, `bun run lint`, `bun run format`,
+Other commands: `bun run build` (remotes), `bun run typecheck` (emits .d.ts for the linked vuu packages into `.vuu-types/`, then checks only trader code), `bun run lint`, `bun run format`,
 `bun test`. Stand-alone exchange-sim (permissive auth, port 8094): `bun run --filter @heswell/exchange-sim start`.
 
 ### Verified / not verified
