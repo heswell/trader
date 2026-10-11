@@ -5,6 +5,8 @@ import {
   TradeTapeExample,
 } from "./BlotterExamples";
 import { InstrumentPricesTicking } from "./InstrumentPricesTicking";
+import { MarketDepthExamples } from "./MarketDepthExamples";
+import { PriceLadderLive, PriceLadderStress } from "./PriceLadderExamples";
 import { SideLabelExamples } from "./SideLabelExamples";
 import type { ShowcaseExample } from "./types";
 
@@ -53,5 +55,29 @@ export const examples: ShowcaseExample[] = [
     group: "PositionsView",
     title: "Ticking P&L with per-currency totals",
     Component: PositionsViewExample,
+  },
+  {
+    id: "market-depth-selected",
+    group: "MarketDepth",
+    title: "Selected instrument",
+    description:
+      "Aggregated depth following the selected instrument: own orders (ACC-US-01), flashes, depth bars, halt / resume, and a second depth pinned to a ric.",
+    Component: MarketDepthExamples,
+  },
+  {
+    id: "price-ladder-live",
+    group: "PriceLadder",
+    title: "Live ladder",
+    description:
+      "Click bid / ask to trade (ACC-US-01), drag or M+arrows+Enter to amend, Delete / double-click to cancel, C to centre.",
+    Component: PriceLadderLive,
+  },
+  {
+    id: "price-ladder-stress",
+    group: "PriceLadder",
+    title: "Stress (50+ updates/s)",
+    description:
+      "PriceLadderView with a synthetic book at 10-200 updates/s; React Profiler and rAF FPS stats.",
+    Component: PriceLadderStress,
   },
 ];
