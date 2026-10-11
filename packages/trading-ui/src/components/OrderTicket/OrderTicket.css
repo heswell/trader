@@ -1,0 +1,201 @@
+.tradingOrderTicket {
+  --tradingOrderTicket-sideColor: var(
+    --trading-buy,
+    var(--salt-sentiment-positive-foreground-informative)
+  );
+  background: var(--salt-container-primary-background);
+  border-top: var(--salt-size-indicator, 2px) var(--salt-borderStyle-solid)
+    var(--tradingOrderTicket-sideColor);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--salt-spacing-150);
+  padding: var(--salt-spacing-200);
+}
+
+.tradingOrderTicket[data-side="SELL"] {
+  --tradingOrderTicket-sideColor: var(
+    --trading-sell,
+    var(--salt-sentiment-negative-foreground-informative)
+  );
+}
+
+.tradingOrderTicket-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--salt-spacing-150);
+}
+
+.tradingOrderTicket-row > .saltFormField {
+  flex: 1 1 12ch;
+  min-width: 0;
+}
+
+.tradingOrderTicket-ric {
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+/* Live quote */
+.tradingOrderTicket-quote {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--salt-spacing-100);
+  font-variant-numeric: tabular-nums;
+}
+
+.tradingOrderTicket-touch.saltButton,
+.tradingOrderTicket-quoteItem {
+  align-items: baseline;
+  display: inline-flex;
+  white-space: nowrap;
+  gap: var(--salt-spacing-50);
+  padding: 0 var(--salt-spacing-50);
+}
+
+.tradingOrderTicket-quoteLabel {
+  color: var(--salt-content-secondary-foreground);
+  font-size: var(--salt-text-label-fontSize);
+}
+
+.tradingOrderTicket-quoteValue {
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+.tradingOrderTicket-quote[data-direction="up"] .tradingOrderTicket-change {
+  color: var(
+    --trading-up,
+    var(--salt-sentiment-positive-foreground-informative)
+  );
+}
+
+.tradingOrderTicket-quote[data-direction="down"] .tradingOrderTicket-change {
+  color: var(
+    --trading-down,
+    var(--salt-sentiment-negative-foreground-informative)
+  );
+}
+
+.tradingOrderTicket-phase {
+  color: var(--salt-status-warning-foreground-informative);
+  font-size: var(--salt-text-label-fontSize);
+}
+
+/* Side toggle: the selected button gets a side-coloured indicator (text keeps
+   Salt's selected contrast; the label carries the meaning, not the colour). */
+.tradingOrderTicket-side .saltToggleButton[data-side="BUY"] {
+  --tradingOrderTicket-toggleSide: var(
+    --trading-buy,
+    var(--salt-sentiment-positive-foreground-informative)
+  );
+}
+
+.tradingOrderTicket-side .saltToggleButton[data-side="SELL"] {
+  --tradingOrderTicket-toggleSide: var(
+    --trading-sell,
+    var(--salt-sentiment-negative-foreground-informative)
+  );
+}
+
+.tradingOrderTicket-side .saltToggleButton[aria-checked="true"],
+.tradingOrderTicket-side .saltToggleButton[aria-pressed="true"] {
+  box-shadow: inset 0 calc(-2 * var(--salt-size-indicator, 2px)) 0
+    var(--tradingOrderTicket-toggleSide);
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+/* Quantity / price steppers */
+.tradingOrderTicket-stepper {
+  display: flex;
+  gap: var(--salt-spacing-50);
+  width: 100%;
+}
+
+.tradingOrderTicket-stepper > .saltInput {
+  flex: 1 1 auto;
+  min-width: 8ch;
+}
+
+.tradingOrderTicket-stepper > .saltButton {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.tradingOrderTicket-stepper input {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Preview, status */
+.tradingOrderTicket-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--salt-spacing-50);
+  font-variant-numeric: tabular-nums;
+}
+
+.tradingOrderTicket-usd {
+  color: var(--salt-content-secondary-foreground);
+}
+
+.tradingOrderTicket-warnings {
+  color: var(--salt-status-warning-foreground-informative);
+  font-size: var(--salt-text-label-fontSize);
+  margin: 0;
+  padding-left: var(--salt-spacing-200);
+}
+
+.tradingOrderTicket-status,
+.tradingOrderTicket-formError {
+  font-size: var(--salt-text-label-fontSize);
+}
+
+.tradingOrderTicket-status-rejected,
+.tradingOrderTicket-formError {
+  color: var(--salt-status-error-foreground-informative);
+}
+
+.tradingOrderTicket-orderId {
+  color: var(--salt-content-secondary-foreground);
+}
+
+.tradingOrderTicket-actions {
+  display: flex;
+  gap: var(--salt-spacing-100);
+  justify-content: flex-end;
+}
+
+.tradingOrderTicket-submit {
+  min-width: 16ch;
+}
+
+/* Compact: a dense inline strip (grid row / ladder) */
+.tradingOrderTicket-compact {
+  align-items: flex-end;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--salt-spacing-100);
+  padding: var(--salt-spacing-100);
+}
+
+.tradingOrderTicket-compact .tradingOrderTicket-row {
+  flex-wrap: nowrap;
+  gap: var(--salt-spacing-100);
+}
+
+.tradingOrderTicket-compact .saltFormFieldLabel {
+  font-size: var(--salt-text-label-fontSize);
+}
+
+.tradingOrderTicket-compact .saltFormField {
+  flex: 0 1 auto;
+}
+
+.tradingOrderTicket-compact .tradingOrderTicket-preview,
+.tradingOrderTicket-compact .tradingOrderTicket-status,
+.tradingOrderTicket-compact .tradingOrderTicket-formError {
+  flex-basis: 100%;
+}
+
+.tradingOrderTicket-compact .tradingOrderTicket-actions {
+  margin-left: auto;
+}

@@ -124,3 +124,15 @@ vuu-websocket was not modified. Workarounds are noted.
 33. **A `LEFT JOIN` row without a price shows `0` (not empty) for numeric columns** in `instrumentPrices`, so a client
     cannot tell "no price yet" from a price of 0. *Workaround:* the sparkline renderer ignores 0 samples
     (`ignoreZero`) and the grid defaults to `simulated = true`.
+34. **vuu `TablePicker` cannot be used as a controlled instrument picker.** It has no controlled `value` (the
+    selected text can't be set from a prefill or from the selected instrument), it logs to the console, and it does
+    not unsubscribe the data source it creates. *Workaround:* `InstrumentPicker` is a Salt `ComboBox` over
+    `useTradingRows("instruments", { filter })`.
+35. **`@vuu-ui/vuu-notifications` `NotificationsProvider` uses one module-level context**, so nested providers
+    shadow each other, and without a provider `showNotification` only logs "have you forgotten to provide a
+    NotificationsCenter?". *Workaround:* `TradingNotificationsProvider` mounts it only with `notificationsCenter`,
+    and accepts a `toastSink`.
+36. **`ConnectionManager.connectionStatusFor(id)` creates the connection (and worker) if it does not exist**, so
+    observing status can open a connection. *Workaround:* `useTradingConnectionStatus` only calls it in remote or
+    inherit mode with a non-local data provider, and otherwise relies on `onConnectionStatus`. A read-only status
+    getter would help.

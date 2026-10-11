@@ -19,6 +19,7 @@
     "@vuu-ui/vuu-context-menu": "4.0.0-alpha.20",
     "@vuu-ui/vuu-data-remote": "4.0.0-alpha.20",
     "@vuu-ui/vuu-data-types": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-notifications": "4.0.0-alpha.20",
     "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20",
     "@vuu-ui/vuu-table": "4.0.0-alpha.20",
     "@vuu-ui/vuu-table-extras": "4.0.0-alpha.20",

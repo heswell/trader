@@ -11,7 +11,9 @@ inside vuu-portal. **Conventions: [docs/ui-guide.md](../../docs/ui-guide.md).**
 | Formatting | `formatPrice`, `priceDecimals`, `formatQuantity`, `formatNotional`, `formatPercent` |
 | Colours | `TradingColour`, `sideColour`, `directionColour`, `orderStatusCategory`, `orderStatusColour`, `tradingPhaseColour` |
 | User settings | `UserSettingsStorage`, `UserSettingsProvider`, `useUserSettingsStorage`, `createLocalSettingsStorage`, `createMemorySettingsStorage` |
-| Components | `SideLabel` (reference component), `InstrumentGrid`, `Sparkline` / `trading.sparkline` renderer |
+| Components | `SideLabel` (reference component), `InstrumentGrid`, `Sparkline` / `trading.sparkline` renderer, `OrderTicket` / `OrderTicketDialog` / `OrderTicketPanel` + `useOrderTicketLauncher` ([README](src/components/OrderTicket/README.md)), `InstrumentPicker`, `ConnectionBanner`, `StaleIndicator` |
+| Rows | `useTradingRows(table, { filter, rowCount })` → `{ dataSource, rows }`, `subscribeTradingRows`, `toTradingRowObject` |
+| Notifications, connection | `TradingNotificationsProvider`, `useTradingNotifications`, `TradingOrderEvent`, `useTradingConnectionStatus`, `useStaleIndicator` ([README](src/notifications/README.md)) |
 
 ```tsx
 const Orders = () => {

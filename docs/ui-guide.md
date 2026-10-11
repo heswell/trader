@@ -281,3 +281,20 @@ in `TradingRenderer` (`registerTradingCellRenderers()`; call it at module level 
 CSS) rather than writing new ones. Non-Table views (e.g. the tape) use `useDataSourceRecords` for rAF-coalesced
 rows. See `packages/trading-ui/README.md` for the component props and `docs/upstream-issues.md` #28–32 for the
 alpha.20 constraints behind the design choices.
+
+## 12. Order ticket, notifications and connection state (P3.6, P3.12)
+
+- **Opening a ticket.** Any component can open the order ticket with
+  `useOrderTicketLauncher().openOrderTicket({ ric, side, price, quantity })` (see the
+  [OrderTicket README](../packages/trading-ui/src/components/OrderTicket/README.md)). Do not build your own ticket.
+  For an inline ticket, render `<OrderTicket variant="compact" prefill={…} />`.
+- **Toasts.** Order toasts come from `TradingNotificationsProvider`, which watches `parentOrders` and `fills`, so
+  components do not toast their own orders. Use `useTradingNotifications().notify(event)` only for failures that
+  never reach the OMS. See the [notifications README](../packages/trading-ui/src/notifications/README.md).
+- **Mounting.** The host mounts `TradingNotificationsProvider`, `OrderTicketLauncherProvider` and
+  `ConnectionBanner` once (the showcase does this in `ShowcaseTradingHost.tsx`).
+- **Staleness.** Components that show live prices can use `useStaleIndicator({ lastUpdate })` or
+  `<StaleIndicator lastUpdate={…} />`.
+- **Rows as objects.** `useTradingRows(table, { filter, rowCount })` returns `{ dataSource, rows }`. It suits a
+  small row set, such as one instrument's quote or the account list. Use a vuu `Table` for grids.
+

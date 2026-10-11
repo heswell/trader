@@ -7,7 +7,8 @@ import { connectToVuuServer } from "@heswell/trading-ui";
 import { useCallback, useMemo, useState } from "react";
 
 export const REMOTE_CONNECTION_ID = "trading-remote";
-const USER = "admin";
+export const SHOWCASE_USER = "admin";
+const USER = SHOWCASE_USER;
 
 export type ShowcaseDataMode = "local" | "remote";
 export type RemoteStatus =

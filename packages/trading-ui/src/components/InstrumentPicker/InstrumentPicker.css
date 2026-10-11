@@ -1,0 +1,12 @@
+.tradingInstrumentPicker-ric {
+  font-weight: var(--salt-text-fontWeight-strong);
+  min-width: 10ch;
+}
+
+.tradingInstrumentPicker-description {
+  color: var(--salt-content-secondary-foreground);
+  overflow: hidden;
+  padding-left: var(--salt-spacing-100);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
