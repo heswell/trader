@@ -1,0 +1,265 @@
+.tradingMarketDepth {
+  --tradingMarketDepth-rowHeight: var(--salt-size-base);
+  --tradingMarketDepth-bid-bar: var(
+    --trading-depth-bid,
+    var(--salt-status-success-background)
+  );
+  --tradingMarketDepth-ask-bar: var(
+    --trading-depth-ask,
+    var(--salt-status-error-background)
+  );
+  --tradingMarketDepth-flash: var(
+    --trading-flash,
+    var(--salt-status-warning-background)
+  );
+  --tradingMarketDepth-own: var(
+    --trading-own-order,
+    var(--salt-status-info-foreground-informative)
+  );
+  background: var(--salt-container-primary-background);
+  color: var(--salt-content-primary-foreground);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--salt-text-fontFamily);
+  font-size: var(--salt-text-fontSize);
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+}
+
+.tradingMarketDepth-summary {
+  align-items: center;
+  border-bottom: var(--salt-size-border) var(--salt-separable-borderStyle)
+    var(--salt-separable-tertiary-borderColor);
+  display: flex;
+  gap: var(--salt-spacing-200);
+  height: var(--tradingMarketDepth-rowHeight);
+  padding: 0 var(--salt-spacing-100);
+}
+
+.tradingMarketDepth-ric {
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+.tradingMarketDepth-spread {
+  color: var(--salt-content-secondary-foreground);
+  flex: 1;
+  text-align: center;
+}
+
+.tradingMarketDepth-phase {
+  border: var(--salt-size-border) var(--salt-borderStyle-solid) currentColor;
+  border-radius: var(--salt-palette-corner-weak, 2px);
+  color: var(--salt-status-warning-foreground-informative);
+  font-weight: var(--salt-text-fontWeight-strong);
+  padding: 0 var(--salt-spacing-50);
+}
+
+.tradingMarketDepth[data-phase="HALTED"] .tradingMarketDepth-phase {
+  color: var(--salt-status-error-foreground-informative);
+}
+
+.tradingMarketDepth-message {
+  display: block;
+  color: var(--salt-content-secondary-foreground);
+  padding: var(--salt-spacing-200);
+  text-align: center;
+}
+
+.tradingMarketDepth-table {
+  border-collapse: collapse;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.tradingMarketDepth-table > thead,
+.tradingMarketDepth-table > tbody {
+  display: contents;
+}
+
+.tradingMarketDepth[data-inactive] .tradingMarketDepth-table {
+  opacity: 0.6;
+}
+
+/* fixed tracks keep header and level rows aligned (each row is its own grid) */
+.tradingMarketDepth-header,
+.tradingMarketDepth-row {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 0.6fr) minmax(0, 1.2fr) minmax(0, 1fr)
+    minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 0.6fr);
+  height: var(--tradingMarketDepth-rowHeight);
+  isolation: isolate;
+  position: relative;
+}
+
+.tradingMarketDepth-header {
+  color: var(--salt-content-secondary-foreground);
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+.tradingMarketDepth-header > th,
+.tradingMarketDepth-row > td {
+  align-items: center;
+  display: flex;
+  font: inherit;
+  gap: var(--salt-spacing-50);
+  overflow: hidden;
+  padding: 0 var(--salt-spacing-100);
+  white-space: nowrap;
+}
+
+.tradingMarketDepth-bid {
+  justify-content: flex-end;
+}
+
+.tradingMarketDepth-ask {
+  justify-content: flex-start;
+}
+
+.tradingMarketDepth-orders.tradingMarketDepth-bid,
+.tradingMarketDepth-header > th:first-child {
+  justify-content: flex-start;
+}
+
+.tradingMarketDepth-orders.tradingMarketDepth-ask,
+.tradingMarketDepth-header > th:last-child {
+  justify-content: flex-end;
+}
+
+.tradingMarketDepth-orders,
+.tradingMarketDepth-qty {
+  position: relative;
+  z-index: 1;
+}
+
+.tradingMarketDepth-orders {
+  color: var(--salt-content-secondary-foreground);
+}
+
+.tradingMarketDepth-price.tradingMarketDepth-bid {
+  border-right: var(--salt-size-border) var(--salt-separable-borderStyle)
+    var(--salt-separable-tertiary-borderColor);
+}
+
+/*
+ * The price cell is the centre-adjacent cell on both sides. It stays
+ * statically positioned so its bar / flash children position against the
+ * row: bars grow outwards from the centre line (bids left, asks right).
+ */
+.tradingMarketDepth-bar {
+  bottom: 1px;
+  pointer-events: none;
+  position: absolute;
+  top: 1px;
+  z-index: 0;
+}
+
+.tradingMarketDepth-bid .tradingMarketDepth-bar {
+  background: var(--tradingMarketDepth-bid-bar);
+  right: 50%;
+}
+
+.tradingMarketDepth-ask .tradingMarketDepth-bar {
+  background: var(--tradingMarketDepth-ask-bar);
+  left: 50%;
+}
+
+.tradingMarketDepth-flash {
+  animation: tradingMarketDepth-flash 600ms ease-out forwards;
+  background: var(--tradingMarketDepth-flash);
+  bottom: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  z-index: 0;
+}
+
+.tradingMarketDepth-bid .tradingMarketDepth-flash {
+  left: 0;
+  right: 50%;
+}
+
+.tradingMarketDepth-ask .tradingMarketDepth-flash {
+  left: 50%;
+  right: 0;
+}
+
+@keyframes tradingMarketDepth-flash {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tradingMarketDepth-flash {
+    animation-duration: 1ms;
+  }
+}
+
+.tradingMarketDepth-priceText {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  font-weight: var(--salt-text-fontWeight-strong);
+  padding: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.tradingMarketDepth-bid.tradingMarketDepth-price {
+  color: var(
+    --trading-buy,
+    var(--salt-sentiment-positive-foreground-informative)
+  );
+}
+
+.tradingMarketDepth-ask.tradingMarketDepth-price {
+  color: var(
+    --trading-sell,
+    var(--salt-sentiment-negative-foreground-informative)
+  );
+}
+
+button.tradingMarketDepth-priceText {
+  cursor: pointer;
+}
+
+button.tradingMarketDepth-priceText:hover {
+  text-decoration: underline;
+}
+
+button.tradingMarketDepth-priceText:focus-visible {
+  outline: var(--salt-focused-outline);
+}
+
+.tradingMarketDepth-ownMarker {
+  border: var(--salt-size-border) var(--salt-borderStyle-solid)
+    var(--tradingMarketDepth-own);
+  border-radius: var(--salt-palette-corner-weak, 2px);
+  color: var(--tradingMarketDepth-own);
+  font-weight: var(--salt-text-fontWeight-strong);
+  padding: 0 var(--salt-spacing-50);
+}
+
+.tradingMarketDepth-ownMarker::before {
+  content: "\25C6\00a0";
+}
+
+.tradingMarketDepth-srOnly {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.tradingMarketDepth-spread abbr {
+  text-decoration: none;
+}

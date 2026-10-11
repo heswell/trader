@@ -113,6 +113,8 @@ Tick and lot maths (rounding, validation, ladder steps) live in `@heswell/tradin
 **Example component.** `SideLabel` is the reference implementation of these conventions: folder, CSS injection,
 tokens, `data-side`, `forwardRef`, and a test.
 
+**Component docs.** Market depth and the price ladder, plus their shared market-data hooks (`useMarketDepth`, `useOwnWorkingOrders`, …), are documented in [components/market-depth-and-ladder.md](components/market-depth-and-ladder.md).
+
 ## 4. Data access: remote vs local
 
 Components never construct data sources from a specific implementation. They get them from the nearest data

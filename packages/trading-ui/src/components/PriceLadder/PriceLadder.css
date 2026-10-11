@@ -1,0 +1,308 @@
+.tradingPriceLadder {
+  --tradingPriceLadder-rowHeight: var(--salt-size-base);
+  --tradingPriceLadder-columns: minmax(3em, 1fr) minmax(4em, 1.2fr)
+    minmax(5em, 1fr) minmax(4em, 1.2fr) minmax(3em, 1fr);
+  --tradingPriceLadder-bid-bar: var(
+    --trading-depth-bid,
+    var(--salt-status-success-background)
+  );
+  --tradingPriceLadder-ask-bar: var(
+    --trading-depth-ask,
+    var(--salt-status-error-background)
+  );
+  --tradingPriceLadder-own: var(
+    --trading-own-order,
+    var(--salt-status-info-foreground-informative)
+  );
+  --tradingPriceLadder-ltp: var(
+    --trading-ltp,
+    var(--salt-status-warning-background)
+  );
+  background: var(--salt-container-primary-background);
+  color: var(--salt-content-primary-foreground);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--salt-text-fontFamily);
+  font-size: var(--salt-text-fontSize);
+  font-variant-numeric: tabular-nums;
+  min-height: 0;
+  min-width: 0;
+}
+
+.tradingPriceLadder-toolbar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--salt-spacing-100);
+  padding: var(--salt-spacing-50) var(--salt-spacing-100);
+}
+
+.tradingPriceLadder-ric {
+  font-weight: var(--salt-text-fontWeight-strong);
+  min-width: 4em;
+}
+
+.tradingPriceLadder-qtyLabel {
+  align-items: center;
+  display: flex;
+  gap: var(--salt-spacing-50);
+}
+
+.tradingPriceLadder-qtyInput {
+  width: 7em;
+}
+
+.tradingPriceLadder-confirm {
+  align-items: center;
+  border-bottom: none;
+  border-right: none;
+  border-top: none;
+  margin: 0;
+  background: var(--salt-container-secondary-background);
+  border-left: var(--salt-size-indicator, 2px) var(--salt-borderStyle-solid)
+    currentColor;
+  display: flex;
+  gap: var(--salt-spacing-100);
+  padding: var(--salt-spacing-50) var(--salt-spacing-100);
+}
+
+.tradingPriceLadder-confirm[data-side="BUY"] {
+  color: var(
+    --trading-buy,
+    var(--salt-sentiment-positive-foreground-informative)
+  );
+}
+
+.tradingPriceLadder-confirm[data-side="SELL"] {
+  color: var(
+    --trading-sell,
+    var(--salt-sentiment-negative-foreground-informative)
+  );
+}
+
+.tradingPriceLadder-confirm > span {
+  color: var(--salt-content-primary-foreground);
+  flex: 1;
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+.tradingPriceLadder-grid {
+  border-collapse: collapse;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  outline: none;
+  overflow: hidden;
+  user-select: none;
+}
+
+.tradingPriceLadder-grid[data-columns="6"] {
+  --tradingPriceLadder-columns: minmax(3em, 1fr) minmax(4em, 1.2fr)
+    minmax(5em, 1fr) minmax(4em, 1.2fr) minmax(3em, 1fr) minmax(4em, 1fr);
+}
+
+.tradingPriceLadder-grid:focus-visible {
+  outline: var(--salt-focused-outline);
+  outline-offset: calc(-1 * var(--salt-focused-outlineWidth, 2px));
+}
+
+.tradingPriceLadder-grid > thead {
+  display: block;
+}
+
+.tradingPriceLadder-body {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tradingPriceLadder-header,
+.tradingPriceLadder-row {
+  display: grid;
+  grid-template-columns: var(--tradingPriceLadder-columns);
+  height: var(--tradingPriceLadder-rowHeight);
+}
+
+.tradingPriceLadder-header {
+  border-bottom: var(--salt-size-border) var(--salt-separable-borderStyle)
+    var(--salt-separable-secondary-borderColor);
+  color: var(--salt-content-secondary-foreground);
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+.tradingPriceLadder-row {
+  border-bottom: var(--salt-size-border) var(--salt-separable-borderStyle)
+    var(--salt-separable-tertiary-borderColor);
+  /* rows are recycled by slot; contain keeps text updates local */
+  contain: layout paint style;
+}
+
+.tradingPriceLadder-cell {
+  align-items: center;
+  display: flex;
+  justify-content: flex-end;
+  overflow: hidden;
+  padding: 0 var(--salt-spacing-100);
+  position: relative;
+  white-space: nowrap;
+}
+
+.tradingPriceLadder-header .tradingPriceLadder-cell {
+  font: inherit;
+  justify-content: center;
+}
+
+.tradingPriceLadder-price {
+  background: var(--salt-container-secondary-background);
+  font-weight: var(--salt-text-fontWeight-strong);
+  justify-content: center;
+}
+
+.tradingPriceLadder-bid,
+.tradingPriceLadder-ask {
+  cursor: pointer;
+}
+
+.tradingPriceLadder-ask {
+  justify-content: flex-start;
+}
+
+.tradingPriceLadder-bid:hover,
+.tradingPriceLadder-ask:hover {
+  background: var(--salt-selectable-background-hover);
+}
+
+.tradingPriceLadder-bar {
+  bottom: 2px;
+  pointer-events: none;
+  position: absolute;
+  top: 2px;
+}
+
+.tradingPriceLadder-bid .tradingPriceLadder-bar {
+  background: var(--tradingPriceLadder-bid-bar);
+  right: 0;
+}
+
+.tradingPriceLadder-ask .tradingPriceLadder-bar {
+  background: var(--tradingPriceLadder-ask-bar);
+  left: 0;
+}
+
+.tradingPriceLadder-qty {
+  position: relative;
+}
+
+.tradingPriceLadder-row[data-best-bid] .tradingPriceLadder-bid,
+.tradingPriceLadder-row[data-best-ask] .tradingPriceLadder-ask {
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+.tradingPriceLadder-row[data-best-bid] .tradingPriceLadder-price {
+  color: var(
+    --trading-buy,
+    var(--salt-sentiment-positive-foreground-informative)
+  );
+}
+
+.tradingPriceLadder-row[data-best-ask] .tradingPriceLadder-price {
+  color: var(
+    --trading-sell,
+    var(--salt-sentiment-negative-foreground-informative)
+  );
+}
+
+.tradingPriceLadder-row[data-spread] .tradingPriceLadder-price {
+  color: var(--salt-content-secondary-foreground);
+}
+
+.tradingPriceLadder-row[data-ltp] .tradingPriceLadder-price {
+  background: var(--tradingPriceLadder-ltp);
+  box-shadow: inset 0 0 0 var(--salt-size-border) currentColor;
+}
+
+.tradingPriceLadder-row[data-ltp] .tradingPriceLadder-price::before {
+  content: "\25B8\00a0";
+}
+
+.tradingPriceLadder-ownBuy,
+.tradingPriceLadder-ownSell {
+  color: var(--tradingPriceLadder-own);
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+.tradingPriceLadder-ownBuy {
+  justify-content: flex-end;
+}
+
+.tradingPriceLadder-ownSell {
+  justify-content: flex-start;
+}
+
+.tradingPriceLadder-cell[data-own] {
+  cursor: grab;
+}
+
+.tradingPriceLadder-cell[data-own]::before {
+  content: "\25C6\00a0";
+}
+
+.tradingPriceLadder-volume {
+  color: var(--salt-content-secondary-foreground);
+}
+
+.tradingPriceLadder-cell[data-cursor] {
+  outline: var(--salt-focused-outlineWidth, 2px)
+    var(--salt-focused-outlineStyle, dotted) var(--salt-focused-outlineColor);
+  outline-offset: calc(-1 * var(--salt-focused-outlineWidth, 2px));
+}
+
+.tradingPriceLadder-row[data-cursor-row] {
+  background: var(--salt-selectable-background-hover);
+}
+
+.tradingPriceLadder[data-dragging] .tradingPriceLadder-grid {
+  cursor: grabbing;
+}
+
+.tradingPriceLadder-row[data-moving] {
+  opacity: 0.6;
+}
+
+.tradingPriceLadder-row[data-drop-target] {
+  box-shadow: inset 0 0 0 var(--salt-size-indicator, 2px)
+    var(--tradingPriceLadder-own);
+}
+
+.tradingPriceLadder-message {
+  display: block;
+  color: var(--salt-content-secondary-foreground);
+  padding: var(--salt-spacing-200);
+  text-align: center;
+}
+
+.tradingPriceLadder-status {
+  display: block;
+  color: var(--salt-content-secondary-foreground);
+  min-height: var(--tradingPriceLadder-rowHeight);
+  overflow: hidden;
+  padding: 0 var(--salt-spacing-100);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tradingPriceLadder-status[data-kind="error"] {
+  color: var(--salt-status-error-foreground-informative);
+}
+
+.tradingPriceLadder-help {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
