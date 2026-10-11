@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "target": "remote-module",
+  "paths": {
+    "entry": "./src/index.tsx",
+    "htmlTemplate": "./public/index.html",
+    "output": "./dist",
+    "publicPath": "http://localhost:5010/"
+  },
+  "html": { "title": "tradingHello (standalone)" },
+  "server": { "corsOrigins": ["http://localhost:5001"] },
+  "moduleFederation": {
+    "name": "tradingHello",
+    "dts": false,
+    "exposes": { "./Hello": "./src/Hello" },
+    "shared": {
+      "react": { "requiredVersion": "^19.2.3", "strictVersion": true },
+      "react-dom": { "requiredVersion": "^19.2.3", "strictVersion": true },
+      "react-router-dom": {
+        "singleton": true,
+        "requiredVersion": "^7.18.3",
+        "strictVersion": true
+      },
+      "@vuu-ui/core": {
+        "singleton": true,
+        "requiredVersion": "package",
+        "strictVersion": true
+      },
+      "@vuu-ui/core/portal": {
+        "singleton": true,
+        "requiredVersion": "package:@vuu-ui/core",
+        "strictVersion": true
+      },
+      "@vuu-ui/vuu-data-editing": {
+        "singleton": true,
+        "requiredVersion": "package:@vuu-ui/core",
+        "strictVersion": true
+      },
+      "@vuu-ui/vuu-data-test": {
+        "singleton": true,
+        "requiredVersion": "package:@vuu-ui/core",
+        "strictVersion": true
+      },
+      "@vuu-ui/vuu-shell": {
+        "requiredVersion": "package:@vuu-ui/core",
+        "strictVersion": true
+      }
+    }
+  }
+}

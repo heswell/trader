@@ -1,4 +1,11 @@
 node_modules/
 dist/
+dist_portal/
 .DS_Store
 *.log
+logs/
+.env
+.env.local
+*.tsbuildinfo
+apps/portal-config/certs/
+apps/portal-config/modules.yaml

@@ -1,0 +1,14 @@
+{
+  "name": "@heswell/trading-portal-config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "start": "bun ./src/start-portal.ts",
+    "start:stock": "bun ./src/start-stock-portal.ts"
+  },
+  "dependencies": {
+    "@heswell/exchange-sim": "workspace:*"
+  }
+}

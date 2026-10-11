@@ -1,0 +1,18 @@
+# Remote modules registered with the portal. Seeds modules.yaml on first startup only
+# (delete modules.yaml to re-seed). mfScope must equal the remote's module-federation name.
+modules:
+  - id: 1
+    version: 1
+    parentModuleId: 0
+    name: "tradingHello"
+    title: "Hello prices"
+    description: "Hello-world ticking table served by the exchange simulator"
+    enabled: true
+    location: "/Trading/Hello"
+    path: "/trading/hello"
+    mfComponent: "Hello"
+    mfScope: "tradingHello"
+    mfUrl: "http://localhost:5010"
+    navIconUrl: ""
+    # No trading-specific keycloak role exists yet, reuse one that the dev users hold.
+    accessRole: "vuu-table-viewer-access"

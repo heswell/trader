@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Typecheck, lint, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VUU_WEBSOCKET_DIR: ${{ github.workspace }}/vuu-websocket
+    steps:
+      - uses: actions/checkout@v4
+
+      # @heswell/vuu-server, service-utils and vuu-portal are not published to npm yet,
+      # so CI checks out vuu-websocket alongside. If the repo is private add a
+      # VUU_WEBSOCKET_TOKEN secret (read access to heswell/vuu-websocket).
+      - uses: actions/checkout@v4
+        with:
+          repository: heswell/vuu-websocket
+          path: vuu-websocket
+          token: ${{ secrets.VUU_WEBSOCKET_TOKEN || github.token }}
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # vuu-websocket uses npm (package-lock.json)
+      - name: Install vuu-websocket
+        working-directory: vuu-websocket
+        run: npm ci
+
+      - name: Install
+        run: bun install
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Format check
+        run: bun run format:check
+
+      - name: Test
+        run: bun test
