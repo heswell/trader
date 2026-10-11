@@ -136,3 +136,23 @@ vuu-websocket was not modified. Workarounds are noted.
     observing status can open a connection. *Workaround:* `useTradingConnectionStatus` only calls it in remote or
     inherit mode with a non-local data provider, and otherwise relies on `onConnectionStatus`. A read-only status
     getter would help.
+
+## Found in Phase 3 consolidation (P3.11 instrument linking)
+
+37. **`Table` `scrollToKey` is a stub in alpha.20**, so a grid can select and highlight a row chosen elsewhere but
+    cannot scroll it into view. InstrumentGrid `followSelection` selects the row (`dataSource.select`) without
+    scrolling.
+38. **`Table` has no controlled selection**, and `autoSelectRowKey` is read only on mount. *Workaround:*
+    InstrumentGrid follows an external selection by sending a `SELECT_ROW` request to its data source and
+    ignoring the echo it gets back.
+39. **Component state persistence is split.** Inside vuu-layout, `useViewContext().save/load` writes to View state
+    (layout JSON). In vuu-portal, `usePersistedState` is a separate store. A component that may run in either
+    must try both (`useComponentLinkGroup`). One persistence hook that works with or without a View would help.
+40. **vuu-layout keeps View state in a module-level `persistentState` map** (`setPersistentState` /
+    `getPersistentState`), so `@vuu-ui/vuu-layout` must be an MF singleton, or a feature's saved state is not found.
+    Restoring a saved layout also means walking the JSON and calling `setPersistentState` for each View before
+    mounting.
+41. **`LayoutJSON` is not exported from `@vuu-ui/vuu-layout`** (it lives in vuu-utils `json-types`). The showcase
+    declares a local type.
+42. **`SelectRequest` is a union**, so `Omit<SelectRequest, "vpId">` (the `DataSource.select` argument) collapses to
+    the shared members and cannot be built without a cast.

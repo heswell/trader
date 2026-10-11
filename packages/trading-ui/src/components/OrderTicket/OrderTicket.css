@@ -199,3 +199,8 @@
 .tradingOrderTicket-compact .tradingOrderTicket-actions {
   margin-left: auto;
 }
+
+.tradingOrderTicket-linkGroup {
+  display: flex;
+  justify-content: flex-end;
+}

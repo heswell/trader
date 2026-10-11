@@ -161,6 +161,30 @@ describe("order event trackers", () => {
   });
 });
 
+describe("describeOrderEvent price format", () => {
+  const event: TradingOrderEvent = {
+    kind: "fill",
+    ric: "VOD.L",
+    side: "BUY",
+    quantity: 100,
+    fillQty: 100,
+    fillPx: 72.125,
+  } as TradingOrderEvent;
+
+  test("defaults to 2 decimals", () => {
+    expect(describeOrderEvent(event).content).toContain("72.13");
+  });
+
+  test("uses the instrument's decimals / tick size", () => {
+    const text = (format: object) =>
+      describeOrderEvent(event, (ric) => (ric === "VOD.L" ? format : undefined))
+        .content;
+    expect(text({ priceDecimals: 4 })).toContain("72.1250");
+    expect(text({ tickSize: 0.5 })).toContain("72.1");
+    expect(text({ tickSize: 0.5 })).not.toContain("72.13");
+  });
+});
+
 describe("toConnectionState", () => {
   test("maps vuu connection statuses", () => {
     expect(toConnectionState("connected")).toBe("connected");

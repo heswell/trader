@@ -1,5 +1,9 @@
 import { OrdStatus, Side } from "@heswell/trading-schemas";
-import { formatPrice, formatQuantity } from "../utils/formatting";
+import {
+  formatPrice,
+  formatQuantity,
+  type PriceFormat,
+} from "../utils/formatting";
 
 /**
  * Something that happened to an order, from any source: the order ticket's
@@ -83,6 +87,21 @@ export const orderEventKindForStatus = (
   }
 };
 
+/**
+ * A "reject" event for a failed order RPC (`TradingRpcError` or anything
+ * thrown), for components that report their own requests (ladder, blotter).
+ */
+export const rpcRejectEvent = (
+  error: unknown,
+  event: Omit<TradingOrderEvent, "kind">,
+): TradingOrderEvent => {
+  const { reason, text } =
+    error && typeof error === "object" && "reason" in error
+      ? (error as { reason: string; text?: string })
+      : { reason: "INTERNAL_ERROR", text: String(error) };
+  return { ...event, kind: "reject", reason, text };
+};
+
 /** Key used to drop duplicates of the same event from different sources. */
 export const orderEventKey = (event: TradingOrderEvent) =>
   event.kind === "fill"
@@ -108,66 +127,81 @@ const sideVerb = (side: unknown, past = false) =>
         : "Sell"
       : "";
 
-const atPrice = (price: number | undefined) =>
-  price !== undefined && price > 0 ? ` @ ${formatPrice(price)}` : "";
+/**
+ * Price format (decimals / tick size) of a ric, e.g. from the
+ * InstrumentLookup. Without one prices show 2 decimals.
+ */
+export type OrderEventPriceFormat = (
+  ric: string | undefined,
+) => PriceFormat | undefined;
 
-const orderLabel = (e: TradingOrderEvent) =>
+const atPrice = (price: number | undefined, format: PriceFormat | undefined) =>
+  price !== undefined && price > 0 ? ` @ ${formatPrice(price, format)}` : "";
+
+const orderLabel = (e: TradingOrderEvent, format: PriceFormat | undefined) =>
   [sideVerb(e.side), e.quantity ? formatQuantity(e.quantity) : "", e.ric]
     .filter(Boolean)
-    .join(" ") + atPrice(e.price);
+    .join(" ") + atPrice(e.price, format);
 
 const ref = (e: TradingOrderEvent) => (e.orderId ? ` (${e.orderId})` : "");
 
-/** Header, text and status for an order event toast. */
-export const describeOrderEvent = (e: TradingOrderEvent): OrderEventToast => {
+/**
+ * Header, text and status for an order event toast. Prices are formatted
+ * with the instrument's decimals / tick size when `priceFormat` knows it.
+ */
+export const describeOrderEvent = (
+  e: TradingOrderEvent,
+  priceFormat?: OrderEventPriceFormat,
+): OrderEventToast => {
+  const format = priceFormat?.(e.ric);
   switch (e.kind) {
     case "submitted":
       return {
         header: "Order sent",
-        content: `${orderLabel(e)}${ref(e)}`,
+        content: `${orderLabel(e, format)}${ref(e)}`,
         status: "info",
       };
     case "ack":
       return {
         header: "Order accepted",
-        content: `${orderLabel(e)}${ref(e)}`,
+        content: `${orderLabel(e, format)}${ref(e)}`,
         status: "info",
       };
     case "reject":
       return {
         header: "Order rejected",
         content:
-          `${orderLabel(e)}${ref(e)}: ${e.reason ?? ""}${e.text ? ` ${e.text}` : ""}`.trim(),
+          `${orderLabel(e, format)}${ref(e)}: ${e.reason ?? ""}${e.text ? ` ${e.text}` : ""}`.trim(),
         status: "error",
       };
     case "fill":
       return {
         header: e.status === OrdStatus.Filled ? "Order filled" : "Fill",
-        content: `${sideVerb(e.side, true)} ${formatQuantity(e.fillQty)} ${e.ric ?? ""}${atPrice(e.fillPx)}${ref(e)}`,
+        content: `${sideVerb(e.side, true)} ${formatQuantity(e.fillQty)} ${e.ric ?? ""}${atPrice(e.fillPx, format)}${ref(e)}`,
         status: "success",
       };
     case "filled":
       return {
         header: "Order filled",
-        content: `${sideVerb(e.side, true)} ${formatQuantity(e.cumQty ?? e.quantity)} ${e.ric ?? ""}${atPrice(e.avgPx)}${ref(e)}`,
+        content: `${sideVerb(e.side, true)} ${formatQuantity(e.cumQty ?? e.quantity)} ${e.ric ?? ""}${atPrice(e.avgPx, format)}${ref(e)}`,
         status: "success",
       };
     case "cancel":
       return {
         header: "Order cancelled",
-        content: `${orderLabel(e)}${ref(e)}`,
+        content: `${orderLabel(e, format)}${ref(e)}`,
         status: "info",
       };
     case "replace":
       return {
         header: "Order amended",
-        content: `${orderLabel(e)}${ref(e)}`,
+        content: `${orderLabel(e, format)}${ref(e)}`,
         status: "info",
       };
     case "expire":
       return {
         header: "Order expired",
-        content: `${orderLabel(e)}${ref(e)}${e.cumQty ? `, ${formatQuantity(e.cumQty)} filled` : ""}`,
+        content: `${orderLabel(e, format)}${ref(e)}${e.cumQty ? `, ${formatQuantity(e.cumQty)} filled` : ""}`,
         status: "warning",
       };
   }

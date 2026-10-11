@@ -11,9 +11,9 @@ import {
   editOrdersInSession,
   sendTradingRpc,
   TradingDataProvider,
-  useDataSourceRecords,
+  useDataSourceRows,
   useTradingDataSource,
-  type DataSourceRecords,
+  type DataSourceRows,
 } from "../src";
 
 setCurrentUser({ name: "admin", authorizations: [] });
@@ -37,10 +37,10 @@ const Orders = ({
   onRecords,
 }: {
   onReady: (ds: DataSource) => void;
-  onRecords: (r: DataSourceRecords) => void;
+  onRecords: (r: DataSourceRows) => void;
 }) => {
   const ds = useTradingDataSource("parentOrders");
-  const records = useDataSourceRecords(ds);
+  const records = useDataSourceRows(ds);
   useEffect(() => {
     onReady(ds);
   }, [ds, onReady]);
@@ -50,7 +50,7 @@ const Orders = ({
 
 const setup = async () => {
   let ds: DataSource | undefined;
-  let latest: DataSourceRecords = { records: [], size: 0 };
+  let latest: DataSourceRows = { rows: [], size: 0, loaded: false, version: 0 };
   render(
     <TradingDataProvider mode="local" localServer={localServer}>
       <Orders
@@ -66,7 +66,7 @@ const setup = async () => {
   await waitFor(() => expect(ds).toBeDefined());
   // an rpc needs a subscribed viewport
   await waitFor(() => expect(latest.size).toBeGreaterThanOrEqual(0));
-  return { ds: ds as DataSource, records: () => latest.records };
+  return { ds: ds as DataSource, records: () => latest.rows };
 };
 
 const limitBuy = async (ds: DataSource) => {

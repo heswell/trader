@@ -1,7 +1,7 @@
 import { createContext, type ReactNode, useContext, useMemo } from "react";
-import { useDataSourceRecords } from "../../data/useDataSourceRecords";
+import { useDataSourceRows } from "../../data/useDataSourceRows";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
-import type { SelectedInstrument } from "../../instrument-context/InstrumentContext";
+import type { SelectedInstrument } from "../../instrument-context/selectedInstrument";
 
 export type InstrumentLookup = ReadonlyMap<string, SelectedInstrument>;
 
@@ -28,9 +28,7 @@ const Subscribed = ({ children }: { children: ReactNode }) => {
       "priceDecimals",
     ],
   });
-  const { records } = useDataSourceRecords(dataSource, {
-    range: { from: 0, to: 2_000 },
-  });
+  const { rows: records } = useDataSourceRows(dataSource, { rowCount: 2_000 });
   const lookup = useMemo<InstrumentLookup>(
     () =>
       new Map(

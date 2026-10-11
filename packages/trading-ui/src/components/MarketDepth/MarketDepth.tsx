@@ -30,6 +30,11 @@ import {
   isInactivePhase,
   tradingPhaseText,
 } from "../../utils/marketData";
+import {
+  type LinkGroupProps,
+  useComponentLinkGroup,
+} from "../../instrument-context/useComponentLinkGroup";
+import { LinkGroupSelector } from "../LinkGroupSelector";
 import marketDepthCss from "./MarketDepth.css";
 
 const classBase = "tradingMarketDepth";
@@ -41,7 +46,8 @@ export interface MarketDepthLevelClick {
 }
 
 export interface MarketDepthProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
+  extends Omit<HTMLAttributes<HTMLDivElement>, "children">,
+    LinkGroupProps {
   /** Instrument to show; defaults to the selected instrument. */
   ric?: string;
   /** Levels per side, 1-10 (the exchange publishes depthLevels = 10). Default 10. */
@@ -93,11 +99,15 @@ export const MarketDepth = forwardRef<HTMLDivElement, MarketDepthProps>(
     {
       account,
       className,
+      defaultLinkGroup,
       flash = true,
       levels: levelsProp = 10,
+      linkGroup: linkGroupProp,
       onLevelClick,
+      onLinkGroupChange,
       ric: ricProp,
       showDepthBars = true,
+      showLinkGroupSelector = false,
       showOwnOrders = true,
       ...htmlAttributes
     },
@@ -110,7 +120,17 @@ export const MarketDepth = forwardRef<HTMLDivElement, MarketDepthProps>(
       window: targetWindow,
     });
     const levels = Math.max(1, Math.min(Math.trunc(levelsProp), 10));
-    const { ric, instrument } = useFollowedInstrument(ricProp);
+    const { linkGroup, channel, setLinkGroup } = useComponentLinkGroup({
+      defaultLinkGroup,
+      linkGroup: linkGroupProp,
+      onLinkGroupChange,
+      persistKey: htmlAttributes.id
+        ? `MarketDepth:${htmlAttributes.id}`
+        : "MarketDepth",
+    });
+    const { ric, instrument } = useFollowedInstrument(ricProp, {
+      linkGroup: channel,
+    });
     const { bids, asks, loaded, version } = useMarketDepth(ric, { levels });
     const own = useOwnWorkingOrders(showOwnOrders ? ric : undefined, {
       account,
@@ -289,10 +309,14 @@ export const MarketDepth = forwardRef<HTMLDivElement, MarketDepthProps>(
         className={cx(classBase, className)}
         data-phase={phase}
         data-inactive={inactive || undefined}
+        data-link-group={linkGroup}
         ref={ref}
       >
-        {ric ? (
+        {ric || showLinkGroupSelector ? (
           <div className={`${classBase}-summary`}>
+            {showLinkGroupSelector ? (
+              <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
+            ) : null}
             <span className={`${classBase}-ric`}>{ric}</span>
             {spread ? (
               <span className={`${classBase}-spread`}>

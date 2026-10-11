@@ -86,6 +86,8 @@ export interface PriceLadderViewProps
   extends Omit<HTMLAttributes<HTMLDivElement>, "children" | "onError"> {
   /** Shown in the toolbar and accessible labels. */
   ric?: string;
+  /** Content at the start of the toolbar (e.g. a LinkGroupSelector). */
+  toolbarStart?: ReactNode;
   /** Price formatting (priceDecimals / tickSize / tickBands). */
   priceFormat?: PriceFormat;
   /** Tick schedule: the ladder has one row per tick. Required to render rows. */
@@ -348,6 +350,7 @@ export const PriceLadderView = forwardRef<HTMLDivElement, PriceLadderViewProps>(
       rowCount: rowCountProp,
       showVolume = false,
       status,
+      toolbarStart,
       statusKind = "info",
       tickSchedule,
       tradeMode: tradeModeProp,
@@ -801,6 +804,7 @@ export const PriceLadderView = forwardRef<HTMLDivElement, PriceLadderViewProps>(
         ref={ref}
       >
         <div className={`${classBase}-toolbar`}>
+          {toolbarStart}
           <span className={`${classBase}-ric`}>{ric ?? ""}</span>
           <span className={`${classBase}-qtyLabel`}>
             <span aria-hidden>Qty</span>

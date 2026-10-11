@@ -10,3 +10,9 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.tradingInstrumentPicker-linked {
+  align-items: center;
+  display: inline-flex;
+  gap: var(--salt-spacing-100);
+}

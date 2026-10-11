@@ -1,4 +1,4 @@
-import type { TradingSchemaName } from "@heswell/trading-schemas";
+import { Side, type TradingSchemaName } from "@heswell/trading-schemas";
 import {
   Button,
   Dropdown,
@@ -33,6 +33,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
@@ -40,8 +41,14 @@ import {
   type SelectedInstrument,
   useSelectedInstrument,
 } from "../../instrument-context/InstrumentContext";
+import {
+  type LinkGroupProps,
+  useComponentLinkGroup,
+} from "../../instrument-context/useComponentLinkGroup";
 import type { UserSettingsStorage } from "../../utils/userSettingsStorage";
 import { InstrumentLookupProvider } from "../InstrumentLookup";
+import { LinkGroupSelector } from "../LinkGroupSelector";
+import { useOrderTicketLauncher } from "../OrderTicket/OrderTicketLauncher";
 import { registerTradingCellRenderers } from "../TradingCellRenderers";
 import { registerInstrumentGridRenderers } from "./cellRenderers";
 import {
@@ -64,7 +71,8 @@ const NONE = "__none__";
 export type InstrumentAction = (instrument: SelectedInstrument) => void;
 
 export interface InstrumentGridProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect"> {
+  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect">,
+    LinkGroupProps {
   /** Supply a data source (otherwise one is created from `table`). */
   dataSource?: DataSource;
   /** Table to bind to. "prices" has no static data (description, sector...). */
@@ -79,9 +87,23 @@ export interface InstrumentGridProps
   sparkline?: false | Partial<SparklineCellOptions>;
   /** Hide the toolbar (watchlists, search, grouping, columns). */
   showToolbar?: boolean;
-  /** Client-side actions; the matching menu items / buttons appear when set. */
+  /**
+   * Client-side actions; the matching menu items / buttons appear when set.
+   * Inside an OrderTicketLauncherProvider, Buy / Sell default to opening the
+   * order ticket (see `launchOrderTicket`).
+   */
   onBuy?: InstrumentAction;
   onSell?: InstrumentAction;
+  /**
+   * Default Buy / Sell to `useOrderTicketLauncher().openOrderTicket` when a
+   * launcher is present and no onBuy / onSell is given. Default true.
+   */
+  launchOrderTicket?: boolean;
+  /**
+   * Select (highlight) the instrument selected elsewhere in this component's
+   * link group. Default true.
+   */
+  followSelection?: boolean;
   onOpenDepth?: InstrumentAction;
   /** Where watchlists are persisted (default: UserSettingsProvider / localStorage). */
   watchlistStorage?: UserSettingsStorage;
@@ -118,7 +140,9 @@ const toInstrument = (row: {
  * (or prices). Price-move and change renderers, formatting per instrument,
  * grouping, column picker, quick filter, watchlists, phase badge, optional
  * sparklines and client-side context menu actions. Selecting a row calls
- * `setSelectedInstrument(instrument, "InstrumentGrid")`.
+ * `setSelectedInstrument(instrument, "InstrumentGrid")` in the grid's link
+ * group; instruments selected elsewhere in the group are selected in the
+ * grid (`followSelection`).
  */
 export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
   function InstrumentGrid(
@@ -126,10 +150,17 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
       className,
       columns,
       dataSource: dataSourceProp,
+      defaultLinkGroup,
+      followSelection = true,
+      id,
       initialGroupBy,
-      onBuy,
+      launchOrderTicket = true,
+      linkGroup: linkGroupProp,
+      onBuy: onBuyProp,
+      onLinkGroupChange,
       onOpenDepth,
-      onSell,
+      onSell: onSellProp,
+      showLinkGroupSelector = false,
       showToolbar = true,
       simulatedOnly = true,
       sparkline,
@@ -235,9 +266,66 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
       }
     }, [dataSource, groupBy, available]);
 
-    // --- selection
-    const { setSelectedInstrument } = useSelectedInstrument();
+    // --- Buy / Sell default to the order ticket launcher
+    const launcher = useOrderTicketLauncher();
+    const launch = launchOrderTicket && launcher.available;
+    const { openOrderTicket } = launcher;
+    const onBuy = useMemo<InstrumentAction | undefined>(
+      () =>
+        onBuyProp ??
+        (launch
+          ? (instrument) =>
+              openOrderTicket({
+                ric: instrument.ric,
+                instrument,
+                side: Side.Buy,
+              })
+          : undefined),
+      [onBuyProp, launch, openOrderTicket],
+    );
+    const onSell = useMemo<InstrumentAction | undefined>(
+      () =>
+        onSellProp ??
+        (launch
+          ? (instrument) =>
+              openOrderTicket({
+                ric: instrument.ric,
+                instrument,
+                side: Side.Sell,
+              })
+          : undefined),
+      [onSellProp, launch, openOrderTicket],
+    );
+
+    // --- selection, shared through the link group
+    const { linkGroup, channel, setLinkGroup } = useComponentLinkGroup({
+      defaultLinkGroup,
+      linkGroup: linkGroupProp,
+      onLinkGroupChange,
+      persistKey: id ? `${SOURCE}:${id}` : SOURCE,
+    });
+    const { selectedInstrument, setSelectedInstrument } = useSelectedInstrument(
+      { linkGroup: channel },
+    );
     const [selected, setSelected] = useState<SelectedInstrument>();
+    const selectedRef = useRef(selected);
+    selectedRef.current = selected;
+    // Follow a selection made elsewhere in the group. The grid's own
+    // selections are already `selected`, so they are not echoed back.
+    useEffect(() => {
+      const ric = selectedInstrument?.ric;
+      if (!followSelection || !ric || ric === selectedRef.current?.ric) return;
+      setSelected(selectedInstrument);
+      // the ric may not be in the grid (filtered, unknown): nothing to show
+      Promise.resolve(
+        dataSource.select?.({
+          type: "SELECT_ROW",
+          rowKey: ric,
+          preserveExistingSelection: false,
+          // Omit<> over the SelectRequest union drops rowKey
+        } as Parameters<NonNullable<DataSource["select"]>>[0]),
+      ).catch(() => undefined);
+    }, [dataSource, followSelection, selectedInstrument]);
     const handleSelect = useCallback<TableRowSelectHandler>(
       (row) => {
         if (row && row.isLeaf !== false) {
@@ -326,13 +414,22 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
 
     return (
       <InstrumentLookupProvider>
-        <div {...htmlAttributes} className={cx(classBase, className)} ref={ref}>
+        <div
+          {...htmlAttributes}
+          className={cx(classBase, className)}
+          data-link-group={linkGroup}
+          id={id}
+          ref={ref}
+        >
           {showToolbar ? (
             <div
               className={`${classBase}-toolbar`}
               role="toolbar"
               aria-label="Instrument grid"
             >
+              {showLinkGroupSelector ? (
+                <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
+              ) : null}
               <Input
                 aria-label="Filter instruments"
                 className={`${classBase}-search`}

@@ -5,7 +5,7 @@ import {
 } from "@heswell/trading-ui";
 import { Button, Checkbox, FlexLayout, Text } from "@salt-ds/core";
 import { useState } from "react";
-import { InstrumentPicker } from "./shared/InstrumentPicker";
+import { InstrumentSelector } from "./shared/InstrumentSelector";
 
 const panel = {
   border: "1px solid var(--salt-separable-tertiary-borderColor)",
@@ -36,7 +36,7 @@ export const MarketDepthExamples = () => {
       }}
     >
       <div style={{ gridRow: "1 / span 3", minHeight: 0 }}>
-        <InstrumentPicker source="showcase-depth" showAdmin />
+        <InstrumentSelector showAdmin />
       </div>
       <FlexLayout align="center" gap={2} wrap>
         <Checkbox

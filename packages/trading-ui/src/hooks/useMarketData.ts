@@ -4,8 +4,10 @@ import {
   type SelectedInstrument,
   useSelectedInstrument,
 } from "../instrument-context/InstrumentContext";
+import type { LinkGroupId } from "../instrument-context/linkGroups";
 import { useTradingDataSource } from "../data/useTradingDataSource";
-import { filterString, useViewportRows } from "./useViewportRows";
+import { useDataSourceRows } from "../data/useDataSourceRows";
+import { filterString } from "../utils/filters";
 
 /** Normalised numeric key for a price (avoids float noise in Map lookups). */
 export const priceKey = (price: number) => Number(price.toFixed(8));
@@ -45,10 +47,10 @@ export const useMarketDepth = (
   const dataSource = useTradingDataSource("depth", {
     columns: ["ric", "side", "level", "price", "size", "cumSize", "orderCount"],
   });
-  const { rows, loaded, version } = useViewportRows(dataSource, {
+  const { rows, loaded, version } = useDataSourceRows(dataSource, {
     enabled: !!ric,
     filter: ric ? `ric = ${filterString(ric)} and level < ${levels}` : "",
-    maxRows: levels * 2 + 2,
+    rowCount: levels * 2 + 2,
   });
   return useMemo(() => {
     const bids: DepthLevel[] = [];
@@ -109,15 +111,22 @@ export const useInstrumentPrice = (
       "phase",
     ],
   });
-  const { rows } = useViewportRows(dataSource, {
+  const { rows } = useDataSourceRows(dataSource, {
     enabled: !!ric,
     filter: ric ? `ric = ${filterString(ric)}` : "",
-    maxRows: 1,
+    rowCount: 1,
   });
   const row = rows[0];
   return useMemo(() => {
     if (!row || row.ric !== ric) return undefined;
-    const { $key: _key, tickBands, ...rest } = row;
+    const {
+      $key: _key,
+      $index: _index,
+      $isLeaf: _isLeaf,
+      $depth: _depth,
+      tickBands,
+      ...rest
+    } = row;
     return {
       ...rest,
       tickBands: typeof tickBands === "string" ? tickBands : undefined,
@@ -137,12 +146,12 @@ export const useTradedVolume = (
   const dataSource = useTradingDataSource("trades", {
     columns: ["ric", "price", "size"],
   });
-  const { rows } = useViewportRows(dataSource, {
+  const { rows } = useDataSourceRows(dataSource, {
     enabled: enabled && !!ric,
     filter: ric ? `ric = ${filterString(ric)}` : "",
     groupBy: GROUP_BY_PRICE,
     aggregations: SUM_SIZE,
-    maxRows: maxPrices,
+    rowCount: maxPrices,
   });
   return useMemo(() => {
     const volume = new Map<number, number>();
@@ -170,13 +179,15 @@ export interface FollowedInstrument {
 
 /**
  * The instrument a market-data component shows: the explicit `ric` prop
- * when given, else the selected instrument (useSelectedInstrument), with its
- * live instrumentPrices row.
+ * when given, else the selected instrument of the link group
+ * (useSelectedInstrument), with its live instrumentPrices row. Rics with no
+ * reference data still resolve (`{ ric }` until / unless prices arrive).
  */
 export const useFollowedInstrument = (
   ricOverride?: string,
+  { linkGroup }: { linkGroup?: LinkGroupId } = {},
 ): FollowedInstrument => {
-  const { selectedInstrument } = useSelectedInstrument();
+  const { selectedInstrument } = useSelectedInstrument({ linkGroup });
   const ric = ricOverride ?? selectedInstrument?.ric;
   const price = useInstrumentPrice(ric);
   const instrument = useMemo(() => {

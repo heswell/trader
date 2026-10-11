@@ -14,9 +14,15 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useDataSourceRecords } from "../../data/useDataSourceRecords";
+import { useDataSourceRows } from "../../data/useDataSourceRows";
+import { filterString } from "../../utils/filters";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
 import { useSelectedInstrument } from "../../instrument-context/InstrumentContext";
+import {
+  type LinkGroupProps,
+  useComponentLinkGroup,
+} from "../../instrument-context/useComponentLinkGroup";
+import { LinkGroupSelector } from "../LinkGroupSelector";
 import { type CsvColumn, downloadCsv, rowsToCsv } from "../../utils/csv";
 import { formatTime } from "../../utils/time";
 import {
@@ -118,7 +124,8 @@ const CSV_COLUMNS: CsvColumn[] = [
 ];
 
 export interface FillsBlotterProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect"> {
+  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect">,
+    LinkGroupProps {
   /** Initial grouping. Default "none". */
   defaultGrouping?: FillsGrouping;
   /** Restrict to one instrument. */
@@ -139,6 +146,10 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
       className,
       csvFileName = "fills.csv",
       defaultGrouping = "none",
+      defaultLinkGroup,
+      linkGroup: linkGroupProp,
+      onLinkGroupChange,
+      showLinkGroupSelector = false,
       highlightOrderId,
       onOrderSelect,
       ric,
@@ -153,9 +164,19 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
       window: targetWindow,
     });
     const lookup = useInstrumentLookup();
-    const { setSelectedInstrument } = useSelectedInstrument();
+    const { linkGroup, channel, setLinkGroup } = useComponentLinkGroup({
+      defaultLinkGroup,
+      linkGroup: linkGroupProp,
+      onLinkGroupChange,
+      persistKey: htmlAttributes.id
+        ? `FillsBlotter:${htmlAttributes.id}`
+        : "FillsBlotter",
+    });
+    const { setSelectedInstrument } = useSelectedInstrument({
+      linkGroup: channel,
+    });
     const [grouping, setGrouping] = useState<FillsGrouping>(defaultGrouping);
-    const filter = ric ? { filter: `ric = "${ric}"` } : { filter: "" };
+    const filter = { filter: ric ? `ric = ${filterString(ric)}` : "" };
 
     const dataSource = useTradingDataSource("fills", {
       columns: COLUMNS,
@@ -168,12 +189,12 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
       filterSpec: filter,
       sort: { sortDefs: [{ column: "timestamp", sortType: "D" }] },
     });
-    const { records } = useDataSourceRecords(mirror, {
-      range: { from: 0, to: MAX_EXPORT_ROWS },
+    const { rows: records } = useDataSourceRows(mirror, {
+      rowCount: MAX_EXPORT_ROWS,
     });
 
     useEffect(() => {
-      const f = ric ? { filter: `ric = "${ric}"` } : { filter: "" };
+      const f = { filter: ric ? `ric = ${filterString(ric)}` : "" };
       dataSource.filter = f;
       mirror.filter = f;
     }, [ric, dataSource, mirror]);
@@ -228,10 +249,14 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
       <div
         {...htmlAttributes}
         className={cx(classBase, className)}
+        data-link-group={linkGroup}
         data-testid="trading-fills-blotter"
         ref={ref}
       >
         <div className={`${classBase}-toolbar`}>
+          {showLinkGroupSelector ? (
+            <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
+          ) : null}
           <label>
             Group by{" "}
             <select

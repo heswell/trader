@@ -18,7 +18,8 @@ One form core (`useOrderTicket`), shown in three layouts:
 | `prefill` | – | `OrderTicketPrefill` (below). A **new object** replaces the draft, so pass a fresh object for each request. |
 | `variant` | `"panel"` | `"panel"` or `"compact"`. |
 | `showInstrumentPicker` | `true` | When false, the RIC is shown as a label. |
-| `followSelection` | `true` | Default the instrument from `useSelectedInstrument()`, and follow it while the draft is clean. |
+| `followSelection` | `true` | Default the instrument from its link group's selection, and follow it while the draft is clean. |
+| `linkGroup` / `defaultLinkGroup` / `onLinkGroupChange` / `showLinkGroupSelector` | inherited | Link group (`LinkGroupProps`, ui-guide §5). |
 | `publishSelection` | `true` | Picking an instrument calls `setSelectedInstrument(inst, "orderTicket")`. |
 | `onOrderEvent` | – | `(event: TradingOrderEvent) => void`. Fires on the RPC result (ack, fill, reject) and on later status changes of the submitted order. |
 | `onClose` | – | Esc on a clean form (Esc on a dirty form resets it first). |

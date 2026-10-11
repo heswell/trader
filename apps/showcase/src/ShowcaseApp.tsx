@@ -1,7 +1,10 @@
 import {
-  InstrumentContextProvider,
+  connectBroadcastChannel,
+  DEFAULT_LINK_GROUPS,
+  getInstrumentLinkBus,
+  type InstrumentLinkSelection,
+  LinkGroupSwatch,
   TradingDataProvider,
-  useSelectedInstrument,
 } from "@heswell/trading-ui";
 import {
   Link,
@@ -25,9 +28,30 @@ const exampleFromHash = () =>
 
 const groups = [...new Set(examples.map(({ group }) => group))];
 
-const SelectedInstrument = () => {
-  const { selectedInstrument } = useSelectedInstrument();
-  return <Text>Instrument: {selectedInstrument?.ric ?? "none"}</Text>;
+const linkBus = getInstrumentLinkBus();
+// Link popouts / other showcase tabs of the same origin.
+connectBroadcastChannel(linkBus);
+
+const groupSelections = () =>
+  new Map<string, InstrumentLinkSelection>(linkBus.snapshot());
+
+/** The selected instrument of each link group (window-wide bus). */
+const LinkGroupSelections = () => {
+  const [selections, setSelections] = useState(groupSelections);
+  useEffect(
+    () => linkBus.subscribeAll(() => setSelections(groupSelections())),
+    [],
+  );
+  return (
+    <span className="showcaseApp-links" title="Link groups">
+      {DEFAULT_LINK_GROUPS.map(({ id, label }) => (
+        <span key={id} title={`${label}: ${selections.get(id)?.source ?? ""}`}>
+          <LinkGroupSwatch group={id} />
+          <Text>{selections.get(id)?.instrument?.ric ?? "–"}</Text>
+        </span>
+      ))}
+    </span>
+  );
 };
 
 export const ShowcaseApp = () => {
@@ -43,72 +67,70 @@ export const ShowcaseApp = () => {
 
   const { Component } = example;
   return (
-    <InstrumentContextProvider>
-      <div className="showcaseApp">
-        <header className="showcaseApp-header">
-          <span className="showcaseApp-title">Trading UI showcase</span>
-          <SelectedInstrument />
-          {error ? <Text color="error">{error}</Text> : null}
-          <ToggleButtonGroup
-            aria-label="Data source"
-            value={mode}
-            onChange={(e: SyntheticEvent<HTMLButtonElement>) =>
-              switchMode(e.currentTarget.value as ShowcaseDataMode)
-            }
-          >
-            <ToggleButton value="local">Local test data</ToggleButton>
-            <ToggleButton value="remote">
-              {remoteStatus === "connecting" ? "Connecting…" : "Remote server"}
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </header>
-        <nav className="showcaseApp-nav" aria-label="Examples">
-          {groups.map((group) => (
-            <StackLayout key={group} gap={0.5}>
-              <div className="showcaseApp-group">{group}</div>
-              {examples
-                .filter((e) => e.group === group)
-                .map(({ id, title }) => (
-                  <Link
-                    key={id}
-                    href={`#${id}`}
-                    aria-current={id === example.id ? "page" : undefined}
-                  >
-                    {title}
-                  </Link>
-                ))}
-            </StackLayout>
-          ))}
-        </nav>
-        <main className="showcaseApp-main">
-          {example.description ? (
-            <p className="showcaseApp-description">{example.description}</p>
-          ) : null}
-          <div className="showcaseApp-example">
-            {mode === "local" ? (
-              <TradingDataProvider
-                key="local"
-                mode="local"
-                localServer={localServer}
-              >
-                <ShowcaseTradingHost>
-                  <Component key={example.id} />
-                </ShowcaseTradingHost>
-              </TradingDataProvider>
-            ) : (
-              <TradingDataProvider
-                key="remote"
-                mode="remote"
-                connectionId={REMOTE_CONNECTION_ID}
-              >
-                <ShowcaseTradingHost>
-                  <Component key={example.id} />
-                </ShowcaseTradingHost>
-              </TradingDataProvider>
-            )}
-          </div>
-        </main>
-      </div>
-    </InstrumentContextProvider>
+    <div className="showcaseApp">
+      <header className="showcaseApp-header">
+        <span className="showcaseApp-title">Trading UI showcase</span>
+        <LinkGroupSelections />
+        {error ? <Text color="error">{error}</Text> : null}
+        <ToggleButtonGroup
+          aria-label="Data source"
+          value={mode}
+          onChange={(e: SyntheticEvent<HTMLButtonElement>) =>
+            switchMode(e.currentTarget.value as ShowcaseDataMode)
+          }
+        >
+          <ToggleButton value="local">Local test data</ToggleButton>
+          <ToggleButton value="remote">
+            {remoteStatus === "connecting" ? "Connecting…" : "Remote server"}
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </header>
+      <nav className="showcaseApp-nav" aria-label="Examples">
+        {groups.map((group) => (
+          <StackLayout key={group} gap={0.5}>
+            <div className="showcaseApp-group">{group}</div>
+            {examples
+              .filter((e) => e.group === group)
+              .map(({ id, title }) => (
+                <Link
+                  key={id}
+                  href={`#${id}`}
+                  aria-current={id === example.id ? "page" : undefined}
+                >
+                  {title}
+                </Link>
+              ))}
+          </StackLayout>
+        ))}
+      </nav>
+      <main className="showcaseApp-main">
+        {example.description ? (
+          <p className="showcaseApp-description">{example.description}</p>
+        ) : null}
+        <div className="showcaseApp-example">
+          {mode === "local" ? (
+            <TradingDataProvider
+              key="local"
+              mode="local"
+              localServer={localServer}
+            >
+              <ShowcaseTradingHost>
+                <Component key={example.id} />
+              </ShowcaseTradingHost>
+            </TradingDataProvider>
+          ) : (
+            <TradingDataProvider
+              key="remote"
+              mode="remote"
+              connectionId={REMOTE_CONNECTION_ID}
+            >
+              <ShowcaseTradingHost>
+                <Component key={example.id} />
+              </ShowcaseTradingHost>
+            </TradingDataProvider>
+          )}
+        </div>
+      </main>
+    </div>
   );
 };
