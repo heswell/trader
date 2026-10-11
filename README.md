@@ -2,19 +2,20 @@
 
 Reusable trading front-end (instrument grids, market depth / price ladder, order ticket, order & trade blotters) built on [Vuu](https://github.com/finos/vuu) UI components and the `vuu-portal`, exercised by a simulated backend (exchange simulator + OMS) running on [vuu-websocket](https://github.com/heswell/vuu-websocket).
 
-Status: bootstrap. Only a hello-world (`helloPrices` table + `tradingHello` remote) exists.
+Status: Phase 1. The exchange simulator (`EXCHANGE` module: instruments, prices, depth, trades, instrumentPrices,
+admin RPCs, in-process OMS gateway) is in place. The `tradingHello` remote shows `EXCHANGE/instrumentPrices`.
 
 ## Layout
 
 ```
 packages/
-  trading-schemas/    shared types (placeholder)
-  exchange-sim/       Vuu server modules; HELLO module with ticking helloPrices table
+  trading-schemas/    shared table defs, enums, RPC contracts, tick/lot utils
+  exchange-sim/       exchange simulator: order books, bots, EXCHANGE module, OMS gateway (see its README)
   oms/                order management (placeholder)
   trading-ui/         shared React components (placeholder)
   trading-test-data/  test data (placeholder)
 apps/
-  features/hello/     module-federation remote (rsbuild via @vuu-ui/portal-build), :5010
+  features/hello/     module-federation remote (rsbuild via @vuu-ui/portal-build), :5010; exchange prices grid
   showcase/           placeholder
   portal-config/      application.conf, default-modules.yaml and launcher for vuu-portal
 docs/upstream-issues.md
@@ -58,17 +59,21 @@ The portal host UI is not in vuu-websocket or published to npm; it is built in t
 `VUU_PORTAL_HOST_DIR` at that build (its `config.json` expects Keycloak `https://localhost:8080`,
 REST `https://localhost:8443/api/authn`, ws `wss://localhost:8091/websocket-portal`), or use an
 already-running host on :5001. Create Keycloak users with vuu-websocket's `npm run keycloak:bootstrap`
-and log in as `trader1`/`trader2`/`admin`; the "Trading / Hello" module then appears in the nav.
+and log in as `trader1`/`trader2`/`admin`; the "Exchange prices" module then appears in the nav.
 
 Other commands: `bun run build` (remotes), `bun run typecheck` (emits .d.ts for the linked vuu packages into `.vuu-types/`, then checks only trader code), `bun run lint`, `bun run format`,
-`bun test`. Stand-alone exchange-sim (permissive auth, port 8094): `bun run --filter @heswell/exchange-sim start`.
+`bun test`. Stand-alone exchange-sim (permissive auth, TLS with the dev cert, `wss://localhost:8094/websocket-exchange-sim`): `bun run --filter @heswell/exchange-sim start`;
+benchmark: `bun run --filter @heswell/exchange-sim bench`. Simulator knobs (`exchangeSim.*` / `EXCHANGE_SIM_*`)
+are documented in [packages/exchange-sim/README.md](packages/exchange-sim/README.md).
 
 ### Verified / not verified
 
-Verified: tests; remote build; the portal server boots with portal + HELLO modules, login works and a
-`CREATE_VP` on `HELLO/helloPrices` streams ticking updates over the websocket (permissive auth on
-alternate ports). Not verified in a browser: the full Keycloak login + host UI, since ports 5001/8091/8443
-were occupied by other local services during development.
+Verified (Phase 1): tests (including a VuuServer + websocket integration test); remote build. The composite
+portal server (`start-portal.ts`, which is what `bun run dev` runs), using an alternate-port copy of the config
+with permissive auth: login works, and `CREATE_VP` on `EXCHANGE/prices`, `depth`, `trades` and `instrumentPrices`
+streams ticking updates. A `haltInstrument` RPC returns `SUCCESS_RESULT`. The same was checked on the
+stand-alone server. Not verified in a browser: the full Keycloak login and host UI, because ports
+5001/8091/8443 were occupied by other local services during development.
 
 ## CI
 

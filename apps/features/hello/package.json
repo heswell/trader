@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Hello-world module-federation remote: ticking helloPrices table",
+  "description": "Smoke-test module-federation remote: ticking EXCHANGE instrumentPrices grid",
   "license": "MIT",
   "sideEffects": [
     "**/*.css"

@@ -22,9 +22,11 @@ const { loadModuleAdminRole, loadModuleState, ModuleDiscoveryModule } =
   await import(
     "@heswell/vuu-portal/src/modules/ModuleDiscovery/ModuleDiscoveryModule"
   );
-const { HelloModule } = await import("@heswell/exchange-sim");
+const { createExchangeSimulator, ExchangeModule, loadExchangeSimConfig } =
+  await import("@heswell/exchange-sim");
 
 const config = ConfigFactory.load();
+const sim = createExchangeSimulator({ config: loadExchangeSimConfig(config) });
 const application = createVuuServerApplication({
   authProviders: createConfiguredAuthProviders(config),
   config,
@@ -38,7 +40,7 @@ const application = createVuuServerApplication({
     ModuleDiscoveryModule(loadModuleState(config), {
       adminRole: loadModuleAdminRole(config),
     }),
-    HelloModule(),
+    ExchangeModule(sim),
   ],
 });
 
