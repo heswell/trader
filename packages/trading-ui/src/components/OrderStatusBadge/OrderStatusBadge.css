@@ -1,0 +1,48 @@
+.tradingOrderStatusBadge {
+  --tradingOrderStatusBadge-color: var(
+    --trading-neutral,
+    var(--salt-content-secondary-foreground)
+  );
+  align-items: center;
+  color: var(--tradingOrderStatusBadge-color);
+  display: inline-flex;
+  gap: var(--salt-spacing-50);
+  white-space: nowrap;
+}
+
+.tradingOrderStatusBadge-icon {
+  font-weight: var(--salt-text-fontWeight-strong);
+  text-align: center;
+  width: 1.2em;
+}
+
+.tradingOrderStatusBadge-pending {
+  --tradingOrderStatusBadge-color: var(
+    --trading-status-pending,
+    var(--salt-status-warning-foreground-informative)
+  );
+}
+.tradingOrderStatusBadge-working {
+  --tradingOrderStatusBadge-color: var(
+    --trading-status-working,
+    var(--salt-status-info-foreground-informative)
+  );
+}
+.tradingOrderStatusBadge-filled {
+  --tradingOrderStatusBadge-color: var(
+    --trading-status-filled,
+    var(--salt-status-success-foreground-informative)
+  );
+}
+.tradingOrderStatusBadge-rejected {
+  --tradingOrderStatusBadge-color: var(
+    --trading-status-rejected,
+    var(--salt-status-error-foreground-informative)
+  );
+}
+.tradingOrderStatusBadge-done {
+  --tradingOrderStatusBadge-color: var(
+    --trading-status-done,
+    var(--salt-content-secondary-foreground)
+  );
+}

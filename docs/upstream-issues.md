@@ -106,3 +106,18 @@ vuu-websocket was not modified. Workarounds are noted.
 27. **Permissive auth rejects an empty password** (HTTP 401). It returns the token both in the body and in a
     `vuu-auth-token` header. Not a bug, but undocumented. `connectToVuuServer` requires a password and reads either
     form.
+28. **`positions` / `positionPrices` have no sector (or any instrument static) column**, so PositionsView cannot group by
+    sector; it groups by currency then account or ric. Adding `sector` to `instruments` and a join column to
+    `positionPrices` would enable it. (This repo's schema, not vuu.)
+29. **No cross-table tree / LinkedTableView in alpha.20**, and `Table.onSelectionChange` reports key-based requests
+    (`SELECT_ROW`, `SELECT_ROW_RANGE`, ...) rather than the selected row set, so ranges can only be resolved with a
+    second data source. OrderBlotter uses a child-orders detail panel and a mirror subscription
+    (`useTableSelectedKeys`).
+30. **No VWAP aggregation** (vuu aggregation types: sum, average, count, high, low, distinct). FillsBlotter sums
+    `quantity` and `notional` and computes `notional / quantity` in a cell renderer.
+31. **Editable Table cells need the edit-session snapshot data source as the Table's own source**, which loses live
+    updates, so inline editing is impractical on a ticking blotter. `editOrdersInSession` drives the same server edit
+    session (`beginEditSession` / `editCell` / `endEditSession`) programmatically; the OrderBlotter amend dialog uses
+    `amendOrder` by default.
+32. **Custom cell renderers are looked up by name in a global registry** and the package `sideEffects` only lists
+    CSS, so each component module must call `registerTradingCellRenderers()` at import time.
