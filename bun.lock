@@ -39,6 +39,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@heswell/exchange-sim": "workspace:*",
+        "@heswell/oms": "workspace:*",
       },
     },
     "apps/showcase": {
@@ -57,6 +58,14 @@
     "packages/oms": {
       "name": "@heswell/oms",
       "version": "0.1.0",
+      "dependencies": {
+        "@heswell/exchange-sim": "workspace:*",
+        "@heswell/trading-schemas": "workspace:*",
+        "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20",
+      },
+      "devDependencies": {
+        "@heswell/hft-limit-order-book": "1.0.0",
+      },
     },
     "packages/trading-schemas": {
       "name": "@heswell/trading-schemas",

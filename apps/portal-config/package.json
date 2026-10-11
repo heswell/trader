@@ -9,6 +9,7 @@
     "start:stock": "bun ./src/start-stock-portal.ts"
   },
   "dependencies": {
-    "@heswell/exchange-sim": "workspace:*"
+    "@heswell/exchange-sim": "workspace:*",
+    "@heswell/oms": "workspace:*"
   }
 }

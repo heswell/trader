@@ -44,3 +44,28 @@ vuu-websocket was not modified. Workarounds are noted.
 14. **The REST auth server now requires TLS** (`RestServer`: "REST HTTPS server requires SSL"), so the Phase 0
     stand-alone config (`vuu.ssl=false`) no longer started. *Fix:* the stand-alone exchange-sim uses the shared
     self-signed dev cert. Allowing plain HTTP for local/permissive setups would simplify tests.
+
+## Found in Phase 2 (OMS)
+
+15. **No trading roles in the Keycloak realm.** `packages/oms` recognises `vuu-portal` client roles
+    `trading-view`, `trading-execute` and `trading-supervisor` (see packages/oms/README.md "Permissions"). The vuu realm
+    bootstrap should create them and assign them to test users. For example: alice/bob/carol/dave/erin get
+    `trading-view` and `trading-execute`, and a supervisor user gets `trading-supervisor` (this supersedes #7's
+    `trading-access`). Until then the OMS runs with `oms.permissionMode="auto"`: account owners see their own
+    accounts, and users without roles who own no accounts see everything.
+16. **`JoinTableDef` constructor drops `permissionFunction`.** The base `TableDef` accepts one, but the join def does
+    not pass it through. *Workaround:* `OmsModule` wraps the `positionPrices` join factory and sets
+    `permissionFunction` on the created def. `ModuleFactory.addJoinTable` still has no `ServiceFactory` (#9), so the
+    same `viewPortDefs.set(...)` workaround is used for the join's RPC handler.
+17. **`editCell` (CreateSessionTableRpcHandler) edits the source table when the viewport is not an edit session.**
+    Any client with an RPC-capable viewport can then overwrite rows directly. *Workaround:* `OmsRpcHandler` guards all
+    edit-session RPCs. They are only allowed on a `parentOrders` session table, only `quantity`/`price` may be edited,
+    and `addRow` is refused.
+18. **The base `handleEndEditSession` ignores the result of `applySessionSave`.** It always reports success and drops
+    the session, so a subclass cannot report per-row failures. *Workaround:* `OmsRpcHandler` overrides
+    `handleEndEditSession` (it uses `prepareSessionSave` for the stale-row check). A save that returns a result would
+    let OMS-style handlers just override `applySessionSave`.
+19. **exchange-sim has no trading session / close.** Phases only change through halt/resume, so DAY orders never
+    expire on their own. *Workaround:* `OmsEngine.endOfDay()` expires working DAY orders on demand. A scheduled
+    close (and `MARKET_CLOSED` reject window) in exchange-sim would make this automatic. This is our own package, so
+    it's for a later phase rather than upstream.

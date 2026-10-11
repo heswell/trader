@@ -1,6 +1,6 @@
 /**
  * vuu-portal (module discovery + auth, configured by ../application.conf) with the
- * exchange-sim modules added to the same server.
+ * EXCHANGE (exchange-sim) and OMS modules added to the same server.
  *
  * The stock vuu-portal registry does not tell remotes which Vuu server to talk to
  * (see docs/upstream-issues.md #1), so remotes use the portal connection and the
@@ -24,9 +24,14 @@ const { loadModuleAdminRole, loadModuleState, ModuleDiscoveryModule } =
   );
 const { createExchangeSimulator, ExchangeModule, loadExchangeSimConfig } =
   await import("@heswell/exchange-sim");
+const { createOms, loadOmsConfig, OmsModule } = await import("@heswell/oms");
 
 const config = ConfigFactory.load();
 const sim = createExchangeSimulator({ config: loadExchangeSimConfig(config) });
+const oms = createOms(sim.gateway, {
+  config: loadOmsConfig(config),
+  rics: () => sim.books.map((book) => book.ric),
+});
 const application = createVuuServerApplication({
   authProviders: createConfiguredAuthProviders(config),
   config,
@@ -41,6 +46,7 @@ const application = createVuuServerApplication({
       adminRole: loadModuleAdminRole(config),
     }),
     ExchangeModule(sim),
+    OmsModule(oms),
   ],
 });
 
