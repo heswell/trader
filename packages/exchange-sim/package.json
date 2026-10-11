@@ -8,9 +8,12 @@
   "license": "MIT",
   "scripts": {
     "start": "bun ./scripts/start.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "bench": "bun ./scripts/bench.ts"
   },
   "dependencies": {
+    "@heswell/hft-limit-order-book": "1.0.0",
+    "@heswell/trading-schemas": "workspace:*",
     "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20"
   }
 }

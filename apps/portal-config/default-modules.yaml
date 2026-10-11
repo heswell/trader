@@ -5,8 +5,8 @@ modules:
     version: 1
     parentModuleId: 0
     name: "tradingHello"
-    title: "Hello prices"
-    description: "Hello-world ticking table served by the exchange simulator"
+    title: "Exchange prices"
+    description: "Smoke-test grid of EXCHANGE instrumentPrices (exchange simulator)"
     enabled: true
     location: "/Trading/Hello"
     path: "/trading/hello"

@@ -3,16 +3,29 @@ import { Table } from "@vuu-ui/vuu-table";
 import type { TableConfig } from "@vuu-ui/vuu-table-types";
 import { useEffect, useMemo } from "react";
 
-const columnNames = ["ric", "description", "bid", "ask", "last", "ticks"];
+const columnNames = [
+  "ric",
+  "description",
+  "currency",
+  "bid",
+  "ask",
+  "last",
+  "changePct",
+  "volume",
+  "phase",
+];
 
 const config: TableConfig = {
   columns: [
     { name: "ric", width: 100 },
     { name: "description", width: 180 },
+    { name: "currency", width: 70 },
     { name: "bid" },
     { name: "ask" },
     { name: "last" },
-    { name: "ticks" },
+    { name: "changePct" },
+    { name: "volume" },
+    { name: "phase", width: 100 },
   ],
 };
 
@@ -23,7 +36,7 @@ const Hello = () => {
     () =>
       new VuuDataSource({
         columns: columnNames,
-        table: { module: "HELLO", table: "helloPrices" },
+        table: { module: "EXCHANGE", table: "instrumentPrices" },
       }),
     [VuuDataSource],
   );
@@ -32,7 +45,7 @@ const Hello = () => {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <h3 style={{ margin: 8 }}>Hello prices</h3>
+      <h3 style={{ margin: 8 }}>Exchange prices</h3>
       <div style={{ flex: 1, minHeight: 0 }}>
         <Table config={config} dataSource={dataSource} />
       </div>

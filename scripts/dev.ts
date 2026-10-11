@@ -3,7 +3,7 @@
  *
  * Starts, with prefixed output:
  *   server  vuu-portal + exchange-sim modules   wss://localhost:8091/websocket-portal
- *   hello   the hello module-federation remote  http://localhost:5010
+ *   hello   smoke-test remote (EXCHANGE grid)   http://localhost:5010
  *   host    (optional) static portal host build http://localhost:5001   [VUU_PORTAL_HOST_DIR]
  *
  * Keycloak (https://localhost:8080, realm "vuu") must already be running, see README.
