@@ -40,8 +40,8 @@ A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns 
 | `watchlistStorage?` | `UserSettingsStorage` override for the watchlists. |
 
 Row selection calls `setSelectedInstrument(instrument, "InstrumentGrid")`. Cell renderers (registered by the grid, or by
-`registerInstrumentGridRenderers()`): `trading.price-move` (flash + optional arrow), `trading.price`, `trading.change`
-(sign + arrow + colour; `percent`), `trading.quantity`, `trading.notional`, `trading.phase` (dot + label; HALTED / CLOSED
+`registerInstrumentGridRenderers()`): `trading.price-move` (flash + optional arrow), `trading.grid-price`, `trading.change`
+(sign + arrow + colour; `percent`), `trading.quantity`, `trading.grid-notional`, `trading.phase` (dot + label; HALTED / CLOSED
 styled). Prices are formatted with the row's `priceDecimals` / `tickSize` / `tickBands`. Pure helpers are exported too:
 `buildInstrumentGridFilter`, `instrumentGridColumns`, watchlist functions and `useWatchlists`.
 

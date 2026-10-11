@@ -160,7 +160,7 @@ export const PriceMoveCell = memo(function PriceMoveCell({
   );
 }, cellUnchanged);
 
-/** `trading.price`: static price (open / high / low / close / vwap) to instrument precision. */
+/** `trading.grid-price`: static price (open / high / low / close / vwap) to instrument precision. */
 export const PriceCell = memo(function PriceCell({
   column,
   dataRow,
@@ -241,7 +241,7 @@ export const QuantityCell = memo(function QuantityCell({
 }, cellUnchanged);
 
 /**
- * `trading.notional`: turnover in the instrument's currency (GBX = pence). Compact by
+ * `trading.grid-notional`: turnover in the instrument's currency (GBX = pence). Compact by
  * default; the full amount with its currency is the tooltip.
  */
 export const NotionalCell = memo(function NotionalCell({
@@ -324,7 +324,7 @@ export const registerInstrumentGridRenderers = () => {
     ),
     serverDataType: ["double"],
   });
-  registerComponent("trading.price", PriceCell, "cell-renderer", {
+  registerComponent("trading.grid-price", PriceCell, "cell-renderer", {
     ...options("Price", "Price to instrument precision"),
     serverDataType: ["double"],
   });
@@ -336,7 +336,7 @@ export const registerInstrumentGridRenderers = () => {
     ...options("Quantity", "Grouped / compact quantity"),
     serverDataType: ["long", "int"],
   });
-  registerComponent("trading.notional", NotionalCell, "cell-renderer", {
+  registerComponent("trading.grid-notional", NotionalCell, "cell-renderer", {
     ...options("Notional", "Compact notional in the instrument currency"),
     serverDataType: ["double"],
   });
