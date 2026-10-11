@@ -1,0 +1,44 @@
+.tradingPositionsView {
+  background: var(--salt-container-primary-background);
+  color: var(--salt-content-primary-foreground);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--salt-text-fontFamily);
+  gap: var(--salt-spacing-100);
+  height: 100%;
+  width: 100%;
+}
+
+.tradingPositionsView-toolbar {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--salt-spacing-100);
+}
+
+.tradingPositionsView-table {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.tradingPositionsView-totals {
+  border-collapse: collapse;
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.tradingPositionsView-totals th,
+.tradingPositionsView-totals td {
+  padding: 0 var(--salt-spacing-100);
+  text-align: right;
+}
+
+.tradingPositionsView-totals th:first-child,
+.tradingPositionsView-totals td:first-child {
+  text-align: left;
+}
+
+.tradingPositionsView-note {
+  color: var(--salt-content-secondary-foreground);
+  font-size: var(--salt-text-label-fontSize);
+}

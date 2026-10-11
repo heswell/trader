@@ -1,0 +1,26 @@
+.tradingFillsBlotter {
+  background: var(--salt-container-primary-background);
+  color: var(--salt-content-primary-foreground);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--salt-text-fontFamily);
+  gap: var(--salt-spacing-100);
+  height: 100%;
+  width: 100%;
+}
+
+.tradingFillsBlotter-toolbar {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--salt-spacing-100);
+}
+
+.tradingFillsBlotter-spacer {
+  flex: 1;
+}
+
+.tradingFillsBlotter-table {
+  flex: 1 1 auto;
+  min-height: 0;
+}

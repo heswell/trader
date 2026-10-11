@@ -1,3 +1,9 @@
+import {
+  FillsBlotterExample,
+  OrderBlotterExample,
+  PositionsViewExample,
+  TradeTapeExample,
+} from "./BlotterExamples";
 import { InstrumentPricesTicking } from "./InstrumentPricesTicking";
 import { SideLabelExamples } from "./SideLabelExamples";
 import type { ShowcaseExample } from "./types";
@@ -23,5 +29,29 @@ export const examples: ShowcaseExample[] = [
     group: "SideLabel",
     title: "Variants",
     Component: SideLabelExamples,
+  },
+  {
+    id: "order-blotter",
+    group: "OrderBlotter",
+    title: "Working / filled / closed with amend and cancel",
+    Component: OrderBlotterExample,
+  },
+  {
+    id: "fills-blotter",
+    group: "FillsBlotter",
+    title: "Fills with grouping, VWAP and CSV export",
+    Component: FillsBlotterExample,
+  },
+  {
+    id: "trade-tape",
+    group: "TradeTape",
+    title: "Time & sales for the selected order's instrument",
+    Component: TradeTapeExample,
+  },
+  {
+    id: "positions-view",
+    group: "PositionsView",
+    title: "Ticking P&L with per-currency totals",
+    Component: PositionsViewExample,
   },
 ];

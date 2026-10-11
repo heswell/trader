@@ -271,3 +271,11 @@ Copy `apps/features/hello` (rsbuild via `@vuu-ui/portal-build`):
 4. Register it in `apps/portal-config/default-modules.yaml`: `mfScope` must equal `moduleFederation.name`, and
    `mfComponent` is the exposed name. Add it to `scripts/dev.ts` if it should start with `bun run dev`.
 5. The instrument context in the portal is P3.11's job. Until then each feature has an independent selection.
+
+## 11. Shared renderers and hooks (P3.7–P3.10)
+
+Grids that need status, side, progress, price, P&L, time or liquidity cells should use the registered renderers
+in `TradingRenderer` (`registerTradingCellRenderers()`; call it at module level because `sideEffects` only lists
+CSS) rather than writing new ones. Non-Table views (e.g. the tape) use `useDataSourceRecords` for rAF-coalesced
+rows. See `packages/trading-ui/README.md` for the component props and `docs/upstream-issues.md` #28–32 for the
+alpha.20 constraints behind the design choices.

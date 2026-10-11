@@ -1,0 +1,78 @@
+.tradingOrderBlotter {
+  background: var(--salt-container-primary-background);
+  color: var(--salt-content-primary-foreground);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--salt-text-fontFamily);
+  gap: var(--salt-spacing-100);
+  height: 100%;
+  width: 100%;
+}
+
+.tradingOrderBlotter-toolbar {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--salt-spacing-100);
+}
+
+.tradingOrderBlotter-spacer {
+  flex: 1;
+}
+
+.tradingOrderBlotter-tab[aria-selected="true"] {
+  font-weight: var(--salt-text-fontWeight-strong);
+  text-decoration: underline;
+}
+
+.tradingOrderBlotter-table {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.tradingOrderBlotter-children {
+  flex: 0 0 160px;
+  min-height: 0;
+}
+
+.tradingOrderBlotter-children-title {
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+.tradingOrderBlotter-actions {
+  align-items: center;
+  display: inline-flex;
+  gap: var(--salt-spacing-50);
+}
+
+.tradingOrderBlotter-orderId {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tradingOrderBlotter-actions button {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.tradingOrderBlotter-actions button:disabled {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.tradingOrderBlotter-dialog {
+  background: var(--salt-overlayable-background);
+  border: var(--salt-size-border) var(--salt-container-borderStyle)
+    var(--salt-container-primary-borderColor);
+  display: flex;
+  flex-direction: column;
+  gap: var(--salt-spacing-100);
+  padding: var(--salt-spacing-200);
+}
+
+.tradingOrderBlotter-message[data-error="true"] {
+  color: var(--salt-status-error-foreground-informative);
+}

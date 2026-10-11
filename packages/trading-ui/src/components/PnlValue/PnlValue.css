@@ -1,0 +1,28 @@
+.tradingPnlValue {
+  --tradingPnlValue-color: var(
+    --trading-neutral,
+    var(--salt-content-secondary-foreground)
+  );
+  color: var(--tradingPnlValue-color);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tradingPnlValue-up {
+  --tradingPnlValue-color: var(
+    --trading-up,
+    var(--salt-sentiment-positive-foreground-informative)
+  );
+}
+
+.tradingPnlValue-down {
+  --tradingPnlValue-color: var(
+    --trading-down,
+    var(--salt-sentiment-negative-foreground-informative)
+  );
+}
+
+.tradingPnlValue-arrow {
+  font-size: 0.7em;
+  margin-right: var(--salt-spacing-50);
+}
