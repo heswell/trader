@@ -1,0 +1,173 @@
+.tradingInstrumentCell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--salt-spacing-50);
+  height: 100%;
+  padding: 0 var(--salt-spacing-100);
+  box-sizing: border-box;
+  color: var(--salt-content-primary-foreground);
+  font-variant-numeric: tabular-nums;
+  position: relative;
+}
+
+.tradingInstrumentCell-value {
+  position: relative;
+  z-index: 1;
+}
+
+.tradingInstrumentCell-arrow {
+  font-size: 0.7em;
+  min-width: 1em;
+  text-align: center;
+}
+
+/* price move flash: background in the move colour, fading out */
+.tradingInstrumentCell-price.up1,
+.tradingInstrumentCell-price.up2 {
+  animation-duration: var(--tradingInstrumentCell-flashDuration, 1s);
+  animation-name: tradingFlashUp1;
+}
+.tradingInstrumentCell-price.up2 {
+  animation-name: tradingFlashUp2;
+}
+.tradingInstrumentCell-price.down1,
+.tradingInstrumentCell-price.down2 {
+  animation-duration: var(--tradingInstrumentCell-flashDuration, 1s);
+  animation-name: tradingFlashDown1;
+}
+.tradingInstrumentCell-price.down2 {
+  animation-name: tradingFlashDown2;
+}
+
+@keyframes tradingFlashUp1 {
+  0% {
+    background-color: color-mix(
+      in srgb,
+      var(--trading-up, var(--salt-sentiment-positive-foreground-informative))
+        45%,
+      transparent
+    );
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+@keyframes tradingFlashUp2 {
+  0% {
+    background-color: color-mix(
+      in srgb,
+      var(--trading-up, var(--salt-sentiment-positive-foreground-informative))
+        45%,
+      transparent
+    );
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+@keyframes tradingFlashDown1 {
+  0% {
+    background-color: color-mix(
+      in srgb,
+      var(--trading-down, var(--salt-sentiment-negative-foreground-informative))
+        45%,
+      transparent
+    );
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+@keyframes tradingFlashDown2 {
+  0% {
+    background-color: color-mix(
+      in srgb,
+      var(--trading-down, var(--salt-sentiment-negative-foreground-informative))
+        45%,
+      transparent
+    );
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.tradingInstrumentCell-price[data-direction="up"] .tradingInstrumentCell-arrow {
+  color: var(
+    --trading-up,
+    var(--salt-sentiment-positive-foreground-informative)
+  );
+}
+.tradingInstrumentCell-price[data-direction="down"]
+  .tradingInstrumentCell-arrow {
+  color: var(
+    --trading-down,
+    var(--salt-sentiment-negative-foreground-informative)
+  );
+}
+
+.tradingInstrumentCell-change[data-direction="up"] {
+  color: var(
+    --trading-up,
+    var(--salt-sentiment-positive-foreground-informative)
+  );
+}
+.tradingInstrumentCell-change[data-direction="down"] {
+  color: var(
+    --trading-down,
+    var(--salt-sentiment-negative-foreground-informative)
+  );
+}
+.tradingInstrumentCell-change[data-direction="flat"] {
+  color: var(--trading-neutral, var(--salt-content-secondary-foreground));
+}
+
+/* trading phase badge */
+.tradingInstrumentCell-phase {
+  justify-content: flex-start;
+}
+.tradingInstrumentCell-phaseDot {
+  width: var(--salt-size-unit, 6px);
+  height: var(--salt-size-unit, 6px);
+  border-radius: 50%;
+  background: var(
+    --trading-status-pending,
+    var(--salt-status-warning-foreground-informative)
+  );
+  flex: none;
+}
+.tradingInstrumentCell-phase[data-phase="CONTINUOUS"]
+  .tradingInstrumentCell-phaseDot {
+  background: var(
+    --trading-status-filled,
+    var(--salt-status-success-foreground-informative)
+  );
+}
+.tradingInstrumentCell-phase[data-phase="CLOSED"],
+.tradingInstrumentCell-phase[data-phase="POST_CLOSE"] {
+  color: var(--salt-content-secondary-foreground);
+}
+.tradingInstrumentCell-phase[data-phase="CLOSED"]
+  .tradingInstrumentCell-phaseDot,
+.tradingInstrumentCell-phase[data-phase="POST_CLOSE"]
+  .tradingInstrumentCell-phaseDot {
+  background: var(
+    --trading-status-done,
+    var(--salt-content-secondary-foreground)
+  );
+}
+.tradingInstrumentCell-phase[data-phase="HALTED"] {
+  color: var(
+    --trading-status-rejected,
+    var(--salt-status-error-foreground-informative)
+  );
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+.tradingInstrumentCell-phase[data-phase="HALTED"]
+  .tradingInstrumentCell-phaseDot {
+  background: var(
+    --trading-status-rejected,
+    var(--salt-status-error-foreground-informative)
+  );
+}

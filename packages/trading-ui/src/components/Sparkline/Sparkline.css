@@ -1,0 +1,42 @@
+.tradingSparkline {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: var(--tradingSparkline-minHeight, 12px);
+  overflow: visible;
+}
+
+.tradingSparkline-line {
+  fill: none;
+  stroke: var(
+    --tradingSparkline-stroke,
+    var(--trading-neutral, var(--salt-content-secondary-foreground))
+  );
+  stroke-width: var(--tradingSparkline-strokeWidth, 1.25px);
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.tradingSparkline[data-trend="up"] .tradingSparkline-line {
+  stroke: var(
+    --trading-up,
+    var(--salt-sentiment-positive-foreground-informative)
+  );
+}
+
+.tradingSparkline[data-trend="down"] .tradingSparkline-line {
+  stroke: var(
+    --trading-down,
+    var(--salt-sentiment-negative-foreground-informative)
+  );
+}
+
+.tradingSparklineCell {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0 var(--salt-spacing-100);
+  box-sizing: border-box;
+}

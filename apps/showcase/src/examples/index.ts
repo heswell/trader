@@ -4,6 +4,11 @@ import {
   PositionsViewExample,
   TradeTapeExample,
 } from "./BlotterExamples";
+import {
+  InstrumentGridExamples,
+  InstrumentGridPrices,
+  InstrumentGridTicking200,
+} from "./InstrumentGridExamples";
 import { InstrumentPricesTicking } from "./InstrumentPricesTicking";
 import { MarketDepthExamples } from "./MarketDepthExamples";
 import { PriceLadderLive, PriceLadderStress } from "./PriceLadderExamples";
@@ -25,6 +30,30 @@ export const examples: ShowcaseExample[] = [
     description:
       "instrumentPrices with the vuu.price-move-background renderer; buy/sell the selected instrument and watch the parentOrders row.",
     Component: InstrumentPricesTicking,
+  },
+  {
+    id: "instrument-grid",
+    group: "InstrumentGrid",
+    title: "Instrument grid",
+    description:
+      "instrumentPrices with price-move, change, phase, sparkline; watchlists, grouping, column picker, quick filter, context menu (Buy/Sell/Depth callbacks).",
+    Component: InstrumentGridExamples,
+  },
+  {
+    id: "instrument-grid-prices",
+    group: "InstrumentGrid",
+    title: "Prices only",
+    description:
+      "Bound to the prices table: no static data, graceful fallback.",
+    Component: InstrumentGridPrices,
+  },
+  {
+    id: "instrument-grid-200",
+    group: "InstrumentGrid",
+    title: "200 ticking rows (perf)",
+    description:
+      "Open with ?active=200 (local mode) to tick 200 instruments with sparklines.",
+    Component: InstrumentGridTicking200,
   },
   {
     id: "side-label-variants",

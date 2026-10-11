@@ -33,7 +33,15 @@ const remoteConnection = () => {
 export const useShowcaseDataMode = () => {
   const localServer = useMemo(() => {
     setCurrentUser({ name: USER, authorizations: [] });
-    return createTradingLocalServer(getTradingTestData());
+    // ?active=200 simulates more instruments (perf checks)
+    const active = Number(
+      new URLSearchParams(window.location.search).get("active"),
+    );
+    return createTradingLocalServer(
+      getTradingTestData(
+        active > 0 ? { exchange: { activeInstruments: active } } : undefined,
+      ),
+    );
   }, []);
   const [mode, setMode] = useState<ShowcaseDataMode>("local");
   const [remoteStatus, setRemoteStatus] =
