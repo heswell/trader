@@ -11,7 +11,7 @@ admin RPCs, in-process OMS gateway) is in place. The `tradingHello` remote shows
 packages/
   trading-schemas/    shared table defs, enums, RPC contracts, tick/lot utils
   exchange-sim/       exchange simulator: order books, bots, EXCHANGE module, OMS gateway (see its README)
-  oms/                order management (placeholder)
+  oms/                OMS module: orders, risk, routing, positions, background flow (see its README)
   trading-ui/         shared React components (placeholder)
   trading-test-data/  test data (placeholder)
 apps/
@@ -50,7 +50,7 @@ Generates a self-signed cert, builds the hello remote if needed, then starts:
 
 | What | Where |
 | --- | --- |
-| portal + exchange-sim modules (one server) | `wss://localhost:8091/websocket-portal`, `https://localhost:8443/api/authn` |
+| portal + EXCHANGE + OMS modules (one server) | `wss://localhost:8091/websocket-portal`, `https://localhost:8443/api/authn` |
 | hello remote | `http://localhost:5010` |
 | portal host UI (only if `VUU_PORTAL_HOST_DIR` set) | `http://localhost:5001` |
 
@@ -65,8 +65,19 @@ Other commands: `bun run build` (remotes), `bun run typecheck` (emits .d.ts for 
 `bun test`. Stand-alone exchange-sim (permissive auth, TLS with the dev cert, `wss://localhost:8094/websocket-exchange-sim`): `bun run --filter @heswell/exchange-sim start`;
 benchmark: `bun run --filter @heswell/exchange-sim bench`. Simulator knobs (`exchangeSim.*` / `EXCHANGE_SIM_*`)
 are documented in [packages/exchange-sim/README.md](packages/exchange-sim/README.md).
+Stand-alone EXCHANGE + OMS (permissive auth, `wss://localhost:8095/websocket-trading`): `bun run --filter @heswell/oms start`.
+OMS knobs (`oms.*` / `OMS_*`), RPCs, roles (`trading-view` / `trading-execute` / `trading-supervisor`) and
+seeded accounts (owners alice, bob, carol, dave, erin) are in [packages/oms/README.md](packages/oms/README.md).
+Keycloak users without trading roles who own no account (e.g. `trader1`) see all accounts while
+`oms.permissionMode="auto"`.
 
 ### Verified / not verified
+
+Verified (Phase 2): OMS tests (68, including WebSocket tests against a real VuuServer with EXCHANGE + OMS). Also
+`start-portal.ts`, using an alternate-port permissive copy of the config: REST login as `alice`, then `CREATE_VP` on
+`OMS/parentOrders` streams background-flow orders (NEW/FILLED/CANCELLED) filtered to `ACC-US-01`. The stand-alone
+OMS server starts on :8095. Keycloak roles are not verified (the realm has no trading roles yet, upstream #15).
+
 
 Verified (Phase 1): tests (including a VuuServer + websocket integration test); remote build. The composite
 portal server (`start-portal.ts`, which is what `bun run dev` runs), using an alternate-port copy of the config
