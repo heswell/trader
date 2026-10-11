@@ -10,7 +10,8 @@ inside vuu-portal. **Conventions: [docs/ui-guide.md](../../docs/ui-guide.md).**
 | Instrument context (P3.11 placeholder) | `InstrumentContextProvider`, `useSelectedInstrument`, `SelectedInstrument`, `InstrumentContextValue` |
 | Formatting | `formatPrice`, `priceDecimals`, `formatQuantity`, `formatNotional`, `formatPercent` |
 | Colours | `TradingColour`, `sideColour`, `directionColour`, `orderStatusCategory`, `orderStatusColour`, `tradingPhaseColour` |
-| Components | `SideLabel` (reference component) |
+| User settings | `UserSettingsStorage`, `UserSettingsProvider`, `useUserSettingsStorage`, `createLocalSettingsStorage`, `createMemorySettingsStorage` |
+| Components | `SideLabel` (reference component), `InstrumentGrid`, `Sparkline` / `trading.sparkline` renderer |
 
 ```tsx
 const Orders = () => {
@@ -18,6 +19,60 @@ const Orders = () => {
   return <Table config={config} dataSource={dataSource} />;
 };
 ```
+
+## InstrumentGrid (P3.2)
+
+A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns that do not exist are dropped).
+
+```tsx
+<InstrumentGrid onBuy={(i) => ...} onSell={(i) => ...} onOpenDepth={(i) => ...} />
+```
+
+| Prop | Meaning |
+| --- | --- |
+| `dataSource?` / `table?` | Supply a data source, or bind `"instrumentPrices"` (default) / `"prices"`. |
+| `columns?` | Visible column names in order (default: ric, description, exchange, currency, bid, ask, last, change, changePct, phase, sparkline, volume, turnover). The "Columns" button opens the vuu column picker; the header menu gives sort / group / hide. |
+| `simulatedOnly?` | Default true: only instruments quoted by the simulator (instrumentPrices). |
+| `initialGroupBy?` | `exchange` / `sector` / `currency`; volume and turnover are summed in group rows. |
+| `sparkline?` | `false` or `{ valueColumn, length, bucketMs, ignoreZero }`. |
+| `showToolbar?` | Quick filter (ric / description), watchlist selector + manager, group-by, columns, Buy/Sell/Depth buttons. |
+| `onBuy` / `onSell` / `onOpenDepth` | `(instrument: SelectedInstrument) => void`. The context-menu items and toolbar buttons exist only when the prop is set. There are no server menu RPCs. |
+| `watchlistStorage?` | `UserSettingsStorage` override for the watchlists. |
+
+Row selection calls `setSelectedInstrument(instrument, "InstrumentGrid")`. Cell renderers (registered by the grid, or by
+`registerInstrumentGridRenderers()`): `trading.price-move` (flash + optional arrow), `trading.price`, `trading.change`
+(sign + arrow + colour; `percent`), `trading.quantity`, `trading.notional`, `trading.phase` (dot + label; HALTED / CLOSED
+styled). Prices are formatted with the row's `priceDecimals` / `tickSize` / `tickBands`. Pure helpers are exported too:
+`buildInstrumentGridFilter`, `instrumentGridColumns`, watchlist functions and `useWatchlists`.
+
+**Watchlists and user settings.** Watchlists are client-side lists of rics stored under `trading.watchlists` through a
+`UserSettingsStorage` (a `getItem` / `setItem` subset of Web Storage, may be async). The default is localStorage
+(memory fallback). In vuu-portal, wrap the feature in `<UserSettingsProvider storage={portalStorage}>` where
+`portalStorage` reads / writes the user's settings document in the portal backend; no component changes are needed.
+
+## Sparkline (P3.3)
+
+`trading.sparkline` cell renderer (a `source: "client"` column, see `instrumentGridColumn("sparkline")`) or the
+presentational `<Sparkline values={[...]} />`. Each visible row keeps a `Float64Array` ring buffer
+(`length` samples, 8 bytes each: 40 samples = 320 B per row) in a ref-counted `sparklineStore`; the buffer is freed when the
+row's cell unmounts or is recycled (the row leaves the viewport), so only rows in the viewport cost memory, and a row's
+history restarts when it comes back. `bucketMs > 0` samples on a constant time axis instead of per change. The polyline is
+updated imperatively (no React render per tick). Zero values are skipped by default (`ignoreZero`) because a row has 0
+until its first price.
+
+*Future:* a server-provided intraday series column (e.g. `last` history as a `string` / array column on `prices`, or an
+`intradaySeries` table keyed by ric) could replace the client buffer: the renderer would draw the column value when it
+holds a series and fall back to the buffer otherwise, so history would survive scrolling and reloads.
+
+### Performance (headless Chrome, local test data, 1400x900, in-browser exchange + OMS on the same thread)
+
+| Scenario | Frame median / p95 | Main thread busy | Notes |
+| --- | --- | --- | --- |
+| 50 ticking instruments, 45 rows rendered | 16.7 / 16.8 ms | ~38% (script 25%) | |
+| 200 ticking, 45 rows rendered | 16.7 / 16.8 ms | ~54% (script 39%) | 60 fps |
+| 200 ticking, all 200 rows rendered (5000px tall) | 50 / 133 ms | ~100% | stress; the plain vuu price-move table at 154 rows was already ~97% busy |
+
+Run it yourself: `?active=200` on the showcase URL, example "InstrumentGrid / 200 ticking rows (perf)".
 
 Tests: `bun run test:ui` (bun:test + @testing-library/react on happy-dom).
 

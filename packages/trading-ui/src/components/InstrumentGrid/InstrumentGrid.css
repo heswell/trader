@@ -1,0 +1,56 @@
+.tradingInstrumentGrid {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: var(--salt-spacing-100);
+}
+
+.tradingInstrumentGrid-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--salt-spacing-100);
+}
+
+.tradingInstrumentGrid .tradingInstrumentGrid-search {
+  width: 220px;
+}
+
+.tradingInstrumentGrid .tradingInstrumentGrid-select {
+  width: 170px;
+}
+
+.tradingInstrumentGrid-actions {
+  display: flex;
+  gap: var(--salt-spacing-100);
+  margin-left: auto;
+}
+
+.tradingInstrumentGrid-popover {
+  display: flex;
+  flex-direction: column;
+  gap: var(--salt-spacing-100);
+  padding: var(--salt-spacing-100);
+}
+
+.tradingInstrumentGrid-watchlistForm {
+  display: flex;
+  gap: var(--salt-spacing-100);
+}
+
+.tradingInstrumentGrid-table {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.tradingInstrumentGrid .tradingInstrumentGrid-search,
+.tradingInstrumentGrid .tradingInstrumentGrid-select {
+  border: var(--salt-size-border, 1px) var(--salt-borderStyle-solid, solid)
+    var(--salt-container-primary-borderColor, currentColor);
+}
+
+.tradingInstrumentGrid-columnPicker {
+  width: 320px;
+  height: 420px;
+}

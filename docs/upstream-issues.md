@@ -121,3 +121,6 @@ vuu-websocket was not modified. Workarounds are noted.
     `amendOrder` by default.
 32. **Custom cell renderers are looked up by name in a global registry** and the package `sideEffects` only lists
     CSS, so each component module must call `registerTradingCellRenderers()` at import time.
+33. **A `LEFT JOIN` row without a price shows `0` (not empty) for numeric columns** in `instrumentPrices`, so a client
+    cannot tell "no price yet" from a price of 0. *Workaround:* the sparkline renderer ignores 0 samples
+    (`ignoreZero`) and the grid defaults to `simulated = true`.

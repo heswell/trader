@@ -195,7 +195,7 @@ The real `exchange-sim` and `oms` engines run in the browser on `@heswell/vuu-da
 reject reasons, edit sessions, visual links and permissions behave like the server. See its README for the API.
 
 - Showcase/app: `createTradingLocalServer()` creates a singleton with ticking timers that start on the first
-  subscription, 50 active instruments and OMS background flow.
+  subscription, 50 active instruments and OMS background flow. Open the showcase with `?active=200` to simulate 200.
 - Deterministic tests: `createTradingTestData({ seed: 1, manualClock: true, oms: { flowRate: 0 } })`, then
   `td.advance(2_000)` to build the books. Call `td.dispose()` in `afterEach`.
 - `setCurrentUser({ name, authorizations: [] })` controls OMS account visibility. `admin` sees all accounts; alice

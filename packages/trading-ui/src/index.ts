@@ -18,6 +18,7 @@ export * from "./hooks/useViewportRows";
 export * from "./utils/colours";
 export * from "./utils/formatting";
 export * from "./utils/marketData";
+export * from "./utils/userSettingsStorage";
 
 // components
 export * from "./components/SideLabel";
@@ -38,3 +39,5 @@ export * from "./components/TradeTape";
 export * from "./components/TradingCellRenderers";
 export * from "./components/MarketDepth";
 export * from "./components/PriceLadder";
+export * from "./components/InstrumentGrid";
+export * from "./components/Sparkline";
