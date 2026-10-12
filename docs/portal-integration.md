@@ -16,7 +16,7 @@ Log in as `alice` / `password` (see [Users and roles](#users-and-roles)).
 flowchart LR
   subgraph Browser
     Host["portal host :5100<br/>PortalShell, auth, nav<br/>(apps/portal-host)"]
-    subgraph Remotes["MF remotes :5110/&lt;feature&gt;/"]
+    subgraph Remotes["MF remotes :5110/&lt;feature&gt;/<br/>mf-manifest.json + config.json"]
       WS[Workspace] --> WT[Workspace ticket]
       WS --> WL[Workspace ladder]
       W[Watchlist]
@@ -24,32 +24,72 @@ flowchart LR
       O[Orders / Fills / Positions / Tape / Ticket / Ladder]
       SV[Supervision]
     end
-    Host -- "loads (mf-manifest.json)" --> Remotes
+    Host -- "loads mf-manifest.json,<br/>reads config.json" --> Remotes
     Bus(("instrument link bus<br/>+ BroadcastChannel"))
     Remotes <--> Bus
   end
   KC["Keycloak :8180<br/>realm vuu"]
-  subgraph Portal["portal server (one bun process)"]
+  subgraph Portal["portal Vuu server (start-portal.ts)"]
     REST["REST :8543<br/>/api/authn, module registry"]
     WSS["WebSocket :8191<br/>/websocket-portal"]
     MD[MODULE_DISCOVERY]
+  end
+  subgraph Trading["trading Vuu server (start-trading.ts)"]
+    TREST["REST :8544<br/>/api/authn (token exchange)"]
+    TWSS["WebSocket :8192<br/>/websocket-trading"]
     EX["EXCHANGE<br/>(exchange-sim)"]
     OMS[OMS]
   end
-  Host -- "OIDC login" --> KC
-  Host -- "token, modules for my roles" --> REST
-  Remotes -- "viewports, RPCs (inherited connection)" --> WSS
+  Host -- "OIDC login (client vuu-portal)" --> KC
+  Host -- "token, modules for my nav roles" --> REST
+  Host --- WSS
+  WSS --- MD
+  Remotes -- "portal token" --> TREST
+  TREST -. "token exchange →<br/>trader-trading-server" .-> KC
+  Remotes -- "viewports, RPCs<br/>(connection &quot;trading&quot;)" --> TWSS
   REST -. "verifies token" .-> KC
-  WSS --- MD & EX & OMS
+  TWSS --- EX & OMS
   EX <--> OMS
 ```
 
 | Part | Where | Source |
 | --- | --- | --- |
-| Keycloak (realm `vuu`, trading roles, seeded users) | `https://localhost:8180` (http 8181, management 9100) | `scripts/stack/keycloak-realm.ts`, `infra/keycloak/realm-vuu.json` |
-| portal server + EXCHANGE + OMS | `wss://localhost:8191/websocket-portal`, `https://localhost:8543` | `apps/portal-config` |
+| Keycloak (realm `vuu`, clients, roles, seeded users) | `https://localhost:8180` (http 8181, management 9100) | `scripts/stack/keycloak-realm.ts`, `infra/keycloak/realm-vuu.json` |
+| portal Vuu server (module registry) | `wss://localhost:8191/websocket-portal`, `https://localhost:8543` | `apps/portal-config/application.conf`, `src/start-portal.ts` |
+| trading Vuu server (EXCHANGE + OMS) | `wss://localhost:8192/websocket-trading`, `https://localhost:8544` | `apps/portal-config/application.trading.conf`, `src/start-trading.ts` |
 | portal host (PortalShell) | `http://localhost:5100` | `apps/portal-host` |
 | trading features (12 MF remotes) | `http://localhost:5110/<feature>/` | `apps/features/trading` |
+
+### Two Vuu servers
+
+The portal server only authenticates the user and serves the module registry. The trading tables (exchange-sim
+and OMS) run in a separate process, the **trading server**. Each feature remote publishes a `config.json` next to
+its `mf-manifest.json` (a @vuu-ui 4.0.0-alpha.21 mechanism):
+
+```json
+{
+  "connectionId": "trading",
+  "restUrl": "https://localhost:8544/api/authn",
+  "websocketUrl": "wss://localhost:8192/websocket-trading"
+}
+```
+
+`RemoteModule` reads it before mounting the remote:
+
+1. It POSTs the user's `vuu-portal` access token to `restUrl`.
+2. The trading server exchanges the token with Keycloak (standard token exchange) for a token of its own
+   confidential client `trader-trading-server`, which carries the trading roles. It then returns a Vuu session
+   token.
+3. `RemoteModule` opens a websocket connection `trading` with that token. The connection is shared, ref-counted,
+   by every remote with the same `connectionId`. It wraps the remote in an `AuthenticationProvider` scoped to that
+   connection, so the trading-ui data sources and `useVuuAuthorizations()` use the trading session without any
+   code changes.
+
+`scripts/features/build.ts` writes `dist/<feature>/config.json` from the `TRADER_*` variables below, and the
+features server (`scripts/stack/serve.ts`) regenerates it on every request from its own environment. To point the
+remotes at a trading server elsewhere, set `TRADER_TRADING_REST_URL` and `TRADER_TRADING_WEBSOCKET_URL`.
+`RemoteModule` treats a missing `config.json` as an error, so every remote must publish one (`{}` means "use the
+portal server"; upstream #57).
 
 There is no proxy. The host fetches the remotes directly, and the features server sends CORS headers. The
 vuu-portal client in finos/vuu uses no haproxy either.
@@ -60,8 +100,8 @@ vuu-portal client in finos/vuu uses no haproxy either.
 
 1. Generates the dev certificate if missing and links vuu-websocket if needed. It builds the host and features if
    `dist` is missing, or always with `--build`.
-2. Writes `apps/portal-config/application.stack.conf` (ports, CORS origin, Keycloak URL) and
-   `default-modules.stack.yaml` (features origin). Both are gitignored. The vuu-portal ConfigFactory has no env
+2. Writes `apps/portal-config/application.stack.conf` and `application.trading.stack.conf` (ports, CORS origin,
+   Keycloak URL, trading client secret) and `default-modules.stack.yaml` (features origin). All are gitignored. The vuu-portal ConfigFactory has no env
    overrides (upstream #46).
 3. Checks that every port is free. A busy port is reported with the `TRADER_*` variable that moves it. It never
    takes over a port.
@@ -69,7 +109,7 @@ vuu-portal client in finos/vuu uses no haproxy either.
    - It uses `KEYCLOAK_HOME`, or the newest `~/keycloak/keycloak-*`, in dev mode with state under `.run/keycloak`.
    - It then creates or updates the realm, roles and users.
    - Without a local install, run `docker compose up -d keycloak` first (see `docker-compose.yml`).
-5. Starts the portal server, the features server and the host with prefixed logs.
+5. Starts the portal server, the trading server, the features server and the host with prefixed logs.
 6. Waits until every part answers and prints the URLs and users.
 7. On Ctrl-C (or SIGTERM), stops everything it started: SIGTERM, then SIGKILL after 15 s.
 
@@ -79,7 +119,8 @@ vuu-portal client in finos/vuu uses no haproxy either.
 | `--reseed` | reset the portal's runtime module list (`modules.stack.yaml`) to the defaults. This also happens automatically when the defaults change. |
 | `--prepare` | certs, builds and generated config only, then exit (for the `Procfile`) |
 
-`Procfile` (overmind / foreman / honcho) runs the portal, features and host as separate processes. Before using it,
+`Procfile` (overmind / foreman / honcho) runs the portal server, trading server, features and host as separate
+processes. Before using it,
 run `bun run start:all --prepare` and start a Keycloak.
 
 ### Ports
@@ -87,26 +128,44 @@ run `bun run start:all --prepare` and start a Keycloak.
 Every port can be changed with an env var (`scripts/stack/config.ts`). The defaults avoid the ports a stock
 vuu-websocket / finos vuu-ui checkout uses (5001, 5006, 8080, 8091, 8443).
 
+The OMS generates background order flow for every account (`OMS_FLOW_ACCOUNTS`, see `packages/oms/README.md`).
+The screenshots were taken with `OMS_FLOW_ACCOUNTS=ACC-US-02,ACC-EU-01,ACC-EU-02,ACC-ASIA-01,ACC-ASIA-02`, so
+alice's account `ACC-US-01` only has her own orders.
+
 | Variable | Default |
 | --- | --- |
 | `TRADER_HOSTNAME` | `localhost` |
 | `TRADER_KEYCLOAK_PORT` / `_HTTP_PORT` / `_MGMT_PORT` | 8180 / 8181 / 9100 |
 | `TRADER_KEYCLOAK_URL` | `https://$TRADER_HOSTNAME:$TRADER_KEYCLOAK_PORT` (set it to use an existing Keycloak) |
 | `TRADER_PORTAL_WS_PORT` / `TRADER_PORTAL_HTTPS_PORT` | 8191 / 8543 |
+| `TRADER_TRADING_WS_PORT` / `TRADER_TRADING_HTTPS_PORT` | 8192 / 8544 |
+| `TRADER_TRADING_REST_URL` / `TRADER_TRADING_WEBSOCKET_URL` | derived from the two ports above (written to each remote's `config.json`) |
+| `TRADER_TRADING_CLIENT_SECRET` | `trader-trading-local-dev-secret` (the `trader-trading-server` client secret; dev only) |
 | `TRADER_HOST_PORT` | 5100 |
 | `TRADER_FEATURES_PORT` / `TRADER_FEATURES_ORIGIN` | 5110 / `http://$TRADER_HOSTNAME:5110` |
 
 ## Users and roles
 
-The roles are client roles of the `vuu-portal` client. The portal sends a user only the modules whose `accessRole`
-they hold, and the OMS checks the same roles on every RPC (`packages/oms/README.md`).
+There are two sets of client roles, because the portal and the trading server are separate Keycloak clients:
 
-| User (password `password`) | Roles | Sees |
+- **Server roles** belong to the confidential client `trader-trading-server`: `trading-view`, `trading-execute`
+  and `trading-supervisor`. They reach the trading server through token exchange, and the OMS checks them on
+  every viewport and RPC (`oms.permissionMode="strict"`, `packages/oms/README.md`). Inside a feature,
+  `useEntitlements()` reads them with `useVuuAuthorizations()`.
+- **Nav roles** belong to the public `vuu-portal` client: `trading-access`, `trading-execute-access` and
+  `trading-supervisor-access`. They are the modules' `accessRole`s, so the portal sends a user only the modules
+  they may open. The realm bootstrap derives them from each user's server roles (`TRADING_ACCESS_ROLE` in
+  `catalog.ts`), so the two sets always agree.
+
+The `vuu-portal` client adds both `vuu-portal-server` and `trader-trading-server` to its tokens' audience, which
+standard token exchange requires.
+
+| User (password `password`) | Server roles (`trader-trading-server`) | Sees |
 | --- | --- | --- |
 | alice, bob, carol, erin | trading-view, trading-execute | All of Trading (Workspace with ticket and ladder; Ticket; Ladder) |
 | dave | trading-view | Workspace, Watchlist, Depth, Orders, Fills, Positions, Tape. No Ticket or Ladder, and a read-only order blotter. |
 | sam | trading-view, trading-supervisor | As dave, plus Supervision › Desk overview (all accounts) |
-| admin | trading-view, trading-supervisor, module-admin-access, vuu-table-viewer-access | Supervision, plus portal module admin |
+| admin | trading-view, trading-supervisor (plus `vuu-portal` module-admin-access, vuu-table-viewer-access) | Supervision, plus portal module admin |
 
 The Keycloak admin console is at `https://localhost:8180/admin` (admin / admin). These are dev credentials only.
 `bun run keycloak:realm export` rewrites `infra/keycloak/realm-vuu.json`, which docker-compose imports. Use
@@ -118,6 +177,9 @@ All features are built from one package, `apps/features/trading`, as **one MF re
 requires a unique `mfScope` per module (upstream #45). `src/catalog.ts` is the source of truth.
 `bun run features:sync` generates `portal-build.json` and `apps/portal-config/default-modules.yaml` from it.
 `bun run features:check` (run in CI) fails on drift and validates the yaml with the portal server's own loader.
+
+The Role column is the server role. The module's `accessRole` is the matching nav role (`trading-view` →
+`trading-access`, and so on).
 
 | Nav | Module | Role | Content |
 | --- | --- | --- | --- |
@@ -162,7 +224,8 @@ Each feature wraps its content in `TradingFeatureRoot` (from `@heswell/trading-u
 - **The link bus is connected to `BroadcastChannel` once per window** (`ensureLinkBusBroadcast`, also called by the
   host). Popped-out features and other tabs stay linked.
 
-Data access is `mode="inherit"`: features use the host's authenticated connection (`@vuu-ui/core` is a singleton).
+Data access is `mode="inherit"`: features use the connection `RemoteModule` provides, which is the trading server
+connection from `config.json` (see [Two Vuu servers](#two-vuu-servers)). `@vuu-ui/core` is a singleton.
 
 ### MF sharing
 
@@ -214,7 +277,9 @@ A green instrument picker sits in the toolbar, next to an account selector.
 
 | Symptom | Fix |
 | --- | --- |
-| Login loops or "Unable to authenticate" | Open `https://localhost:8180`, `https://localhost:8543` and `https://localhost:8191` once and accept the self-signed certificate (or trust `apps/portal-config/certs/cert.pem`). |
+| Login loops or "Unable to authenticate" | Open `https://localhost:8180`, `https://localhost:8543`, `https://localhost:8191`, `https://localhost:8544` and `https://localhost:8192` once and accept the self-signed certificate (or trust `apps/portal-config/certs/cert.pem`). |
+| A feature shows "Invalid remote module config" | Its `config.json` is missing or invalid. Rebuild with `bun run build`, or check `http://localhost:5110/<feature>/config.json`. |
+| Features load but show no data | The trading server is down, or its certificate is not accepted (`https://localhost:8544`). Check the `trading` log prefix. Token exchange failures (401) mean the realm is missing the `trader-trading-server` client: run `bun run keycloak:realm bootstrap`. |
 | `port N (...) is in use` | Another process has it. Set the `TRADER_*` variable shown. |
 | `no Keycloak` | Set `KEYCLOAK_HOME`, unpack Keycloak 26.x into `~/keycloak/`, or `docker compose up -d keycloak`. |
 | A new or renamed feature is missing from the nav | `bun run start:all --build --reseed`. The portal keeps its runtime module list in `modules.stack.yaml`. |
@@ -226,22 +291,26 @@ A green instrument picker sits in the toolbar, next to an account selector.
 
 ## Verified
 
-Verified with Keycloak 26.4.2 (real OIDC login) and headless Chrome against `bun run start:all`. The scripts are
-not in the repo. Screenshots are in [docs/screenshots](screenshots).
+Verified with @vuu-ui 4.0.0-alpha.21, Keycloak 26.4.2 (real OIDC login and token exchange) and headless Chrome
+against `bun run start:all`, with the trading modules on the standalone trading server. The scripts are not in the
+repo. Screenshots are in [docs/screenshots](screenshots).
 
+- **Token exchange:** each page load exchanges the `vuu-portal` token once at `https://localhost:8544/api/authn`
+  (200). Every remote shares the one `trading` connection, and the OMS applies the exchanged token's roles in
+  `strict` mode.
 - **Order flow:** alice opens Trading › Ticket, buys 200 AAL.L at market, and gets "Filled 200 @ … O-…". The same
   order appears in Orders (Filled tab), Fills and Positions (`orders.png`, `fills.png`, `positions.png`,
   `ticket.png`).
 - **Role gating:**
   - dave has no Ticket or Ladder in the nav. The workspace shows "needs trading-execute" placeholders, and his
     blotter has no amend, cancel or Cancel all (`workspace-dave-view-only.png`).
-  - sam additionally gets Supervision › Desk overview (`supervisor-sam.png`).
+  - sam additionally gets Supervision › Desk overview and sees every account (`supervisor-sam.png`).
 - **Linking across separately loaded remotes:**
-  - In the workspace, picking AAL.L in the green picker drives the ladder (a child remote) and the tape.
+  - In the workspace, picking BARC.L in the green picker drives the ladder (a child remote) and the tape.
   - Clicking a watchlist row drives depth and the ticket (a child remote) (`workspace-linked.png`).
-  - Clicking a row in the standalone Watchlist feature, then opening the Ticket and Depth features, shows that
-    instrument (`watchlist.png`, `depth.png`).
-- **Saved state:** switching the workspace's Depth to green survives a page reload, and Reset layout returns it to
-  red.
+  - Clicking a row in the standalone Watchlist feature, then opening the Ticket and Depth features from the nav,
+    shows that instrument (`watchlist.png`, `depth.png`). Link state lives in the page, so a full reload clears it.
+- **Saved state** (verified in Phase 4 on alpha.20, not re-run): switching the workspace's Depth to green survives a
+  page reload, and Reset layout returns it to red.
 - **Not verified:** `docker-compose.yml` (no Docker on the dev machine) and the `Procfile` under a process manager.
   `--prepare` was run.

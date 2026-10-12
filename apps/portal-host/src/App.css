@@ -7,14 +7,15 @@ body {
 }
 
 /*
- * @vuu-ui/core alpha.20 lays the shell out with a 56px icon rail; our modules
- * have no nav icons, so widen it to fit the labels (newer core releases use
- * --vuuPortalShell-leftPanel-width instead).
+ * @vuu-ui/core (alpha.21) lays the shell out with a fixed 56px icon rail; our
+ * modules have no nav icons, so widen it to fit the labels. Keep the rows in
+ * step with PortalShell.css (alpha.21 added the "banners" row).
  */
 #trader-portal {
   --vuuPortalShell-leftPanel-width: 168px;
   grid-template:
     "nav header" 56px
+    "nav banners"
     "nav content" 1fr
     / var(--vuuPortalShell-leftPanel-width) 1fr;
 

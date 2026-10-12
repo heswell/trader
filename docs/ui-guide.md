@@ -302,12 +302,13 @@ the roles and the run-all command.
 
 1. Add `src/features/<Name>.tsx`. It renders trading-ui components wrapped in `withFeatureRoot` /
    `TradingFeatureRoot`, which mounts notifications (toasted once per window), the ticket launcher and the
-   connection banner. Do not add a `TradingDataProvider`: data access is `mode="inherit"`, so the host's
-   authenticated `DataProvider` is used.
+   connection banner. Do not add a `TradingDataProvider`: data access is `mode="inherit"`, so the connection
+   `RemoteModule` provides is used. That is the trading server, named in the remote's `config.json`, which
+   `bun run build` writes for every feature.
 2. Give components stable `id`s. They key the saved state (e.g. `trading.linkGroup.<id>` in the module's portal
    state).
-3. Add an entry to `src/catalog.ts`: a unique `key`, module `id`, `mfScope`, `accessRole` (`trading-view`,
-   `trading-execute` or `trading-supervisor`), and either `location` + `path` (nav entry) or `parent` (child module
+3. Add an entry to `src/catalog.ts`: a unique `key`, module `id`, `mfScope`, `accessRole` (the `vuu-portal` nav role
+   for `trading-view`, `trading-execute` or `trading-supervisor`, via `TRADING_ACCESS_ROLE`), and either `location` + `path` (nav entry) or `parent` (child module
    rendered by another feature through `usePortalModuleRegistry()` + `RemoteModule`).
 4. Run `bun run features:sync`. This regenerates `portal-build.json` (one remote per entry, the shared block and
    `cssInline`, upstream #23) and `apps/portal-config/default-modules.yaml`. Then run `bun run build`, which renames
@@ -324,7 +325,7 @@ Grids that need status, side, progress, price, P&L, time or liquidity cells shou
 in `TradingRenderer` (`registerTradingCellRenderers()`; call it at module level because `sideEffects` only lists
 CSS) rather than writing new ones. Non-Table views (e.g. the tape) use `useDataSourceRows` for rAF-coalesced
 rows (see §12, "Rows as objects"). See `packages/trading-ui/README.md` for the component props and `docs/upstream-issues.md` #28–32 for the
-alpha.20 constraints behind the design choices.
+alpha.20/alpha.21 constraints behind the design choices.
 
 ## 12. Order ticket, notifications and connection state (P3.6, P3.12)
 

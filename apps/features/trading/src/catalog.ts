@@ -5,10 +5,34 @@
  * dist/<key>/ and scripts/features/sync-build-config.ts generates
  * apps/portal-config/default-modules.yaml from this list.
  */
+
+/**
+ * Trading server roles: client roles of the trading Vuu server's own Keycloak
+ * client (trader-trading-server). The OMS enforces them on every viewport and
+ * RPC; the UI reads them from the trading connection (useVuuAuthorizations).
+ */
 export type TradingRole =
   | "trading-view"
   | "trading-execute"
   | "trading-supervisor";
+
+/**
+ * Navigation roles: `vuu-portal` client roles, the modules' `accessRole`. The
+ * portal server lists a module only for users holding it. Each trading role
+ * has one; users are granted both (scripts/stack/keycloak-realm.ts).
+ */
+export type TradingAccessRole =
+  | "trading-access"
+  | "trading-execute-access"
+  | "trading-supervisor-access";
+
+export const TRADING_ACCESS_ROLE: Readonly<
+  Record<TradingRole, TradingAccessRole>
+> = {
+  "trading-view": "trading-access",
+  "trading-execute": "trading-execute-access",
+  "trading-supervisor": "trading-supervisor-access",
+};
 
 export interface TradingFeature {
   /** Build / URL key: served at <featuresOrigin>/<key>/. */
@@ -24,7 +48,7 @@ export interface TradingFeature {
   source: string;
   title: string;
   description: string;
-  accessRole: TradingRole;
+  accessRole: TradingAccessRole;
   /** Top-level modules: nav location and route. */
   location?: string;
   path?: string;
@@ -32,8 +56,8 @@ export interface TradingFeature {
   parent?: string;
 }
 
-const view: TradingRole = "trading-view";
-const execute: TradingRole = "trading-execute";
+const view = TRADING_ACCESS_ROLE["trading-view"];
+const execute = TRADING_ACCESS_ROLE["trading-execute"];
 
 export const TRADING_FEATURES: readonly TradingFeature[] = [
   {
@@ -188,7 +212,7 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     title: "Supervisor",
     description:
       "All desks' orders (incl. child orders) and positions by account",
-    accessRole: "trading-supervisor",
+    accessRole: TRADING_ACCESS_ROLE["trading-supervisor"],
     location: "/Supervision/Desk overview",
     path: "/supervision/desk",
   },
