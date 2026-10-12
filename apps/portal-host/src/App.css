@@ -1,0 +1,40 @@
+body {
+  padding: 0;
+  margin: 0;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/*
+ * @vuu-ui/core alpha.20 lays the shell out with a 56px icon rail; our modules
+ * have no nav icons, so widen it to fit the labels (newer core releases use
+ * --vuuPortalShell-leftPanel-width instead).
+ */
+#trader-portal {
+  --vuuPortalShell-leftPanel-width: 168px;
+  grid-template:
+    "nav header" 56px
+    "nav content" 1fr
+    / var(--vuuPortalShell-leftPanel-width) 1fr;
+
+  .vuuNavContainer {
+    justify-items: stretch;
+    min-width: 0;
+  }
+
+  .vuuNavContainer .vuuPortalLogo {
+    grid-area: logo;
+    justify-self: center;
+  }
+
+  .vuuPortalShell-content {
+    min-width: 0;
+    min-height: 0;
+  }
+}
+
+#trader-portal .vuuPortalAppSwitcher a {
+  color: inherit;
+  text-decoration: none;
+}

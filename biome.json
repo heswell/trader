@@ -17,8 +17,17 @@
       "!**/node_modules"
     ]
   },
-  "assist": { "actions": { "source": { "organizeImports": "off" } } },
-  "formatter": { "enabled": true, "indentStyle": "space" },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "off"
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space"
+  },
   "linter": {
     "enabled": true,
     "rules": {
@@ -30,9 +39,27 @@
         "noInferrableTypes": "error",
         "noUselessElse": "off"
       },
-      "complexity": { "noForEach": "off" },
-      "correctness": { "noUnusedImports": "error" },
-      "suspicious": { "noExplicitAny": "warn" }
+      "complexity": {
+        "noForEach": "off"
+      },
+      "correctness": {
+        "noUnusedImports": "error"
+      },
+      "suspicious": {
+        "noExplicitAny": "warn"
+      }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["apps/features/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "useUniqueElementIds": "off"
+          }
+        }
+      }
+    }
+  ]
 }

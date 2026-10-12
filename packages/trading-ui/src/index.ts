@@ -34,6 +34,7 @@ export * from "./utils/marketData";
 export * from "./utils/userSettingsStorage";
 
 // components
+export * from "./components/AccountSelector";
 export * from "./components/ConnectionBanner";
 export * from "./components/InstrumentPicker";
 export * from "./components/LinkGroupSelector";
@@ -58,3 +59,6 @@ export * from "./components/PriceLadder";
 export * from "./components/InstrumentGrid";
 export * from "./components/Sparkline";
 export * from "./components/StaleIndicator";
+
+// MF feature root: per-host services mounted once (P4.1)
+export * from "./feature-root";

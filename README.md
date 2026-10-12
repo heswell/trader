@@ -2,8 +2,43 @@
 
 Reusable trading front-end (instrument grids, market depth / price ladder, order ticket, order & trade blotters) built on [Vuu](https://github.com/finos/vuu) UI components and the `vuu-portal`, exercised by a simulated backend (exchange simulator + OMS) running on [vuu-websocket](https://github.com/heswell/vuu-websocket).
 
-Status: Phase 1. The exchange simulator (`EXCHANGE` module: instruments, prices, depth, trades, instrumentPrices,
-admin RPCs, in-process OMS gateway) is in place. The `tradingHello` remote shows `EXCHANGE/instrumentPrices`.
+Status: Phase 4. The trading UI runs in vuu-portal as role-gated module-federation features (Watchlist, Depth,
+Ladder, Ticket, Orders, Fills, Positions, Tape, a prebuilt trader Workspace and a supervisor desk overview), over
+the exchange simulator and OMS. One command starts the whole stack. See
+[docs/portal-integration.md](docs/portal-integration.md).
+
+![Trader workspace](docs/screenshots/workspace-linked.png)
+
+## Quick start
+
+```sh
+bun install
+bun run start:all        # or: bun run dev
+```
+
+Open http://localhost:5100 and log in as `alice` / `password`. The first time, open https://localhost:8180,
+https://localhost:8543 and https://localhost:8191 and accept the self-signed dev certificate. `start:all` needs
+Keycloak 26.x: `KEYCLOAK_HOME`, a `~/keycloak/keycloak-*` install, an already-running Keycloak
+(`TRADER_KEYCLOAK_URL`), or `docker compose up -d keycloak`. It creates the realm, roles and users itself.
+
+| User (password `password`) | Can |
+| --- | --- |
+| alice, bob, carol, erin | view and trade (ticket, ladder, amend / cancel) |
+| dave | view only |
+| sam | view, plus Supervision › Desk overview |
+| admin | supervision and portal module admin |
+
+| What | Where |
+| --- | --- |
+| portal host (PortalShell) | http://localhost:5100 |
+| trading features (MF remotes) | http://localhost:5110/&lt;feature&gt;/ |
+| portal server + EXCHANGE + OMS | `wss://localhost:8191/websocket-portal`, `https://localhost:8543` |
+| Keycloak (admin / admin) | https://localhost:8180 |
+
+All ports can be changed with `TRADER_*` env vars, and busy ports are reported, not taken over. Flags: `--build`
+(rebuild the features), `--reseed` (reset the portal module list) and `--prepare` (build and generate config only,
+for the `Procfile`). Ctrl-C stops everything. See
+[docs/portal-integration.md](docs/portal-integration.md#running) for details and troubleshooting.
 
 ## Layout
 
@@ -12,15 +47,16 @@ packages/
   trading-schemas/    shared table defs, enums, RPC contracts, tick/lot utils
   exchange-sim/       exchange simulator: order books, bots, EXCHANGE module, OMS gateway (see its README)
   oms/                OMS module: orders, risk, routing, positions, background flow (see its README)
-  trading-ui/         reusable React components, data hooks, instrument context, formatters (see docs/ui-guide.md)
+  trading-ui/         reusable React components, data hooks, instrument linking, TradingFeatureRoot (docs/ui-guide.md)
   trading-test-data/  in-browser EXCHANGE + OMS (real engines on @heswell/vuu-data-engine-local)
 apps/
-  features/hello/     module-federation remote (rsbuild via @vuu-ui/portal-build), :5010; exchange prices grid
+  features/trading/   the portal features: catalog.ts -> one MF remote per feature (served on :5110)
+  portal-host/        the portal host: PortalShell, Keycloak login, nav (:5100)
+  portal-config/      application.conf, default-modules.yaml (generated) and the portal server launcher
   showcase/           rsbuild dev app: trading-ui examples on local data or a server, :5001
-  portal-config/      application.conf, default-modules.yaml and launcher for vuu-portal
-docs/ui-guide.md      UI conventions (components, styling, data access, showcase, tests, MF features)
-docs/upstream-issues.md
-scripts/              link, certs, dev, typecheck helpers
+infra/keycloak/       realm export (roles, clients, seeded users) for docker-compose
+docs/                 ui-guide, portal-integration, protocol-parity, upstream-issues, screenshots/
+scripts/              start-all, stack/ (config, Keycloak realm, static server), features/ (sync, build), link, certs
 ```
 
 ## Prerequisites
@@ -41,44 +77,46 @@ cp .env.example .env   # set VUU_WEBSOCKET_DIR if not ../vuu-websocket
 bun install
 ```
 
-## Run
+## Other commands
 
-```sh
-bun run dev
-```
+- `bun run build`: the portal host and features.
+- `bun run features:sync`: regenerate `portal-build.json` and `default-modules.yaml` from the feature catalog.
+  `features:check` verifies them.
+- `bun run typecheck`: emits .d.ts for the linked vuu packages into `.vuu-types/`, then checks only trader code.
+- `bun run lint`, `bun run format`.
+- `bun run test`: `test:server` + `test:ui`, the latter with a happy-dom preload.
+- `bun run keycloak:realm export|bootstrap`: write `infra/keycloak/realm-vuu.json`, or apply it to a running
+  Keycloak.
 
-Generates a self-signed cert, builds the hello remote if needed, then starts:
+UI showcase: `bun run dev:showcase` (http://localhost:5001, local data; its "Remote server" toggle uses
+`bun run dev:trading-server`).
 
-| What | Where |
-| --- | --- |
-| portal + EXCHANGE + OMS modules (one server) | `wss://localhost:8091/websocket-portal`, `https://localhost:8443/api/authn` |
-| hello remote | `http://localhost:5010` |
-| portal host UI (only if `VUU_PORTAL_HOST_DIR` set) | `http://localhost:5001` |
+Stand-alone exchange-sim (permissive auth, TLS with the dev cert, `wss://localhost:8094/websocket-exchange-sim`):
+`bun run --filter @heswell/exchange-sim start`. Benchmark: `bun run --filter @heswell/exchange-sim bench`.
+Simulator knobs (`exchangeSim.*` / `EXCHANGE_SIM_*`) are documented in
+[packages/exchange-sim/README.md](packages/exchange-sim/README.md).
 
-The portal host UI is not in vuu-websocket or published to npm; it is built in the
-[finos/vuu](https://github.com/finos/vuu) repo (`vuu-ui/dist_portal/portal-host`). Point
-`VUU_PORTAL_HOST_DIR` at that build (its `config.json` expects Keycloak `https://localhost:8080`,
-REST `https://localhost:8443/api/authn`, ws `wss://localhost:8091/websocket-portal`), or use an
-already-running host on :5001. Create Keycloak users with vuu-websocket's `npm run keycloak:bootstrap`
-and log in as `trader1`/`trader2`/`admin`; the "Exchange prices" module then appears in the nav.
-
-Other commands: `bun run build` (remotes), `bun run typecheck` (emits .d.ts for the linked vuu packages into `.vuu-types/`, then checks only trader code), `bun run lint`, `bun run format`,
-`bun run test` (`test:server` + `test:ui`, the latter with a happy-dom preload). UI showcase: `bun run dev:showcase`
-(http://localhost:5001, local data; its "Remote server" toggle uses `bun run dev:trading-server`). Stand-alone exchange-sim (permissive auth, TLS with the dev cert, `wss://localhost:8094/websocket-exchange-sim`): `bun run --filter @heswell/exchange-sim start`;
-benchmark: `bun run --filter @heswell/exchange-sim bench`. Simulator knobs (`exchangeSim.*` / `EXCHANGE_SIM_*`)
-are documented in [packages/exchange-sim/README.md](packages/exchange-sim/README.md).
-Stand-alone EXCHANGE + OMS (permissive auth, `wss://localhost:8095/websocket-trading`): `bun run --filter @heswell/oms start`.
-OMS knobs (`oms.*` / `OMS_*`), RPCs, roles (`trading-view` / `trading-execute` / `trading-supervisor`) and
-seeded accounts (owners alice, bob, carol, dave, erin) are in [packages/oms/README.md](packages/oms/README.md).
-Keycloak users without trading roles who own no account (e.g. `trader1`) see all accounts while
-`oms.permissionMode="auto"`.
+Stand-alone EXCHANGE + OMS (permissive auth, `wss://localhost:8095/websocket-trading`):
+`bun run --filter @heswell/oms start`. OMS knobs (`oms.*` / `OMS_*`), RPCs, roles (`trading-view` /
+`trading-execute` / `trading-supervisor`) and seeded accounts (owners alice, bob, carol, dave, erin) are in
+[packages/oms/README.md](packages/oms/README.md).
 
 ### Verified / not verified
+
+Verified (Phase 4): `bun run start:all` with Keycloak 26.4.2 (real OIDC login), driven by headless Chrome through
+the portal UI.
+- alice places an order in Ticket, and it shows in Orders, Fills and Positions.
+- dave has no Ticket or Ladder, and a read-only blotter. sam gets the supervisor desk.
+- Link groups work across separately loaded remotes, and a changed link group survives a reload.
+- Screenshots are in [docs/screenshots](docs/screenshots).
+- Not verified: `docker-compose.yml` (no Docker) and the `Procfile` under a process manager.
+
+See [docs/portal-integration.md](docs/portal-integration.md#verified).
 
 Verified (Phase 2): OMS tests (68, including WebSocket tests against a real VuuServer with EXCHANGE + OMS). Also
 `start-portal.ts`, using an alternate-port permissive copy of the config: REST login as `alice`, then `CREATE_VP` on
 `OMS/parentOrders` streams background-flow orders (NEW/FILLED/CANCELLED) filtered to `ACC-US-01`. The stand-alone
-OMS server starts on :8095. Keycloak roles are not verified (the realm has no trading roles yet, upstream #15).
+OMS server starts on :8095. Keycloak roles were not verified in Phase 2; Phase 4 adds them to the realm.
 
 
 Verified (Phase 1): tests (including a VuuServer + websocket integration test); remote build. The composite
@@ -90,8 +128,8 @@ stand-alone server. Not verified in a browser: the full Keycloak login and host 
 
 ## CI
 
-`.github/workflows/ci.yml` checks out vuu-websocket alongside, installs, then typechecks, lints,
-format-checks and tests. If vuu-websocket is private, add a `VUU_WEBSOCKET_TOKEN` secret (read access).
+`.github/workflows/ci.yml` checks out vuu-websocket alongside and installs. It then typechecks, lints,
+format-checks, tests, checks the generated feature config (`features:check`) and builds the host and features. If vuu-websocket is private, add a `VUU_WEBSOCKET_TOKEN` secret (read access).
 
 ## Upstream
 

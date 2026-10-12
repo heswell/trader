@@ -1,0 +1,246 @@
+{
+  "realm": "vuu",
+  "enabled": true,
+  "displayName": "Trader (dev)",
+  "sslRequired": "external",
+  "accessTokenLifespan": 1800,
+  "ssoSessionIdleTimeout": 36000,
+  "clients": [
+    {
+      "clientId": "vuu-portal",
+      "name": "Vuu portal host",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "fullScopeAllowed": false,
+      "redirectUris": [
+        "http://localhost:5100/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5100"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "+"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience-vuu-portal-server",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "vuu-portal-server",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "vuu-portal-server",
+      "name": "Vuu portal server",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "vuu-portal-local-dev-secret",
+      "standardFlowEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": false,
+      "attributes": {
+        "standard.token.exchange.enabled": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience-vuu-portal-server",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "vuu-portal-server",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "roles": {
+    "client": {
+      "vuu-portal": [
+        {
+          "name": "trading-view",
+          "clientRole": true
+        },
+        {
+          "name": "trading-execute",
+          "clientRole": true
+        },
+        {
+          "name": "trading-supervisor",
+          "clientRole": true
+        },
+        {
+          "name": "module-admin-access",
+          "clientRole": true
+        },
+        {
+          "name": "vuu-table-viewer-access",
+          "clientRole": true
+        }
+      ]
+    }
+  },
+  "users": [
+    {
+      "username": "alice",
+      "enabled": true,
+      "email": "alice@trader.example",
+      "emailVerified": true,
+      "firstName": "Alice",
+      "lastName": "Trader",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "clientRoles": {
+        "vuu-portal": [
+          "trading-view",
+          "trading-execute"
+        ]
+      }
+    },
+    {
+      "username": "bob",
+      "enabled": true,
+      "email": "bob@trader.example",
+      "emailVerified": true,
+      "firstName": "Bob",
+      "lastName": "Trader",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "clientRoles": {
+        "vuu-portal": [
+          "trading-view",
+          "trading-execute"
+        ]
+      }
+    },
+    {
+      "username": "carol",
+      "enabled": true,
+      "email": "carol@trader.example",
+      "emailVerified": true,
+      "firstName": "Carol",
+      "lastName": "Trader",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "clientRoles": {
+        "vuu-portal": [
+          "trading-view",
+          "trading-execute"
+        ]
+      }
+    },
+    {
+      "username": "dave",
+      "enabled": true,
+      "email": "dave@trader.example",
+      "emailVerified": true,
+      "firstName": "Dave",
+      "lastName": "Viewer",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "clientRoles": {
+        "vuu-portal": [
+          "trading-view"
+        ]
+      }
+    },
+    {
+      "username": "erin",
+      "enabled": true,
+      "email": "erin@trader.example",
+      "emailVerified": true,
+      "firstName": "Erin",
+      "lastName": "Trader",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "clientRoles": {
+        "vuu-portal": [
+          "trading-view",
+          "trading-execute"
+        ]
+      }
+    },
+    {
+      "username": "sam",
+      "enabled": true,
+      "email": "sam@trader.example",
+      "emailVerified": true,
+      "firstName": "Sam",
+      "lastName": "Supervisor",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "clientRoles": {
+        "vuu-portal": [
+          "trading-view",
+          "trading-supervisor"
+        ]
+      }
+    },
+    {
+      "username": "admin",
+      "enabled": true,
+      "email": "admin@trader.example",
+      "emailVerified": true,
+      "firstName": "Portal",
+      "lastName": "Admin",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "clientRoles": {
+        "vuu-portal": [
+          "trading-view",
+          "trading-supervisor",
+          "module-admin-access",
+          "vuu-table-viewer-access"
+        ]
+      }
+    }
+  ]
+}

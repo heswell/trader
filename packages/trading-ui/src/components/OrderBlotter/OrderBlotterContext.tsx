@@ -15,19 +15,30 @@ export const OrderBlotterContext = createContext<OrderRowActions | undefined>(
 
 export const ORDER_ACTIONS_RENDERER = "trading.order-actions";
 
-const OrderActionsCell = ({ column, dataRow }: TableCellRendererProps) => {
+export const OrderActionsCell = ({
+  column,
+  dataRow,
+}: TableCellRendererProps) => {
   const actions = useContext(OrderBlotterContext);
   const orderId = String(dataRow[column.name] ?? "");
   const status = String(dataRow.status ?? "");
+  if (!actions) {
+    // read-only blotter
+    return (
+      <span className="tradingOrderBlotter-actions">
+        <span className="tradingOrderBlotter-orderId">{orderId}</span>
+      </span>
+    );
+  }
   return (
     <span className="tradingOrderBlotter-actions">
       <span className="tradingOrderBlotter-orderId">{orderId}</span>
       <button
         aria-label={`Amend order ${orderId}`}
-        disabled={!actions || !isOrderAmendable(status)}
+        disabled={!isOrderAmendable(status)}
         onClick={(e) => {
           e.stopPropagation();
-          actions?.amend(orderId);
+          actions.amend(orderId);
         }}
         title="Amend"
         type="button"
@@ -36,10 +47,10 @@ const OrderActionsCell = ({ column, dataRow }: TableCellRendererProps) => {
       </button>
       <button
         aria-label={`Cancel order ${orderId}`}
-        disabled={!actions || !isOrderCancellable(status)}
+        disabled={!isOrderCancellable(status)}
         onClick={(e) => {
           e.stopPropagation();
-          actions?.cancel(orderId);
+          actions.cancel(orderId);
         }}
         title="Cancel"
         type="button"

@@ -59,3 +59,10 @@ jobs:
 
       - name: Test
         run: bun run test
+
+      # portal-build.json / default-modules.yaml in sync with the feature catalog
+      - name: Features check
+        run: bun run features:check
+
+      - name: Build portal host and trading features
+        run: bun run build

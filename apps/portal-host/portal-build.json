@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "target": "host",
+  "paths": {
+    "assetPrefix": "/",
+    "htmlTemplate": "./public/index.html",
+    "output": "./dist",
+    "entries": {
+      "remote": "./src/index.tsx"
+    },
+    "preEntry": "@vuu-ui/vuu-theme/index.css"
+  },
+  "manifest": {
+    "filename": "./config.json",
+    "remote": {
+      "authUrl": "https://localhost:8180",
+      "restUrl": "https://localhost:8543/api/authn",
+      "websocketUrl": "wss://localhost:8191/websocket-portal"
+    }
+  },
+  "moduleFederation": {
+    "name": "host",
+    "remoteType": "module",
+    "remotes": {},
+    "shared": {
+      "react": {
+        "singleton": true,
+        "requiredVersion": "^19.2.3",
+        "strictVersion": true
+      },
+      "react-dom": {
+        "singleton": true,
+        "requiredVersion": "^19.2.3",
+        "strictVersion": true
+      },
+      "react-router-dom": {
+        "singleton": true,
+        "requiredVersion": "^7.18.3",
+        "strictVersion": true
+      },
+      "@vuu-ui/core": {
+        "singleton": true,
+        "requiredVersion": "package",
+        "strictVersion": true
+      },
+      "@vuu-ui/core/portal": {
+        "singleton": true,
+        "requiredVersion": "package:@vuu-ui/core",
+        "strictVersion": true
+      },
+      "@vuu-ui/vuu-data-remote": {
+        "singleton": true,
+        "requiredVersion": "package:@vuu-ui/core",
+        "strictVersion": true
+      },
+      "@vuu-ui/vuu-notifications": {
+        "singleton": true,
+        "requiredVersion": "package:@vuu-ui/core",
+        "strictVersion": true
+      },
+      "@salt-ds/core": {
+        "singleton": true,
+        "requiredVersion": "^1.67.0"
+      },
+      "@heswell/trading-ui": {
+        "singleton": true,
+        "requiredVersion": "^0.1.0"
+      }
+    }
+  },
+  "cssInline": {
+    "include": ["/packages/trading-ui/"]
+  }
+}

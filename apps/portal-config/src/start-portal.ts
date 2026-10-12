@@ -35,9 +35,9 @@ const oms = createOms(sim.gateway, {
 const application = createVuuServerApplication({
   authProviders: createConfiguredAuthProviders(config),
   config,
-  defaultHttpsPort: 8443,
+  defaultHttpsPort: 8543,
   defaultWebSocketPath: "/websocket-portal",
-  defaultWebSocketPort: 8091,
+  defaultWebSocketPort: 8191,
   loginSuccessProvider: (user, tableContainer) => ({
     moduleRegistry: createModuleRegistry(tableContainer, user),
   }),
