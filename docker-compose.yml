@@ -1,5 +1,7 @@
-# Keycloak for the trader stack (realm "vuu" with the trading roles and the
-# seeded users, see docs/portal-integration.md). The rest of the stack runs
+# Keycloak for the trader stack (realm "vuu": the vuu-portal client with the
+# navigation roles, the confidential clients of the portal server and of the
+# trading server (trader-trading-server, owning the trading roles, with token
+# exchange) and the seeded users, see docs/portal-integration.md). The rest of the stack runs
 # on the host with bun: `bun run start:all` reuses this Keycloak.
 #
 #   bun run certs                 # once: apps/portal-config/certs
@@ -7,7 +9,8 @@
 #   bun run start:all
 #
 # The realm is imported on first start only; after changing the roles / users
-# run `bun run keycloak:realm export` and `docker compose down -v`.
+# run `bun run keycloak:realm export` and `docker compose down -v`. (start:all
+# also recreates a realm that predates the trader-trading-server client.)
 services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.4

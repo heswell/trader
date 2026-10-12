@@ -25,6 +25,9 @@ export const stackConfig = () => {
     keycloakRealm: "vuu",
     portalWsPort: num("TRADER_PORTAL_WS_PORT", 8191),
     portalHttpsPort: num("TRADER_PORTAL_HTTPS_PORT", 8543),
+    /** The trading Vuu server (exchange-sim + OMS) the trading modules use. */
+    tradingWsPort: num("TRADER_TRADING_WS_PORT", 8192),
+    tradingHttpsPort: num("TRADER_TRADING_HTTPS_PORT", 8544),
     hostPort,
     hostOrigin: `http://${host}:${hostPort}`,
     featuresPort,
@@ -34,3 +37,26 @@ export const stackConfig = () => {
 };
 
 export type StackConfig = ReturnType<typeof stackConfig>;
+
+/** Keycloak confidential client of the trading Vuu server (owns the trading roles). */
+export const TRADING_CLIENT_ID = "trader-trading-server";
+export const TRADING_CONNECTION_ID = "trading";
+export const TRADING_WEBSOCKET_PATH = "/websocket-trading";
+
+/**
+ * <mfUrl>/config.json of every trading remote (@vuu-ui/core RemoteModule,
+ * alpha.21+): the Vuu server the module connects to. The portal user's
+ * Keycloak token is exchanged for a Vuu token at restUrl. TRADER_TRADING_REST_URL
+ * / TRADER_TRADING_WEBSOCKET_URL override the derived URLs (e.g. behind a proxy).
+ */
+export const featureConfigJson = (
+  cfg: Pick<StackConfig, "host" | "tradingHttpsPort" | "tradingWsPort">,
+) => ({
+  connectionId: TRADING_CONNECTION_ID,
+  restUrl:
+    process.env.TRADER_TRADING_REST_URL ??
+    `https://${cfg.host}:${cfg.tradingHttpsPort}/api/authn`,
+  websocketUrl:
+    process.env.TRADER_TRADING_WEBSOCKET_URL ??
+    `wss://${cfg.host}:${cfg.tradingWsPort}${TRADING_WEBSOCKET_PATH}`,
+});

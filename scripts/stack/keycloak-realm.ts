@@ -1,7 +1,13 @@
 /**
- * Keycloak realm "vuu" for the trader stack: the clients vuu-portal (public,
- * used by the portal host) and vuu-portal-server (confidential, the audience
- * the portal server requires), the trading client roles and seeded dev users.
+ * Keycloak realm "vuu" for the trader stack:
+ *
+ *   vuu-portal             public, the portal host's login. Owns the
+ *                          navigation roles (modules' accessRole) and puts
+ *                          both server clients in its tokens' audience.
+ *   vuu-portal-server      confidential, the audience the portal server requires.
+ *   trader-trading-server  confidential, the trading Vuu server (exchange-sim +
+ *                          OMS). It exchanges the portal user's token for its own
+ *                          (standard token exchange) and owns the trading roles.
  *
  *   bun scripts/stack/keycloak-realm.ts export     # writes infra/keycloak/realm-vuu.json
  *   bun scripts/stack/keycloak-realm.ts bootstrap  # creates the realm in a running Keycloak
@@ -11,61 +17,76 @@
  */
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { type StackConfig, stackConfig } from "./config";
+import {
+  TRADING_ACCESS_ROLE,
+  type TradingRole,
+} from "../../apps/features/trading/src/catalog";
+import { type StackConfig, stackConfig, TRADING_CLIENT_ID } from "./config";
 
 export const DEV_PASSWORD = process.env.TRADER_DEV_PASSWORD ?? "password";
 /** Must match vuu.auth.keycloak.clientSecret in apps/portal-config/application.conf. */
 export const SERVER_CLIENT_SECRET = "vuu-portal-local-dev-secret";
+/** Must match vuu.auth.keycloak.clientSecret in apps/portal-config/application.trading.conf. */
+export const TRADING_CLIENT_SECRET = "trader-trading-local-dev-secret";
+
+export const TRADING_ROLES = Object.keys(TRADING_ACCESS_ROLE) as TradingRole[];
 
 export const PORTAL_CLIENT_ROLES = [
-  "trading-view",
-  "trading-execute",
-  "trading-supervisor",
+  ...Object.values(TRADING_ACCESS_ROLE),
   "module-admin-access",
   "vuu-table-viewer-access",
 ] as const;
 
-type Role = (typeof PORTAL_CLIENT_ROLES)[number];
+type PortalRole = (typeof PORTAL_CLIENT_ROLES)[number];
 
-export const SEEDED_USERS: { username: string; name: string; roles: Role[] }[] =
-  [
-    {
-      username: "alice",
-      name: "Alice Trader",
-      roles: ["trading-view", "trading-execute"],
-    },
-    {
-      username: "bob",
-      name: "Bob Trader",
-      roles: ["trading-view", "trading-execute"],
-    },
-    {
-      username: "carol",
-      name: "Carol Trader",
-      roles: ["trading-view", "trading-execute"],
-    },
-    { username: "dave", name: "Dave Viewer", roles: ["trading-view"] },
-    {
-      username: "erin",
-      name: "Erin Trader",
-      roles: ["trading-view", "trading-execute"],
-    },
-    {
-      username: "sam",
-      name: "Sam Supervisor",
-      roles: ["trading-view", "trading-supervisor"],
-    },
-    {
-      username: "admin",
-      name: "Portal Admin",
-      roles: [
-        "trading-view",
-        "trading-supervisor",
-        "module-admin-access",
-        "vuu-table-viewer-access",
-      ],
-    },
-  ];
+/**
+ * Each user's trading roles also grant the matching navigation role; `portal`
+ * lists any other vuu-portal roles.
+ */
+export const SEEDED_USERS: {
+  username: string;
+  name: string;
+  roles: TradingRole[];
+  portal?: PortalRole[];
+}[] = [
+  {
+    username: "alice",
+    name: "Alice Trader",
+    roles: ["trading-view", "trading-execute"],
+  },
+  {
+    username: "bob",
+    name: "Bob Trader",
+    roles: ["trading-view", "trading-execute"],
+  },
+  {
+    username: "carol",
+    name: "Carol Trader",
+    roles: ["trading-view", "trading-execute"],
+  },
+  { username: "dave", name: "Dave Viewer", roles: ["trading-view"] },
+  {
+    username: "erin",
+    name: "Erin Trader",
+    roles: ["trading-view", "trading-execute"],
+  },
+  {
+    username: "sam",
+    name: "Sam Supervisor",
+    roles: ["trading-view", "trading-supervisor"],
+  },
+  {
+    username: "admin",
+    name: "Portal Admin",
+    roles: ["trading-view", "trading-supervisor"],
+    portal: ["module-admin-access", "vuu-table-viewer-access"],
+  },
+];
+
+export const portalRolesOf = (user: (typeof SEEDED_USERS)[number]) => [
+  ...user.roles.map((role) => TRADING_ACCESS_ROLE[role]),
+  ...(user.portal ?? []),
+];
 
 const audienceMapper = (audience: string) => ({
   name: `audience-${audience}`,
@@ -80,8 +101,24 @@ const audienceMapper = (audience: string) => ({
   },
 });
 
+const serverClient = (clientId: string, name: string, secret: string) => ({
+  clientId,
+  name,
+  enabled: true,
+  publicClient: false,
+  secret,
+  standardFlowEnabled: false,
+  directAccessGrantsEnabled: false,
+  serviceAccountsEnabled: true,
+  fullScopeAllowed: false,
+  attributes: { "standard.token.exchange.enabled": "true" },
+  protocolMappers: [audienceMapper(clientId)],
+});
+
 export const buildRealm = (cfg: Pick<StackConfig, "hostOrigin">) => {
   const origins = [...new Set([cfg.hostOrigin, "http://localhost:5100"])];
+  const clientRoles = (names: readonly string[]) =>
+    names.map((name) => ({ name, clientRole: true }));
   return {
     realm: "vuu",
     enabled: true,
@@ -104,42 +141,46 @@ export const buildRealm = (cfg: Pick<StackConfig, "hostOrigin">) => {
           "pkce.code.challenge.method": "S256",
           "post.logout.redirect.uris": "+",
         },
-        protocolMappers: [audienceMapper("vuu-portal-server")],
+        // Token exchange requires the requesting client in the subject
+        // token's audience.
+        protocolMappers: [
+          audienceMapper("vuu-portal-server"),
+          audienceMapper(TRADING_CLIENT_ID),
+        ],
       },
-      {
-        clientId: "vuu-portal-server",
-        name: "Vuu portal server",
-        enabled: true,
-        publicClient: false,
-        secret: SERVER_CLIENT_SECRET,
-        standardFlowEnabled: false,
-        serviceAccountsEnabled: true,
-        fullScopeAllowed: false,
-        attributes: { "standard.token.exchange.enabled": "true" },
-        protocolMappers: [audienceMapper("vuu-portal-server")],
-      },
+      serverClient(
+        "vuu-portal-server",
+        "Vuu portal server",
+        SERVER_CLIENT_SECRET,
+      ),
+      serverClient(
+        TRADING_CLIENT_ID,
+        "Trader trading server (exchange-sim + OMS)",
+        TRADING_CLIENT_SECRET,
+      ),
     ],
     roles: {
       client: {
-        "vuu-portal": PORTAL_CLIENT_ROLES.map((name) => ({
-          name,
-          clientRole: true,
-        })),
+        "vuu-portal": clientRoles(PORTAL_CLIENT_ROLES),
+        [TRADING_CLIENT_ID]: clientRoles(TRADING_ROLES),
       },
     },
-    users: SEEDED_USERS.map(({ username, name, roles }) => {
-      const [firstName, lastName] = name.split(" ");
+    users: SEEDED_USERS.map((user) => {
+      const [firstName, lastName] = user.name.split(" ");
       return {
-        username,
+        username: user.username,
         enabled: true,
-        email: `${username}@trader.example`,
+        email: `${user.username}@trader.example`,
         emailVerified: true,
         firstName,
         lastName,
         credentials: [
           { type: "password", value: DEV_PASSWORD, temporary: false },
         ],
-        clientRoles: { "vuu-portal": roles },
+        clientRoles: {
+          "vuu-portal": portalRolesOf(user),
+          [TRADING_CLIENT_ID]: user.roles,
+        },
       };
     }),
   };
@@ -167,7 +208,10 @@ const adminToken = async (url: string) => {
   return ((await res.json()) as { access_token: string }).access_token;
 };
 
-/** Create realm "vuu" unless it exists (reset: delete it first). */
+/**
+ * Create realm "vuu" unless it exists (reset: delete it first). A realm from
+ * before the trading server had its own client is recreated.
+ */
 export const bootstrapRealm = async (cfg: StackConfig, reset = false) => {
   const token = await adminToken(cfg.keycloakUrl);
   const call = (path: string, init: RequestInit = {}) =>
@@ -179,10 +223,17 @@ export const bootstrapRealm = async (cfg: StackConfig, reset = false) => {
       },
       tls: { rejectUnauthorized: false },
     } as RequestInit);
+  let recreated = false;
   const existing = await call(`/${cfg.keycloakRealm}`);
   if (existing.ok) {
-    if (!reset) return "exists";
+    const tradingClient = await call(
+      `/${cfg.keycloakRealm}/clients?clientId=${TRADING_CLIENT_ID}`,
+    );
+    const outdated =
+      tradingClient.ok && ((await tradingClient.json()) as []).length === 0;
+    if (!reset && !outdated) return "exists";
     await call(`/${cfg.keycloakRealm}`, { method: "DELETE" });
+    recreated = true;
   }
   const res = await call("", {
     method: "POST",
@@ -190,7 +241,7 @@ export const bootstrapRealm = async (cfg: StackConfig, reset = false) => {
   });
   if (!res.ok)
     throw new Error(`realm import failed: ${res.status} ${await res.text()}`);
-  return "created";
+  return recreated ? "recreated" : "created";
 };
 
 if (import.meta.main) {

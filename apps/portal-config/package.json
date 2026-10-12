@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "start": "bun ./src/start-portal.ts",
+    "start:trading": "bun ./src/start-trading.ts",
     "start:stock": "bun ./src/start-stock-portal.ts"
   },
   "dependencies": {

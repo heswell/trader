@@ -3,10 +3,13 @@ import {
   TradingFeatureRoot,
   useSelectedAccount,
 } from "@heswell/trading-ui";
-import { usePortalModuleRegistry } from "@vuu-ui/core/portal";
+import { useVuuAuthorizations } from "@vuu-ui/core";
 import type { CSSProperties, ReactNode } from "react";
 
-/** Portal roles (granted as `vuu-portal` client roles, see docs/portal-integration.md). */
+/**
+ * Trading server roles (`trader-trading-server` client roles, see
+ * docs/portal-integration.md).
+ */
 export const ROLE = {
   view: "trading-view",
   execute: "trading-execute",
@@ -14,21 +17,22 @@ export const ROLE = {
 } as const;
 
 /**
- * What the signed-in user may do, derived from the modules the portal server
- * registered for them: the server only sends modules whose `accessRole` the
- * user holds, so a module gated by `trading-execute` proves the role. The
- * OMS enforces the same roles on every RPC; this only shapes the UI.
+ * What the signed-in user may do: the roles of the trading Vuu session (the
+ * remote's config.json connection, whose token the trading server issued).
+ * The OMS enforces the same roles on every RPC; this only shapes the UI.
  */
 export const useEntitlements = () => {
-  let modules: readonly { accessRole?: string }[] = [];
+  let roles: readonly string[] = [];
   try {
-    // biome-ignore lint/correctness/useHookAtTopLevel: always called; try only guards the throw outside a portal (standalone dev)
-    modules = usePortalModuleRegistry().remoteModules;
+    // biome-ignore lint/correctness/useHookAtTopLevel: always called; try only guards the throw without a Vuu connection (standalone dev)
+    roles = useVuuAuthorizations();
   } catch {
-    modules = [];
+    roles = [];
   }
-  const has = (role: string) => modules.some((m) => m.accessRole === role);
-  return { canTrade: has(ROLE.execute), isSupervisor: has(ROLE.supervisor) };
+  return {
+    canTrade: roles.includes(ROLE.execute),
+    isSupervisor: roles.includes(ROLE.supervisor),
+  };
 };
 
 const frame: CSSProperties = {

@@ -7,7 +7,8 @@
   "types": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./engine": "./src/engine.ts"
+    "./engine": "./src/engine.ts",
+    "./main": "./src/Main.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -17,7 +18,7 @@
   "dependencies": {
     "@heswell/exchange-sim": "workspace:*",
     "@heswell/trading-schemas": "workspace:*",
-    "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20"
+    "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.21"
   },
   "devDependencies": {
     "@heswell/hft-limit-order-book": "1.0.0"

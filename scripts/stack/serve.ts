@@ -6,10 +6,13 @@
  *             stack config (Keycloak URL, portal REST / websocket URLs).
  *   features  apps/features/trading/dist on TRADER_FEATURES_PORT (5110), one
  *             remote per /<key>/ (scripts/features/build.ts), with CORS.
+ *             /<key>/config.json (the trading Vuu server the remote connects
+ *             to) is generated from the current stack config, so TRADER_TRADING_*
+ *             changes need no rebuild; the built copy is for other hosting.
  */
 import { existsSync, statSync } from "node:fs";
 import { extname, resolve, sep } from "node:path";
-import { type StackConfig, stackConfig } from "./config";
+import { featureConfigJson, type StackConfig, stackConfig } from "./config";
 
 const root = resolve(import.meta.dir, "../..");
 
@@ -67,6 +70,11 @@ export const serveFeatures = (cfg = stackConfig()) => {
         return new Response(null, { status: 204, headers: cors });
       const { pathname } = new URL(req.url);
       if (pathname === "/health") return new Response("ok", { headers: cors });
+      const remoteConfig = /^\/([^/]+)\/config\.json$/.exec(pathname);
+      if (remoteConfig && fileIn(dist, `/${remoteConfig[1]}/mf-manifest.json`))
+        return Response.json(featureConfigJson(cfg), {
+          headers: { ...cors, ...noStore },
+        });
       const file = fileIn(
         dist,
         pathname.endsWith("/") ? `${pathname}index.html` : pathname,
@@ -78,9 +86,6 @@ export const serveFeatures = (cfg = stackConfig()) => {
           headers: fresh ? { ...cors, ...noStore } : cors,
         });
       }
-      // Remotes built for a newer core fetch <mfUrl>/config.json; ours need none.
-      if (pathname.endsWith("/config.json"))
-        return Response.json({}, { headers: cors });
       return new Response("Not found", { status: 404, headers: cors });
     },
   });

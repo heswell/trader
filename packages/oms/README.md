@@ -13,7 +13,7 @@ const oms = createOms(sim.gateway, {
 // VuuServerConfig(...).withModule(ExchangeModule(sim)).withModule(OmsModule(oms))
 ```
 
-- `apps/portal-config/src/start-portal.ts` hosts EXCHANGE + OMS inside the portal server (keycloak auth).
+- `apps/portal-config/src/start-trading.ts` runs EXCHANGE + OMS as the portal stack's trading server (keycloak auth with token exchange, `application.trading.conf`).
 - Stand-alone (permissive auth, dev cert): `bun run --filter @heswell/oms start` gives
   `wss://localhost:8095/websocket-trading`, `https://localhost:8447/api/authn`.
 
@@ -174,7 +174,7 @@ Each OMS table and `positionPrices` has a Vuu permission function (`omsPermissio
 - Edit-session copies inherit the filter.
 - RPCs re-check access per request.
 
-| role (keycloak `vuu-portal` client roles) | effect |
+| role (client roles of the trading server's keycloak client, `trader-trading-server` in this repo's stack) | effect |
 | --- | --- |
 | `trading-view` | See your own accounts (`accounts.owner == username`). |
 | `trading-execute` | See your own accounts and create/amend/cancel orders for any visible account. Required to trade. |
@@ -187,7 +187,8 @@ No `trading-*` role:
   - any other user sees and trades everything.
 - With `strict`: the user sees nothing and cannot trade.
 
-Use `strict` once the keycloak realm has the roles (docs/upstream-issues.md #15).
+The portal stack (`bun run start:all`) runs the trading server with `strict`
+(`apps/portal-config/application.trading.conf`); see docs/portal-integration.md "Users and roles".
 
 ## Config
 

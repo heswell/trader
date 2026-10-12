@@ -20,7 +20,7 @@ modules:
     mfScope: "tradingWorkspace"
     mfUrl: "http://localhost:5110/workspace"
     navIconUrl: ""
-    accessRole: "trading-view"
+    accessRole: "trading-access"
   - id: 101
     version: 1
     parentModuleId: 100
@@ -34,7 +34,7 @@ modules:
     mfScope: "tradingWorkspaceTicket"
     mfUrl: "http://localhost:5110/workspace-ticket"
     navIconUrl: ""
-    accessRole: "trading-execute"
+    accessRole: "trading-execute-access"
   - id: 102
     version: 1
     parentModuleId: 100
@@ -48,7 +48,7 @@ modules:
     mfScope: "tradingWorkspaceLadder"
     mfUrl: "http://localhost:5110/workspace-ladder"
     navIconUrl: ""
-    accessRole: "trading-execute"
+    accessRole: "trading-execute-access"
   - id: 110
     version: 1
     parentModuleId: 0
@@ -62,7 +62,7 @@ modules:
     mfScope: "tradingWatchlist"
     mfUrl: "http://localhost:5110/watchlist"
     navIconUrl: ""
-    accessRole: "trading-view"
+    accessRole: "trading-access"
   - id: 111
     version: 1
     parentModuleId: 0
@@ -76,7 +76,7 @@ modules:
     mfScope: "tradingDepth"
     mfUrl: "http://localhost:5110/depth"
     navIconUrl: ""
-    accessRole: "trading-view"
+    accessRole: "trading-access"
   - id: 112
     version: 1
     parentModuleId: 0
@@ -90,7 +90,7 @@ modules:
     mfScope: "tradingLadder"
     mfUrl: "http://localhost:5110/ladder"
     navIconUrl: ""
-    accessRole: "trading-execute"
+    accessRole: "trading-execute-access"
   - id: 113
     version: 1
     parentModuleId: 0
@@ -104,7 +104,7 @@ modules:
     mfScope: "tradingTicket"
     mfUrl: "http://localhost:5110/ticket"
     navIconUrl: ""
-    accessRole: "trading-execute"
+    accessRole: "trading-execute-access"
   - id: 114
     version: 1
     parentModuleId: 0
@@ -118,7 +118,7 @@ modules:
     mfScope: "tradingOrders"
     mfUrl: "http://localhost:5110/orders"
     navIconUrl: ""
-    accessRole: "trading-view"
+    accessRole: "trading-access"
   - id: 115
     version: 1
     parentModuleId: 0
@@ -132,7 +132,7 @@ modules:
     mfScope: "tradingFills"
     mfUrl: "http://localhost:5110/fills"
     navIconUrl: ""
-    accessRole: "trading-view"
+    accessRole: "trading-access"
   - id: 116
     version: 1
     parentModuleId: 0
@@ -146,7 +146,7 @@ modules:
     mfScope: "tradingPositions"
     mfUrl: "http://localhost:5110/positions"
     navIconUrl: ""
-    accessRole: "trading-view"
+    accessRole: "trading-access"
   - id: 117
     version: 1
     parentModuleId: 0
@@ -160,7 +160,7 @@ modules:
     mfScope: "tradingTape"
     mfUrl: "http://localhost:5110/tape"
     navIconUrl: ""
-    accessRole: "trading-view"
+    accessRole: "trading-access"
   - id: 120
     version: 1
     parentModuleId: 0
@@ -174,4 +174,4 @@ modules:
     mfScope: "tradingSupervisor"
     mfUrl: "http://localhost:5110/supervisor"
     navIconUrl: ""
-    accessRole: "trading-supervisor"
+    accessRole: "trading-supervisor-access"

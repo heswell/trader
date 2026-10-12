@@ -2,11 +2,13 @@
 
 vuu-websocket was not modified. Workarounds are noted.
 
-1. **Module registry cannot point a remote at a different Vuu server.** The UI descriptor supports a
-   per-module `vuu: {connectionId, restUrl, websocketUrl}`, but `ModuleRecord` (vuu-server `LoginSuccess.ts`)
-   and vuu-portal `ModuleRegistry` do not emit it, and `ModuleStore` drops `vuuConnectionId/vuuWebsocketUrl/vuuRestUrl`
-   (`retiredModuleKeys`). *Workaround:* `apps/portal-config/src/start-portal.ts` hosts the trading modules
-   inside the portal server. Needed before exchange-sim can run as its own process.
+1. ~~**Module registry cannot point a remote at a different Vuu server.**~~ *Resolved in @vuu-ui 4.0.0-alpha.21.*
+   vuu-portal no longer sends connection details in module records. Instead each remote publishes `config.json`
+   next to its `mf-manifest.json` (`{connectionId, restUrl, websocketUrl}`, or `{}` for the portal server).
+   `RemoteModule` reads it (`remote-module-config`), exchanges the portal user's Keycloak token at `restUrl`
+   and opens a ref-counted connection per `connectionId` (`ModuleServerMap`). The trading modules now connect to
+   a standalone trading server (`apps/portal-config/src/start-trading.ts`, ports 8192/8544) and the portal
+   server only serves the module registry. See #57 for the remaining rough edge.
 2. **`@heswell/vuu-server`, `service-utils`, `vuu-portal` are unpublished**; `main` points at `dist/`. Linked via symlink
    (see README). Also `import { createModuleRegistry } from "@heswell/vuu-portal"` was undefined at runtime through the
    link, so we deep-import `src/ModuleRegistry`.
@@ -17,7 +19,8 @@ vuu-websocket was not modified. Workarounds are noted.
    missing `RpcNamedParams`, `ProxySessionDataTable`; vuu-websocket CI only runs `bun test`). *Workaround:* `scripts/vuu-types.ts`
    emits declarations with `tsc --noCheck` into gitignored `.vuu-types/`, and `tsconfig.typecheck.json` maps the packages to them.
    Ideally fix the errors and ship a real `dist/` with `.d.ts`.
-7. **No trading roles in Keycloak bootstrap**; module uses `vuu-table-viewer-access`. Add e.g. `trading-access`.
+7. ~~**No trading roles in Keycloak bootstrap**~~ *Resolved in this repo:* `scripts/stack/keycloak-realm.ts` creates the
+   roles (see #15).
 8. **Config paths must be relative** (`getPath` rejects absolute), which makes ad-hoc configs outside the config
    directory awkward.
 
@@ -47,12 +50,14 @@ vuu-websocket was not modified. Workarounds are noted.
 
 ## Found in Phase 2 (OMS)
 
-15. **No trading roles in the Keycloak realm.** `packages/oms` recognises `vuu-portal` client roles
-    `trading-view`, `trading-execute` and `trading-supervisor` (see packages/oms/README.md "Permissions"). The vuu realm
-    bootstrap should create them and assign them to test users. For example: alice/bob/carol/dave/erin get
-    `trading-view` and `trading-execute`, and a supervisor user gets `trading-supervisor` (this supersedes #7's
-    `trading-access`). Until then the OMS runs with `oms.permissionMode="auto"`: account owners see their own
-    accounts, and users without roles who own no accounts see everything.
+15. ~~**No trading roles in the Keycloak realm.**~~ *Resolved in this repo (revised with the alpha.21 split).*
+    The trading server has its own confidential Keycloak client, `trader-trading-server`, which owns the server
+    roles `trading-view`, `trading-execute` and `trading-supervisor`. The portal user's `vuu-portal` token is
+    exchanged for a `trader-trading-server` token (Keycloak standard token exchange), and `packages/oms` reads
+    the roles from it with `oms.permissionMode="strict"`. Module gating in the portal uses separate `vuu-portal`
+    nav roles (`trading-access`, `trading-execute-access`, `trading-supervisor-access`) that
+    `scripts/stack/keycloak-realm.ts` derives from the same user list. vuu-server has no hook to gate a portal
+    module on another client's roles, hence the two role sets.
 16. **`JoinTableDef` constructor drops `permissionFunction`.** The base `TableDef` accepts one, but the join def does
     not pass it through. *Workaround:* `OmsModule` wraps the `positionPrices` join factory and sets
     `permissionFunction` on the created def. `ModuleFactory.addJoinTable` still has no `ServiceFactory` (#9), so the
@@ -195,3 +200,30 @@ vuu-websocket was not modified. Workarounds are noted.
     read with `load()` to find keys by prefix.
 56. **A parent module cannot reset its child modules' persisted state.** The children are separate modules with
     their own state documents. The workspace's Reset layout clears only its own keys.
+
+## Re-tested against @vuu-ui 4.0.0-alpha.21
+
+#23 and #29–#56 (the vuu-ui items) were re-checked against alpha.21 and portal-build 0.3.0. None is fixed yet,
+so every workaround stays:
+`scrollToKey` still only logs (#37); `Table` still has no controlled selection (#38); `LayoutJSON` (#41) and
+`pluginCssInline` (#23) are still not exported; `SelectRequest` is still a union (#42); vuu-data-react still
+imports vuu-layout (#43); portal-build 0.3.0 has no chunk-loading-global option (#44); the `PortalShell` rail is
+still a fixed 56px (#48; alpha.21 added a `banners` grid row, which `App.css` now includes); `vuuConfig` (#51)
+and the `@vuu-ui/vuu-icons` main entry (#52) still lack types; `PersistedStateAPI` still has no delete (#55);
+`NotificationsProvider` (#35) and `connectionStatusFor` (#36) are unchanged.
+
+## Found in the alpha.21 upgrade (trading server split)
+
+57. **Every remote must publish `config.json`.** `RemoteModule` treats a missing file (404) as an error, so a
+    remote that uses the portal server still needs `{}`. The file is also static per build, while the trading URLs
+    depend on where the stack runs, and portal-build 0.3.0 has no option to emit it (its remote target ignores
+    `manifest`). *Workaround:* `scripts/features/build.ts` writes `dist/<key>/config.json` from `TRADER_*` env
+    vars, and `scripts/stack/serve.ts` regenerates it per request from the current env. Treating 404 as `{}`
+    and a portal-build `remoteConfig` option would help.
+58. **`[ConnectionManager] subscribed message received, viewport not found`** is logged when navigating between
+    modules: a subscribe ack arrives after the component unmounted. It looks harmless but is noisy.
+59. **The `PortalAppSwitcher` nav groups are collapsed by default** (state persisted as `nav/expanded`), so a new
+    user sees only group headers. A default-expanded option would help a portal with few groups.
+60. **The `@vuu-ui/*` packages depend on exact alpha versions**, and `@heswell/vuu-data-engine-local` pins
+    alpha.20, so bun installs two copies of `@vuu-ui/core` (two React contexts) unless the root `package.json`
+    `overrides` every `@vuu-ui/*` package.

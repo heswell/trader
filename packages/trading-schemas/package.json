@@ -14,7 +14,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@vuu-ui/vuu-data-types": "4.0.0-alpha.20",
-    "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20"
+    "@vuu-ui/vuu-data-types": "4.0.0-alpha.21",
+    "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.21"
   }
 }

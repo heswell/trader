@@ -3,8 +3,9 @@
 Reusable trading front-end (instrument grids, market depth / price ladder, order ticket, order & trade blotters) built on [Vuu](https://github.com/finos/vuu) UI components and the `vuu-portal`, exercised by a simulated backend (exchange simulator + OMS) running on [vuu-websocket](https://github.com/heswell/vuu-websocket).
 
 Status: Phase 4. The trading UI runs in vuu-portal as role-gated module-federation features (Watchlist, Depth,
-Ladder, Ticket, Orders, Fills, Positions, Tape, a prebuilt trader Workspace and a supervisor desk overview), over
-the exchange simulator and OMS. One command starts the whole stack. See
+Ladder, Ticket, Orders, Fills, Positions, Tape, a prebuilt trader Workspace and a supervisor desk overview). The
+features connect to a standalone trading Vuu server (exchange simulator + OMS), separate from the portal's own Vuu
+server, through @vuu-ui's per-module `config.json`. One command starts the whole stack. See
 [docs/portal-integration.md](docs/portal-integration.md).
 
 ![Trader workspace](docs/screenshots/workspace-linked.png)
@@ -17,9 +18,12 @@ bun run start:all        # or: bun run dev
 ```
 
 Open http://localhost:5100 and log in as `alice` / `password`. The first time, open https://localhost:8180,
-https://localhost:8543 and https://localhost:8191 and accept the self-signed dev certificate. `start:all` needs
+https://localhost:8543, https://localhost:8191, https://localhost:8544 and https://localhost:8192 and accept the
+self-signed dev certificate. `start:all` needs
 Keycloak 26.x: `KEYCLOAK_HOME`, a `~/keycloak/keycloak-*` install, an already-running Keycloak
-(`TRADER_KEYCLOAK_URL`), or `docker compose up -d keycloak`. It creates the realm, roles and users itself.
+(`TRADER_KEYCLOAK_URL`), or `docker compose up -d keycloak`. It creates the realm, clients, roles and users itself.
+The trading roles belong to the trading server's own Keycloak client (`trader-trading-server`), which receives the
+portal user's token by token exchange.
 
 | User (password `password`) | Can |
 | --- | --- |
@@ -32,7 +36,8 @@ Keycloak 26.x: `KEYCLOAK_HOME`, a `~/keycloak/keycloak-*` install, an already-ru
 | --- | --- |
 | portal host (PortalShell) | http://localhost:5100 |
 | trading features (MF remotes) | http://localhost:5110/&lt;feature&gt;/ |
-| portal server + EXCHANGE + OMS | `wss://localhost:8191/websocket-portal`, `https://localhost:8543` |
+| portal Vuu server (module registry) | `wss://localhost:8191/websocket-portal`, `https://localhost:8543` |
+| trading Vuu server (EXCHANGE + OMS) | `wss://localhost:8192/websocket-trading`, `https://localhost:8544` |
 | Keycloak (admin / admin) | https://localhost:8180 |
 
 All ports can be changed with `TRADER_*` env vars, and busy ports are reported, not taken over. Flags: `--build`
@@ -52,7 +57,7 @@ packages/
 apps/
   features/trading/   the portal features: catalog.ts -> one MF remote per feature (served on :5110)
   portal-host/        the portal host: PortalShell, Keycloak login, nav (:5100)
-  portal-config/      application.conf, default-modules.yaml (generated) and the portal server launcher
+  portal-config/      portal + trading server configs and launchers, default-modules.yaml (generated)
   showcase/           rsbuild dev app: trading-ui examples on local data or a server, :5001
 infra/keycloak/       realm export (roles, clients, seeded users) for docker-compose
 docs/                 ui-guide, portal-integration, protocol-parity, upstream-issues, screenshots/
@@ -70,7 +75,7 @@ scripts/              start-all, stack/ (config, Keycloak realm, static server),
 `@heswell/vuu-server`, `@heswell/service-utils` and `@heswell/vuu-portal` are not published, so
 `bun install` runs `scripts/link-vuu-websocket.ts`, which symlinks them into `node_modules/@heswell/`
 from `$VUU_WEBSOCKET_DIR` (env var or `.env`, default `../vuu-websocket`). Re-run with `bun run link:vuu`.
-Published deps (`@vuu-ui/*@4.0.0-alpha.20`, `@vuu-ui/portal-build`) come from npm.
+Published deps (`@vuu-ui/*@4.0.0-alpha.21`, pinned for every package by root `overrides`, `@vuu-ui/portal-build`) come from npm.
 
 ```sh
 cp .env.example .env   # set VUU_WEBSOCKET_DIR if not ../vuu-websocket
@@ -103,11 +108,11 @@ Stand-alone EXCHANGE + OMS (permissive auth, `wss://localhost:8095/websocket-tra
 
 ### Verified / not verified
 
-Verified (Phase 4): `bun run start:all` with Keycloak 26.4.2 (real OIDC login), driven by headless Chrome through
-the portal UI.
+Verified (Phase 4, re-run on @vuu-ui 4.0.0-alpha.21 with the separate trading server): `bun run start:all` with
+Keycloak 26.4.2 (real OIDC login and token exchange), driven by headless Chrome through the portal UI.
 - alice places an order in Ticket, and it shows in Orders, Fills and Positions.
 - dave has no Ticket or Ladder, and a read-only blotter. sam gets the supervisor desk.
-- Link groups work across separately loaded remotes, and a changed link group survives a reload.
+- Link groups work across separately loaded remotes, and a changed link group survives a reload (Phase 4).
 - Screenshots are in [docs/screenshots](docs/screenshots).
 - Not verified: `docker-compose.yml` (no Docker) and the `Procfile` under a process manager.
 
