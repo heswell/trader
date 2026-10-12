@@ -1,6 +1,11 @@
 /**
- * bun scripts/stack/serve.ts host|features
+ * bun scripts/stack/serve.ts host|features|portal|trading
  *
+ *   portal    the stock vuu-portal server (@heswell/vuu-portal/main) with
+ *             apps/portal-config/application.conf, ports / origins from the
+ *             stack config (serverEnv: the conf's ${?VUU_*} overrides).
+ *   trading   the trading Vuu server (apps/portal-config/src/start-trading.ts)
+ *             with application.trading.conf, likewise.
  *   host      apps/portal-host/dist on TRADER_HOST_PORT (5100): SPA fallback
  *             to index.html for routes, and /config.json generated from the
  *             stack config (Keycloak URL, portal REST / websocket URLs).
@@ -12,7 +17,12 @@
  */
 import { existsSync, statSync } from "node:fs";
 import { extname, resolve, sep } from "node:path";
-import { featureConfigJson, type StackConfig, stackConfig } from "./config";
+import {
+  featureConfigJson,
+  type StackConfig,
+  serverEnv,
+  stackConfig,
+} from "./config";
 
 const root = resolve(import.meta.dir, "../..");
 
@@ -100,8 +110,22 @@ if (import.meta.main) {
   } else if (which === "features") {
     serveFeatures(cfg);
     console.log(`trading features on ${cfg.featuresOrigin}/<feature>/`);
+  } else if (which === "portal") {
+    Object.assign(process.env, serverEnv(cfg).portal);
+    const { main } = await import("@heswell/vuu-portal/main");
+    await main({
+      configFile: resolve(root, "apps/portal-config/application.conf"),
+    });
+  } else if (which === "trading") {
+    Object.assign(process.env, serverEnv(cfg).trading, {
+      VUU_CONFIG_FILE: resolve(
+        root,
+        "apps/portal-config/application.trading.conf",
+      ),
+    });
+    await import("../../apps/portal-config/src/start-trading");
   } else {
-    console.error("usage: serve.ts host|features");
+    console.error("usage: serve.ts host|features|portal|trading");
     process.exit(1);
   }
 }

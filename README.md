@@ -61,33 +61,35 @@ apps/
   showcase/           rsbuild dev app: trading-ui examples on local data or a server, :5001
 infra/keycloak/       realm export (roles, clients, seeded users) for docker-compose
 docs/                 ui-guide, portal-integration, protocol-parity, upstream-issues, screenshots/
-scripts/              start-all, stack/ (config, Keycloak realm, static server), features/ (sync, build), link, certs
+scripts/              start-all, stack/ (config, Keycloak realm, static server), features/ (sync, build), certs
 ```
 
 ## Prerequisites
 
 - [bun](https://bun.sh) >= 1.3 (CI uses 1.3.14), openssl, Keycloak (realm `vuu`) for portal login.
-- A checkout of [heswell/vuu-websocket](https://github.com/heswell/vuu-websocket) **alongside this repo**
-  (`../vuu-websocket`) with dependencies installed. vuu-websocket uses `npm install` (its own convention).
 - **trader must be installed with `bun install` only.** npm, yarn and pnpm are unsupported (workspace protocol);
   a `preinstall` guard fails fast with a clear message.
 
-`@heswell/vuu-server`, `@heswell/service-utils` and `@heswell/vuu-portal` are not published, so
-`bun install` runs `scripts/link-vuu-websocket.ts`, which symlinks them into `node_modules/@heswell/`
-from `$VUU_WEBSOCKET_DIR` (env var or `.env`, default `../vuu-websocket`). Re-run with `bun run link:vuu`.
-Published deps (`@vuu-ui/*@4.0.0-alpha.21`, pinned for every package by root `overrides`, `@vuu-ui/portal-build`) come from npm.
+All dependencies come from npm: the server side from [heswell/vuu-websocket](https://github.com/heswell/vuu-websocket)
+(`@heswell/vuu-server@^3.1.0`, `@heswell/vuu-portal@^2.0.0`, which brings `@heswell/service-utils`), the UI from
+`@vuu-ui/*@4.0.0-alpha.21` (pinned for every package by root `overrides`) and `@vuu-ui/portal-build`.
 
 ```sh
-cp .env.example .env   # set VUU_WEBSOCKET_DIR if not ../vuu-websocket
 bun install
 ```
+
+The portal server is the stock vuu-portal: `bunx vuu-portal --config apps/portal-config/application.conf`
+(or `bun run --filter @heswell/trading-portal-config start`). The trading server is
+`bun apps/portal-config/src/start-trading.ts` (`application.trading.conf`). Both confs take `${?VUU_*}` env overrides
+(`VUU_HTTPS_PORT`, `VUU_WEBSOCKET_PORT`, `VUU_CORS_ALLOWED_ORIGIN`, `VUU_KEYCLOAK_URL`, ...); `start:all` sets them
+per process from the `TRADER_*` settings.
 
 ## Other commands
 
 - `bun run build`: the portal host and features.
 - `bun run features:sync`: regenerate `portal-build.json` and `default-modules.yaml` from the feature catalog.
   `features:check` verifies them.
-- `bun run typecheck`: emits .d.ts for the linked vuu packages into `.vuu-types/`, then checks only trader code.
+- `bun run typecheck`: `tsc --noEmit` against the published `.d.ts` of the vuu packages.
 - `bun run lint`, `bun run format`.
 - `bun run test`: `test:server` + `test:ui`, the latter with a happy-dom preload.
 - `bun run keycloak:realm export|bootstrap`: write `infra/keycloak/realm-vuu.json`, or apply it to a running
@@ -119,13 +121,13 @@ Keycloak 26.4.2 (real OIDC login and token exchange), driven by headless Chrome 
 See [docs/portal-integration.md](docs/portal-integration.md#verified).
 
 Verified (Phase 2): OMS tests (68, including WebSocket tests against a real VuuServer with EXCHANGE + OMS). Also
-`start-portal.ts`, using an alternate-port permissive copy of the config: REST login as `alice`, then `CREATE_VP` on
+the then portal launcher (`start-portal.ts`, since replaced by the stock vuu-portal), using an alternate-port permissive copy of the config: REST login as `alice`, then `CREATE_VP` on
 `OMS/parentOrders` streams background-flow orders (NEW/FILLED/CANCELLED) filtered to `ACC-US-01`. The stand-alone
 OMS server starts on :8095. Keycloak roles were not verified in Phase 2; Phase 4 adds them to the realm.
 
 
 Verified (Phase 1): tests (including a VuuServer + websocket integration test); remote build. The composite
-portal server (`start-portal.ts`, which is what `bun run dev` runs), using an alternate-port copy of the config
+portal server (the former `start-portal.ts`), using an alternate-port copy of the config
 with permissive auth: login works, and `CREATE_VP` on `EXCHANGE/prices`, `depth`, `trades` and `instrumentPrices`
 streams ticking updates. A `haltInstrument` RPC returns `SUCCESS_RESULT`. The same was checked on the
 stand-alone server. Not verified in a browser: the full Keycloak login and host UI, because ports
@@ -133,8 +135,8 @@ stand-alone server. Not verified in a browser: the full Keycloak login and host 
 
 ## CI
 
-`.github/workflows/ci.yml` checks out vuu-websocket alongside and installs. It then typechecks, lints,
-format-checks, tests, checks the generated feature config (`features:check`) and builds the host and features. If vuu-websocket is private, add a `VUU_WEBSOCKET_TOKEN` secret (read access).
+`.github/workflows/ci.yml` installs, typechecks, lints, format-checks, tests, checks the generated feature config
+(`features:check`) and builds the host and features.
 
 ## Upstream
 

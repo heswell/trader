@@ -18,6 +18,7 @@
   "dependencies": {
     "@heswell/hft-limit-order-book": "1.0.0",
     "@heswell/trading-schemas": "workspace:*",
+    "@heswell/vuu-server": "^3.1.0",
     "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.21"
   }
 }

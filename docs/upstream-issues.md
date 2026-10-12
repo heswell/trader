@@ -1,6 +1,6 @@
 # Upstream changes needed (vuu-websocket / vuu)
 
-vuu-websocket was not modified. Workarounds are noted.
+Workarounds are noted. Resolved issues are struck through.
 
 1. ~~**Module registry cannot point a remote at a different Vuu server.**~~ *Resolved in @vuu-ui 4.0.0-alpha.21.*
    vuu-portal no longer sends connection details in module records. Instead each remote publishes `config.json`
@@ -9,20 +9,25 @@ vuu-websocket was not modified. Workarounds are noted.
    and opens a ref-counted connection per `connectionId` (`ModuleServerMap`). The trading modules now connect to
    a standalone trading server (`apps/portal-config/src/start-trading.ts`, ports 8192/8544) and the portal
    server only serves the module registry. See #57 for the remaining rough edge.
-2. **`@heswell/vuu-server`, `service-utils`, `vuu-portal` are unpublished**; `main` points at `dist/`. Linked via symlink
-   (see README). Also `import { createModuleRegistry } from "@heswell/vuu-portal"` was undefined at runtime through the
-   link, so we deep-import `src/ModuleRegistry`.
-3. **vuu-portal exports** do not include `loadModuleState`/`loadModuleAdminRole`; deep import used.
-4. **`PortalMain` hard-codes its modules**; no hook to add modules. Composite launcher duplicates its ~20 lines.
+2. ~~**`@heswell/vuu-server`, `service-utils`, `vuu-portal` are unpublished**~~ *Resolved: fixed in vuu-websocket#85; vuu-server 3.1.0 / vuu-portal 2.0.0 / service-utils 1.1.0.*
+   They (and `@heswell/module-admin`) are on npm; trader depends on them directly. The symlink script
+   (`scripts/link-vuu-websocket.ts`, `link:vuu`, postinstall, `VUU_WEBSOCKET_DIR`) and CI's vuu-websocket checkout are gone.
+3. ~~**vuu-portal exports** do not include `loadModuleState`/`loadModuleAdminRole`; deep import used.~~ *Resolved: fixed in vuu-websocket#85; vuu-server 3.1.0 / vuu-portal 2.0.0 / service-utils 1.1.0.*
+   The root exports them, plus `createModuleRegistry`, `ModuleDiscoveryModule`, `createPortalApplication` and
+   `loadDefaultModules`; all deep imports are gone.
+4. ~~**`PortalMain` hard-codes its modules**; no hook to add modules. Composite launcher duplicates its ~20 lines.~~
+   *Resolved: fixed in vuu-websocket#85; vuu-server 3.1.0 / vuu-portal 2.0.0 / service-utils 1.1.0.* Everything (ports, websocket path, auth, admin role, module files) comes from the conf, so trader runs
+   the stock `@heswell/vuu-portal/main` (or `bunx vuu-portal --config apps/portal-config/application.conf`);
+   `start-portal.ts` is deleted.
 5. **Portal host UI is not published** (only `@vuu-ui/portal-build` is). It must be built from finos/vuu.
-6. **vuu-server / service-utils / vuu-portal do not typecheck** (`types` points at raw `src/*.ts`, which has errors such as
-   missing `RpcNamedParams`, `ProxySessionDataTable`; vuu-websocket CI only runs `bun test`). *Workaround:* `scripts/vuu-types.ts`
-   emits declarations with `tsc --noCheck` into gitignored `.vuu-types/`, and `tsconfig.typecheck.json` maps the packages to them.
-   Ideally fix the errors and ship a real `dist/` with `.d.ts`.
+6. ~~**vuu-server / service-utils / vuu-portal do not typecheck**~~ *Resolved: fixed in vuu-websocket#85; vuu-server 3.1.0 / vuu-portal 2.0.0 / service-utils 1.1.0.*
+   The packages ship `.d.ts`; `scripts/vuu-types.ts`, `.vuu-types/` and `tsconfig.typecheck.json` are deleted and
+   `bun run typecheck` is plain `tsc --noEmit` (with the existing `skipLibCheck: true`).
 7. ~~**No trading roles in Keycloak bootstrap**~~ *Resolved in this repo:* `scripts/stack/keycloak-realm.ts` creates the
    roles (see #15).
-8. **Config paths must be relative** (`getPath` rejects absolute), which makes ad-hoc configs outside the config
-   directory awkward.
+8. ~~**Config paths must be relative** (`getPath` rejects absolute), which makes ad-hoc configs outside the config
+   directory awkward.~~ *Resolved: fixed in vuu-websocket#85; vuu-server 3.1.0 / vuu-portal 2.0.0 / service-utils 1.1.0.* Absolute and `~/` paths are accepted; `start:all` no longer writes conf copies
+   next to the originals.
 
 ## Found in Phase 1 (exchange simulator)
 
@@ -174,9 +179,10 @@ vuu-websocket was not modified. Workarounds are noted.
     to `rspackChunk_<mfScope>` after each build.
 45. **The portal requires a unique `mfScope` per module**, so a package that exposes several components still needs
     one remote (one build) per module. *Workaround:* `apps/features/trading` builds 12 remotes from one catalog.
-46. **The vuu-portal `ConfigFactory` has no env-var overrides.** Ports, CORS origin and the Keycloak URL can only be
-    changed by editing the file. *Workaround:* `start:all` writes `application.stack.conf` from
-    `application.conf`.
+46. ~~**The vuu-portal `ConfigFactory` has no env-var overrides.**~~ *Resolved: fixed in vuu-websocket#85; vuu-server 3.1.0 / vuu-portal 2.0.0 / service-utils 1.1.0.*
+    `key=${?VAR}` / `${VAR}` substitutions: trader's confs end with `${?VUU_*}` lines and `start:all` sets those
+    per process from the `TRADER_*` settings (`scripts/stack/config.ts` `serverEnv`). The generated
+    `application.stack.conf` / `application.trading.stack.conf` are gone.
 47. **`cssInline` turns every plain `.css` import in an included path into a `?inline` string.** If the host
     includes its own path, its CSS is never applied. *Workaround:* the host's cssInline includes only shared
     packages.

@@ -29,7 +29,7 @@ flowchart LR
     Remotes <--> Bus
   end
   KC["Keycloak :8180<br/>realm vuu"]
-  subgraph Portal["portal Vuu server (start-portal.ts)"]
+  subgraph Portal["portal Vuu server (stock vuu-portal)"]
     REST["REST :8543<br/>/api/authn, module registry"]
     WSS["WebSocket :8191<br/>/websocket-portal"]
     MD[MODULE_DISCOVERY]
@@ -55,7 +55,7 @@ flowchart LR
 | Part | Where | Source |
 | --- | --- | --- |
 | Keycloak (realm `vuu`, clients, roles, seeded users) | `https://localhost:8180` (http 8181, management 9100) | `scripts/stack/keycloak-realm.ts`, `infra/keycloak/realm-vuu.json` |
-| portal Vuu server (module registry) | `wss://localhost:8191/websocket-portal`, `https://localhost:8543` | `apps/portal-config/application.conf`, `src/start-portal.ts` |
+| portal Vuu server (module registry) | `wss://localhost:8191/websocket-portal`, `https://localhost:8543` | `apps/portal-config/application.conf`, stock `@heswell/vuu-portal` (`bunx vuu-portal --config apps/portal-config/application.conf`) |
 | trading Vuu server (EXCHANGE + OMS) | `wss://localhost:8192/websocket-trading`, `https://localhost:8544` | `apps/portal-config/application.trading.conf`, `src/start-trading.ts` |
 | portal host (PortalShell) | `http://localhost:5100` | `apps/portal-host` |
 | trading features (12 MF remotes) | `http://localhost:5110/<feature>/` | `apps/features/trading` |
@@ -98,18 +98,21 @@ vuu-portal client in finos/vuu uses no haproxy either.
 
 `bun run start:all` (also `bun run dev`) does the following:
 
-1. Generates the dev certificate if missing and links vuu-websocket if needed. It builds the host and features if
-   `dist` is missing, or always with `--build`.
-2. Writes `apps/portal-config/application.stack.conf` and `application.trading.stack.conf` (ports, CORS origin,
-   Keycloak URL, trading client secret) and `default-modules.stack.yaml` (features origin). All are gitignored. The vuu-portal ConfigFactory has no env
-   overrides (upstream #46).
+1. Generates the dev certificate if missing. It builds the host and features if `dist` is missing, or always with
+   `--build`.
+2. Writes `apps/portal-config/default-modules.stack.yaml` (features origin, gitignored). The servers run on the
+   committed `application.conf` / `application.trading.conf`; ports, CORS origin and Keycloak URL reach them as
+   per-process env vars (`VUU_HTTPS_PORT`, `VUU_WEBSOCKET_PORT`, `VUU_CORS_ALLOWED_ORIGIN`, `VUU_KEYCLOAK_URL`,
+   `VUU_PORTAL_DEFAULT_MODULES_FILE`, `VUU_PORTAL_MODULES_FILE`), derived from the `TRADER_*` settings
+   (`scripts/stack/config.ts` `serverEnv`) and read by the confs' `key=${?VUU_*}` lines.
 3. Checks that every port is free. A busy port is reported with the `TRADER_*` variable that moves it. It never
    takes over a port.
 4. Starts Keycloak, unless one already answers at `TRADER_KEYCLOAK_URL` / `https://localhost:8180`:
    - It uses `KEYCLOAK_HOME`, or the newest `~/keycloak/keycloak-*`, in dev mode with state under `.run/keycloak`.
    - It then creates or updates the realm, roles and users.
    - Without a local install, run `docker compose up -d keycloak` first (see `docker-compose.yml`).
-5. Starts the portal server, the trading server, the features server and the host with prefixed logs.
+5. Starts the portal server (the stock `@heswell/vuu-portal/main`), the trading server (`start-trading.ts`), the
+   features server and the host with prefixed logs, each via `scripts/stack/serve.ts portal|trading|features|host`.
 6. Waits until every part answers and prints the URLs and users.
 7. On Ctrl-C (or SIGTERM), stops everything it started: SIGTERM, then SIGKILL after 15 s.
 
@@ -117,11 +120,14 @@ vuu-portal client in finos/vuu uses no haproxy either.
 | --- | --- |
 | `--build` | rebuild the host and features first |
 | `--reseed` | reset the portal's runtime module list (`modules.stack.yaml`) to the defaults. This also happens automatically when the defaults change. |
-| `--prepare` | certs, builds and generated config only, then exit (for the `Procfile`) |
+| `--prepare` | certs, builds and the generated module list only, then exit (for the `Procfile`) |
 
 `Procfile` (overmind / foreman / honcho) runs the portal server, trading server, features and host as separate
-processes. Before using it,
-run `bun run start:all --prepare` and start a Keycloak.
+processes with the same `scripts/stack/serve.ts` entries, so `TRADER_*` overrides apply too. Before using it, run
+`bun run start:all --prepare` and start a Keycloak.
+
+Outside `start:all`, the portal server is the stock bin: `bunx vuu-portal --config apps/portal-config/application.conf`
+(or `VUU_CONFIG_FILE=...`); set `VUU_HTTPS_PORT` etc. to move it.
 
 ### Ports
 

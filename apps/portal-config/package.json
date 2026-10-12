@@ -5,12 +5,13 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "start": "bun ./src/start-portal.ts",
-    "start:trading": "bun ./src/start-trading.ts",
-    "start:stock": "bun ./src/start-stock-portal.ts"
+    "start": "vuu-portal --config ./application.conf",
+    "start:trading": "bun ./src/start-trading.ts"
   },
   "dependencies": {
     "@heswell/exchange-sim": "workspace:*",
-    "@heswell/oms": "workspace:*"
+    "@heswell/oms": "workspace:*",
+    "@heswell/vuu-portal": "^2.0.0",
+    "@heswell/vuu-server": "^3.1.0"
   }
 }

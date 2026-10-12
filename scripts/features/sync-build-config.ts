@@ -146,9 +146,7 @@ if (check && drift) {
 if (check) {
   // validate with the portal server's own loader (unique names / scopes /
   // paths, location format, child modules)
-  const { loadDefaultModules } = await import(
-    "@heswell/vuu-portal/src/modules/ModuleDiscovery/ModuleStore"
-  );
+  const { loadDefaultModules } = await import("@heswell/vuu-portal");
   const file = resolve(root, "apps/portal-config/default-modules.yaml");
   const modules = loadDefaultModules(file, Date.now());
   console.log(`default-modules.yaml: ${modules.length} modules valid`);
