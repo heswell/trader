@@ -38,7 +38,7 @@ A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns 
 | `initialGroupBy?` | `exchange` / `sector` / `currency`; volume and turnover are summed in group rows. |
 | `sparkline?` | `false` or `{ valueColumn, length, bucketMs, ignoreZero }`. |
 | `showToolbar?` | Quick filter (ric / description), watchlist selector + manager, group-by, columns, Buy/Sell/Depth buttons. |
-| `onBuy` / `onSell` / `onOpenDepth` | `(instrument: SelectedInstrument) => void`. The context-menu items and toolbar buttons exist only when the prop is set, or (Buy / Sell) when an `OrderTicketLauncherProvider` is mounted. There are no server menu RPCs. |
+| `onBuy` / `onSell` / `onOpenDepth` | `(instrument: SelectedInstrument) => void`. The context-menu items and toolbar buttons exist only when the prop is set, or (Buy / Sell) when an `OrderTicketLauncherProvider` is mounted. The menu items are client-side and call direct RPCs; vuu-server 3.3.0 supports server menu RPCs, but trader declares none (see `docs/upstream-issues.md` 11, 63–66). |
 | `launchOrderTicket?` | Default `true`: without `onBuy` / `onSell`, Buy / Sell open the ticket via `useOrderTicketLauncher()` when a launcher is present. |
 | `followSelection?` | Default `true`: select and highlight the row of the instrument selected elsewhere in the link group. It clears for an unknown ric, and does not scroll (upstream #37). |
 | `LinkGroupProps` | `linkGroup`, `defaultLinkGroup`, `onLinkGroupChange`, `showLinkGroupSelector` (toolbar). |

@@ -38,8 +38,19 @@ export class VuuClient {
     });
   }
 
-  static async login(port: number, token: string) {
-    const socket = new WebSocket(`ws://localhost:${port}/websocket`);
+  /** POST credentials to the REST auth endpoint (plain HTTP in tests) for a token. */
+  static async fetchToken(authUrl: string, username: string) {
+    const response = await fetch(authUrl, {
+      body: JSON.stringify({ username, password: "password" }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+    if (!response.ok) throw Error(`login failed: HTTP ${response.status}`);
+    return ((await response.json()) as { token: string }).token;
+  }
+
+  static async login(url: string, token: string) {
+    const socket = new WebSocket(url);
     await new Promise<void>((resolve, reject) => {
       socket.addEventListener("open", () => resolve());
       socket.addEventListener("error", () => reject(Error("WebSocket failed")));

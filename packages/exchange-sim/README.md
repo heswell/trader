@@ -21,9 +21,9 @@ scripts/          start.ts (stand-alone server), bench.ts
 - `bun run start:all` (repo root, also `bun run dev`): the `EXCHANGE` module is hosted inside the portal server,
   and the portal's Trading features (Watchlist, Depth, Ladder, Tape, ...) show it. See
   [docs/portal-integration.md](../../docs/portal-integration.md).
-- `bun run --cwd packages/exchange-sim start`: stand-alone server on `wss://localhost:8094/websocket-exchange-sim`.
-  It uses the self-signed dev cert (generated if missing) and permissive auth: POST `{username,password}`
-  to `https://localhost:8446/api/authn` to get a token.
+- `bun run --cwd packages/exchange-sim start`: stand-alone server on `ws://localhost:8094/websocket-exchange-sim`.
+  It uses permissive auth over plain HTTP (`vuu.ssl=false`, no certificate): POST `{username,password}`
+  to `http://localhost:8446/api/authn` to get a token.
 - `bun run --cwd packages/exchange-sim bench [--mode=max|realtime|both] [--seconds=10] [--subscribe]`.
 
 Embedding in another server:

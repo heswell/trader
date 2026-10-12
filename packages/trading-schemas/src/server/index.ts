@@ -8,6 +8,7 @@ import {
   JoinSpec,
   JoinTableDef,
   Link,
+  type PermissionFunction,
   TableDef,
   VisualLinks,
 } from "@heswell/vuu-server";
@@ -49,9 +50,17 @@ export const toServerTableDef = (def: TableDefinition): TableDef =>
     ),
   });
 
+export interface ServerJoinOptions {
+  /** Row filter applied to every viewport on the join table. */
+  permissionFunction?: PermissionFunction;
+}
+
 /** Join factory for `ModuleFactory.addJoinTable`. */
 export const toServerJoinFactory =
-  (def: JoinDefinition): TableJoinFactory =>
+  (
+    def: JoinDefinition,
+    { permissionFunction }: ServerJoinOptions = {},
+  ): TableJoinFactory =>
   (container) =>
     JoinTableDef({
       name: def.name,
@@ -63,6 +72,7 @@ export const toServerJoinFactory =
       ),
       joinFields: [],
       links: VisualLinks(),
+      permissionFunction,
     });
 
 const toServerTableDefs = <T extends Record<string, TableDefinition>>(

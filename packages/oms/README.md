@@ -14,8 +14,8 @@ const oms = createOms(sim.gateway, {
 ```
 
 - `apps/portal-config/src/start-trading.ts` runs EXCHANGE + OMS as the portal stack's trading server (keycloak auth with token exchange, `application.trading.conf`).
-- Stand-alone (permissive auth, dev cert): `bun run --filter @heswell/oms start` gives
-  `wss://localhost:8095/websocket-trading`, `https://localhost:8447/api/authn`.
+- Stand-alone (permissive auth over plain HTTP, `vuu.ssl=false`): `bun run --filter @heswell/oms start` gives
+  `ws://localhost:8095/websocket-trading`, `http://localhost:8447/api/authn`.
 
 ## Layout
 
@@ -91,6 +91,8 @@ behaviour is restricted to trading actions:
 - `endEditSession {save: true}` turns each changed row into `amendOrder` and each deleted row into `cancelOrder`.
   - It returns `{results: [{orderId, action, status}]}`, or one `ERROR_RESULT` that lists the per-order failures.
   - Stale rows (the order changed since the session began) fail unless `force: true`, as in the default handler.
+    The OMS tables have no `vuuUpdatedTimestamp`, so the handler compares the session copy with the live row on
+    every non-edited column instead (docs/upstream-issues.md #61).
   - The live rows change only through execution reports.
 - This overrides `handleEndEditSession` rather than `applySessionSave`, because the base class ignores the
   `applySessionSave` result (docs/upstream-issues.md #18).

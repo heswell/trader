@@ -1,39 +1,31 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { resolve } from "node:path";
 import {
   EXCHANGE_MODULE,
   RejectReason,
   TradingPhase,
 } from "@heswell/trading-schemas";
-import {
-  LifecycleContainer,
-  LoginTokenService,
-  VuuServer,
-  VuuServerConfig,
-  VuuUserWithAuthorizations,
-  VuuWebSocketOptions,
-} from "@heswell/vuu-server";
+import { ConfigFactory, type VuuServer } from "@heswell/vuu-server";
 import type {
   ServerToClientTableRows,
   VuuRpcServiceResponse,
   VuuServerMessage,
   VuuViewportCreateSuccessResponse,
 } from "@vuu-ui/vuu-protocol-types";
-import { createExchangeSimulator } from "../src/engine/ExchangeSimulator";
-import { ExchangeModule } from "../src/modules/exchange/ExchangeModule";
+import main from "../src/Main";
 
 /**
- * End-to-end over the Vuu websocket protocol: the module registers the
- * EXCHANGE tables, the simulator ticks on real timers, a client subscribes
- * and invokes admin RPCs.
+ * End-to-end over the Vuu protocol: the stand-alone server (`src/Main.ts` with
+ * `application.conf`, permissive auth over plain HTTP, ephemeral ports) registers
+ * the EXCHANGE tables, the simulator ticks on real timers, a client logs in at
+ * `http://localhost:<port>/api/authn`, subscribes over `ws://` and invokes admin RPCs.
  */
 describe("ExchangeModule over the Vuu protocol", () => {
-  let lifecycle: LifecycleContainer;
+  let application: Awaited<ReturnType<typeof main>>["application"];
+  let sim: Awaited<ReturnType<typeof main>>["sim"];
   let server: VuuServer;
   let socket: WebSocket;
   let sessionId: string;
-  const sim = createExchangeSimulator({
-    config: { activeInstruments: 10, botStepMs: 10, publishIntervalMs: 50 },
-  });
   let requestId = 0;
 
   const send = (body: Record<string, unknown>) =>
@@ -107,29 +99,33 @@ describe("ExchangeModule over the Vuu protocol", () => {
   };
 
   beforeAll(async () => {
-    lifecycle = new LifecycleContainer();
-    const loginTokenService = LoginTokenService();
-    server = new VuuServer(
-      VuuServerConfig(
-        VuuWebSocketOptions().withWsPort(0).withSslDisabled(),
-        {},
-        loginTokenService,
-      ).withModule(ExchangeModule(sim)),
-      lifecycle,
+    const config = ConfigFactory.fromFile(
+      resolve(import.meta.dir, "../application.conf"),
+      {
+        env: {},
+        overrides: {
+          "vuu.websocket.port": 0,
+          "vuu.https.port": 0,
+          "exchangeSim.activeInstruments": 10,
+          "exchangeSim.botStepMs": 10,
+          "exchangeSim.publishIntervalMs": 50,
+        },
+      },
     );
-    await lifecycle.start();
-    const token = loginTokenService.getToken(
-      VuuUserWithAuthorizations("trader1", []),
-    );
+    ({ application, sim } = await main(config));
+    application.lifecycle.removeShutdownHooks();
+    server = application.server;
+    expect(server.restUrl).toStartWith("http://");
+    const token = await restLogin(server.restPort as number, "trader1");
     ({ socket, sessionId } = await login(
-      server.webSocketPort as number,
+      `ws://localhost:${server.webSocketPort}${config.getString("vuu.websocket.path")}`,
       token,
     ));
   });
 
   afterAll(async () => {
     socket?.close();
-    await lifecycle?.destroy();
+    await application?.lifecycle.destroy();
     expect(sim.running).toBe(false);
   });
 
@@ -233,11 +229,23 @@ describe("ExchangeModule over the Vuu protocol", () => {
   });
 });
 
+/** Permissive auth: POST credentials to the plain-HTTP REST server for a token. */
+async function restLogin(port: number, username: string): Promise<string> {
+  const response = await fetch(`http://localhost:${port}/api/authn`, {
+    body: JSON.stringify({ username, password: "password" }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+  expect(response.status).toBe(200);
+  const { token } = (await response.json()) as { token: string };
+  return token;
+}
+
 async function login(
-  port: number,
+  url: string,
   token: string,
 ): Promise<{ socket: WebSocket; sessionId: string }> {
-  const socket = new WebSocket(`ws://localhost:${port}/websocket`);
+  const socket = new WebSocket(url);
   const loggedIn = waitFor<string>(
     socket,
     (body) => body.type === "LOGIN_SUCCESS",

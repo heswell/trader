@@ -31,16 +31,23 @@ Workarounds are noted. Resolved issues are struck through.
 
 ## Found in Phase 1 (exchange simulator)
 
-9. **`ModuleFactory.addJoinTable` has no `ServiceFactory` parameter**, so a join table cannot have an RPC
-   handler (or custom `ViewPortDef`). *Workaround:* `ExchangeModule` sets
-   `module.viewPortDefs.set("instrumentPrices", serviceFactory)` after `asModule()`. This relies on
-   `VuuServer.registerModule` reading the same Map after creating the tables.
-10. **The `ServiceFactory` is invoked on every `CREATE_VP` and every `GET_TABLE_META`**
-    (`ViewportContainer.getViewPortDefinition`). That means a new `RpcHandler` per call; `DefaultRpcHandler`
-    also re-registers typeahead each time. *Workaround:* cache the handler per table container
-    (`WeakMap`). A per-table singleton (or a documented contract) upstream would be cleaner.
-11. **Menu RPCs are not supported server-side** (already noted in `docs/protocol-parity.md`). Admin actions
-    are plain `RPC_REQUEST`s in a `VIEWPORT_CONTEXT`, so the UI needs a custom affordance rather than a context menu.
+9. ~~**`ModuleFactory.addJoinTable` has no `ServiceFactory` parameter**, so a join table cannot have an RPC
+   handler (or custom `ViewPortDef`).~~ *Resolved: fixed in vuu-websocket#86; vuu-server 3.2.0.*
+   `addJoinTable(func, serviceFactory)` registers the factory under the realised join's name. `ExchangeModule`
+   (`instrumentPrices`) and `OmsModule` (`positionPrices`) pass it directly; the `module.viewPortDefs.set(...)`
+   calls after `asModule()` are gone.
+10. ~~**The `ServiceFactory` is invoked on every `CREATE_VP` and every `GET_TABLE_META`**, so a new `RpcHandler`
+    per call, with typeahead re-registered each time.~~ *Resolved: fixed in vuu-websocket#86; vuu-server 3.2.0.*
+    `GET_TABLE_META` reads `tableDef.columns`; the factory runs once per viewport on `CREATE_VP` and typeahead is
+    shared per table container. The per-table-container `WeakMap` handler caches are gone: each viewport gets its
+    own `ExchangeAdminRpcHandler` / `OmsRpcHandler`. Neither keeps cross-viewport state (the simulator and
+    `OmsService` hold the orders and permissions, the `TableContainer` holds edit-session tables), so no shared
+    handler is needed.
+11. ~~**Menu RPCs are not supported server-side** (already noted in `docs/protocol-parity.md`). Admin actions
+    are plain `RPC_REQUEST`s in a `VIEWPORT_CONTEXT`, so the UI needs a custom affordance rather than a context menu.~~
+    *Resolved: fixed in vuu-websocket#89; vuu-server 3.3.0.* `VIEW_PORT_MENUS_SELECT_RPC` and the table / row / cell
+    menu RPCs dispatch to handlers on the menu items (`protocol-parity.md` §1.7). Trader declares no server menus
+    yet; the vuu-ui client gaps are 63–66.
 12. **Noisy `console.log`** in `ModuleFactory` (it dumps the whole module including `viewPortDefs`), `TableContainer`,
     `ViewportContainer` and `CoreServerApi` on every create, plus the `[SESSION] ... has not responded` warnings. This
     drowns test and bench output. A log level (or `debug`) would help.
@@ -49,9 +56,11 @@ Workarounds are noted. Resolved issues are struck through.
     resets `timeInForce`/`stpMode` to defaults. Trade ids from `onTrade` are per book, so the simulator issues its own
     global `TR<n>` ids. *Workaround:* the gateway documents "amend loses priority". Only resting DAY/GTC orders can be
     amended, so the TIF reset doesn't matter yet. Bots only use cancel/new.
-14. **The REST auth server now requires TLS** (`RestServer`: "REST HTTPS server requires SSL"), so the Phase 0
-    stand-alone config (`vuu.ssl=false`) no longer started. *Fix:* the stand-alone exchange-sim uses the shared
-    self-signed dev cert. Allowing plain HTTP for local/permissive setups would simplify tests.
+14. ~~**The REST auth server now requires TLS** (`RestServer`: "REST HTTPS server requires SSL"), so the Phase 0
+    stand-alone config (`vuu.ssl=false`) no longer started.~~ *Resolved: fixed in vuu-websocket#88; vuu-server 3.3.0.*
+    With `vuu.auth.mode="permissive"`, `vuu.ssl=false` serves REST as `http://` and the websocket as `ws://`. The
+    stand-alone exchange-sim and OMS configs use it (no dev cert), and the server tests start them on ephemeral ports
+    and log in at `http://localhost:<port>/api/authn`. The Keycloak (`start:all`) configs keep TLS.
 
 ## Found in Phase 2 (OMS)
 
@@ -63,10 +72,10 @@ Workarounds are noted. Resolved issues are struck through.
     nav roles (`trading-access`, `trading-execute-access`, `trading-supervisor-access`) that
     `scripts/stack/keycloak-realm.ts` derives from the same user list. vuu-server has no hook to gate a portal
     module on another client's roles, hence the two role sets.
-16. **`JoinTableDef` constructor drops `permissionFunction`.** The base `TableDef` accepts one, but the join def does
-    not pass it through. *Workaround:* `OmsModule` wraps the `positionPrices` join factory and sets
-    `permissionFunction` on the created def. `ModuleFactory.addJoinTable` still has no `ServiceFactory` (#9), so the
-    same `viewPortDefs.set(...)` workaround is used for the join's RPC handler.
+16. ~~**`JoinTableDef` constructor drops `permissionFunction`.**~~ *Resolved: fixed in vuu-websocket#86;
+    vuu-server 3.2.0.* `JoinTableDef` passes every remaining `TableDefConfig` field through.
+    `toServerJoinFactory(positionPrices, {permissionFunction})` sets it in the config, so `OmsModule` no longer
+    wraps the join factory.
 17. **`editCell` (CreateSessionTableRpcHandler) edits the source table when the viewport is not an edit session.**
     Any client with an RPC-capable viewport can then overwrite rows directly. *Workaround:* `OmsRpcHandler` guards all
     edit-session RPCs. They are only allowed on a `parentOrders` session table, only `quantity`/`price` may be edited,
@@ -233,3 +242,30 @@ and the `@vuu-ui/vuu-icons` main entry (#52) still lack types; `PersistedStateAP
 60. **The `@vuu-ui/*` packages depend on exact alpha versions**, and `@heswell/vuu-data-engine-local` pins
     alpha.20, so bun installs two copies of `@vuu-ui/core` (two React contexts) unless the root `package.json`
     `overrides` every `@vuu-ui/*` package.
+
+## Found in the vuu-server 3.2.0 / 3.3.0 upgrade
+
+61. **The edit-session stale-row check silently does nothing without a `vuuUpdatedTimestamp` column.**
+    `EndEditSessionRpcHandler.prepareSessionSave` compares the session change's `lastUpdateTimestamp` with the
+    source row's `vuuUpdatedTimestamp`; on a table without that column both are `undefined`, so every row passes
+    and `force` has no effect. The OMS tables don't declare the Vuu default columns, so the documented OMS stale
+    check had never fired. *Workaround:* `OmsRpcHandler.handleEndEditSession` also compares the session copy with
+    the live `parentOrders` row on every column the user did not edit (an amend bumps `version`, a fill moves
+    `cumQty`) and fails with `stale update: <orderIds> ...` unless `force: true`. Upstream should either require the
+    column for edit sessions or fall back to a row comparison.
+62. **`@heswell/vuu-portal` 2.0.0 pins `@heswell/vuu-server` 3.1.0**, so bun installs a second copy next to
+    trader's 3.3.0. It is harmless today (the portal server only does module discovery; the trading modules run
+    on the trading server with 3.3.0), but a vuu-portal release with a `^3.3.0` range would avoid it.
+63. **vuu-ui `useVuuMenuActions` ignores `CLOSE_DIALOG_ACTION` and `NO_ACTION`** (alpha.21). It only handles
+    `SHOW_NOTIFICATION_ACTION` and `OPEN_DIALOG_ACTION`, so a menu handler cannot close an open dialog. `NO_ACTION`
+    is harmless, but `CLOSE_DIALOG_ACTION` from vuu-server 3.3.0 has no effect unless the caller passes
+    `onRpcResponse`.
+64. **vuu-ui only acts on `OPEN_DIALOG_ACTION` for session tables** (`isSessionTableActionMessage` /
+    `isCustomComponentActionMessage` both require `isSessionTable(action.table)`), so a menu cannot open a dialog
+    on a plain table.
+65. **Menu `SHOW_NOTIFICATION_ACTION` is always a "success" toast.** The protocol action has only `message` and
+    `title`, no type or severity, so a handler cannot report a warning or failure as a notification. Return a
+    `VIEW_PORT_MENU_REJ` (throw) for errors, but see 66.
+66. **vuu-ui does not surface `VIEW_PORT_MENU_REJ`.** `menuRpcCall` resolves with the reject message, and
+    `useVuuMenuActions` ignores it unless the caller passes `onRpcResponse`, so a failed menu action is silent for
+    the user.

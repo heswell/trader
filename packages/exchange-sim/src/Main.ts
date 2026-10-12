@@ -1,4 +1,5 @@
 import {
+  type Config,
   ConfigFactory,
   createConfiguredAuthProviders,
   createVuuServerApplication,
@@ -8,8 +9,7 @@ import { createExchangeSimulator } from "./engine/ExchangeSimulator";
 import { ExchangeModule } from "./modules/exchange/ExchangeModule";
 
 /** Stand-alone exchange simulator server (auth mode and ports come from application.conf). */
-export default async function main() {
-  const config = ConfigFactory.load();
+export default async function main(config: Config = ConfigFactory.load()) {
   const sim = createExchangeSimulator({
     config: loadExchangeSimConfig(config),
   });

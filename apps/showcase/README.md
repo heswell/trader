@@ -10,8 +10,8 @@ bun run dev:trading-server      # optional: standalone EXCHANGE + OMS server for
 
 - **Local test data** (default): the engines run in the page and tick live.
 - **Remote server**: the app authenticates as `admin` and connects through the dev-server proxy:
-  - `/remote/trading/authn` → `https://localhost:8447/api/authn`
-  - `/remote/trading/ws` → `wss://localhost:8095/websocket-trading`
+  - `/remote/trading/authn` → `http://localhost:8447/api/authn`
+  - `/remote/trading/ws` → `ws://localhost:8095/websocket-trading`
 
   Override the targets with `TRADING_REMOTE_AUTH`, `TRADING_REMOTE_WS` and `TRADING_REMOTE_WS_PATH`.
 
