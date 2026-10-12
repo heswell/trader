@@ -294,25 +294,29 @@ registry line per example.
 - Global shortcuts must be scoped to the component's focus-within, never `window`, because several features share
   one page in the portal.
 
-## 10. Packaging a component as an MF feature (`apps/features/<name>`)
+## 10. Packaging a component as an MF feature (`apps/features/trading`)
 
-Copy `apps/features/hello` (rsbuild via `@vuu-ui/portal-build`):
+All features live in one package, `apps/features/trading`, and are built as one MF remote each (the portal needs a
+unique `mfScope` per module, upstream #45). See [portal-integration.md](portal-integration.md) for the architecture,
+the roles and the run-all command.
 
-1. `package.json`: name it `@heswell/trading-feature-<name>`. Depend on `@heswell/trading-ui`, plus `@vuu-ui/*`,
-   `@salt-ds/core` and react as peers. Use a `build` script (`portal-build --config ./portal-build.json`), a unique
-   port (5011+) and `publicPath`.
-2. `src/<Feature>.tsx` renders the trading-ui component. Do not wrap it in a `TradingDataProvider`, or wrap it in
-   `mode="inherit"`: the portal host provides the authenticated `DataProvider`.
-3. In `portal-build.json`:
-   - `moduleFederation.name` must be unique, e.g. `tradingBlotter`. `exposes` the component.
-   - Keep the `shared` block from hello: `@vuu-ui/core` and `@vuu-ui/core/portal` are singletons, so `useData()`
-     resolves the host's provider.
-   - Add `"cssInline": { "include": ["/packages/trading-ui/", "/apps/features/"] }`, because the default list only
-     covers vuu packages (upstream #23).
-4. Register it in `apps/portal-config/default-modules.yaml`: `mfScope` must equal `moduleFederation.name`, and
-   `mfComponent` is the exposed name. Add it to `scripts/dev.ts` if it should start with `bun run dev`.
-5. Instrument linking works across features through the window bus. Add `@heswell/trading-ui`, `react`,
-   `react-dom` and `@vuu-ui/vuu-layout` to `shared` as singletons (see §5).
+1. Add `src/features/<Name>.tsx`. It renders trading-ui components wrapped in `withFeatureRoot` /
+   `TradingFeatureRoot`, which mounts notifications (toasted once per window), the ticket launcher and the
+   connection banner. Do not add a `TradingDataProvider`: data access is `mode="inherit"`, so the host's
+   authenticated `DataProvider` is used.
+2. Give components stable `id`s. They key the saved state (e.g. `trading.linkGroup.<id>` in the module's portal
+   state).
+3. Add an entry to `src/catalog.ts`: a unique `key`, module `id`, `mfScope`, `accessRole` (`trading-view`,
+   `trading-execute` or `trading-supervisor`), and either `location` + `path` (nav entry) or `parent` (child module
+   rendered by another feature through `usePortalModuleRegistry()` + `RemoteModule`).
+4. Run `bun run features:sync`. This regenerates `portal-build.json` (one remote per entry, the shared block and
+   `cssInline`, upstream #23) and `apps/portal-config/default-modules.yaml`. Then run `bun run build`, which renames
+   each remote's chunk global (upstream #44). `bun run features:check` (CI) fails on drift.
+5. Shared singletons are react, react-dom, react-router-dom, `@vuu-ui/core` (+ `/portal`), vuu-data-remote,
+   vuu-notifications, `@salt-ds/core` and `@heswell/trading-ui`, so instrument linking works across features
+   through the one window bus. **`@vuu-ui/vuu-layout` is not shared**: sharing it deadlocks startup (upstream
+   #43), so View state from a remote is not visible to trading-ui (upstream #50) and components fall back to portal
+   state (§5).
 
 ## 11. Shared renderers and hooks (P3.7–P3.10)
 

@@ -13,16 +13,16 @@
         "typescript": "^5.5.3",
       },
     },
-    "apps/features/hello": {
-      "name": "@heswell/trading-feature-hello",
+    "apps/features/trading": {
+      "name": "@heswell/trading-features",
       "version": "0.1.0",
       "dependencies": {
+        "@heswell/trading-ui": "workspace:*",
         "@salt-ds/core": "1.67.0",
         "@vuu-ui/core": "4.0.0-alpha.20",
-        "@vuu-ui/vuu-data-types": "4.0.0-alpha.20",
-        "@vuu-ui/vuu-icons": "4.0.0-alpha.20",
-        "@vuu-ui/vuu-table": "4.0.0-alpha.20",
-        "@vuu-ui/vuu-table-types": "4.0.0-alpha.20",
+        "@vuu-ui/vuu-data-remote": "4.0.0-alpha.20",
+        "@vuu-ui/vuu-layout": "4.0.0-alpha.20",
+        "@vuu-ui/vuu-notifications": "4.0.0-alpha.20",
         "@vuu-ui/vuu-theme": "4.0.0-alpha.20",
         "react-router-dom": "7.18.3",
       },
@@ -41,6 +41,29 @@
       "dependencies": {
         "@heswell/exchange-sim": "workspace:*",
         "@heswell/oms": "workspace:*",
+      },
+    },
+    "apps/portal-host": {
+      "name": "@heswell/trading-portal-host",
+      "version": "0.1.0",
+      "dependencies": {
+        "@heswell/trading-ui": "workspace:*",
+        "@module-federation/enhanced": "2.8.0",
+        "@salt-ds/core": "1.67.0",
+        "@vuu-ui/core": "4.0.0-alpha.20",
+        "@vuu-ui/vuu-data-remote": "4.0.0-alpha.20",
+        "@vuu-ui/vuu-icons": "4.0.0-alpha.20",
+        "@vuu-ui/vuu-layout": "4.0.0-alpha.20",
+        "@vuu-ui/vuu-notifications": "4.0.0-alpha.20",
+        "@vuu-ui/vuu-theme": "4.0.0-alpha.20",
+        "@vuu-ui/vuu-utils": "4.0.0-alpha.20",
+        "clsx": "^2.1.1",
+        "react": "^19.2.3",
+        "react-dom": "^19.2.3",
+        "react-router-dom": "7.18.3",
+      },
+      "devDependencies": {
+        "@vuu-ui/portal-build": "0.3.0",
       },
     },
     "apps/showcase": {
@@ -217,9 +240,11 @@
 
     "@heswell/oms": ["@heswell/oms@workspace:packages/oms"],
 
-    "@heswell/trading-feature-hello": ["@heswell/trading-feature-hello@workspace:apps/features/hello"],
+    "@heswell/trading-features": ["@heswell/trading-features@workspace:apps/features/trading"],
 
     "@heswell/trading-portal-config": ["@heswell/trading-portal-config@workspace:apps/portal-config"],
+
+    "@heswell/trading-portal-host": ["@heswell/trading-portal-host@workspace:apps/portal-host"],
 
     "@heswell/trading-schemas": ["@heswell/trading-schemas@workspace:packages/trading-schemas"],
 

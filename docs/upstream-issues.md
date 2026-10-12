@@ -151,8 +151,47 @@ vuu-websocket was not modified. Workarounds are noted.
 40. **vuu-layout keeps View state in a module-level `persistentState` map** (`setPersistentState` /
     `getPersistentState`), so `@vuu-ui/vuu-layout` must be an MF singleton, or a feature's saved state is not found.
     Restoring a saved layout also means walking the JSON and calling `setPersistentState` for each View before
-    mounting.
+    mounting. *Phase 4:* sharing vuu-layout deadlocks MF startup (#43), so the portal features use portal state
+    instead (#50).
 41. **`LayoutJSON` is not exported from `@vuu-ui/vuu-layout`** (it lives in vuu-utils `json-types`). The showcase
     declares a local type.
 42. **`SelectRequest` is a union**, so `Omit<SelectRequest, "vpId">` (the `DataSource.select` argument) collapses to
     the shared members and cannot be built without a cast.
+
+## Found in Phase 4 (portal integration, `docs/portal-integration.md`)
+
+43. **Sharing `@vuu-ui/vuu-layout` as an MF singleton deadlocks startup.** Its shared chunk bundles
+    vuu-data-react, which imports `@vuu-ui/vuu-layout` again, so the share never resolves and the host page stays
+    blank. This conflicts with #40. *Workaround:* vuu-layout is not shared; each remote bundles its own copy.
+44. **portal-build has no `uniqueName` / chunk-loading-global option.** All remotes built from one package get the
+    same JSONP global `rspackChunk_<package>`, so loading two at once fails with
+    `__webpack_modules__[moduleId] is not a function`. *Workaround:* `scripts/features/build.ts` renames the global
+    to `rspackChunk_<mfScope>` after each build.
+45. **The portal requires a unique `mfScope` per module**, so a package that exposes several components still needs
+    one remote (one build) per module. *Workaround:* `apps/features/trading` builds 12 remotes from one catalog.
+46. **The vuu-portal `ConfigFactory` has no env-var overrides.** Ports, CORS origin and the Keycloak URL can only be
+    changed by editing the file. *Workaround:* `start:all` writes `application.stack.conf` from
+    `application.conf`.
+47. **`cssInline` turns every plain `.css` import in an included path into a `?inline` string.** If the host
+    includes its own path, its CSS is never applied. *Workaround:* the host's cssInline includes only shared
+    packages.
+48. **alpha.20 `PortalShell` has a fixed 56px nav rail, and modules have no icons**, so labels are clipped.
+    *Workaround:* `apps/portal-host/src/App.css` widens the rail. A label-only or icon-from-module option would help.
+49. **There is no server-side state persistence.** `usePersistedState` defaults to `LocalStoragePersistenceBackend`,
+    so saved layouts and link groups are per browser and lost in a fresh profile. A REST persistence backend in
+    vuu-portal would make layouts follow the user.
+50. **A shared singleton library cannot see a remote's `View`s.** `@heswell/trading-ui` is bound to the host's
+    vuu-layout (#43), so `useViewContext()` in a remote returns the host's default context. *Workaround:*
+    `useComponentLinkGroup` stores link groups in the module's portal state (`trading.linkGroup.<id>`).
+51. **The vuu-utils global `vuuConfig: Promise<VuuConfig>` lacks the auth fields** (`clientId`, `realm`, ...) that
+    `PortalShell` needs, so hosts cast. Declaring another global clashes with it.
+52. **`@vuu-ui/vuu-icons` ships no type declarations.** *Workaround:* `apps/portal-host/src/vuu-icons.d.ts`.
+53. **Restoring vuu-layout JSON needs the component registry, which is per bundle.** A remote cannot restore a
+    layout containing components it did not register, so the workspace saves View states but not its
+    arrangement.
+54. **`vuu.auth.cors.allowedOrigin` takes a single origin**, so a host served from two origins (e.g. localhost and
+    a LAN name) needs two configs.
+55. **`PersistedStateAPI` has no delete or clear.** *Workaround:* `save(key, null)`, and the whole document is
+    read with `load()` to find keys by prefix.
+56. **A parent module cannot reset its child modules' persisted state.** The children are separate modules with
+    their own state documents. The workspace's Reset layout clears only its own keys.

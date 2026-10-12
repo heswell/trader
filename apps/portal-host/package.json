@@ -1,0 +1,33 @@
+{
+  "name": "@heswell/trading-portal-host",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Portal host (vuu-portal PortalShell) for the trader stack",
+  "license": "MIT",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "portal-build --config ./portal-build.json"
+  },
+  "dependencies": {
+    "@heswell/trading-ui": "workspace:*",
+    "@module-federation/enhanced": "2.8.0",
+    "@salt-ds/core": "1.67.0",
+    "@vuu-ui/core": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-data-remote": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-icons": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-layout": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-notifications": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-theme": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-utils": "4.0.0-alpha.20",
+    "clsx": "^2.1.1",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-router-dom": "7.18.3"
+  },
+  "devDependencies": {
+    "@vuu-ui/portal-build": "0.3.0"
+  }
+}

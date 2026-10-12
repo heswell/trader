@@ -1,0 +1,35 @@
+# Keycloak for the trader stack (realm "vuu" with the trading roles and the
+# seeded users, see docs/portal-integration.md). The rest of the stack runs
+# on the host with bun: `bun run start:all` reuses this Keycloak.
+#
+#   bun run certs                 # once: apps/portal-config/certs
+#   docker compose up -d keycloak
+#   bun run start:all
+#
+# The realm is imported on first start only; after changing the roles / users
+# run `bun run keycloak:realm export` and `docker compose down -v`.
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4
+    command:
+      - start-dev
+      - --import-realm
+      - --https-port=8180
+      - --http-port=8181
+      - --http-management-port=9100
+      - --https-certificate-file=/opt/keycloak/certs/cert.pem
+      - --https-certificate-key-file=/opt/keycloak/certs/key.pem
+      - --hostname-strict=false
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
+      - "${TRADER_KEYCLOAK_PORT:-8180}:8180"
+      - "${TRADER_KEYCLOAK_HTTP_PORT:-8181}:8181"
+    volumes:
+      - ./infra/keycloak/realm-vuu.json:/opt/keycloak/data/import/realm-vuu.json:ro
+      - ./apps/portal-config/certs:/opt/keycloak/certs:ro
+      - keycloak-data:/opt/keycloak/data/h2
+
+volumes:
+  keycloak-data:

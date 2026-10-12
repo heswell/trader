@@ -1,25 +1,24 @@
 {
-  "name": "@heswell/trading-feature-hello",
+  "name": "@heswell/trading-features",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Smoke-test module-federation remote: ticking EXCHANGE instrumentPrices grid",
+  "description": "Module-federation remote exposing the trading features (watchlist, depth, ladder, ticket, blotters, positions, tape, supervisor, trader workspace) for vuu-portal",
   "license": "MIT",
   "sideEffects": [
     "**/*.css"
   ],
   "scripts": {
-    "build": "portal-build --config ./portal-build.json",
-    "start": "bun ./scripts/serve.ts"
+    "build": "bun ../../../scripts/features/build.ts"
   },
   "dependencies": {
+    "@heswell/trading-ui": "workspace:*",
     "@salt-ds/core": "1.67.0",
     "@vuu-ui/core": "4.0.0-alpha.20",
-    "@vuu-ui/vuu-data-types": "4.0.0-alpha.20",
-    "@vuu-ui/vuu-table": "4.0.0-alpha.20",
-    "@vuu-ui/vuu-table-types": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-data-remote": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-layout": "4.0.0-alpha.20",
+    "@vuu-ui/vuu-notifications": "4.0.0-alpha.20",
     "@vuu-ui/vuu-theme": "4.0.0-alpha.20",
-    "@vuu-ui/vuu-icons": "4.0.0-alpha.20",
     "react-router-dom": "7.18.3"
   },
   "devDependencies": {

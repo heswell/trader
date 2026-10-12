@@ -1,18 +1,177 @@
-# Remote modules registered with the portal. Seeds modules.yaml on first startup only
-# (delete modules.yaml to re-seed). mfScope must equal the remote's module-federation name.
+# GENERATED from apps/features/trading/src/catalog.ts by
+# `bun run features:sync` (CI checks it): edit the catalog, not this file.
+#
+# Seeds the portal's runtime modules file on first start (start:all reseeds
+# when this file changes). Roles are vuu-portal client roles, see
+# docs/portal-integration.md. Child modules (parentModuleId != 0) have no
+# menu location: the parent renders them, and the server lists them only
+# when the user also holds the parent's role.
 modules:
-  - id: 1
+  - id: 100
     version: 1
     parentModuleId: 0
-    name: "tradingHello"
-    title: "Exchange prices"
-    description: "Smoke-test grid of EXCHANGE instrumentPrices (exchange simulator)"
+    name: "TradingWorkspace"
+    title: "Trader workspace"
+    description: "Prebuilt trader layout: watchlist, depth, ticket, ladder, blotters, positions and tape with red / green link groups"
     enabled: true
-    location: "/Trading/Hello"
-    path: "/trading/hello"
-    mfComponent: "Hello"
-    mfScope: "tradingHello"
-    mfUrl: "http://localhost:5010"
+    location: "/Trading/Workspace"
+    path: "/trading/workspace"
+    mfComponent: "TraderWorkspace"
+    mfScope: "tradingWorkspace"
+    mfUrl: "http://localhost:5110/workspace"
     navIconUrl: ""
-    # No trading-specific keycloak role exists yet, reuse one that the dev users hold.
-    accessRole: "vuu-table-viewer-access"
+    accessRole: "trading-view"
+  - id: 101
+    version: 1
+    parentModuleId: 100
+    name: "TradingWorkspaceTicket"
+    title: "Workspace order ticket"
+    description: "Order ticket docked in the trader workspace"
+    enabled: true
+    location: ""
+    path: ""
+    mfComponent: "Ticket"
+    mfScope: "tradingWorkspaceTicket"
+    mfUrl: "http://localhost:5110/workspace-ticket"
+    navIconUrl: ""
+    accessRole: "trading-execute"
+  - id: 102
+    version: 1
+    parentModuleId: 100
+    name: "TradingWorkspaceLadder"
+    title: "Workspace price ladder"
+    description: "Price ladder docked in the trader workspace"
+    enabled: true
+    location: ""
+    path: ""
+    mfComponent: "Ladder"
+    mfScope: "tradingWorkspaceLadder"
+    mfUrl: "http://localhost:5110/workspace-ladder"
+    navIconUrl: ""
+    accessRole: "trading-execute"
+  - id: 110
+    version: 1
+    parentModuleId: 0
+    name: "TradingWatchlist"
+    title: "Watchlist"
+    description: "Ticking instrument grid with sparklines and watchlists"
+    enabled: true
+    location: "/Trading/Watchlist"
+    path: "/trading/watchlist"
+    mfComponent: "Watchlist"
+    mfScope: "tradingWatchlist"
+    mfUrl: "http://localhost:5110/watchlist"
+    navIconUrl: ""
+    accessRole: "trading-view"
+  - id: 111
+    version: 1
+    parentModuleId: 0
+    name: "TradingDepth"
+    title: "Market depth"
+    description: "Order book depth for the linked instrument"
+    enabled: true
+    location: "/Trading/Depth"
+    path: "/trading/depth"
+    mfComponent: "Depth"
+    mfScope: "tradingDepth"
+    mfUrl: "http://localhost:5110/depth"
+    navIconUrl: ""
+    accessRole: "trading-view"
+  - id: 112
+    version: 1
+    parentModuleId: 0
+    name: "TradingLadder"
+    title: "Price ladder"
+    description: "Click-to-trade price ladder"
+    enabled: true
+    location: "/Trading/Ladder"
+    path: "/trading/ladder"
+    mfComponent: "Ladder"
+    mfScope: "tradingLadder"
+    mfUrl: "http://localhost:5110/ladder"
+    navIconUrl: ""
+    accessRole: "trading-execute"
+  - id: 113
+    version: 1
+    parentModuleId: 0
+    name: "TradingTicket"
+    title: "Order ticket"
+    description: "Docked order ticket following its link group"
+    enabled: true
+    location: "/Trading/Ticket"
+    path: "/trading/ticket"
+    mfComponent: "Ticket"
+    mfScope: "tradingTicket"
+    mfUrl: "http://localhost:5110/ticket"
+    navIconUrl: ""
+    accessRole: "trading-execute"
+  - id: 114
+    version: 1
+    parentModuleId: 0
+    name: "TradingOrders"
+    title: "Orders"
+    description: "Order blotter: working, filled, closed"
+    enabled: true
+    location: "/Trading/Orders"
+    path: "/trading/orders"
+    mfComponent: "Orders"
+    mfScope: "tradingOrders"
+    mfUrl: "http://localhost:5110/orders"
+    navIconUrl: ""
+    accessRole: "trading-view"
+  - id: 115
+    version: 1
+    parentModuleId: 0
+    name: "TradingFills"
+    title: "Fills"
+    description: "Executions blotter"
+    enabled: true
+    location: "/Trading/Fills"
+    path: "/trading/fills"
+    mfComponent: "Fills"
+    mfScope: "tradingFills"
+    mfUrl: "http://localhost:5110/fills"
+    navIconUrl: ""
+    accessRole: "trading-view"
+  - id: 116
+    version: 1
+    parentModuleId: 0
+    name: "TradingPositions"
+    title: "Positions"
+    description: "Positions and P&L by account / instrument"
+    enabled: true
+    location: "/Trading/Positions"
+    path: "/trading/positions"
+    mfComponent: "Positions"
+    mfScope: "tradingPositions"
+    mfUrl: "http://localhost:5110/positions"
+    navIconUrl: ""
+    accessRole: "trading-view"
+  - id: 117
+    version: 1
+    parentModuleId: 0
+    name: "TradingTape"
+    title: "Trade tape"
+    description: "Time and sales for the linked instrument"
+    enabled: true
+    location: "/Trading/Tape"
+    path: "/trading/tape"
+    mfComponent: "Tape"
+    mfScope: "tradingTape"
+    mfUrl: "http://localhost:5110/tape"
+    navIconUrl: ""
+    accessRole: "trading-view"
+  - id: 120
+    version: 1
+    parentModuleId: 0
+    name: "TradingSupervisor"
+    title: "Supervisor"
+    description: "All desks' orders (incl. child orders) and positions by account"
+    enabled: true
+    location: "/Supervision/Desk overview"
+    path: "/supervision/desk"
+    mfComponent: "Supervisor"
+    mfScope: "tradingSupervisor"
+    mfUrl: "http://localhost:5110/supervisor"
+    navIconUrl: ""
+    accessRole: "trading-supervisor"

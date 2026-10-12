@@ -9,6 +9,7 @@
     "packages/*",
     "apps/showcase",
     "apps/portal-config",
+    "apps/portal-host",
     "apps/features/*"
   ],
   "scripts": {
@@ -16,10 +17,10 @@
     "postinstall": "bun ./scripts/link-vuu-websocket.ts",
     "link:vuu": "bun ./scripts/link-vuu-websocket.ts",
     "certs": "bun ./scripts/make-certs.ts",
-    "dev": "bun ./scripts/dev.ts",
+    "dev": "bun ./scripts/start-all.ts",
     "dev:showcase": "bun run --filter @heswell/trading-showcase dev",
     "dev:trading-server": "bun run --filter @heswell/oms start",
-    "build": "bun run --filter './apps/features/*' build",
+    "build": "bun run features:sync && bun run --filter @heswell/trading-portal-host --filter @heswell/trading-features build",
     "typecheck": "bun scripts/vuu-types.ts && tsc --noEmit -p tsconfig.typecheck.json",
     "lint": "biome lint .",
     "format": "biome format --write .",
@@ -27,7 +28,11 @@
     "test": "bun run test:server && bun run test:ui",
     "test:server": "bun test ./packages/trading-schemas ./packages/exchange-sim ./packages/oms",
     "test:ui": "bun test --preload ./scripts/dom-test-setup.ts ./packages/trading-test-data ./packages/trading-ui",
-    "types:vuu": "bun scripts/vuu-types.ts"
+    "types:vuu": "bun scripts/vuu-types.ts",
+    "start:all": "bun ./scripts/start-all.ts",
+    "features:sync": "bun ./scripts/features/sync-build-config.ts",
+    "features:check": "bun ./scripts/features/sync-build-config.ts --check",
+    "keycloak:realm": "bun ./scripts/stack/keycloak-realm.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",

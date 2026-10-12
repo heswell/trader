@@ -77,6 +77,11 @@ export interface OrderBlotterProps
    * endEditSession) instead of the amendOrder RPC. Default false.
    */
   useEditSession?: boolean;
+  /**
+   * Hide amend / cancel controls, e.g. for users without trading-execute
+   * (the OMS rejects their requests anyway). Default false.
+   */
+  readOnly?: boolean;
 }
 
 const describe = (err: unknown) =>
@@ -93,6 +98,7 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
       onError,
       onLinkGroupChange,
       onOrderSelect,
+      readOnly = false,
       showLinkGroupSelector = false,
       showChildOrders = true,
       useEditSession = false,
@@ -290,18 +296,22 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
             </button>
           ))}
           <span className={`${classBase}-spacer`} />
-          <button
-            disabled={cancellableSelected.length === 0}
-            onClick={() => void cancelIds(cancellableSelected)}
-            type="button"
-          >
-            Cancel selected ({cancellableSelected.length})
-          </button>
-          <button onClick={() => void cancelAll()} type="button">
-            Cancel all
-          </button>
+          {readOnly ? null : (
+            <>
+              <button
+                disabled={cancellableSelected.length === 0}
+                onClick={() => void cancelIds(cancellableSelected)}
+                type="button"
+              >
+                Cancel selected ({cancellableSelected.length})
+              </button>
+              <button onClick={() => void cancelAll()} type="button">
+                Cancel all
+              </button>
+            </>
+          )}
         </div>
-        <OrderBlotterContext.Provider value={actions}>
+        <OrderBlotterContext.Provider value={readOnly ? undefined : actions}>
           <div className={`${classBase}-table`}>
             <Table
               config={orderBlotterTableConfig}
