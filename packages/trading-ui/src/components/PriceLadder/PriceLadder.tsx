@@ -1,5 +1,6 @@
 import {
   type AmendOrderResponse,
+  OrdStatus,
   type CancelAllResponse,
   type CancelOrderResponse,
   type CreateOrderRequest,
@@ -19,12 +20,23 @@ import {
   type OwnOrder,
   useOwnWorkingOrders,
 } from "../../hooks/useOwnWorkingOrders";
+import {
+  type LinkGroupProps,
+  useComponentLinkGroup,
+} from "../../instrument-context/useComponentLinkGroup";
+import { useTradingNotifications } from "../../notifications/TradingNotificationsProvider";
+import {
+  orderEventKindForStatus,
+  rpcRejectEvent,
+  type TradingOrderEvent,
+} from "../../notifications/tradingOrderEvents";
 import { formatPrice } from "../../utils/formatting";
 import {
   instrumentTickSchedule,
   isInactivePhase,
   tradingPhaseText,
 } from "../../utils/marketData";
+import { LinkGroupSelector } from "../LinkGroupSelector";
 import {
   type LadderTradeIntent,
   PriceLadderView,
@@ -59,24 +71,25 @@ export type PriceLadderAction =
 
 export interface PriceLadderProps
   extends Omit<
-    PriceLadderViewProps,
-    | "asks"
-    | "bids"
-    | "last"
-    | "lotSize"
-    | "onAmendOrders"
-    | "onCancelAll"
-    | "onCancelOrders"
-    | "onTrade"
-    | "ownOrders"
-    | "priceFormat"
-    | "referencePrice"
-    | "ric"
-    | "status"
-    | "statusKind"
-    | "tickSchedule"
-    | "tradedVolume"
-  > {
+      PriceLadderViewProps,
+      | "asks"
+      | "bids"
+      | "last"
+      | "lotSize"
+      | "onAmendOrders"
+      | "onCancelAll"
+      | "onCancelOrders"
+      | "onTrade"
+      | "ownOrders"
+      | "priceFormat"
+      | "referencePrice"
+      | "ric"
+      | "status"
+      | "statusKind"
+      | "tickSchedule"
+      | "tradedVolume"
+    >,
+    LinkGroupProps {
   /** Instrument to show; defaults to the selected instrument. */
   ric?: string;
   /**
@@ -93,7 +106,15 @@ export interface PriceLadderProps
   onOrderEvent?: (event: PriceLadderOrderEvent) => void;
   /** Rejected order RPCs (also shown in the ladder's status line). */
   onError?: (error: TradingRpcError, action: PriceLadderAction) => void;
+  /**
+   * Report new orders and failed requests to the TradingNotificationsProvider
+   * (if there is one; deduplicated with the order stream toasts by clOrdId).
+   * Default true.
+   */
+  notify?: boolean;
 }
+
+export const PRICE_LADDER_SOURCE = "ladder";
 
 const rpcNames: Record<PriceLadderAction["type"], RpcName> = {
   create: "createOrder",
@@ -105,6 +126,39 @@ const rpcNames: Record<PriceLadderAction["type"], RpcName> = {
 let clOrdSeq = 0;
 const newClOrdId = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}-${++clOrdSeq}`;
+
+/** The order a ladder action is about, as a notification event. */
+const actionEvent = (
+  action: PriceLadderAction,
+): Omit<TradingOrderEvent, "kind"> => {
+  switch (action.type) {
+    case "create": {
+      const { request } = action;
+      return {
+        clOrdId: request.clOrdId,
+        ric: request.ric,
+        side: request.side,
+        quantity: request.quantity,
+        price: request.price,
+        account: request.account,
+        status: OrdStatus.Rejected,
+      };
+    }
+    case "amend":
+    case "cancel": {
+      const { order } = action;
+      return {
+        orderId: order.orderId,
+        ric: order.ric,
+        side: order.side,
+        quantity: order.quantity,
+        price: action.type === "amend" ? action.price : order.price,
+      };
+    }
+    case "cancelAll":
+      return { ric: action.ric, account: action.account };
+  }
+};
 
 const toRpcError = (err: unknown, rpcName: RpcName) =>
   err instanceof TradingRpcError
@@ -124,10 +178,15 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
     {
       account,
       clOrdIdPrefix = "LDR",
+      defaultLinkGroup,
       levels = 10,
+      linkGroup: linkGroupProp,
+      notify: notifyEnabled = true,
       onError,
+      onLinkGroupChange,
       onOrderEvent,
       ric: ricProp,
+      showLinkGroupSelector = false,
       showVolume = false,
       timeInForce = TimeInForce.Day,
       tradingEnabled = true,
@@ -135,7 +194,15 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
     },
     ref,
   ) {
-    const { ric, instrument } = useFollowedInstrument(ricProp);
+    const { linkGroup, channel, setLinkGroup } = useComponentLinkGroup({
+      defaultLinkGroup,
+      linkGroup: linkGroupProp,
+      onLinkGroupChange,
+      persistKey: props.id ? `PriceLadder:${props.id}` : "PriceLadder",
+    });
+    const { ric, instrument } = useFollowedInstrument(ricProp, {
+      linkGroup: channel,
+    });
     const { bids, asks } = useMarketDepth(ric, {
       levels: Math.max(1, Math.min(levels, 10)),
     });
@@ -160,13 +227,22 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
       text: string;
       kind: "info" | "error";
     }>();
-    const callbacks = useRef({ onError, onOrderEvent });
-    callbacks.current = { onError, onOrderEvent };
+    const notifications = useTradingNotifications();
+    const notify = useCallback(
+      (event: TradingOrderEvent) => {
+        if (notifyEnabled && notifications.provided)
+          notifications.notify({ source: PRICE_LADDER_SOURCE, ...event });
+      },
+      [notifications, notifyEnabled],
+    );
+    const callbacks = useRef({ onError, onOrderEvent, notify });
+    callbacks.current = { onError, onOrderEvent, notify };
 
     const fail = useCallback((err: unknown, action: PriceLadderAction) => {
       const error = toRpcError(err, rpcNames[action.type]);
       setStatus({ text: `${error.reason}: ${error.text}`, kind: "error" });
       callbacks.current.onError?.(error, action);
+      callbacks.current.notify(rpcRejectEvent(error, actionEvent(action)));
     }, []);
 
     const { dataSource } = own;
@@ -202,6 +278,12 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
             type: "create",
             request,
             response,
+          });
+          callbacks.current.notify({
+            ...actionEvent({ type: "create", request }),
+            kind: orderEventKindForStatus(response.status) ?? "ack",
+            orderId: response.orderId,
+            status: response.status,
           });
         } catch (err) {
           fail(err, { type: "create", request });
@@ -308,11 +390,19 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
         priceFormat={priceFormat}
         ref={ref}
         referencePrice={instrument?.close || instrument?.refPrice || undefined}
+        data-link-group={linkGroup}
         ric={ric}
         showVolume={showVolume}
         status={status?.text}
         statusKind={status?.kind}
         tickSchedule={tickSchedule}
+        toolbarStart={
+          showLinkGroupSelector ? (
+            <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
+          ) : (
+            props.toolbarStart
+          )
+        }
         tradedVolume={tradedVolume}
         tradingEnabled={canTrade}
       />

@@ -28,6 +28,8 @@ apps/
     `src/utils/`.
   - CSS class base: `trading<ComponentName>` (camelCase). Elements and modifiers are `-suffix`, e.g. `tradingPriceLadder`,
     `tradingPriceLadder-row`, `tradingPriceLadder-bid`. This mirrors vuu-ui (`vuuTable`, `vuuTableRow-selected`).
+    This rule replaces the `trd` prefix in the original plan. Every component uses `trading<Name>`; there are no
+    `trd*` classes.
   - Component CSS custom properties: `--tradingPriceLadder-rowHeight`. Shared semantic tokens are `--trading-*`
     (see §3).
   - `testId` for CSS injection: kebab-case, `trading-price-ladder`.
@@ -161,10 +163,14 @@ present.
 **Never import `@heswell/trading-test-data` from `packages/trading-ui/src` or from features.** It bundles both
 engines and is a devDependency of trading-ui, for tests only.
 
-## 5. Instrument context (P3.11 placeholder)
+## 5. Instrument linking (P3.11)
 
-Components follow, and publish, the selected instrument through a context. They never talk to each other
-directly:
+Components follow and publish the selected instrument through **link groups** (channels), like the coloured link
+groups of Bloomberg / Eikon. They never talk to each other directly. Each component instance joins one group:
+`red`, `green`, `blue`, `yellow` (`DEFAULT_LINK_GROUPS`) or `unlinked` (a private selection). Selecting a ric in a
+source (grid, blotters, positions, picker) publishes it to the group; followers in the group (ticket, depth,
+ladder, tape, grid highlight) follow it. Visual links are a different thing: they are one-way parent→child server
+filters between Tables, and stay as they are. Link groups sit beside them.
 
 ```ts
 interface SelectedInstrument {
@@ -172,22 +178,53 @@ interface SelectedInstrument {
   description?: string; currency?: string; exchange?: string;
   tickSize?: number; tickBands?: string; lotSize?: number; priceDecimals?: number;
 }
-interface InstrumentContextValue {
-  selectedInstrument: SelectedInstrument | undefined;
-  selectionSource: string | undefined;           // id of the component that selected
-  setSelectedInstrument(instrument: SelectedInstrument | undefined, source?: string): void;
-}
-const { selectedInstrument, setSelectedInstrument } = useSelectedInstrument();
+// Unchanged API; resolves to the component's group (default: inherited, else "red").
+const { selectedInstrument, selectionSource, setSelectedInstrument, linkGroup } =
+  useSelectedInstrument({ linkGroup: channel });
 ```
 
-- Publish as much static data as you have, so consumers (the ticket, the ladder) can format and validate without
-  another lookup. instrumentPrices rows carry all the fields.
-- Pass a stable `source` id. Ignore your own echoes with `selectionSource === myId`.
-- `useSelectedInstrument()` works without a provider: the selection is always `undefined` and setting it is a no-op.
-  Components must render sensibly with no selection.
-- `InstrumentContextProvider` (`initialInstrument`, `onSelectionChange`) is a local React-state placeholder. P3.11
-  will back the same interface with a bus shared across MF features and windows (link groups/channels). Code
-  against the hook and the interface, not the provider.
+**Layers.**
+
+- `instrumentLinkBus.ts`: a framework-free store with `publish(group, instrument, source)`, `subscribe(group, fn)`,
+  `subscribeAll`, `getSelection`, `receive`, `snapshot` and `addTransport`. `getInstrumentLinkBus()` returns the one
+  bus per window. It lives on `globalThis` under `Symbol.for("@heswell/trading-ui/instrument-link-bus/v1")`, so
+  separately mounted MF features share it even when they do not share a React tree or a copy of trading-ui.
+- `connectBroadcastChannel(bus)` (optional) links windows / popouts of the same origin. Selections carry a Lamport
+  `seq` and an `origin`, and are applied last-writer-wins. Received selections are never re-posted (no loops). A new
+  window asks for the current selections. Private groups never leave the window.
+- React: `useSelectedInstrument()` reads and writes the bus. It works without any provider (the window bus).
+  `InstrumentContextProvider` is now optional. It gives a subtree a private bus (tests, previews), or `bus={…}`,
+  and a default group. `LinkGroupProvider linkGroup="green"` sets the default group of a subtree (e.g. a whole MF
+  feature).
+- Components: every linkable component accepts `LinkGroupProps` (`linkGroup`, `defaultLinkGroup`,
+  `onLinkGroupChange`, `showLinkGroupSelector`) and calls `useComponentLinkGroup()`. That returns
+  `{ linkGroup, channel, setLinkGroup }`; pass `channel` to `useSelectedInstrument`. `channel` is
+  `unlinked:<useId>` for an unlinked instance. `<LinkGroupSelector value onChange />` is the compact header control
+  (swatch plus name, so it does not rely on colour alone). It is off by default (`showLinkGroupSelector`).
+
+**Rules.**
+
+- **Source tagging.** Pass a stable `source` id. The bus drops a publish of the ric a group already has (unless it
+  adds static data), so a follower that echoes a selection back changes nothing. Ignore your own echoes with
+  `selectionSource === myId` when a follow would re-trigger your own publish.
+- **Unknown rics.** `publish` rejects a missing or blank ric and strips non-instrument fields.
+  `setSelectedInstrument` enriches a bare ric from the `InstrumentLookup` when it knows it. Followers must render
+  sensibly with an unknown ric or none: the grid clears its selection, and depth / ladder show an empty book.
+- **Publish static data** when you have it (instrumentPrices rows carry all the fields), so consumers can format
+  and validate without another lookup.
+- **Persistence.** The group the user picks is saved with the layout. Inside a vuu-layout `View` it is saved in the
+  View's state (`save(group, "linkGroup")`) and returned by `load("linkGroup")`, so it travels in the layout JSON
+  (the Trader workspace example restores it after a reload). Outside a View, with a `persistKey`, it goes to vuu-portal
+  `usePersistedState()` under `trading.linkGroup.<persistKey>`. The order of precedence is: `linkGroup` prop, then
+  saved, then `defaultLinkGroup`, then inherited.
+
+**MF features (Phase 4).** In each feature's `portal-build.json` `shared` block, add `@heswell/trading-ui`,
+`react`, `react-dom` and `@vuu-ui/vuu-layout` as **singletons**. trading-ui keeps the React context and the
+InstrumentLookup in one copy. vuu-layout keeps View state in a module-level map (`setPersistentState`), so every
+feature must use the host's copy for the saved group to be found. The bus itself still links features that end up
+with their own copy, through `globalThis`, provided they use the same bus protocol version
+(`INSTRUMENT_LINK_BUS_VERSION`). The host calls `connectBroadcastChannel(getInstrumentLinkBus())` once if popouts
+should link. A feature that wants its own group by default wraps itself in `LinkGroupProvider`.
 
 ## 6. Test data (`@heswell/trading-test-data`)
 
@@ -221,8 +258,10 @@ through the showcase.
    { id: "price-ladder-basic", group: "PriceLadder", title: "Basic", description: "…", Component: PriceLadderBasic },
    ```
    `id` is unique and url-safe, and becomes `#price-ladder-basic`. `group` is the component name.
-3. The app wraps every example in `TradingDataProvider` (local or remote) and `InstrumentContextProvider`, inside
-   `SaltProviderNext` with vuu-theme. The examples area fills its height, so give tables a sized flex container.
+3. The app wraps every example in `TradingDataProvider` (local or remote) and `ShowcaseTradingHost`, inside
+   `SaltProviderNext` with vuu-theme. Examples share the window-wide link bus (connected to a BroadcastChannel). The
+   header shows each group's ric. Use the trading-ui `InstrumentPicker` / `InstrumentGrid` to select instruments
+   (`examples/shared/InstrumentSelector.tsx` adds halt / resume). The examples area fills its height, so give tables a sized flex container.
 
 To avoid merge conflicts between parallel sessions, keep each session's examples in its own file and add only one
 registry line per example.
@@ -272,14 +311,15 @@ Copy `apps/features/hello` (rsbuild via `@vuu-ui/portal-build`):
      covers vuu packages (upstream #23).
 4. Register it in `apps/portal-config/default-modules.yaml`: `mfScope` must equal `moduleFederation.name`, and
    `mfComponent` is the exposed name. Add it to `scripts/dev.ts` if it should start with `bun run dev`.
-5. The instrument context in the portal is P3.11's job. Until then each feature has an independent selection.
+5. Instrument linking works across features through the window bus. Add `@heswell/trading-ui`, `react`,
+   `react-dom` and `@vuu-ui/vuu-layout` to `shared` as singletons (see §5).
 
 ## 11. Shared renderers and hooks (P3.7–P3.10)
 
 Grids that need status, side, progress, price, P&L, time or liquidity cells should use the registered renderers
 in `TradingRenderer` (`registerTradingCellRenderers()`; call it at module level because `sideEffects` only lists
-CSS) rather than writing new ones. Non-Table views (e.g. the tape) use `useDataSourceRecords` for rAF-coalesced
-rows. See `packages/trading-ui/README.md` for the component props and `docs/upstream-issues.md` #28–32 for the
+CSS) rather than writing new ones. Non-Table views (e.g. the tape) use `useDataSourceRows` for rAF-coalesced
+rows (see §12, "Rows as objects"). See `packages/trading-ui/README.md` for the component props and `docs/upstream-issues.md` #28–32 for the
 alpha.20 constraints behind the design choices.
 
 ## 12. Order ticket, notifications and connection state (P3.6, P3.12)
@@ -295,6 +335,21 @@ alpha.20 constraints behind the design choices.
   `ConnectionBanner` once (the showcase does this in `ShowcaseTradingHost.tsx`).
 - **Staleness.** Components that show live prices can use `useStaleIndicator({ lastUpdate })` or
   `<StaleIndicator lastUpdate={…} />`.
-- **Rows as objects.** `useTradingRows(table, { filter, rowCount })` returns `{ dataSource, rows }`. It suits a
-  small row set, such as one instrument's quote or the account list. Use a vuu `Table` for grids.
+- **Rows as objects.** There is one primitive, in `data/useDataSourceRows.ts`:
+  - `subscribeTradingRows(dataSource, { rowCount | range, filter?, groupBy?, aggregations? }, listener)` is
+    framework-free. Every viewport message calls `listener({ rows, updated, size, messageSize, loaded, cleared })`.
+    It returns unsubscribe.
+  - `useDataSourceRows(dataSource, { …config, enabled?, throttle? })` returns `{ rows, size, loaded, version }`
+    for a data source you own. It renders at most once per animation frame (`throttle: "none"` renders every
+    message). It re-subscribes with the rows cleared when the filter / grouping / range change.
+  - `useTradingRows(table, { filter, rowCount, … })` creates the data source too and returns
+    `{ dataSource, rows, size, loaded }`. An undefined filter means no filter.
+
+  Rows are `TradingRow` objects (`{ column: value, $key, $index, $isLeaf, $depth }`). They suit a small or
+  custom-rendered row set (a quote, the account list, the tape, the depth book). Use a vuu `Table` for grids.
+- **Default wiring.** Inside an `OrderTicketLauncherProvider`, InstrumentGrid Buy / Sell open the ticket (pass
+  `onBuy` / `onSell`, or `launchOrderTicket={false}`, to override). Inside a `TradingNotificationsProvider`,
+  PriceLadder and OrderBlotter RPC failures and ladder acks go to `notify` (`notify={false}` to opt out).
+  `orderEventKey` dedupes them against the stream toasts. Toast prices use the instrument's decimals / tick size
+  from the InstrumentLookup.
 

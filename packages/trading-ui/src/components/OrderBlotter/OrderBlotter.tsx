@@ -10,19 +10,28 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { editOrdersInSession } from "../../data/editSessionAmend";
 import { sendTradingRpc, TradingRpcError } from "../../data/tradingRpc";
-import { useDataSourceRecords } from "../../data/useDataSourceRecords";
+import { useDataSourceRows } from "../../data/useDataSourceRows";
+import { filterString } from "../../utils/filters";
 import { useTableSelectedKeys } from "../../data/useTableSelectedKeys";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
 import { useSelectedInstrument } from "../../instrument-context/InstrumentContext";
+import {
+  type LinkGroupProps,
+  useComponentLinkGroup,
+} from "../../instrument-context/useComponentLinkGroup";
+import { useTradingNotifications } from "../../notifications/TradingNotificationsProvider";
+import { rpcRejectEvent } from "../../notifications/tradingOrderEvents";
 import { isOrderAmendable, isOrderCancellable } from "../../utils/orderStatus";
 import {
   InstrumentLookupProvider,
   useInstrumentLookup,
 } from "../InstrumentLookup";
+import { LinkGroupSelector } from "../LinkGroupSelector";
 import { registerTradingCellRenderers } from "../TradingCellRenderers";
 import {
   CHILD_ORDER_COLUMNS,
@@ -45,9 +54,11 @@ registerTradingCellRenderers();
 registerOrderActionsRenderer();
 
 const classBase = "tradingOrderBlotter";
+const SOURCE = "OrderBlotter";
 
 export interface OrderBlotterProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect" | "onError"> {
+  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect" | "onError">,
+    LinkGroupProps {
   /** Initial filter tab. Default "working". */
   defaultTab?: OrderBlotterTab;
   /** Show the child (street) orders of the selected order. Default true. */
@@ -56,6 +67,11 @@ export interface OrderBlotterProps
   onOrderSelect?: (orderId: string | undefined) => void;
   /** Called with RPC failures (also shown in the status line). */
   onError?: (error: TradingRpcError) => void;
+  /**
+   * Report failed cancel / amend requests to the
+   * TradingNotificationsProvider, if there is one. Default true.
+   */
+  notify?: boolean;
   /**
    * Amend through the server edit session (beginEditSession, editCell,
    * endEditSession) instead of the amendOrder RPC. Default false.
@@ -70,9 +86,14 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
   function OrderBlotterInner(
     {
       className,
+      defaultLinkGroup,
       defaultTab = "working",
+      linkGroup: linkGroupProp,
+      notify: notifyEnabled = true,
       onError,
+      onLinkGroupChange,
       onOrderSelect,
+      showLinkGroupSelector = false,
       showChildOrders = true,
       useEditSession = false,
       ...htmlAttributes
@@ -86,7 +107,16 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
       window: targetWindow,
     });
     const lookup = useInstrumentLookup();
-    const { setSelectedInstrument } = useSelectedInstrument();
+    const { linkGroup, channel, setLinkGroup } = useComponentLinkGroup({
+      defaultLinkGroup,
+      linkGroup: linkGroupProp,
+      onLinkGroupChange,
+      persistKey: htmlAttributes.id ? `${SOURCE}:${htmlAttributes.id}` : SOURCE,
+    });
+    const { setSelectedInstrument } = useSelectedInstrument({
+      linkGroup: channel,
+    });
+    const notifications = useTradingNotifications();
     const [tab, setTab] = useState<OrderBlotterTab>(defaultTab);
     const [message, setMessage] = useState<{ text: string; error: boolean }>();
     const [amending, setAmending] = useState<string>();
@@ -101,9 +131,7 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
       columns: ["orderId", "status", "quantity", "price", "cumQty", "ric"],
       filterSpec: { filter: orderBlotterTabFilter(defaultTab) },
     });
-    const { records } = useDataSourceRecords(mirror, {
-      range: { from: 0, to: 500 },
-    });
+    const { rows: records } = useDataSourceRows(mirror, { rowCount: 500 });
     const orderedKeys = useMemo(() => records.map((r) => r.$key), [records]);
     const { selectedKeys, onSelectionChange, clear } =
       useTableSelectedKeys(orderedKeys);
@@ -111,6 +139,8 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
       () => new Map(records.map((r) => [r.$key, r])),
       [records],
     );
+    const byKeyRef = useRef(byKey);
+    byKeyRef.current = byKey;
 
     useEffect(() => {
       const filter = orderBlotterTabFilter(tab);
@@ -120,11 +150,21 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
     }, [tab, dataSource, mirror, clear]);
 
     const fail = useCallback(
-      (err: unknown) => {
+      (err: unknown, orderId?: string) => {
         setMessage({ text: describe(err), error: true });
         if (err instanceof TradingRpcError) onError?.(err);
+        if (notifyEnabled && notifications.provided) {
+          const order = orderId ? byKeyRef.current.get(orderId) : undefined;
+          notifications.notify(
+            rpcRejectEvent(err, {
+              orderId,
+              ric: order?.ric === undefined ? undefined : String(order.ric),
+              source: SOURCE,
+            }),
+          );
+        }
       },
-      [onError],
+      [onError, notifyEnabled, notifications],
     );
 
     const cancelIds = useCallback(
@@ -137,7 +177,8 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
         const failed = results.filter(
           (r): r is PromiseRejectedResult => r.status === "rejected",
         );
-        if (failed.length) fail(failed[0].reason);
+        const firstFailed = results.findIndex((r) => r.status === "rejected");
+        if (failed.length) fail(failed[0].reason, orderIds[firstFailed]);
         else
           setMessage({
             text: `Cancel sent for ${orderIds.length} order(s)`,
@@ -191,7 +232,7 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
         const orderId = String(row.orderId);
         setFocusedOrderId(orderId);
         onOrderSelect?.(orderId);
-        setSelectedInstrument(lookup.get(ric) ?? { ric }, "OrderBlotter");
+        setSelectedInstrument(lookup.get(ric) ?? { ric }, SOURCE);
       },
       [lookup, onOrderSelect, setSelectedInstrument],
     );
@@ -218,7 +259,7 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
           setMessage({ text: `Amend sent for ${amending}`, error: false });
           setAmending(undefined);
         } catch (err) {
-          fail(err);
+          fail(err, amending);
         }
       },
       [amending, dataSource, fail, useEditSession],
@@ -228,10 +269,14 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
       <div
         {...htmlAttributes}
         className={cx(classBase, className)}
+        data-link-group={linkGroup}
         data-testid="trading-order-blotter"
         ref={ref}
       >
         <div className={`${classBase}-toolbar`} role="tablist">
+          {showLinkGroupSelector ? (
+            <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
+          ) : null}
           {ORDER_BLOTTER_TABS.map(({ id, label }) => (
             <button
               aria-selected={tab === id}
@@ -300,7 +345,7 @@ const ChildOrders = ({ parentOrderId }: { parentOrderId?: string }) => {
   });
   useEffect(() => {
     dataSource.filter = {
-      filter: `parentOrderId = "${parentOrderId ?? "-"}"`,
+      filter: `parentOrderId = ${filterString(parentOrderId ?? "-")}`,
     };
   }, [dataSource, parentOrderId]);
   return (

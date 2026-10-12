@@ -53,3 +53,14 @@
   flex: 1;
   min-height: 0;
 }
+
+.showcaseApp-links {
+  display: flex;
+  gap: var(--salt-spacing-200);
+}
+
+.showcaseApp-links > span {
+  align-items: center;
+  display: inline-flex;
+  gap: var(--salt-spacing-50);
+}

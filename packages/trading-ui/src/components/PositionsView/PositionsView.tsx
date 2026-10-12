@@ -14,9 +14,15 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useDataSourceRecords } from "../../data/useDataSourceRecords";
+import { useDataSourceRows } from "../../data/useDataSourceRows";
+import { filterString } from "../../utils/filters";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
 import { useSelectedInstrument } from "../../instrument-context/InstrumentContext";
+import {
+  type LinkGroupProps,
+  useComponentLinkGroup,
+} from "../../instrument-context/useComponentLinkGroup";
+import { LinkGroupSelector } from "../LinkGroupSelector";
 import { formatNotional } from "../../utils/formatting";
 import {
   InstrumentLookupProvider,
@@ -42,7 +48,8 @@ const classBase = "tradingPositionsView";
 export type PositionsGrouping = "none" | "account" | "ric";
 
 export interface PositionsViewProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect"> {
+  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect">,
+    LinkGroupProps {
   /** Initial grouping. Default "none". */
   defaultGrouping?: PositionsGrouping;
   /** Restrict to one account. */
@@ -186,6 +193,10 @@ const Inner = forwardRef<HTMLDivElement, PositionsViewProps>(
       account,
       className,
       defaultGrouping = "none",
+      defaultLinkGroup,
+      linkGroup: linkGroupProp,
+      onLinkGroupChange,
+      showLinkGroupSelector = false,
       showTotals = true,
       ...htmlAttributes
     },
@@ -198,10 +209,22 @@ const Inner = forwardRef<HTMLDivElement, PositionsViewProps>(
       window: targetWindow,
     });
     const lookup = useInstrumentLookup();
-    const { setSelectedInstrument } = useSelectedInstrument();
+    const { linkGroup, channel, setLinkGroup } = useComponentLinkGroup({
+      defaultLinkGroup,
+      linkGroup: linkGroupProp,
+      onLinkGroupChange,
+      persistKey: htmlAttributes.id
+        ? `PositionsView:${htmlAttributes.id}`
+        : "PositionsView",
+    });
+    const { setSelectedInstrument } = useSelectedInstrument({
+      linkGroup: channel,
+    });
     const [grouping, setGrouping] =
       useState<PositionsGrouping>(defaultGrouping);
-    const filter = { filter: account ? `account = "${account}"` : "" };
+    const filter = {
+      filter: account ? `account = ${filterString(account)}` : "",
+    };
 
     const dataSource = useTradingDataSource("positionPrices", {
       columns: COLUMNS,
@@ -211,13 +234,13 @@ const Inner = forwardRef<HTMLDivElement, PositionsViewProps>(
       columns: ["currency", ...SUMMED],
       filterSpec: filter,
     });
-    const { records } = useDataSourceRecords(totalsSource, {
-      range: { from: 0, to: 2_000 },
+    const { rows: records } = useDataSourceRows(totalsSource, {
+      rowCount: 2_000,
     });
     const totals = useMemo(() => totalsByCurrency(records), [records]);
 
     useEffect(() => {
-      const f = { filter: account ? `account = "${account}"` : "" };
+      const f = { filter: account ? `account = ${filterString(account)}` : "" };
       dataSource.filter = f;
       totalsSource.filter = f;
     }, [account, dataSource, totalsSource]);
@@ -251,10 +274,14 @@ const Inner = forwardRef<HTMLDivElement, PositionsViewProps>(
       <div
         {...htmlAttributes}
         className={cx(classBase, className)}
+        data-link-group={linkGroup}
         data-testid="trading-positions-view"
         ref={ref}
       >
         <div className={`${classBase}-toolbar`}>
+          {showLinkGroupSelector ? (
+            <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
+          ) : null}
           <label>
             Group by{" "}
             <select

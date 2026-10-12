@@ -2,10 +2,16 @@ import { Side } from "@heswell/trading-schemas";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
 import cx from "clsx";
-import { forwardRef, type HTMLAttributes, useEffect, useMemo } from "react";
-import { useDataSourceRecords } from "../../data/useDataSourceRecords";
+import { forwardRef, type HTMLAttributes, useMemo } from "react";
+import { useDataSourceRows } from "../../data/useDataSourceRows";
+import { filterString } from "../../utils/filters";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
 import { useSelectedInstrument } from "../../instrument-context/InstrumentContext";
+import {
+  type LinkGroupProps,
+  useComponentLinkGroup,
+} from "../../instrument-context/useComponentLinkGroup";
+import { LinkGroupSelector } from "../LinkGroupSelector";
 import { sideColour } from "../../utils/colours";
 import { formatPrice, formatQuantity } from "../../utils/formatting";
 import { formatTime } from "../../utils/time";
@@ -18,7 +24,9 @@ import tradeTapeCss from "./TradeTape.css";
 
 const classBase = "tradingTradeTape";
 
-export interface TradeTapeProps extends HTMLAttributes<HTMLDivElement> {
+export interface TradeTapeProps
+  extends HTMLAttributes<HTMLDivElement>,
+    LinkGroupProps {
   /** Instrument to show. Defaults to the selected instrument. */
   ric?: string;
   /** Maximum rows kept and rendered (newest first). Default 100. */
@@ -49,6 +57,10 @@ const Inner = forwardRef<HTMLDivElement, TradeTapeProps>(
   function TradeTapeInner(
     {
       className,
+      defaultLinkGroup,
+      linkGroup: linkGroupProp,
+      onLinkGroupChange,
+      showLinkGroupSelector = false,
       largeSizePercentile = 90,
       largeSizeThreshold,
       maxRows = 100,
@@ -64,7 +76,17 @@ const Inner = forwardRef<HTMLDivElement, TradeTapeProps>(
       css: tradeTapeCss,
       window: targetWindow,
     });
-    const { selectedInstrument } = useSelectedInstrument();
+    const { linkGroup, channel, setLinkGroup } = useComponentLinkGroup({
+      defaultLinkGroup,
+      linkGroup: linkGroupProp,
+      onLinkGroupChange,
+      persistKey: htmlAttributes.id
+        ? `TradeTape:${htmlAttributes.id}`
+        : "TradeTape",
+    });
+    const { selectedInstrument } = useSelectedInstrument({
+      linkGroup: channel,
+    });
     const lookup = useInstrumentLookup();
     const ric = ricProp ?? selectedInstrument?.ric;
 
@@ -79,15 +101,10 @@ const Inner = forwardRef<HTMLDivElement, TradeTapeProps>(
         "seq",
       ],
       sort: { sortDefs: [{ column: "seq", sortType: "D" }] },
-      filterSpec: { filter: ric ? `ric = "${ric}"` : 'ric = "-"' },
     });
-    useEffect(() => {
-      dataSource.filter = { filter: ric ? `ric = "${ric}"` : 'ric = "-"' };
-    }, [ric, dataSource]);
-
-    const { records } = useDataSourceRecords(dataSource, {
-      range: { from: 0, to: maxRows },
-      enabled: true,
+    const { rows: records } = useDataSourceRows(dataSource, {
+      rowCount: maxRows,
+      filter: ric ? `ric = ${filterString(ric)}` : 'ric = "-"',
     });
     // drop rows of the previous instrument until the filtered rows arrive
     const trades = useMemo(
@@ -109,9 +126,16 @@ const Inner = forwardRef<HTMLDivElement, TradeTapeProps>(
       <div
         {...htmlAttributes}
         className={cx(classBase, className)}
+        data-link-group={linkGroup}
         data-testid="trading-trade-tape"
         ref={ref}
       >
+        {showLinkGroupSelector ? (
+          <div className={`${classBase}-toolbar`}>
+            <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
+            <span className={`${classBase}-ric`}>{ric}</span>
+          </div>
+        ) : null}
         <div aria-hidden="true" className={`${classBase}-header`}>
           <span>Time</span>
           <span>Price</span>

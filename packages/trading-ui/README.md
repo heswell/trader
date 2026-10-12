@@ -7,12 +7,12 @@ inside vuu-portal. **Conventions: [docs/ui-guide.md](../../docs/ui-guide.md).**
 | Area | Exports |
 | --- | --- |
 | Data | `TradingDataProvider` (`inherit` / `local` / `remote`), `useTradingDataSource(table, options?)`, `useTradingDataMode`, `useHasDataProvider`, `connectToVuuServer`, `disconnectFromVuuServer`, `sendTradingRpc`, `TradingRpcError`, `tradingTableSchema`, `tradingVuuTable`, `tradingColumnNames` |
-| Instrument context (P3.11 placeholder) | `InstrumentContextProvider`, `useSelectedInstrument`, `SelectedInstrument`, `InstrumentContextValue` |
+| Instrument linking (P3.11) | `useSelectedInstrument({ linkGroup? })`, `SelectedInstrument`, link groups (`DEFAULT_LINK_GROUPS`, `UNLINKED`, `LinkGroupProvider`), `useComponentLinkGroup`, `LinkGroupProps`, `LinkGroupSelector` / `LinkGroupSwatch`, the bus (`getInstrumentLinkBus`, `createInstrumentLinkBus`, `connectBroadcastChannel`), optional `InstrumentContextProvider`. See [ui-guide §5](../../docs/ui-guide.md#5-instrument-linking-p311). |
 | Formatting | `formatPrice`, `priceDecimals`, `formatQuantity`, `formatNotional`, `formatPercent` |
 | Colours | `TradingColour`, `sideColour`, `directionColour`, `orderStatusCategory`, `orderStatusColour`, `tradingPhaseColour` |
 | User settings | `UserSettingsStorage`, `UserSettingsProvider`, `useUserSettingsStorage`, `createLocalSettingsStorage`, `createMemorySettingsStorage` |
 | Components | `SideLabel` (reference component), `InstrumentGrid`, `Sparkline` / `trading.sparkline` renderer, `OrderTicket` / `OrderTicketDialog` / `OrderTicketPanel` + `useOrderTicketLauncher` ([README](src/components/OrderTicket/README.md)), `InstrumentPicker`, `ConnectionBanner`, `StaleIndicator` |
-| Rows | `useTradingRows(table, { filter, rowCount })` → `{ dataSource, rows }`, `subscribeTradingRows`, `toTradingRowObject` |
+| Rows | `useDataSourceRows(dataSource, config)` → `{ rows, size, loaded, version }`, `useTradingRows(table, { filter, rowCount })` → `{ dataSource, rows, size, loaded }`, `subscribeTradingRows(dataSource, config, listener)`, `toTradingRow`, `TradingRow` ([ui-guide §12](../../docs/ui-guide.md#12-order-ticket-notifications-and-connection-state-p36-p312)) |
 | Notifications, connection | `TradingNotificationsProvider`, `useTradingNotifications`, `TradingOrderEvent`, `useTradingConnectionStatus`, `useStaleIndicator` ([README](src/notifications/README.md)) |
 
 ```tsx
@@ -38,7 +38,10 @@ A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns 
 | `initialGroupBy?` | `exchange` / `sector` / `currency`; volume and turnover are summed in group rows. |
 | `sparkline?` | `false` or `{ valueColumn, length, bucketMs, ignoreZero }`. |
 | `showToolbar?` | Quick filter (ric / description), watchlist selector + manager, group-by, columns, Buy/Sell/Depth buttons. |
-| `onBuy` / `onSell` / `onOpenDepth` | `(instrument: SelectedInstrument) => void`. The context-menu items and toolbar buttons exist only when the prop is set. There are no server menu RPCs. |
+| `onBuy` / `onSell` / `onOpenDepth` | `(instrument: SelectedInstrument) => void`. The context-menu items and toolbar buttons exist only when the prop is set, or (Buy / Sell) when an `OrderTicketLauncherProvider` is mounted. There are no server menu RPCs. |
+| `launchOrderTicket?` | Default `true`: without `onBuy` / `onSell`, Buy / Sell open the ticket via `useOrderTicketLauncher()` when a launcher is present. |
+| `followSelection?` | Default `true`: select and highlight the row of the instrument selected elsewhere in the link group. It clears for an unknown ric, and does not scroll (upstream #37). |
+| `LinkGroupProps` | `linkGroup`, `defaultLinkGroup`, `onLinkGroupChange`, `showLinkGroupSelector` (toolbar). |
 | `watchlistStorage?` | `UserSettingsStorage` override for the watchlists. |
 
 Row selection calls `setSelectedInstrument(instrument, "InstrumentGrid")`. Cell renderers (registered by the grid, or by
@@ -81,7 +84,9 @@ Tests: `bun run test:ui` (bun:test + @testing-library/react on happy-dom).
 ## Blotters, tape and positions (P3.7–P3.10)
 
 All four wrap themselves in `InstrumentLookupProvider` (one `instruments` subscription, reused if nested) and
-set the selected instrument via `useSelectedInstrument()`.
+publish the selected instrument to their link group (`LinkGroupProps`: `linkGroup`, `defaultLinkGroup`,
+`showLinkGroupSelector`, `onLinkGroupChange`). The tape follows its group. OrderBlotter `notify` (default true)
+sends RPC failures to `useTradingNotifications()` inside a provider.
 
 | Component | Props |
 | --- | --- |
@@ -94,6 +99,6 @@ Shared pieces (all exported): `OrderStatusBadge`, `FillProgressBar`, `PnlValue`;
 `registerTradingCellRenderers()` and named in `TradingRenderer` (`trading.order-status`, `trading.side`,
 `trading.fill-progress`, `trading.price`, `trading.pnl`, `trading.position-quantity`, `trading.notional`,
 `trading.time`, `trading.liquidity`) – use them as a column `type: { name: "string", renderer: { name } }`;
-`useInstrumentLookup`, `useDataSourceRecords` (rAF-coalesced records from a data source you own),
+`useInstrumentLookup`, `useDataSourceRows` (rAF-coalesced rows from a data source you own),
 `useTableSelectedKeys`, `editOrdersInSession`, and the `formatTime`, `rowsToCsv` / `downloadCsv` and order status
 helpers (`isOrderAmendable`, `WORKING_STATUSES`, ...).

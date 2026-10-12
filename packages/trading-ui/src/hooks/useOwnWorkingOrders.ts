@@ -8,7 +8,8 @@ import type { DataSource } from "@vuu-ui/vuu-data-types";
 import { useMemo } from "react";
 import { useTradingDataSource } from "../data/useTradingDataSource";
 import { priceKey } from "./useMarketData";
-import { filterString, useViewportRows } from "./useViewportRows";
+import { useDataSourceRows } from "../data/useDataSourceRows";
+import { filterString } from "../utils/filters";
 
 /** A working (or pending) LIMIT parent order of the current user. */
 export interface OwnOrder {
@@ -99,10 +100,10 @@ export const useOwnWorkingOrders = (
         .filter(Boolean)
         .join(" and ")
     : "";
-  const { rows, loaded } = useViewportRows(dataSource, {
+  const { rows, loaded } = useDataSourceRows(dataSource, {
     enabled: !!ric,
     filter,
-    maxRows: maxOrders,
+    rowCount: maxOrders,
   });
   return useMemo(() => {
     const orders: OwnOrder[] = [];

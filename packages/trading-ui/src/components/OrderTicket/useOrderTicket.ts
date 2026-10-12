@@ -14,10 +14,10 @@ import {
   useState,
 } from "react";
 import { sendTradingRpc, TradingRpcError } from "../../data/tradingRpc";
-import {
-  type TradingRowObject,
-  useTradingRows,
-} from "../../data/useTradingRows";
+import { filterString } from "../../utils/filters";
+import type { LinkGroupId } from "../../instrument-context/linkGroups";
+import type { TradingRow } from "../../data/useDataSourceRows";
+import { useTradingRows } from "../../data/useTradingRows";
 import {
   type SelectedInstrument,
   useSelectedInstrument,
@@ -79,6 +79,11 @@ export interface UseOrderTicketProps extends RiskPreviewOptions {
   prefill?: OrderTicketPrefill;
   /** Follow the selected instrument (useSelectedInstrument). Default true. */
   followSelection?: boolean;
+  /**
+   * Link group (channel) whose selection is followed / published. Default:
+   * the inherited group (LinkGroupProvider / InstrumentContextProvider).
+   */
+  linkGroup?: LinkGroupId;
   /** Publish instruments picked in the ticket as the selection. Default true. */
   publishSelection?: boolean;
   /** Called for each order event of orders sent from this ticket. */
@@ -145,7 +150,6 @@ const ORDER_COLUMNS = [
   "version",
 ];
 
-const quote = (value: string) => `"${value.replace(/["\\]/g, "")}"`;
 const NO_ORDER_FILTER = 'clOrdId = "-"';
 
 const readLastAccount = () => {
@@ -190,7 +194,7 @@ export const draftFromPrefill = (
   };
 };
 
-const toInstrument = (row: TradingRowObject | undefined) =>
+const toInstrument = (row: TradingRow | undefined) =>
   row as unknown as OrderTicketInstrument | undefined;
 
 const isTextEntry = (target: EventTarget) =>
@@ -204,6 +208,7 @@ const isTextEntry = (target: EventTarget) =>
 export const useOrderTicket = ({
   prefill,
   followSelection = true,
+  linkGroup,
   publishSelection = true,
   onOrderEvent,
   onClose,
@@ -214,7 +219,7 @@ export const useOrderTicket = ({
   collarPct,
 }: UseOrderTicketProps = {}) => {
   const { selectedInstrument, selectionSource, setSelectedInstrument } =
-    useSelectedInstrument();
+    useSelectedInstrument({ linkGroup });
   const notifications = useTradingNotifications();
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: recomputed per prefill only
@@ -272,7 +277,7 @@ export const useOrderTicket = ({
   // Live instrument (static + prices).
   const { rows: instrumentRows } = useTradingRows("instrumentPrices", {
     columns: INSTRUMENT_PRICE_COLUMNS,
-    filter: `ric = ${quote(draft.ric ?? "-")}`,
+    filter: `ric = ${filterString(draft.ric ?? "-")}`,
     rowCount: 1,
   });
   const instrument = useMemo(() => {
@@ -317,7 +322,7 @@ export const useOrderTicket = ({
     "parentOrders",
     {
       columns: ORDER_COLUMNS,
-      filter: clOrdId ? `clOrdId = ${quote(clOrdId)}` : NO_ORDER_FILTER,
+      filter: clOrdId ? `clOrdId = ${filterString(clOrdId)}` : NO_ORDER_FILTER,
       rowCount: 1,
     },
   );
@@ -473,7 +478,7 @@ export const useOrderTicket = ({
     try {
       // The ticket's parentOrders data source is filtered on this clOrdId
       // so the live order shows; the RPC only needs it to be subscribed.
-      ordersDataSource.filter = { filter: `clOrdId = ${quote(id)}` };
+      ordersDataSource.filter = { filter: `clOrdId = ${filterString(id)}` };
       const result = await sendTradingRpc(
         ordersDataSource,
         "createOrder",

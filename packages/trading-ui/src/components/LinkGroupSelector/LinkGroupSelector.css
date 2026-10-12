@@ -1,0 +1,29 @@
+.tradingLinkGroupSelector {
+  --tradingLinkGroupSelector-swatchSize: 10px;
+  min-width: 0;
+  width: auto;
+}
+
+.tradingLinkGroupSelector-swatch {
+  background: var(--tradingLinkGroupSelector-color, transparent);
+  border: 1px solid var(--salt-separable-primary-borderColor);
+  border-radius: 50%;
+  display: inline-block;
+  flex: none;
+  height: var(--tradingLinkGroupSelector-swatchSize);
+  width: var(--tradingLinkGroupSelector-swatchSize);
+}
+
+.tradingLinkGroupSelector-swatch[data-link-group="unlinked"] {
+  background: repeating-linear-gradient(
+    135deg,
+    transparent 0 2px,
+    var(--salt-separable-primary-borderColor) 2px 3px
+  );
+}
+
+.tradingLinkGroupSelector-option {
+  align-items: center;
+  display: flex;
+  gap: var(--salt-spacing-100);
+}

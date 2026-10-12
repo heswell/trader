@@ -33,7 +33,12 @@ import {
   formatPrice,
   formatQuantity,
 } from "../../utils/formatting";
+import {
+  type LinkGroupProps,
+  useComponentLinkGroup,
+} from "../../instrument-context/useComponentLinkGroup";
 import { InstrumentPicker } from "../InstrumentPicker";
+import { LinkGroupSelector } from "../LinkGroupSelector";
 import { StaleIndicator } from "../StaleIndicator";
 import {
   isTimeInForceAllowed,
@@ -55,7 +60,8 @@ export type OrderTicketVariant = "panel" | "compact";
 
 export interface OrderTicketProps
   extends Omit<HTMLAttributes<HTMLDivElement>, "onKeyDown">,
-    UseOrderTicketProps {
+    Omit<UseOrderTicketProps, "linkGroup">,
+    LinkGroupProps {
   /**
    * "panel" (default): full form for a docked panel or dialog.
    * "compact": a dense inline strip for a grid row or ladder.
@@ -277,14 +283,18 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
       className,
       clOrdIdPrefix,
       collarPct,
+      defaultLinkGroup,
       followSelection,
+      linkGroup: linkGroupProp,
       notify,
       onClose,
+      onLinkGroupChange,
       onOrderEvent,
       prefill,
       publishSelection,
       rememberAccount,
       showInstrumentPicker = true,
+      showLinkGroupSelector = false,
       usdPerPriceUnit,
       variant = "panel",
       ...htmlAttributes
@@ -297,10 +307,19 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
       css: orderTicketCss,
       window: targetWindow,
     });
+    const { linkGroup, channel, setLinkGroup } = useComponentLinkGroup({
+      defaultLinkGroup,
+      linkGroup: linkGroupProp,
+      onLinkGroupChange,
+      persistKey: htmlAttributes.id
+        ? `OrderTicket:${htmlAttributes.id}`
+        : "OrderTicket",
+    });
     const ticket = useOrderTicket({
       clOrdIdPrefix,
       collarPct,
       followSelection,
+      linkGroup: channel,
       notify,
       onClose,
       onOrderEvent,
@@ -342,12 +361,18 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
         {...htmlAttributes}
         aria-label={htmlAttributes["aria-label"] ?? "Order ticket"}
         className={cx(classBase, className, `${classBase}-${variant}`)}
+        data-link-group={linkGroup}
         data-side={draft.side}
         data-submission={submission.state}
         onKeyDown={handleKeyDown}
         ref={ref}
         role="form"
       >
+        {showLinkGroupSelector ? (
+          <div className={`${classBase}-linkGroup`}>
+            <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
+          </div>
+        ) : null}
         {showInstrumentPicker ? (
           <FormField
             className={`${classBase}-instrument`}

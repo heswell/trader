@@ -65,3 +65,17 @@
   color: var(--salt-content-secondary-foreground);
   padding: var(--salt-spacing-100);
 }
+
+.tradingTradeTape-toolbar {
+  align-items: center;
+  border-bottom: var(--salt-size-border) var(--salt-container-borderStyle)
+    var(--salt-separable-secondary-borderColor);
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--salt-spacing-100);
+  padding: var(--salt-spacing-50) var(--salt-spacing-100);
+}
+
+.tradingTradeTape-ric {
+  font-weight: var(--salt-text-fontWeight-strong);
+}

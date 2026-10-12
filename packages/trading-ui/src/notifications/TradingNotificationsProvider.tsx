@@ -7,6 +7,7 @@ import {
   createContext,
   type ReactElement,
   type ReactNode,
+  type RefObject,
   useCallback,
   useContext,
   useEffect,
@@ -14,8 +15,13 @@ import {
   useRef,
   useState,
 } from "react";
+import {
+  type InstrumentLookup,
+  InstrumentLookupProvider,
+  useInstrumentLookup,
+} from "../components/InstrumentLookup/InstrumentLookup";
 import { useHasDataProvider } from "../data/TradingDataProvider";
-import { subscribeTradingRows } from "../data/useTradingRows";
+import { subscribeTradingRows } from "../data/useDataSourceRows";
 import { useTradingDataSource } from "../data/useTradingDataSource";
 import { FillSound } from "./fillSound";
 import {
@@ -30,6 +36,7 @@ import {
 } from "./orderEventTrackers";
 import {
   describeOrderEvent,
+  type OrderEventPriceFormat,
   type OrderEventToast,
   type TradingOrderEvent,
   type TradingOrderEventKind,
@@ -214,17 +221,27 @@ const OrderEventStreams = ({
 
   useEffect(() => {
     const tracker = new ParentOrderEventTracker();
-    return subscribeTradingRows(parentOrders, STREAM_ROWS, (rows, size) => {
-      const events = tracker.update(rows, size);
-      if (events.length) onEventsRef.current(events);
-    });
+    return subscribeTradingRows(
+      parentOrders,
+      { rowCount: STREAM_ROWS },
+      ({ cleared, updated, messageSize }) => {
+        if (cleared) return;
+        const events = tracker.update(updated, messageSize);
+        if (events.length) onEventsRef.current(events);
+      },
+    );
   }, [parentOrders]);
   useEffect(() => {
     const tracker = new FillEventTracker();
-    return subscribeTradingRows(fills, STREAM_ROWS, (rows, size) => {
-      const events = tracker.update(rows, size);
-      if (events.length) onEventsRef.current(events);
-    });
+    return subscribeTradingRows(
+      fills,
+      { rowCount: STREAM_ROWS },
+      ({ cleared, updated, messageSize }) => {
+        if (cleared) return;
+        const events = tracker.update(updated, messageSize);
+        if (events.length) onEventsRef.current(events);
+      },
+    );
   }, [fills]);
   return null;
 };
@@ -235,6 +252,23 @@ const OrderEventStreams = ({
  * and from components that call `notify` (deduplicated). Mount once, inside
  * the data provider and the vuu NotificationsProvider. See docs/ui-guide.md.
  */
+const EMPTY_LOOKUP: InstrumentLookup = new Map();
+
+const lookupPriceFormat =
+  (lookupRef: RefObject<InstrumentLookup>): OrderEventPriceFormat =>
+  (ric) =>
+    ric ? lookupRef.current?.get(ric) : undefined;
+
+/** Keeps the provider's view of the instrument lookup current. */
+const LookupBridge = ({
+  lookupRef,
+}: {
+  lookupRef: RefObject<InstrumentLookup>;
+}) => {
+  lookupRef.current = useInstrumentLookup();
+  return null;
+};
+
 export const TradingNotificationsProvider = ({
   children,
   trader: traderProp,
@@ -267,6 +301,8 @@ export const TradingNotificationsProvider = ({
   const showRef = useRef(showNotification);
   showRef.current = showNotification;
 
+  const lookupRef = useRef<InstrumentLookup>(EMPTY_LOOKUP);
+
   const fillSound = useMemo(() => new FillSound(), []);
   useEffect(() => () => fillSound.dispose(), [fillSound]);
 
@@ -293,7 +329,10 @@ export const TradingNotificationsProvider = ({
         dedupeMs: settingsRef.current.dedupeMs,
         rateLimit: settingsRef.current.rateLimit,
         emit: (event) => {
-          showToast({ ...describeOrderEvent(event), event });
+          showToast({
+            ...describeOrderEvent(event, lookupPriceFormat(lookupRef)),
+            event,
+          });
           if (
             (event.kind === "fill" || event.kind === "filled") &&
             settingsRef.current.sound
@@ -352,10 +391,21 @@ export const TradingNotificationsProvider = ({
 
   const content = (
     <TradingNotificationsContext.Provider value={value}>
-      {streaming ? (
-        <OrderEventStreams filter={filter} key={filter} onEvents={notifyAll} />
-      ) : null}
-      {children}
+      {hasDataProvider ? (
+        <InstrumentLookupProvider>
+          <LookupBridge lookupRef={lookupRef} />
+          {streaming ? (
+            <OrderEventStreams
+              filter={filter}
+              key={filter}
+              onEvents={notifyAll}
+            />
+          ) : null}
+          {children}
+        </InstrumentLookupProvider>
+      ) : (
+        children
+      )}
     </TradingNotificationsContext.Provider>
   );
   return notificationsCenter ? (
@@ -373,11 +423,14 @@ export const TradingNotificationsProvider = ({
 export const useTradingNotifications = (): TradingNotificationsContextValue => {
   const context = useContext(TradingNotificationsContext);
   const { showNotification } = useNotifications();
+  const lookup = useInstrumentLookup();
+  const lookupRef = useRef(lookup);
+  lookupRef.current = lookup;
   const fallback = useMemo<TradingNotificationsContextValue>(
     () => ({
       notify: (event) => {
         if (!DEFAULT_NOTIFICATION_KINDS[event.kind]) return;
-        const toast = describeOrderEvent(event);
+        const toast = describeOrderEvent(event, lookupPriceFormat(lookupRef));
         showNotification({ type: "toast", ...toast });
       },
       settings: {

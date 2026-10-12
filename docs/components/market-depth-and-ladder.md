@@ -24,6 +24,7 @@ Aggregated two-sided book (bid | ask). Each side shows orders, quantity and pric
 | Prop | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `ric` | `string` | selected instrument | Explicit instrument override. |
+| `linkGroup` / `defaultLinkGroup` / `onLinkGroupChange` / `showLinkGroupSelector` | `LinkGroupProps` | inherited, else `red` | Link group to follow (ui-guide §5). The selector sits in the header. The choice persists with the layout. |
 | `levels` | `number` | `10` | 1–10 per side (the exchange publishes `depthLevels = 10`). |
 | `showOwnOrders` | `boolean` | `true` | Join own working orders (`useOwnWorkingOrders`). |
 | `account` | `string` | all visible | Restrict own orders to one account. |
@@ -80,6 +81,8 @@ Supports every `PriceLadderViewProps` prop except the data props (`bids`, `asks`
 | Prop | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `ric` | `string` | selected instrument | |
+| `linkGroup` / `defaultLinkGroup` / `onLinkGroupChange` / `showLinkGroupSelector` | `LinkGroupProps` | inherited, else `red` | Link group to follow (ui-guide §5). The selector sits in the header. The choice persists with the layout. |
+| `notify` | `boolean` | `true` | Send acks and RPC failures to `useTradingNotifications()` when a provider is mounted (deduped with stream toasts). |
 | `account` | `string` | – | Account for new orders. It also filters own orders. Without it, new orders are disabled ("No account: view only"). |
 | `levels` | `number` | `10` | Depth levels per side. |
 | `timeInForce` | `TimeInForce` | `DAY` | |
@@ -154,11 +157,11 @@ These are exported from `@heswell/trading-ui` for other components to reuse.
 
 | Export | Purpose |
 | --- | --- |
-| `useViewportRows(dataSource, options)` | Subscribes to a `DataSource` and returns plain row objects keyed by column. Use it for non-table components. |
+| `useDataSourceRows(dataSource, options)` | Subscribes to a `DataSource` and returns `TradingRow` objects keyed by column, rAF-coalesced. Use it for non-table components (see ui-guide §12). |
 | `useMarketDepth(ric, levels?)` | `depth` rows for a ric, split into `bids` / `asks`, best first, with cumulative sizes. |
 | `useInstrumentPrice(ric)` | The live `instrumentPrices` row (static data, prices and phase). |
 | `useTradedVolume(ric, enabled?)` | Traded quantity per price: `trades` grouped by price. Limited to the trades ring buffer. |
-| `useFollowedInstrument(ric?)` | The explicit ric, or else the selected instrument, merged with its live prices. |
+| `useFollowedInstrument(ric?, { linkGroup? })` | The explicit ric, or else the selected instrument of the link group, merged with its live prices. |
 | `useOwnWorkingOrders(ric, { account? })` | Working LIMIT `parentOrders` for a ric, plus `byPrice` keyed by `ownOrdersKey(side, price)`. |
 | `actionableOrders(orders)` | Keeps only NEW / PARTIALLY_FILLED / REPLACED orders. |
 | `useLevelFlash(levels, version, resetKey)` | Flash state per `levelKey(side, price)` when quantity changes. |

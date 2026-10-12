@@ -6,11 +6,7 @@ import {
 } from "@heswell/trading-test-data";
 import { act, cleanup, render, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
-import {
-  TradingDataProvider,
-  type TradingRowObject,
-  useTradingRows,
-} from "../src";
+import { TradingDataProvider, type TradingRow, useTradingRows } from "../src";
 
 setCurrentUser({ name: "admin", authorizations: [] });
 const testData = createTradingTestData({
@@ -30,7 +26,7 @@ const Probe = ({
   onRows,
 }: {
   filter?: string;
-  onRows: (rows: TradingRowObject[]) => void;
+  onRows: (rows: TradingRow[]) => void;
 }) => {
   const { rows } = useTradingRows("instruments", { filter, rowCount: 500 });
   useEffect(() => onRows(rows), [rows, onRows]);
@@ -39,8 +35,8 @@ const Probe = ({
 
 describe("useTradingRows", () => {
   test("returns rows as objects and follows filter changes", async () => {
-    let latest: TradingRowObject[] = [];
-    const onRows = (rows: TradingRowObject[]) => {
+    let latest: TradingRow[] = [];
+    const onRows = (rows: TradingRow[]) => {
       latest = rows;
     };
     const { rerender } = render(

@@ -21,7 +21,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { InstrumentPicker } from "./shared/InstrumentPicker";
+import { InstrumentSelector } from "./shared/InstrumentSelector";
 
 const ACCOUNT = "ACC-US-01";
 
@@ -61,7 +61,7 @@ export const PriceLadderLive = () => {
       }}
     >
       <div style={{ gridRow: "1 / span 3", minHeight: 0 }}>
-        <InstrumentPicker source="showcase-ladder" showAdmin />
+        <InstrumentSelector showAdmin />
       </div>
       <PriceLadder
         account={ACCOUNT}

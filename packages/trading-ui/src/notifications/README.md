@@ -4,14 +4,12 @@
 
 ```tsx
 <TradingDataProvider mode="inherit">
-  <InstrumentContextProvider>
-    <TradingNotificationsProvider notificationsCenter>   {/* toasts */}
-      <OrderTicketLauncherProvider>                      {/* openOrderTicket() */}
-        <ConnectionBanner />                             {/* disconnected / reconnecting */}
-        {features}
-      </OrderTicketLauncherProvider>
-    </TradingNotificationsProvider>
-  </InstrumentContextProvider>
+  <TradingNotificationsProvider notificationsCenter>   {/* toasts */}
+    <OrderTicketLauncherProvider>                      {/* openOrderTicket() */}
+      <ConnectionBanner />                             {/* disconnected / reconnecting */}
+      {features}                                       {/* linked via the window link bus */}
+    </OrderTicketLauncherProvider>
+  </TradingNotificationsProvider>
 </TradingDataProvider>
 ```
 
@@ -53,6 +51,8 @@ updateSettings({ kinds: { fill: false }, sound: true });
 - **Outside a provider.** `notify` shows a vuu toast directly, and `provided` is `false`.
 
 **Event model.** `TradingOrderEvent { kind, orderId?, clOrdId?, ric?, side?, quantity?, price?, account?, status?, reason?, text?, execId?, fillQty?, fillPx?, cumQty?, avgPx?, currency?, source? }`.
+Prices in toasts use the instrument's decimals / tick size from the `InstrumentLookup` (the provider mounts one
+when it has a data provider). `describeOrderEvent(event, priceFormat?)` accepts a `(ric) => PriceFormat` lookup.
 Helpers: `orderEventKindForStatus`, `orderEventKey`, `describeOrderEvent`, `orderEventFromParentOrder` and
 `orderEventFromFill`. The building blocks can be used on their own: `NotificationGate` (dedupe + rate limit),
 `ParentOrderEventTracker`, `FillEventTracker` and `FillSound`.

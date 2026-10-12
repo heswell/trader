@@ -23,6 +23,7 @@ import {
   OrderTicketLauncherExample,
 } from "./OrderTicketExamples";
 import { SideLabelExamples } from "./SideLabelExamples";
+import { TraderWorkspace } from "./TraderWorkspaceExamples";
 import type { ShowcaseExample } from "./types";
 
 export type { ShowcaseExample } from "./types";
@@ -33,6 +34,14 @@ export type { ShowcaseExample } from "./types";
  * here (keep groups together, ids unique).
  */
 export const examples: ShowcaseExample[] = [
+  {
+    id: "trader-workspace",
+    group: "Workspace",
+    title: "Trader workspace (linked)",
+    description:
+      "vuu-layout workspace with two instrument link groups: red follows the grid (ticket, depth, orders, fills), green follows the picker and positions (ladder, tape). Change a View's group with its swatch; the choice is saved with the layout.",
+    Component: TraderWorkspace,
+  },
   {
     id: "stack-instrument-prices",
     group: "Stack",

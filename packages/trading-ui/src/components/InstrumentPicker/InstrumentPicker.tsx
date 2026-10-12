@@ -9,11 +9,15 @@ import {
   useMemo,
   useState,
 } from "react";
+import type { TradingRow } from "../../data/useDataSourceRows";
+import { useTradingRows } from "../../data/useTradingRows";
+import { useSelectedInstrument } from "../../instrument-context/InstrumentContext";
+import type { SelectedInstrument } from "../../instrument-context/selectedInstrument";
 import {
-  type TradingRowObject,
-  useTradingRows,
-} from "../../data/useTradingRows";
-import type { SelectedInstrument } from "../../instrument-context/InstrumentContext";
+  type LinkGroupProps,
+  useComponentLinkGroup,
+} from "../../instrument-context/useComponentLinkGroup";
+import { LinkGroupSelector } from "../LinkGroupSelector";
 
 import instrumentPickerCss from "./InstrumentPicker.css";
 
@@ -32,13 +36,24 @@ const INSTRUMENT_COLUMNS = [
 
 export interface InstrumentPickerProps
   extends Omit<
-    ComboBoxProps<string>,
-    "value" | "defaultValue" | "onChange" | "onSelect" | "selected" | "children"
-  > {
+      ComboBoxProps<string>,
+      | "value"
+      | "defaultValue"
+      | "onChange"
+      | "onSelect"
+      | "selected"
+      | "children"
+    >,
+    LinkGroupProps {
   /** The selected ric (controlled). */
   value?: string;
   /** Called with the instrument's static data when the user picks one. */
   onSelect?: (instrument: SelectedInstrument) => void;
+  /**
+   * Show and publish the selected instrument of the picker's link group.
+   * Default: true when neither `value` nor `onSelect` is given.
+   */
+  linked?: boolean;
   /** Max matches listed (default 20). */
   maxResults?: number;
 }
@@ -52,9 +67,7 @@ export const instrumentSearchFilter = (text: string) => {
   return `ric starts "${query.toUpperCase()}" or description contains "${query}"`;
 };
 
-export const toSelectedInstrument = (
-  row: TradingRowObject,
-): SelectedInstrument => ({
+export const toSelectedInstrument = (row: TradingRow): SelectedInstrument => ({
   ric: String(row.ric),
   description: row.description as string | undefined,
   currency: row.currency as string | undefined,
@@ -71,10 +84,17 @@ export const toSelectedInstrument = (
  * A thin Salt ComboBox (vuu TablePicker has no controlled value - see
  * docs/upstream-issues.md).
  */
+export const INSTRUMENT_PICKER_SOURCE = "InstrumentPicker";
+
 export const InstrumentPicker = ({
   className,
-  value,
-  onSelect,
+  defaultLinkGroup,
+  linked: linkedProp,
+  linkGroup: linkGroupProp,
+  onLinkGroupChange,
+  showLinkGroupSelector = false,
+  value: valueProp,
+  onSelect: onSelectProp,
   maxResults = 20,
   placeholder = "Search instrument",
   ...comboBoxProps
@@ -85,6 +105,23 @@ export const InstrumentPicker = ({
     css: instrumentPickerCss,
     window: targetWindow,
   });
+  const linked = linkedProp ?? (valueProp === undefined && !onSelectProp);
+  const { linkGroup, channel, setLinkGroup } = useComponentLinkGroup({
+    defaultLinkGroup,
+    linkGroup: linkGroupProp,
+    onLinkGroupChange,
+    persistKey: comboBoxProps.id
+      ? `${INSTRUMENT_PICKER_SOURCE}:${comboBoxProps.id}`
+      : INSTRUMENT_PICKER_SOURCE,
+  });
+  const { selectedInstrument, setSelectedInstrument } = useSelectedInstrument({
+    linkGroup: channel,
+  });
+  const value = valueProp ?? (linked ? selectedInstrument?.ric : undefined);
+  const onSelect = (instrument: SelectedInstrument) => {
+    onSelectProp?.(instrument);
+    if (linked) setSelectedInstrument(instrument, INSTRUMENT_PICKER_SOURCE);
+  };
   const [text, setText] = useState(value ?? "");
   const [typing, setTyping] = useState(false);
   useEffect(() => {
@@ -113,7 +150,7 @@ export const InstrumentPicker = ({
     setTyping(false);
     if (row) {
       setText(ric);
-      onSelect?.(toSelectedInstrument(row));
+      onSelect(toSelectedInstrument(row));
     }
   };
   const handleBlur = () => {
@@ -123,10 +160,11 @@ export const InstrumentPicker = ({
     }
   };
 
-  return (
+  const comboBox = (
     <ComboBox<string>
       {...comboBoxProps}
       className={cx(classBase, className)}
+      data-link-group={linked ? linkGroup : undefined}
       data-instrument-picker=""
       onBlur={handleBlur}
       onChange={handleChange}
@@ -144,5 +182,13 @@ export const InstrumentPicker = ({
         </Option>
       ))}
     </ComboBox>
+  );
+  return showLinkGroupSelector ? (
+    <span className={`${classBase}-linked`}>
+      <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
+      {comboBox}
+    </span>
+  ) : (
+    comboBox
   );
 };
