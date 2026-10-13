@@ -6,10 +6,10 @@ import { pluginReact } from "@rsbuild/plugin-react";
 const require = createRequire(import.meta.url);
 
 /** Remote (standalone) trading server: `bun run dev:trading-server`. */
-const REMOTE_WS = process.env.TRADING_REMOTE_WS ?? "wss://localhost:8095";
+const REMOTE_WS = process.env.TRADING_REMOTE_WS ?? "ws://localhost:8095";
 const REMOTE_WS_PATH =
   process.env.TRADING_REMOTE_WS_PATH ?? "/websocket-trading";
-const REMOTE_AUTH = process.env.TRADING_REMOTE_AUTH ?? "https://localhost:8447";
+const REMOTE_AUTH = process.env.TRADING_REMOTE_AUTH ?? "http://localhost:8447";
 
 export default defineConfig({
   plugins: [pluginReact()],
@@ -21,7 +21,9 @@ export default defineConfig({
   },
   server: {
     port: 5001,
-    // Same-origin access to the remote server (no CORS, self-signed certs).
+    // Same-origin access to the remote server (no CORS). The standalone server
+    // is plain http/ws; `secure: false` still allows an https target with the
+    // self-signed dev cert via TRADING_REMOTE_*.
     proxy: {
       "/remote/trading/authn": {
         target: REMOTE_AUTH,

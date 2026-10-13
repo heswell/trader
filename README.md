@@ -98,12 +98,12 @@ per process from the `TRADER_*` settings.
 UI showcase: `bun run dev:showcase` (http://localhost:5001, local data; its "Remote server" toggle uses
 `bun run dev:trading-server`).
 
-Stand-alone exchange-sim (permissive auth, TLS with the dev cert, `wss://localhost:8094/websocket-exchange-sim`):
+Stand-alone exchange-sim (permissive auth over plain HTTP, `ws://localhost:8094/websocket-exchange-sim`):
 `bun run --filter @heswell/exchange-sim start`. Benchmark: `bun run --filter @heswell/exchange-sim bench`.
 Simulator knobs (`exchangeSim.*` / `EXCHANGE_SIM_*`) are documented in
 [packages/exchange-sim/README.md](packages/exchange-sim/README.md).
 
-Stand-alone EXCHANGE + OMS (permissive auth, `wss://localhost:8095/websocket-trading`):
+Stand-alone EXCHANGE + OMS (permissive auth over plain HTTP, `ws://localhost:8095/websocket-trading`):
 `bun run --filter @heswell/oms start`. OMS knobs (`oms.*` / `OMS_*`), RPCs, roles (`trading-view` /
 `trading-execute` / `trading-supervisor`) and seeded accounts (owners alice, bob, carol, dave, erin) are in
 [packages/oms/README.md](packages/oms/README.md).

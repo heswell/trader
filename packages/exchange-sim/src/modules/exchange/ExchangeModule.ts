@@ -3,7 +3,6 @@ import {
   ModuleFactory,
   Provider,
   type ServiceFactory,
-  type TableContainer,
   ViewPortDef,
 } from "@heswell/vuu-server";
 import { EXCHANGE_MODULE, instrumentPrices } from "@heswell/trading-schemas";
@@ -82,35 +81,28 @@ export const ExchangeModule = (
   { autoStart = true }: ExchangeModuleOptions = {},
 ) => {
   const binder = new TableBinder(sim, autoStart);
-  const services = new WeakMap<TableContainer, ExchangeAdminRpcHandler>();
+  // Called once per viewport (CREATE_VP). The handler holds no state of its
+  // own (the simulator does), so each viewport gets a fresh one.
   const serviceFactory: ServiceFactory = (
     table: DataTable,
     _provider,
     _providerContainer,
     tableContainer,
-  ) => {
-    let service = services.get(tableContainer);
-    if (!service) {
-      service = new ExchangeAdminRpcHandler(tableContainer, sim);
-      services.set(tableContainer, service);
-    }
-    return ViewPortDef(table.tableDef.columns, service);
-  };
+  ) =>
+    ViewPortDef(
+      table.tableDef.columns,
+      new ExchangeAdminRpcHandler(tableContainer, sim),
+    );
 
   const defs = createExchangeTableDefs();
   const provider = (name: TableName) => (table: ProviderTable) =>
     new SimTableProvider(table, name, binder);
 
-  const module = ModuleFactory.withNameSpace(EXCHANGE_MODULE)
+  return ModuleFactory.withNameSpace(EXCHANGE_MODULE)
     .addTable(defs.instruments, provider("instruments"), serviceFactory)
     .addTable(defs.prices, provider("prices"), serviceFactory)
     .addTable(defs.depth, provider("depth"), serviceFactory)
     .addTable(defs.trades, provider("trades"), serviceFactory)
-    .addJoinTable(toServerJoinFactory(instrumentPrices))
+    .addJoinTable(toServerJoinFactory(instrumentPrices), serviceFactory)
     .asModule();
-  // addJoinTable takes no ServiceFactory; viewPortDefs is the live map that
-  // VuuServer.registerModule reads, so register the join's service here.
-  // See docs/upstream-issues.md.
-  module.viewPortDefs.set(instrumentPrices.name, serviceFactory);
-  return module;
 };

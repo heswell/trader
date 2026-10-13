@@ -1,6 +1,7 @@
 import {
   CreateSessionTableRpcHandler,
   InMemSessionDataTable,
+  type PreparedSessionSave,
   type RpcParams,
   type TableContainer,
 } from "@heswell/vuu-server";
@@ -28,6 +29,31 @@ const error = (errorMessage: string): RpcResult => ({
   type: "ERROR_RESULT",
   errorMessage,
 });
+
+/**
+ * Orders whose live row no longer matches the session copy on any column the
+ * user did not edit (an amend bumps `version`, fills move `cumQty`, ...).
+ * vuu-server's own check needs a `vuuUpdatedTimestamp` column, which the OMS
+ * tables don't have, so it never fires here (docs/upstream-issues.md #61).
+ */
+const staleOrders = (
+  sessionTable: InMemSessionDataTable,
+  { sourceTable, changes }: PreparedSessionSave,
+) => {
+  const stale: string[] = [];
+  for (const { action, key, cellUpdates, sourceRow } of changes) {
+    const sessionRow = sessionTable.getRowAtKey(key, false);
+    if (action === "addRow" || !sourceRow || !sessionRow) continue;
+    const changed = sourceTable.schema.columns.some(
+      ({ name }) =>
+        !(name in cellUpdates) &&
+        sessionRow[sessionTable.columnMap[name]] !==
+          sourceRow[sourceTable.columnMap[name]],
+    );
+    if (changed) stale.push(key);
+  }
+  return stale;
+};
 
 /**
  * Vuu RPC handler for every OMS table (and positionPrices): the order RPCs
@@ -106,6 +132,14 @@ export class OmsRpcHandler extends CreateSessionTableRpcHandler {
     }
     const prepared = this.prepareSessionSave(sessionTable, Boolean(force));
     if ("type" in prepared) return prepared;
+    if (!force) {
+      const stale = staleOrders(sessionTable, prepared);
+      if (stale.length > 0) {
+        return error(
+          `stale update: ${stale.join(", ")} changed since the session began`,
+        );
+      }
+    }
 
     const errors: string[] = [];
     const results: { orderId: string; action: string; status?: string }[] = [];

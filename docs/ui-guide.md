@@ -245,7 +245,7 @@ reject reasons, edit sessions, visual links and permissions behave like the serv
 
 `bun run dev:showcase` serves http://localhost:5001 on local data. "Remote server" connects through the dev-server
 proxy (`/remote/trading/*`) to the standalone trading server: `bun run dev:trading-server` (EXCHANGE + OMS,
-permissive auth, :8095/:8447). Override the target with `TRADING_REMOTE_WS`, `TRADING_REMOTE_WS_PATH` and
+permissive auth over plain http/ws, :8095/:8447). Override the target with `TRADING_REMOTE_WS`, `TRADING_REMOTE_WS_PATH` and
 `TRADING_REMOTE_AUTH`. The `bun run dev` portal server uses Keycloak, so it is reached through vuu-portal and not
 through the showcase.
 

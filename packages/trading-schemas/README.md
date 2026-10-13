@@ -19,7 +19,7 @@ Tables are plain data (`defineTable`), from which both shapes are derived:
 |---|---|---|
 | vuu-ui / local data sources | `toTableSchema(def)`, `getTradingSchemas()` | `TableSchema` (as in `TABLE_META_RESP`) |
 | vuu-server modules | `toServerTableDef(def)`, `createExchangeTableDefs()`, `createOmsTableDefs()` | `TableDef` (fresh instance per module) |
-| vuu-server joins | `toServerJoinFactory(join)` | factory for `ModuleFactory.addJoinTable` |
+| vuu-server joins | `toServerJoinFactory(join, {permissionFunction?})` | factory for `ModuleFactory.addJoinTable` |
 
 Row helpers: `RowOf<typeof prices>` (object row type), `toRowArray(def, partial)`
 (positional row, missing columns default to `0`/`""`/`false`),
@@ -29,7 +29,7 @@ Row helpers: `RowOf<typeof prices>` (object row type), `toRowArray(def, partial)
 const ex = createExchangeTableDefs();
 ModuleFactory.withNameSpace(EXCHANGE_MODULE)
   .addTable(ex.prices, (t) => new PricesProvider(t))
-  .addJoinTable(toServerJoinFactory(instrumentPrices))
+  .addJoinTable(toServerJoinFactory(instrumentPrices), serviceFactory)
   .asModule();
 ```
 

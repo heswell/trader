@@ -1,4 +1,5 @@
 import {
+  type Config,
   ConfigFactory,
   createConfiguredAuthProviders,
   createVuuServerApplication,
@@ -16,8 +17,7 @@ import { OmsModule } from "./modules/oms/OmsModule";
  * Stand-alone trading server: EXCHANGE + OMS in one VuuServer (auth mode and
  * ports come from application.conf).
  */
-export default async function main() {
-  const config = ConfigFactory.load();
+export default async function main(config: Config = ConfigFactory.load()) {
   const sim = createExchangeSimulator({
     config: loadExchangeSimConfig(config),
   });

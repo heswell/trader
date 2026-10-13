@@ -5,7 +5,6 @@ import {
   PermissionFilter,
   Provider,
   type ServiceFactory,
-  type TableContainer,
   ViewPortDef,
 } from "@heswell/vuu-server";
 import { OMS_MODULE, positionPrices } from "@heswell/trading-schemas";
@@ -93,20 +92,16 @@ export const OmsModule = (
     oms.stop();
   };
 
-  const services = new WeakMap<TableContainer, OmsRpcHandler>();
+  // Called once per viewport (CREATE_VP), including viewports on edit-session
+  // tables. OmsRpcHandler keeps no cross-viewport state: orders and
+  // permissions live in `oms`, session tables in the TableContainer.
   const serviceFactory: ServiceFactory = (
     table: DataTable,
     _provider,
     _providerContainer,
     tableContainer,
-  ) => {
-    let service = services.get(tableContainer);
-    if (!service) {
-      service = new OmsRpcHandler(tableContainer, oms);
-      services.set(tableContainer, service);
-    }
-    return ViewPortDef(table.tableDef.columns, service);
-  };
+  ) =>
+    ViewPortDef(table.tableDef.columns, new OmsRpcHandler(tableContainer, oms));
 
   const permissionFunction = omsPermissionFunction(oms);
   const defs = createOmsTableDefs();
@@ -119,16 +114,10 @@ export const OmsModule = (
     factory = factory.addTable(defs[name], provider(name), serviceFactory);
   }
   if (withJoin) {
-    const joinFactory = toServerJoinFactory(positionPrices);
-    factory = factory.addJoinTable((container) => {
-      const def = joinFactory(container);
-      // JoinTableDef's constructor drops permissionFunction; set it on the instance.
-      def.permissionFunction = permissionFunction;
-      return def;
-    });
+    factory = factory.addJoinTable(
+      toServerJoinFactory(positionPrices, { permissionFunction }),
+      serviceFactory,
+    );
   }
-  const module = factory.asModule();
-  // addJoinTable takes no ServiceFactory (docs/upstream-issues.md #9).
-  if (withJoin) module.viewPortDefs.set(positionPrices.name, serviceFactory);
-  return module;
+  return factory.asModule();
 };

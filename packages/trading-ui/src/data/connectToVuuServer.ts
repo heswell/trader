@@ -2,9 +2,9 @@ import { ConnectionManager } from "@vuu-ui/vuu-data-remote";
 
 export interface VuuServerConnection {
   connectionId: string;
-  /** e.g. wss://localhost:8095/websocket-trading */
+  /** e.g. ws://localhost:8095/websocket-trading */
   websocketUrl: string;
-  /** POST endpoint returning `{ token }`, e.g. https://localhost:8447/api/authn */
+  /** POST endpoint returning `{ token }`, e.g. http://localhost:8447/api/authn */
   authUrl: string;
   username: string;
   /** Permissive auth accepts any non-empty password. */

@@ -75,22 +75,24 @@ Note: the old `VP_EDIT_*` message family (`VP_EDIT_CELL_RPC` and others) no long
 | `beginEditSession {editSessionMode}` | ✅ | `CreateSessionTableRpcHandler.ts:123-127` | `UI:VDS:719`. The client hard-codes `'all-rows'` (`UI:VDS:724`), which copies the whole source table. This is a client issue (vuu-ui), not a server one. |
 | `editCell {key,column,data}` | ✅ | `net/rpc/EditTableRpcHandler.ts:163-170` | Contains demo-specific validation (`lotSize > 1000`, `:26-31`). `UI:VDS:754`. |
 | `addRow` / `deleteRow` / `deleteSelectedRows` / `undoRowChange` | ✅ | `EditTableRpcHandler.ts:163-170` | `UI:VDS:822,837,853,869`. Only valid on session tables. |
-| `endEditSession {save, force}` | ✅ | `net/rpc/EndEditSessionRpcHandler.ts:22-48` | Optimistic concurrency uses `vuuUpdatedTimestamp` (`:95-110`). On save, changes are written directly to the source table (`applySessionSave :131-162`). `prepareSessionSave`, `applySessionSave` and `handleEndEditSession` are `protected`, so a module can override them to route changes to a business service. Client: `UI:VDS:766` (`StaleUpdateError`). |
+| `endEditSession {save, force}` | ✅ | `net/rpc/EndEditSessionRpcHandler.ts:22-48` | Optimistic concurrency uses `vuuUpdatedTimestamp` (`:95-110`); on a table without that column the check silently passes (trader's OMS tables, see docs/upstream-issues.md #61). On save, changes are written directly to the source table (`applySessionSave :131-162`). `prepareSessionSave`, `applySessionSave` and `handleEndEditSession` are `protected`, so a module can override them to route changes to a business service. Client: `UI:VDS:766` (`StaleUpdateError`). |
 | `submitForm` (used by `SessionEditingForm`) | ➖ | No server default. A module must register it (`registerRpc`). | `UI:vuu-data-react/src/session-editing-form/SessionEditingForm.tsx:257` |
 
 ### 1.7 Menus and menu RPCs
 
+Menu RPCs are supported since vuu-server 3.3.0 (vuu-websocket#89, trader upstream issue 11). The rows below describe 3.3.0; the `CSA:` / `VPC:` line references elsewhere in this document are from the original `b6e32b4` survey.
+
 | Message | Status | Server evidence | Client evidence / notes |
 |---|---|---|---|
 | `GET_VIEW_PORT_MENUS` → `VIEW_PORT_MENUS_RESP` | ✅ | `CSA:101`; `net/rpc/RpcHandler.ts:23-45` (`menuItems`, `menuMap`) | Requested automatically after `CREATE_VP` (`UI:SP:316`). Real modules advertise menus, e.g. `vuu-basket-trading` `BasketService.ts:45-46`, `vuu-demo` `OrdersService.ts:62-63` ("Cancel Order"), `InstrumentService.ts:38-40`. |
-| `VIEW_PORT_MENUS_SELECT_RPC` (context `selected-rows`) → `VIEW_PORT_MENU_RESP` / `VIEW_PORT_MENU_REJ` | 💤 | The `case` is commented out at `CSA:137-142`. The dead handler at `CSA:533-550` uses a stale signature (`requestId, body, session.enqueue`). The backing logic exists: `VPC:235-249` `callRpcSelection` → `SelectionViewPortMenuItem.func` (`viewport/ViewPortMenu.ts:58-77`). | Sent by `UI:vuu-data-react/src/hooks/useVuuMenuActions.tsx:430`; routed by `UI:SP:668`. Today it hits `default: throw`, and the client promise never resolves. |
-| `VIEW_PORT_MENU_TABLE_RPC` (context `grid`) | ❌ | No `case`. `TableViewPortMenuItem` has no handler function (`ViewPortMenu.ts:93`). | `useVuuMenuActions.tsx:435` |
-| `VIEW_PORT_MENU_ROW_RPC` (context `row`) | ❌ | No `case`. `RowViewPortMenuItem` has no handler function (`ViewPortMenu.ts:107`). | `useVuuMenuActions.tsx:425` |
-| `VIEW_PORT_MENU_CELL_RPC` (context `cell`) | ❌ | No `case`. `CellViewPortMenuItem` has no handler function (`ViewPortMenu.ts:79`). | `useVuuMenuActions.tsx:418` |
-| Menu actions: `OPEN_DIALOG_ACTION` (+ session table) | 🟡 | Factory exists (`viewport/ViewPortAction.ts`, `OpenDialogViewPortAction`), but it is unreachable until menu RPCs are dispatched. | `UI:SP:1223` fetches table meta for session-table dialogs; `useVuuMenuActions.tsx:359-389,466` opens `SessionEditingForm`. |
-| `SHOW_NOTIFICATION_ACTION` / `CLOSE_DIALOG_ACTION` / `NO_ACTION` | 🟡 | Only `NoAction` and `OpenDialogViewPortAction` exist (`ViewPortAction.ts`). The notification action in `createErrorRpcResponse` is commented out (`CSA:65-79`). | `PT:914,921,930,933` |
+| `VIEW_PORT_MENUS_SELECT_RPC` (context `selected-rows`) → `VIEW_PORT_MENU_RESP` / `VIEW_PORT_MENU_REJ` | ✅ | `SelectionViewPortMenuItem(name, filter, handler, rpcName)`; the handler gets the `ViewPortSelection` and a `MenuRpcSession {sessionId, channelId, requestId, user, viewport}` and may be async. A missing item or a throwing handler replies `VIEW_PORT_MENU_REJ`. | Sent by `UI:vuu-data-react/src/hooks/useVuuMenuActions.tsx:430`; routed by `UI:SP:668`. The client ignores `VIEW_PORT_MENU_REJ` (upstream-issues 66). |
+| `VIEW_PORT_MENU_TABLE_RPC` (context `grid`) | ✅ | `TableViewPortMenuItem(name, filter, handler, rpcName)`, handler `(session)` | `useVuuMenuActions.tsx:435` |
+| `VIEW_PORT_MENU_ROW_RPC` (context `row`) | ✅ | `RowViewPortMenuItem(name, filter, handler, rpcName)`, handler `(rowKey, row, session)` | `useVuuMenuActions.tsx:425` |
+| `VIEW_PORT_MENU_CELL_RPC` (context `cell`) | ✅ | `CellViewPortMenuItem(name, filter, handler, rpcName, field?)`, handler `(rowKey, field, value, session)` | `useVuuMenuActions.tsx:418` |
+| Menu actions: `OPEN_DIALOG_ACTION` (+ session table) | ✅ server / 🟡 client | `OpenDialog(table, renderComponent)` (`viewport/ViewPortAction.ts`). | `UI:SP:1223` fetches table meta for session-table dialogs; `useVuuMenuActions.tsx:359-389,466` opens `SessionEditingForm`. The client only acts on session tables (upstream-issues 64). |
+| `SHOW_NOTIFICATION_ACTION` / `CLOSE_DIALOG_ACTION` / `NO_ACTION` | ✅ server / 🟡 client | `ShowNotification(message, title?)`, `CloseDialog()`, `NoAction()`. | `PT:914,921,930,933`. The client always shows notifications as "success" toasts (upstream-issues 65) and ignores `CLOSE_DIALOG_ACTION` / `NO_ACTION` (upstream-issues 63). |
 
-`LE:` supports both `rpcRequest` and `menuRpcCall` (`LE:ModuleDataSource.ts:302-348`; `LE:EngineDataSource.ts:980-993`), so menus work in showcase but not against the server.
+`LE:` supports both `rpcRequest` and `menuRpcCall` (`LE:ModuleDataSource.ts:302-348`; `LE:EngineDataSource.ts:980-993`), so menus work in showcase and against the server. Trader declares no server menus yet: admin and order actions are direct `RPC_REQUEST`s from custom affordances (grid toolbar / client-side context-menu items, blotter row buttons).
 
 ### 1.8 Visual links
 
@@ -105,7 +107,7 @@ Note: the old `VP_EDIT_*` message family (`VP_EDIT_CELL_RPC` and others) no long
 | Behaviour | Status | Evidence |
 |---|---|---|
 | `ERROR {msg}` for handled failures | ✅ | `CSA:62`. The client only logs it (`UI:SP:1276`). |
-| Unknown or unsupported message type | ❌ | `CSA:143-146` throws inside the async `process`. `RequestProcessor` returns the promise without `await` (`net/RequestProcessor.ts:72-76`), so its `try/catch` never sees the error. `ViewServerHandler.handle` (`:48-57`) and `net/ws/BunWebSocketConnectionHandler.ts:20-26` await it, so the error ends as an unhandled rejection. No reply is sent, and the client's pending request hangs. Applies to `FREEZE_VP`, `UNFREEZE_VP` and all four menu RPCs. |
+| Unknown or unsupported message type | ❌ | `CSA:143-146` throws inside the async `process`. `RequestProcessor` returns the promise without `await` (`net/RequestProcessor.ts:72-76`), so its `try/catch` never sees the error. `ViewServerHandler.handle` (`:48-57`) and `net/ws/BunWebSocketConnectionHandler.ts:20-26` await it, so the error ends as an unhandled rejection. No reply is sent, and the client's pending request hangs. Applies to `FREEZE_VP` and `UNFREEZE_VP` (the four menu RPCs reply since vuu-server 3.3.0). |
 | Exceptions in `CREATE_VP` (unknown table), `DESELECT_ROW` and `DESELECT_ALL` | ❌ | Same path; these handlers have no try/catch. |
 | RPC handler exceptions | ✅ | Caught and returned as `ERROR_RESULT` (`CSA:283-336`). An unknown `rpcName` throws in `DefaultRpcHandler.ts:30` and becomes "Failed to process request". |
 | Permission filtering on viewports | ✅ | `TableDef.permissionFunction` is applied at viewport create (`VPC:123-129`). Relevant for P2.7. |
@@ -134,7 +136,7 @@ B = blocker for the feature as specified in the plan. N = nice-to-have, or a wor
 
 | ID | Blocker | Affects |
 |---|---|---|
-| **B1** | Menu RPCs: `VIEW_PORT_MENUS_SELECT_RPC` is commented out; `VIEW_PORT_MENU_TABLE_RPC`, `VIEW_PORT_MENU_ROW_RPC` and `VIEW_PORT_MENU_CELL_RPC` are unimplemented, with no handler function on those menu item types. The server advertises menus that cannot be invoked. | P3.2 context menu, P3.7 menu cancel, session-table order ticket |
+| ~~**B1**~~ | *Resolved: vuu-websocket#89; vuu-server 3.3.0 (see §1.7).* Menu RPCs: `VIEW_PORT_MENUS_SELECT_RPC` is commented out; `VIEW_PORT_MENU_TABLE_RPC`, `VIEW_PORT_MENU_ROW_RPC` and `VIEW_PORT_MENU_CELL_RPC` are unimplemented, with no handler function on those menu item types. The server advertises menus that cannot be invoked. | P3.2 context menu, P3.7 menu cancel, session-table order ticket |
 | **B2** | Unsupported or failing requests get no reply (unhandled rejection, missing `*_REJECT` replies), so client promises hang | P3.7 selection / multi-cancel, P3.12 error UX, any `FREEZE_VP` call |
 
 ### Nice-to-haves
@@ -166,6 +168,8 @@ Use direct `RPC_REQUEST`s (`createOrder`, `amendOrder`, `cancelOrder`, `cancelAl
 ## 4. Draft upstream issues for `heswell/vuu-websocket` (not filed)
 
 ### Issue 1 (B1): Implement viewport menu RPCs (`VIEW_PORT_MENUS_SELECT_RPC`, `VIEW_PORT_MENU_TABLE/ROW/CELL_RPC`)
+
+*Resolved: fixed in vuu-websocket#89; vuu-server 3.3.0.*
 
 **Body**
 

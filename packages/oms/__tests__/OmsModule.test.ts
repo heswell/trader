@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { resolve } from "node:path";
 import { createExchangeSimulator, ExchangeModule } from "@heswell/exchange-sim";
 import {
   EXCHANGE_MODULE,
@@ -7,12 +8,11 @@ import {
   RejectReason,
 } from "@heswell/trading-schemas";
 import {
-  LifecycleContainer,
-  LoginTokenService,
-  VuuServer,
-  VuuServerConfig,
+  ConfigFactory,
+  createVuuServerApplication,
+  type VuuServer,
+  type VuuServerApplication,
   VuuUserWithAuthorizations,
-  VuuWebSocketOptions,
 } from "@heswell/vuu-server";
 import { createOms } from "../src/engine/OmsService";
 import { OmsModule } from "../src/modules/oms/OmsModule";
@@ -59,7 +59,7 @@ const POSITION_COLUMNS = [
  * per-user permission filtering.
  */
 describe("OmsModule over the Vuu protocol", () => {
-  let lifecycle: LifecycleContainer;
+  let application: VuuServerApplication;
   let server: VuuServer;
   const sim = createExchangeSimulator({
     config: {
@@ -74,12 +74,30 @@ describe("OmsModule over the Vuu protocol", () => {
     rics: () => sim.books.map((b) => b.ric),
     log: () => {},
   });
-  const tokens = LoginTokenService();
+  // Stand-alone OMS config (permissive auth over plain HTTP) on ephemeral
+  // ports. Permissive auth grants no roles, so the test's credential provider
+  // assigns them; the token still comes from POST /api/authn.
+  const config = ConfigFactory.fromFile(
+    resolve(import.meta.dir, "../application.conf"),
+    {
+      env: {},
+      overrides: { "vuu.websocket.port": 0, "vuu.https.port": 0 },
+    },
+  );
+  const roles: Record<string, string[]> = {
+    alice: [TradingRole.Execute],
+    bob: [TradingRole.Execute],
+    sam: [TradingRole.Supervisor],
+  };
   const clients: VuuClient[] = [];
-  const login = async (name: string, roles: string[]) => {
+  const login = async (name: string) => {
+    const token = await VuuClient.fetchToken(
+      `http://localhost:${server.restPort}${config.getString("vuu.auth.path")}`,
+      name,
+    );
     const client = await VuuClient.login(
-      server.webSocketPort as number,
-      tokens.getToken(VuuUserWithAuthorizations(name, roles)),
+      `ws://localhost:${server.webSocketPort}${config.getString("vuu.websocket.path")}`,
+      token,
     );
     clients.push(client);
     return client;
@@ -100,21 +118,24 @@ describe("OmsModule over the Vuu protocol", () => {
   let samOrders: string;
 
   beforeAll(async () => {
-    lifecycle = new LifecycleContainer();
-    server = new VuuServer(
-      VuuServerConfig(
-        VuuWebSocketOptions().withWsPort(0).withSslDisabled(),
-        {},
-        tokens,
-      )
-        .withModule(ExchangeModule(sim))
-        .withModule(OmsModule(oms)),
-      lifecycle,
-    );
-    await lifecycle.start();
-    alice = await login("alice", [TradingRole.Execute]);
-    bob = await login("bob", [TradingRole.Execute]);
-    sam = await login("sam", [TradingRole.Supervisor]);
+    application = createVuuServerApplication({
+      authProviders: {
+        credentials: {
+          authenticate: async (username) =>
+            VuuUserWithAuthorizations(username, roles[username] ?? []),
+        },
+      },
+      config,
+      defaultHttpsPort: 0,
+      defaultWebSocketPort: 0,
+      modules: [ExchangeModule(sim), OmsModule(oms)],
+    });
+    await application.lifecycle.start();
+    server = application.server;
+    expect(server.restUrl).toStartWith("http://");
+    alice = await login("alice");
+    bob = await login("bob");
+    sam = await login("sam");
     aliceOrders = await alice.createViewport(
       OMS_MODULE,
       "parentOrders",
@@ -134,7 +155,7 @@ describe("OmsModule over the Vuu protocol", () => {
 
   afterAll(async () => {
     for (const client of clients) client.close();
-    await lifecycle?.destroy();
+    await application?.lifecycle.destroy();
     expect(oms.running).toBe(false);
     oms.dispose();
   });
@@ -241,6 +262,48 @@ describe("OmsModule over the Vuu protocol", () => {
       type: "SUCCESS_RESULT",
       data: { status: OrdStatus.Cancelled },
     });
+  });
+
+  test("positionPrices join is permission filtered per viewport user", async () => {
+    // bob takes 10 of the 40 still resting at 170 for his own account
+    const bought = await bob.rpc(OMS_MODULE, bobOrders, "createOrder", {
+      account: "ACC-US-02",
+      ric: AAPL,
+      side: "BUY",
+      ordType: "LIMIT",
+      quantity: 10,
+      price: 170,
+    });
+    expect(bought).toMatchObject({
+      type: "SUCCESS_RESULT",
+      data: { status: OrdStatus.Filled },
+    });
+    const columns = ["id", "account", "quantity", "last"];
+    const aliceVp = await alice.createViewport(
+      OMS_MODULE,
+      "positionPrices",
+      columns,
+    );
+    const bobVp = await bob.createViewport(
+      OMS_MODULE,
+      "positionPrices",
+      columns,
+    );
+    const samVp = await sam.createViewport(
+      OMS_MODULE,
+      "positionPrices",
+      columns,
+    );
+    await alice.row(aliceVp, (r) => r.id === "ACC-US-01|AAPL.OQ");
+    await bob.row(bobVp, (r) => r.id === "ACC-US-02|AAPL.OQ");
+    await sam.row(samVp, (r) => r.id === "ACC-US-01|AAPL.OQ");
+    await sam.row(samVp, (r) => r.id === "ACC-US-02|AAPL.OQ");
+    expect(alice.rowsOf(aliceVp).every((r) => r.account === "ACC-US-01")).toBe(
+      true,
+    );
+    expect(bob.rowsOf(bobVp).every((r) => r.account === "ACC-US-02")).toBe(
+      true,
+    );
   });
 
   test("amend and cancel RPCs, with contract errors", async () => {
@@ -461,6 +524,77 @@ describe("OmsModule over the Vuu protocol", () => {
     expect(oms.engine.getOrder(toCancel)?.state.status).toBe(
       OrdStatus.Cancelled,
     );
+  });
+
+  test("blotter edit session: stale rows fail unless forced", async () => {
+    const orderId = (
+      await alice.rpc(OMS_MODULE, aliceOrders, "createOrder", {
+        account: "ACC-US-01",
+        ric: AAPL,
+        side: "BUY",
+        ordType: "LIMIT",
+        quantity: 10,
+        price: 163,
+      })
+    ).data?.orderId as string;
+    await alice.row(aliceOrders, (r) => r.orderId === orderId);
+    const begun = await alice.rpc(
+      OMS_MODULE,
+      aliceOrders,
+      "beginEditSession",
+      {},
+    );
+    const session = await alice.createViewport(
+      OMS_MODULE,
+      begun.data?.sessionTable as string,
+      ORDER_COLUMNS,
+    );
+    await alice.row(session, (r) => r.orderId === orderId);
+    expect(
+      await alice.rpc(OMS_MODULE, session, "editCell", {
+        key: orderId,
+        column: "quantity",
+        data: 15,
+      }),
+    ).toMatchObject({ type: "SUCCESS_RESULT" });
+
+    // the order changes underneath the session (another viewport amends it)
+    expect(
+      await alice.rpc(OMS_MODULE, aliceOrders, "amendOrder", {
+        orderId,
+        price: 163.5,
+      }),
+    ).toMatchObject({ type: "SUCCESS_RESULT" });
+    await alice.row(
+      aliceOrders,
+      (r) => r.orderId === orderId && r.version === 1,
+    );
+
+    expect(
+      await alice.rpc(OMS_MODULE, session, "endEditSession", { save: true }),
+    ).toEqual({
+      type: "ERROR_RESULT",
+      errorMessage: `stale update: ${orderId} changed since the session began`,
+    });
+    expect(oms.engine.getOrder(orderId)?.state.quantity).toBe(10);
+
+    expect(
+      await alice.rpc(OMS_MODULE, session, "endEditSession", {
+        save: true,
+        force: true,
+      }),
+    ).toMatchObject({
+      type: "SUCCESS_RESULT",
+      data: {
+        results: [
+          { orderId, action: "amendOrder", status: OrdStatus.Replaced },
+        ],
+      },
+    });
+    expect(oms.engine.getOrder(orderId)?.state).toMatchObject({
+      quantity: 15,
+      version: 2,
+    });
   });
 
   test("EXCHANGE and OMS modules coexist", async () => {
