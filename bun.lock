@@ -7,7 +7,9 @@
       "devDependencies": {
         "@biomejs/biome": "2.2.4",
         "@happy-dom/global-registrator": "20.14.5",
-        "@heswell/vuu-portal": "^2.0.0",
+        "@heswell/vuu-portal": "^2.1.0",
+        "@heswell/vuu-server": "^4.0.0",
+        "@heswell/vuu-table": "^1.0.1",
         "@types/bun": "1.3.3",
         "@types/react": "^19.2.0",
         "@types/react-dom": "^19.2.0",
@@ -42,8 +44,9 @@
       "dependencies": {
         "@heswell/exchange-sim": "workspace:*",
         "@heswell/oms": "workspace:*",
-        "@heswell/vuu-portal": "^2.0.0",
-        "@heswell/vuu-server": "^3.3.0",
+        "@heswell/vuu-portal": "^2.1.0",
+        "@heswell/vuu-server": "^4.0.0",
+        "@heswell/vuu-table": "^1.0.1",
       },
     },
     "apps/portal-host": {
@@ -100,7 +103,7 @@
       "dependencies": {
         "@heswell/hft-limit-order-book": "1.0.0",
         "@heswell/trading-schemas": "workspace:*",
-        "@heswell/vuu-server": "^3.3.0",
+        "@heswell/vuu-server": "^4.0.0",
         "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.21",
       },
     },
@@ -110,7 +113,7 @@
       "dependencies": {
         "@heswell/exchange-sim": "workspace:*",
         "@heswell/trading-schemas": "workspace:*",
-        "@heswell/vuu-server": "^3.3.0",
+        "@heswell/vuu-server": "^4.0.0",
         "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.21",
       },
       "devDependencies": {
@@ -121,7 +124,7 @@
       "name": "@heswell/trading-schemas",
       "version": "0.1.0",
       "dependencies": {
-        "@heswell/vuu-server": "^3.3.0",
+        "@heswell/vuu-server": "^4.0.0",
         "@vuu-ui/vuu-data-types": "4.0.0-alpha.21",
         "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.21",
       },
@@ -133,7 +136,7 @@
         "@heswell/exchange-sim": "workspace:*",
         "@heswell/oms": "workspace:*",
         "@heswell/trading-schemas": "workspace:*",
-        "@heswell/vuu-data-engine-local": "2.0.0",
+        "@heswell/vuu-data-engine-local": "2.0.1",
         "@heswell/vuu-table": "1.0.1",
         "@vuu-ui/core": "4.0.0-alpha.21",
         "@vuu-ui/vuu-data-types": "4.0.0-alpha.21",
@@ -272,7 +275,7 @@
 
     "@heswell/oms": ["@heswell/oms@workspace:packages/oms"],
 
-    "@heswell/service-utils": ["@heswell/service-utils@1.1.0", "", { "dependencies": { "@heswell/vuu-table": "1.0.1" }, "peerDependencies": { "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20" } }, "sha512-gGRd/NaXFcevxfF/QDK0Nuqu/9XKkNyAXgAPEncxK+ChMq/blSoutnIw9PvCc9UbAxp2hSgkGK4XtHeEss85cg=="],
+    "@heswell/service-utils": ["@heswell/service-utils@1.2.0", "", { "dependencies": { "@heswell/vuu-table": "^1.0.1" }, "peerDependencies": { "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20" } }, "sha512-iNhDQn1LpwVqmVXanPfyV5EOZUr5aQ9DzWt0pdzFYVCZFZgYxIL8ncUXnYb+qxx2RpPbFO//pOcFoINiGbSbjg=="],
 
     "@heswell/trading-features": ["@heswell/trading-features@workspace:apps/features/trading"],
 
@@ -290,15 +293,15 @@
 
     "@heswell/user-admin": ["@heswell/user-admin@1.0.2", "", {}, "sha512-mrpf769m/0SmClauaxBvU1g8r0xi0GZdSEU2AXRjdkrowhwnyQwwctNv+UxrbAMJreSGryhoZeO4fPJJrIGQBw=="],
 
-    "@heswell/vuu-data-engine-local": ["@heswell/vuu-data-engine-local@2.0.0", "", { "dependencies": { "@heswell/module-admin": "2.0.0", "@heswell/user-admin": "1.0.2", "@heswell/vuu-table": "1.0.1", "@heswell/vuu-viewport": "1.1.2", "@vuu-ui/vuu-data-editing": "4.0.0-alpha.20", "@vuu-ui/vuu-data-local": "4.0.0-alpha.20", "@vuu-ui/vuu-filter-parser": "4.0.0-alpha.20", "@vuu-ui/vuu-utils": "4.0.0-alpha.20" }, "peerDependencies": { "@vuu-ui/core": "^4.0.0-alpha.20", "@vuu-ui/vuu-data-types": "^4.0.0-alpha.20", "@vuu-ui/vuu-filter-types": "^4.0.0-alpha.20", "@vuu-ui/vuu-protocol-types": "^4.0.0-alpha.20", "@vuu-ui/vuu-table-types": "^4.0.0-alpha.20", "react": "^19.2.3" } }, "sha512-s1pggSXwCJfmcSK1OoootcqxBLhUlFykh/k2j82TbNi2au+JNUsfcrwx44nRF/NRHDPLVvvT3qqUVMbRRdYj0Q=="],
+    "@heswell/vuu-data-engine-local": ["@heswell/vuu-data-engine-local@2.0.1", "", { "dependencies": { "@heswell/module-admin": "^2.0.1", "@heswell/user-admin": "^1.0.2", "@heswell/vuu-table": "^1.0.1", "@heswell/vuu-viewport": "^1.1.3", "@vuu-ui/vuu-data-editing": "4.0.0-alpha.20", "@vuu-ui/vuu-data-local": "4.0.0-alpha.20", "@vuu-ui/vuu-filter-parser": "4.0.0-alpha.20", "@vuu-ui/vuu-utils": "4.0.0-alpha.20" }, "peerDependencies": { "@vuu-ui/core": "^4.0.0-alpha.20", "@vuu-ui/vuu-data-types": "^4.0.0-alpha.20", "@vuu-ui/vuu-filter-types": "^4.0.0-alpha.20", "@vuu-ui/vuu-protocol-types": "^4.0.0-alpha.20", "@vuu-ui/vuu-table-types": "^4.0.0-alpha.20", "react": "^19.2.3" } }, "sha512-t5nsq5WP543y4o+x565lpifmCvrNFOTqJbtz7V2Nr9Kq6DLst3xQgLGiKqSOHoFpJEVX5Km1XpFpqOQK7VdpnA=="],
 
-    "@heswell/vuu-portal": ["@heswell/vuu-portal@2.0.0", "", { "dependencies": { "@heswell/module-admin": "2.0.1", "@heswell/vuu-server": "3.1.0", "@heswell/vuu-table": "1.0.1" }, "peerDependencies": { "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20" }, "bin": { "vuu-portal": "bin.js" } }, "sha512-NfdmOke1x70KCivv2Fh+9hd7xkWSzrGBcQQrkBp6HbU7TqO+Xl/Zy8ErqUSgkw+3NWPrLSU+qrLRwhOXi/ACJw=="],
+    "@heswell/vuu-portal": ["@heswell/vuu-portal@2.1.0", "", { "dependencies": { "@heswell/module-admin": "^2.0.1" }, "peerDependencies": { "@heswell/vuu-server": "^3.1.0 || ^4.0.0", "@heswell/vuu-table": "^1.0.1", "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20" }, "bin": { "vuu-portal": "bin.js" } }, "sha512-KbEbs+ROWCXlUseW30VOabPxldg9GIwMDKqKnjUzLfYM3/8PRoqXvlSyoOTti4kikVBwQ95TAC+sw6zQMkP8RA=="],
 
-    "@heswell/vuu-server": ["@heswell/vuu-server@3.3.0", "", { "dependencies": { "@heswell/service-utils": "1.1.0", "@heswell/vuu-table": "1.0.1", "@heswell/vuu-viewport": "1.1.2", "@vuu-ui/vuu-utils": "4.0.0-alpha.20" }, "peerDependencies": { "@types/bun": ">=1.3.0", "@vuu-ui/vuu-data-types": "4.0.0-alpha.20", "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20" }, "optionalPeers": ["@types/bun"] }, "sha512-N18+K6miDbKzaaGnFpoBBYXMJGH8HllpJ+J71Neb59/HNBDqXXP8rvNKuCIiGuf+Q56yHJvxFNOUf3//X788BQ=="],
+    "@heswell/vuu-server": ["@heswell/vuu-server@4.0.0", "", { "dependencies": { "@heswell/service-utils": "^1.2.0", "@heswell/vuu-table": "^1.0.1", "@heswell/vuu-viewport": "^1.1.3", "@vuu-ui/vuu-utils": "4.0.0-alpha.20" }, "peerDependencies": { "@types/bun": ">=1.3.0", "@vuu-ui/vuu-data-types": "4.0.0-alpha.20", "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20" }, "optionalPeers": ["@types/bun"] }, "sha512-XP+pSmZm5EbK48eugDpUQjV11L3+UBQ9afnAV0JqxHMS+TW+IzryCgYMLDqPtn8ia5bQONKxNC3VW6fTB3++ug=="],
 
     "@heswell/vuu-table": ["@heswell/vuu-table@1.0.1", "", { "peerDependencies": { "@vuu-ui/vuu-data-types": "4.0.0-alpha.20", "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20" } }, "sha512-gpqQkyfliUzgBgFxE6QRcfTmZfze3EVcCH69B0yxXvGjlKylQjuDcr3aZ9+eClaXddBwy+nDb9cBQOqXMzA80A=="],
 
-    "@heswell/vuu-viewport": ["@heswell/vuu-viewport@1.1.2", "", { "dependencies": { "@heswell/vuu-table": "1.0.1" }, "peerDependencies": { "@vuu-ui/vuu-data-types": "4.0.0-alpha.20", "@vuu-ui/vuu-filter-parser": "4.0.0-alpha.20", "@vuu-ui/vuu-filter-types": "4.0.0-alpha.20", "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20" } }, "sha512-QfF85/ZNKqXDc5UPjFIeeNKIe3aPqKZMXldkWNBxH9RuCGjSVV64O8HrSBRCipAouZ5ipfcOs1n+/f1bPNO0Kg=="],
+    "@heswell/vuu-viewport": ["@heswell/vuu-viewport@1.1.3", "", { "dependencies": { "@heswell/vuu-table": "^1.0.1" }, "peerDependencies": { "@vuu-ui/vuu-data-types": "4.0.0-alpha.20", "@vuu-ui/vuu-filter-parser": "4.0.0-alpha.20", "@vuu-ui/vuu-filter-types": "4.0.0-alpha.20", "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20" } }, "sha512-WjItNbonL4olXetPekGElmCkigPul6Hi+d1P0T+vlsQ+Q25/XlLfN0QzBPKsZOZ6pU2mFE0MAAc5H7f1JUoWug=="],
 
     "@internationalized/date": ["@internationalized/date@3.12.4", "", { "dependencies": { "@swc/helpers": "^0.5.0" } }, "sha512-M1dEn4c1U1HsSlaVR8upZtSqvXrTkHDfv18H01uCSJyjVLDxnBR38v/fMxecmlwXKR4i9HeZcmgQAPE6A+aGJQ=="],
 
@@ -853,10 +856,6 @@
     "wrap-ansi": ["wrap-ansi@8.1.0", "", { "dependencies": { "ansi-styles": "^6.1.0", "string-width": "^5.0.1", "strip-ansi": "^7.0.1" } }, "sha512-si7QWI6zUMq56bESFvagtmzMdGOtoxfR+Sez11Mobfc7tm+VkUckk9bW2UeffTGVUbOksxmSw0AA2gs8g71NCQ=="],
 
     "ws": ["ws@8.21.0", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g=="],
-
-    "@heswell/vuu-data-engine-local/@heswell/module-admin": ["@heswell/module-admin@2.0.0", "", {}, "sha512-Mr8mf1+efa4EHjxa6SLVcn+NAFRZE7fnrayElGBqMQqzOe+voyH38JQg7q6NSiMz0pp3T7fBdoecmrkvRKwwAQ=="],
-
-    "@heswell/vuu-portal/@heswell/vuu-server": ["@heswell/vuu-server@3.1.0", "", { "dependencies": { "@heswell/service-utils": "1.1.0", "@heswell/vuu-table": "1.0.1", "@heswell/vuu-viewport": "1.1.2", "@vuu-ui/vuu-utils": "4.0.0-alpha.20" }, "peerDependencies": { "@types/bun": ">=1.3.0", "@vuu-ui/vuu-data-types": "4.0.0-alpha.20", "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.20" }, "optionalPeers": ["@types/bun"] }, "sha512-5FTtsHfuqPEd/EnH/rll7kXoclCKyWAgjpwB2OiI++n5jVXOmIqEPn7AjTffdX+863v+fRmPExUmPgMYKAAY9Q=="],
 
     "@rsdoctor/sdk/tapable": ["tapable@2.3.3", "", {}, "sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A=="],
 

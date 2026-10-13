@@ -16,6 +16,7 @@ const Orders = () => {
         readOnly={!canTrade}
         showLinkGroupSelector
         style={fillStyle}
+        useEditSession
       />
     </FeatureFrame>
   );

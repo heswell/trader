@@ -45,6 +45,7 @@ export {
 export {
   createOms,
   OmsService,
+  type OmsLogger,
   type OmsServiceOptions,
 } from "./engine/OmsService";
 export { BackgroundFlow } from "./flow/BackgroundFlow";

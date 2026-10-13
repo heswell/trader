@@ -3,6 +3,7 @@ import {
   ConfigFactory,
   createConfiguredAuthProviders,
   createVuuServerApplication,
+  getLogger,
 } from "@heswell/vuu-server";
 import {
   createExchangeSimulator,
@@ -24,6 +25,7 @@ export default async function main(config: Config = ConfigFactory.load()) {
   const oms = createOms(sim.gateway, {
     config: loadOmsConfig(config),
     rics: () => sim.books.map((book) => book.ric),
+    logger: getLogger("trader.oms"),
   });
   const application = createVuuServerApplication({
     authProviders: createConfiguredAuthProviders(config),

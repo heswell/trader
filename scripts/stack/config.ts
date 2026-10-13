@@ -33,6 +33,8 @@ export const stackConfig = () => {
     featuresPort,
     featuresOrigin:
       process.env.TRADER_FEATURES_ORIGIN ?? `http://${host}:${featuresPort}`,
+    /** vuu-server log level (trace|debug|info|warn|error|silent); unset = info. */
+    logLevel: process.env.TRADER_LOG_LEVEL,
   };
 };
 
@@ -70,6 +72,7 @@ export const serverEnv = (cfg: StackConfig) => {
   const shared = {
     VUU_CORS_ALLOWED_ORIGIN: cfg.hostOrigin,
     VUU_KEYCLOAK_URL: cfg.keycloakUrl,
+    ...(cfg.logLevel ? { VUU_LOG_LEVEL: cfg.logLevel } : {}),
   };
   return {
     portal: {

@@ -22,6 +22,7 @@ import { EXCHANGE_MODULE } from "@heswell/trading-schemas";
 import {
   LifecycleContainer,
   LoginTokenService,
+  setLogLevel,
   VuuServer,
   VuuServerConfig,
   VuuUserWithAuthorizations,
@@ -43,34 +44,21 @@ const mode = args.mode ?? "both";
 const seconds = Number(args.seconds ?? 10);
 const subscribe = args.subscribe === "true";
 
-const quiet = <T>(fn: () => T): T => {
-  const log = console.log;
-  console.log = () => {};
-  try {
-    return fn();
-  } finally {
-    console.log = log;
-  }
-};
+// keep server startup chatter out of the report; VUU_LOG_LEVEL=info shows it
+if (!process.env.VUU_LOG_LEVEL) setLogLevel("warn");
 
 const startServer = async (sim: ExchangeSimulator, autoStart: boolean) => {
   const lifecycle = new LifecycleContainer();
   const tokens = LoginTokenService();
-  const server = quiet(
-    () =>
-      new VuuServer(
-        VuuServerConfig(
-          VuuWebSocketOptions().withWsPort(0).withSslDisabled(),
-          {},
-          tokens,
-        ).withModule(ExchangeModule(sim, { autoStart })),
-        lifecycle,
-      ),
+  const server = new VuuServer(
+    VuuServerConfig(
+      VuuWebSocketOptions().withWsPort(0).withSslDisabled(),
+      {},
+      tokens,
+    ).withModule(ExchangeModule(sim, { autoStart })),
+    lifecycle,
   );
-  const log = console.log;
-  console.log = () => {};
   await lifecycle.start();
-  console.log = log;
   return { lifecycle, server, tokens };
 };
 

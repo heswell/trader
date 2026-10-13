@@ -17,6 +17,17 @@ import { TableSink } from "../modules/oms/TableSink";
 import { DelayedGateway, type OmsGateway, type Scheduler } from "./gateway";
 import { OmsEngine } from "./OmsEngine";
 
+/** Structurally a vuu-server Logger, so getLogger("trader.oms") fits. */
+export interface OmsLogger {
+  warn(...args: unknown[]): void;
+  error(...args: unknown[]): void;
+}
+
+const consoleLogger: OmsLogger = {
+  warn: (...args) => console.warn("[OMS]", ...args),
+  error: (...args) => console.error("[OMS]", ...args),
+};
+
 export interface OmsServiceOptions {
   /** Defaults to DEFAULT_OMS_CONFIG; usually the result of loadOmsConfig. */
   config?: Partial<OmsConfig>;
@@ -26,6 +37,9 @@ export interface OmsServiceOptions {
   clock?: () => number;
   /** Scheduler for gatewayLatencyMs (tests inject ManualScheduler.schedule). */
   scheduler?: Scheduler;
+  /** Defaults to console; the server passes getLogger("trader.oms"). */
+  logger?: OmsLogger;
+  /** Engine warnings; defaults to logger.warn (tests capture them). */
   log?: (message: string) => void;
 }
 
@@ -39,6 +53,7 @@ export class OmsService {
   readonly flow: BackgroundFlow;
   readonly tables = new TableSink();
   readonly gateway: OmsGateway;
+  readonly logger: OmsLogger;
   #timers: ReturnType<typeof setInterval>[] = [];
   #clock: () => number;
 
@@ -48,6 +63,7 @@ export class OmsService {
       ...options.config,
     });
     this.config = config;
+    this.logger = options.logger ?? consoleLogger;
     this.#clock = options.clock ?? Date.now;
     this.gateway =
       config.gatewayLatencyMs > 0
@@ -65,7 +81,7 @@ export class OmsService {
       sink: this.tables,
       collarPct: config.collarPct,
       restrictedRics: splitList(config.restrictedRics),
-      log: options.log,
+      log: options.log ?? ((message) => this.logger.warn(message)),
     });
     const flowAccountIds = new Set(splitList(config.flowAccounts));
     const { rics = [] } = options;

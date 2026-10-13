@@ -74,7 +74,7 @@ export const handleOmsRpc = (
         );
     }
   } catch (err) {
-    console.error(`[OMS] ${rpcName} failed`, err);
+    oms.logger.error(`${rpcName} failed`, err);
     return rpcError(RejectReason.InternalError, String(err));
   }
 };

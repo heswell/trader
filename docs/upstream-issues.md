@@ -48,9 +48,13 @@ Workarounds are noted. Resolved issues are struck through.
     *Resolved: fixed in vuu-websocket#89; vuu-server 3.3.0.* `VIEW_PORT_MENUS_SELECT_RPC` and the table / row / cell
     menu RPCs dispatch to handlers on the menu items (`protocol-parity.md` §1.7). Trader declares no server menus
     yet; the vuu-ui client gaps are 63–66.
-12. **Noisy `console.log`** in `ModuleFactory` (it dumps the whole module including `viewPortDefs`), `TableContainer`,
+12. ~~**Noisy `console.log`** in `ModuleFactory` (it dumps the whole module including `viewPortDefs`), `TableContainer`,
     `ViewportContainer` and `CoreServerApi` on every create, plus the `[SESSION] ... has not responded` warnings. This
-    drowns test and bench output. A log level (or `debug`) would help.
+    drowns test and bench output. A log level (or `debug`) would help.~~ *Resolved: fixed in vuu-websocket#90;
+    service-utils 1.2.0 / vuu-server 4.0.0.* A leveled logger (`getLogger(name)`, `setLogLevel`, `setLogSink`,
+    `resetLogging`, re-exported by vuu-server) configured by `vuu.log.level` / `vuu.log.levels.<name>` or
+    `VUU_LOG_LEVEL`. Every trader conf has `vuu.log.level=${?VUU_LOG_LEVEL}`, `start:all` maps `TRADER_LOG_LEVEL`,
+    the test preload defaults to `silent`, the bench sets `warn`, and the OMS logs through `getLogger("trader.oms")`.
 13. **`@heswell/hft-limit-order-book` `modify`** (fork of nodejs-order-book): `modify(id, {price?, size?})` re-inserts
     the order, so it **loses time priority even when only reducing size**, which differs from real exchanges. It also
     resets `timeInForce`/`stpMode` to defaults. Trade ids from `onTrade` are per book, so the simulator issues its own
@@ -76,14 +80,18 @@ Workarounds are noted. Resolved issues are struck through.
     vuu-server 3.2.0.* `JoinTableDef` passes every remaining `TableDefConfig` field through.
     `toServerJoinFactory(positionPrices, {permissionFunction})` sets it in the config, so `OmsModule` no longer
     wraps the join factory.
-17. **`editCell` (CreateSessionTableRpcHandler) edits the source table when the viewport is not an edit session.**
-    Any client with an RPC-capable viewport can then overwrite rows directly. *Workaround:* `OmsRpcHandler` guards all
-    edit-session RPCs. They are only allowed on a `parentOrders` session table, only `quantity`/`price` may be edited,
-    and `addRow` is refused.
-18. **The base `handleEndEditSession` ignores the result of `applySessionSave`.** It always reports success and drops
-    the session, so a subclass cannot report per-row failures. *Workaround:* `OmsRpcHandler` overrides
-    `handleEndEditSession` (it uses `prepareSessionSave` for the stale-row check). A save that returns a result would
-    let OMS-style handlers just override `applySessionSave`.
+17. ~~**`editCell` (CreateSessionTableRpcHandler) edits the source table when the viewport is not an edit session.**
+    Any client with an RPC-capable viewport can then overwrite rows directly.~~ *Resolved: fixed in vuu-websocket#91; vuu-server 4.0.0.*
+    Source edits are refused unless `canEditSource` is overridden; key, system and unknown columns are refused and
+    values are type-checked; rows hidden by the permission filter cannot be edited, deleted, selected or copied into a
+    session; cross-session viewports and sessions of sessions are refused. `OmsRpcHandler` only overrides
+    `isEditableColumn` (`quantity` / `price` on `parentOrders` session tables), `validateCellEdit` (order rules) and
+    `canSaveSession` (trading-execute), scopes sessions to `parentOrders` and refuses `addRow`.
+18. ~~**The base `handleEndEditSession` ignores the result of `applySessionSave`.** It always reports success and drops
+    the session, so a subclass cannot report per-row failures.~~ *Resolved: fixed in vuu-websocket#91; vuu-server 4.0.0.* A failed save, a
+    `canSaveSession` veto or a throw returns `ERROR_RESULT`, rolls the source back and keeps the session open.
+    `OmsRpcHandler` now just overrides `applySessionSave` (no `handleEndEditSession` override); the UI discards the
+    session after a failure (`openOrderEditSession` / `editOrdersInSession`). See 68.
 19. **exchange-sim has no trading session / close.** Phases only change through halt/resume, so DAY orders never
     expire on their own. *Workaround:* `OmsEngine.endOfDay()` expires working DAY orders on demand. A scheduled
     close (and `MARKET_CLOSED` reject window) in exchange-sim would make this automatic. This is our own package, so
@@ -136,8 +144,9 @@ Workarounds are noted. Resolved issues are struck through.
     `quantity` and `notional` and computes `notional / quantity` in a cell renderer.
 31. **Editable Table cells need the edit-session snapshot data source as the Table's own source**, which loses live
     updates, so inline editing is impractical on a ticking blotter. `editOrdersInSession` drives the same server edit
-    session (`beginEditSession` / `editCell` / `endEditSession`) programmatically; the OrderBlotter amend dialog uses
-    `amendOrder` by default.
+    session (`beginEditSession` / `editCell` / `endEditSession`) programmatically. The OrderBlotter amend dialog uses
+    `amendOrder` by default; with `useEditSession` (the Orders and Trader Workspace features) the dialog begins a
+    session when it opens and saves it on Amend (`openOrderEditSession`).
 32. **Custom cell renderers are looked up by name in a global registry** and the package `sideEffects` only lists
     CSS, so each component module must call `registerTradingCellRenderers()` at import time.
 33. **A `LEFT JOIN` row without a price shows `0` (not empty) for numeric columns** in `instrumentPrices`, so a client
@@ -245,17 +254,25 @@ and the `@vuu-ui/vuu-icons` main entry (#52) still lack types; `PersistedStateAP
 
 ## Found in the vuu-server 3.2.0 / 3.3.0 upgrade
 
-61. **The edit-session stale-row check silently does nothing without a `vuuUpdatedTimestamp` column.**
+61. ~~**The edit-session stale-row check silently does nothing without a `vuuUpdatedTimestamp` column.**~~
     `EndEditSessionRpcHandler.prepareSessionSave` compares the session change's `lastUpdateTimestamp` with the
     source row's `vuuUpdatedTimestamp`; on a table without that column both are `undefined`, so every row passes
     and `force` has no effect. The OMS tables don't declare the Vuu default columns, so the documented OMS stale
     check had never fired. *Workaround:* `OmsRpcHandler.handleEndEditSession` also compares the session copy with
     the live `parentOrders` row on every column the user did not edit (an amend bumps `version`, a fill moves
     `cumQty`) and fails with `stale update: <orderIds> ...` unless `force: true`. Upstream should either require the
-    column for edit sessions or fall back to a row comparison.
-62. **`@heswell/vuu-portal` 2.0.0 pins `@heswell/vuu-server` 3.1.0**, so bun installs a second copy next to
+    column for edit sessions or fall back to a row comparison. *Resolved: fixed in vuu-websocket#91; vuu-server 4.0.0.* Each source row is
+    snapshotted when it is copied into the session and every column is compared at save; the error is
+    `stale update` and each stale row's `vuuMsg` is `stale:<key>:<cols>`. The OMS workaround is gone. `OmsRpcHandler`
+    does not override `getStaleColumns`: `parentOrders` rows change only on order events (ack, fill, replace, cancel,
+    reject, expire), and each of them should make an open amend stale. The UI shows
+    "Order <ids> changed since you started editing; check it and amend again".
+62. ~~**`@heswell/vuu-portal` 2.0.0 pins `@heswell/vuu-server` 3.1.0**, so bun installs a second copy next to
     trader's 3.3.0. It is harmless today (the portal server only does module discovery; the trading modules run
-    on the trading server with 3.3.0), but a vuu-portal release with a `^3.3.0` range would avoid it.
+    on the trading server with 3.3.0), but a vuu-portal release with a `^3.3.0` range would avoid it.~~
+    *Resolved: vuu-portal 2.1.0.* It peers `@heswell/vuu-server` `^3.1.0 || ^4.0.0` and `@heswell/vuu-table`
+    `^1.0.1`; trader depends on both directly (root and `apps/portal-config`), and there is one vuu-server 4.0.0 in
+    the install. See 67 for its `@vuu-ui` peer pin.
 63. **vuu-ui `useVuuMenuActions` ignores `CLOSE_DIALOG_ACTION` and `NO_ACTION`** (alpha.21). It only handles
     `SHOW_NOTIFICATION_ACTION` and `OPEN_DIALOG_ACTION`, so a menu handler cannot close an open dialog. `NO_ACTION`
     is harmless, but `CLOSE_DIALOG_ACTION` from vuu-server 3.3.0 has no effect unless the caller passes
@@ -269,3 +286,40 @@ and the `@vuu-ui/vuu-icons` main entry (#52) still lack types; `PersistedStateAP
 66. **vuu-ui does not surface `VIEW_PORT_MENU_REJ`.** `menuRpcCall` resolves with the reject message, and
     `useVuuMenuActions` ignores it unless the caller passes `onRpcResponse`, so a failed menu action is silent for
     the user.
+
+## Found in the vuu-server 4.0.0 upgrade
+
+67. **The @heswell packages peer `@vuu-ui/*` at exactly `4.0.0-alpha.20`.** vuu-server 4.0.0, service-utils 1.2.0,
+    vuu-table, vuu-viewport 1.1.3 and vuu-portal 2.1.0 all peer `@vuu-ui/vuu-protocol-types` (and friends) at
+    `4.0.0-alpha.20`; trader is on alpha.21. Without trader's root `overrides`, bun warns "incorrect peer dependency
+    @vuu-ui/vuu-protocol-types@4.0.0-alpha.21" and npm fails with ERESOLVE. With the overrides there is a single
+    alpha.21 copy and no warning. A range (`>=4.0.0-alpha.20 <5`) would avoid it. Related to 60.
+68. **`applySessionSave(sessionTable, prepared)` gets no `RequestContext`**, although `canSaveSession` does. An OMS
+    must send each amend / cancel as the saving user, so `OmsRpcHandler` remembers the user from `canSaveSession` in
+    a `WeakMap` keyed by `prepared`. That only works because its `canSaveSession` is synchronous (an async result
+    makes the base class prepare the save again). Passing `ctx` to `applySessionSave` would remove it.
+69. **A cross-session viewport id is refused as an internal error.** `getViewportForSession` throws, so
+    `CoreServerApiHandler` logs the refusal at `error` with a stack trace and the client gets
+    `Failed to process request <id>`. A refused request is a client error; an `ERROR_RESULT` such as
+    "viewport not found" without the stack would keep server logs clean. The OMS test captures it with `setLogSink`.
+70. **`VuuDataSource.beginEditSession` drops the `connectionId`** (`@vuu-ui/vuu-data-remote` 4.0.0-alpha.21). It
+    builds the session data source with `new VuuDataSource({...this.config, table, viewport})`, so it uses the base
+    class with the default `"portal"` connection rather than the source's connection-bound subclass
+    (`createSessionDataSource` passes `connectionId`). Under the portal, the session table's `GET_TABLE_META` /
+    `CREATE_VP` went to the portal server instead of trading (and crashed it, see 71). `openOrderEditSession`
+    rebuilds the session with `source.constructor` and ends it with the `endEditSession` RPC: the rebuilt instance
+    is not linked to its source, so its own `endEditSession` would send a resume for the removed viewport.
+71. **vuu-server exits on a request for an unknown table.** `processGetTableMetaRequest` and
+    `processCreateViewPortRequest` call `TableContainer.getTable`, which throws `[TableContainer] no table <name>`;
+    the throw is not caught, so any client can stop the server with one message (seen with 4.0.0 in the e2e run
+    via 70). `ViewportContainer.create` throws `[ViewportContainer] no table` the same way for another session's
+    session table. Root cause: the message handler does `try { return this.handleViewServerMessage(...) }`
+    without `await`, so a rejection from the async handler escapes the `catch` as an unhandled rejection. Awaiting
+    it (and answering with an `ERROR_RESULT` / `TABLE_NOT_FOUND`) would fix all of these. No trader workaround
+    beyond fixing 70.
+72. **A second login silently evicts the user's first session.** `ClientSessionContainer` defaults to
+    `maxSessionsPerUser = 1` (not settable from conf). Logging in again drops the oldest session from the
+    container without closing its channel or removing its session tables, so the first tab only learns from
+    "Invalid session" on its next request. It then reconnects and re-creates its session-table viewport, which
+    hits 71 and stops the server. Closing the evicted channel (and its session tables), and a
+    `vuu.server.maxSessionsPerUser` setting, would fix it. Trader users should use one tab per user for now.
