@@ -1,4 +1,7 @@
-import type { DataSource } from "@vuu-ui/vuu-data-types";
+import type {
+  DataSource,
+  DataSourceConstructorProps,
+} from "@vuu-ui/vuu-data-types";
 import { Range } from "@vuu-ui/vuu-utils";
 import { TradingRpcError } from "./tradingRpc";
 
@@ -51,6 +54,37 @@ export interface OrderEditSession {
   discard(): Promise<void>;
 }
 
+type DataSourceClass = new (props: DataSourceConstructorProps) => DataSource;
+
+/**
+ * Upstream issue 70: @vuu-ui/vuu-data-remote's beginEditSession builds the
+ * session VuuDataSource from the base class without the source's
+ * connectionId, so under a portal (or any connection-bound subclass) its
+ * viewport goes to the default "portal" server, which has no such table.
+ * Rebuild it with the source's own (connection-bound) class. The rebuilt
+ * instance is not linked to its source, so its endEditSession would send a
+ * resume for the removed viewport; end it with the RPC instead.
+ */
+const rebindRemoteSession = (source: DataSource, session: DataSource) => {
+  const remote = (source as { isRemote?: boolean }).isRemote === true;
+  const Source = source.constructor as DataSourceClass;
+  if (!remote || session.constructor === Source) return undefined;
+  const { table, viewport } = session as DataSource & {
+    table: DataSourceConstructorProps["table"];
+  };
+  return new Source({ ...session.config, table, viewport });
+};
+
+const endRemoteSession = async (session: DataSource, save: boolean) => {
+  const result = await session.rpcRequest?.({
+    type: "RPC_REQUEST",
+    rpcName: "endEditSession",
+    params: save ? { save: true, force: false } : {},
+  });
+  if (isRpcError(result)) throw new Error(result.errorMessage);
+  session.unsubscribe();
+};
+
 /**
  * Begin a server edit session on the live `parentOrders` data source. Only
  * `quantity` and `price` are editable; addRow is refused (use createOrder).
@@ -65,11 +99,18 @@ export const openOrderEditSession = async (
     );
   }
   let session: DataSource;
+  let rebound = false;
   try {
-    session = await dataSource.beginEditSession();
+    const begun = await dataSource.beginEditSession();
+    if (!begun) throw Error("beginEditSession returned no session");
+    const rebuilt = rebindRemoteSession(dataSource, begun);
+    rebound = rebuilt !== undefined;
+    session = rebuilt ?? begun;
   } catch (err) {
     throw new TradingRpcError("amendOrder", errorMessage(err));
   }
+  const end = (save: boolean) =>
+    rebound ? endRemoteSession(session, save) : session.endEditSession?.(save);
   await session.subscribe({ range: Range(0, 1) }, () => undefined);
   const touched = new Set<string>();
   let open = true;
@@ -101,7 +142,7 @@ export const openOrderEditSession = async (
     },
     async save() {
       try {
-        await rpc(session.endEditSession?.(true));
+        await end(true);
       } catch (err) {
         const message = errorMessage(err);
         if (message === STALE_UPDATE) {
@@ -116,7 +157,7 @@ export const openOrderEditSession = async (
     async discard() {
       if (!open) return;
       try {
-        await session.endEditSession?.(false);
+        await end(false);
       } finally {
         close();
       }

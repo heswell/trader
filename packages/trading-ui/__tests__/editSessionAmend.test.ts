@@ -117,4 +117,62 @@ describe("parentOrders edit session", () => {
     expect(error).not.toBeInstanceOf(StaleOrderEditError);
     expect(error.reason).toBe("PERMISSION_DENIED");
   });
+
+  test("a remote session is rebuilt with the source's connection-bound class (upstream issue 70)", async () => {
+    const calls: Call[] = [];
+    // stands in for VuuDataSource: beginEditSession returns the base class
+    class Base {
+      isRemote = true;
+      config = { columns: ["id", "quantity"] };
+      constructor(readonly props: Record<string, unknown>) {}
+      async beginEditSession() {
+        return new Base({ table: SESSION_TABLE, viewport: "vp-session" });
+      }
+      get table() {
+        return this.props.table;
+      }
+      get viewport() {
+        return this.props.viewport;
+      }
+      async subscribe() {
+        calls.push(["subscribe", this.constructor.name, this.props]);
+      }
+      unsubscribe() {
+        calls.push(["unsubscribe"]);
+      }
+      async endEditSession() {
+        calls.push(["endEditSession"]);
+      }
+      async rpcRequest(request: { rpcName: string; params: unknown }) {
+        calls.push(["rpcRequest", request.rpcName, request.params]);
+        return { type: "SUCCESS_RESULT", data: undefined };
+      }
+    }
+    class Bound extends Base {
+      constructor(props: Record<string, unknown>) {
+        super({ ...props, connectionId: "trading" });
+      }
+    }
+    const SESSION_TABLE = { module: "OMS", table: "session:S1/parentOrders" };
+    const source = new Bound({
+      table: { module: "OMS", table: "parentOrders" },
+    });
+    const session = await openOrderEditSession(source as unknown as DataSource);
+    await session.save();
+    expect(calls).toEqual([
+      [
+        "subscribe",
+        "Bound",
+        {
+          columns: ["id", "quantity"],
+          table: SESSION_TABLE,
+          viewport: "vp-session",
+          connectionId: "trading",
+        },
+      ],
+      ["rpcRequest", "endEditSession", { save: true, force: false }],
+      ["unsubscribe"],
+      ["unsubscribe"],
+    ]);
+  });
 });

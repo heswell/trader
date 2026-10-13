@@ -302,3 +302,24 @@ and the `@vuu-ui/vuu-icons` main entry (#52) still lack types; `PersistedStateAP
     `CoreServerApiHandler` logs the refusal at `error` with a stack trace and the client gets
     `Failed to process request <id>`. A refused request is a client error; an `ERROR_RESULT` such as
     "viewport not found" without the stack would keep server logs clean. The OMS test captures it with `setLogSink`.
+70. **`VuuDataSource.beginEditSession` drops the `connectionId`** (`@vuu-ui/vuu-data-remote` 4.0.0-alpha.21). It
+    builds the session data source with `new VuuDataSource({...this.config, table, viewport})`, so it uses the base
+    class with the default `"portal"` connection rather than the source's connection-bound subclass
+    (`createSessionDataSource` passes `connectionId`). Under the portal, the session table's `GET_TABLE_META` /
+    `CREATE_VP` went to the portal server instead of trading (and crashed it, see 71). `openOrderEditSession`
+    rebuilds the session with `source.constructor` and ends it with the `endEditSession` RPC: the rebuilt instance
+    is not linked to its source, so its own `endEditSession` would send a resume for the removed viewport.
+71. **vuu-server exits on a request for an unknown table.** `processGetTableMetaRequest` and
+    `processCreateViewPortRequest` call `TableContainer.getTable`, which throws `[TableContainer] no table <name>`;
+    the throw is not caught, so any client can stop the server with one message (seen with 4.0.0 in the e2e run
+    via 70). `ViewportContainer.create` throws `[ViewportContainer] no table` the same way for another session's
+    session table. Root cause: the message handler does `try { return this.handleViewServerMessage(...) }`
+    without `await`, so a rejection from the async handler escapes the `catch` as an unhandled rejection. Awaiting
+    it (and answering with an `ERROR_RESULT` / `TABLE_NOT_FOUND`) would fix all of these. No trader workaround
+    beyond fixing 70.
+72. **A second login silently evicts the user's first session.** `ClientSessionContainer` defaults to
+    `maxSessionsPerUser = 1` (not settable from conf). Logging in again drops the oldest session from the
+    container without closing its channel or removing its session tables, so the first tab only learns from
+    "Invalid session" on its next request. It then reconnects and re-creates its session-table viewport, which
+    hits 71 and stops the server. Closing the evicted channel (and its session tables), and a
+    `vuu.server.maxSessionsPerUser` setting, would fix it. Trader users should use one tab per user for now.
