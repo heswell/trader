@@ -1,4 +1,11 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+} from "bun:test";
 import { resolve } from "node:path";
 import { createExchangeSimulator, ExchangeModule } from "@heswell/exchange-sim";
 import {
@@ -10,6 +17,10 @@ import {
 import {
   ConfigFactory,
   createVuuServerApplication,
+  type LogEntry,
+  resetLogging,
+  setLogLevel,
+  setLogSink,
   type VuuServer,
   type VuuServerApplication,
   VuuUserWithAuthorizations,
@@ -35,6 +46,7 @@ const ORDER_COLUMNS = [
   "version",
   "rejectReason",
 ];
+const SESSION_COLUMNS = [...ORDER_COLUMNS, "vuuMsg"];
 const FILL_COLUMNS = [
   "execId",
   "orderId",
@@ -70,7 +82,8 @@ describe("OmsModule over the Vuu protocol", () => {
     },
   });
   const oms = createOms(sim.gateway, {
-    config: { flowRate: 0, markIntervalMs: 20 },
+    // strict: a user without trading roles sees nothing (eve below)
+    config: { flowRate: 0, markIntervalMs: 20, permissionMode: "strict" },
     rics: () => sim.books.map((b) => b.ric),
     log: () => {},
   });
@@ -152,6 +165,8 @@ describe("OmsModule over the Vuu protocol", () => {
       ORDER_COLUMNS,
     );
   });
+
+  afterEach(() => resetLogging());
 
   afterAll(async () => {
     for (const client of clients) client.close();
@@ -547,7 +562,7 @@ describe("OmsModule over the Vuu protocol", () => {
     const session = await alice.createViewport(
       OMS_MODULE,
       begun.data?.sessionTable as string,
-      ORDER_COLUMNS,
+      SESSION_COLUMNS,
     );
     await alice.row(session, (r) => r.orderId === orderId);
     expect(
@@ -572,11 +587,16 @@ describe("OmsModule over the Vuu protocol", () => {
 
     expect(
       await alice.rpc(OMS_MODULE, session, "endEditSession", { save: true }),
-    ).toEqual({
-      type: "ERROR_RESULT",
-      errorMessage: `stale update: ${orderId} changed since the session began`,
-    });
+    ).toEqual({ type: "ERROR_RESULT", errorMessage: "stale update" });
     expect(oms.engine.getOrder(orderId)?.state.quantity).toBe(10);
+    // the session stays open; the row says which columns moved
+    const staleRow = await alice.row(
+      session,
+      (r) => r.orderId === orderId && String(r.vuuMsg).includes("stale:"),
+    );
+    expect(String(staleRow.vuuMsg)).toMatch(
+      new RegExp(`stale:${orderId}:(\\w+\\|)*version`),
+    );
 
     expect(
       await alice.rpc(OMS_MODULE, session, "endEditSession", {
@@ -595,6 +615,169 @@ describe("OmsModule over the Vuu protocol", () => {
       quantity: 15,
       version: 2,
     });
+  });
+
+  const limitOrder = async (client: VuuClient, vp: string, price: number) => {
+    const created = await client.rpc(OMS_MODULE, vp, "createOrder", {
+      account: client === bob ? "ACC-US-02" : "ACC-US-01",
+      ric: AAPL,
+      side: "BUY",
+      ordType: "LIMIT",
+      quantity: 10,
+      price,
+    });
+    expect(created.type).toBe("SUCCESS_RESULT");
+    const orderId = created.data?.orderId as string;
+    await client.row(vp, (r) => r.orderId === orderId);
+    return orderId;
+  };
+  const beginSession = async (client: VuuClient, vp: string) => {
+    const begun = await client.rpc(OMS_MODULE, vp, "beginEditSession", {});
+    expect(begun.type).toBe("SUCCESS_RESULT");
+    return client.createViewport(
+      OMS_MODULE,
+      begun.data?.sessionTable as string,
+      SESSION_COLUMNS,
+    );
+  };
+
+  test("blotter edit session: order validation on edit, OMS rejects keep the session open", async () => {
+    const orderId = await limitOrder(alice, aliceOrders, 164);
+    const session = await beginSession(alice, aliceOrders);
+    await alice.row(session, (r) => r.orderId === orderId);
+    const edit = (column: string, data: unknown) =>
+      alice.rpc(OMS_MODULE, session, "editCell", {
+        key: orderId,
+        column,
+        data,
+      });
+
+    // key, system and other columns are refused, values are type checked
+    expect(await edit("orderId", "x")).toMatchObject({
+      errorMessage: expect.stringMatching(/not editable/),
+    });
+    expect(await edit("vuuMsg", "x")).toMatchObject({
+      errorMessage: expect.stringMatching(/not editable/),
+    });
+    expect(await edit("quantity", "lots")).toMatchObject({
+      errorMessage: expect.stringMatching(/invalid value/),
+    });
+    // amend validation (validateCellEdit)
+    expect(await edit("price", -1)).toMatchObject({
+      errorMessage: expect.stringMatching(/^INVALID_PRICE/),
+    });
+    expect(await edit("quantity", 0)).toMatchObject({
+      errorMessage: expect.stringMatching(/^INVALID_QUANTITY/),
+    });
+    expect(await edit("quantity", "12")).toMatchObject({
+      type: "SUCCESS_RESULT",
+    });
+
+    // a risk reject at save fails it (upstream issue 18) and keeps the session
+    expect(await edit("quantity", 60_000)).toMatchObject({
+      type: "SUCCESS_RESULT",
+    });
+    expect(
+      await alice.rpc(OMS_MODULE, session, "endEditSession", { save: true }),
+    ).toMatchObject({
+      type: "ERROR_RESULT",
+      errorMessage: expect.stringMatching(
+        new RegExp(`^${orderId}: ${RejectReason.ExceedsMaxQuantity}`),
+      ),
+    });
+    expect(oms.engine.getOrder(orderId)?.state.quantity).toBe(10);
+    expect(await edit("quantity", 20)).toMatchObject({
+      type: "SUCCESS_RESULT",
+    });
+    expect(
+      await alice.rpc(OMS_MODULE, session, "endEditSession", { save: true }),
+    ).toMatchObject({ type: "SUCCESS_RESULT" });
+    expect(oms.engine.getOrder(orderId)?.state.quantity).toBe(20);
+  });
+
+  test("blotter edit session: hidden rows, other sessions and other tables are refused", async () => {
+    const bobsId = await limitOrder(bob, bobOrders, 166);
+    const alicesId = await limitOrder(alice, aliceOrders, 166);
+    const session = await beginSession(alice, aliceOrders);
+    await alice.row(session, (r) => r.orderId === alicesId);
+    // bob's order was not copied, and cannot be edited or deleted
+    expect(alice.rowsOf(session).some((r) => r.orderId === bobsId)).toBe(false);
+    expect(
+      await alice.rpc(OMS_MODULE, session, "editCell", {
+        key: bobsId,
+        column: "price",
+        data: 1,
+      }),
+    ).toMatchObject({ errorMessage: expect.stringMatching(/not found/) });
+    expect(
+      await alice.rpc(OMS_MODULE, session, "deleteRow", { key: bobsId }),
+    ).toMatchObject({ errorMessage: expect.stringMatching(/not found/) });
+
+    // bob cannot drive alice's session viewport (vuu-server logs the refusal)
+    const logged: LogEntry[] = [];
+    setLogSink((entry) => logged.push(entry));
+    setLogLevel("error");
+    expect(
+      await bob.rpc(OMS_MODULE, session, "deleteRow", { key: alicesId }),
+    ).toMatchObject({ type: "ERROR_RESULT" });
+    expect(
+      await bob.rpc(OMS_MODULE, session, "endEditSession", { save: true }),
+    ).toMatchObject({ type: "ERROR_RESULT" });
+    expect(
+      logged.filter(({ args }) =>
+        String(args[1]).includes("viewport not found"),
+      ),
+    ).toHaveLength(2);
+
+    // no session of a session, no sessions on other OMS tables
+    expect(
+      await alice.rpc(OMS_MODULE, session, "beginEditSession", {}),
+    ).toMatchObject({ type: "ERROR_RESULT" });
+    const fills = await alice.createViewport(OMS_MODULE, "fills", FILL_COLUMNS);
+    expect(
+      await alice.rpc(OMS_MODULE, fills, "beginEditSession", {}),
+    ).toMatchObject({
+      errorMessage:
+        "beginEditSession: only parentOrders supports edit sessions",
+    });
+
+    expect(
+      await alice.rpc(OMS_MODULE, session, "endEditSession", { save: false }),
+    ).toMatchObject({ type: "SUCCESS_RESULT" });
+    expect(oms.engine.getOrder(bobsId)?.state.status).toBe(OrdStatus.New);
+  });
+
+  test("blotter edit session: strict mode, and users without trading-execute cannot save", async () => {
+    const orderId = await limitOrder(alice, aliceOrders, 167);
+    const eve = await login("eve");
+    const eveOrders = await eve.createViewport(
+      OMS_MODULE,
+      "parentOrders",
+      ORDER_COLUMNS,
+    );
+    const eveSession = await beginSession(eve, eveOrders);
+    // strict: no roles, no rows
+    await Bun.sleep(100);
+    expect(eve.rowsOf(eveOrders)).toEqual([]);
+    expect(eve.rowsOf(eveSession)).toEqual([]);
+    expect(
+      await eve.rpc(OMS_MODULE, eveSession, "deleteRow", { key: orderId }),
+    ).toMatchObject({ errorMessage: expect.stringMatching(/not found/) });
+
+    // a supervisor without trading-execute sees the order and may edit the
+    // session, but canSaveSession refuses the save
+    const samSession = await beginSession(sam, samOrders);
+    await sam.row(samSession, (r) => r.orderId === orderId);
+    expect(
+      await sam.rpc(OMS_MODULE, samSession, "deleteRow", { key: orderId }),
+    ).toMatchObject({ type: "SUCCESS_RESULT" });
+    expect(
+      await sam.rpc(OMS_MODULE, samSession, "endEditSession", { save: true }),
+    ).toEqual({
+      type: "ERROR_RESULT",
+      errorMessage: `${RejectReason.PermissionDenied}: sam may not trade`,
+    });
+    expect(oms.engine.getOrder(orderId)?.state.status).toBe(OrdStatus.New);
   });
 
   test("EXCHANGE and OMS modules coexist", async () => {

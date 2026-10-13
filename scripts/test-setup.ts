@@ -1,11 +1,5 @@
-import { mkdirSync, realpathSync } from "node:fs";
-import { resolve } from "node:path";
+import { mkdirSync } from "node:fs";
 
 mkdirSync("logs", { recursive: true });
-// vuu-server writes its log files to <vuu-websocket>/logs
-try {
-  const server = realpathSync(
-    resolve(import.meta.dir, "../node_modules/@heswell/vuu-server"),
-  );
-  mkdirSync(resolve(server, "../../logs"), { recursive: true });
-} catch {}
+// keep test output quiet; run with VUU_LOG_LEVEL=info (or debug) to see server logs
+process.env.VUU_LOG_LEVEL ??= "silent";

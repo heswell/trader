@@ -1,6 +1,7 @@
 import { RpcName } from "@heswell/trading-schemas";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
+import type { DataSource } from "@vuu-ui/vuu-data-types";
 import { Table } from "@vuu-ui/vuu-table";
 import type { TableRowSelectHandler } from "@vuu-ui/vuu-table-types";
 import cx from "clsx";
@@ -13,7 +14,12 @@ import {
   useRef,
   useState,
 } from "react";
-import { editOrdersInSession } from "../../data/editSessionAmend";
+import {
+  type OrderEdits,
+  type OrderEditSession,
+  openOrderEditSession,
+  StaleOrderEditError,
+} from "../../data/editSessionAmend";
 import { sendTradingRpc, TradingRpcError } from "../../data/tradingRpc";
 import { useDataSourceRows } from "../../data/useDataSourceRows";
 import { filterString } from "../../utils/filters";
@@ -73,8 +79,10 @@ export interface OrderBlotterProps
    */
   notify?: boolean;
   /**
-   * Amend through the server edit session (beginEditSession, editCell,
-   * endEditSession) instead of the amendOrder RPC. Default false.
+   * Amend through the server edit session instead of the amendOrder RPC:
+   * opening the amend dialog begins the session (snapshotting the order),
+   * Amend applies editCell + endEditSession, Close discards it. If the order
+   * changed in between the save is refused as stale. Default false.
    */
   useEditSession?: boolean;
   /**
@@ -85,7 +93,68 @@ export interface OrderBlotterProps
 }
 
 const describe = (err: unknown) =>
-  err instanceof TradingRpcError ? `${err.reason}: ${err.text}` : String(err);
+  err instanceof StaleOrderEditError
+    ? `Order ${err.orderIds.join(", ")} changed since you started editing; check it and amend again`
+    : err instanceof TradingRpcError
+      ? `${err.reason}: ${err.text}`
+      : String(err);
+
+/**
+ * The edit session behind the amend dialog: begun when the dialog opens for
+ * `orderId`, discarded when it closes. Returns submit(edits). After a stale
+ * refusal the session is replaced by a fresh snapshot, so a second Amend
+ * re-applies the user's values to the current order.
+ */
+const useAmendEditSession = (
+  dataSource: DataSource,
+  orderId: string | undefined,
+  enabled: boolean,
+) => {
+  const pendingRef = useRef<Promise<OrderEditSession> | undefined>(undefined);
+  const begin = useCallback(() => {
+    const pending = openOrderEditSession(dataSource);
+    pending.catch(() => undefined); // reported by submit
+    pendingRef.current = pending;
+    return pending;
+  }, [dataSource]);
+
+  useEffect(() => {
+    if (!enabled || !orderId) return;
+    begin();
+    return () => {
+      const pending = pendingRef.current;
+      pendingRef.current = undefined;
+      pending?.then((session) => session.discard()).catch(() => undefined);
+    };
+  }, [begin, enabled, orderId]);
+
+  return useCallback(
+    async (edits: OrderEdits) => {
+      if (!orderId) return;
+      const pending = pendingRef.current ?? begin();
+      let session: OrderEditSession;
+      try {
+        session = await pending;
+      } catch (err) {
+        pendingRef.current = undefined;
+        throw err;
+      }
+      try {
+        await session.amend(orderId, edits);
+        await session.save();
+        pendingRef.current = undefined;
+      } catch (err) {
+        if (err instanceof StaleOrderEditError) {
+          pendingRef.current = undefined;
+          await session.discard().catch(() => undefined);
+          begin();
+        }
+        throw err;
+      }
+    },
+    [begin, orderId],
+  );
+};
 
 const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
   function OrderBlotterInner(
@@ -247,14 +316,18 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
       ? records.find((r) => r.orderId === amending)
       : undefined;
 
+    const amendInSession = useAmendEditSession(
+      dataSource,
+      amending,
+      useEditSession,
+    );
+
     const submitAmend = useCallback(
       async (quantity: number | undefined, price: number | undefined) => {
         if (!amending) return;
         try {
           if (useEditSession) {
-            await editOrdersInSession(dataSource, {
-              amend: { [amending]: { quantity, price } },
-            });
+            await amendInSession({ quantity, price });
           } else {
             await sendTradingRpc(dataSource, RpcName.AmendOrder, {
               orderId: amending,
@@ -268,7 +341,7 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
           fail(err, amending);
         }
       },
-      [amending, dataSource, fail, useEditSession],
+      [amendInSession, amending, dataSource, fail, useEditSession],
     );
 
     return (

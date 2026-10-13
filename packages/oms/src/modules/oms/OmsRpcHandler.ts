@@ -1,67 +1,64 @@
 import {
+  type CanSaveSessionResult,
+  type CellEdit,
   CreateSessionTableRpcHandler,
+  type DataTable,
   InMemSessionDataTable,
   type PreparedSessionSave,
+  type RequestContext,
   type RpcParams,
+  type SessionSaveResult,
   type TableContainer,
+  type Viewport,
 } from "@heswell/vuu-server";
-import { OMS_RPC_NAMES, parentOrders, RpcName } from "@heswell/trading-schemas";
+import {
+  OMS_RPC_NAMES,
+  parentOrders,
+  RejectReason,
+  RpcName,
+  validateAmend,
+} from "@heswell/trading-schemas";
 import type { RpcResult } from "@vuu-ui/vuu-protocol-types";
 import type { OmsService } from "../../engine/OmsService";
+import type { TradingUser } from "../../permissions/access";
 import { handleOmsRpc } from "./omsRpc";
 
 export { handleOmsRpc, type OmsRpcName } from "./omsRpc";
 
-/** Edit-session RPCs inherited from CreateSessionTableRpcHandler. */
-const EDIT_SESSION_RPCS = new Set([
-  "beginEditSession",
-  "createSessionTable",
-  "endEditSession",
-  "editCell",
-  "addRow",
-  "deleteRow",
-  "deleteSelectedRows",
-  "undoRowChange",
-]);
-const EDITABLE_COLUMNS = new Set(["quantity", "price"]);
+const EDITABLE_COLUMNS = ["quantity", "price"] as const;
+const SESSION_RPCS = new Set(["beginEditSession", "createSessionTable"]);
 
 const error = (errorMessage: string): RpcResult => ({
   type: "ERROR_RESULT",
   errorMessage,
 });
 
-/**
- * Orders whose live row no longer matches the session copy on any column the
- * user did not edit (an amend bumps `version`, fills move `cumQty`, ...).
- * vuu-server's own check needs a `vuuUpdatedTimestamp` column, which the OMS
- * tables don't have, so it never fires here (docs/upstream-issues.md #61).
- */
-const staleOrders = (
-  sessionTable: InMemSessionDataTable,
-  { sourceTable, changes }: PreparedSessionSave,
-) => {
-  const stale: string[] = [];
-  for (const { action, key, cellUpdates, sourceRow } of changes) {
-    const sessionRow = sessionTable.getRowAtKey(key, false);
-    if (action === "addRow" || !sourceRow || !sessionRow) continue;
-    const changed = sourceTable.schema.columns.some(
-      ({ name }) =>
-        !(name in cellUpdates) &&
-        sessionRow[sessionTable.columnMap[name]] !==
-          sourceRow[sourceTable.columnMap[name]],
-    );
-    if (changed) stale.push(key);
-  }
-  return stale;
-};
+const isParentOrders = (table: DataTable) =>
+  table.tableDef.name === parentOrders.name;
 
 /**
  * Vuu RPC handler for every OMS table (and positionPrices): the order RPCs
- * plus a restricted edit session on parentOrders, where saving the session
- * turns edited quantity / price into amendOrder and deleted rows into
- * cancelOrder (see README "Blotter inline edit").
+ * plus an edit session on parentOrders, where saving the session turns
+ * edited quantity / price into amendOrder and deleted rows into cancelOrder
+ * (see README "Blotter inline edit").
+ *
+ * vuu-server's edit RPCs are secure by default: edits only reach a session
+ * table owned by the caller, rows hidden by the permission filter cannot be
+ * edited, deleted or copied, and a save fails with "stale update" when a
+ * source row changed after it was copied into the session. This class only
+ * adds the OMS rules: sessions on parentOrders only, no addRow, quantity and
+ * price editable, order validation, trading-execute to save.
+ *
+ * Stale check: every parentOrders column is compared (the vuu-server
+ * default). The columns only change on an order event (ack, fill, replace,
+ * cancel, reject), never on a timer, and every such event changes what an
+ * amend is based on (a fill moves cumQty / leavesQty, another amend bumps
+ * version), so getStaleColumns is deliberately not overridden.
  */
 export class OmsRpcHandler extends CreateSessionTableRpcHandler {
+  /** canSaveSession -> applySessionSave: applySessionSave has no ctx. */
+  readonly #saveUsers = new WeakMap<PreparedSessionSave, TradingUser>();
+
   constructor(
     tableContainer: TableContainer,
     readonly oms: OmsService,
@@ -78,73 +75,68 @@ export class OmsRpcHandler extends CreateSessionTableRpcHandler {
     rpcName: string,
     params: RpcParams,
   ): RpcResult | Promise<RpcResult> {
-    if (EDIT_SESSION_RPCS.has(rpcName)) {
-      const guard = this.#guardEditSession(rpcName, params);
-      if (guard) return guard;
+    if (
+      SESSION_RPCS.has(rpcName) &&
+      !isParentOrders(params.viewport.dataTable)
+    ) {
+      return error(`${rpcName}: only parentOrders supports edit sessions`);
+    }
+    if (rpcName === "addRow") {
+      return error("addRow: use createOrder to enter orders");
     }
     return super.processRpcRequest(rpcName, params);
   }
 
-  #guardEditSession(
-    rpcName: string,
-    { namedParams, viewport }: RpcParams,
-  ): RpcResult | undefined {
-    const table = viewport.dataTable;
-    if (table.tableDef.name !== parentOrders.name) {
-      return error(`${rpcName}: only parentOrders supports edit sessions`);
+  protected isEditableColumn(table: DataTable, column: string) {
+    return (
+      table instanceof InMemSessionDataTable &&
+      isParentOrders(table) &&
+      (EDITABLE_COLUMNS as readonly string[]).includes(column)
+    );
+  }
+
+  /** The amendOrder validation (lot size, tick, filled quantity, market price). */
+  protected validateCellEdit({ column, key, value }: CellEdit) {
+    const order = this.oms.engine.getOrder(key);
+    const instrument = order && this.oms.gateway.getInstrument(order.ric);
+    if (!order || !instrument) return undefined;
+    const invalid = validateAmend({ [column]: value }, instrument, {
+      ordType: order.ordType,
+      cumQty: order.state.cumQty,
+    });
+    return invalid ? `${invalid.reason}: ${invalid.text}` : undefined;
+  }
+
+  protected canSaveSession(
+    _viewport: Viewport,
+    prepared: PreparedSessionSave,
+    ctx: RequestContext,
+  ): CanSaveSessionResult {
+    const user = ctx.user as TradingUser;
+    if (!isParentOrders(prepared.sourceTable)) {
+      return "endEditSession: only parentOrders supports edit sessions";
     }
-    const isSession = table instanceof InMemSessionDataTable;
-    if (rpcName === "beginEditSession" || rpcName === "createSessionTable") {
-      return isSession
-        ? error(`${rpcName}: already a session table`)
-        : undefined;
+    if (!this.oms.accessFor(user).canExecute) {
+      return `${RejectReason.PermissionDenied}: ${user.name} may not trade`;
     }
-    // Everything else only ever touches the session copy, never parentOrders itself.
-    if (!isSession) return error(`${rpcName}: viewport is not an edit session`);
-    if (rpcName === "addRow") {
-      return error("addRow: use createOrder to enter orders");
-    }
-    if (rpcName === "editCell") {
-      const column = (namedParams as { column?: string }).column ?? "";
-      if (!EDITABLE_COLUMNS.has(column)) {
-        return error(`editCell: ${column} is not editable (quantity, price)`);
-      }
-    }
+    this.#saveUsers.set(prepared, user);
+    return true;
   }
 
   /**
    * Save = amend / cancel through the OMS. The source rows are only changed
-   * by the resulting execution reports. Stale rows (order changed since the
-   * session started) fail unless force is set, as in the default handler.
+   * by the resulting execution reports. Any OMS reject fails the save, so
+   * the session stays open (requests that were accepted are not undone).
    */
-  protected handleEndEditSession({
-    namedParams: { force, save },
-    viewport,
-    ctx,
-  }: RpcParams): RpcResult {
-    const sessionTable = viewport.dataTable;
-    if (!(sessionTable instanceof InMemSessionDataTable)) {
-      return error("endEditSession: viewport is not using a session table");
-    }
-    if (!save) {
-      this.tableContainer.removeSessionTable(sessionTable.name);
-      return { type: "SUCCESS_RESULT", data: undefined };
-    }
-    const prepared = this.prepareSessionSave(sessionTable, Boolean(force));
-    if ("type" in prepared) return prepared;
-    if (!force) {
-      const stale = staleOrders(sessionTable, prepared);
-      if (stale.length > 0) {
-        return error(
-          `stale update: ${stale.join(", ")} changed since the session began`,
-        );
-      }
-    }
-
+  protected applySessionSave(
+    sessionTable: InMemSessionDataTable,
+    prepared: PreparedSessionSave,
+  ): SessionSaveResult {
+    const user = this.#saveUsers.get(prepared);
+    if (!user) return error("endEditSession: save not authorised");
     const errors: string[] = [];
     const results: { orderId: string; action: string; status?: string }[] = [];
     for (const { action, key, cellUpdates } of prepared.changes) {
-      if (action === "addRow") continue;
       const isCancel = action === "deleteRow";
       const rpcName = isCancel ? RpcName.CancelOrder : RpcName.AmendOrder;
       const params: Record<string, unknown> = { orderId: key };
@@ -154,7 +146,7 @@ export class OmsRpcHandler extends CreateSessionTableRpcHandler {
         }
         if (Object.keys(params).length === 1) continue;
       }
-      const result = handleOmsRpc(this.oms, rpcName, params, ctx.user);
+      const result = handleOmsRpc(this.oms, rpcName, params, user);
       if (result.type === "ERROR_RESULT") {
         errors.push(`${key}: ${result.errorMessage}`);
       } else {
@@ -162,9 +154,8 @@ export class OmsRpcHandler extends CreateSessionTableRpcHandler {
         results.push({ orderId: key, action: rpcName, status: data?.status });
       }
     }
+    if (errors.length > 0) return error(errors.join("; "));
     this.tableContainer.removeSessionTable(sessionTable.name);
-    return errors.length > 0
-      ? error(errors.join("; "))
-      : { type: "SUCCESS_RESULT", data: { results } };
+    return { type: "SUCCESS_RESULT", data: { results } };
   }
 }

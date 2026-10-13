@@ -81,21 +81,25 @@ Errors to handle in the UI:
 
 ### Blotter inline edit (edit session)
 
-`parentOrders` supports the vuu edit-session RPCs (`beginEditSession` → `editCell` → `endEditSession`). The
-behaviour is restricted to trading actions:
+`parentOrders` supports the vuu edit-session RPCs (`beginEditSession` → `editCell` → `endEditSession`).
+vuu-server 4.0.0 supplies the secure defaults: direct `editCell` on the live viewport, key / system / unknown
+columns, rows hidden by the permission filter, other users' session viewports and sessions of sessions are all
+refused, and values are type-checked. `OmsRpcHandler` only adds the trading rules through the protected hooks:
 
-- Only the `quantity` and `price` columns are editable. `deleteRow` / `deleteSelectedRows` mean cancel. `addRow` is
-  refused (use `createOrder`).
-- Edit-session RPCs on any other table, or on the live `parentOrders` viewport rather than the session copy, are
-  refused. Without this guard, stock `editCell` would edit the source table directly.
-- `endEditSession {save: true}` turns each changed row into `amendOrder` and each deleted row into `cancelOrder`.
+- `isEditableColumn`: only `quantity` and `price`, only on a `parentOrders` session table. `deleteRow` /
+  `deleteSelectedRows` mean cancel. `addRow` is refused (use `createOrder`), and sessions can only be begun on
+  `parentOrders`.
+- `validateCellEdit`: `validateAmend` against the order and instrument, so `editCell` rejects a bad price or
+  quantity immediately (`INVALID_PRICE: ...`).
+- `canSaveSession`: the user must have trading-execute (`PERMISSION_DENIED: <user> may not trade`).
+- `applySessionSave`: each changed row becomes `amendOrder` and each deleted row `cancelOrder`, as the saving user.
   - It returns `{results: [{orderId, action, status}]}`, or one `ERROR_RESULT` that lists the per-order failures.
-  - Stale rows (the order changed since the session began) fail unless `force: true`, as in the default handler.
-    The OMS tables have no `vuuUpdatedTimestamp`, so the handler compares the session copy with the live row on
-    every non-edited column instead (docs/upstream-issues.md #61).
+    On failure vuu-server rolls back and keeps the session open; discard it with `endEditSession` (no save).
   - The live rows change only through execution reports.
-- This overrides `handleEndEditSession` rather than `applySessionSave`, because the base class ignores the
-  `applySessionSave` result (docs/upstream-issues.md #18).
+- Stale rows (the order changed since the session began) fail with `stale update` unless `force: true`, and each
+  stale row's `vuuMsg` is `stale:<orderId>:<columns>`. vuu-server compares every column of the snapshot taken at
+  session start. `getStaleColumns` is not overridden: `parentOrders` rows only change on order events (ack, fill,
+  replace, cancel, reject, expire, all material to an amend), and nothing ticks on a timer.
 
 ## Order state machine
 
@@ -253,4 +257,4 @@ Set in `application.conf` as `oms.<key>`, or with the env var `OMS_<UPPER_SNAKE>
 | config | 3 | Config |
 | engine | 22 | Lifecycle, partial fills, amend/cancel races, IOC/FOK/market, end of day, positions. Uses a real exchange-sim with a manual clock and scheduler. |
 | flow | 3 | Deterministic background flow |
-| OmsModule | 9 | Over WebSocket against a real `VuuServer` with EXCHANGE + OMS: RPC → fill → rows, the join, amend/cancel, rejects, permission filtering, the edit session. |
+| OmsModule | 14 | Over WebSocket against a real `VuuServer` with EXCHANGE + OMS: RPC → fill → rows, the join, amend/cancel, rejects, permission filtering, the edit session (amend / cancel, stale rows, edit validation, hidden rows and other sessions, strict mode). |

@@ -206,6 +206,7 @@ const TraderWorkspace = () => {
                   readOnly={!canTrade}
                   showLinkGroupSelector
                   style={content}
+                  useEditSession
                 />
               </View>
               <View id={VIEW_ID.fills} title="Fills">
