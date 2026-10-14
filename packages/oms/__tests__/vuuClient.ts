@@ -55,15 +55,24 @@ export class VuuClient {
       socket.addEventListener("open", () => resolve());
       socket.addEventListener("error", () => reject(Error("WebSocket failed")));
     });
-    const sessionId = new Promise<string>((resolve) => {
+    const sessionId = new Promise<string>((resolve, reject) => {
+      const onClose = ({ code, reason }: CloseEvent) =>
+        reject(Error(`login closed ${code}: ${reason}`));
       const listener = ({ data }: MessageEvent) => {
-        const message = JSON.parse(String(data)) as VuuServerMessage;
+        let message: VuuServerMessage;
+        try {
+          message = JSON.parse(String(data)) as VuuServerMessage;
+        } catch {
+          return;
+        }
         if (message.body.type === "LOGIN_SUCCESS") {
           socket.removeEventListener("message", listener);
+          socket.removeEventListener("close", onClose);
           resolve(message.sessionId ?? "");
         }
       };
       socket.addEventListener("message", listener);
+      socket.addEventListener("close", onClose);
     });
     socket.send(
       JSON.stringify({

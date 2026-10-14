@@ -71,8 +71,10 @@ scripts/              start-all, stack/ (config, Keycloak realm, static server),
   a `preinstall` guard fails fast with a clear message.
 
 All dependencies come from npm: the server side from [heswell/vuu-websocket](https://github.com/heswell/vuu-websocket)
-(`@heswell/vuu-server@^3.1.0`, `@heswell/vuu-portal@^2.0.0`, which brings `@heswell/service-utils`), the UI from
-`@vuu-ui/*@4.0.0-alpha.21` (pinned for every package by root `overrides`) and `@vuu-ui/portal-build`.
+(`@heswell/vuu-server@^4.1.0`, `@heswell/vuu-portal@^2.1.1`, which bring `@heswell/service-utils`), the UI from
+`@vuu-ui/*@4.0.0-alpha.21` and `@vuu-ui/portal-build`. The @heswell packages only peer `@vuu-ui/*`
+(`^4.0.0-alpha.20`), so every workspace that uses vuu-server lists the `@vuu-ui` packages it needs at alpha.21 and the
+install has one copy of each; there are no root `overrides`.
 
 ```sh
 bun install
@@ -82,7 +84,8 @@ The portal server is the stock vuu-portal: `bunx vuu-portal --config apps/portal
 (or `bun run --filter @heswell/trading-portal-config start`). The trading server is
 `bun apps/portal-config/src/start-trading.ts` (`application.trading.conf`). Both confs take `${?VUU_*}` env overrides
 (`VUU_HTTPS_PORT`, `VUU_WEBSOCKET_PORT`, `VUU_CORS_ALLOWED_ORIGIN`, `VUU_KEYCLOAK_URL`, ...); `start:all` sets them
-per process from the `TRADER_*` settings.
+per process from the `TRADER_*` settings. See [Sessions per user](docs/portal-integration.md#sessions-per-user) for
+`VUU_MAX_SESSIONS_PER_USER` / `VUU_SESSION_LIMIT_POLICY`.
 
 ## Other commands
 

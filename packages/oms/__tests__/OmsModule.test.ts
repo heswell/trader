@@ -1,11 +1,4 @@
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  describe,
-  expect,
-  test,
-} from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { resolve } from "node:path";
 import { createExchangeSimulator, ExchangeModule } from "@heswell/exchange-sim";
 import {
@@ -17,10 +10,6 @@ import {
 import {
   ConfigFactory,
   createVuuServerApplication,
-  type LogEntry,
-  resetLogging,
-  setLogLevel,
-  setLogSink,
   type VuuServer,
   type VuuServerApplication,
   VuuUserWithAuthorizations,
@@ -165,8 +154,6 @@ describe("OmsModule over the Vuu protocol", () => {
       ORDER_COLUMNS,
     );
   });
-
-  afterEach(() => resetLogging());
 
   afterAll(async () => {
     for (const client of clients) client.close();
@@ -713,21 +700,14 @@ describe("OmsModule over the Vuu protocol", () => {
       await alice.rpc(OMS_MODULE, session, "deleteRow", { key: bobsId }),
     ).toMatchObject({ errorMessage: expect.stringMatching(/not found/) });
 
-    // bob cannot drive alice's session viewport (vuu-server logs the refusal)
-    const logged: LogEntry[] = [];
-    setLogSink((entry) => logged.push(entry));
-    setLogLevel("error");
+    // bob cannot drive alice's session viewport
+    const notFound = { errorMessage: `viewport not found ${session}` };
     expect(
       await bob.rpc(OMS_MODULE, session, "deleteRow", { key: alicesId }),
-    ).toMatchObject({ type: "ERROR_RESULT" });
+    ).toMatchObject(notFound);
     expect(
       await bob.rpc(OMS_MODULE, session, "endEditSession", { save: true }),
-    ).toMatchObject({ type: "ERROR_RESULT" });
-    expect(
-      logged.filter(({ args }) =>
-        String(args[1]).includes("viewport not found"),
-      ),
-    ).toHaveLength(2);
+    ).toMatchObject(notFound);
 
     // no session of a session, no sessions on other OMS tables
     expect(
@@ -786,5 +766,24 @@ describe("OmsModule over the Vuu protocol", () => {
       "last",
     ]);
     await alice.row(vp, (r) => r.ric === AAPL && r.last === 170);
+  });
+
+  test("session limit: a user may hold five tabs; a sixth is refused (4003) until one closes", async () => {
+    expect(config.getNumber("vuu.server.maxSessionsPerUser")).toBe(5);
+    expect(config.getString("vuu.server.sessionLimitPolicy")).toBe(
+      "reject-new",
+    );
+    const tabs: VuuClient[] = [];
+    for (let i = 0; i < 5; i++) tabs.push(await login("tabby"));
+    await expect(login("tabby")).rejects.toThrow(/^login closed 4003: /);
+    for (const tab of tabs) {
+      const vp = await tab.createViewport(EXCHANGE_MODULE, "prices", ["ric"]);
+      await tab.row(vp, (r) => r.ric === AAPL);
+    }
+    tabs[0].close();
+    await Bun.sleep(100);
+    const sixth = await login("tabby");
+    const vp = await sixth.createViewport(EXCHANGE_MODULE, "prices", ["ric"]);
+    await sixth.row(vp, (r) => r.ric === AAPL);
   });
 });

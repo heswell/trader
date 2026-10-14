@@ -248,9 +248,15 @@ and the `@vuu-ui/vuu-icons` main entry (#52) still lack types; `PersistedStateAP
     modules: a subscribe ack arrives after the component unmounted. It looks harmless but is noisy.
 59. **The `PortalAppSwitcher` nav groups are collapsed by default** (state persisted as `nav/expanded`), so a new
     user sees only group headers. A default-expanded option would help a portal with few groups.
-60. **The `@vuu-ui/*` packages depend on exact alpha versions**, and `@heswell/vuu-data-engine-local` pins
+60. **The `@vuu-ui/*` packages depend on exact alpha versions**, and ~~`@heswell/vuu-data-engine-local` pins
     alpha.20, so bun installs two copies of `@vuu-ui/core` (two React contexts) unless the root `package.json`
-    `overrides` every `@vuu-ui/*` package.
+    `overrides` every `@vuu-ui/*` package.~~ *Resolved on the @heswell side: vuu-websocket#93; engine-local 2.1.0
+    and every other @heswell package peer `@vuu-ui/*` at `^4.0.0-alpha.20`, and the root `overrides` are gone.*
+    The finos side remains: the `@vuu-ui/*` packages still depend on (and `vuu-utils` peers `vuu-filter-parser` at)
+    exact sibling versions. That is consistent while everything is on alpha.21, but a mixed version in a future
+    upgrade would install duplicates again, so all `@vuu-ui/*` packages must be bumped together. The
+    `vuu-utils` ⇄ `vuu-filter-parser` peer cycle gives bun two store variants of `vuu-filter-parser` (same version;
+    also on main before this change).
 
 ## Found in the vuu-server 3.2.0 / 3.3.0 upgrade
 
@@ -289,37 +295,75 @@ and the `@vuu-ui/vuu-icons` main entry (#52) still lack types; `PersistedStateAP
 
 ## Found in the vuu-server 4.0.0 upgrade
 
-67. **The @heswell packages peer `@vuu-ui/*` at exactly `4.0.0-alpha.20`.** vuu-server 4.0.0, service-utils 1.2.0,
+67. ~~**The @heswell packages peer `@vuu-ui/*` at exactly `4.0.0-alpha.20`.**~~ vuu-server 4.0.0, service-utils 1.2.0,
     vuu-table, vuu-viewport 1.1.3 and vuu-portal 2.1.0 all peer `@vuu-ui/vuu-protocol-types` (and friends) at
     `4.0.0-alpha.20`; trader is on alpha.21. Without trader's root `overrides`, bun warns "incorrect peer dependency
     @vuu-ui/vuu-protocol-types@4.0.0-alpha.21" and npm fails with ERESOLVE. With the overrides there is a single
     alpha.21 copy and no warning. A range (`>=4.0.0-alpha.20 <5`) would avoid it. Related to 60.
-68. **`applySessionSave(sessionTable, prepared)` gets no `RequestContext`**, although `canSaveSession` does. An OMS
+    *Resolved: vuu-websocket#93; vuu-server 4.1.0, vuu-portal 2.1.1, vuu-table 1.0.2, vuu-viewport 1.1.4,
+    vuu-data-engine-local 2.1.0, service-utils 1.2.1.* They peer `@vuu-ui/*` at `^4.0.0-alpha.20` (vuu-server's
+    `vuu-utils` moved from a dependency to a peer), so every workspace that uses vuu-server or engine-local lists
+    `vuu-utils`, `vuu-data-types` and `vuu-protocol-types` directly at alpha.21. The root `overrides` are removed;
+    the lockfile has one alpha.21 copy of each `@vuu-ui/*` package, bun reports no peer warnings and an npm
+    install of the same set has no ERESOLVE. vuu-server's `@types/bun >=1.3.0` peer is optional
+    (`peerDependenciesMeta`), so browser-only packages and npm consumers are unaffected.
+68. ~~**`applySessionSave(sessionTable, prepared)` gets no `RequestContext`**~~, although `canSaveSession` does. An OMS
     must send each amend / cancel as the saving user, so `OmsRpcHandler` remembers the user from `canSaveSession` in
     a `WeakMap` keyed by `prepared`. That only works because its `canSaveSession` is synchronous (an async result
     makes the base class prepare the save again). Passing `ctx` to `applySessionSave` would remove it.
-69. **A cross-session viewport id is refused as an internal error.** `getViewportForSession` throws, so
+    *Resolved: vuu-websocket#94; vuu-server 4.1.0.* `prepareSessionSave` and `applySessionSave` receive the
+    `RequestContext`; `OmsRpcHandler.applySessionSave` takes the user from `ctx` and the `WeakMap` is gone.
+69. ~~**A cross-session viewport id is refused as an internal error.**~~ `getViewportForSession` throws, so
     `CoreServerApiHandler` logs the refusal at `error` with a stack trace and the client gets
     `Failed to process request <id>`. A refused request is a client error; an `ERROR_RESULT` such as
     "viewport not found" without the stack would keep server logs clean. The OMS test captures it with `setLogSink`.
+    *Resolved: vuu-websocket#94; vuu-server 4.1.0.* Expected refusals log at `warn` without a stack and the client
+    gets `viewport not found <id>`; the OMS test asserts that result and no longer captures the log.
 70. **`VuuDataSource.beginEditSession` drops the `connectionId`** (`@vuu-ui/vuu-data-remote` 4.0.0-alpha.21). It
     builds the session data source with `new VuuDataSource({...this.config, table, viewport})`, so it uses the base
     class with the default `"portal"` connection rather than the source's connection-bound subclass
     (`createSessionDataSource` passes `connectionId`). Under the portal, the session table's `GET_TABLE_META` /
-    `CREATE_VP` went to the portal server instead of trading (and crashed it, see 71). `openOrderEditSession`
+    `CREATE_VP` went to the portal server instead of trading (and, before vuu-server 4.1.0, crashed it; see 71). `openOrderEditSession`
     rebuilds the session with `source.constructor` and ends it with the `endEditSession` RPC: the rebuilt instance
     is not linked to its source, so its own `endEditSession` would send a resume for the removed viewport.
-71. **vuu-server exits on a request for an unknown table.** `processGetTableMetaRequest` and
+71. ~~**vuu-server exits on a request for an unknown table.**~~ `processGetTableMetaRequest` and
     `processCreateViewPortRequest` call `TableContainer.getTable`, which throws `[TableContainer] no table <name>`;
     the throw is not caught, so any client can stop the server with one message (seen with 4.0.0 in the e2e run
     via 70). `ViewportContainer.create` throws `[ViewportContainer] no table` the same way for another session's
     session table. Root cause: the message handler does `try { return this.handleViewServerMessage(...) }`
     without `await`, so a rejection from the async handler escapes the `catch` as an unhandled rejection. Awaiting
     it (and answering with an `ERROR_RESULT` / `TABLE_NOT_FOUND`) would fix all of these. No trader workaround
-    beyond fixing 70.
-72. **A second login silently evicts the user's first session.** `ClientSessionContainer` defaults to
+    beyond fixing 70. *Resolved: vuu-websocket#94; vuu-server 4.1.0.* A failing request answers with
+    `CREATE_VP_REJECT`, `ERROR_RESULT`, `VIEW_PORT_MENU_REJ`, `*_REJECT` or `ERROR` and keeps the channel open; an
+    `unhandledRejection` guard is on by default (`vuu.server.unhandledRejectionGuard=false` turns it off). Trader
+    had no guards of its own to remove.
+72. ~~**A second login silently evicts the user's first session.**~~ `ClientSessionContainer` defaults to
     `maxSessionsPerUser = 1` (not settable from conf). Logging in again drops the oldest session from the
     container without closing its channel or removing its session tables, so the first tab only learns from
     "Invalid session" on its next request. It then reconnects and re-creates its session-table viewport, which
     hits 71 and stops the server. Closing the evicted channel (and its session tables), and a
-    `vuu.server.maxSessionsPerUser` setting, would fix it. Trader users should use one tab per user for now.
+    `vuu.server.maxSessionsPerUser` setting, would fix it. ~~Trader users should use one tab per user for now.~~
+    *Resolved: vuu-websocket#94; vuu-server 4.1.0.* An evicted session is closed with code 4001
+    "session evicted: user logged in again" and its viewports and session tables are removed.
+    `vuu.server.maxSessionsPerUser` (default 1) and `vuu.server.sessionLimitPolicy` (`evict-oldest`, or
+    `reject-new`, which closes the new channel with 4003) are configurable. Trader sets 5 / `reject-new` on both
+    servers (env `VUU_MAX_SESSIONS_PER_USER` / `VUU_SESSION_LIMIT_POLICY`), not `evict-oldest`, because of 73;
+    see [Sessions per user](portal-integration.md#sessions-per-user).
+
+## Found in the vuu-server 4.1.0 upgrade
+
+73. **vuu-ui ignores the WebSocket close code, so `evict-oldest` evicts every tab in turn.** (finos `@vuu-ui/core`
+    `VuuConnectionRegistry`, `@vuu-ui/vuu-data-remote` `WebSocketConnection`, 4.0.0-alpha.21.) The registry
+    reconnects after `retryIntervals` (1 s, 2 s, …) on any `disconnected` or `failed` status, and `onclose` drops
+    the code and reason. An evicted tab (`4001`) therefore logs in again a second later and evicts the user's
+    next oldest session. With more tabs than `maxSessionsPerUser` this goes round the tabs forever: each one is
+    disconnected, loses its viewports and shows only trader's generic "Disconnected from the trading server"
+    banner (one tab also logs "Viewport server id not found"). Seen with 6 and 7 tabs against a limit of 5.
+    Not reconnecting on `4001`, `4003` or `4004`, and telling the user why (e.g. "signed in from another tab"),
+    would fix it. *Workaround:* trader uses `sessionLimitPolicy="reject-new"`.
+74. **A login refused at the session limit leaves a blank page.** (finos `@vuu-ui`, portal shell.) Under
+    `reject-new` the extra tab's portal connection is closed with `4003` and a text frame
+    `maximum sessions (N) reached for user X`, which `isLoginErrorMessage` / `InvalidLoginMessages` do not
+    recognise. The shell renders nothing (no banner or message) and never retries, even after other tabs close.
+    Showing the reason, and retrying or offering a retry, would fix it. *Workaround:* reload the tab after closing
+    another; trader allows 5 sessions per user so this is rare.
