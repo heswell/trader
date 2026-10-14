@@ -16,6 +16,8 @@ export interface InstrumentStatic {
   ric: string;
   currency: string;
   exchange: string;
+  /** GICS sector (instruments.sector), when known. */
+  sector?: string;
   tickSize: number;
   tickBands?: string;
   lotSize: number;

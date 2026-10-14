@@ -1,6 +1,7 @@
 import type { Trade } from "@heswell/hft-limit-order-book";
 import { TimeInForce as BookTif } from "@heswell/hft-limit-order-book";
 import {
+  acceptsOrders,
   ExecType,
   Liquidity,
   OrdStatus,
@@ -132,6 +133,30 @@ export class SimExchangeGateway implements ExchangeGateway, FillSink {
     }
   }
 
+  /**
+   * Market close: expire every live DAY order (optionally only on `ric`),
+   * removing it from the book. GTC orders keep resting. Returns the
+   * exchange order ids expired.
+   */
+  expireDayOrders(ric?: string, text = "DAY order expired at market close") {
+    const expired: string[] = [];
+    this.#hold++;
+    try {
+      for (const [exchangeOrderId, state] of this.#orders) {
+        const { report, book } = state;
+        if (!state.live || !book) continue;
+        if (report.timeInForce !== TimeInForce.Day) continue;
+        if (ric !== undefined && report.ric !== ric) continue;
+        book.cancel(exchangeOrderId);
+        this.#expire(state, undefined, text);
+        expired.push(exchangeOrderId);
+      }
+    } finally {
+      this.#release();
+    }
+    return expired;
+  }
+
   // ---------------------------------------------------------------- requests
 
   #submit(exchangeOrderId: string, order: GatewayNewOrder) {
@@ -203,6 +228,17 @@ export class SimExchangeGateway implements ExchangeGateway, FillSink {
     if (invalid) return rejectNew(invalid.reason, invalid.text);
     if (!book) {
       return rejectNew(RejectReason.MarketClosed, `${order.ric} is closed`);
+    }
+    // No auction: a MARKET order outside continuous trading has nothing to
+    // uncross against, so only LIMIT orders are accepted in PRE_OPEN.
+    if (
+      order.ordType === OrdType.Market &&
+      book.phase !== TradingPhase.Continuous
+    ) {
+      return rejectNew(
+        RejectReason.UnsupportedOrdType,
+        `MARKET orders are only accepted in continuous trading (market is ${book.phase})`,
+      );
     }
     if (
       order.ordType === OrdType.Limit &&
@@ -297,6 +333,9 @@ export class SimExchangeGateway implements ExchangeGateway, FillSink {
     }
     if (book.isHalted) {
       return reject(RejectReason.InstrumentHalted, `${report.ric} is halted`);
+    }
+    if (!acceptsOrders(book.phase)) {
+      return reject(RejectReason.MarketClosed, `market is ${book.phase}`);
     }
     const invalid = validateAmend(amend, book.instrument, {
       ordType: report.ordType,

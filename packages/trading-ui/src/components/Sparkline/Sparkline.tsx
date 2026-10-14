@@ -97,12 +97,6 @@ export interface SparklineCellOptions {
   length: number;
   /** 0 = a sample per change of the value; > 0 = time buckets of this many ms. */
   bucketMs: number;
-  /**
-   * Skip zero values (default true): a left-joined row has 0 until its first
-   * price arrives, which would flatten the chart. Turn off for series that
-   * are legitimately 0, e.g. `change`.
-   */
-  ignoreZero: boolean;
 }
 
 export const DEFAULT_SPARKLINE_LENGTH = 40;
@@ -120,7 +114,6 @@ export const sparklineOptions = (
       : DEFAULT_SPARKLINE_LENGTH,
   bucketMs:
     typeof componentProps?.bucketMs === "number" ? componentProps.bucketMs : 0,
-  ignoreZero: componentProps?.ignoreZero !== false,
 });
 
 const rendererComponentProps = (column: RuntimeColumnDescriptor) => {
@@ -167,7 +160,7 @@ export const SparklineCell = memo(
       css: sparklineCss,
       window: targetWindow,
     });
-    const { valueColumn, length, bucketMs, ignoreZero } = sparklineOptions(
+    const { valueColumn, length, bucketMs } = sparklineOptions(
       rendererComponentProps(column),
     );
     const rowKey = `${column.name}|${valueColumn}|${dataRow.key}`;
@@ -193,12 +186,13 @@ export const SparklineCell = memo(
     // biome-ignore lint/correctness/useExhaustiveDependencies: rowKey: sample the new row's current value after a recycle
     useEffect(() => {
       const buffer = bufferRef.current;
-      if (buffer && typeof value === "number" && !(ignoreZero && value === 0)) {
+      // null (no trade yet) is not a sample
+      if (buffer && typeof value === "number") {
         if (recordSample(buffer, value, { bucketMs })) {
           draw(svgRef.current, lineRef.current, buffer);
         }
       }
-    }, [value, bucketMs, ignoreZero, rowKey]);
+    }, [value, bucketMs, rowKey]);
 
     return (
       <div className="tradingSparklineCell">

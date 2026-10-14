@@ -6,10 +6,10 @@ import {
   tickScheduleOf,
 } from "@heswell/trading-schemas";
 import {
-  createTradingLocalServer,
   createTradingTestData,
   setCurrentUser,
 } from "@heswell/trading-test-data";
+import { createTradingLocalServer } from "@heswell/trading-test-data/react";
 import {
   act,
   cleanup,

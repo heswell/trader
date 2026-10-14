@@ -22,7 +22,8 @@ vuu-server. Local data therefore matches the server:
 ## Use
 
 ```ts
-import { createTradingLocalServer, setCurrentUser } from "@heswell/trading-test-data";
+import { setCurrentUser } from "@heswell/trading-test-data";
+import { createTradingLocalServer } from "@heswell/trading-test-data/react";
 
 setCurrentUser({ name: "admin", authorizations: [] }); // admin sees every account
 const localServer = createTradingLocalServer(); // shared singleton, ticking
@@ -50,7 +51,7 @@ td.dispose();                    // in afterEach
 | `createTradingTestData(options)` | Returns `{ exchange, oms, engine, sim, omsService, schemas, clock, running, start, stop, advance, rpc, dispose }`. |
 | `options` | `seed`; `exchange` (exchange-sim config, default `activeInstruments: 50`); `oms` (OMS config); `manualClock`; `autoStart` (`"on-subscribe"` by default, or `true`/`false`). |
 | `getTradingTestData()` / `resetTradingTestData()` | Process-wide singleton. |
-| `createTradingLocalServer(testData?, connectionId = "trading")` | A `LocalVuuServer` for `@vuu-ui/core`, or for `TradingDataProvider mode="local"`. |
+| `createTradingLocalServer(testData?, connectionId = "trading")` | From `@heswell/trading-test-data/react`. A `LocalVuuServer` for `@vuu-ui/core`, or for `TradingDataProvider mode="local"`. |
 | `setCurrentUser` / `getCurrentUser` | engine-local user; drives OMS permissions. Seeded owners: alice (ACC-US-01), bob, carol, dave, erin. |
 | `ManualClock`, `visualLinksFor`, `TradingLocalModule` | Lower-level building blocks. |
 
@@ -60,4 +61,6 @@ Notes:
   `dispose()` releases its tables, timers and modules.
 - No bundler shims are needed: the browser bundle runs the real engines as-is.
 - This is a development and test dependency. Do not import it from `@heswell/trading-ui` sources or MF features.
-- Tests: `bun run test:ui` (happy-dom preload).
+- The main entry has no React or DOM dependency (it runs in plain Bun/Node); only `/react` (`createTradingLocalServer`)
+  imports `@heswell/vuu-data-engine-local/react` / `@vuu-ui/core`, which need a DOM.
+- Tests: `bun run test:server` (plain Bun, no DOM).

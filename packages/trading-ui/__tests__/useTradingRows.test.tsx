@@ -1,9 +1,9 @@
 import { afterAll, afterEach, describe, expect, test } from "bun:test";
 import {
-  createTradingLocalServer,
   createTradingTestData,
   setCurrentUser,
 } from "@heswell/trading-test-data";
+import { createTradingLocalServer } from "@heswell/trading-test-data/react";
 import { act, cleanup, render, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
 import { TradingDataProvider, type TradingRow, useTradingRows } from "../src";

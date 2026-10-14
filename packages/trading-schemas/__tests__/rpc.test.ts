@@ -115,6 +115,13 @@ describe("validateRpcParams", () => {
     expect(
       validateRpcParams(RpcName.SetBotRate, { bot: "X", rate: 50 }).ok,
     ).toBe(false);
+    expect(
+      validateRpcParams(RpcName.SetMarketPhase, { phase: "CLOSED" }),
+    ).toEqual({ ok: true, value: { phase: "CLOSED" } });
+    expect(
+      validateRpcParams(RpcName.SetMarketPhase, { phase: "HALTED" }).ok,
+    ).toBe(false);
+    expect(validateRpcParams(RpcName.SetMarketPhase, {}).ok).toBe(false);
   });
 
   test("unknown rpc / non-object", () => {

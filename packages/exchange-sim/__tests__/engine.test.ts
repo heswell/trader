@@ -1,3 +1,4 @@
+import { Sector } from "../src/reference/sectors";
 import { describe, expect, test } from "bun:test";
 import { isOnTick, tickScheduleOf } from "@heswell/trading-schemas";
 import {
@@ -42,6 +43,16 @@ describe("Random", () => {
 });
 
 describe("instrument universe", () => {
+  test("every instrument has a GICS sector", () => {
+    const sectors = new Set<string>(Object.values(Sector));
+    for (const { ric, sector } of ALL_INSTRUMENTS) {
+      expect({ ric, known: sectors.has(sector) }).toEqual({ ric, known: true });
+    }
+    expect(new Set(ALL_INSTRUMENTS.map((i) => i.sector)).size).toBe(
+      sectors.size,
+    );
+  });
+
   test("is self-contained, unique and tick-consistent", () => {
     expect(ALL_INSTRUMENTS.length).toBeGreaterThanOrEqual(200);
     const rics = new Set(ALL_INSTRUMENTS.map(({ ric }) => ric));

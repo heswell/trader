@@ -1,8 +1,5 @@
-import {
-  createTradingLocalServer,
-  getTradingTestData,
-  setCurrentUser,
-} from "@heswell/trading-test-data";
+import { getTradingTestData, setCurrentUser } from "@heswell/trading-test-data";
+import { createTradingLocalServer } from "@heswell/trading-test-data/react";
 import { connectToVuuServer } from "@heswell/trading-ui";
 import { useCallback, useMemo, useState } from "react";
 

@@ -1,3 +1,5 @@
+import { validateSessionConfig } from "./engine/TradingSession";
+
 /**
  * Exchange simulator configuration. Every knob can be set in application.conf
  * as `exchangeSim.<key>` or with an `EXCHANGE_SIM_<KEY>` environment variable
@@ -39,6 +41,21 @@ export interface ExchangeSimConfig {
   takerRate: number;
   /** Target notional (USD) of a typical order / quote level. */
   baseNotionalUsd: number;
+  /**
+   * Session open, "HH:MM" UTC. Set together with sessionClose; both empty
+   * (and sessionDayMs 0) = no schedule, the market is always CONTINUOUS.
+   */
+  sessionOpen: string;
+  /** Session close, "HH:MM" UTC (earlier than sessionOpen = overnight session). */
+  sessionClose: string;
+  /** Minutes of PRE_OPEN (order entry, no bots) before sessionOpen. */
+  preOpenMinutes: number;
+  /**
+   * 0 = real 24h day. > 0 = fast simulated day: the 24h schedule is
+   * compressed into this many ms of clock time; open/close default to
+   * 08:00/16:30 when unset.
+   */
+  sessionDayMs: number;
 }
 
 export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
@@ -59,6 +76,10 @@ export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
   mmRate: 10,
   takerRate: 8,
   baseNotionalUsd: 20_000,
+  sessionOpen: "",
+  sessionClose: "",
+  preOpenMinutes: 0,
+  sessionDayMs: 0,
 });
 
 /** Structural subset of service-utils Config. */
@@ -128,5 +149,6 @@ export const validateConfig = (config: ExchangeSimConfig) => {
   ] as const) {
     if (!(config[key] >= 0)) throw Error(`exchangeSim.${key} must be >= 0`);
   }
+  validateSessionConfig(config);
   return config;
 };

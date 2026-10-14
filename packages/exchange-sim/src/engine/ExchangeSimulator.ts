@@ -26,6 +26,7 @@ import { Random } from "../util/random";
 import { MarketMaker } from "./bots/MarketMaker";
 import { NoiseTaker } from "./bots/NoiseTaker";
 import { fromBookSide, InstrumentBook } from "./InstrumentBook";
+import { type SessionPhase, TradingSession } from "./TradingSession";
 
 export interface SimulatedInstrument {
   readonly book: InstrumentBook;
@@ -57,6 +58,17 @@ export class ExchangeAdminError extends Error {
 
 export type TapeListener = (trade: TapeTrade) => void;
 
+export interface SessionStatus {
+  /** Current market-wide phase (halted books keep HALTED on top of this). */
+  phase: SessionPhase;
+  /** Phase after the next scheduled change (undefined = no change scheduled). */
+  nextPhase?: SessionPhase;
+  /** Clock time of the next scheduled change. */
+  nextChangeAt?: number;
+  /** True while a setMarketPhase override is in force. */
+  forced: boolean;
+}
+
 /**
  * The exchange: one InstrumentBook per active instrument, the bots that
  * trade on them, the OMS gateway and (once tables are attached) the market
@@ -68,6 +80,7 @@ export class ExchangeSimulator {
   readonly clock: Clock;
   readonly universe: readonly InstrumentDef[];
   readonly gateway: SimExchangeGateway;
+  readonly session: TradingSession;
   readonly #listed = new Map<string, InstrumentDef>();
   readonly #simulated = new Map<string, SimulatedInstrument>();
   readonly #books: InstrumentBook[] = [];
@@ -78,6 +91,9 @@ export class ExchangeSimulator {
   #tradeSeq = 0;
   #stepTimer: ReturnType<typeof setInterval> | undefined;
   #flushTimer: ReturnType<typeof setInterval> | undefined;
+  #marketPhase: SessionPhase = TradingPhase.Continuous;
+  /** setMarketPhase override, in force until `until` (undefined = indefinitely). */
+  #forced: { phase: SessionPhase; until: number | undefined } | undefined;
   /** Book events deferred because a step hit maxOpsPerStep. */
   deferredSteps = 0;
 
@@ -110,6 +126,8 @@ export class ExchangeSimulator {
       getInstrument: (ric) => this.#listed.get(ric),
       getBook: (ric) => this.#simulated.get(ric)?.book,
     });
+    this.session = new TradingSession(this.config);
+    this.updateSession(clock());
   }
 
   #addInstrument(instrument: InstrumentDef, rng: Random) {
@@ -250,11 +268,73 @@ export class ExchangeSimulator {
     return publisher;
   }
 
+  // ---------------------------------------------------------------- session
+
+  /** Market-wide phase from the session schedule (or setMarketPhase). */
+  get marketPhase(): SessionPhase {
+    return this.#marketPhase;
+  }
+
+  sessionStatus(now = this.clock()): SessionStatus {
+    const forced = this.#forced;
+    const nextChangeAt = forced ? forced.until : this.session.nextChangeAt(now);
+    return {
+      phase: this.#marketPhase,
+      nextPhase:
+        nextChangeAt === undefined
+          ? undefined
+          : this.session.phaseAt(nextChangeAt),
+      nextChangeAt,
+      forced: forced !== undefined,
+    };
+  }
+
+  /**
+   * Apply the session schedule at `now` (called by step()). Returns the
+   * market phase.
+   */
+  updateSession(now = this.clock()) {
+    const forced = this.#forced;
+    if (forced && forced.until !== undefined && now >= forced.until) {
+      this.#forced = undefined;
+    }
+    const phase = this.#forced?.phase ?? this.session.phaseAt(now);
+    if (phase !== this.#marketPhase) this.#applyMarketPhase(phase);
+    return phase;
+  }
+
+  /**
+   * Force the market-wide phase now, until the next scheduled phase change
+   * (indefinitely when there is no schedule). CLOSED expires DAY orders.
+   */
+  setMarketPhase(phase: SessionPhase, now = this.clock()): string[] {
+    this.#forced = { phase, until: this.session.nextChangeAt(now) };
+    this.updateSession(now);
+    return this.#books.map((book) => book.ric);
+  }
+
+  #applyMarketPhase(phase: SessionPhase) {
+    this.#marketPhase = phase;
+    for (const book of this.#books) {
+      if (book.phase === TradingPhase.Halted) continue;
+      book.phase = phase;
+      book.dirty = true;
+    }
+    if (phase === TradingPhase.Closed) {
+      for (const sim of this.#simulated.values()) {
+        for (const mm of sim.marketMakers) mm.pull();
+        sim.taker.pull();
+      }
+      this.gateway.expireDayOrders();
+    }
+  }
+
   // ---------------------------------------------------------------- time
 
-  /** Advance prices and bots to `now`. */
+  /** Advance the session, prices and bots to `now`. */
   step(now = this.clock()) {
     const { config } = this;
+    this.updateSession(now);
     const elapsed =
       this.#lastStep === undefined ? config.botStepMs : now - this.#lastStep;
     this.#lastStep = now;
@@ -343,7 +423,7 @@ export class ExchangeSimulator {
         "resume via auction is not supported yet",
       );
     }
-    book.phase = TradingPhase.Continuous;
+    book.phase = this.#marketPhase;
     book.haltReason = "";
     book.dirty = true;
     return [book.ric];

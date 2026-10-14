@@ -37,6 +37,10 @@ const invoke = (
       const p = params as RpcRequestParams<"setBotRate">;
       return sim.setBotRate(p.ric, p.bot, p.rate);
     }
+    case RpcName.SetMarketPhase: {
+      const p = params as RpcRequestParams<"setMarketPhase">;
+      return sim.setMarketPhase(p.phase);
+    }
   }
 };
 

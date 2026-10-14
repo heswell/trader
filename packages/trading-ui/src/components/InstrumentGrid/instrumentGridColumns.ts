@@ -175,7 +175,6 @@ export const instrumentGridColumn = (
               valueColumn: sparkline?.valueColumn ?? "last",
               length: sparkline?.length ?? 40,
               bucketMs: sparkline?.bucketMs ?? 0,
-              ignoreZero: sparkline?.ignoreZero ?? true,
             },
           },
         },

@@ -8,7 +8,7 @@ GBM reference price drives them. The results are published to the `EXCHANGE` mod
 ```
 src/
   reference/      instrument universe (336 listings, 9 venues, tick bands, lot sizes, ref prices)
-  engine/         ExchangeSimulator, InstrumentBook, PriceModel, bots/{MarketMaker,NoiseTaker}
+  engine/         ExchangeSimulator, InstrumentBook, PriceModel, TradingSession, bots/{MarketMaker,NoiseTaker}
   publish/        MarketDataPublisher (prices / depth deltas / trades ring buffer), TradeRingBuffer
   gateway/        SimExchangeGateway: in-process order entry + execution reports
   modules/exchange ExchangeModule (Vuu module) and ExchangeAdminService (admin RPCs)
@@ -63,6 +63,23 @@ nothing visible changed.
   is reflected inside the static band refPrice ±`priceBandPct`, and published prices are on the tick grid.
 - **Phases.** `CONTINUOUS`, `HALTED` (admin), and `CLOSED` for instruments without a book. A halted
   book rejects new orders and amends but accepts cancels; bots pause.
+- **Trading session.** A market-wide schedule (`TradingSession`) drives every book through
+  `CLOSED` → `PRE_OPEN` → `CONTINUOUS` → `CLOSED` each day. It is evaluated at the start of every
+  `step(now)` (so a `ManualClock` drives it in tests and in-browser test data), and the phase is
+  published per instrument on `prices.phase`. By default no session is configured and the market is
+  always `CONTINUOUS`. With a schedule:
+  - `PRE_OPEN` (`preOpenMinutes` before `sessionOpen`): bots are idle; LIMIT DAY/GTC orders,
+    amends and cancels are accepted. IOC/FOK are rejected (`UNSUPPORTED_TIF`) and MARKET orders are
+    rejected (`UNSUPPORTED_ORD_TYPE`) because there is no auction. There is no auction uncross
+    either: crossing limit orders entered in `PRE_OPEN` match immediately (a simplification).
+  - `CONTINUOUS` (`sessionOpen` to `sessionClose`): normal trading.
+  - `CLOSED`: at the transition the bots pull all their quotes and every live DAY order is
+    `EXPIRED` ("DAY order expired at market close"); GTC orders keep resting. New orders and
+    amends are rejected with `MARKET_CLOSED`; cancels are still accepted.
+  - A `HALTED` book stays halted across session changes (its DAY orders still expire at the
+    close); `resumeInstrument` returns it to the current market phase.
+  - `sim.marketPhase` and `sim.sessionStatus()` (`{phase, nextPhase, nextChangeAt, forced}`) expose
+    the state; the `setMarketPhase` admin RPC overrides it.
 - **Market makers.** There are `mmPerInstrument` MMs (accounts `MM1..`, owner `bot:mm`) per instrument.
   Each quotes `mmLevels` per side on a tick grid around fair value, with a half spread of about 2–6 bps,
   level spacing of 1–3 bps, and inventory skew. They requote when fair value moves, by cancel/replace of
@@ -99,8 +116,17 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | `mmRate` | 10 | MM discretionary churn events/s per instrument (0 = MMs paused). |
 | `takerRate` | 8 | Taker orders/s per instrument (0 = off). |
 | `baseNotionalUsd` | 20000 | Typical order / quote notional. |
+| `sessionOpen` | `""` | Session open, `HH:MM` UTC (`EXCHANGE_SIM_SESSION_OPEN`). Set with `sessionClose`; both empty = always open. |
+| `sessionClose` | `""` | Session close, `HH:MM` UTC (`EXCHANGE_SIM_SESSION_CLOSE`). Earlier than `sessionOpen` = overnight session. |
+| `preOpenMinutes` | 0 | Minutes of `PRE_OPEN` before the open (`EXCHANGE_SIM_PRE_OPEN_MINUTES`). |
+| `sessionDayMs` | 0 | Fast simulated day (`EXCHANGE_SIM_SESSION_DAY_MS`): the 24h schedule is compressed into this many ms of clock time (aligned to multiples of it since the epoch); open/close default to 08:00/16:30 when unset. 0 = real 24h day. |
 
 Book events/s scale roughly linearly with `activeInstruments`, `takerRate` and `mmRate`.
+
+Session examples: `EXCHANGE_SIM_SESSION_OPEN=08:00 EXCHANGE_SIM_SESSION_CLOSE=16:30
+EXCHANGE_SIM_PRE_OPEN_MINUTES=30` for a real-time day, or `EXCHANGE_SIM_SESSION_DAY_MS=120000` for a
+2-minute simulated day (08:00–16:30 scaled, i.e. ~42s open). The dev / e2e stacks configure no
+session, so they are always open.
 
 ## Admin RPCs
 
@@ -113,8 +139,9 @@ with `validateRpcParams`. Results follow the trading-schemas contract: `rpcSucce
 | --- | --- | --- |
 | `setVolatility` | `{ric?, volatility}` | Omit `ric` to apply to all books. |
 | `haltInstrument` | `{ric, reason?}` | Sets phase to `HALTED`. |
-| `resumeInstrument` | `{ric, auction?}` | Returns to `CONTINUOUS`; `auction: true` returns `INVALID_REQUEST` (auctions not implemented). |
+| `resumeInstrument` | `{ric, auction?}` | Returns to the current market phase (`CONTINUOUS` unless the session is closed / pre-open); `auction: true` returns `INVALID_REQUEST` (auctions not implemented). |
 | `setBotRate` | `{ric?, bot: MARKET_MAKER\|TAKER\|ALL, rate}` | Rate per instrument; 0 pauses. |
+| `setMarketPhase` | `{phase: PRE_OPEN\|CONTINUOUS\|CLOSED}` | Forces the market-wide phase now (same transition logic, so `CLOSED` expires DAY orders) until the next scheduled change, or indefinitely when no session is configured. Halted books stay halted. Returns every simulated ric. |
 
 Unknown or unsimulated rics give `UNKNOWN_INSTRUMENT`.
 
@@ -134,6 +161,7 @@ const exchangeOrderId = sim.gateway.submit({
 });
 sim.gateway.amend(exchangeOrderId, { quantity: 200, price: 190.2, clOrdId: "C1-1" });
 sim.gateway.cancel(exchangeOrderId, { clOrdId: "C1-2" });
+sim.gateway.expireDayOrders(ric?);       // what the session close does: EXPIRE live DAY orders
 
 sim.gateway.getTopOfBook("AAPL.OQ");     // {bid, bidSize, ask, askSize, last, phase, seq}
 sim.gateway.getOrder(exchangeOrderId);   // last ExecutionReport state
@@ -154,13 +182,14 @@ How execution reports are delivered:
   - `TRADE` → `PARTIALLY_FILLED` or `FILLED`, with `lastQty`, `lastPx`, `cumQty`, `leavesQty` and `avgPx`.
   - `REPLACED`: an amend was applied.
   - `CANCELLED`.
-  - `EXPIRED`: an IOC or market remainder (`rejectReason` `NO_LIQUIDITY` for market orders), or an FOK that could not fill (`FOK_NOT_FILLABLE`).
+  - `EXPIRED`: an IOC or market remainder (`rejectReason` `NO_LIQUIDITY` for market orders), an FOK that could not fill (`FOK_NOT_FILLABLE`), or a DAY order at the session close (text `DAY order expired at market close`, no `rejectReason`).
   - `REJECTED` with a `rejectReason`.
 - **New-order rejects** (`rejectReason`): `INVALID_REQUEST` covers tick, lot, qty, price/ordType
   mismatch and similar. The others are `DUPLICATE_CLORDID`, `UNKNOWN_INSTRUMENT`, `MARKET_CLOSED`,
-  `INSTRUMENT_HALTED` and `PRICE_OUTSIDE_COLLAR`.
+  `INSTRUMENT_HALTED`, `PRICE_OUTSIDE_COLLAR`, `UNSUPPORTED_TIF` (IOC/FOK outside continuous) and
+  `UNSUPPORTED_ORD_TYPE` (MARKET outside continuous).
 - **Amend or cancel rejects.** If the order is unknown or already done, or the amend is invalid
-  (including halted books), you get a `REJECTED` report with `responseTo` `AMEND` or `CANCEL`. The
+  (including halted books, `INSTRUMENT_HALTED`, and a closed market, `MARKET_CLOSED`), you get a `REJECTED` report with `responseTo` `AMEND` or `CANCEL`. The
   order keeps its current `ordStatus` and is not changed.
 - **Amends.** An amend may change the price and/or the total quantity, which must be ≥ `cumQty`. An
   amend down to `cumQty` reports `REPLACED` with status `FILLED`. An amend that crosses the book

@@ -14,9 +14,15 @@ export {
   ExchangeAdminError,
   ExchangeSimulator,
   type ExchangeSimulatorOptions,
+  type SessionStatus,
   type SimulatedInstrument,
   type TapeListener,
 } from "./engine/ExchangeSimulator";
+export {
+  type SessionPhase,
+  TradingSession,
+  type TradingSessionConfig,
+} from "./engine/TradingSession";
 export { InstrumentBook } from "./engine/InstrumentBook";
 export { MM_OWNER } from "./engine/bots/MarketMaker";
 export { TAKER_OWNER } from "./engine/bots/NoiseTaker";

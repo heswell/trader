@@ -60,9 +60,28 @@ describe("MarketDataPublisher", () => {
     const vod = tables.instruments.get("VOD.L");
     expect(vod?.simulated).toBe(false);
     expect(vod?.currency).toBe("GBX");
+    expect(vod?.sector).toBe("Communication Services");
     expect(tables.prices.rowCount).toBe(ALL_INSTRUMENTS.length);
     expect(tables.prices.get("VOD.L")?.phase).toBe(TradingPhase.Closed);
     expect(tables.prices.get("AAPL.OQ")?.phase).toBe(TradingPhase.Continuous);
+  });
+
+  test("publishes null (not 0) for prices fields with no quote or trade", () => {
+    const { sim, tables, limit } = quietSim();
+    const vod = tables.prices.get("VOD.L");
+    for (const field of ["bid", "ask", "bidSize", "askSize", "last", "open"]) {
+      expect(vod?.[field]).toBeNull();
+    }
+    expect(vod?.close).toBeGreaterThan(0);
+    limit(BookSide.BUY, 100, 10);
+    sim.flush();
+    const aapl = tables.prices.get("AAPL.OQ");
+    expect(aapl?.bid).toBe(100);
+    expect(aapl?.bidSize).toBe(10);
+    for (const field of ["ask", "askSize", "last", "high", "vwap", "change"]) {
+      expect(aapl?.[field]).toBeNull();
+    }
+    expect(aapl?.volume).toBe(0);
   });
 
   test("publishes depth as deltas and deletes vanished levels", () => {
