@@ -397,14 +397,34 @@ and the `@vuu-ui/vuu-icons` main entry (#52) still lack types; `PersistedStateAP
 77. ~~**Importing `@heswell/vuu-data-engine-local` needs a DOM.**~~ *Resolved: vuu-websocket#97;
     vuu-data-engine-local 4.0.0.* The React/DOM pieces moved to `@heswell/vuu-data-engine-local/react`; trader's
     `createTradingLocalServer` moved to `@heswell/trading-test-data/react`, and trading-test-data tests run in
-    `test:server` without happy-dom (but see 78). (vuu-websocket, vuu-data-engine-local 3.0.0.) Its
+    `test:server` without happy-dom. (vuu-websocket, vuu-data-engine-local 3.0.0.) Its
     entry imports `@vuu-ui/vuu-ui-controls`, which creates a `ResizeObserver` at import, so a plain Bun/Node script
     fails with `ResizeObserver is not defined`. *Workaround:* tests preload `scripts/dom-test-setup.ts` (happy-dom).
 
 ## Found in the engine-local 4.0.0 upgrade
 
-78. **engine-local 4.0.0's DOM-free main entry still calls a global `requestAnimationFrame`.** (vuu-websocket,
-    vuu-data-engine-local 4.0.0.) `VuuModule.handlePostSubscribeActivities` schedules with a bare
-    `requestAnimationFrame`, so the first `subscribe` in plain Bun/Node throws `ReferenceError: requestAnimationFrame
-    is not defined`. Falling back to `setTimeout` when rAF is missing would fix it. *Workaround:*
-    `packages/trading-test-data/__tests__/helpers.ts` installs a `setTimeout`-based shim.
+78. ~~**engine-local 4.0.0's DOM-free main entry still calls a global `requestAnimationFrame`.**~~ *Resolved:
+    vuu-websocket#98; vuu-data-engine-local 4.1.0.* `VuuModule.handlePostSubscribeActivities` (and
+    `EngineDataSource`) use `requestAnimationFrame` when it exists and `setTimeout(cb, 0)` otherwise. The test shim
+    in `packages/trading-test-data/__tests__/helpers.ts` is removed. The same release lets `createJoinTable` take a
+    declared `schema` (column order preserved), so `createTradingTestData` now builds `instrumentPrices` and
+    `positionPrices` with `createJoinTable` instead of a hand-built `@heswell/vuu-table` `JoinTable` (both join on
+    `ric`/`ric`). (vuu-websocket, vuu-data-engine-local 4.0.0.) `VuuModule.handlePostSubscribeActivities` schedules
+    with a bare `requestAnimationFrame`, so the first `subscribe` in plain Bun/Node throws `ReferenceError:
+    requestAnimationFrame is not defined`. Falling back to `setTimeout` when rAF is missing would fix it.
+    *Workaround:* `packages/trading-test-data/__tests__/helpers.ts` installed a `setTimeout`-based shim.
+
+## Found in the engine-local 4.1.0 upgrade
+
+79. **`createJoinTable` gives no typed way to dispose the join.** (vuu-websocket, vuu-data-engine-local 4.1.0.)
+    The returned `Table`'s `engineTable` is an `@heswell/vuu-table` `JoinTable` at runtime but is typed as the base
+    engine `Table`, so `destroy()` (which detaches the join's listeners from its source tables) is not visible, and
+    `Table` has no `destroy()` of its own. A `Table.destroy()` that forwards to the engine table, or a `JoinTable`
+    type on joins, would fix it. *Workaround:* `createTradingTestData`'s `joinTableFor` narrows `engineTable` with a
+    structural `{ destroy(): void }` cast and calls it on `dispose()`.
+80. **`createJoinTable({ schema })` adds `rangeLimits` the declared schema did not have.** (vuu-websocket,
+    vuu-data-engine-local 4.1.0.) A declared schema without `rangeLimits` gets the engine default
+    (`maxRangeEnd: 1000000, maxRangeWidth: 1000`), so the join's `Table.schema` no longer matches the schema the
+    server returns in TABLE_META_RESP, while plain `createTable`/`new Table(schema)` keep it unchanged. Preserving
+    the declared schema as given would fix it. *Workaround:* `createTradingTestData` publishes the declared
+    `getTradingSchemas()` schemas as the modules' `schemas` rather than each table's `schema`.

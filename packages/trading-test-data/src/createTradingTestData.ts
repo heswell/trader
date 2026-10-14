@@ -18,6 +18,7 @@ import {
   EXCHANGE_ADMIN_RPC_NAMES,
   EXCHANGE_MODULE,
   exchangeTables,
+  getTradingSchemas,
   instrumentPrices,
   OMS_MODULE,
   OMS_RPC_NAMES,
@@ -30,6 +31,7 @@ import {
 } from "@heswell/trading-schemas";
 import {
   AllowAllPermissionFilter,
+  createJoinTable,
   createLocalEngine,
   getCurrentUser,
   type LocalEngine,
@@ -38,7 +40,6 @@ import {
   type RpcService,
   Table,
 } from "@heswell/vuu-data-engine-local";
-import { JoinTable } from "@heswell/vuu-table";
 import type { TableSchema } from "@vuu-ui/vuu-data-types";
 import type { RpcResult } from "@vuu-ui/vuu-protocol-types";
 import { parentOrdersEditHooks } from "./modules/parentOrdersEditHooks";
@@ -131,16 +132,30 @@ export interface TradingTestData {
 const tableFor = (def: TableDefinition | JoinDefinition) =>
   new Table(toTableSchema(def));
 
+// Both trading joins use the same column on each side (ric/ric), which is
+// what createJoinTable expects.
 const joinTableFor = (def: JoinDefinition, base: Table, join: Table) => {
-  const engineTable = new JoinTable({
-    schema: toTableSchema(def),
-    baseTable: base.engineTable,
-    joinTable: join.engineTable,
-    leftColumn: def.left,
-    rightColumn: def.right,
-    joinType: def.type === "InnerJoin" ? "inner" : "leftOuter",
-  });
-  return { table: new Table(engineTable), engineTable };
+  if (def.left !== def.right) {
+    throw Error(
+      `[trading-test-data] ${def.name}: createJoinTable needs left === right (${def.left}/${def.right})`,
+    );
+  }
+  const table = createJoinTable(
+    { module: def.module, table: def.name },
+    base,
+    join,
+    def.left,
+    {
+      schema: toTableSchema(def),
+      joinType: def.type === "InnerJoin" ? "inner" : "leftOuter",
+    },
+  );
+  // The engine table is a JoinTable at runtime, but typed as the base engine
+  // Table; destroy() detaches it from its sources (trader upstream issue 79).
+  const engineTable = table.engineTable as typeof table.engineTable & {
+    destroy(): void;
+  };
+  return { table, engineTable };
 };
 
 const isExchangeRpc = (name: string): name is ExchangeAdminRpcName =>
@@ -276,9 +291,12 @@ export const createTradingTestData = ({
     trades,
     instrumentPrices: instrumentPricesJoin.table,
   };
+  // Published schemas are the declared ones (the server's TABLE_META_RESP);
+  // createJoinTable adds default rangeLimits to the joins' engine schemas.
+  const declaredSchemas = getTradingSchemas();
   const exchangeSchemas = forEachTable(
     EXCHANGE_TABLE_NAMES,
-    (name) => exchangeTablesByName[name].schema,
+    (name) => declaredSchemas[name],
   );
   const exchangeServices = rpcServices(
     EXCHANGE_ADMIN_RPC_NAMES,
@@ -304,7 +322,7 @@ export const createTradingTestData = ({
   };
   const omsSchemas = forEachTable(
     OMS_TABLE_NAMES,
-    (name) => omsTablesByName[name].schema,
+    (name) => declaredSchemas[name],
   );
   const omsServices: RpcService[] = [
     ...rpcServices(OMS_RPC_NAMES, () => oms),
