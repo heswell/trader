@@ -79,7 +79,10 @@ export interface InstrumentGridProps
   table?: Extract<TradingSchemaName, "instrumentPrices" | "prices">;
   /** Visible column names, in order. Defaults to a trading preset. */
   columns?: readonly string[];
-  /** Only instruments quoted by the exchange simulator (instrumentPrices). */
+  /**
+   * Only instruments quoted by the exchange simulator (default false).
+   * Unquoted rows show empty (null) price cells.
+   */
   simulatedOnly?: boolean;
   /** Group by this column initially ("exchange" | "sector" | "currency"). */
   initialGroupBy?: string;
@@ -162,7 +165,7 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
       onSell: onSellProp,
       showLinkGroupSelector = false,
       showToolbar = true,
-      simulatedOnly = true,
+      simulatedOnly = false,
       sparkline,
       table = "instrumentPrices",
       watchlistStorage,

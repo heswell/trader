@@ -12,6 +12,7 @@ import {
   SIDES,
   TIME_IN_FORCE_VALUES,
   TimeInForce,
+  TradingPhase,
 } from "../domain/enums";
 import {
   boolean,
@@ -43,6 +44,7 @@ export const RpcName = Object.freeze({
   HaltInstrument: "haltInstrument",
   ResumeInstrument: "resumeInstrument",
   SetBotRate: "setBotRate",
+  SetMarketPhase: "setMarketPhase",
 } as const);
 export type RpcName = (typeof RpcName)[keyof typeof RpcName];
 
@@ -57,6 +59,7 @@ export const EXCHANGE_ADMIN_RPC_NAMES = Object.freeze([
   RpcName.HaltInstrument,
   RpcName.ResumeInstrument,
   RpcName.SetBotRate,
+  RpcName.SetMarketPhase,
 ] as const);
 
 const id = string({ maxLength: 64 });
@@ -152,6 +155,23 @@ export const setBotRateParams = object({
 });
 export type SetBotRateRequest = Infer<typeof setBotRateParams>;
 
+/** Market-wide phases an exchange session can be forced into. */
+export const MARKET_SESSION_PHASES = Object.freeze([
+  TradingPhase.PreOpen,
+  TradingPhase.Continuous,
+  TradingPhase.Closed,
+] as const);
+
+/**
+ * Force the market-wide session phase now, until the next scheduled phase
+ * change (indefinitely when no session is configured). CLOSED expires
+ * working DAY orders; halted instruments stay HALTED.
+ */
+export const setMarketPhaseParams = object({
+  phase: oneOf(MARKET_SESSION_PHASES),
+});
+export type SetMarketPhaseRequest = Infer<typeof setMarketPhaseParams>;
+
 export interface AdminRpcResponse {
   /** Instruments affected. */
   rics: string[];
@@ -168,6 +188,7 @@ export interface RpcContracts {
   haltInstrument: [HaltInstrumentRequest, AdminRpcResponse];
   resumeInstrument: [ResumeInstrumentRequest, AdminRpcResponse];
   setBotRate: [SetBotRateRequest, AdminRpcResponse];
+  setMarketPhase: [SetMarketPhaseRequest, AdminRpcResponse];
 }
 export type RpcRequestParams<N extends RpcName> = RpcContracts[N][0];
 export type RpcResponseData<N extends RpcName> = RpcContracts[N][1];
@@ -240,6 +261,7 @@ const validators = {
   haltInstrument: haltInstrumentParams,
   resumeInstrument: resumeInstrumentParams,
   setBotRate: setBotRateParams,
+  setMarketPhase: setMarketPhaseParams,
 } as const;
 
 /**

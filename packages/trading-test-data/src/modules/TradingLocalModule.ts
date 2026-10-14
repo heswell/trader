@@ -3,7 +3,6 @@ import {
   getCurrentUser,
   type PermissionFunction,
   type RpcService,
-  type ServiceHandler,
   type Table,
   VuuModule,
   type VuuModuleUser,
@@ -39,12 +38,6 @@ export class TradingLocalModule<T extends string> extends VuuModule<T> {
   protected services: Record<T, RpcService[] | undefined>;
   protected visualLinks: Record<T, VuuLink[] | undefined>;
   protected editHooks: Partial<Record<T, EditHooks>>;
-  protected moduleServices: RpcService[] = [
-    {
-      rpcName: "deleteRow",
-      service: (request) => this.markRowDeleted(request),
-    },
-  ];
   #config: TradingLocalModuleConfig<T>;
 
   constructor(config: TradingLocalModuleConfig<T>) {
@@ -69,36 +62,6 @@ export class TradingLocalModule<T extends string> extends VuuModule<T> {
   protected isEditableColumn() {
     return false;
   }
-
-  /**
-   * deleteRow as vuu-server: only in an edit session, where the row is
-   * marked (vuuAction "deleteRow") for endEditSession, whatever the `mode`.
-   * engine-local's built-in removes the row from the session on a "hard"
-   * delete (vuu-ui's default), so the save never sees it, and outside a
-   * session deletes the source row (upstream issue 76).
-   */
-  private markRowDeleted: ServiceHandler = async (request) => {
-    const { context, params } = request;
-    const key = String((params as { key?: unknown }).key);
-    const sessionTable =
-      context.type === "VIEWPORT_CONTEXT"
-        ? this.getSessionTable(context.viewPortId, false)
-        : undefined;
-    if (!sessionTable) {
-      return {
-        type: "ERROR_RESULT",
-        errorMessage: "deleteRow: only supported in an edit session",
-      };
-    }
-    if (!sessionTable.findByKey(key)) {
-      return {
-        type: "ERROR_RESULT",
-        errorMessage: `deleteRow: row ${key} not found`,
-      };
-    }
-    sessionTable.update(key, "vuuAction", "deleteRow");
-    return { type: "SUCCESS_RESULT", data: undefined };
-  };
 
   /** Table by name (the engine-local wrapper; `.engineTable` for raw access). */
   getTable(tableName: T): Table {

@@ -95,10 +95,12 @@ Workarounds are noted. Resolved issues are struck through.
     `canSaveSession` veto or a throw returns `ERROR_RESULT`, rolls the source back and keeps the session open.
     `OmsRpcHandler` now just overrides `applySessionSave` (no `handleEndEditSession` override); the UI discards the
     session after a failure (`openOrderEditSession` / `editOrdersInSession`). See 68.
-19. **exchange-sim has no trading session / close.** Phases only change through halt/resume, so DAY orders never
-    expire on their own. *Workaround:* `OmsEngine.endOfDay()` expires working DAY orders on demand. A scheduled
-    close (and `MARKET_CLOSED` reject window) in exchange-sim would make this automatic. This is our own package, so
-    it's for a later phase rather than upstream.
+19. ~~**exchange-sim has no trading session / close.**~~ *Resolved in trader (exchange-sim).* exchange-sim has a
+    scheduled trading session (`sessionOpen` / `sessionClose` UTC, `preOpenMinutes`, or a fast simulated day with
+    `sessionDayMs`) with PRE_OPEN / CONTINUOUS / CLOSED phases published on `prices.phase`. Working DAY orders expire
+    at the close, new orders and amends are rejected with `MARKET_CLOSED` while closed, and the `setMarketPhase`
+    admin RPC forces a phase. By default no session is configured, so dev and e2e runs are always open.
+    `OmsEngine.endOfDay()` still expires DAY orders on demand.
 
 ## Found in Phase 3 wave 1 (UI foundation)
 
@@ -137,9 +139,9 @@ Workarounds are noted. Resolved issues are struck through.
     accepted (`vuu.auth.permissive.users` is still an allow-list when set), and the token in both the JSON body and
     the `vuu-auth-token` header (exposed for CORS) is documented. `connectToVuuServer`'s password is optional and it
     reads the body; the showcase and the server tests send no password.
-28. **`positions` / `positionPrices` have no sector (or any instrument static) column**, so PositionsView cannot group by
-    sector; it groups by currency then account or ric. Adding `sector` to `instruments` and a join column to
-    `positionPrices` would enable it. (This repo's schema, not vuu.)
+28. ~~**`positions` / `positionPrices` have no sector (or any instrument static) column**~~ *Resolved in trader.*
+    `instruments.sector` carries a GICS sector for every ric, and the OMS denormalises `exchange` and `sector` onto
+    `positions` (so `positionPrices` has them too). PositionsView defaults to grouping by currency / sector.
 29. **No cross-table tree / LinkedTableView in alpha.20**, and `Table.onSelectionChange` reports key-based requests
     (`SELECT_ROW`, `SELECT_ROW_RANGE`, ...) rather than the selected row set, so ranges can only be resolved with a
     second data source. OrderBlotter uses a child-orders detail panel and a mirror subscription
@@ -153,9 +155,12 @@ Workarounds are noted. Resolved issues are struck through.
     session when it opens and saves it on Amend (`openOrderEditSession`).
 32. **Custom cell renderers are looked up by name in a global registry** and the package `sideEffects` only lists
     CSS, so each component module must call `registerTradingCellRenderers()` at import time.
-33. **A `LEFT JOIN` row without a price shows `0` (not empty) for numeric columns** in `instrumentPrices`, so a client
-    cannot tell "no price yet" from a price of 0. *Workaround:* the sparkline renderer ignores 0 samples
-    (`ignoreZero`) and the grid defaults to `simulated = true`.
+33. ~~**A `LEFT JOIN` row without a price shows `0` (not empty) for numeric columns**~~ *Resolved in trader;
+    vuu-websocket#97; vuu-viewport 1.1.5.* The servers already return null for unmatched LEFT JOIN columns; the 0s
+    came from exchange-sim's `MarketDataPublisher`, which pre-inserted a `prices` row with numeric fields 0. It now
+    writes null for bid/ask/sizes when a side is empty and for last/open/high/low/vwap/change until the first trade,
+    and relational filters no longer match null (vuu-viewport 1.1.5). The sparkline `ignoreZero` option and the
+    grid's `simulated = true` default are removed.
 34. **vuu `TablePicker` cannot be used as a controlled instrument picker.** It has no controlled `value` (the
     selected text can't be set from a prefill or from the selected instrument), it logs to the console, and it does
     not unsubscribe the data source it creates. *Workaround:* `InstrumentPicker` is a Salt `ComboBox` over
@@ -381,11 +386,25 @@ and the `@vuu-ui/vuu-icons` main entry (#52) still lack types; `PersistedStateAP
     `equals`, `reset`, `withBuffer`, ...), although engine-local and `VuuDataSource` only read `from`/`to`. Code
     typed against `DataSource` (`useDataSourceRows`, `editSessionAmend`, `useTradingDataSource.test.tsx`) keeps
     `Range(from, to)`. Accepting `{from, to}` in the type would remove them.
-76. **engine-local's `deleteRow` differs from vuu-server's.** (vuu-websocket, vuu-data-engine-local 3.0.0.) With
+76. ~~**engine-local's `deleteRow` differs from vuu-server's.**~~ *Resolved: vuu-websocket#97;
+    vuu-data-engine-local 4.0.0.* `deleteRow` / `deleteSelectedRows` now mark the session row
+    `vuuAction = "deleteRow"` in every mode and refuse `deleteRow` outside a session. The `TradingLocalModule`
+    override is removed; tests cover delete-in-session -> `cancelOrder`. (vuu-websocket, vuu-data-engine-local 3.0.0.) With
     vuu-ui's default `mode: "hard"` it removes the row from the session table, so `applySessionSave` never sees the
     delete; outside an edit session it deletes the source row. vuu-server marks the row `vuuAction = "deleteRow"` in
     either mode and refuses `deleteRow` outside a session. *Workaround:* `TradingLocalModule` overrides the
     `deleteRow` service with the server's behaviour.
-77. **Importing `@heswell/vuu-data-engine-local` needs a DOM.** (vuu-websocket, vuu-data-engine-local 3.0.0.) Its
+77. ~~**Importing `@heswell/vuu-data-engine-local` needs a DOM.**~~ *Resolved: vuu-websocket#97;
+    vuu-data-engine-local 4.0.0.* The React/DOM pieces moved to `@heswell/vuu-data-engine-local/react`; trader's
+    `createTradingLocalServer` moved to `@heswell/trading-test-data/react`, and trading-test-data tests run in
+    `test:server` without happy-dom (but see 78). (vuu-websocket, vuu-data-engine-local 3.0.0.) Its
     entry imports `@vuu-ui/vuu-ui-controls`, which creates a `ResizeObserver` at import, so a plain Bun/Node script
     fails with `ResizeObserver is not defined`. *Workaround:* tests preload `scripts/dom-test-setup.ts` (happy-dom).
+
+## Found in the engine-local 4.0.0 upgrade
+
+78. **engine-local 4.0.0's DOM-free main entry still calls a global `requestAnimationFrame`.** (vuu-websocket,
+    vuu-data-engine-local 4.0.0.) `VuuModule.handlePostSubscribeActivities` schedules with a bare
+    `requestAnimationFrame`, so the first `subscribe` in plain Bun/Node throws `ReferenceError: requestAnimationFrame
+    is not defined`. Falling back to `setTimeout` when rAF is missing would fix it. *Workaround:*
+    `packages/trading-test-data/__tests__/helpers.ts` installs a `setTimeout`-based shim.

@@ -21,7 +21,12 @@ export const instruments = defineTable({
     { name: "isin", dataType: "string", optional: true },
     { name: "currency", dataType: "string" },
     { name: "exchange", dataType: "string", description: "MIC, e.g. XLON" },
-    { name: "sector", dataType: "string", optional: true },
+    {
+      name: "sector",
+      dataType: "string",
+      optional: true,
+      description: "GICS sector, e.g. Financials.",
+    },
     { name: "tickSize", dataType: "double" },
     {
       name: "tickBands",
@@ -280,6 +285,16 @@ export const positions = defineTable({
     { name: "unrealizedPnl", dataType: "double" },
     { name: "totalPnl", dataType: "double" },
     { name: "currency", dataType: "string" },
+    {
+      name: "exchange",
+      dataType: "string",
+      description: "Instrument MIC (from instruments).",
+    },
+    {
+      name: "sector",
+      dataType: "string",
+      description: "Instrument GICS sector (from instruments).",
+    },
     { name: "lastUpdate", dataType: "epochtimestamp" },
   ],
   links: [{ fromColumn: "account", toTable: "accounts", toColumn: "account" }],

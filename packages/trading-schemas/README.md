@@ -126,6 +126,7 @@ with `errorMessage = "<RejectReason>: <text>"` (`rpcError` / `parseRpcError`).
 | `haltInstrument` | EXCHANGE | `ric, reason?` | `{ rics }` |
 | `resumeInstrument` | EXCHANGE | `ric, auction?` | `{ rics }` |
 | `setBotRate` | EXCHANGE | `ric?, bot? (=ALL), rate` (events/s, 0 pauses) | `{ rics }` |
+| `setMarketPhase` | EXCHANGE | `phase` (`PRE_OPEN` \| `CONTINUOUS` \| `CLOSED`); forced until the next scheduled session change, `CLOSED` expires DAY orders | `{ rics }` |
 
 ```ts
 // client

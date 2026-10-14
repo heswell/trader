@@ -16,7 +16,8 @@ const GRID_COLUMNS = ["ric", "currency", "bid", "ask", "last", "phase"];
  * Showcase helper: the trading-ui InstrumentPicker and a compact
  * InstrumentGrid of simulated instruments, both publishing to the (default)
  * link group the components under test follow, plus exchange admin
- * halt / resume for the selected instrument.
+ * halt / resume for the selected instrument and market-wide open / close
+ * (setMarketPhase).
  */
 export const InstrumentSelector = ({
   showAdmin = false,
@@ -33,6 +34,15 @@ export const InstrumentSelector = ({
     try {
       await sendTradingRpc(prices, rpc, { ric: selectedInstrument.ric });
       setMessage(`${rpc} ${selectedInstrument.ric}`);
+    } catch (err) {
+      const e = err as TradingRpcError;
+      setMessage(`${e.reason ?? "ERROR"}: ${e.text ?? String(err)}`);
+    }
+  };
+  const setMarketPhase = async (phase: "CONTINUOUS" | "CLOSED") => {
+    try {
+      await sendTradingRpc(prices, "setMarketPhase", { phase });
+      setMessage(`setMarketPhase ${phase}`);
     } catch (err) {
       const e = err as TradingRpcError;
       setMessage(`${e.reason ?? "ERROR"}: ${e.text ?? String(err)}`);
@@ -62,6 +72,10 @@ export const InstrumentSelector = ({
             onClick={() => admin("resumeInstrument")}
           >
             Resume
+          </Button>
+          <Button onClick={() => setMarketPhase("CLOSED")}>Close market</Button>
+          <Button onClick={() => setMarketPhase("CONTINUOUS")}>
+            Open market
           </Button>
           <Text>{message}</Text>
         </FlexLayout>

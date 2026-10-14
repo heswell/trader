@@ -6,11 +6,14 @@ import {
   type TickSchedule,
   tickSizeAt,
 } from "@heswell/trading-schemas";
+import { SECTOR_BY_RIC } from "./sectors";
 import { UNIVERSE, type UniverseRow } from "./universe";
 
 /** Static data of a simulated (or listed but inactive) instrument. */
 export interface InstrumentDef extends InstrumentStatic {
   description: string;
+  /** GICS sector ("" if unknown). */
+  sector: string;
   tickBands: string;
   priceDecimals: number;
   refPrice: number;
@@ -62,6 +65,7 @@ export const toInstrumentDef = ([
     description,
     currency,
     exchange,
+    sector: SECTOR_BY_RIC.get(ric) ?? "",
     tickSize,
     tickBands,
     lotSize: exchange === "XHKG" ? hkBoardLot(refPrice) : 1,

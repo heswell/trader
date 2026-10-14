@@ -67,7 +67,7 @@ stylesheet to load. The same `.css` source works in every environment:
 | --- | --- |
 | showcase | `apps/showcase/css-inline-loader.cjs` rewrites to `./X.css?inline` (rsbuild returns the text) |
 | MF feature | portal-build `cssInline` option (see §8) |
-| `bun test` | a `*.css` loader plugin in `scripts/dom-test-setup.ts` |
+| `bun test` (`test:ui`) | a `*.css` loader plugin in `scripts/dom-test-setup.ts` |
 | typecheck | `packages/trading-ui/src/css.d.ts` (`declare module "*.css"` -> `string`) |
 
 Rules:
@@ -154,7 +154,7 @@ return <Table config={config} dataSource={dataSource} />;
 | mode | Use | What it does |
 | --- | --- | --- |
 | `inherit` (default without a provider) | **MF features inside vuu-portal**, or any host with a `@vuu-ui/core` `DataProvider` | Uses the host's data provider (the portal's authenticated connection). |
-| `local` + `localServer` | showcase, tests, demos | An in-browser `LocalVuuServer`, e.g. `createTradingLocalServer()` from `@heswell/trading-test-data`. |
+| `local` + `localServer` | showcase, tests, demos | An in-browser `LocalVuuServer`, e.g. `createTradingLocalServer()` from `@heswell/trading-test-data/react`. |
 | `remote` + `connectionId` | showcase "Remote server", standalone apps | `VuuDataSource` bound to a connection opened with `connectToVuuServer({ connectionId, websocketUrl, authUrl, username, password })`. |
 
 `useTradingDataMode()` returns `{ mode, connectionId }`. `useHasDataProvider()` tells you whether any provider is
@@ -264,13 +264,14 @@ registry line per example.
 
 ## 8. Testing
 
-- `bun run test` runs `test:server` (schemas, exchange-sim, oms; no DOM) and `test:ui` (trading-test-data and
-  trading-ui, with `--preload ./scripts/dom-test-setup.ts`: happy-dom globals and the `*.css` loader). CI runs
-  `bun run test`.
+- `bun run test` runs `test:server` (schemas, exchange-sim, oms, trading-test-data; no DOM) and `test:ui`
+  (trading-ui only, with `--preload ./scripts/dom-test-setup.ts`: happy-dom globals and the `*.css` loader, needed
+  for React rendering). CI runs `bun run test`.
 - Put tests in `packages/trading-ui/__tests__/<Name>.test.tsx`, using `bun:test` and `@testing-library/react`
   (`render`, `screen`, `act`, `waitFor`; `afterEach(cleanup)`). Prefer role, label or text queries plus `data-*`
   attributes.
 - Data-bound components: render inside `<TradingDataProvider mode="local" localServer={createTradingLocalServer(td, "<unique-id>")}>`
+  (`createTradingLocalServer` is imported from `@heswell/trading-test-data/react`)
   with a seeded, manual-clock `td` (see `__tests__/useTradingDataSource.test.tsx`). Advance the clock to drive
   ticks.
 - happy-dom has no layout, so vuu `Table` virtualisation renders few or no rows in tests. Test hooks and logic at

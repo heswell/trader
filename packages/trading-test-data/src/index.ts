@@ -10,7 +10,6 @@ export {
   type TradingTestDataOptions,
 } from "./createTradingTestData";
 export {
-  createTradingLocalServer,
   getTradingTestData,
   resetTradingTestData,
   TRADING_LOCAL_CONNECTION_ID,

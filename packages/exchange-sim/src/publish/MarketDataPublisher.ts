@@ -13,7 +13,8 @@ import type { InstrumentBook } from "../engine/InstrumentBook";
 import type { InstrumentDef } from "../reference/instruments";
 import { TradeRingBuffer } from "./TradeRingBuffer";
 
-export type RowValue = string | number | boolean;
+/** null = no value (no quote / no trade yet), rendered empty by the UI. */
+export type RowValue = string | number | boolean | null;
 
 /** Structural subset of a vuu-table Table used for publishing. */
 export interface PublishTable {
@@ -61,11 +62,11 @@ interface PublishedLevel {
 }
 
 interface PublishedPrice {
-  bid: number;
-  ask: number;
-  bidSize: number;
-  askSize: number;
-  last: number;
+  bid: number | null;
+  ask: number | null;
+  bidSize: number | null;
+  askSize: number | null;
+  last: number | null;
   volume: number;
   phase: string;
 }
@@ -87,15 +88,20 @@ class RowLayout<T extends TableDefinition> {
   readonly #template: RowValue[];
   readonly idx: Record<T["columns"][number]["name"], number>;
 
-  constructor(table: PublishTable, def: T) {
-    const template: RowValue[] = new Array(table.columns.length).fill(0);
+  /**
+   * numeric: the value for numeric columns not set by the caller. Prices use
+   * null (no quote or trade yet), so a LEFT JOIN or a pre-loaded row never
+   * shows a fake 0 (trader upstream issue 33).
+   */
+  constructor(table: PublishTable, def: T, numeric: 0 | null = 0) {
+    const template: RowValue[] = new Array(table.columns.length).fill(numeric);
     const idx = {} as Record<string, number>;
     for (const { name, dataType } of def.columns) {
       const i = table.columnMap[name];
       if (i === undefined) throw Error(`${def.name}: no column ${name}`);
       idx[name] = i;
       template[i] =
-        dataType === "string" ? "" : dataType === "boolean" ? false : 0;
+        dataType === "string" ? "" : dataType === "boolean" ? false : numeric;
     }
     this.#template = template;
     this.idx = idx;
@@ -134,7 +140,7 @@ export class MarketDataPublisher {
     tradesCapacity: number,
   ) {
     this.#ring = new TradeRingBuffer(tradesCapacity);
-    this.#prices = new RowLayout(tables.prices, pricesDef);
+    this.#prices = new RowLayout(tables.prices, pricesDef, null);
     this.#depth = new RowLayout(tables.depth, depthDef);
     this.#trades = new RowLayout(tables.trades, tradesDef);
   }
@@ -156,6 +162,7 @@ export class MarketDataPublisher {
       row[idx.description] = instrument.description;
       row[idx.currency] = instrument.currency;
       row[idx.exchange] = instrument.exchange;
+      row[idx.sector] = instrument.sector;
       row[idx.tickSize] = instrument.tickSize;
       row[idx.tickBands] = instrument.tickBands;
       row[idx.lotSize] = instrument.lotSize;
@@ -277,11 +284,11 @@ export class MarketDataPublisher {
   ) {
     const { stats, instrument } = book;
     const next: PublishedPrice = {
-      bid: bestBid?.price ?? 0,
-      ask: bestAsk?.price ?? 0,
-      bidSize: bestBid?.size ?? 0,
-      askSize: bestAsk?.size ?? 0,
-      last: stats.last,
+      bid: bestBid?.price ?? null,
+      ask: bestAsk?.price ?? null,
+      bidSize: bestBid?.size ?? null,
+      askSize: bestAsk?.size ?? null,
+      last: stats.tradeCount ? stats.last : null,
       volume: stats.volume,
       phase: book.phase,
     };
@@ -301,7 +308,8 @@ export class MarketDataPublisher {
     state.price = next;
     const decimals = instrument.priceDecimals;
     const close = instrument.refPrice;
-    const change = stats.last ? round(stats.last - close, decimals) : 0;
+    const traded = stats.tradeCount > 0;
+    const change = traded ? round(stats.last - close, decimals) : null;
     const { idx } = this.#prices;
     const row = this.#prices.row();
     row[idx.ric] = book.ric;
@@ -309,19 +317,19 @@ export class MarketDataPublisher {
     row[idx.ask] = next.ask;
     row[idx.bidSize] = next.bidSize;
     row[idx.askSize] = next.askSize;
-    row[idx.last] = stats.last;
-    row[idx.lastSize] = stats.lastSize;
-    row[idx.open] = stats.open;
-    row[idx.high] = stats.high;
-    row[idx.low] = stats.low;
+    if (traded) {
+      row[idx.last] = stats.last;
+      row[idx.lastSize] = stats.lastSize;
+      row[idx.open] = stats.open;
+      row[idx.high] = stats.high;
+      row[idx.low] = stats.low;
+      row[idx.vwap] = round(stats.turnover / stats.volume, decimals + 2);
+      row[idx.changePct] = round((100 * (change as number)) / close, 4);
+    }
     row[idx.close] = close;
     row[idx.volume] = stats.volume;
     row[idx.turnover] = round(stats.turnover, 2);
-    row[idx.vwap] = stats.volume
-      ? round(stats.turnover / stats.volume, decimals + 2)
-      : 0;
     row[idx.change] = change;
-    row[idx.changePct] = round((100 * change) / close, 4);
     row[idx.phase] = book.phase;
     row[idx.seq] = book.seq;
     row[idx.timestamp] = now;

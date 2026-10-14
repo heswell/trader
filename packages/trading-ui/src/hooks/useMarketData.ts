@@ -127,8 +127,12 @@ export const useInstrumentPrice = (
       tickBands,
       ...rest
     } = row;
+    // null = no quote / trade yet: absent, so the optional fields hold
+    const present = Object.fromEntries(
+      Object.entries(rest).filter(([, value]) => value !== null),
+    );
     return {
-      ...rest,
+      ...present,
       tickBands: typeof tickBands === "string" ? tickBands : undefined,
     } as InstrumentPrice;
   }, [row, ric]);

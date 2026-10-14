@@ -220,11 +220,13 @@ Set in `application.conf` as `oms.<key>`, or with the env var `OMS_<UPPER_SNAKE>
 
 - **TWAP / algo slicing.** Skipped. Routing is 1:1 parent → child. The parent/child tables and `childOrderId`
   plumbing allow N children later.
-- **DAY expiry at close.** exchange-sim has no trading session or close (docs/upstream-issues.md #19).
-  - `oms.engine.endOfDay()` expires working DAY orders: it cancels them at the exchange and records them as
-    `EXPIRED`.
-  - Nothing calls it on a schedule yet.
-  - IOC / FOK / unfilled market orders already expire through exchange `EXPIRED` reports.
+- **DAY expiry at close.** With a configured exchange-sim trading session (`sessionOpen` / `sessionClose`, or
+  `sessionDayMs` for a fast simulated day; see the exchange-sim README), the exchange expires working DAY orders at
+  its close and the OMS records the `EXPIRED` reports. New orders are rejected with `MARKET_CLOSED` while closed.
+  - By default no session is configured and the market is always open.
+  - `oms.engine.endOfDay()` still expires working DAY orders on demand: it cancels them at the exchange and records
+    them as `EXPIRED`.
+  - IOC / FOK / unfilled market orders expire through exchange `EXPIRED` reports.
 - **Account limit editing.** The `accounts` table is read-only seed data. There is no RPC for it.
 
 ## Notes for the UI (Phase 3)

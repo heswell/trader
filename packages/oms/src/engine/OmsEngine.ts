@@ -90,6 +90,9 @@ export interface Position extends PositionState, PositionMarks {
   account: string;
   ric: string;
   currency: string;
+  /** Instrument static, denormalised so positions can group by it. */
+  exchange: string;
+  sector: string;
   lastUpdate: number;
 }
 
@@ -514,8 +517,10 @@ export class OmsEngine {
 
   /**
    * End of trading day: expire working DAY orders (cancelled at the exchange,
-   * recorded as EXPIRED). exchange-sim has no session close, so this is driven
-   * by the caller. Orders with a request in flight are skipped.
+   * recorded as EXPIRED). With a configured exchange-sim session the exchange
+   * expires DAY orders at its close itself (EXPIRED reports); this is the
+   * manual equivalent, e.g. for an always-open market. Orders with a request
+   * in flight are skipped.
    */
   endOfDay() {
     const expired: string[] = [];
@@ -565,11 +570,14 @@ export class OmsEngine {
       fill.price,
     );
     const markPx = existing?.markPx || fill.price;
+    const instrument = this.#gateway.getInstrument(fill.ric);
     const position: Position = {
       id,
       account: fill.account,
       ric: fill.ric,
       currency: fill.currency,
+      exchange: instrument?.exchange ?? "",
+      sector: instrument?.sector ?? "",
       ...state,
       ...markPosition(state, markPx),
       lastUpdate: fill.timestamp,

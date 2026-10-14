@@ -538,9 +538,12 @@ describe("positions", () => {
       realizedPnl: 40,
       currency: "USD",
     });
+    // instrument static copied onto the position (groupable by sector)
     expect(positions.at(-1)).toMatchObject({
       id: "ACC-US-01|AAPL.OQ",
       quantity: 60,
+      exchange: "XNAS",
+      sector: "Information Technology",
     });
     expect(sim.gateway.getTopOfBook(AAPL)?.last).toBe(171);
     engine.markToMarket();

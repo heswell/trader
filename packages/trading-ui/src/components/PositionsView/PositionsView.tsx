@@ -43,14 +43,24 @@ const classBase = "tradingPositionsView";
 /**
  * `none`: one row per account|ric. Grouped modes always group by currency
  * first so aggregated amounts are never summed across currencies.
- * (positions has no sector column, so there is no sector grouping.)
  */
-export type PositionsGrouping = "none" | "account" | "ric";
+export type PositionsGrouping = "none" | "sector" | "account" | "ric";
+
+/** The positionPrices `groupBy` for each PositionsView grouping. */
+export const POSITIONS_GROUP_BY: Record<PositionsGrouping, string[]> = {
+  none: [],
+  sector: ["currency", "sector"],
+  account: ["currency", "account"],
+  ric: ["currency", "ric"],
+};
+
+const aggregationsFor = (grouping: PositionsGrouping) =>
+  grouping === "none" ? [] : SUMMED.map((column) => ({ column, aggType: SUM }));
 
 export interface PositionsViewProps
   extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect">,
     LinkGroupProps {
-  /** Initial grouping. Default "none". */
+  /** Initial grouping. Default "sector" (currency / sector). */
   defaultGrouping?: PositionsGrouping;
   /** Restrict to one account. */
   account?: string;
@@ -70,6 +80,8 @@ const COLUMNS = [
   "account",
   "ric",
   "currency",
+  "sector",
+  "exchange",
   "quantity",
   "avgCost",
   "markPx",
@@ -90,6 +102,7 @@ const tableConfig: TableConfig = {
     { name: "account", width: 110 },
     { name: "ric", width: 90 },
     { name: "currency", width: 70 },
+    { name: "sector", width: 150 },
     {
       name: "quantity",
       label: "Position",
@@ -137,6 +150,7 @@ const tableConfig: TableConfig = {
       align: "right",
       type: pnl,
     },
+    { name: "exchange", hidden: true },
     { name: "id", hidden: true },
     { name: "bid", hidden: true },
     { name: "ask", hidden: true },
@@ -192,7 +206,7 @@ const Inner = forwardRef<HTMLDivElement, PositionsViewProps>(
     {
       account,
       className,
-      defaultGrouping = "none",
+      defaultGrouping = "sector",
       defaultLinkGroup,
       linkGroup: linkGroupProp,
       onLinkGroupChange,
@@ -226,9 +240,13 @@ const Inner = forwardRef<HTMLDivElement, PositionsViewProps>(
       filter: account ? `account = ${filterString(account)}` : "",
     };
 
+    // Initial grouping goes in the constructor config: a groupBy set before
+    // the Table subscribes is not applied by the remote data source.
     const dataSource = useTradingDataSource("positionPrices", {
       columns: COLUMNS,
       filterSpec: filter,
+      groupBy: POSITIONS_GROUP_BY[defaultGrouping],
+      aggregations: aggregationsFor(defaultGrouping),
     });
     const totalsSource = useTradingDataSource("positionPrices", {
       columns: ["currency", ...SUMMED],
@@ -246,16 +264,8 @@ const Inner = forwardRef<HTMLDivElement, PositionsViewProps>(
     }, [account, dataSource, totalsSource]);
 
     useEffect(() => {
-      dataSource.groupBy =
-        grouping === "none"
-          ? []
-          : grouping === "account"
-            ? ["currency", "account"]
-            : ["currency", "ric"];
-      dataSource.aggregations =
-        grouping === "none"
-          ? []
-          : SUMMED.map((column) => ({ column, aggType: SUM }));
+      dataSource.groupBy = POSITIONS_GROUP_BY[grouping];
+      dataSource.aggregations = aggregationsFor(grouping);
     }, [grouping, dataSource]);
 
     const handleSelect = useCallback<TableRowSelectHandler>(
@@ -289,6 +299,7 @@ const Inner = forwardRef<HTMLDivElement, PositionsViewProps>(
               value={grouping}
             >
               <option value="none">None</option>
+              <option value="sector">Currency / sector</option>
               <option value="account">Currency / account</option>
               <option value="ric">Currency / RIC</option>
             </select>
@@ -353,7 +364,7 @@ const Inner = forwardRef<HTMLDivElement, PositionsViewProps>(
 
 /**
  * Positions on `positionPrices` with ticking realised / unrealised / total
- * P&L, optional grouping (currency then account or ric) with summed
+ * P&L, grouping (currency then sector – the default – account or ric) with summed
  * aggregations, and per-currency totals. Selecting a row sets the selected
  * instrument.
  */

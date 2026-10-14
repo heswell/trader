@@ -34,7 +34,7 @@ Order entry follows the protocol parity decision (`docs/protocol-parity.md`, #1)
 `RPC_REQUEST`s (`createOrder`, `amendOrder`, `cancelOrder`, `cancelAll`) with
 `VIEWPORT_CONTEXT`, answered with `SUCCESS_RESULT {orderId, status}` or
 `ERROR_RESULT "<RejectReason>: <text>"`. The exchange simulator exposes admin
-RPCs `setVolatility`, `haltInstrument`, `resumeInstrument`, `setBotRate`.
+RPCs `setVolatility`, `haltInstrument`, `resumeInstrument`, `setBotRate`, `setMarketPhase`.
 
 Order status semantics (FIX-like, `ORDER_STATUS_TRANSITIONS`) and tick/lot
 validation (`validateOrder`) are shared so that the order ticket, blotters and

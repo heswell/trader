@@ -34,9 +34,9 @@ A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns 
 | --- | --- |
 | `dataSource?` / `table?` | Supply a data source, or bind `"instrumentPrices"` (default) / `"prices"`. |
 | `columns?` | Visible column names in order (default: ric, description, exchange, currency, bid, ask, last, change, changePct, phase, sparkline, volume, turnover). The "Columns" button opens the vuu column picker; the header menu gives sort / group / hide. |
-| `simulatedOnly?` | Default true: only instruments quoted by the simulator (instrumentPrices). |
+| `simulatedOnly?` | Default false. True: only instruments quoted by the simulator (instrumentPrices). Unquoted instruments show empty price cells. |
 | `initialGroupBy?` | `exchange` / `sector` / `currency`; volume and turnover are summed in group rows. |
-| `sparkline?` | `false` or `{ valueColumn, length, bucketMs, ignoreZero }`. |
+| `sparkline?` | `false` or `{ valueColumn, length, bucketMs }`. |
 | `showToolbar?` | Quick filter (ric / description), watchlist selector + manager, group-by, columns, Buy/Sell/Depth buttons. |
 | `onBuy` / `onSell` / `onOpenDepth` | `(instrument: SelectedInstrument) => void`. The context-menu items and toolbar buttons exist only when the prop is set, or (Buy / Sell) when an `OrderTicketLauncherProvider` is mounted. The menu items are client-side and call direct RPCs; vuu-server 3.3.0 supports server menu RPCs, but trader declares none (see `docs/upstream-issues.md` 11, 63–66). |
 | `launchOrderTicket?` | Default `true`: without `onBuy` / `onSell`, Buy / Sell open the ticket via `useOrderTicketLauncher()` when a launcher is present. |
@@ -62,8 +62,7 @@ presentational `<Sparkline values={[...]} />`. Each visible row keeps a `Float64
 (`length` samples, 8 bytes each: 40 samples = 320 B per row) in a ref-counted `sparklineStore`; the buffer is freed when the
 row's cell unmounts or is recycled (the row leaves the viewport), so only rows in the viewport cost memory, and a row's
 history restarts when it comes back. `bucketMs > 0` samples on a constant time axis instead of per change. The polyline is
-updated imperatively (no React render per tick). Zero values are skipped by default (`ignoreZero`) because a row has 0
-until its first price.
+updated imperatively (no React render per tick). Null values (no trade yet) are not sampled.
 
 *Future:* a server-provided intraday series column (e.g. `last` history as a `string` / array column on `prices`, or an
 `intradaySeries` table keyed by ric) could replace the client buffer: the renderer would draw the column value when it
@@ -93,7 +92,7 @@ sends RPC failures to `useTradingNotifications()` inside a provider.
 | `OrderBlotter` | `defaultTab` (`working` \| `filled` \| `closed` \| `all`), `showChildOrders` (default true), `onOrderSelect(orderId?)`, `onError(TradingRpcError)`, `useEditSession` (amend through the server edit session instead of `amendOrder`: the dialog begins the session when it opens, Amend saves it, Close discards it, and an order that changed meanwhile is refused as stale). Tabs filter client side on `status`. Amend / cancel icons are enabled only for NEW, PARTIALLY_FILLED, REPLACED. Multi-select (ctrl / shift click) + **Cancel selected** sends `cancelOrder` per order; **Cancel all** sends `cancelAll`. Amend opens a dialog (quantity, price). Child orders of the selected order show in a panel below (a vuu LinkedTableView / tree does not span tables, still the case in alpha.21). Rejected rows show `rejectReason: text` as a tooltip on the status. |
 | `FillsBlotter` | `defaultGrouping` (`none` \| `ric` \| `ric-side`), `ric`, `onOrderSelect(orderId)` (order link), `highlightOrderId`, `csvFileName`. Group rows show summed quantity / notional and VWAP (`sum(notional) / sum(quantity)`, computed in the renderer – vuu has no VWAP aggregation). **Export CSV** writes the current filter and sort, ungrouped, up to 5,000 rows. |
 | `TradeTape` | `ric` (default: selected instrument), `maxRows` (100), `largeSizeThreshold` (absolute) or `largeSizePercentile` (90), `utc`. Newest first (`seq` descending), one render per animation frame, aggressor shown as ▲ Buy / ▼ Sell plus colour. |
-| `PositionsView` | `defaultGrouping` (`none` \| `account` \| `ric`; groups are always by currency first), `account`, `showTotals`. Realised / unrealised / total P&L tick via `positionPrices`. The totals table is **per currency** (never mixed; GBX is pence). No sector grouping: positions has no sector column. |
+| `PositionsView` | `defaultGrouping` (`sector` (default) \| `none` \| `account` \| `ric`; groups are always by currency first), `account`, `showTotals`. Realised / unrealised / total P&L tick via `positionPrices`. `sector` and `exchange` come from instrument static (the OMS copies them onto `positions`). The totals table is **per currency** (never mixed; GBX is pence). |
 
 Shared pieces (all exported): `OrderStatusBadge`, `FillProgressBar`, `PnlValue`; cell renderers registered by
 `registerTradingCellRenderers()` and named in `TradingRenderer` (`trading.order-status`, `trading.side`,

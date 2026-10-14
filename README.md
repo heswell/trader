@@ -94,7 +94,8 @@ per process from the `TRADER_*` settings. See [Sessions per user](docs/portal-in
   `features:check` verifies them.
 - `bun run typecheck`: `tsc --noEmit` against the published `.d.ts` of the vuu packages.
 - `bun run lint`, `bun run format`.
-- `bun run test`: `test:server` + `test:ui`, the latter with a happy-dom preload.
+- `bun run test`: `test:server` (no DOM: schemas, exchange-sim, oms, trading-test-data) + `test:ui` (trading-ui, with
+  a happy-dom preload for React rendering).
 - `bun run keycloak:realm export|bootstrap`: write `infra/keycloak/realm-vuu.json`, or apply it to a running
   Keycloak.
 

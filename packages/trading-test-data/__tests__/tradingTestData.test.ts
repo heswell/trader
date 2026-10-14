@@ -262,6 +262,51 @@ describe("OMS rpc", () => {
     expect(td.oms.getTable("fills").data.length).toBeGreaterThan(0);
     const positions = td.oms.getTable("positionPrices");
     expect(positions.data.length).toBe(1);
+    const sector = td.exchange.getTable("instruments").findByKey(ricAt(0))?.[
+      td.exchange.getTable("instruments").map.sector
+    ];
+    expect(sector).toBeTruthy();
+    expect(positions.data[0][positions.map.sector]).toBe(sector as string);
+    ds.unsubscribe();
+  });
+
+  test("positionPrices groups by currency / sector (PositionsView default)", async () => {
+    setCurrentUser(ADMIN);
+    td.advance(500);
+    for (const i of [0, 1, 2, 3]) {
+      const created = td.rpc("createOrder", {
+        account: "ACC-US-01",
+        ric: ricAt(i),
+        side: "BUY",
+        ordType: "MARKET",
+        quantity: td.sim.books[i].instrument.lotSize * 10,
+      });
+      expect(created.type).toBe("SUCCESS_RESULT");
+    }
+    td.advance(200);
+    const ds = createDs(td.oms, "positionPrices");
+    const c = collector();
+    await ds.subscribe(
+      {
+        range: RANGE,
+        columns: ["id", "currency", "sector", "totalPnl"],
+        groupBy: ["currency", "sector"],
+      },
+      c.callback,
+    );
+    await tick();
+    const positions = td.oms.getTable("positionPrices");
+    const groups = new Set(
+      positions.data.map(
+        (row) => `${row[positions.map.currency]}|${row[positions.map.sector]}`,
+      ),
+    );
+    expect(positions.data.length).toBeGreaterThan(0);
+    // top-level rows are the currency groups
+    expect(c.size).toBe(
+      new Set(positions.data.map((row) => row[positions.map.currency])).size,
+    );
+    expect(groups.size).toBeGreaterThan(0);
     ds.unsubscribe();
   });
 
@@ -351,17 +396,60 @@ describe("OMS rpc", () => {
     ds.unsubscribe();
   });
 
-  test("deleting a row in a parentOrders edit session cancels the order", async () => {
+  // engine-local >= 4 marks deleted session rows vuuAction="deleteRow" in
+  // every mode, so applySessionSave sees the delete and sends cancelOrder
+  // (the row stays, CANCELLED, rather than being removed from the table).
+  for (const mode of ["hard", "soft"] as const) {
+    test(`deleting a row (${mode}) in a parentOrders edit session cancels the order`, async () => {
+      setCurrentUser(ADMIN);
+      const ds = createDs(td.oms, "parentOrders");
+      await ds.subscribe({ range: RANGE }, () => undefined);
+      const orderId = restingOrder();
+      const session = await openSession(ds);
+      expect(await session.deleteRow?.(orderId, mode)).toBe(true);
+      await session.endEditSession?.(true);
+      td.advance(100);
+      const orders = td.oms.getTable("parentOrders");
+      expect(orders.findByKey(orderId)?.[orders.map.status]).toBe("CANCELLED");
+      ds.unsubscribe();
+    });
+  }
+
+  test("deleteSelectedRows in a parentOrders edit session cancels the orders", async () => {
     setCurrentUser(ADMIN);
     const ds = createDs(td.oms, "parentOrders");
     await ds.subscribe({ range: RANGE }, () => undefined);
     const orderId = restingOrder();
     const session = await openSession(ds);
-    await session.deleteRow?.(orderId);
+    const selectRow: Omit<SelectRowRequest, "vpId"> = {
+      type: "SELECT_ROW",
+      rowKey: orderId,
+      preserveExistingSelection: false,
+    };
+    session.select(selectRow as Parameters<typeof session.select>[0]);
+    await tick();
+    expect(await session.deleteSelectedRows?.()).toMatchObject({
+      type: "SUCCESS_RESULT",
+    });
     await session.endEditSession?.(true);
     td.advance(100);
     const orders = td.oms.getTable("parentOrders");
     expect(orders.findByKey(orderId)?.[orders.map.status]).toBe("CANCELLED");
+    ds.unsubscribe();
+  });
+
+  test("deleteRow outside an edit session is refused", async () => {
+    setCurrentUser(ADMIN);
+    const ds = createDs(td.oms, "parentOrders");
+    await ds.subscribe({ range: RANGE }, () => undefined);
+    const orderId = restingOrder();
+    expect(await ds.deleteRow?.(orderId)).toBe(
+      "deleteRow: only supported in an edit session",
+    );
+    const orders = td.oms.getTable("parentOrders");
+    expect(orders.findByKey(orderId)?.[orders.map.status]).not.toBe(
+      "CANCELLED",
+    );
     ds.unsubscribe();
   });
 
