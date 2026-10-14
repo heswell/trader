@@ -9,7 +9,9 @@ import type { DataSource } from "@vuu-ui/vuu-data-types";
 import { useEffect } from "react";
 import {
   editOrdersInSession,
+  openOrderEditSession,
   sendTradingRpc,
+  StaleOrderEditError,
   TradingDataProvider,
   useDataSourceRows,
   useTradingDataSource,
@@ -132,5 +134,41 @@ describe("order blotter actions", () => {
       expect(r?.quantity).toBe(300);
       expect(r?.version).toBe(1);
     });
+  });
+
+  test("cancel through the edit session", async () => {
+    const { ds, records } = await setup();
+    const a = await limitBuy(ds);
+    await waitFor(() =>
+      expect(records().some((r) => r.orderId === a.orderId)).toBe(true),
+    );
+    await editOrdersInSession(ds, { cancel: [a.orderId] });
+    await waitFor(() =>
+      expect(records().find((r) => r.orderId === a.orderId)?.status).toBe(
+        "CANCELLED",
+      ),
+    );
+  });
+
+  test("a save after the order changed is refused as stale, as on the server", async () => {
+    const { ds, records } = await setup();
+    const a = await limitBuy(ds);
+    await waitFor(() =>
+      expect(records().some((r) => r.orderId === a.orderId)).toBe(true),
+    );
+    const session = await openOrderEditSession(ds);
+    await session.amend(a.orderId, { quantity: 250 });
+    await sendTradingRpc(ds, "amendOrder", {
+      orderId: a.orderId,
+      quantity: 400,
+    });
+    const error = await session.save().catch((err: unknown) => err);
+    expect(error).toBeInstanceOf(StaleOrderEditError);
+    await session.discard();
+    await waitFor(() =>
+      expect(records().find((r) => r.orderId === a.orderId)?.quantity).toBe(
+        400,
+      ),
+    );
   });
 });

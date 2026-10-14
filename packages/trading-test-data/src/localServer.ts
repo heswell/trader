@@ -38,4 +38,5 @@ export const createTradingLocalServer = (
   createLocalVuuServer({
     connectionId,
     modules: [testData.exchange, testData.oms],
+    engine: testData.engine,
   });

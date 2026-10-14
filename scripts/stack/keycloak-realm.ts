@@ -115,8 +115,16 @@ const serverClient = (clientId: string, name: string, secret: string) => ({
   protocolMappers: [audienceMapper(clientId)],
 });
 
-export const buildRealm = (cfg: Pick<StackConfig, "hostOrigin">) => {
-  const origins = [...new Set([cfg.hostOrigin, "http://localhost:5100"])];
+const portalOrigins = (cfg: Pick<StackConfig, "hostOrigins">) => [
+  ...new Set([
+    ...cfg.hostOrigins,
+    "http://localhost:5100",
+    "http://127.0.0.1:5100",
+  ]),
+];
+
+export const buildRealm = (cfg: Pick<StackConfig, "hostOrigins">) => {
+  const origins = portalOrigins(cfg);
   const clientRoles = (names: readonly string[]) =>
     names.map((name) => ({ name, clientRole: true }));
   return {
@@ -209,6 +217,44 @@ const adminToken = async (url: string) => {
 };
 
 /**
+ * Add any missing host origins (e.g. 127.0.0.1) to the vuu-portal client's
+ * redirect URIs / web origins in an existing realm.
+ */
+const addPortalOrigins = async (
+  cfg: StackConfig,
+  call: (path: string, init?: RequestInit) => Promise<Response>,
+) => {
+  const res = await call(`/${cfg.keycloakRealm}/clients?clientId=vuu-portal`);
+  if (!res.ok) return false;
+  const [client] = (await res.json()) as {
+    id: string;
+    redirectUris?: string[];
+    webOrigins?: string[];
+  }[];
+  if (!client) return false;
+  const origins = portalOrigins(cfg);
+  const redirectUris = [
+    ...new Set([
+      ...(client.redirectUris ?? []),
+      ...origins.map((o) => `${o}/*`),
+    ]),
+  ];
+  const webOrigins = [...new Set([...(client.webOrigins ?? []), ...origins])];
+  if (
+    redirectUris.length === client.redirectUris?.length &&
+    webOrigins.length === client.webOrigins?.length
+  )
+    return false;
+  const put = await call(`/${cfg.keycloakRealm}/clients/${client.id}`, {
+    method: "PUT",
+    body: JSON.stringify({ ...client, redirectUris, webOrigins }),
+  });
+  if (!put.ok)
+    throw new Error(`vuu-portal client update failed: ${put.status}`);
+  return true;
+};
+
+/**
  * Create realm "vuu" unless it exists (reset: delete it first). A realm from
  * before the trading server had its own client is recreated.
  */
@@ -231,7 +277,9 @@ export const bootstrapRealm = async (cfg: StackConfig, reset = false) => {
     );
     const outdated =
       tradingClient.ok && ((await tradingClient.json()) as []).length === 0;
-    if (!reset && !outdated) return "exists";
+    if (!reset && !outdated) {
+      return (await addPortalOrigins(cfg, call)) ? "updated" : "exists";
+    }
     await call(`/${cfg.keycloakRealm}`, { method: "DELETE" });
     recreated = true;
   }

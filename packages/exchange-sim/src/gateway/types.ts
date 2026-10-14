@@ -70,6 +70,11 @@ export interface ExecutionReport {
   liquidity?: Liquidity;
   rejectReason?: RejectReason;
   text?: string;
+  /**
+   * On an AMEND `REPLACED` of a resting order: true if it kept its time
+   * priority (same price, size not increased), false if it was re-queued.
+   */
+  priorityKept?: boolean;
   timestamp: number;
 }
 

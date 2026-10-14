@@ -3,6 +3,7 @@ import {
   type LimitOrderOptions,
   type MarketOrderOptions,
   OrderBook,
+  type OrderUpdate,
   Side as BookSide,
   type Trade,
 } from "@heswell/hft-limit-order-book";
@@ -135,12 +136,13 @@ export class InstrumentBook {
     return result;
   }
 
-  /** Cancel/replace (loses priority; may trade if the new price crosses). */
-  modify(id: string, update: { price?: number; size?: number }) {
-    const result = this.book.modify(
-      id,
-      update as { price: number; size?: number },
-    );
+  /**
+   * Amend a resting order. A size decrease at the same price keeps time
+   * priority (`result.priorityKept`); a price change or size increase
+   * re-queues it at the back of the level and may trade if it crosses.
+   */
+  modify(id: string, update: OrderUpdate) {
+    const result = this.book.modify(id, update);
     this.#afterOp(result);
     if (this.#sinks.has(id) && this.book.order(id) === undefined) {
       this.#sinks.delete(id);

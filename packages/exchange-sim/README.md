@@ -164,8 +164,9 @@ How execution reports are delivered:
   order keeps its current `ordStatus` and is not changed.
 - **Amends.** An amend may change the price and/or the total quantity, which must be ≥ `cumQty`. An
   amend down to `cumQty` reports `REPLACED` with status `FILLED`. An amend that crosses the book
-  reports `REPLACED` followed by `TRADE`s. Amends lose time priority (order-book `modify` semantics;
-  see docs/upstream-issues.md).
+  reports `REPLACED` followed by `TRADE`s. A quantity decrease at the same price keeps the order's
+  time priority; a price change or quantity increase re-queues it at the back of its level. The
+  `REPLACED` report's `priorityKept` says which applied.
 - **Identification.** Gateway orders sit on the book with `accountId = account`,
   `owner = "gateway"` and `meta = clOrdId`, so they are distinguishable from bot orders.
 

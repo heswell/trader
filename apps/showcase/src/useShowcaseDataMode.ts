@@ -17,18 +17,14 @@ export type RemoteStatus =
   | "connected"
   | "error";
 
-const remoteConnection = () => {
-  const ws = window.location.protocol === "https:" ? "wss" : "ws";
-  return {
-    connectionId: REMOTE_CONNECTION_ID,
-    // proxied by the dev server (rsbuild.config.ts) to the trading server
-    websocketUrl: `${ws}://${window.location.host}/remote/trading/ws`,
-    authUrl: "/remote/trading/authn",
-    username: USER,
-    // the standalone trading server uses permissive auth (any non-empty password)
-    password: USER,
-  };
-};
+// The standalone trading server (permissive auth: no password needed).
+// TRADING_REMOTE_* are set in rsbuild.config.ts.
+const remoteConnection = () => ({
+  connectionId: REMOTE_CONNECTION_ID,
+  websocketUrl: process.env.TRADING_REMOTE_WS as string,
+  authUrl: process.env.TRADING_REMOTE_AUTH as string,
+  username: USER,
+});
 
 /** Local test data (default) or a connection to the standalone trading server. */
 export const useShowcaseDataMode = () => {

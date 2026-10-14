@@ -8,12 +8,22 @@ const num = (name: string, fallback: number) => {
   const value = process.env[name];
   return value ? Number(value) : fallback;
 };
+const unique = (values: string[]) => [...new Set(values)];
+/** A local dev server is reachable via localhost and 127.0.0.1. */
+const loopbackOrigins = (port: number) => [
+  `http://localhost:${port}`,
+  `http://127.0.0.1:${port}`,
+];
 
 export const stackConfig = () => {
   const host = process.env.TRADER_HOSTNAME ?? "localhost";
   const keycloakPort = num("TRADER_KEYCLOAK_PORT", 8180);
   const hostPort = num("TRADER_HOST_PORT", 5100);
   const featuresPort = num("TRADER_FEATURES_PORT", 5110);
+  const hostOrigin = `http://${host}:${hostPort}`;
+  const featuresOrigin =
+    process.env.TRADER_FEATURES_ORIGIN ?? `http://${host}:${featuresPort}`;
+  const hostOrigins = unique([hostOrigin, ...loopbackOrigins(hostPort)]);
   return {
     host,
     keycloakPort,
@@ -29,10 +39,17 @@ export const stackConfig = () => {
     tradingWsPort: num("TRADER_TRADING_WS_PORT", 8192),
     tradingHttpsPort: num("TRADER_TRADING_HTTPS_PORT", 8544),
     hostPort,
-    hostOrigin: `http://${host}:${hostPort}`,
+    hostOrigin,
+    /** Every origin the host can be loaded from (Keycloak redirect URIs). */
+    hostOrigins,
     featuresPort,
-    featuresOrigin:
-      process.env.TRADER_FEATURES_ORIGIN ?? `http://${host}:${featuresPort}`,
+    featuresOrigin,
+    /** vuu.auth.cors.allowedOrigins of both Vuu servers. */
+    corsOrigins: unique([
+      ...hostOrigins,
+      featuresOrigin,
+      ...loopbackOrigins(featuresPort),
+    ]),
     /** vuu-server log level (trace|debug|info|warn|error|silent); unset = info. */
     logLevel: process.env.TRADER_LOG_LEVEL,
   };
@@ -70,7 +87,7 @@ export const featureConfigJson = (
  */
 export const serverEnv = (cfg: StackConfig) => {
   const shared = {
-    VUU_CORS_ALLOWED_ORIGIN: cfg.hostOrigin,
+    VUU_CORS_ALLOWED_ORIGINS: cfg.corsOrigins.join(","),
     VUU_KEYCLOAK_URL: cfg.keycloakUrl,
     ...(cfg.logLevel ? { VUU_LOG_LEVEL: cfg.logLevel } : {}),
   };

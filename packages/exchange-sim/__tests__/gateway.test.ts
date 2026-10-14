@@ -283,6 +283,56 @@ describe("SimExchangeGateway", () => {
     expect(take()[0].rejectReason).toBe(RejectReason.InstrumentHalted);
   });
 
+  test("a size-decrease amend keeps queue position; a price amend loses it", () => {
+    const { gw, book, rest, order, take } = setup();
+    const id = gw.submit(order({ quantity: 100 }));
+    rest(BookSide.BUY, 170, 50);
+    take();
+    const fillFirst = () => {
+      book.market({ id: `m${Math.random()}`, side: BookSide.SELL, size: 1 });
+      return take();
+    };
+
+    gw.amend(id, { quantity: 80 });
+    expect(take()[0]).toMatchObject({
+      execType: ExecType.Replaced,
+      leavesQty: 80,
+      priorityKept: true,
+    });
+    expect(book.book.order(id)).toMatchObject({ price: 170, size: 80 });
+    // still at the front of the 170 level: the next sell hits our order
+    expect(fillFirst()).toEqual([
+      expect.objectContaining({ execType: ExecType.Trade, lastQty: 1 }),
+    ]);
+
+    // a price change re-queues at the back of the (new) level
+    rest(BookSide.BUY, 169.99, 50);
+    gw.amend(id, { price: 169.99 });
+    expect(take()[0]).toMatchObject({
+      execType: ExecType.Replaced,
+      price: 169.99,
+      priorityKept: false,
+    });
+    // the bot at 170 trades first, then the earlier bot at 169.99
+    book.market({ id: "m-a", side: BookSide.SELL, size: 100 });
+    expect(take()).toEqual([]);
+    expect(fillFirst()).toEqual([
+      expect.objectContaining({ execType: ExecType.Trade, lastQty: 1 }),
+    ]);
+    expect(gw.getOrder(id)).toMatchObject({ cumQty: 2, leavesQty: 78 });
+  });
+
+  test("a size increase loses priority", () => {
+    const { gw, book, rest, order, take } = setup();
+    const id = gw.submit(order({ quantity: 10 }));
+    rest(BookSide.BUY, 170, 10);
+    take();
+    gw.amend(id, { quantity: 20 });
+    expect(take()[0]).toMatchObject({ leavesQty: 20, priorityKept: false });
+    book.market({ id: "m", side: BookSide.SELL, size: 10 });
+    expect(take()).toEqual([]);
+  });
+
   test("amend that crosses trades immediately", () => {
     const { gw, rest, order, take } = setup();
     rest(BookSide.SELL, 171, 10);

@@ -47,7 +47,7 @@ td.dispose();                    // in afterEach
 
 | API | |
 | --- | --- |
-| `createTradingTestData(options)` | Returns `{ exchange, oms, sim, omsService, schemas, clock, running, start, stop, advance, rpc, dispose }`. |
+| `createTradingTestData(options)` | Returns `{ exchange, oms, engine, sim, omsService, schemas, clock, running, start, stop, advance, rpc, dispose }`. |
 | `options` | `seed`; `exchange` (exchange-sim config, default `activeInstruments: 50`); `oms` (OMS config); `manualClock`; `autoStart` (`"on-subscribe"` by default, or `true`/`false`). |
 | `getTradingTestData()` / `resetTradingTestData()` | Process-wide singleton. |
 | `createTradingLocalServer(testData?, connectionId = "trading")` | A `LocalVuuServer` for `@vuu-ui/core`, or for `TradingDataProvider mode="local"`. |
@@ -56,9 +56,8 @@ td.dispose();                    // in afterEach
 
 Notes:
 
-- **One live instance at a time.** engine-local registers tables globally by name (upstream #21), so `dispose()`
-  the previous instance first.
-- Bundlers must map `node:crypto` to `@heswell/trading-test-data/shims/node-crypto` (upstream #24). For rspack,
-  see `apps/showcase/rsbuild.config.ts`.
+- Each instance has its own engine-local `LocalEngine` (`td.engine`), so several can be live at once.
+  `dispose()` releases its tables, timers and modules.
+- No bundler shims are needed: the browser bundle runs the real engines as-is.
 - This is a development and test dependency. Do not import it from `@heswell/trading-ui` sources or MF features.
 - Tests: `bun run test:ui` (happy-dom preload).

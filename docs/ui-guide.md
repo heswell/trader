@@ -237,16 +237,12 @@ reject reasons, edit sessions, visual links and permissions behave like the serv
   `td.advance(2_000)` to build the books. Call `td.dispose()` in `afterEach`.
 - `setCurrentUser({ name, authorizations: [] })` controls OMS account visibility. `admin` sees all accounts; alice
   sees only ACC-US-01. Market orders fill synchronously (gateway latency 0).
-- Bundlers must map `node:crypto` to `@heswell/trading-test-data/shims/node-crypto`. In rspack, use
-  `NormalModuleReplacementPlugin`, because a resolve alias does not apply to `node:` URIs; see
-  `apps/showcase/rsbuild.config.ts`.
 
 ## 7. Showcase
 
-`bun run dev:showcase` serves http://localhost:5001 on local data. "Remote server" connects through the dev-server
-proxy (`/remote/trading/*`) to the standalone trading server: `bun run dev:trading-server` (EXCHANGE + OMS,
-permissive auth over plain http/ws, :8095/:8447). Override the target with `TRADING_REMOTE_WS`, `TRADING_REMOTE_WS_PATH` and
-`TRADING_REMOTE_AUTH`. The `bun run dev` portal server uses Keycloak, so it is reached through vuu-portal and not
+`bun run dev:showcase` serves http://localhost:5001 on local data. "Remote server" connects directly (CORS) to the
+standalone trading server: `bun run dev:trading-server` (EXCHANGE + OMS, permissive auth over plain http/ws,
+:8095/:8447). Override the target with `TRADING_REMOTE_WS` and `TRADING_REMOTE_AUTH`. The `bun run dev` portal server uses Keycloak, so it is reached through vuu-portal and not
 through the showcase.
 
 **Adding an example.**
