@@ -321,11 +321,17 @@ export class SimExchangeGateway implements ExchangeGateway, FillSink {
       state.live = false;
       return this.#emit(state, ExecType.Replaced, OrdStatus.Filled, "AMEND");
     }
+    const resting = book.book.order(exchangeOrderId);
+    const priorityKept =
+      resting !== undefined &&
+      price === resting.price &&
+      report.leavesQty <= resting.size;
     this.#emit(
       state,
       ExecType.Replaced,
       workingStatusFor(report.cumQty, true),
       "AMEND",
+      { priorityKept },
     );
     book.modify(exchangeOrderId, { price, size: report.leavesQty });
   }
@@ -437,6 +443,7 @@ export class SimExchangeGateway implements ExchangeGateway, FillSink {
       liquidity: undefined,
       rejectReason: undefined,
       text: undefined,
+      priorityKept: undefined,
       ...extra,
       execId: this.#nextExecId(),
       execType,

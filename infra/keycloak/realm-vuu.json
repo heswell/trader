@@ -15,10 +15,12 @@
       "directAccessGrantsEnabled": false,
       "fullScopeAllowed": false,
       "redirectUris": [
-        "http://localhost:5100/*"
+        "http://localhost:5100/*",
+        "http://127.0.0.1:5100/*"
       ],
       "webOrigins": [
-        "http://localhost:5100"
+        "http://localhost:5100",
+        "http://127.0.0.1:5100"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256",

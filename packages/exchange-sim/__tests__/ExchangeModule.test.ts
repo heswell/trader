@@ -232,7 +232,7 @@ describe("ExchangeModule over the Vuu protocol", () => {
 /** Permissive auth: POST credentials to the plain-HTTP REST server for a token. */
 async function restLogin(port: number, username: string): Promise<string> {
   const response = await fetch(`http://localhost:${port}/api/authn`, {
-    body: JSON.stringify({ username, password: "password" }),
+    body: JSON.stringify({ username }),
     headers: { "Content-Type": "application/json" },
     method: "POST",
   });

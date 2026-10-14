@@ -7,8 +7,7 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./shims/node-crypto": "./src/shims/node-crypto.ts"
+    ".": "./src/index.ts"
   },
   "license": "MIT",
   "sideEffects": false,
@@ -19,7 +18,7 @@
     "@heswell/exchange-sim": "workspace:*",
     "@heswell/oms": "workspace:*",
     "@heswell/trading-schemas": "workspace:*",
-    "@heswell/vuu-data-engine-local": "2.1.0",
+    "@heswell/vuu-data-engine-local": "3.0.0",
     "@heswell/vuu-table": "1.0.2",
     "@vuu-ui/core": "4.0.0-alpha.21",
     "@vuu-ui/vuu-data-types": "4.0.0-alpha.21",
@@ -29,7 +28,7 @@
     "@vuu-ui/vuu-utils": "4.0.0-alpha.21"
   },
   "devDependencies": {
-    "@heswell/hft-limit-order-book": "1.0.0"
+    "@heswell/hft-limit-order-book": "2.0.0"
   },
   "peerDependencies": {
     "react": "^19.2.3",

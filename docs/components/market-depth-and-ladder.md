@@ -60,8 +60,8 @@ supported). Columns: **My bids | Bid qty | Price | Ask qty | My offers | (Volume
   - Double-click an own-order cell, or press `Delete` at the cursor, to cancel every own order at that level. If the
     cursor is on an own-order column, only that side is cancelled.
   - **Cancel all** calls `cancelAll` for the ric.
-- Amend and cancel apply only to NEW, PARTIALLY_FILLED and REPLACED orders (see `actionableOrders`). Amends lose
-  queue priority on the exchange.
+- Amend and cancel apply only to NEW, PARTIALLY_FILLED and REPLACED orders (see `actionableOrders`). A drag changes the
+  price, so the order goes to the back of the new level (only a same-price quantity decrease keeps queue priority).
 
 ```tsx
 <PriceLadder

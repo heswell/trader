@@ -94,6 +94,11 @@ portal server"; upstream #57).
 There is no proxy. The host fetches the remotes directly, and the features server sends CORS headers. The
 vuu-portal client in finos/vuu uses no haproxy either.
 
+The host can be opened at `http://localhost:5100` or `http://127.0.0.1:5100`. Both Vuu servers list both origins
+(and the features server's) in `vuu.auth.cors.allowedOrigins`, and the realm's vuu-portal client has both as
+redirect URIs. With other `TRADER_*` ports or hostname, `start:all` passes the derived list as
+`VUU_CORS_ALLOWED_ORIGINS` and adds the origins to the realm.
+
 ## Running
 
 `bun run start:all` (also `bun run dev`) does the following:
@@ -101,8 +106,8 @@ vuu-portal client in finos/vuu uses no haproxy either.
 1. Generates the dev certificate if missing. It builds the host and features if `dist` is missing, or always with
    `--build`.
 2. Writes `apps/portal-config/default-modules.stack.yaml` (features origin, gitignored). The servers run on the
-   committed `application.conf` / `application.trading.conf`; ports, CORS origin and Keycloak URL reach them as
-   per-process env vars (`VUU_HTTPS_PORT`, `VUU_WEBSOCKET_PORT`, `VUU_CORS_ALLOWED_ORIGIN`, `VUU_KEYCLOAK_URL`,
+   committed `application.conf` / `application.trading.conf`; ports, CORS origins and Keycloak URL reach them as
+   per-process env vars (`VUU_HTTPS_PORT`, `VUU_WEBSOCKET_PORT`, `VUU_CORS_ALLOWED_ORIGINS`, `VUU_KEYCLOAK_URL`,
    `VUU_PORTAL_DEFAULT_MODULES_FILE`, `VUU_PORTAL_MODULES_FILE`), derived from the `TRADER_*` settings
    (`scripts/stack/config.ts` `serverEnv`) and read by the confs' `key=${?VUU_*}` lines.
 3. Checks that every port is free. A busy port is reported with the `TRADER_*` variable that moves it. It never

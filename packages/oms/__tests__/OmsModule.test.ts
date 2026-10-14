@@ -123,6 +123,8 @@ describe("OmsModule over the Vuu protocol", () => {
     application = createVuuServerApplication({
       authProviders: {
         credentials: {
+          // like permissive auth: logins send no password
+          allowsEmptyPassword: true,
           authenticate: async (username) =>
             VuuUserWithAuthorizations(username, roles[username] ?? []),
         },

@@ -30,17 +30,18 @@ import {
 } from "@heswell/trading-schemas";
 import {
   AllowAllPermissionFilter,
+  createLocalEngine,
   getCurrentUser,
+  type LocalEngine,
   PermissionFilter,
   type PermissionFunction,
   type RpcService,
   Table,
-  tableContainer,
 } from "@heswell/vuu-data-engine-local";
 import { JoinTable } from "@heswell/vuu-table";
 import type { TableSchema } from "@vuu-ui/vuu-data-types";
 import type { RpcResult } from "@vuu-ui/vuu-protocol-types";
-import { parentOrdersSessionSave } from "./modules/parentOrdersSessionSave";
+import { parentOrdersEditHooks } from "./modules/parentOrdersEditHooks";
 import { TradingLocalModule } from "./modules/TradingLocalModule";
 import { visualLinksFor } from "./modules/visualLinks";
 
@@ -100,6 +101,8 @@ export interface TradingTestDataOptions {
 export interface TradingTestData {
   readonly exchange: TradingLocalModule<ExchangeTableName>;
   readonly oms: TradingLocalModule<OmsLocalTableName>;
+  /** The isolated engine both modules are registered with. */
+  readonly engine: LocalEngine;
   readonly sim: ExchangeSimulator;
   readonly omsService: OmsService;
   /** TableSchemas (identical to the server's TABLE_META_RESP), by table name. */
@@ -121,17 +124,12 @@ export interface TradingTestData {
    * exactly as a viewport RPC would be handled.
    */
   rpc(rpcName: RpcName, params: object, user?: TradingUser): RpcResult;
-  /** Stop timers, dispose engines and unregister the modules' join tables. */
+  /** Stop timers and dispose the sim, the OMS and the local engine. */
   dispose(): void;
 }
 
-const tableFor = (def: TableDefinition | JoinDefinition) => {
-  const table = new Table(toTableSchema(def));
-  // engine-local's getTableList resolves tables through the global
-  // tableContainer by bare table name (see docs/upstream-issues.md).
-  tableContainer.addTable(table);
-  return table;
-};
+const tableFor = (def: TableDefinition | JoinDefinition) =>
+  new Table(toTableSchema(def));
 
 const joinTableFor = (def: JoinDefinition, base: Table, join: Table) => {
   const engineTable = new JoinTable({
@@ -142,9 +140,7 @@ const joinTableFor = (def: JoinDefinition, base: Table, join: Table) => {
     rightColumn: def.right,
     joinType: def.type === "InnerJoin" ? "inner" : "leftOuter",
   });
-  const table = new Table(engineTable);
-  tableContainer.addTable(table);
-  return { table, engineTable };
+  return { table: new Table(engineTable), engineTable };
 };
 
 const isExchangeRpc = (name: string): name is ExchangeAdminRpcName =>
@@ -161,9 +157,8 @@ const forEachTable = <T extends string, V>(
 /**
  * Create the EXCHANGE and OMS engine-local modules, backed by the real
  * @heswell/exchange-sim and @heswell/oms engines running in the browser.
- *
- * Modules register globally (by name) in @heswell/vuu-data-engine-local, so
- * creating a second instance replaces the first: dispose() the old one.
+ * Each instance has its own engine-local LocalEngine, so several can be live
+ * at once.
  */
 export const createTradingTestData = ({
   seed,
@@ -311,7 +306,17 @@ export const createTradingTestData = ({
     OMS_TABLE_NAMES,
     (name) => omsTablesByName[name].schema,
   );
-  const omsServices = rpcServices(OMS_RPC_NAMES, () => oms);
+  const omsServices: RpcService[] = [
+    ...rpcServices(OMS_RPC_NAMES, () => oms),
+    {
+      // As OmsRpcHandler: orders are only entered with createOrder.
+      rpcName: "addRow",
+      service: async () => ({
+        type: "ERROR_RESULT",
+        errorMessage: "addRow: use createOrder to enter orders",
+      }),
+    },
+  ];
   // Every OMS table carries an `account` column (as OmsModule on the server).
   const permission: PermissionFunction = (viewport) => {
     const access = omsService.accessFor(viewport.user);
@@ -327,10 +332,12 @@ export const createTradingTestData = ({
     visualLinks: visualLinksFor<OmsLocalTableName>(omsTables, OMS_TABLE_NAMES),
     permissionFunctions: forEachTable(OMS_TABLE_NAMES, () => permission),
     onCreateDataSource,
-    beforeSessionSave: parentOrdersSessionSave((rpcName, params) =>
-      rpc(rpcName, params),
-    ),
+    editHooks: {
+      parentOrders: parentOrdersEditHooks(omsService, rpc),
+    },
   });
+
+  const engine = createLocalEngine({ modules: [exchange, oms] });
 
   if (autoStart === true) start();
 
@@ -339,6 +346,7 @@ export const createTradingTestData = ({
   return {
     exchange,
     oms,
+    engine,
     sim,
     omsService,
     schemas,
@@ -369,6 +377,7 @@ export const createTradingTestData = ({
     dispose() {
       stop();
       omsService.dispose();
+      engine.dispose();
       instrumentPricesJoin.engineTable.destroy();
       positionPricesJoin.engineTable.destroy();
     },

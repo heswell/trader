@@ -41,7 +41,7 @@ export class VuuClient {
   /** POST credentials to the REST auth endpoint (plain HTTP in tests) for a token. */
   static async fetchToken(authUrl: string, username: string) {
     const response = await fetch(authUrl, {
-      body: JSON.stringify({ username, password: "password" }),
+      body: JSON.stringify({ username }),
       headers: { "Content-Type": "application/json" },
       method: "POST",
     });

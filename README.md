@@ -83,7 +83,7 @@ bun install
 The portal server is the stock vuu-portal: `bunx vuu-portal --config apps/portal-config/application.conf`
 (or `bun run --filter @heswell/trading-portal-config start`). The trading server is
 `bun apps/portal-config/src/start-trading.ts` (`application.trading.conf`). Both confs take `${?VUU_*}` env overrides
-(`VUU_HTTPS_PORT`, `VUU_WEBSOCKET_PORT`, `VUU_CORS_ALLOWED_ORIGIN`, `VUU_KEYCLOAK_URL`, ...); `start:all` sets them
+(`VUU_HTTPS_PORT`, `VUU_WEBSOCKET_PORT`, `VUU_CORS_ALLOWED_ORIGINS`, `VUU_KEYCLOAK_URL`, ...); `start:all` sets them
 per process from the `TRADER_*` settings. See [Sessions per user](docs/portal-integration.md#sessions-per-user) for
 `VUU_MAX_SESSIONS_PER_USER` / `VUU_SESSION_LIMIT_POLICY`.
 

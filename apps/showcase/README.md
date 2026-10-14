@@ -9,11 +9,10 @@ bun run dev:trading-server      # optional: standalone EXCHANGE + OMS server for
 ```
 
 - **Local test data** (default): the engines run in the page and tick live.
-- **Remote server**: the app authenticates as `admin` and connects through the dev-server proxy:
-  - `/remote/trading/authn` → `http://localhost:8447/api/authn`
-  - `/remote/trading/ws` → `ws://localhost:8095/websocket-trading`
-
-  Override the targets with `TRADING_REMOTE_AUTH`, `TRADING_REMOTE_WS` and `TRADING_REMOTE_WS_PATH`.
+- **Remote server**: the app authenticates as `admin` (no password; permissive auth) and connects directly to
+  `http://localhost:8447/api/authn` and `ws://localhost:8095/websocket-trading`. The server's conf lists
+  `http://localhost:5001` and `http://127.0.0.1:5001` in `vuu.auth.cors.allowedOrigins`. Override the targets with
+  `TRADING_REMOTE_AUTH` and `TRADING_REMOTE_WS` (full URLs).
 
 To add an example, see [docs/ui-guide.md §7](../../docs/ui-guide.md#7-showcase): add
 `src/examples/<Component>Examples.tsx` and register it in `src/examples/index.ts`.

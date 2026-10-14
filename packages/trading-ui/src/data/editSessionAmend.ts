@@ -2,7 +2,7 @@ import type {
   DataSource,
   DataSourceConstructorProps,
 } from "@vuu-ui/vuu-data-types";
-import { Range } from "@vuu-ui/vuu-utils";
+import { Range, StaleUpdateError } from "@vuu-ui/vuu-utils";
 import { TradingRpcError } from "./tradingRpc";
 
 export interface OrderEdits {
@@ -14,8 +14,9 @@ const STALE_UPDATE = "stale update";
 
 /**
  * The save was refused because orders changed after the session began
- * (vuu-server snapshots each row at session start and compares it at save;
- * the per-row detail is in the session table's vuuMsg as stale:<key>:<cols>).
+ * (vuu-server and engine-local snapshot each row at session start and
+ * compare it at save; on the server the per-row detail is in the session
+ * table's vuuMsg as stale:<key>:<cols>).
  */
 export class StaleOrderEditError extends TradingRpcError {
   constructor(readonly orderIds: readonly string[]) {
@@ -145,7 +146,9 @@ export const openOrderEditSession = async (
         await end(true);
       } catch (err) {
         const message = errorMessage(err);
-        if (message === STALE_UPDATE) {
+        // VuuDataSource / engine-local throw StaleUpdateError; the RPC path
+        // (rebound remote session) reports the bare message.
+        if (err instanceof StaleUpdateError || message === STALE_UPDATE) {
           throw new StaleOrderEditError([...touched]);
         }
         throw err instanceof TradingRpcError

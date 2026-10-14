@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { exchangeTables, getTradingSchemas } from "@heswell/trading-schemas";
 import type { SelectRowRequest } from "@vuu-ui/vuu-protocol-types";
-import type { ModuleDataSource } from "@heswell/vuu-data-engine-local";
+import {
+  type ModuleDataSource,
+  STALE_UPDATE,
+} from "@heswell/vuu-data-engine-local";
+import { StaleUpdateError } from "@vuu-ui/vuu-utils";
 import {
   createTradingTestData,
   EXCHANGE_TABLE_NAMES,
@@ -10,11 +14,11 @@ import {
   type TradingTestData,
   visualLinksFor,
 } from "../src";
-import { Range } from "@vuu-ui/vuu-utils";
 import { collector, tick } from "./helpers";
 
 const ADMIN = { name: "admin", authorizations: [] };
-const RANGE = Range(0, 500);
+const VIEWER = { name: "viewer", authorizations: ["trading-supervisor"] };
+const RANGE = { from: 0, to: 500 };
 
 let td: TradingTestData;
 
@@ -30,6 +34,36 @@ beforeEach(() => {
 afterEach(() => td.dispose());
 
 const ricAt = (i: number) => td.sim.books[i].ric;
+const openSession = async (ds: ModuleDataSource) => {
+  const session = (await ds.beginEditSession?.()) as
+    | ModuleDataSource
+    | undefined;
+  if (!session) throw Error("no edit session");
+  await session.subscribe({ range: RANGE }, () => undefined);
+  return session;
+};
+/** A resting ACC-US-01 limit buy, 5% below the bid. */
+const restingOrder = () => {
+  td.advance(500);
+  const ric = ricAt(0);
+  const prices = td.exchange.getTable("prices");
+  const bid = prices.findByKey(ric)?.[prices.map.bid] as number;
+  const created = td.rpc(
+    "createOrder",
+    {
+      account: "ACC-US-01",
+      ric,
+      side: "BUY",
+      ordType: "LIMIT",
+      quantity: 100,
+      price: Math.floor(bid * 0.95),
+    },
+    ADMIN,
+  );
+  expect(created).toMatchObject({ type: "SUCCESS_RESULT" });
+  td.advance(100);
+  return (created as { data: { orderId: string } }).data.orderId;
+};
 const createDs = <T extends string>(
   module: { createDataSource: (table: T) => unknown },
   table: T,
@@ -67,6 +101,47 @@ describe("determinism", () => {
     });
     td.advance(2_000);
     expect(td.exchange.getTable("prices").data.map((r) => [...r])).toEqual(a);
+  });
+
+  test("two instances are independent (each has its own engine)", () => {
+    const other = createTradingTestData({
+      seed: 2,
+      manualClock: true,
+      exchange: { activeInstruments: 5 },
+      oms: { flowRate: 0 },
+    });
+    expect(other.engine).not.toBe(td.engine);
+    expect(
+      other.engine.tableContainer.getTable({
+        module: "EXCHANGE",
+        table: "prices",
+      }),
+    ).toBe(other.exchange.getTable("prices"));
+    expect(
+      td.engine.tableContainer.getTable({
+        module: "EXCHANGE",
+        table: "prices",
+      }),
+    ).toBe(td.exchange.getTable("prices"));
+    other.advance(500);
+    td.advance(500);
+    expect(
+      other.rpc(
+        "createOrder",
+        {
+          account: "ACC-US-01",
+          ric: other.sim.books[0].ric,
+          side: "BUY",
+          ordType: "MARKET",
+          quantity: 10,
+        },
+        ADMIN,
+      ).type,
+    ).toBe("SUCCESS_RESULT");
+    expect(other.oms.getTable("parentOrders").data.length).toBe(1);
+    expect(td.oms.getTable("parentOrders").data.length).toBe(0);
+    other.dispose();
+    expect(td.engine.getTableList().length).toBe(11);
   });
 
   test("advance requires a manual clock", () => {
@@ -263,11 +338,9 @@ describe("OMS rpc", () => {
     const { orderId } = (created as { data: { orderId: string } }).data;
     td.advance(100);
 
-    const session = await ds.beginEditSession?.();
-    expect(session).toBeDefined();
-    await session?.subscribe({ range: RANGE }, () => undefined);
-    await session?.editCell?.(orderId, "quantity", 200);
-    await session?.endEditSession?.(true);
+    const session = await openSession(ds);
+    await session.editCell?.(orderId, "quantity", 200);
+    await session.endEditSession?.(true);
     td.advance(100);
 
     const orders = td.oms.getTable("parentOrders");
@@ -275,6 +348,84 @@ describe("OMS rpc", () => {
     expect(row?.[orders.map.quantity]).toBe(200);
     // version 0 -> 1 proves the OMS amended (a direct write keeps 0)
     expect(row?.[orders.map.version]).toBe(1);
+    ds.unsubscribe();
+  });
+
+  test("deleting a row in a parentOrders edit session cancels the order", async () => {
+    setCurrentUser(ADMIN);
+    const ds = createDs(td.oms, "parentOrders");
+    await ds.subscribe({ range: RANGE }, () => undefined);
+    const orderId = restingOrder();
+    const session = await openSession(ds);
+    await session.deleteRow?.(orderId);
+    await session.endEditSession?.(true);
+    td.advance(100);
+    const orders = td.oms.getTable("parentOrders");
+    expect(orders.findByKey(orderId)?.[orders.map.status]).toBe("CANCELLED");
+    ds.unsubscribe();
+  });
+
+  test("only quantity and price are editable, and only in a session", async () => {
+    setCurrentUser(ADMIN);
+    const ds = createDs(td.oms, "parentOrders");
+    await ds.subscribe({ range: RANGE }, () => undefined);
+    const orderId = restingOrder();
+    expect(await ds.editCell?.(orderId, "quantity", 200)).toMatchObject({
+      type: "ERROR_RESULT",
+    });
+    const session = await openSession(ds);
+    expect(await session.editCell?.(orderId, "account", "X")).toMatchObject({
+      type: "ERROR_RESULT",
+    });
+    // amendOrder validation (quantity must be positive)
+    expect(await session.editCell?.(orderId, "quantity", -1)).toMatchObject({
+      type: "ERROR_RESULT",
+    });
+    expect(
+      await session.rpcRequest?.({
+        type: "RPC_REQUEST",
+        rpcName: "addRow",
+        params: { key: "NEW", data: {} },
+      }),
+    ).toMatchObject({
+      type: "ERROR_RESULT",
+      errorMessage: "addRow: use createOrder to enter orders",
+    });
+    await session.endEditSession?.(false);
+    ds.unsubscribe();
+  });
+
+  test("a save after the order changed is refused as a stale update", async () => {
+    setCurrentUser(ADMIN);
+    const ds = createDs(td.oms, "parentOrders");
+    await ds.subscribe({ range: RANGE }, () => undefined);
+    const orderId = restingOrder();
+    const session = await openSession(ds);
+    await session.editCell?.(orderId, "quantity", 300);
+    // another user's amend bumps the order's version under the session
+    expect(td.rpc("amendOrder", { orderId, quantity: 200 }, ADMIN).type).toBe(
+      "SUCCESS_RESULT",
+    );
+    td.advance(100);
+    const error = await session.endEditSession?.(true).catch((err) => err);
+    expect(error).toBeInstanceOf(StaleUpdateError);
+    expect(error.message).toBe(STALE_UPDATE);
+    const orders = td.oms.getTable("parentOrders");
+    expect(orders.findByKey(orderId)?.[orders.map.quantity]).toBe(200);
+    await session.endEditSession?.(false);
+    ds.unsubscribe();
+  });
+
+  test("a user without trading-execute cannot save a session", async () => {
+    setCurrentUser(ADMIN);
+    const orderId = restingOrder();
+    setCurrentUser(VIEWER);
+    const ds = createDs(td.oms, "parentOrders");
+    await ds.subscribe({ range: RANGE }, () => undefined);
+    const session = await openSession(ds);
+    await session.editCell?.(orderId, "quantity", 300);
+    const error = await session.endEditSession?.(true).catch((err) => err);
+    expect(String(error?.message)).toMatch(/^PERMISSION_DENIED: /);
     ds.unsubscribe();
   });
 

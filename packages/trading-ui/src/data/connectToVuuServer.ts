@@ -7,13 +7,13 @@ export interface VuuServerConnection {
   /** POST endpoint returning `{ token }`, e.g. http://localhost:8447/api/authn */
   authUrl: string;
   username: string;
-  /** Permissive auth accepts any non-empty password. */
-  password: string;
+  /** Not needed for permissive auth (vuu-server ≥ 4.2). */
+  password?: string;
 }
 
 /**
  * Authenticate against a vuu-server REST auth endpoint (permissive auth in
- * dev) and open a websocket connection with ConnectionManager. Resolves
+ * dev; the token is read from the JSON body) and open a websocket connection with ConnectionManager. Resolves
  * once connected; rejects on auth or connection failure.
  *
  * Inside vuu-portal the host does this - features use mode="inherit".
@@ -23,7 +23,7 @@ export const connectToVuuServer = async ({
   websocketUrl,
   authUrl,
   username,
-  password,
+  password = "",
 }: VuuServerConnection) => {
   const response = await fetch(authUrl, {
     method: "POST",
@@ -33,9 +33,7 @@ export const connectToVuuServer = async ({
   if (!response.ok) {
     throw Error(`authentication failed: ${response.status}`);
   }
-  const token =
-    response.headers.get("vuu-auth-token") ??
-    ((await response.json()) as { token?: string }).token;
+  const { token } = (await response.json()) as { token?: string };
   if (!token) throw Error("authentication failed: no token");
   const status = await ConnectionManager.connectTo(
     connectionId,

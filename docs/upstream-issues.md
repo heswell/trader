@@ -55,11 +55,14 @@ Workarounds are noted. Resolved issues are struck through.
     `resetLogging`, re-exported by vuu-server) configured by `vuu.log.level` / `vuu.log.levels.<name>` or
     `VUU_LOG_LEVEL`. Every trader conf has `vuu.log.level=${?VUU_LOG_LEVEL}`, `start:all` maps `TRADER_LOG_LEVEL`,
     the test preload defaults to `silent`, the bench sets `warn`, and the OMS logs through `getLogger("trader.oms")`.
-13. **`@heswell/hft-limit-order-book` `modify`** (fork of nodejs-order-book): `modify(id, {price?, size?})` re-inserts
+13. ~~**`@heswell/hft-limit-order-book` `modify`** (fork of nodejs-order-book): `modify(id, {price?, size?})` re-inserts
     the order, so it **loses time priority even when only reducing size**, which differs from real exchanges. It also
-    resets `timeInForce`/`stpMode` to defaults. Trade ids from `onTrade` are per book, so the simulator issues its own
-    global `TR<n>` ids. *Workaround:* the gateway documents "amend loses priority". Only resting DAY/GTC orders can be
-    amended, so the TIF reset doesn't matter yet. Bots only use cancel/new.
+    resets `timeInForce`/`stpMode` to defaults.~~ *Resolved: heswell/hft-limit-order-book#3; hft-limit-order-book 2.0.0.* A size decrease at the same price now resizes
+    in place and keeps priority (`priorityKept: true`); a price change or size increase re-queues at the back of the
+    level. TIF, postOnly, STP, account, owner, meta and OCO links are preserved, and the exported `OrderUpdate` type
+    replaced trader's cast in `InstrumentBook.modify`. The gateway's AMEND `REPLACED` report carries `priorityKept`,
+    and the "amend loses priority" caveats are gone. Trade ids from `onTrade` are still per book, so the simulator
+    still issues its own global `TR<n>` ids (by design, not an issue).
 14. ~~**The REST auth server now requires TLS** (`RestServer`: "REST HTTPS server requires SSL"), so the Phase 0
     stand-alone config (`vuu.ssl=false`) no longer started.~~ *Resolved: fixed in vuu-websocket#88; vuu-server 3.3.0.*
     With `vuu.auth.mode="permissive"`, `vuu.ssl=false` serves REST as `http://` and the websocket as `ws://`. The
@@ -99,40 +102,41 @@ Workarounds are noted. Resolved issues are struck through.
 
 ## Found in Phase 3 wave 1 (UI foundation)
 
-20. **`@heswell/vuu-data-engine-local` has import-time side effects.** Importing it creates the SIMUL/TEST/BASKET
-    demo modules and starts their timers, although the package declares `sideEffects: false`. Bundlers may
-    tree-shake it unexpectedly. A Bun/Node script that imports it also never exits on its own, because the timers
-    keep the process alive, so the script needs `process.exit`. *Workaround:* none needed in the browser; `bun test`
-    exits normally. Creating the modules lazily upstream would fix both problems.
-21. **engine-local's `tableContainer` is global and keyed by bare table name**, and `getTableList` and modules
-    resolve tables through it. A second test-data instance (or another module with a `prices` table) replaces the
-    first instance's tables. *Workaround:* `createTradingTestData` documents "one live instance at a time". Tests
-    create one per test and `dispose()` it in `afterEach`. Keying by `{module, table}` upstream would allow
-    several instances.
-22. **engine-local's default edit-session RPC services cannot be overridden** per table, so saving a `parentOrders`
-    session would write rows directly instead of going through the OMS. *Workaround:* `TradingLocalModule` has a
-    `beforeSessionSave` hook. It turns quantity/price edits into `amendOrder` and deletes into `cancelOrder`, and
-    clears `vuuAction` on the rows it handled so the default write skips them. An overridable session-save service
-    upstream would be cleaner.
+20. ~~**`@heswell/vuu-data-engine-local` has import-time side effects.**~~ *Resolved: vuu-websocket#96; vuu-data-engine-local 3.0.0.* Importing it creates no
+    modules or timers; `registerDemoModules(engine)` is explicit and `/legacy` keeps the old behaviour. Trader never
+    used the demo modules, so nothing changed; a Bun script importing it now exits on its own (it still needs a DOM;
+    see 77).
+21. ~~**engine-local's `tableContainer` is global and keyed by bare table name**~~ *Resolved: vuu-websocket#96; vuu-data-engine-local 3.0.0.* Each
+    `LocalEngine` (`createLocalEngine({modules})`) has its own container keyed by `{module, table}`, and
+    `createLocalVuuServer` takes the `engine`. `createTradingTestData` creates one engine per instance (`td.engine`),
+    no longer adds tables to the global container, and disposes with `engine.dispose()`. The "one live instance at a
+    time" restriction is gone; a test runs two instances side by side.
+22. ~~**engine-local's default edit-session RPC services cannot be overridden** per table~~ *Resolved: vuu-websocket#96; vuu-data-engine-local 3.0.0.*
+    `VuuModule.editHooks` replaced trader's `beforeSessionSave` hook (and its `vuuAction` clearing):
+    `parentOrdersEditHooks` makes only `quantity`/`price` editable (in a session), validates edits like the OMS,
+    compares every column for staleness, checks `canExecute` in `canSaveSession`, and routes edits to `amendOrder` and
+    deletes to `cancelOrder` in `applySessionSave`, like the server's `OmsRpcHandler`. A stale save throws vuu-ui's
+    `StaleUpdateError`, which `editSessionAmend` maps to `StaleOrderEditError` as for the server. engine-local's
+    `deleteRow` still differs; see 76.
 23. **`@vuu-ui/portal-build` `cssInline` covers only vuu packages by default, and `pluginCssInline` is not
     exported.** Components that inject CSS (`useComponentCssInjection` with `import css from "./X.css"`) need
     `"cssInline": {"include": ["/packages/trading-ui/", "/apps/features/"]}` in every feature's
     portal-build.json. Apps that don't use portal-build (the showcase) must reimplement the rewrite
     (`apps/showcase/css-inline-loader.cjs`). Exporting the plugin would let other rsbuild apps reuse it.
-24. **`@heswell/hft-limit-order-book` imports `randomUUID` from `node:crypto`**, which breaks browser bundles of
-    exchange-sim. In rspack a `resolve.alias` does not apply to `node:` URIs. *Workaround:*
-    `@heswell/trading-test-data/shims/node-crypto` (it uses `globalThis.crypto.randomUUID`), mapped with
-    `rspack.NormalModuleReplacementPlugin`. Using `globalThis.crypto` upstream (available in Node ≥ 19 and in
-    browsers) would remove the need for the shim.
-25. **The REST auth CORS config allows a single origin** (`vuu.auth.cors.allowedOrigin`), so dev apps on other
-    ports cannot authenticate directly. *Workaround:* the showcase dev server proxies `/remote/trading/*` to the
-    trading server, which makes the requests same-origin. Allowing a list of origins would help.
-26. **engine-local `subscribe` requires a vuu-utils `Range` object** (`Range(0, 100)`), not a plain `{from, to}`
-    (`range.reset` is called), unlike the remote `VuuDataSource`. This is minor; tests use `Range` from
-    `@vuu-ui/vuu-utils`.
-27. **Permissive auth rejects an empty password** (HTTP 401). It returns the token both in the body and in a
-    `vuu-auth-token` header. Not a bug, but undocumented. `connectToVuuServer` requires a password and reads either
-    form.
+24. ~~**`@heswell/hft-limit-order-book` imports `randomUUID` from `node:crypto`**, which breaks browser bundles of
+    exchange-sim.~~ *Resolved: heswell/hft-limit-order-book#3; hft-limit-order-book 2.0.0.* It uses `globalThis.crypto`. The `@heswell/trading-test-data/shims/node-crypto`
+    shim, its export and the showcase's `NormalModuleReplacementPlugin` are gone.
+25. ~~**The REST auth CORS config allows a single origin** (`vuu.auth.cors.allowedOrigin`), so dev apps on other
+    ports cannot authenticate directly.~~ *Resolved: vuu-websocket#95; vuu-server 4.2.0 / vuu-portal 2.1.2.* `vuu.auth.cors.allowedOrigins` takes a list. The
+    standalone trading and exchange-sim confs list the showcase (`localhost`/`127.0.0.1:5001`), and the showcase
+    calls the trading server directly; its `/remote/trading/*` dev-server proxy is gone.
+26. ~~**engine-local `subscribe` requires a vuu-utils `Range` object**~~ *Resolved: vuu-websocket#96; vuu-data-engine-local 3.0.0.* A plain `{from, to}` is
+    accepted; `tradingTestData.test.ts` uses one. Code typed against vuu-ui's `DataSource` still needs `Range(...)`
+    (see 75).
+27. ~~**Permissive auth rejects an empty password** (HTTP 401).~~ *Resolved: vuu-websocket#95; vuu-server 4.2.0 / vuu-portal 2.1.2.* An empty or missing password is
+    accepted (`vuu.auth.permissive.users` is still an allow-list when set), and the token in both the JSON body and
+    the `vuu-auth-token` header (exposed for CORS) is documented. `connectToVuuServer`'s password is optional and it
+    reads the body; the showcase and the server tests send no password.
 28. **`positions` / `positionPrices` have no sector (or any instrument static) column**, so PositionsView cannot group by
     sector; it groups by currency then account or ric. Adding `sector` to `instruments` and a join column to
     `positionPrices` would enable it. (This repo's schema, not vuu.)
@@ -218,8 +222,11 @@ Workarounds are noted. Resolved issues are struck through.
 53. **Restoring vuu-layout JSON needs the component registry, which is per bundle.** A remote cannot restore a
     layout containing components it did not register, so the workspace saves View states but not its
     arrangement.
-54. **`vuu.auth.cors.allowedOrigin` takes a single origin**, so a host served from two origins (e.g. localhost and
-    a LAN name) needs two configs.
+54. ~~**`vuu.auth.cors.allowedOrigin` takes a single origin**, so a host served from two origins (e.g. localhost and
+    a LAN name) needs two configs.~~ *Resolved: vuu-websocket#95; vuu-server 4.2.0 / vuu-portal 2.1.2.* Both portal-config confs list the host and features origins
+    via `localhost` and `127.0.0.1`. `start:all` passes the list derived from the `TRADER_*` settings as
+    `VUU_CORS_ALLOWED_ORIGINS` and adds the host origins to the realm's vuu-portal redirect URIs, so the host works
+    from either origin.
 55. **`PersistedStateAPI` has no delete or clear.** *Workaround:* `save(key, null)`, and the whole document is
     read with `load()` to find keys by prefix.
 56. **A parent module cannot reset its child modules' persisted state.** The children are separate modules with
@@ -367,3 +374,18 @@ and the `@vuu-ui/vuu-icons` main entry (#52) still lack types; `PersistedStateAP
     recognise. The shell renders nothing (no banner or message) and never retries, even after other tabs close.
     Showing the reason, and retrying or offering a retry, would fix it. *Workaround:* reload the tab after closing
     another; trader allows 5 sessions per user so this is rare.
+
+## Found in the vuu-server 4.2.0 / engine-local 3.0.0 upgrade
+
+75. **vuu-ui's `DataSource.subscribe` type requires a full `Range`** (`@vuu-ui/vuu-data-types`, 4.0.0-alpha.21:
+    `equals`, `reset`, `withBuffer`, ...), although engine-local and `VuuDataSource` only read `from`/`to`. Code
+    typed against `DataSource` (`useDataSourceRows`, `editSessionAmend`, `useTradingDataSource.test.tsx`) keeps
+    `Range(from, to)`. Accepting `{from, to}` in the type would remove them.
+76. **engine-local's `deleteRow` differs from vuu-server's.** (vuu-websocket, vuu-data-engine-local 3.0.0.) With
+    vuu-ui's default `mode: "hard"` it removes the row from the session table, so `applySessionSave` never sees the
+    delete; outside an edit session it deletes the source row. vuu-server marks the row `vuuAction = "deleteRow"` in
+    either mode and refuses `deleteRow` outside a session. *Workaround:* `TradingLocalModule` overrides the
+    `deleteRow` service with the server's behaviour.
+77. **Importing `@heswell/vuu-data-engine-local` needs a DOM.** (vuu-websocket, vuu-data-engine-local 3.0.0.) Its
+    entry imports `@vuu-ui/vuu-ui-controls`, which creates a `ResizeObserver` at import, so a plain Bun/Node script
+    fails with `ResizeObserver is not defined`. *Workaround:* tests preload `scripts/dom-test-setup.ts` (happy-dom).
