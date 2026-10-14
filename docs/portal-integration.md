@@ -151,6 +151,27 @@ alice's account `ACC-US-01` only has her own orders.
 | `TRADER_FEATURES_PORT` / `TRADER_FEATURES_ORIGIN` | 5110 / `http://$TRADER_HOSTNAME:5110` |
 | `TRADER_LOG_LEVEL` | unset = `info`. Passed to both Vuu servers as `VUU_LOG_LEVEL` (`trace`, `debug`, `info`, `warn`, `error` or `silent`) |
 
+### Sessions per user
+
+Each browser tab opens one Vuu session on the portal server and one on the trading server (the trading modules in a
+tab share a ref-counted connection). Every trader conf sets
+
+```
+vuu.server.maxSessionsPerUser=5
+vuu.server.sessionLimitPolicy="reject-new"
+```
+
+so a user can work in up to five tabs. A sixth login is refused: vuu-server closes its socket with code `4003`
+(`maximum sessions (5) reached for user …`) and the existing tabs carry on. Closing or reloading a tab frees its
+session at once, so a reload at the limit still works. The refused tab shows a blank page and does not retry when
+a slot frees up (upstream issue 74); reload it once another tab is closed.
+
+`evict-oldest` (close the oldest session with `4001`) would suit traders better, because a forgotten tab could not
+block a new one. But vuu-ui ignores the close code and reconnects an evicted tab after a second, which then evicts
+the next oldest, so with more tabs than the limit every tab is disconnected in turn, forever (upstream issue 73).
+Switch to `evict-oldest` once that is fixed. Override the settings with `VUU_MAX_SESSIONS_PER_USER` /
+`VUU_SESSION_LIMIT_POLICY` (set them in the shell before `start:all`; they apply to both servers).
+
 ## Users and roles
 
 There are two sets of client roles, because the portal and the trading server are separate Keycloak clients:

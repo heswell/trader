@@ -56,9 +56,6 @@ const isParentOrders = (table: DataTable) =>
  * version), so getStaleColumns is deliberately not overridden.
  */
 export class OmsRpcHandler extends CreateSessionTableRpcHandler {
-  /** canSaveSession -> applySessionSave: applySessionSave has no ctx. */
-  readonly #saveUsers = new WeakMap<PreparedSessionSave, TradingUser>();
-
   constructor(
     tableContainer: TableContainer,
     readonly oms: OmsService,
@@ -119,7 +116,6 @@ export class OmsRpcHandler extends CreateSessionTableRpcHandler {
     if (!this.oms.accessFor(user).canExecute) {
       return `${RejectReason.PermissionDenied}: ${user.name} may not trade`;
     }
-    this.#saveUsers.set(prepared, user);
     return true;
   }
 
@@ -131,8 +127,9 @@ export class OmsRpcHandler extends CreateSessionTableRpcHandler {
   protected applySessionSave(
     sessionTable: InMemSessionDataTable,
     prepared: PreparedSessionSave,
+    ctx?: RequestContext,
   ): SessionSaveResult {
-    const user = this.#saveUsers.get(prepared);
+    const user = ctx?.user as TradingUser | undefined;
     if (!user) return error("endEditSession: save not authorised");
     const errors: string[] = [];
     const results: { orderId: string; action: string; status?: string }[] = [];
