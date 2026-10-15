@@ -30,6 +30,14 @@ export type OmsTableName = keyof typeof omsTables;
 export class TableSink implements OmsSink {
   #tables: Partial<Record<OmsTableName, OmsTable>> = {};
   #pending = new Map<OmsTableName, Map<string, Record<string, unknown>>>();
+  /** Rows written (insert + update) per table, for perf stats. */
+  readonly writes: Record<OmsTableName, number> = {
+    accounts: 0,
+    parentOrders: 0,
+    childOrders: 0,
+    fills: 0,
+    positions: 0,
+  };
 
   attach(name: OmsTableName, table: OmsTable) {
     this.#tables[name] = table;
@@ -55,6 +63,7 @@ export class TableSink implements OmsSink {
       pending.set(key, values);
       return;
     }
+    this.writes[name]++;
     if (table.rowIndexAtKey(key) === -1) {
       const ordered = toRowArray(def, values as never);
       const row: RowValue[] = new Array(table.columns.length).fill(0);

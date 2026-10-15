@@ -13,6 +13,7 @@ import {
 import { loadOmsConfig } from "./config";
 import { createOms } from "./engine/OmsService";
 import { OmsModule } from "./modules/oms/OmsModule";
+import { startPerfStatsReporter } from "./perf/PerfStatsReporter";
 
 /**
  * Stand-alone trading server: EXCHANGE + OMS in one VuuServer (auth mode and
@@ -37,5 +38,15 @@ export default async function main(config: Config = ConfigFactory.load()) {
     modules: [ExchangeModule(sim), OmsModule(oms)],
   });
   await application.start();
-  return { application, sim, oms };
+  // perf harness hook (scripts/perf/ws-load.ts); off unless the env var is set
+  const statsFile = process.env.TRADER_PERF_STATS_FILE;
+  const stopPerfStats = statsFile
+    ? startPerfStatsReporter(
+        statsFile,
+        sim,
+        oms,
+        Number(process.env.TRADER_PERF_STATS_INTERVAL_MS ?? 1_000),
+      )
+    : undefined;
+  return { application, sim, oms, stopPerfStats };
 }

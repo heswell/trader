@@ -128,6 +128,17 @@
         "@heswell/hft-limit-order-book": "2.0.0",
       },
     },
+    "packages/perf": {
+      "name": "@heswell/trading-perf",
+      "version": "0.1.0",
+      "dependencies": {
+        "@heswell/oms": "workspace:*",
+        "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.21",
+      },
+      "devDependencies": {
+        "playwright": "^1.64.1",
+      },
+    },
     "packages/trading-schemas": {
       "name": "@heswell/trading-schemas",
       "version": "0.1.0",
@@ -263,6 +274,8 @@
     "@heswell/service-utils": ["@heswell/service-utils@1.2.1", "", { "dependencies": { "@heswell/vuu-table": "^1.0.2" }, "peerDependencies": { "@vuu-ui/vuu-protocol-types": "^4.0.0-alpha.20" } }, "sha512-y/yRt5Mr3X4hgLDsQ5dZbsr31B6vr7QbHp39RWuiwU5Ot7EtFnolXwBykV0eYbZGe9ggHVCcYj1bT9xTXxDalw=="],
 
     "@heswell/trading-features": ["@heswell/trading-features@workspace:apps/features/trading"],
+
+    "@heswell/trading-perf": ["@heswell/trading-perf@workspace:packages/perf"],
 
     "@heswell/trading-portal-config": ["@heswell/trading-portal-config@workspace:apps/portal-config"],
 

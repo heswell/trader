@@ -14,3 +14,6 @@ apps/portal-config/modules.yaml
 .run/
 apps/portal-config/default-modules.stack.yaml
 apps/portal-config/modules.stack.yaml
+
+# perf harness output (packages/perf)
+perf-results/

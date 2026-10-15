@@ -54,13 +54,14 @@ packages/
   oms/                OMS module: orders, risk, routing, positions, background flow (see its README)
   trading-ui/         reusable React components, data hooks, instrument linking, TradingFeatureRoot (docs/ui-guide.md)
   trading-test-data/  in-browser EXCHANGE + OMS (real engines on @heswell/vuu-data-engine-local)
+  perf/               perf tools: WS load harness, UI tick-rate profiler, ladder frame budget (docs/performance.md)
 apps/
   features/trading/   the portal features: catalog.ts -> one MF remote per feature (served on :5110)
   portal-host/        the portal host: PortalShell, Keycloak login, nav (:5100)
   portal-config/      portal + trading server configs and launchers, default-modules.yaml (generated)
   showcase/           rsbuild dev app: trading-ui examples on local data or a server, :5001
 infra/keycloak/       realm export (roles, clients, seeded users) for docker-compose
-docs/                 ui-guide, portal-integration, protocol-parity, upstream-issues, screenshots/
+docs/                 ui-guide, portal-integration, protocol-parity, performance, upstream-issues, screenshots/
 scripts/              start-all, stack/ (config, Keycloak realm, static server), features/ (sync, build), certs
 ```
 
@@ -98,6 +99,11 @@ per process from the `TRADER_*` settings. See [Sessions per user](docs/portal-in
   a happy-dom preload for React rendering).
 - `bun run keycloak:realm export|bootstrap`: write `infra/keycloak/realm-vuu.json`, or apply it to a running
   Keycloak.
+- `bun run perf:ws [--preset=smoke|heavy] [--target=local|stack]`: end-to-end WS throughput (N clients × M
+  viewports on the ticking tables).
+- `bun run perf:ui [--scenario=trader-workspace] [--throttle=4]` and `bun run perf:ladder`: UI tick-rate profile and
+  depth-ladder frame budget in headless Chrome (opt-in). See [docs/performance.md](docs/performance.md) for flags
+  and baseline numbers.
 
 UI showcase: `bun run dev:showcase` (http://localhost:5001, local data; its "Remote server" toggle uses
 `bun run dev:trading-server`).
@@ -140,7 +146,8 @@ stand-alone server. Not verified in a browser: the full Keycloak login and host 
 ## CI
 
 `.github/workflows/ci.yml` installs, typechecks, lints, format-checks, tests, checks the generated feature config
-(`features:check`) and builds the host and features.
+(`features:check`), builds the host and features, and runs the `perf:ws` smoke preset (5 clients × 5 viewports,
+`--assert`).
 
 ## Upstream
 
