@@ -1,5 +1,9 @@
 import { Side as BookSide } from "@heswell/hft-limit-order-book";
-import { createExchangeSimulator, ManualClock } from "@heswell/exchange-sim";
+import {
+  createExchangeSimulator,
+  type ExchangeSimulatorOptions,
+  ManualClock,
+} from "@heswell/exchange-sim";
 import {
   type CreateOrderRequest,
   OrdType,
@@ -16,14 +20,28 @@ export const VOD = "VOD.L";
 export interface SetupOptions extends Partial<OmsEngineOptions> {
   /** One-way gateway latency (ms) driven by a ManualScheduler. */
   latencyMs?: number;
+  /** Extra exchange-sim config (e.g. a session schedule). */
+  simConfig?: ExchangeSimulatorOptions["config"];
+  /** Initial clock time. */
+  time?: number;
 }
 
 /** A real exchange-sim (no bots) + OmsEngine with a deterministic clock. */
-export const setup = ({ latencyMs = 0, ...options }: SetupOptions = {}) => {
-  const clock = new ManualClock();
+export const setup = ({
+  latencyMs = 0,
+  simConfig,
+  time,
+  ...options
+}: SetupOptions = {}) => {
+  const clock = new ManualClock(time);
   const sim = createExchangeSimulator({
     clock: clock.now,
-    config: { instruments: `${AAPL},${VOD}`, mmRate: 0, takerRate: 0 },
+    config: {
+      instruments: `${AAPL},${VOD}`,
+      mmRate: 0,
+      takerRate: 0,
+      ...simConfig,
+    },
   });
   const scheduler = new ManualScheduler();
   const gateway =

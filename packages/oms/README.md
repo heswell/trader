@@ -216,6 +216,14 @@ Set in `application.conf` as `oms.<key>`, or with the env var `OMS_<UPPER_SNAKE>
 | `permissionMode` | `auto` | `auto` or `strict` (see above). |
 | `gatewayLatencyMs` | 0 | Simulated one-way OMS↔exchange latency. More than 0 makes `PENDING_*` states visible. |
 
+### Persistence
+
+`persistence.<key>` / `PERSISTENCE_<KEY>` / `TRADER_PERSISTENCE_<KEY>` (`store` = `memory` (default) | `file` |
+`sqlite`, `dir`, `fsync`, `snapshotIntervalMs`, `snapshotEveryEntries`, `reset`, `cancelOrphans`). With a durable
+store, `Main` recovers the exchange and OMS state before the tables attach, journals every change, and snapshots
+periodically and on shutdown. `createTradingPersistence` (`@heswell/oms/persistence`) wires it for other servers
+(the `start:all` trading server). See [docs/persistence.md](../../docs/persistence.md).
+
 ## Not done / deferred
 
 - **TWAP / algo slicing.** Skipped. Routing is 1:1 parent → child. The parent/child tables and `childOrderId`
@@ -248,7 +256,7 @@ Set in `application.conf` as `oms.<key>`, or with the env var `OMS_<UPPER_SNAKE>
 
 ## Tests
 
-`bun test` in this package runs 68 tests:
+`bun test` in this package runs 94 tests:
 
 | file | tests | covers |
 | --- | --- | --- |
@@ -259,4 +267,7 @@ Set in `application.conf` as `oms.<key>`, or with the env var `OMS_<UPPER_SNAKE>
 | config | 3 | Config |
 | engine | 22 | Lifecycle, partial fills, amend/cancel races, IOC/FOK/market, end of day, positions. Uses a real exchange-sim with a manual clock and scheduler. |
 | flow | 3 | Deterministic background flow |
-| OmsModule | 14 | Over WebSocket against a real `VuuServer` with EXCHANGE + OMS: RPC → fill → rows, the join, amend/cancel, rejects, permission filtering, the edit session (amend / cancel, stale rows, edit validation, hidden rows and other sessions, strict mode). |
+| OmsModule | 15 | Over WebSocket against a real `VuuServer` with EXCHANGE + OMS: RPC → fill → rows, the join, amend/cancel, rejects, permission filtering, the edit session (amend / cancel, stale rows, edit validation, hidden rows and other sessions, strict mode). |
+| session | 3 | Exchange trading session: DAY expiry at the close, `MARKET_CLOSED`, `endOfDay`. |
+| persistence | 16 | Restart from memory / file stores (graceful and crash), fill replay from exec reports, idempotence, reconcile (lost requests, orphans), DAY expiry while down, session / admin state, compaction, `kill -9` of a child process, config, reset. See [docs/persistence.md](../../docs/persistence.md#tests). |
+| persistenceServer | 1 | A real `VuuServer` on a file store: order and partial fill over WebSocket, stop, a new server recovers the rows, and the order then fills. |

@@ -527,3 +527,18 @@ See [resilience.md](resilience.md) for the behaviour these work around.
     (p50 36 ms in the smoke run), and a burst of more than 300 changed rows per session waits extra cycles.
     Conf keys for the cycle time and batch size would fix it. *Workaround:* none; the baselines in
     docs/performance.md include it.
+
+## Found in Phase 5C (persistence: order state survives a restart)
+
+See [persistence.md](persistence.md).
+
+93. **hft-limit-order-book's snapshot types are not exported, and a snapshot drops the market price and trade
+    count.** (`@heswell/hft-limit-order-book` 2.0.0.) `OrderBook.snapshot()` returns `Snapshot` and the
+    `OrderBookOptions.snapshot` constructor option takes one, but the package entry exports neither `Snapshot` nor
+    `ILimitOrder` / `IStopOrder`, so a caller that stores and filters a snapshot has to derive them from
+    `OrderBookOptions`. The snapshot also omits the private `_marketPrice` (last trade price, used by stop orders)
+    and `_tradeCount`, so a book restored from it starts with `marketPrice` 0 and its trade count at 0. Exporting
+    the types and adding `marketPrice` / `tradeCount` to `Snapshot` (restored by the constructor) would fix it.
+    *Workaround:* `exchange-sim/src/engine/persistence.ts` derives `BookSnapshot` / `ILimitOrder` from
+    `OrderBookOptions["snapshot"]`; the simulator keeps its own trade-id counter (journaled in blocks) and fair
+    value, and uses no stop orders, so the missing market price has no effect today.

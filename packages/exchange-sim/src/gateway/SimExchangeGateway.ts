@@ -48,6 +48,21 @@ interface OrderState {
   notional: number;
 }
 
+/** Persisted gateway state (live orders only; see docs/persistence.md). */
+export interface GatewayState {
+  orderSeq: number;
+  execSeq: number;
+  /** `account\u0000clOrdId` of every order ever submitted (duplicate check). */
+  clOrdIds: string[];
+  orders: { report: ExecutionReport; amended: boolean }[];
+}
+
+/** Called with every report, in order, before any listener sees it. */
+export type GatewayJournal = (report: ExecutionReport) => void;
+
+/** Numeric part of an `E<n>` exec id / `X<n>` order id (NaN if not ours). */
+export const idSeq = (id: string) => Number(id.slice(1));
+
 const TERMINAL: ReadonlySet<string> = new Set([
   OrdStatus.Filled,
   OrdStatus.Cancelled,
@@ -64,8 +79,85 @@ export class SimExchangeGateway implements ExchangeGateway, FillSink {
   #draining = false;
   #orderSeq = 0;
   #execSeq = 0;
+  #journal: GatewayJournal | undefined;
 
   constructor(private readonly venue: GatewayVenue) {}
+
+  /** Write-ahead hook: every report is journaled before listeners see it. */
+  setJournal(journal: GatewayJournal | undefined) {
+    this.#journal = journal;
+  }
+
+  /** Live (resting) orders: exchange order id + last report. */
+  *liveOrders(): Generator<ExecutionReport> {
+    for (const state of this.#orders.values()) {
+      if (state.live) yield { ...state.report };
+    }
+  }
+
+  exportState(): GatewayState {
+    const orders: GatewayState["orders"] = [];
+    for (const state of this.#orders.values()) {
+      if (state.live)
+        orders.push({ report: { ...state.report }, amended: state.amended });
+    }
+    return {
+      orderSeq: this.#orderSeq,
+      execSeq: this.#execSeq,
+      clOrdIds: [...this.#clOrdIds],
+      orders,
+    };
+  }
+
+  /**
+   * Rebuild order state from a snapshot plus the journaled reports after it
+   * (applied in order: the last persistent report of an order is its state).
+   * Live orders are bound to their book here; putting them back in the
+   * order book is the simulator's job. Call before any order flow.
+   */
+  restoreState(state: GatewayState | undefined, reports: ExecutionReport[]) {
+    this.#orders.clear();
+    this.#clOrdIds.clear();
+    this.#orderSeq = state?.orderSeq ?? 0;
+    this.#execSeq = state?.execSeq ?? 0;
+    for (const key of state?.clOrdIds ?? []) this.#clOrdIds.add(key);
+    for (const { report, amended } of state?.orders ?? []) {
+      this.#orders.set(report.exchangeOrderId, this.#stateFor(report, amended));
+    }
+    for (const report of reports) {
+      this.#execSeq = Math.max(this.#execSeq, idSeq(report.execId) || 0);
+      this.#orderSeq = Math.max(
+        this.#orderSeq,
+        idSeq(report.exchangeOrderId) || 0,
+      );
+      if (
+        report.responseTo === "NEW" &&
+        report.rejectReason !== RejectReason.DuplicateClOrdId &&
+        report.account &&
+        report.clOrdId
+      ) {
+        this.#clOrdIds.add(`${report.account}\u0000${report.clOrdId}`);
+      }
+      const persistent =
+        report.execType !== ExecType.Rejected || report.responseTo === "NEW";
+      if (!persistent) continue;
+      const previous = this.#orders.get(report.exchangeOrderId);
+      const amended =
+        (previous?.amended ?? false) || report.execType === ExecType.Replaced;
+      this.#orders.set(report.exchangeOrderId, this.#stateFor(report, amended));
+    }
+  }
+
+  #stateFor(report: ExecutionReport, amended: boolean): OrderState {
+    const live = !TERMINAL.has(report.ordStatus);
+    return {
+      report: { ...report },
+      book: live ? this.venue.getBook(report.ric) : undefined,
+      live,
+      amended,
+      notional: report.avgPx * report.cumQty,
+    };
+  }
 
   onExecutionReport(listener: ExecutionReportListener) {
     this.#listeners.add(listener);
@@ -155,6 +247,23 @@ export class SimExchangeGateway implements ExchangeGateway, FillSink {
       this.#release();
     }
     return expired;
+  }
+
+  /**
+   * Expire one live order (removing it from its book), e.g. an order the
+   * persistence reconcile finds with no owner. Returns false if not live.
+   */
+  expireOrder(exchangeOrderId: string, text: string) {
+    const state = this.#orders.get(exchangeOrderId);
+    if (!state?.live) return false;
+    this.#hold++;
+    try {
+      state.book?.cancel(exchangeOrderId);
+      this.#expire(state, undefined, text);
+    } finally {
+      this.#release();
+    }
+    return true;
   }
 
   // ---------------------------------------------------------------- requests
@@ -519,7 +628,9 @@ export class SimExchangeGateway implements ExchangeGateway, FillSink {
     this.#draining = true;
     try {
       const queue = this.#queue;
+      const journal = this.#journal;
       for (let i = 0; i < queue.length; i++) {
+        journal?.(queue[i]);
         for (const listener of this.#listeners) listener(queue[i]);
       }
       queue.length = 0;

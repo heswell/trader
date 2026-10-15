@@ -128,6 +128,14 @@ EXCHANGE_SIM_PRE_OPEN_MINUTES=30` for a real-time day, or `EXCHANGE_SIM_SESSION_
 2-minute simulated day (08:00–16:30 scaled, i.e. ~42s open). The dev / e2e stacks configure no
 session, so they are always open.
 
+## Persistence
+
+`ExchangeSimulator.exportState()` / `restoreState(state, journal)` / `setJournal(fn)` / `catchUpSession(lastActiveAt)`
+make the books durable. Only customer (gateway) orders are kept, through hft-limit-order-book's `snapshot()`, in
+time priority. Bots re-quote after a restore. Also kept: the trade-id counter (journaled in blocks of 1000, so ids
+are never reused after a crash), the market phase and admin settings. A restart after a session close expires DAY
+orders. The OMS's `TradingPersistence` drives it; see [docs/persistence.md](../../docs/persistence.md).
+
 ## Admin RPCs
 
 Admin RPCs are registered on every `EXCHANGE` table (including `instrumentPrices`) through

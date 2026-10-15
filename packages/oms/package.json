@@ -8,7 +8,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./engine": "./src/engine.ts",
-    "./main": "./src/Main.ts"
+    "./main": "./src/Main.ts",
+    "./persistence": "./src/persistence/index.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -17,6 +18,7 @@
   },
   "dependencies": {
     "@heswell/exchange-sim": "workspace:*",
+    "@heswell/trading-persistence": "workspace:*",
     "@heswell/trading-schemas": "workspace:*",
     "@heswell/vuu-server": "^4.2.0",
     "@vuu-ui/vuu-data-types": "4.0.0-alpha.21",

@@ -66,6 +66,8 @@ export interface ChildOrder extends OrderInfo {
   expiring?: boolean;
   /** Reject of the last amend / cancel request, for the synchronous RPC result. */
   lastRequestReject?: OrderReject;
+  /** Sequence of the last exchange exec id (`E<n>`) applied (replay is idempotent). */
+  lastExecSeq?: number;
 }
 
 export interface Fill {
@@ -121,6 +123,56 @@ const fail = <T>(
   orderId?: string,
 ): OmsResult<T> => ({ ok: false, reason, text, orderId });
 
+/** Persisted OMS state (see docs/persistence.md). */
+export interface OmsState {
+  version: 1;
+  orderSeq: number;
+  parents: ParentOrder[];
+  children: ChildOrder[];
+  fills: Fill[];
+  positions: Position[];
+}
+
+/**
+ * One OMS journal entry: the latest version of every row changed since the
+ * previous batch (rows are upserts; fills are appended, keyed by execId).
+ */
+export interface OmsJournalBatch {
+  orderSeq: number;
+  parents?: ParentOrder[];
+  children?: ChildOrder[];
+  fills?: Fill[];
+  positions?: Position[];
+}
+
+export type OmsJournal = (batch: OmsJournalBatch) => void;
+
+/** Outcome of `reconcile` (all problems are also logged). */
+export interface ReconcileResult {
+  /** Children resolved because the request they were waiting on was lost. */
+  resolved: string[];
+  /** Working children with no live exchange order, expired. */
+  expired: string[];
+  /** Live exchange orders no OMS child owns (exchange order ids). */
+  orphans: string[];
+  /** Human-readable discrepancies. */
+  discrepancies: string[];
+}
+
+/** What reconcile needs to know about the exchange. */
+export interface ExchangeView {
+  getOrder(exchangeOrderId: string): ExecutionReport | undefined;
+  liveOrders(): Iterable<ExecutionReport>;
+}
+
+const execSeqOf = (execId: string) => {
+  const n = Number(execId.slice(1));
+  return Number.isFinite(n) ? n : undefined;
+};
+
+const childRecord = ({ lastRequestReject: _, ...child }: ChildOrder) =>
+  child as ChildOrder;
+
 export interface OmsEngineOptions {
   gateway: OmsGateway;
   accounts: readonly Account[];
@@ -154,6 +206,12 @@ export class OmsEngine {
   #clOrdIdsByTrader = new Map<string, Set<string>>();
   #unsubscribe: () => void;
   #fillListeners = new Set<(fill: Fill) => void>();
+  #journal: OmsJournal | undefined;
+  #dirtyParents = new Set<ParentOrder>();
+  #dirtyChildren = new Set<ChildOrder>();
+  #dirtyPositions = new Set<Position>();
+  #newFills: Fill[] = [];
+  #flushScheduled = false;
 
   constructor({
     gateway,
@@ -179,6 +237,224 @@ export class OmsEngine {
 
   dispose() {
     this.#unsubscribe();
+  }
+
+  // ---------------------------------------------------------------- persistence
+
+  /**
+   * Journal hook: changed rows are batched and handed over at the end of the
+   * current tick, or earlier by `flushJournal()` (the persistence layer
+   * flushes before every exchange journal entry, keeping causal order).
+   */
+  setJournal(journal: OmsJournal | undefined) {
+    this.#journal = journal;
+  }
+
+  #markDirty() {
+    if (!this.#journal || this.#flushScheduled) return;
+    this.#flushScheduled = true;
+    queueMicrotask(() => this.flushJournal());
+  }
+
+  /** Hand pending row changes to the journal now. */
+  flushJournal() {
+    this.#flushScheduled = false;
+    const journal = this.#journal;
+    if (!journal) return;
+    if (
+      this.#dirtyParents.size === 0 &&
+      this.#dirtyChildren.size === 0 &&
+      this.#dirtyPositions.size === 0 &&
+      this.#newFills.length === 0
+    ) {
+      return;
+    }
+    const batch: OmsJournalBatch = { orderSeq: this.#orderSeq };
+    if (this.#dirtyParents.size) batch.parents = [...this.#dirtyParents];
+    if (this.#dirtyChildren.size)
+      batch.children = [...this.#dirtyChildren].map(childRecord);
+    if (this.#newFills.length) batch.fills = this.#newFills;
+    if (this.#dirtyPositions.size) batch.positions = [...this.#dirtyPositions];
+    this.#dirtyParents = new Set();
+    this.#dirtyChildren = new Set();
+    this.#dirtyPositions = new Set();
+    this.#newFills = [];
+    journal(batch);
+  }
+
+  exportState(): OmsState {
+    return {
+      version: 1,
+      orderSeq: this.#orderSeq,
+      parents: [...this.parents.values()],
+      children: [...this.children.values()].map(childRecord),
+      fills: this.fills,
+      positions: [...this.positions.values()],
+    };
+  }
+
+  /**
+   * Replace all orders, fills and positions with `state` (a snapshot with
+   * journal batches applied, see `applyJournalBatch`), rebuild the indexes
+   * and publish every row to the sink. Call before any order flow.
+   */
+  restoreState(state: OmsState) {
+    if (state.version !== 1) {
+      throw Error(`unsupported OMS state version ${state.version}`);
+    }
+    this.parents.clear();
+    this.children.clear();
+    this.positions.clear();
+    this.fills.length = 0;
+    this.#byClOrdId.clear();
+    this.#byExchangeId.clear();
+    this.#clOrdIdsByTrader.clear();
+    let orderSeq = state.orderSeq;
+    for (const parent of state.parents) {
+      this.parents.set(parent.orderId, parent);
+      orderSeq = Math.max(orderSeq, Number(parent.orderId.slice(2)) || 0);
+      if (parent.clOrdId) {
+        const used = this.#clOrdIdsByTrader.get(parent.trader) ?? new Set();
+        used.add(parent.clOrdId);
+        this.#clOrdIdsByTrader.set(parent.trader, used);
+      }
+      this.#publishParent(parent);
+    }
+    this.#orderSeq = orderSeq;
+    for (const child of state.children) {
+      this.children.set(child.orderId, child);
+      this.#byClOrdId.set(child.orderId, child);
+      for (let k = 1; k <= child.requestSeq; k++) {
+        this.#byClOrdId.set(`${child.orderId}.r${k}`, child);
+        this.#byClOrdId.set(`${child.orderId}.c${k}`, child);
+      }
+      if (child.exchangeOrderId)
+        this.#byExchangeId.set(child.exchangeOrderId, child);
+      this.#publishChild(child);
+    }
+    for (const fill of state.fills) {
+      this.fills.push(fill);
+      this.#sink.fill?.(fill);
+    }
+    for (const position of state.positions) {
+      this.positions.set(position.id, position);
+      this.#sink.position?.({ ...position });
+    }
+    this.#dirtyParents.clear();
+    this.#dirtyChildren.clear();
+    this.#dirtyPositions.clear();
+    this.#newFills = [];
+  }
+
+  /**
+   * Apply an execution report outside the gateway subscription, e.g. one
+   * replayed from the journal. Reports already applied to the child (exec
+   * seq <= child.lastExecSeq) are ignored.
+   */
+  applyExecutionReport(report: ExecutionReport) {
+    this.#onExecutionReport(report);
+  }
+
+  /**
+   * After a restore (and replay of journaled reports), make the OMS agree
+   * with the exchange:
+   * - a child still waiting on a request whose report never came (lost in
+   *   the restart) is resolved: PENDING_NEW -> REJECTED, PENDING_REPLACE ->
+   *   replace rejected, PENDING_CANCEL -> cancel rejected;
+   * - a working child with no live exchange order is expired;
+   * - quantity / status differences are logged;
+   * - live exchange orders with no OMS child are returned as orphans.
+   */
+  reconcile(view: ExchangeView): ReconcileResult {
+    const result: ReconcileResult = {
+      resolved: [],
+      expired: [],
+      orphans: [],
+      discrepancies: [],
+    };
+    const note = (text: string) => {
+      result.discrepancies.push(text);
+      this.#log(`reconcile: ${text}`);
+    };
+    const lost = "request lost in server restart";
+    for (const child of this.children.values()) {
+      const parent = this.parents.get(child.parentOrderId);
+      if (!parent || isTerminalStatus(child.state.status)) continue;
+      const apply = (event: OrderEvent) => {
+        try {
+          this.#applyChild(child, event);
+          this.#applyParent(parent, event);
+        } catch (err) {
+          if (!(err instanceof OrderStateError)) throw err;
+          note(`${child.orderId} ${event.type} not applied: ${err.message}`);
+        }
+      };
+      const { status } = child.state;
+      if (!child.exchangeOrderId) {
+        if (status === OrdStatus.PendingNew) {
+          apply({
+            type: "reject",
+            reason: RejectReason.InternalError,
+            text: lost,
+          });
+          result.resolved.push(child.orderId);
+          note(
+            `${child.orderId} was never acknowledged by the exchange: rejected`,
+          );
+        }
+        continue;
+      }
+      const exchange = view.getOrder(child.exchangeOrderId);
+      if (status === OrdStatus.PendingReplace) {
+        apply({
+          type: "replaceReject",
+          reason: RejectReason.InternalError,
+          text: lost,
+        });
+        result.resolved.push(child.orderId);
+      } else if (status === OrdStatus.PendingCancel) {
+        apply({
+          type: "cancelReject",
+          reason: RejectReason.InternalError,
+          text: lost,
+        });
+        result.resolved.push(child.orderId);
+      }
+      if (child.expiring) {
+        child.expiring = false;
+        this.#dirtyChildren.add(child);
+      }
+      if (!exchange || isTerminalStatus(exchange.ordStatus)) {
+        note(
+          `${child.orderId} is ${child.state.status} but exchange order ${child.exchangeOrderId} is ${exchange?.ordStatus ?? "unknown"}: expired`,
+        );
+        apply({
+          type: "expired",
+          text: "order not found at the exchange after restart",
+        });
+        result.expired.push(child.orderId);
+        continue;
+      }
+      const { cumQty, quantity, price } = child.state;
+      if (
+        exchange.cumQty !== cumQty ||
+        exchange.quantity !== quantity ||
+        (child.ordType === OrdType.Limit && exchange.price !== price)
+      ) {
+        note(
+          `${child.orderId} OMS qty ${quantity} @ ${price} cum ${cumQty} != exchange ${exchange.exchangeOrderId} qty ${exchange.quantity} @ ${exchange.price} cum ${exchange.cumQty}`,
+        );
+      }
+    }
+    for (const order of view.liveOrders()) {
+      if (!this.#byExchangeId.has(order.exchangeOrderId)) {
+        result.orphans.push(order.exchangeOrderId);
+        note(
+          `exchange order ${order.exchangeOrderId} (${order.account} ${order.clOrdId}) has no OMS order`,
+        );
+      }
+    }
+    return result;
   }
 
   onFill(listener: (fill: Fill) => void) {
@@ -429,6 +705,7 @@ export class OmsEngine {
     this.#applyParent(parent, event);
     this.#applyChild(child, event);
     const clOrdId = `${child.orderId}.r${++child.requestSeq}`;
+    this.#publishChild(child);
     this.#byClOrdId.set(clOrdId, child);
     child.lastRequestReject = undefined;
     this.#gateway.amend(child.exchangeOrderId as string, {
@@ -464,6 +741,7 @@ export class OmsEngine {
     }
     child.expiring = expiring;
     const clOrdId = `${child.orderId}.c${++child.requestSeq}`;
+    this.#publishChild(child);
     this.#byClOrdId.set(clOrdId, child);
     child.lastRequestReject = undefined;
     this.#gateway.cancel(child.exchangeOrderId as string, { clOrdId });
@@ -583,6 +861,10 @@ export class OmsEngine {
       lastUpdate: fill.timestamp,
     };
     this.positions.set(id, position);
+    if (this.#journal) {
+      this.#dirtyPositions.add(position);
+      this.#markDirty();
+    }
     this.#sink.position?.({ ...position });
   }
 
@@ -593,6 +875,16 @@ export class OmsEngine {
       this.#byExchangeId.get(report.exchangeOrderId) ??
       this.#byClOrdId.get(report.clOrdId);
     if (!child) return;
+    const execSeq = execSeqOf(report.execId);
+    if (execSeq !== undefined) {
+      if (child.lastExecSeq !== undefined && execSeq <= child.lastExecSeq)
+        return;
+      child.lastExecSeq = execSeq;
+    }
+    if (this.#journal) {
+      this.#dirtyChildren.add(child);
+      this.#markDirty();
+    }
     if (!child.exchangeOrderId && report.exchangeOrderId) {
       child.exchangeOrderId = report.exchangeOrderId;
       this.#byExchangeId.set(report.exchangeOrderId, child);
@@ -671,6 +963,10 @@ export class OmsEngine {
       timestamp: report.timestamp,
     };
     this.fills.push(fill);
+    if (this.#journal) {
+      this.#newFills.push(fill);
+      this.#markDirty();
+    }
     this.#sink.fill?.(fill);
     this.#applyFillToPosition(fill);
     for (const listener of this.#fillListeners) listener(fill);
@@ -715,6 +1011,10 @@ export class OmsEngine {
   }
 
   #publishParent(parent: ParentOrder) {
+    if (this.#journal) {
+      this.#dirtyParents.add(parent);
+      this.#markDirty();
+    }
     this.#sink.parentOrder?.({
       orderId: parent.orderId,
       clOrdId: parent.clOrdId ?? "",
@@ -726,6 +1026,10 @@ export class OmsEngine {
   }
 
   #publishChild(child: ChildOrder) {
+    if (this.#journal) {
+      this.#dirtyChildren.add(child);
+      this.#markDirty();
+    }
     this.#sink.childOrder?.({
       childOrderId: child.orderId,
       parentOrderId: child.parentOrderId,

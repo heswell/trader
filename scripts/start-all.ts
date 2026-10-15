@@ -21,7 +21,10 @@
  * --prepare (certs, builds and the generated portal module list only, then
  * exit: used by the Procfile), --keycloak-only (Keycloak + realm only, kept
  * running until stopped: used by scripts/e2e/resilience.ts, which runs and
- * restarts the servers itself).
+ * restarts the servers itself), --restart-trading (respawn the trading
+ * server when it exits, e.g. `kill <pid>` / `kill -9 <pid>` of the pid in
+ * .run/trading.pid, instead of stopping the stack: manual restart /
+ * persistence testing, docs/persistence.md).
  * The servers use the committed apps/portal-config/*.conf; TRADER_* settings
  * reach them as per-process VUU_* env vars (scripts/stack/config.ts serverEnv).
  * TRADER_TRADING_CLIENT_SECRET overrides the trading server's Keycloak client
@@ -93,6 +96,7 @@ const spawn = (
   name: string,
   cmd: string[],
   env: Record<string, string> = {},
+  { restart = false, pidFile }: { restart?: boolean; pidFile?: string } = {},
 ) => {
   const proc = Bun.spawn(cmd, {
     cwd: root,
@@ -113,12 +117,17 @@ const spawn = (
   };
   pipe(proc.stdout);
   pipe(proc.stderr);
+  if (pidFile) writeFileSync(pidFile, String(proc.pid));
+  const child = { name, proc };
   proc.exited.then((code) => {
     if (stopping) return;
-    log(`${name} exited with code ${code}`);
-    shutdown(code || 1);
+    log(`${name} exited with code ${code ?? proc.signalCode}`);
+    if (!restart) return shutdown(code || 1);
+    children.splice(children.indexOf(child), 1);
+    log(`restarting ${name} (--restart-trading)`);
+    spawn(name, cmd, env, { restart, pidFile });
   });
-  children.push({ name, proc });
+  children.push(child);
   return proc;
 };
 
@@ -295,7 +304,15 @@ if (args.has("--keycloak-only")) {
 
 // ---- 4. servers ------------------------------------------------------------
 spawn("portal", ["bun", "./scripts/stack/serve.ts", "portal"]);
-spawn("trading", ["bun", "./scripts/stack/serve.ts", "trading"]);
+spawn(
+  "trading",
+  ["bun", "./scripts/stack/serve.ts", "trading"],
+  {},
+  {
+    restart: args.has("--restart-trading"),
+    pidFile: resolve(runDir, "trading.pid"),
+  },
+);
 spawn("features", ["bun", "./scripts/stack/serve.ts", "features"]);
 spawn("host", ["bun", "./scripts/stack/serve.ts", "host"]);
 

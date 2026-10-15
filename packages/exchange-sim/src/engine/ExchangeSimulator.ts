@@ -1,6 +1,12 @@
-import type { Trade } from "@heswell/hft-limit-order-book";
+import {
+  OrderType as BookOrderType,
+  TimeInForce as BookTif,
+  type Trade,
+} from "@heswell/hft-limit-order-book";
 import {
   BotType,
+  ExecType,
+  OrdType,
   RejectReason,
   roundToLot,
   TradingPhase,
@@ -10,7 +16,11 @@ import {
   type ExchangeSimConfig,
   validateConfig,
 } from "../config";
-import { SimExchangeGateway } from "../gateway/SimExchangeGateway";
+import {
+  GATEWAY_OWNER,
+  SimExchangeGateway,
+} from "../gateway/SimExchangeGateway";
+import type { ExecutionReport } from "../gateway/types";
 import {
   type ExchangeTables,
   MarketDataPublisher,
@@ -25,7 +35,16 @@ import { type Clock, systemClock } from "../util/clock";
 import { Random } from "../util/random";
 import { MarketMaker } from "./bots/MarketMaker";
 import { NoiseTaker } from "./bots/NoiseTaker";
-import { fromBookSide, InstrumentBook } from "./InstrumentBook";
+import { fromBookSide, InstrumentBook, toBookSide } from "./InstrumentBook";
+import {
+  type BookSettings,
+  type ExchangeJournal,
+  type ExchangeJournalEntry,
+  type ExchangeRestoreResult,
+  type ExchangeState,
+  type ILimitOrder,
+  TRADE_ID_BLOCK,
+} from "./persistence";
 import { type SessionPhase, TradingSession } from "./TradingSession";
 
 export interface SimulatedInstrument {
@@ -96,6 +115,9 @@ export class ExchangeSimulator {
   #forced: { phase: SessionPhase; until: number | undefined } | undefined;
   /** Book events deferred because a step hit maxOpsPerStep. */
   deferredSteps = 0;
+  #journal: ExchangeJournal | undefined;
+  /** Trade ids up to this value are journaled as reserved. */
+  #tradeReserved = 0;
 
   constructor({
     config = {},
@@ -234,6 +256,10 @@ export class ExchangeSimulator {
   }
 
   #onTrade(book: InstrumentBook, trade: Trade) {
+    if (this.#journal && this.#tradeSeq >= this.#tradeReserved) {
+      this.#tradeReserved = this.#tradeSeq + TRADE_ID_BLOCK;
+      this.#journal({ k: "tradeSeq", upTo: this.#tradeReserved });
+    }
     const tradeId = `TR${String(++this.#tradeSeq).padStart(9, "0")}`;
     if (this.#publisher || this.#tapeListeners.size > 0) {
       const tape: TapeTrade = {
@@ -295,11 +321,17 @@ export class ExchangeSimulator {
    */
   updateSession(now = this.clock()) {
     const forced = this.#forced;
+    let changed = false;
     if (forced && forced.until !== undefined && now >= forced.until) {
       this.#forced = undefined;
+      changed = true;
     }
     const phase = this.#forced?.phase ?? this.session.phaseAt(now);
-    if (phase !== this.#marketPhase) this.#applyMarketPhase(phase);
+    if (phase !== this.#marketPhase) {
+      this.#applyMarketPhase(phase);
+      changed = true;
+    }
+    if (changed) this.#journalSession();
     return phase;
   }
 
@@ -310,6 +342,7 @@ export class ExchangeSimulator {
   setMarketPhase(phase: SessionPhase, now = this.clock()): string[] {
     this.#forced = { phase, until: this.session.nextChangeAt(now) };
     this.updateSession(now);
+    this.#journalSession();
     return this.#books.map((book) => book.ric);
   }
 
@@ -404,6 +437,7 @@ export class ExchangeSimulator {
   setVolatility(ric: string | undefined, volatility: number): string[] {
     const targets = this.#target(ric);
     for (const { book } of targets) book.model.volatility = volatility;
+    this.#journalBooks(targets);
     return targets.map(({ book }) => book.ric);
   }
 
@@ -412,6 +446,7 @@ export class ExchangeSimulator {
     book.phase = TradingPhase.Halted;
     book.haltReason = reason;
     book.dirty = true;
+    this.#journalBooks(this.#target(ric));
     return [book.ric];
   }
 
@@ -426,6 +461,7 @@ export class ExchangeSimulator {
     book.phase = this.#marketPhase;
     book.haltReason = "";
     book.dirty = true;
+    this.#journalBooks(this.#target(ric));
     return [book.ric];
   }
 
@@ -439,7 +475,235 @@ export class ExchangeSimulator {
       if (bot !== BotType.Taker) sim.mmRate = rate;
       if (bot !== BotType.MarketMaker) sim.takerRate = rate;
     }
+    this.#journalBooks(targets);
     return targets.map(({ book }) => book.ric);
+  }
+
+  // ---------------------------------------------------------------- persistence
+
+  /**
+   * Write-ahead journal hook (see docs/persistence.md): gateway reports,
+   * trade id reservations, admin and session changes. Undefined = off.
+   */
+  setJournal(journal: ExchangeJournal | undefined) {
+    this.#journal = journal;
+    this.gateway.setJournal(
+      journal ? (r) => journal({ k: "report", r }) : undefined,
+    );
+    // Re-reserve on the next trade so the journal covers every id issued.
+    this.#tradeReserved = this.#tradeSeq;
+  }
+
+  #journalSession() {
+    this.#journal?.({
+      k: "session",
+      marketPhase: this.#marketPhase,
+      forced: this.#forced ? { ...this.#forced } : undefined,
+    });
+  }
+
+  #settings({ book, mmRate, takerRate }: SimulatedInstrument): BookSettings {
+    return {
+      ric: book.ric,
+      phase: book.phase,
+      haltReason: book.haltReason,
+      volatility: book.model.volatility,
+      mmRate,
+      takerRate,
+    };
+  }
+
+  #journalBooks(targets: SimulatedInstrument[]) {
+    if (!this.#journal) return;
+    for (const sim of targets)
+      this.#journal({ k: "book", b: this.#settings(sim) });
+  }
+
+  /** Persistable state: counters, session, settings and resting gateway orders. */
+  exportState(): ExchangeState {
+    return {
+      version: 1,
+      tradeSeq: this.#tradeSeq,
+      marketPhase: this.#marketPhase,
+      forced: this.#forced ? { ...this.#forced } : undefined,
+      gateway: this.gateway.exportState(),
+      books: [...this.#simulated.values()].map((sim) => {
+        const { book } = sim;
+        const snapshot = book.book.snapshot();
+        const orders = [...snapshot.bids, ...snapshot.asks].flatMap((level) =>
+          level.orders.filter((o) => o.owner === GATEWAY_OWNER),
+        );
+        return {
+          ...this.#settings(sim),
+          fair: book.model.fairValue,
+          stats: { ...book.stats },
+          seq: book.seq,
+          orders,
+        };
+      }),
+    };
+  }
+
+  /**
+   * Restore from a snapshot plus the exchange journal entries after it, in
+   * order. Call on a fresh simulator, before tables attach, `start()` or any
+   * order flow. Live gateway orders go back into their books in time
+   * priority (snapshot order, then journal order for new / re-queued ones);
+   * bot liquidity is not restored. Book stats and fair values come from the
+   * snapshot (journal entries only carry customer order state).
+   */
+  restoreState(
+    state: ExchangeState | undefined,
+    entries: readonly ExchangeJournalEntry[] = [],
+  ): ExchangeRestoreResult {
+    if (state && state.version !== 1) {
+      throw Error(`unsupported exchange state version ${state.version}`);
+    }
+    let tradeSeq = state?.tradeSeq ?? 0;
+    let marketPhase = state?.marketPhase ?? this.#marketPhase;
+    let forced = state?.forced;
+    const settings = new Map<string, BookSettings>();
+    const reports: ExecutionReport[] = [];
+    for (const book of state?.books ?? []) settings.set(book.ric, book);
+    for (const entry of entries) {
+      switch (entry.k) {
+        case "report":
+          reports.push(entry.r);
+          break;
+        case "tradeSeq":
+          tradeSeq = Math.max(tradeSeq, entry.upTo);
+          break;
+        case "book":
+          settings.set(entry.b.ric, entry.b);
+          break;
+        case "session":
+          marketPhase = entry.marketPhase;
+          forced = entry.forced;
+          break;
+      }
+    }
+    for (const r of reports) {
+      if (r.tradeId) tradeSeq = Math.max(tradeSeq, Number(r.tradeId.slice(2)));
+    }
+    this.#tradeSeq = tradeSeq;
+    this.#tradeReserved = tradeSeq;
+    this.#forced = forced ? { ...forced } : undefined;
+    this.#marketPhase = marketPhase;
+
+    this.gateway.restoreState(state?.gateway, reports);
+
+    // Time priority: snapshot order, then (re-)queued in journal order.
+    const snapshotOrders = new Map<string, ILimitOrder>();
+    const priority: string[] = [];
+    for (const book of state?.books ?? []) {
+      for (const order of book.orders) {
+        snapshotOrders.set(order.id, order);
+        priority.push(order.id);
+      }
+    }
+    const requeued = new Set<string>();
+    for (const r of reports) {
+      if (
+        (r.execType === ExecType.New && r.responseTo === "NEW") ||
+        (r.execType === ExecType.Replaced && r.priorityKept !== true)
+      ) {
+        requeued.add(r.exchangeOrderId);
+        priority.push(r.exchangeOrderId);
+      }
+    }
+    const live = new Map<string, ExecutionReport>();
+    for (const report of this.gateway.liveOrders())
+      live.set(report.exchangeOrderId, report);
+    const byRic = new Map<string, ILimitOrder[]>();
+    const placed = new Set<string>();
+    // Last occurrence wins for re-queued orders, first for the rest.
+    const lastIndex = new Map<string, number>();
+    priority.forEach((id, i) => {
+      lastIndex.set(id, i);
+    });
+    priority.forEach((id, i) => {
+      const report = live.get(id);
+      if (!report || placed.has(id) || report.ordType !== OrdType.Limit) return;
+      if (requeued.has(id) && lastIndex.get(id) !== i) return;
+      placed.add(id);
+      const saved = snapshotOrders.get(id);
+      const order: ILimitOrder = {
+        ...(saved ?? {
+          id,
+          type: BookOrderType.LIMIT,
+          side: toBookSide(report.side),
+          origSize: report.quantity,
+          time: report.timestamp,
+          timeInForce: BookTif.GTC,
+          makerQty: report.leavesQty,
+          takerQty: 0,
+          accountId: report.account,
+          owner: GATEWAY_OWNER,
+          meta: report.clOrdId,
+        }),
+        size: report.leavesQty,
+        price: report.price,
+      };
+      const list = byRic.get(report.ric) ?? [];
+      list.push(order);
+      byRic.set(report.ric, list);
+    });
+
+    for (const sim of this.#simulated.values()) {
+      const { book } = sim;
+      const saved = state?.books.find((b) => b.ric === book.ric);
+      const s = settings.get(book.ric);
+      if (s) {
+        book.model.volatility = s.volatility;
+        sim.mmRate = s.mmRate;
+        sim.takerRate = s.takerRate;
+        book.haltReason = s.haltReason;
+      }
+      book.phase =
+        s?.phase === TradingPhase.Halted ? TradingPhase.Halted : marketPhase;
+      if (saved) book.model.fairValue = saved.fair;
+      book.restore(byRic.get(book.ric) ?? [], this.gateway, {
+        seq: saved?.seq ?? 0,
+        stats: saved?.stats,
+      });
+    }
+    const droppedOrders = [...live.values()]
+      .filter(
+        (r) => !this.#simulated.has(r.ric) || !placed.has(r.exchangeOrderId),
+      )
+      .map((r) => r.exchangeOrderId);
+    return { restoredOrders: placed.size, droppedOrders, tradeSeq };
+  }
+
+  /**
+   * After a restore: apply the session schedule at `now`. If a market close
+   * fell between `since` (when the state was last persisted) and `now`, DAY
+   * orders are expired (EXPIRED reports reach the OMS), as they would have
+   * been had the server been running. Returns the expired exchange order ids.
+   */
+  catchUpSession(since: number, now = this.clock()) {
+    const expired = this.#closeBetween(since, now)
+      ? this.gateway.expireDayOrders(
+          undefined,
+          "DAY order expired at market close (server was down)",
+        )
+      : [];
+    this.updateSession(now);
+    return expired;
+  }
+
+  #closeBetween(since: number, now: number) {
+    const { session } = this;
+    if (!session.scheduled || now <= since) return false;
+    if (now - since >= session.dayMs) return true;
+    let t = since;
+    for (let i = 0; i < 4; i++) {
+      const next = session.nextChangeAt(t);
+      if (next === undefined || next > now) return false;
+      if (session.phaseAt(next) === TradingPhase.Closed) return true;
+      t = next;
+    }
+    return false;
   }
 }
 

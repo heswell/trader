@@ -14,12 +14,21 @@ import { loadOmsConfig } from "./config";
 import { createOms } from "./engine/OmsService";
 import { OmsModule } from "./modules/oms/OmsModule";
 import { startPerfStatsReporter } from "./perf/PerfStatsReporter";
+import { createTradingPersistence, loadPersistenceConfig } from "./persistence";
 
 /**
  * Stand-alone trading server: EXCHANGE + OMS in one VuuServer (auth mode and
  * ports come from application.conf).
  */
-export default async function main(config: Config = ConfigFactory.load()) {
+export default async function main(
+  config: Config = ConfigFactory.load(),
+  {
+    persistenceBaseDir,
+  }: {
+    /** Base of a relative persistence.dir (default: the cwd). */
+    persistenceBaseDir?: string;
+  } = {},
+) {
   const sim = createExchangeSimulator({
     config: loadExchangeSimConfig(config),
   });
@@ -28,6 +37,33 @@ export default async function main(config: Config = ConfigFactory.load()) {
     rics: () => sim.books.map((book) => book.ric),
     logger: getLogger("trader.oms"),
   });
+  // Restore persisted exchange + OMS state before the modules attach their
+  // tables (TableSink buffers the rows) and start the simulator / flow.
+  const persistenceLogger = getLogger("trader.persistence");
+  const persistence = createTradingPersistence({
+    config: loadPersistenceConfig(config),
+    sim,
+    engine: oms.engine,
+    baseDir: persistenceBaseDir,
+    log: (message) => persistenceLogger.info(message),
+  });
+  const recovery = persistence.recover();
+  persistence.start();
+  let shutDown = false;
+  const shutdown = () => {
+    if (shutDown) return;
+    shutDown = true;
+    try {
+      persistence.close();
+      persistenceLogger.info("final snapshot written");
+    } catch (err) {
+      persistenceLogger.error(`final snapshot failed: ${err}`);
+    }
+  };
+  process.once("SIGTERM", shutdown);
+  process.once("SIGINT", shutdown);
+  process.once("beforeExit", shutdown);
+
   const application = createVuuServerApplication({
     authProviders: createConfiguredAuthProviders(config),
     config,
@@ -48,5 +84,5 @@ export default async function main(config: Config = ConfigFactory.load()) {
         Number(process.env.TRADER_PERF_STATS_INTERVAL_MS ?? 1_000),
       )
     : undefined;
-  return { application, sim, oms, stopPerfStats };
+  return { application, sim, oms, persistence, recovery, stopPerfStats };
 }
