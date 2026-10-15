@@ -2,7 +2,7 @@ import { Dropdown, Option } from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
 import cx from "clsx";
-import type { CSSProperties, SyntheticEvent } from "react";
+import { type CSSProperties, memo, type SyntheticEvent } from "react";
 import {
   DEFAULT_LINK_GROUPS,
   isUnlinkedGroup,
@@ -62,9 +62,10 @@ export const LinkGroupSwatch = ({
  * A compact dropdown to pick a component's instrument link group (colour
  * swatch + name, so it does not rely on colour alone). For component
  * headers / toolbars; linkable components render one when
- * `showLinkGroupSelector` is set.
+ * `showLinkGroupSelector` is set. Memoized: it sits in the headers of
+ * components that re-render on every tick, and a Salt Dropdown is costly.
  */
-export const LinkGroupSelector = ({
+export const LinkGroupSelector = memo(function LinkGroupSelector({
   allowUnlinked = true,
   "aria-label": ariaLabel = "Link group",
   className,
@@ -72,7 +73,7 @@ export const LinkGroupSelector = ({
   groups = DEFAULT_LINK_GROUPS,
   onChange,
   value,
-}: LinkGroupSelectorProps) => {
+}: LinkGroupSelectorProps) {
   useLinkGroupCss();
   const options = allowUnlinked ? [...groups, UNLINKED_GROUP] : groups;
   const current = linkGroupDefinition(value, groups);
@@ -102,4 +103,4 @@ export const LinkGroupSelector = ({
       ))}
     </Dropdown>
   );
-};
+});

@@ -12,8 +12,31 @@ const REMOTE_WS =
 const REMOTE_AUTH =
   process.env.TRADING_REMOTE_AUTH ?? "http://localhost:8447/api/authn";
 
+/**
+ * Perf builds (packages/perf): SHOWCASE_PROFILING=1 uses React's profiling
+ * build so <Profiler> timings work in production and keeps function names
+ * for CPU profiles; SHOWCASE_DIST_PATH sets the output directory.
+ */
+const PROFILING = process.env.SHOWCASE_PROFILING === "1";
+
 export default defineConfig({
   plugins: [pluginReact()],
+  output: {
+    distPath: { root: process.env.SHOWCASE_DIST_PATH ?? "dist" },
+    minify: PROFILING
+      ? {
+          jsOptions: {
+            minimizerOptions: {
+              mangle: { keep_fnames: true, keep_classnames: true },
+              compress: { keep_fnames: true, keep_classnames: true },
+            },
+          },
+        }
+      : undefined,
+  },
+  resolve: PROFILING
+    ? { alias: { "react-dom/client$": "react-dom/profiling" } }
+    : undefined,
   html: {
     title: "Trading UI showcase",
   },

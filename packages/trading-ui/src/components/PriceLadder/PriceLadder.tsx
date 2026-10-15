@@ -217,20 +217,20 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
     });
     const own = useOwnWorkingOrders(ric, { account });
     const tradedVolume = useTradedVolume(ric, { enabled: showVolume });
+    // instrument is a new object on every price tick: key the schedule and
+    // format on its static fields, or every memoized ladder row re-renders
+    const tickSize = instrument?.tickSize;
+    const tickBands = instrument?.tickBands;
+    const priceDecimals = instrument?.priceDecimals;
+    const hasInstrument = instrument !== undefined;
     const tickSchedule = useMemo(
-      () => instrumentTickSchedule(instrument),
-      [instrument],
+      () => instrumentTickSchedule({ tickSize, tickBands }),
+      [tickSize, tickBands],
     );
     const priceFormat = useMemo(
       () =>
-        instrument
-          ? {
-              priceDecimals: instrument.priceDecimals,
-              tickSize: instrument.tickSize,
-              tickBands: instrument.tickBands,
-            }
-          : undefined,
-      [instrument],
+        hasInstrument ? { priceDecimals, tickSize, tickBands } : undefined,
+      [hasInstrument, priceDecimals, tickSize, tickBands],
     );
     const [status, setStatus] = useState<{
       text: string;
@@ -393,6 +393,17 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
       }
     }, [ric, account, dataSource, fail, connectionState]);
 
+    // a stable element, so the memoized ladder toolbar skips tick renders
+    const toolbarStart = useMemo(
+      () =>
+        showLinkGroupSelector ? (
+          <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
+        ) : (
+          props.toolbarStart
+        ),
+      [showLinkGroupSelector, linkGroup, setLinkGroup, props.toolbarStart],
+    );
+
     const phase = instrument?.phase;
     const inactive = isInactivePhase(phase);
     const blockedReason = connectionBlockedReason(connectionState);
@@ -432,13 +443,7 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
         status={status?.text}
         statusKind={status?.kind}
         tickSchedule={tickSchedule}
-        toolbarStart={
-          showLinkGroupSelector ? (
-            <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
-          ) : (
-            props.toolbarStart
-          )
-        }
+        toolbarStart={toolbarStart}
         tradedVolume={tradedVolume}
         tradingEnabled={canTrade}
       />

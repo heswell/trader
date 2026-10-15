@@ -289,6 +289,94 @@ const toMap = (levels: readonly LadderLevel[] | undefined) => {
   return map;
 };
 
+interface LadderToolbarProps {
+  start: ReactNode;
+  ric: string | undefined;
+  quantityText: string;
+  invalidQuantity: boolean;
+  onQuantityText: (e: ChangeEvent<HTMLInputElement>) => void;
+  tradeMode: PriceLadderTradeMode;
+  setTradeMode: (mode: PriceLadderTradeMode) => void;
+  autoCentre: boolean;
+  setAutoCentre: (autoCentre: boolean) => void;
+  recentre: () => void;
+  onCancelAll?: () => void;
+  cancelAllDisabled: boolean;
+}
+
+/**
+ * Memoized: the ladder re-renders on every depth / price tick, the toolbar's
+ * Salt components only when its own props change.
+ */
+const LadderToolbar = memo(function LadderToolbar({
+  autoCentre,
+  cancelAllDisabled,
+  invalidQuantity,
+  onCancelAll,
+  onQuantityText,
+  quantityText,
+  recentre,
+  ric,
+  setAutoCentre,
+  setTradeMode,
+  start,
+  tradeMode,
+}: LadderToolbarProps) {
+  return (
+    <div className={`${classBase}-toolbar`}>
+      {start}
+      <span className={`${classBase}-ric`}>{ric ?? ""}</span>
+      <span className={`${classBase}-qtyLabel`}>
+        <span aria-hidden>Qty</span>
+        <Input
+          className={`${classBase}-qtyInput`}
+          inputProps={{
+            "aria-label": "Order quantity",
+            inputMode: "numeric",
+            "aria-invalid": invalidQuantity || undefined,
+          }}
+          value={quantityText}
+          onChange={onQuantityText}
+          validationStatus={invalidQuantity ? "error" : undefined}
+        />
+      </span>
+      <ToggleButtonGroup
+        aria-label="Trade mode"
+        value={tradeMode}
+        onChange={(e: SyntheticEvent<HTMLButtonElement>) =>
+          setTradeMode(e.currentTarget.value as PriceLadderTradeMode)
+        }
+      >
+        <ToggleButton value="confirm">Confirm</ToggleButton>
+        <ToggleButton value="one-click">1-click</ToggleButton>
+      </ToggleButtonGroup>
+      <Tooltip content="Auto-centre on mid / last (L)">
+        <ToggleButton
+          aria-label="Auto-centre"
+          selected={autoCentre}
+          value="auto-centre"
+          onChange={() => setAutoCentre(!autoCentre)}
+        >
+          Auto
+        </ToggleButton>
+      </Tooltip>
+      <Button appearance="bordered" onClick={recentre} aria-label="Centre (C)">
+        Centre
+      </Button>
+      {onCancelAll ? (
+        <Button
+          appearance="bordered"
+          sentiment="negative"
+          onClick={onCancelAll}
+          disabled={cancelAllDisabled}
+        >
+          Cancel all
+        </Button>
+      ) : null}
+    </div>
+  );
+});
+
 const useControlled = <T,>(
   value: T | undefined,
   defaultValue: T,
@@ -466,12 +554,17 @@ export const PriceLadderView = forwardRef<HTMLDivElement, PriceLadderViewProps>(
       [priceFormat],
     );
 
+    // the reference moves with every tick: read it at call time so recentre
+    // (a toolbar prop) stays stable
+    const referenceRef = useRef(reference);
+    referenceRef.current = reference;
     const recentre = useCallback(() => {
-      if (reference !== undefined) {
-        setCentre(reference);
-        setCursor((c) => ({ price: reference, col: c?.col ?? priceCol }));
+      const target = referenceRef.current;
+      if (target !== undefined) {
+        setCentre(target);
+        setCursor((c) => ({ price: target, col: c?.col ?? priceCol }));
       }
-    }, [reference, priceCol]);
+    }, [priceCol]);
 
     const scrollBy = useCallback(
       (ticks: number) => {
@@ -777,12 +870,15 @@ export const PriceLadderView = forwardRef<HTMLDivElement, PriceLadderViewProps>(
     });
 
     const sideText = (side: Side) => (side === Side.Buy ? "Buy" : "Sell");
-    const handleQuantity = (e: ChangeEvent<HTMLInputElement>) => {
-      const text = e.target.value;
-      setQuantityText(text);
-      const value = Number(text.replace(/,/g, ""));
-      if (Number.isFinite(value) && value > 0) setQuantity(value);
-    };
+    const handleQuantity = useCallback(
+      (e: ChangeEvent<HTMLInputElement>) => {
+        const text = e.target.value;
+        setQuantityText(text);
+        const value = Number(text.replace(/,/g, ""));
+        if (Number.isFinite(value) && value > 0) setQuantity(value);
+      },
+      [setQuantity],
+    );
     const invalidQuantity =
       !(quantity > 0) ||
       Math.abs(quantity / lotSize - Math.round(quantity / lotSize)) > 1e-9;
@@ -803,61 +899,20 @@ export const PriceLadderView = forwardRef<HTMLDivElement, PriceLadderViewProps>(
         data-dragging={drag ? drag.via : undefined}
         ref={ref}
       >
-        <div className={`${classBase}-toolbar`}>
-          {toolbarStart}
-          <span className={`${classBase}-ric`}>{ric ?? ""}</span>
-          <span className={`${classBase}-qtyLabel`}>
-            <span aria-hidden>Qty</span>
-            <Input
-              className={`${classBase}-qtyInput`}
-              inputProps={{
-                "aria-label": "Order quantity",
-                inputMode: "numeric",
-                "aria-invalid": invalidQuantity || undefined,
-              }}
-              value={quantityText}
-              onChange={handleQuantity}
-              validationStatus={invalidQuantity ? "error" : undefined}
-            />
-          </span>
-          <ToggleButtonGroup
-            aria-label="Trade mode"
-            value={tradeMode}
-            onChange={(e: SyntheticEvent<HTMLButtonElement>) =>
-              setTradeMode(e.currentTarget.value as PriceLadderTradeMode)
-            }
-          >
-            <ToggleButton value="confirm">Confirm</ToggleButton>
-            <ToggleButton value="one-click">1-click</ToggleButton>
-          </ToggleButtonGroup>
-          <Tooltip content="Auto-centre on mid / last (L)">
-            <ToggleButton
-              aria-label="Auto-centre"
-              selected={autoCentre}
-              value="auto-centre"
-              onChange={() => setAutoCentre(!autoCentre)}
-            >
-              Auto
-            </ToggleButton>
-          </Tooltip>
-          <Button
-            appearance="bordered"
-            onClick={recentre}
-            aria-label="Centre (C)"
-          >
-            Centre
-          </Button>
-          {onCancelAll ? (
-            <Button
-              appearance="bordered"
-              sentiment="negative"
-              onClick={onCancelAll}
-              disabled={!ownOrders || ownOrders.size === 0}
-            >
-              Cancel all
-            </Button>
-          ) : null}
-        </div>
+        <LadderToolbar
+          autoCentre={autoCentre}
+          cancelAllDisabled={!ownOrders || ownOrders.size === 0}
+          invalidQuantity={invalidQuantity}
+          onCancelAll={onCancelAll}
+          onQuantityText={handleQuantity}
+          quantityText={quantityText}
+          recentre={recentre}
+          ric={ric}
+          setAutoCentre={setAutoCentre}
+          setTradeMode={setTradeMode}
+          start={toolbarStart}
+          tradeMode={tradeMode}
+        />
         {pending ? (
           <fieldset
             className={`${classBase}-confirm`}

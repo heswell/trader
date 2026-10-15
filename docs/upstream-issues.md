@@ -504,3 +504,26 @@ See [resilience.md](resilience.md) for the behaviour these work around.
     same id they never hear from it. Removing only the destroyed connection's own wiring would fix it.
     *Workaround:* `useVuuConnectionStatuses` re-reads and re-subscribes whenever the registry state of an id
     changes.
+
+## Found in Phase 5A (performance)
+
+90. **`TableHeader`'s `memo` is defeated on data updates.** (finos `@vuu-ui/vuu-table`, 4.0.0-alpha.21.) `Table`
+    passes `TableHeader` callbacks from `useTable` whose identity changes as rows update: `onMoveColumn` (its
+    dependencies include `focusCell`, which depends on `requestScroll` in `useCellFocus`) and
+    `onCheckBoxColumnHeaderClick` (from `useSelection`, rebuilt when its `onSelectionChange` changes). In the
+    showcase trader workspace the headers re-render about 9 times a second, and the column-header menus
+    (`MenuBase` / `ColumnMenu`) cost 8–15 ms/s of scripting per table under a 4× CPU throttle
+    (docs/performance.md). Keeping these callbacks stable (refs for the changing values) would fix it.
+    *Workaround:* none in trader.
+91. **vuu-server exposes no metrics.** (vuu-websocket `@heswell/vuu-server` 4.2.0.) There is no API for
+    per-session queue depth, rows sent and coalesced, send-cycle duration or viewport counts, so throughput and
+    coalescing can only be estimated from the outside. A metrics hook or periodic stats event would fix it.
+    *Workaround:* `PerfStatsReporter` (`packages/oms/src/perf`, enabled by `TRADER_PERF_STATS_FILE`) counts
+    trader's own table writes, CPU, memory and event-loop lag; `perf:ws` derives server→client coalescing from
+    those and the client-received rows.
+92. **The session send cycle is fixed at 60 ms / 300 rows.** (vuu-websocket `@heswell/vuu-server` 4.2.0.) The
+    session runner is a `LifeCycleRunner` with a hard-coded 60 ms minimum cycle, and both flow controllers return
+    `BatchSize(300)`. Neither can be configured, so end-to-end latency has a floor of about 30 ms on average
+    (p50 36 ms in the smoke run), and a burst of more than 300 changed rows per session waits extra cycles.
+    Conf keys for the cycle time and batch size would fix it. *Workaround:* none; the baselines in
+    docs/performance.md include it.

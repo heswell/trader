@@ -46,3 +46,8 @@ jobs:
 
       - name: Build portal host and trading features
         run: bun run build
+
+      # WS throughput smoke (5 clients x 5 viewports against an in-process
+      # perf server, ~20s). Thresholds are loose; see docs/performance.md.
+      - name: Perf smoke (WS load)
+        run: bun run perf:ws --preset=smoke --assert

@@ -1,0 +1,20 @@
+{
+  "name": "@heswell/trading-perf",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Performance tooling: WS load harness, UI tick-rate profiling, ladder frame budget (docs/performance.md).",
+  "scripts": {
+    "ws": "bun ./src/ws-load.ts",
+    "ui": "bun ./src/ui-profile.ts",
+    "ladder": "bun ./src/ladder-budget.ts"
+  },
+  "dependencies": {
+    "@heswell/oms": "workspace:*",
+    "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.21"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1"
+  }
+}

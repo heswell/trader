@@ -110,7 +110,7 @@ export const ShowcaseApp = () => {
           <p className="showcaseApp-description">{example.description}</p>
         ) : null}
         <div className="showcaseApp-example">
-          {mode === "local" ? (
+          {mode === "local" && localServer ? (
             <TradingDataProvider
               key="local"
               mode="local"
@@ -120,7 +120,7 @@ export const ShowcaseApp = () => {
                 <Component key={example.id} />
               </ShowcaseTradingHost>
             </TradingDataProvider>
-          ) : (
+          ) : remoteStatus === "connected" ? (
             <TradingDataProvider
               key="remote"
               mode="remote"
@@ -130,7 +130,7 @@ export const ShowcaseApp = () => {
                 <Component key={example.id} />
               </ShowcaseTradingHost>
             </TradingDataProvider>
-          )}
+          ) : null}
         </div>
       </main>
     </div>

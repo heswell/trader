@@ -17,6 +17,7 @@ import {
   type ProfilerOnRenderCallback,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -149,8 +150,23 @@ interface PerfStats {
   renderAvgMs: number;
   renderP95Ms: number;
   renderMaxMs: number;
+  /** Book update (setState) to the ladder's committed DOM (layout effect). */
+  commitP95Ms: number;
+  /** Book update to the start of the next frame (rAF after the commit). */
+  frameP95Ms: number;
   longFrames: number;
 }
+
+/** ?rate=100&autorun=1 sets the update rate and runs the benchmark (packages/perf). */
+const stressParams = () => {
+  const params = new URLSearchParams(window.location.search);
+  const rate = Number(params.get("rate"));
+  return {
+    rate: rate > 0 ? rate : 50,
+    autorun: params.get("autorun") === "1",
+    seconds: Number(params.get("seconds")) || 10,
+  };
+};
 
 const percentile = (values: number[], p: number) => {
   if (!values.length) return 0;
@@ -166,7 +182,8 @@ const percentile = (values: number[], p: number) => {
  * in `[data-testid=price-ladder-perf-result]` for automated runs).
  */
 export const PriceLadderStress = () => {
-  const [rate, setRate] = useState(50);
+  const [params] = useState(stressParams);
+  const [rate, setRate] = useState(params.rate);
   const [running, setRunning] = useState(true);
   const [book, setBook] = useState<Book>(() => makeBook(100, rng(1), 100));
   const [stats, setStats] = useState<PerfStats>();
@@ -174,6 +191,11 @@ export const PriceLadderStress = () => {
   const renders = useRef<number[]>([]);
   const updates = useRef(0);
   const frames = useRef<number[]>([]);
+  const updatedAt = useRef<number>(undefined);
+  const commitLatency = useRef<number[]>([]);
+  const frameLatency = useRef<number[]>([]);
+  /** Raw samples while a benchmark runs, for whole-run percentiles. */
+  const samples = useRef<{ render: number[]; commit: number[] }>(undefined);
 
   // synthetic market
   useEffect(() => {
@@ -181,6 +203,8 @@ export const PriceLadderStress = () => {
     const random = rng(42);
     const id = setInterval(() => {
       updates.current += 1;
+      // first update since the last commit: later ones coalesce into it
+      updatedAt.current ??= performance.now();
       setBook((b) => {
         let mid = b.mid;
         let last = b.last;
@@ -203,6 +227,19 @@ export const PriceLadderStress = () => {
     return () => clearInterval(id);
   }, [rate, running]);
 
+  // update -> commit / next frame latency
+  useLayoutEffect(() => {
+    void book;
+    const since = updatedAt.current;
+    if (since === undefined) return;
+    updatedAt.current = undefined;
+    const committed = performance.now();
+    commitLatency.current.push(committed - since);
+    requestAnimationFrame((frame) => {
+      frameLatency.current.push(Math.max(0, frame - since));
+    });
+  }, [book]);
+
   // FPS meter + 1s stats
   useEffect(() => {
     let raf = 0;
@@ -217,6 +254,12 @@ export const PriceLadderStress = () => {
     const id = setInterval(() => {
       const f = frames.current.splice(0);
       const r = renders.current.splice(0);
+      const c = commitLatency.current.splice(0);
+      const fl = frameLatency.current.splice(0);
+      if (samples.current) {
+        samples.current.render.push(...r);
+        samples.current.commit.push(...c);
+      }
       const u = updates.current - lastUpdates;
       lastUpdates = updates.current;
       setStats({
@@ -227,6 +270,8 @@ export const PriceLadderStress = () => {
         renderAvgMs: r.length ? r.reduce((a, b) => a + b, 0) / r.length : 0,
         renderP95Ms: percentile(r, 0.95),
         renderMaxMs: r.length ? Math.max(...r) : 0,
+        commitP95Ms: percentile(c, 0.95),
+        frameP95Ms: percentile(fl, 0.95),
         longFrames: f.filter((d) => d > 1000 / 30).length,
       });
     }, 1000);
@@ -243,26 +288,46 @@ export const PriceLadderStress = () => {
   const benchmark = useCallback(() => {
     setResult("running…");
     history.current = [];
+    samples.current = undefined;
+    // skip the partial first second
     setTimeout(() => {
-      const h = history.current.slice(1); // skip the partial first second
-      const avg = (k: keyof PerfStats) =>
-        h.reduce((a, s) => a + s[k], 0) / Math.max(1, h.length);
-      const summary = {
-        seconds: h.length,
-        targetUpdatesPerSec: rate,
-        updatesPerSec: Math.round(avg("updatesPerSec")),
-        fps: Math.round(avg("fps") * 10) / 10,
-        minFps: Math.min(...h.map((s) => s.minFps)),
-        renderAvgMs: Math.round(avg("renderAvgMs") * 100) / 100,
-        renderP95Ms:
-          Math.round(Math.max(...h.map((s) => s.renderP95Ms)) * 100) / 100,
-        renderMaxMs:
-          Math.round(Math.max(...h.map((s) => s.renderMaxMs)) * 100) / 100,
-        longFrames: h.reduce((a, s) => a + s.longFrames, 0),
-      };
-      setResult(JSON.stringify(summary));
-    }, 11_000);
-  }, [rate]);
+      history.current = [];
+      samples.current = { render: [], commit: [] };
+    }, 1_000);
+    setTimeout(
+      () => {
+        const h = history.current;
+        const all = samples.current ?? { render: [], commit: [] };
+        samples.current = undefined;
+        const ms = (value: number) => Math.round(value * 100) / 100;
+        const avg = (k: keyof PerfStats) =>
+          h.reduce((a, s) => a + s[k], 0) / Math.max(1, h.length);
+        const summary = {
+          seconds: h.length,
+          targetUpdatesPerSec: rate,
+          updatesPerSec: Math.round(avg("updatesPerSec")),
+          fps: Math.round(avg("fps") * 10) / 10,
+          minFps: Math.min(...h.map((s) => s.minFps)),
+          renderAvgMs: Math.round(avg("renderAvgMs") * 100) / 100,
+          renderP95Ms: ms(percentile(all.render, 0.95)),
+          renderMaxMs: ms(Math.max(0, ...all.render)),
+          commitP95Ms: ms(percentile(all.commit, 0.95)),
+          commitMaxMs: ms(Math.max(0, ...all.commit)),
+          /** Worst 1s window. */
+          frameP95Ms: ms(Math.max(...h.map((s) => s.frameP95Ms))),
+          longFrames: h.reduce((a, s) => a + s.longFrames, 0),
+        };
+        setResult(JSON.stringify(summary));
+      },
+      (params.seconds + 1) * 1_000,
+    );
+  }, [rate, params.seconds]);
+
+  useEffect(() => {
+    if (!params.autorun) return;
+    const id = setTimeout(benchmark, 2_000);
+    return () => clearTimeout(id);
+  }, [params.autorun, benchmark]);
 
   const onRender = useCallback<ProfilerOnRenderCallback>(
     (_id, _phase, actualDuration) => {
@@ -323,10 +388,10 @@ export const PriceLadderStress = () => {
           checked={running}
           onChange={(e) => setRunning(e.target.checked)}
         />
-        <Button onClick={benchmark}>Run 10s benchmark</Button>
+        <Button onClick={benchmark}>Run {params.seconds}s benchmark</Button>
         <Text data-testid="price-ladder-perf-live">
           {stats
-            ? `${stats.updatesPerSec} upd/s · ${stats.commitsPerSec} commits/s · ${stats.fps} fps (min ${stats.minFps}) · render avg ${stats.renderAvgMs.toFixed(2)}ms p95 ${stats.renderP95Ms.toFixed(2)}ms max ${stats.renderMaxMs.toFixed(2)}ms`
+            ? `${stats.updatesPerSec} upd/s · ${stats.commitsPerSec} commits/s · ${stats.fps} fps (min ${stats.minFps}) · render avg ${stats.renderAvgMs.toFixed(2)}ms p95 ${stats.renderP95Ms.toFixed(2)}ms max ${stats.renderMaxMs.toFixed(2)}ms · update→commit p95 ${stats.commitP95Ms.toFixed(1)}ms`
             : "measuring…"}
         </Text>
       </FlexLayout>
