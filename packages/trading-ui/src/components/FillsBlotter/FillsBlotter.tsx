@@ -23,8 +23,10 @@ import {
   useComponentLinkGroup,
 } from "../../instrument-context/useComponentLinkGroup";
 import { LinkGroupSelector } from "../LinkGroupSelector";
+import { useStaleData } from "../StaleIndicator/useStaleData";
 import { type CsvColumn, downloadCsv, rowsToCsv } from "../../utils/csv";
 import { formatTime } from "../../utils/time";
+import { useStableCallback } from "../../hooks/useStableCallback";
 import {
   InstrumentLookupProvider,
   useInstrumentLookup,
@@ -157,6 +159,7 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
     },
     ref,
   ) {
+    const { staleProps } = useStaleData();
     const targetWindow = useWindow();
     useComponentCssInjection({
       testId: "trading-fills-blotter",
@@ -235,6 +238,7 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
       },
       [lookup, setSelectedInstrument],
     );
+    const stableHandleSelect = useStableCallback(handleSelect);
 
     const link = useMemo(
       () => ({ onOrderSelect, highlightOrderId }),
@@ -248,7 +252,8 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
     return (
       <div
         {...htmlAttributes}
-        className={cx(classBase, className)}
+        {...staleProps}
+        className={cx(classBase, className, staleProps.className)}
         data-link-group={linkGroup}
         data-testid="trading-fills-blotter"
         ref={ref}
@@ -282,7 +287,7 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
             <Table
               config={tableConfig}
               dataSource={dataSource}
-              onSelect={handleSelect}
+              onSelect={stableHandleSelect}
               selectionModel="single"
             />
           </div>

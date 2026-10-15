@@ -20,6 +20,7 @@ import {
   openOrderEditSession,
   StaleOrderEditError,
 } from "../../data/editSessionAmend";
+import type { TradingConnectionState } from "../../connection/useTradingConnectionStatus";
 import { sendTradingRpc, TradingRpcError } from "../../data/tradingRpc";
 import { useDataSourceRows } from "../../data/useDataSourceRows";
 import { filterString } from "../../utils/filters";
@@ -33,11 +34,13 @@ import {
 import { useTradingNotifications } from "../../notifications/TradingNotificationsProvider";
 import { rpcRejectEvent } from "../../notifications/tradingOrderEvents";
 import { isOrderAmendable, isOrderCancellable } from "../../utils/orderStatus";
+import { useStableCallback } from "../../hooks/useStableCallback";
 import {
   InstrumentLookupProvider,
   useInstrumentLookup,
 } from "../InstrumentLookup";
 import { LinkGroupSelector } from "../LinkGroupSelector";
+import { useStaleData } from "../StaleIndicator/useStaleData";
 import { registerTradingCellRenderers } from "../TradingCellRenderers";
 import {
   CHILD_ORDER_COLUMNS,
@@ -109,14 +112,16 @@ const useAmendEditSession = (
   dataSource: DataSource,
   orderId: string | undefined,
   enabled: boolean,
+  connectionState: TradingConnectionState,
 ) => {
   const pendingRef = useRef<Promise<OrderEditSession> | undefined>(undefined);
+  // Re-begun when the connection comes back (a restart drops the session).
   const begin = useCallback(() => {
-    const pending = openOrderEditSession(dataSource);
+    const pending = openOrderEditSession(dataSource, { connectionState });
     pending.catch(() => undefined); // reported by submit
     pendingRef.current = pending;
     return pending;
-  }, [dataSource]);
+  }, [dataSource, connectionState]);
 
   useEffect(() => {
     if (!enabled || !orderId) return;
@@ -197,6 +202,8 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
     const [amending, setAmending] = useState<string>();
     const [focusedOrderId, setFocusedOrderId] = useState<string>();
 
+    const { connectionState, staleProps } = useStaleData();
+    const connected = connectionState === "connected";
     const dataSource = useTradingDataSource("parentOrders", {
       columns: [...ORDER_BLOTTER_COLUMNS, "quantity", "version"],
       filterSpec: { filter: orderBlotterTabFilter(defaultTab) },
@@ -246,7 +253,12 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
       async (orderIds: string[]) => {
         const results = await Promise.allSettled(
           orderIds.map((orderId) =>
-            sendTradingRpc(dataSource, RpcName.CancelOrder, { orderId }),
+            sendTradingRpc(
+              dataSource,
+              RpcName.CancelOrder,
+              { orderId },
+              { connectionState },
+            ),
           ),
         );
         const failed = results.filter(
@@ -260,7 +272,7 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
             error: false,
           });
       },
-      [dataSource, fail],
+      [dataSource, fail, connectionState],
     );
 
     const actions = useMemo<OrderRowActions>(
@@ -286,6 +298,7 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
           dataSource,
           RpcName.CancelAll,
           {},
+          { connectionState },
         );
         setMessage({
           text: `Cancel all sent for ${orderIds.length} order(s)`,
@@ -294,7 +307,7 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
       } catch (err) {
         fail(err);
       }
-    }, [dataSource, fail]);
+    }, [dataSource, fail, connectionState]);
 
     const handleSelect = useCallback<TableRowSelectHandler>(
       (row) => {
@@ -311,6 +324,7 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
       },
       [lookup, onOrderSelect, setSelectedInstrument],
     );
+    const stableHandleSelect = useStableCallback(handleSelect);
 
     const amendTarget = amending
       ? records.find((r) => r.orderId === amending)
@@ -320,6 +334,7 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
       dataSource,
       amending,
       useEditSession,
+      connectionState,
     );
 
     const submitAmend = useCallback(
@@ -329,11 +344,12 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
           if (useEditSession) {
             await amendInSession({ quantity, price });
           } else {
-            await sendTradingRpc(dataSource, RpcName.AmendOrder, {
-              orderId: amending,
-              quantity,
-              price,
-            });
+            await sendTradingRpc(
+              dataSource,
+              RpcName.AmendOrder,
+              { orderId: amending, quantity, price },
+              { connectionState },
+            );
           }
           setMessage({ text: `Amend sent for ${amending}`, error: false });
           setAmending(undefined);
@@ -341,13 +357,21 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
           fail(err, amending);
         }
       },
-      [amendInSession, amending, dataSource, fail, useEditSession],
+      [
+        amendInSession,
+        amending,
+        connectionState,
+        dataSource,
+        fail,
+        useEditSession,
+      ],
     );
 
     return (
       <div
         {...htmlAttributes}
         className={cx(classBase, className)}
+        data-connection-state={connectionState}
         data-link-group={linkGroup}
         data-testid="trading-order-blotter"
         ref={ref}
@@ -372,24 +396,31 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
           {readOnly ? null : (
             <>
               <button
-                disabled={cancellableSelected.length === 0}
+                disabled={!connected || cancellableSelected.length === 0}
                 onClick={() => void cancelIds(cancellableSelected)}
                 type="button"
               >
                 Cancel selected ({cancellableSelected.length})
               </button>
-              <button onClick={() => void cancelAll()} type="button">
+              <button
+                disabled={!connected}
+                onClick={() => void cancelAll()}
+                type="button"
+              >
                 Cancel all
               </button>
             </>
           )}
         </div>
         <OrderBlotterContext.Provider value={readOnly ? undefined : actions}>
-          <div className={`${classBase}-table`}>
+          <div
+            {...staleProps}
+            className={cx(`${classBase}-table`, staleProps.className)}
+          >
             <Table
               config={orderBlotterTableConfig}
               dataSource={dataSource}
-              onSelect={handleSelect}
+              onSelect={stableHandleSelect}
               onSelectionChange={onSelectionChange}
               selectionModel="extended"
             />

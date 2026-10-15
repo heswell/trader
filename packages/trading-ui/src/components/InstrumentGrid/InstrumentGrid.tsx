@@ -46,8 +46,10 @@ import {
   useComponentLinkGroup,
 } from "../../instrument-context/useComponentLinkGroup";
 import type { UserSettingsStorage } from "../../utils/userSettingsStorage";
+import { useStableCallback } from "../../hooks/useStableCallback";
 import { InstrumentLookupProvider } from "../InstrumentLookup";
 import { LinkGroupSelector } from "../LinkGroupSelector";
+import { useStaleData } from "../StaleIndicator/useStaleData";
 import { useOrderTicketLauncher } from "../OrderTicket/OrderTicketLauncher";
 import { registerTradingCellRenderers } from "../TradingCellRenderers";
 import { registerInstrumentGridRenderers } from "./cellRenderers";
@@ -173,6 +175,7 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
     },
     ref,
   ) {
+    const { staleProps } = useStaleData();
     const targetWindow = useWindow();
     useComponentCssInjection({
       testId: "trading-instrument-grid",
@@ -344,6 +347,7 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
       },
       [setSelectedInstrument],
     );
+    const stableHandleSelect = useStableCallback(handleSelect);
 
     // --- context menu (client-side only)
     const menuBuilder = useCallback<MenuBuilder>(
@@ -419,7 +423,8 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
       <InstrumentLookupProvider>
         <div
           {...htmlAttributes}
-          className={cx(classBase, className)}
+          {...staleProps}
+          className={cx(classBase, className, staleProps.className)}
           data-link-group={linkGroup}
           id={id}
           ref={ref}
@@ -576,7 +581,7 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
               <Table
                 config={config}
                 dataSource={dataSource}
-                onSelect={handleSelect}
+                onSelect={stableHandleSelect}
                 selectionModel="single"
               />
             </ContextMenuProvider>

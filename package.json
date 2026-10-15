@@ -29,7 +29,8 @@
     "start:all": "bun ./scripts/start-all.ts",
     "features:sync": "bun ./scripts/features/sync-build-config.ts",
     "features:check": "bun ./scripts/features/sync-build-config.ts --check",
-    "keycloak:realm": "bun ./scripts/stack/keycloak-realm.ts"
+    "keycloak:realm": "bun ./scripts/stack/keycloak-realm.ts",
+    "e2e:resilience": "bun ./scripts/e2e/resilience.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
@@ -40,6 +41,7 @@
     "@types/bun": "1.3.3",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "playwright": "^1.64.1",
     "typescript": "^5.5.3"
   },
   "overrides": {

@@ -1,4 +1,7 @@
-import { ensureLinkBusBroadcast } from "@heswell/trading-ui";
+import {
+  createResilientConnectionRegistry,
+  ensureLinkBusBroadcast,
+} from "@heswell/trading-ui";
 import { init } from "@module-federation/enhanced/runtime";
 import {
   type AuthConfig,
@@ -27,6 +30,11 @@ new PageVisibilityObserver({
 // set by public/index.html from /config.json; vuu-utils types the global as
 // VuuConfig, which lacks the Keycloak clientId/realm that AuthConfig carries
 const config = (await vuuConfig) as unknown as AuthConfig;
+
+// Reconnect with backoff + jitter, never giving up, and a per-attempt login
+// timeout; publishes reconnect state to the connection status indicator
+// (docs/resilience.md).
+const registry = createResilientConnectionRegistry();
 const container = document.getElementById("root");
 if (!container) throw Error("No react root defined in page");
 
@@ -40,6 +48,7 @@ createRoot(container).render(
       authConfig={config}
       authHandlerClass={KeycloakAuthHandler}
       mode="identity"
+      registry={registry}
     >
       <App />
     </AuthenticationProvider>

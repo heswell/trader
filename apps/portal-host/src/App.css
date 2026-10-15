@@ -39,3 +39,12 @@ body {
   color: inherit;
   text-decoration: none;
 }
+
+/* Global connection status, overlaid on the header (docs/resilience.md) */
+#trader-portal .traderHostConnectionStatus {
+  align-self: center;
+  grid-area: header;
+  justify-self: center;
+  position: relative;
+  z-index: 1;
+}

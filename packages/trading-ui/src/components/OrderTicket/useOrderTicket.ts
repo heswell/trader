@@ -13,6 +13,10 @@ import {
   useRef,
   useState,
 } from "react";
+import {
+  type TradingConnectionState,
+  useTradingConnectionStatus,
+} from "../../connection/useTradingConnectionStatus";
 import { sendTradingRpc, TradingRpcError } from "../../data/tradingRpc";
 import { filterString } from "../../utils/filters";
 import type { LinkGroupId } from "../../instrument-context/linkGroups";
@@ -197,6 +201,22 @@ export const draftFromPrefill = (
 const toInstrument = (row: TradingRow | undefined) =>
   row as unknown as OrderTicketInstrument | undefined;
 
+/** Why orders cannot be sent in this connection state, else undefined. */
+export const connectionBlockedReason = (
+  state: TradingConnectionState,
+): string | undefined => {
+  switch (state) {
+    case "connected":
+      return undefined;
+    case "connecting":
+      return "Connecting to the trading server…";
+    case "reconnecting":
+      return "Connection lost, reconnecting: orders cannot be sent";
+    default:
+      return "Not connected to the trading server: orders cannot be sent";
+  }
+};
+
 const isTextEntry = (target: EventTarget) =>
   target instanceof HTMLElement &&
   (target.tagName === "INPUT" || target.tagName === "TEXTAREA");
@@ -221,6 +241,8 @@ export const useOrderTicket = ({
   const { selectedInstrument, selectionSource, setSelectedInstrument } =
     useSelectedInstrument({ linkGroup });
   const notifications = useTradingNotifications();
+  const { state: connectionState } = useTradingConnectionStatus();
+  const blockedReason = connectionBlockedReason(connectionState);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: recomputed per prefill only
   const initialDraft = useMemo(
@@ -458,6 +480,8 @@ export const useOrderTicket = ({
   const submit = useCallback(async () => {
     if (submission.state === "pending") return;
     setSubmitAttempted(true);
+    // Blocked while the connection is down (also F9 / Ctrl+Enter).
+    if (blockedReason) return;
     const { params } = validation;
     if (!params) return;
     const id = newClOrdId(clOrdIdPrefix);
@@ -483,6 +507,7 @@ export const useOrderTicket = ({
         ordersDataSource,
         "createOrder",
         request,
+        { connectionState },
       );
       setSubmission({
         state: "accepted",
@@ -507,7 +532,9 @@ export const useOrderTicket = ({
       });
     }
   }, [
+    blockedReason,
     clOrdIdPrefix,
+    connectionState,
     emit,
     instrument?.currency,
     ordersDataSource,
@@ -580,6 +607,10 @@ export const useOrderTicket = ({
     errors: visibleErrors,
     risk,
     submission,
+    /** The trading server connection state. */
+    connectionState,
+    /** Why submission is blocked (not connected), else undefined. */
+    blockedReason,
     /** The submitted order's live parentOrders row. */
     order,
     handleKeyDown,

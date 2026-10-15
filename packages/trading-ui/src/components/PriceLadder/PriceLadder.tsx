@@ -9,7 +9,10 @@ import {
   type RpcName,
   TimeInForce,
 } from "@heswell/trading-schemas";
+import cx from "clsx";
 import { forwardRef, useCallback, useMemo, useRef, useState } from "react";
+import { connectionBlockedReason } from "../OrderTicket/useOrderTicket";
+import { useStaleData } from "../StaleIndicator/useStaleData";
 import { sendTradingRpc, TradingRpcError } from "../../data/tradingRpc";
 import {
   useFollowedInstrument,
@@ -92,6 +95,11 @@ export interface PriceLadderProps
     LinkGroupProps {
   /** Instrument to show; defaults to the selected instrument. */
   ric?: string;
+  /**
+   * Grey the ladder out if the book has not updated for this long (ms).
+   * Default: only while disconnected / reconnecting.
+   */
+  staleAfterMs?: number;
   /**
    * Account for new orders; also restricts own orders to it. Without an
    * account the ladder is view-only for new orders.
@@ -188,6 +196,7 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
       ric: ricProp,
       showLinkGroupSelector = false,
       showVolume = false,
+      staleAfterMs,
       timeInForce = TimeInForce.Day,
       tradingEnabled = true,
       ...props
@@ -203,7 +212,7 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
     const { ric, instrument } = useFollowedInstrument(ricProp, {
       linkGroup: channel,
     });
-    const { bids, asks } = useMarketDepth(ric, {
+    const { bids, asks, loaded, version } = useMarketDepth(ric, {
       levels: Math.max(1, Math.min(levels, 10)),
     });
     const own = useOwnWorkingOrders(ric, { account });
@@ -246,6 +255,10 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
     }, []);
 
     const { dataSource } = own;
+    const { connectionState, staleProps } = useStaleData({
+      lastUpdate: `${ric}:${version}`,
+      staleAfterMs: loaded ? staleAfterMs : undefined,
+    });
     const fmt = useCallback(
       (p: number) => formatPrice(p, priceFormat ?? {}),
       [priceFormat],
@@ -269,6 +282,7 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
             dataSource,
             "createOrder",
             request,
+            { connectionState },
           );
           setStatus({
             text: `${response.orderId} ${response.status}`,
@@ -289,7 +303,15 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
           fail(err, { type: "create", request });
         }
       },
-      [ric, account, timeInForce, clOrdIdPrefix, dataSource, fail],
+      [
+        ric,
+        account,
+        timeInForce,
+        clOrdIdPrefix,
+        dataSource,
+        fail,
+        connectionState,
+      ],
     );
 
     const handleCancelOrders = useCallback(
@@ -297,9 +319,12 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
         await Promise.all(
           orders.map(async (order) => {
             try {
-              const response = await sendTradingRpc(dataSource, "cancelOrder", {
-                orderId: order.orderId,
-              });
+              const response = await sendTradingRpc(
+                dataSource,
+                "cancelOrder",
+                { orderId: order.orderId },
+                { connectionState },
+              );
               callbacks.current.onOrderEvent?.({
                 type: "cancel",
                 order,
@@ -311,7 +336,7 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
           }),
         );
       },
-      [dataSource, fail],
+      [dataSource, fail, connectionState],
     );
 
     const handleAmendOrders = useCallback(
@@ -319,10 +344,12 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
         await Promise.all(
           orders.map(async (order) => {
             try {
-              const response = await sendTradingRpc(dataSource, "amendOrder", {
-                orderId: order.orderId,
-                price,
-              });
+              const response = await sendTradingRpc(
+                dataSource,
+                "amendOrder",
+                { orderId: order.orderId, price },
+                { connectionState },
+              );
               setStatus({
                 text: `${order.orderId} → ${fmt(price)} ${response.status}`,
                 kind: "info",
@@ -339,16 +366,18 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
           }),
         );
       },
-      [dataSource, fail, fmt],
+      [dataSource, fail, fmt, connectionState],
     );
 
     const handleCancelAll = useCallback(async () => {
       if (!ric) return;
       try {
-        const response = await sendTradingRpc(dataSource, "cancelAll", {
-          ric,
-          ...(account ? { account } : {}),
-        });
+        const response = await sendTradingRpc(
+          dataSource,
+          "cancelAll",
+          { ric, ...(account ? { account } : {}) },
+          { connectionState },
+        );
         setStatus({
           text: `Cancelled ${response.orderIds.length} order(s)`,
           kind: "info",
@@ -362,20 +391,27 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
       } catch (err) {
         fail(err, { type: "cancelAll", ric, account });
       }
-    }, [ric, account, dataSource, fail]);
+    }, [ric, account, dataSource, fail, connectionState]);
 
     const phase = instrument?.phase;
     const inactive = isInactivePhase(phase);
-    const canTrade = tradingEnabled && !!account && !!ric && !inactive;
+    const blockedReason = connectionBlockedReason(connectionState);
+    const canTrade =
+      tradingEnabled && !!account && !!ric && !inactive && !blockedReason;
     const disabledReason = !account
       ? "No account: view only"
-      : inactive && phase
-        ? tradingPhaseText[phase]
-        : undefined;
+      : blockedReason
+        ? blockedReason
+        : inactive && phase
+          ? tradingPhaseText[phase]
+          : undefined;
 
     return (
       <PriceLadderView
         {...props}
+        {...staleProps}
+        className={cx(props.className, staleProps.className)}
+        data-connection-state={connectionState}
         asks={asks}
         bids={bids}
         data-phase={phase}

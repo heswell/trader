@@ -1,4 +1,5 @@
 import {
+  ConnectionStatusIndicator,
   connectBroadcastChannel,
   DEFAULT_LINK_GROUPS,
   getInstrumentLinkBus,
@@ -72,6 +73,7 @@ export const ShowcaseApp = () => {
         <span className="showcaseApp-title">Trading UI showcase</span>
         <LinkGroupSelections />
         {error ? <Text color="error">{error}</Text> : null}
+        {mode === "remote" ? <ConnectionStatusIndicator /> : null}
         <ToggleButtonGroup
           aria-label="Data source"
           value={mode}

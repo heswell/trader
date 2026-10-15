@@ -1,3 +1,4 @@
+import { ConnectionStatusIndicator } from "@heswell/trading-ui";
 import { useModuleRegistry } from "@vuu-ui/core";
 import {
   NavContainer,
@@ -24,6 +25,11 @@ export const App = () => {
         <PortalAppSwitcher remoteModules={remoteModules} />
       </NavContainer>
       <PortalHeader />
+      {/* PortalHeader has no slot for status items (trader upstream issue 85) */}
+      <ConnectionStatusIndicator
+        className="traderHostConnectionStatus"
+        compact={false}
+      />
     </PortalShell>
   );
 };

@@ -330,6 +330,8 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
     });
     const {
       accounts,
+      blockedReason,
+      connectionState,
       draft,
       errors,
       handleKeyDown,
@@ -362,6 +364,7 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
         aria-label={htmlAttributes["aria-label"] ?? "Order ticket"}
         className={cx(classBase, className, `${classBase}-${variant}`)}
         data-link-group={linkGroup}
+        data-connection-state={connectionState}
         data-side={draft.side}
         data-submission={submission.state}
         onKeyDown={handleKeyDown}
@@ -568,6 +571,14 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
           </div>
         ) : null}
         <SubmissionStatus ticket={ticket} />
+        {blockedReason ? (
+          <output
+            className={`${classBase}-blocked`}
+            data-connection-state={connectionState}
+          >
+            {blockedReason}
+          </output>
+        ) : null}
 
         <div className={`${classBase}-actions`}>
           {actions}
@@ -584,6 +595,7 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
             aria-keyshortcuts="F9 Control+Enter"
             className={`${classBase}-submit`}
             data-side={draft.side}
+            disabled={blockedReason !== undefined}
             loading={pending}
             onClick={() => void submit()}
             sentiment={draft.side === Side.Buy ? "positive" : "negative"}

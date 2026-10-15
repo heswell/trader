@@ -3,7 +3,13 @@ import type {
   DataSourceConstructorProps,
 } from "@vuu-ui/vuu-data-types";
 import { Range, StaleUpdateError } from "@vuu-ui/vuu-utils";
-import { TradingRpcError } from "./tradingRpc";
+import {
+  DEFAULT_RPC_TIMEOUT_MS,
+  disconnectedRpcError,
+  type TradingRpcOptions,
+  TradingRpcError,
+  withRpcTimeout,
+} from "./tradingRpc";
 
 export interface OrderEdits {
   quantity?: number;
@@ -92,7 +98,14 @@ const endRemoteSession = async (session: DataSource, save: boolean) => {
  */
 export const openOrderEditSession = async (
   dataSource: DataSource,
+  {
+    timeoutMs = DEFAULT_RPC_TIMEOUT_MS,
+    connectionState,
+  }: TradingRpcOptions = {},
 ): Promise<OrderEditSession> => {
+  if (connectionState !== undefined && connectionState !== "connected") {
+    throw disconnectedRpcError("amendOrder", connectionState);
+  }
   if (!dataSource.beginEditSession) {
     throw new TradingRpcError(
       "amendOrder",
@@ -102,22 +115,38 @@ export const openOrderEditSession = async (
   let session: DataSource;
   let rebound = false;
   try {
-    const begun = await dataSource.beginEditSession();
+    const begun = await withRpcTimeout(
+      dataSource.beginEditSession(),
+      "amendOrder",
+      timeoutMs,
+    );
     if (!begun) throw Error("beginEditSession returned no session");
     const rebuilt = rebindRemoteSession(dataSource, begun);
     rebound = rebuilt !== undefined;
     session = rebuilt ?? begun;
   } catch (err) {
-    throw new TradingRpcError("amendOrder", errorMessage(err));
+    throw err instanceof TradingRpcError
+      ? err
+      : new TradingRpcError("amendOrder", errorMessage(err));
   }
   const end = (save: boolean) =>
-    rebound ? endRemoteSession(session, save) : session.endEditSession?.(save);
+    withRpcTimeout(
+      Promise.resolve(
+        rebound
+          ? endRemoteSession(session, save)
+          : session.endEditSession?.(save),
+      ),
+      "amendOrder",
+      timeoutMs,
+    );
   await session.subscribe({ range: Range(0, 1) }, () => undefined);
   const touched = new Set<string>();
   let open = true;
 
   const rpc = async (call: Promise<unknown> | undefined) => {
-    const result = await call;
+    const result = call
+      ? await withRpcTimeout(call, "amendOrder", timeoutMs)
+      : undefined;
     if (isRpcError(result)) {
       throw new TradingRpcError("amendOrder", result.errorMessage);
     }
@@ -177,8 +206,9 @@ export const openOrderEditSession = async (
 export const editOrdersInSession = async (
   dataSource: DataSource,
   edits: { amend?: Record<string, OrderEdits>; cancel?: readonly string[] },
+  options?: TradingRpcOptions,
 ) => {
-  const session = await openOrderEditSession(dataSource);
+  const session = await openOrderEditSession(dataSource, options);
   try {
     for (const [orderId, orderEdits] of Object.entries(edits.amend ?? {})) {
       await session.amend(orderId, orderEdits);

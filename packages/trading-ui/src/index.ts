@@ -22,6 +22,7 @@ export * from "./instrument-context/useComponentLinkGroup";
 export * from "./hooks/useLevelFlash";
 export * from "./hooks/useMarketData";
 export * from "./hooks/useOwnWorkingOrders";
+export * from "./hooks/useStableCallback";
 // order events, notifications, connection state (P3.12)
 export * from "./connection";
 export * from "./notifications";
@@ -36,6 +37,7 @@ export * from "./utils/userSettingsStorage";
 // components
 export * from "./components/AccountSelector";
 export * from "./components/ConnectionBanner";
+export * from "./components/ConnectionStatusIndicator";
 export * from "./components/InstrumentPicker";
 export * from "./components/LinkGroupSelector";
 export * from "./components/OrderTicket";

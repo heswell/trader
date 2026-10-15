@@ -12,3 +12,10 @@
   border-color: var(--salt-status-error-borderColor);
   color: var(--salt-status-error-foreground-informative);
 }
+
+/* useStaleData: a view whose data is stale is greyed out (docs/resilience.md) */
+.tradingStaleData[data-stale="true"] {
+  filter: grayscale(1);
+  opacity: var(--tradingStaleData-opacity, 0.55);
+  transition: opacity 150ms ease-in;
+}

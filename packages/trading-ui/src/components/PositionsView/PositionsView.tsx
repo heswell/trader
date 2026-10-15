@@ -23,7 +23,9 @@ import {
   useComponentLinkGroup,
 } from "../../instrument-context/useComponentLinkGroup";
 import { LinkGroupSelector } from "../LinkGroupSelector";
+import { useStaleData } from "../StaleIndicator/useStaleData";
 import { formatNotional } from "../../utils/formatting";
+import { useStableCallback } from "../../hooks/useStableCallback";
 import {
   InstrumentLookupProvider,
   useInstrumentLookup,
@@ -216,6 +218,7 @@ const Inner = forwardRef<HTMLDivElement, PositionsViewProps>(
     },
     ref,
   ) {
+    const { staleProps } = useStaleData();
     const targetWindow = useWindow();
     useComponentCssInjection({
       testId: "trading-positions-view",
@@ -279,11 +282,13 @@ const Inner = forwardRef<HTMLDivElement, PositionsViewProps>(
       },
       [lookup, setSelectedInstrument],
     );
+    const stableHandleSelect = useStableCallback(handleSelect);
 
     return (
       <div
         {...htmlAttributes}
-        className={cx(classBase, className)}
+        {...staleProps}
+        className={cx(classBase, className, staleProps.className)}
         data-link-group={linkGroup}
         data-testid="trading-positions-view"
         ref={ref}
@@ -309,7 +314,7 @@ const Inner = forwardRef<HTMLDivElement, PositionsViewProps>(
           <Table
             config={tableConfig}
             dataSource={dataSource}
-            onSelect={handleSelect}
+            onSelect={stableHandleSelect}
             selectionModel="single"
           />
         </div>

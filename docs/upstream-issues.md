@@ -377,8 +377,10 @@ and the `@vuu-ui/vuu-icons` main entry (#52) still lack types; `PersistedStateAP
     `reject-new` the extra tab's portal connection is closed with `4003` and a text frame
     `maximum sessions (N) reached for user X`, which `isLoginErrorMessage` / `InvalidLoginMessages` do not
     recognise. The shell renders nothing (no banner or message) and never retries, even after other tabs close.
-    Showing the reason, and retrying or offering a retry, would fix it. *Workaround:* reload the tab after closing
-    another; trader allows 5 sessions per user so this is rare.
+    Showing the reason, and retrying or offering a retry, would fix it. *Workaround:* trader allows 5 sessions per
+    user so this is rare. For module (trading) connections, `createResilientConnectionRegistry` now retries with
+    backoff and shows "Connecting…" until a session is free (trader upstream issues 83, 84). The portal connection
+    goes through the same registry, so it is retried too, but the shell stays blank until it connects.
 
 ## Found in the vuu-server 4.2.0 / engine-local 3.0.0 upgrade
 
@@ -434,3 +436,71 @@ and the `@vuu-ui/vuu-icons` main entry (#52) still lack types; `PersistedStateAP
     server returns in TABLE_META_RESP, while plain `createTable`/`new Table(schema)` keep it unchanged. Preserving
     the declared schema as given would fix it. *Workaround:* `createTradingTestData` publishes the declared
     `getTradingSchemas()` schemas as the modules' `schemas` rather than each table's `schema`.
+
+## Found in Phase 5B (resilience: reconnect, resubscribe, stale data)
+
+See [resilience.md](resilience.md) for the behaviour these work around.
+
+81. **vuu-ui RPC / menu requests never time out, and a send while disconnected is dropped.** (finos
+    `@vuu-ui/vuu-data-remote` `ConnectionManager.asyncRequest` / `ServerProxy`, 4.0.0-alpha.21.) The pending request
+    is kept until a response arrives. If the socket drops after the send, or the send happens while disconnected
+    (the worker discards it), the promise never settles, so a menu action or order RPC spins forever. Rejecting
+    pending requests on `disconnected` (and refusing sends while not connected), plus an optional per-request
+    timeout, would fix it. *Workaround:* `sendTradingRpc` / the edit-session amend take `connectionState` (fail at
+    once, nothing sent) and a `timeoutMs` (default 10 s) and reject with `TradingRpcError.transport`
+    `"disconnected"` / `"timeout"`.
+82. **`WebSocketConnection` never reports `connecting` or `reconnecting`.** (finos `@vuu-ui/vuu-data-remote`,
+    4.0.0-alpha.21.) The `connectionStatus` setter ignores those two values, so listeners only see
+    `websocket-open`, `connected` / `reconnected`, `disconnected` and `closed`, and cannot tell "down, retrying"
+    from "down for good". Emitting them would fix it. *Workaround:* trader keeps the reconnect state itself
+    (`connectionStateStore`, fed by the registry and `ReconnectSupervisor`) and combines it with the socket status
+    in `useTradingConnectionStatus`.
+83. **A login refused with an unrecognised text frame hangs the connect for good.** (vuu-websocket
+    `@heswell/vuu-server` 4.2 and finos `@vuu-ui/vuu-data-remote` 4.0.0-alpha.21.) At the session limit the server
+    answers LOGIN with the text `maximum sessions (N) reached for user X` (also `Invalid session <id>`) and closes
+    with 4003. `isLoginErrorMessage` / `InvalidLoginMessages` do not match it, so `receive` passes it to
+    `parseWebSocketMessage`, which throws "Error parsing JSON response"; `onclose` then sets `disconnected`, but the
+    deferred open has already resolved and the pending login is never rejected, so
+    `ConnectionManager.connectWithLoginResponseTo` never settles and `VuuConnectionRegistry`'s connect / reconnect
+    loop stops waiting on it. Related to trader upstream issue 74. Fix in vuu-server (heswell/vuu-websocket): answer
+    a refused LOGIN with a JSON `LOGIN_FAIL` message (`{ type: "LOGIN_FAIL", msg: "maximum sessions (N) reached",
+    code: 4003 }`) before closing, or use a text vuu-ui's `InvalidLoginMessages` recognises. Fix in vuu-ui: reject the
+    pending login when the socket closes before LOGIN_SUCCESS, and treat an unparseable frame during login as a
+    refusal. *Workaround:* `createResilientConnectionRegistry` fails an attempt when the socket closes after opening
+    and before LOGIN_SUCCESS, and after `loginTimeoutMs` (20 s) at most.
+84. **`VuuConnectionRegistry` does not retry a failed first connect, and gives up on reconnects after ~4 minutes.**
+    (finos `@vuu-ui/core`, 4.0.0-alpha.21.) `acquire` sets `failed` and rejects when the first connect fails
+    (server down, login refused at the session limit), and `RemoteModule` shows its error boundary ("An error
+    occurred while creating the remote module"). After a drop it retries on `retryIntervals` (1–120 s, no jitter, so
+    every tab retries in lock-step), then stops for good. A retry policy shared by first connects and reconnects,
+    with jitter and an option never to give up, and the attempt number / next attempt time in the state events,
+    would fix it. *Workaround:* `createResilientConnectionRegistry` passes a jittered, unbounded `retryIntervals`
+    iterable and wraps `acquire` to retry first connects with the same backoff (one shared wait per connection id,
+    403 not retried), publishing the next attempt time.
+85. **`PortalHeader` has no slot for status items.** (finos `@vuu-ui/core` portal, 4.0.0-alpha.21.) A host cannot put
+    a connection indicator (or anything else) in the header. A `children` / `endAdornment` slot would fix it.
+    *Workaround:* the portal host renders `ConnectionStatusIndicator` after `PortalHeader` and positions it over the
+    header with CSS (`apps/portal-host/src/App.css`).
+86. **`WebSocketConnection.openWebSocket`'s timeout throws inside `setTimeout`.** (finos `@vuu-ui/vuu-data-remote`,
+    4.0.0-alpha.21.) When the socket does not open in time the timer throws `Failed to open WebSocket connection to
+    …`, an uncaught error in the worker, instead of rejecting the open promise, so the caller waits forever and the
+    socket is not closed. Rejecting the deferred open (and closing the socket) would fix it. *Workaround:* the
+    per-attempt login timeout of trader upstream issue 83.
+87. **`useDataSource` throws if its effect re-runs while the viewport is still subscribing.** (finos
+    `@vuu-ui/vuu-table` `useDataSource`, 4.0.0-alpha.21.) The effect treats any status other than `initialising` /
+    `unsubscribed` as resumed and throws "[useDataSource] a resumed dataSource must have a tableSchema" when there is
+    no schema yet. It re-runs whenever a dependency changes, including the `Table`'s `onSelect`, so a callback
+    rebuilt during a cold start or a resubscribe after a reconnect (e.g. when the instrument lookup loads) breaks
+    the whole module. Treating `subscribing` like `initialising` (wait for the schema) would fix it. *Workaround:*
+    trader's Tables get a stable `onSelect` (`useStableCallback`).
+88. **`ServerProxy` clears every viewport on disconnect.** (finos `@vuu-ui/vuu-data-remote`, 4.0.0-alpha.21.) On
+    `disconnected` the worker clears all viewports' rows, so a grid, ladder or depth book goes empty while the server
+    is down instead of keeping the last data greyed out as stale; it repopulates after the resubscribe. An option to
+    keep rows until the resubscribe (and send the size / rows fresh then) would fix it. *Workaround:* none; views
+    are marked stale while down and empty until they repopulate.
+89. **`ConnectionManager.destroyConnection(id)` drops every status listener of the id.** (finos
+    `@vuu-ui/vuu-data-remote`, 4.0.0-alpha.21.) It deletes the id's whole listener set, including listeners
+    registered by others (status hooks), so after a failed connection is destroyed and a new one is made for the
+    same id they never hear from it. Removing only the destroyed connection's own wiring would fix it.
+    *Workaround:* `useVuuConnectionStatuses` re-reads and re-subscribes whenever the registry state of an id
+    changes.
