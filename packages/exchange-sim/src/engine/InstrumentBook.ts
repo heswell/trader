@@ -112,11 +112,17 @@ export class InstrumentBook {
     { seq = 0, stats }: { seq?: number; stats?: SessionStats } = {},
   ) {
     type Level = { price: number; orders: ILimitOrder[] };
-    const levels = { bids: new Map<number, Level>(), asks: new Map<number, Level>() };
+    const levels = {
+      bids: new Map<number, Level>(),
+      asks: new Map<number, Level>(),
+    };
     for (const order of orders) {
       const side = order.side === BookSide.BUY ? levels.bids : levels.asks;
       let level = side.get(order.price);
-      if (!level) side.set(order.price, (level = { price: order.price, orders: [] }));
+      if (!level) {
+        level = { price: order.price, orders: [] };
+        side.set(order.price, level);
+      }
       level.orders.push(order);
     }
     const sorted = (map: Map<number, Level>, dir: number) =>

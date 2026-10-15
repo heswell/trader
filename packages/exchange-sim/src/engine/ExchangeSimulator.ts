@@ -618,7 +618,9 @@ export class ExchangeSimulator {
     const placed = new Set<string>();
     // Last occurrence wins for re-queued orders, first for the rest.
     const lastIndex = new Map<string, number>();
-    priority.forEach((id, i) => lastIndex.set(id, i));
+    priority.forEach((id, i) => {
+      lastIndex.set(id, i);
+    });
     priority.forEach((id, i) => {
       const report = live.get(id);
       if (!report || placed.has(id) || report.ordType !== OrdType.Limit) return;
@@ -666,7 +668,9 @@ export class ExchangeSimulator {
       });
     }
     const droppedOrders = [...live.values()]
-      .filter((r) => !this.#simulated.has(r.ric) || !placed.has(r.exchangeOrderId))
+      .filter(
+        (r) => !this.#simulated.has(r.ric) || !placed.has(r.exchangeOrderId),
+      )
       .map((r) => r.exchangeOrderId);
     return { restoredOrders: placed.size, droppedOrders, tradeSeq };
   }

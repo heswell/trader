@@ -8,7 +8,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./engine": "./src/engine.ts",
-    "./main": "./src/Main.ts"
+    "./main": "./src/Main.ts",
+    "./persistence": "./src/persistence/index.ts"
   },
   "license": "MIT",
   "scripts": {

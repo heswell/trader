@@ -4,7 +4,8 @@ import { MemoryStore } from "./MemoryStore";
 import { SqliteStore } from "./SqliteStore";
 import type { PersistenceStore, StoreKind } from "./types";
 
-export { FileStore } from "./FileStore";
+export { FileStore, LOCK } from "./FileStore";
+export { acquireLock, lockHolder } from "./lock";
 export { SqliteStore } from "./SqliteStore";
 export * from "./index";
 

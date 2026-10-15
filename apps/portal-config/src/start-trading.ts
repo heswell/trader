@@ -11,4 +11,7 @@ process.env.VUU_CONFIG_FILE ??= resolve(
   "../application.trading.conf",
 );
 const { default: start } = await import("@heswell/oms/main");
-await start();
+// persistence.dir (application.trading.conf) is relative to the repo root.
+await start(undefined, {
+  persistenceBaseDir: resolve(import.meta.dir, "../../.."),
+});

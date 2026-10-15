@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { acquireLock } from "./lock";
 import type {
   LoadResult,
   PersistenceStore,
@@ -29,10 +30,17 @@ export class SqliteStore implements PersistenceStore {
   readonly #insert;
   #seq = 0;
   #sinceSnapshot = 0;
+  #unlock: (() => void) | undefined;
 
   constructor(file: string, { fsync = false }: StoreOptions = {}) {
     this.location = file === ":memory:" ? file : resolve(file);
-    if (file !== ":memory:") mkdirSync(dirname(this.location), { recursive: true });
+    if (file !== ":memory:") {
+      mkdirSync(dirname(this.location), { recursive: true });
+      this.#unlock = acquireLock(
+        `${this.location}.lock`,
+        `database ${this.location}`,
+      );
+    }
     const db = new Database(this.location, { create: true, strict: true });
     db.exec("PRAGMA journal_mode = WAL");
     db.exec(`PRAGMA synchronous = ${fsync ? "FULL" : "NORMAL"}`);
@@ -108,5 +116,7 @@ export class SqliteStore implements PersistenceStore {
 
   close() {
     this.#db.close();
+    this.#unlock?.();
+    this.#unlock = undefined;
   }
 }

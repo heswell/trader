@@ -392,18 +392,32 @@ export class OmsEngine {
       const { status } = child.state;
       if (!child.exchangeOrderId) {
         if (status === OrdStatus.PendingNew) {
-          apply({ type: "reject", reason: RejectReason.InternalError, text: lost });
+          apply({
+            type: "reject",
+            reason: RejectReason.InternalError,
+            text: lost,
+          });
           result.resolved.push(child.orderId);
-          note(`${child.orderId} was never acknowledged by the exchange: rejected`);
+          note(
+            `${child.orderId} was never acknowledged by the exchange: rejected`,
+          );
         }
         continue;
       }
       const exchange = view.getOrder(child.exchangeOrderId);
       if (status === OrdStatus.PendingReplace) {
-        apply({ type: "replaceReject", reason: RejectReason.InternalError, text: lost });
+        apply({
+          type: "replaceReject",
+          reason: RejectReason.InternalError,
+          text: lost,
+        });
         result.resolved.push(child.orderId);
       } else if (status === OrdStatus.PendingCancel) {
-        apply({ type: "cancelReject", reason: RejectReason.InternalError, text: lost });
+        apply({
+          type: "cancelReject",
+          reason: RejectReason.InternalError,
+          text: lost,
+        });
         result.resolved.push(child.orderId);
       }
       if (child.expiring) {
@@ -414,7 +428,10 @@ export class OmsEngine {
         note(
           `${child.orderId} is ${child.state.status} but exchange order ${child.exchangeOrderId} is ${exchange?.ordStatus ?? "unknown"}: expired`,
         );
-        apply({ type: "expired", text: "order not found at the exchange after restart" });
+        apply({
+          type: "expired",
+          text: "order not found at the exchange after restart",
+        });
         result.expired.push(child.orderId);
         continue;
       }

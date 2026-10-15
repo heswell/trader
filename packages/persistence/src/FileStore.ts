@@ -12,6 +12,7 @@ import {
   writeSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
+import { acquireLock } from "./lock";
 import type {
   LoadResult,
   PersistenceStore,
@@ -22,7 +23,7 @@ import type {
 
 const SNAPSHOT = /^snapshot-(\d+)\.json$/;
 const JOURNAL = /^journal-(\d+)\.ndjson$/;
-const LOCK = "LOCK";
+export const LOCK = "LOCK";
 const pad = (n: number) => String(n).padStart(12, "0");
 
 interface JournalLine {
@@ -31,15 +32,6 @@ interface JournalLine {
   s: string;
   d: unknown;
 }
-
-const isAlive = (pid: number) => {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (err) {
-    return (err as NodeJS.ErrnoException).code === "EPERM";
-  }
-};
 
 /**
  * Directory store: `snapshot-<seq>.json` (written to a temp file, fsynced and
@@ -55,34 +47,17 @@ export class FileStore implements PersistenceStore {
   #fd: number | undefined;
   #seq = 0;
   #sinceSnapshot = 0;
-  #locked = false;
+  #unlock: (() => void) | undefined;
 
   constructor(dir: string, { fsync = false }: StoreOptions = {}) {
     this.dir = resolve(dir);
     this.#fsync = fsync;
     mkdirSync(this.dir, { recursive: true });
-    this.#lock();
+    this.#unlock = acquireLock(join(this.dir, LOCK), `dir ${this.dir}`);
   }
 
   get location() {
     return this.dir;
-  }
-
-  #lock() {
-    const path = join(this.dir, LOCK);
-    try {
-      writeFileSync(path, String(process.pid), { flag: "wx" });
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
-      const pid = Number(readFileSync(path, "utf8").trim());
-      if (pid && pid !== process.pid && isAlive(pid)) {
-        throw Error(
-          `persistence dir ${this.dir} is in use by process ${pid} (remove ${path} if that is wrong)`,
-        );
-      }
-      writeFileSync(path, String(process.pid));
-    }
-    this.#locked = true;
   }
 
   #files(pattern: RegExp) {
@@ -220,9 +195,7 @@ export class FileStore implements PersistenceStore {
 
   close() {
     this.#closeSegment();
-    if (this.#locked) {
-      rmSync(join(this.dir, LOCK), { force: true });
-      this.#locked = false;
-    }
+    this.#unlock?.();
+    this.#unlock = undefined;
   }
 }

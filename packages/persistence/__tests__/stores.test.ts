@@ -17,7 +17,8 @@ const tempDir = () => {
   return dir;
 };
 afterEach(() => {
-  for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+  for (const dir of dirs.splice(0))
+    rmSync(dir, { recursive: true, force: true });
 });
 
 interface Kind {
@@ -53,7 +54,11 @@ const kinds: Kind[] = [
 describe.each(kinds)("$name store", ({ factory }) => {
   test("empty load", () => {
     const store = factory()();
-    expect(store.load()).toEqual({ snapshot: undefined, entries: [], warnings: [] });
+    expect(store.load()).toEqual({
+      snapshot: undefined,
+      entries: [],
+      warnings: [],
+    });
     store.close();
   });
 
@@ -88,13 +93,21 @@ describe.each(kinds)("$name store", ({ factory }) => {
     a.close();
     const b = open();
     const loaded = b.load();
-    expect(loaded.snapshot).toEqual({ seq: 2, ts: 3, data: { oms: { n: 2 }, exchange: { t: 0 } } });
+    expect(loaded.snapshot).toEqual({
+      seq: 2,
+      ts: 3,
+      data: { oms: { n: 2 }, exchange: { t: 0 } },
+    });
     expect(loaded.entries).toEqual([{ seq: 3, ts: 4, stream: "oms", data: 3 }]);
     expect(b.entriesSinceSnapshot).toBe(1);
     b.snapshot({ oms: { n: 3 } }, 5);
     b.close();
     const c = open();
-    expect(c.load()).toEqual({ snapshot: { seq: 3, ts: 5, data: { oms: { n: 3 } } }, entries: [], warnings: [] });
+    expect(c.load()).toEqual({
+      snapshot: { seq: 3, ts: 5, data: { oms: { n: 3 } } },
+      entries: [],
+      warnings: [],
+    });
     expect(c.append("oms", 4, 6)).toBe(4);
     c.close();
   });
@@ -119,7 +132,11 @@ describe.each(kinds)("$name store", ({ factory }) => {
     a.clear();
     a.close();
     const b = open();
-    expect(b.load()).toEqual({ snapshot: undefined, entries: [], warnings: [] });
+    expect(b.load()).toEqual({
+      snapshot: undefined,
+      entries: [],
+      warnings: [],
+    });
     b.close();
   });
 });
@@ -141,7 +158,11 @@ describe("file store", () => {
     expect(b.append("oms", { n: 3 }, 3)).toBe(3);
     b.close();
     const c = new FileStore(dir);
-    expect(c.load().entries.map((e) => e.data)).toEqual([{ n: 1 }, { n: 2 }, { n: 3 }]);
+    expect(c.load().entries.map((e) => e.data)).toEqual([
+      { n: 1 },
+      { n: 2 },
+      { n: 3 },
+    ]);
     c.close();
   });
 
@@ -152,7 +173,10 @@ describe("file store", () => {
     a.append("oms", 1, 1);
     a.close();
     const [segment] = readdirSync(dir).filter((f) => f.startsWith("journal-"));
-    appendFileSync(join(dir, segment), 'garbage\n{"seq":3,"ts":3,"s":"oms","d":3}\n');
+    appendFileSync(
+      join(dir, segment),
+      'garbage\n{"seq":3,"ts":3,"s":"oms","d":3}\n',
+    );
     expect(() => new FileStore(dir).load()).toThrow("corrupt journal entry");
   });
 
@@ -191,6 +215,8 @@ describe("createStore", () => {
       expect(s.kind).toBe(store);
       s.close();
     }
-    expect(() => createStore({ store: "duckdb" as never, dir })).toThrow("unknown persistence store");
+    expect(() => createStore({ store: "duckdb" as never, dir })).toThrow(
+      "unknown persistence store",
+    );
   });
 });

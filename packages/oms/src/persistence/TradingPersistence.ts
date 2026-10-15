@@ -168,7 +168,8 @@ export class TradingPersistence {
         exchangeEntries.push(entry.data as ExchangeJournalEntry);
       else if (entry.stream === OMS_STREAM)
         omsBatches.push(entry.data as OmsJournalBatch);
-      else this.#log(`warning: ignored entry of unknown stream ${entry.stream}`);
+      else
+        this.#log(`warning: ignored entry of unknown stream ${entry.stream}`);
     }
     const restored = data !== undefined || loaded.entries.length > 0;
     const report: RecoveryReport = {

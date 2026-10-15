@@ -3,8 +3,10 @@ import type { ConfigSource } from "../config";
 
 /**
  * Persistence configuration: `persistence.<key>` in application.conf or a
- * `PERSISTENCE_<KEY>` environment variable (UPPER_SNAKE_CASE, env wins).
- * `TRADER_DATA_DIR` is an alias for `PERSISTENCE_DIR`. See docs/persistence.md.
+ * `PERSISTENCE_<KEY>` / `TRADER_PERSISTENCE_<KEY>` environment variable
+ * (UPPER_SNAKE_CASE, env wins), e.g. `TRADER_PERSISTENCE_STORE=file`,
+ * `TRADER_PERSISTENCE_RESET=1`. `TRADER_DATA_DIR` is an alias for
+ * `PERSISTENCE_DIR`. See docs/persistence.md.
  */
 export interface PersistenceConfig {
   /** memory (nothing survives the process), file or sqlite. */
@@ -68,7 +70,9 @@ export const loadPersistenceConfig = (
   )) {
     const confKey = `persistence.${key}`;
     const envValue =
-      env[envName(key)] || (key === "dir" ? env.TRADER_DATA_DIR : undefined);
+      env[envName(key)] ||
+      env[`TRADER_${envName(key)}`] ||
+      (key === "dir" ? env.TRADER_DATA_DIR : undefined);
     const isString = typeof defaultValue === "string";
     if (envValue !== undefined && envValue !== "") {
       const value = isString

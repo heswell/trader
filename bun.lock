@@ -7,6 +7,7 @@
       "devDependencies": {
         "@biomejs/biome": "2.2.4",
         "@happy-dom/global-registrator": "20.14.5",
+        "@heswell/trading-persistence": "workspace:*",
         "@heswell/vuu-portal": "^2.2.0",
         "@heswell/vuu-server": "^4.2.0",
         "@heswell/vuu-table": "^1.0.2",
