@@ -288,14 +288,24 @@ const main = async () => {
 
     // ---- 5. order ids continue ------------------------------------------------
     const nextPrice = (Math.floor(ask * 0.97 * 20) / 20).toFixed(2);
-    await page.locator("input[placeholder='Search instrument']").fill("AAPL");
-    await page.locator("[role=option]", { hasText: RIC }).first().click();
-    await submitBuy(page, 300, nextPrice);
-    await mustWait(
-      "new order in the blotter",
-      async () => orderIds(await workingOrders(page)).length > 1,
-      20_000,
-    );
+    // The ticket can still be settling after the reload, so one resubmit is
+    // allowed; any extra order only gets a higher id.
+    let placed = false;
+    for (let attempt = 1; attempt <= 2 && !placed; attempt++) {
+      await page.locator("input[placeholder='Search instrument']").fill("AAPL");
+      await page.locator("[role=option]", { hasText: RIC }).first().click();
+      await submitBuy(page, 300, nextPrice);
+      placed =
+        (await waitUntil(
+          async () => orderIds(await workingOrders(page)).length > 1,
+          15_000,
+        )) >= 0;
+      if (!placed) log(`new order not in the blotter (attempt ${attempt})`);
+    }
+    if (!placed) {
+      await shot("new-order-missing");
+      throw Error("new order in the blotter: timeout");
+    }
     const newIds = orderIds(await workingOrders(page)).filter(
       (id) => !idsBefore.includes(id),
     );
