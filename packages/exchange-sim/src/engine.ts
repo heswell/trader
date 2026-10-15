@@ -45,3 +45,21 @@ export {
 } from "./reference/instruments";
 export { type Clock, ManualClock, systemClock } from "./util/clock";
 export { Random } from "./util/random";
+export {
+  type BookSettings,
+  type BookState,
+  type ExchangeJournal,
+  type ExchangeJournalEntry,
+  type ExchangeRestoreResult,
+  type ExchangeState,
+  type BookSnapshot,
+  type ForcedPhase,
+  type ILimitOrder,
+  TRADE_ID_BLOCK,
+} from "./engine/persistence";
+export {
+  type GatewayJournal,
+  type GatewayState,
+  GATEWAY_OWNER,
+  idSeq,
+} from "./gateway/SimExchangeGateway";

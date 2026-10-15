@@ -28,6 +28,11 @@ export class PriceModel {
     return this.#fair;
   }
 
+  /** Restore a persisted fair value (clamped to the band). */
+  set fairValue(value: number) {
+    if (Number.isFinite(value) && value > 0) this.#fair = this.clampToBand(value);
+  }
+
   /** Fair value snapped to the tick grid. */
   get fairOnTick() {
     return roundToTick(this.#fair, this.schedule);

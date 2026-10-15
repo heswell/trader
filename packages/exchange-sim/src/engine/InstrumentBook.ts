@@ -15,6 +15,7 @@ import {
 } from "@heswell/trading-schemas";
 import type { InstrumentDef } from "../reference/instruments";
 import type { Clock } from "../util/clock";
+import type { ILimitOrder } from "./persistence";
 import { PriceModel } from "./PriceModel";
 
 export const toBookSide = (side: Side) =>
@@ -54,7 +55,8 @@ export type BookTradeListener = (book: InstrumentBook, trade: Trade) => string;
  * counting and dirty tracking are in one place.
  */
 export class InstrumentBook {
-  readonly book: OrderBook;
+  /** Replaced (never mutated in place) by `restore`. */
+  book: OrderBook;
   readonly schedule: TickSchedule;
   readonly model: PriceModel;
   phase: TradingPhase = TradingPhase.Continuous;
@@ -97,6 +99,44 @@ export class InstrumentBook {
 
   get ric() {
     return this.instrument.ric;
+  }
+
+  /**
+   * Replace the order book with `orders` (resting limit orders, each queue in
+   * time priority) owned by `sink`, e.g. restored gateway orders. Call
+   * before any other order entry: existing orders are dropped.
+   */
+  restore(
+    orders: readonly ILimitOrder[],
+    sink: FillSink,
+    { seq = 0, stats }: { seq?: number; stats?: SessionStats } = {},
+  ) {
+    type Level = { price: number; orders: ILimitOrder[] };
+    const levels = { bids: new Map<number, Level>(), asks: new Map<number, Level>() };
+    for (const order of orders) {
+      const side = order.side === BookSide.BUY ? levels.bids : levels.asks;
+      let level = side.get(order.price);
+      if (!level) side.set(order.price, (level = { price: order.price, orders: [] }));
+      level.orders.push(order);
+    }
+    const sorted = (map: Map<number, Level>, dir: number) =>
+      [...map.values()].sort((a, b) => dir * (a.price - b.price));
+    this.book = new OrderBook({
+      clock: this.clock,
+      onTrade: (trade) => this.#handleTrade(trade),
+      snapshot: {
+        bids: sorted(levels.bids, -1),
+        asks: sorted(levels.asks, 1),
+        stopBook: { bids: [], asks: [] },
+        ts: this.clock(),
+        lastOp: 0,
+        seq,
+      },
+    });
+    this.#sinks.clear();
+    for (const order of orders) this.#sinks.set(order.id, sink);
+    if (stats) Object.assign(this.stats, stats);
+    this.dirty = true;
   }
 
   get seq() {
