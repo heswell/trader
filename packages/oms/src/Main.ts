@@ -49,7 +49,10 @@ export default async function main(
   });
   const recovery = persistence.recover();
   persistence.start();
+  let shutDown = false;
   const shutdown = () => {
+    if (shutDown) return;
+    shutDown = true;
     try {
       persistence.close();
       persistenceLogger.info("final snapshot written");
