@@ -24,147 +24,31 @@
  * everything this script spawns is stopped when it exits. Browsers:
  * `bunx playwright install chromium` once. Screenshots go to .run/.
  */
-import { connect } from "node:net";
 import { resolve } from "node:path";
 import { chromium, type Page } from "playwright";
-import { stackConfig } from "../stack/config";
+import {
+  check,
+  flag,
+  indicatorState,
+  log,
+  login,
+  moduleError,
+  option,
+  output,
+  portOpen,
+  root,
+  run,
+  startStack,
+  stop,
+  waitUntil,
+  mustWait,
+} from "./harness";
 
-const root = resolve(import.meta.dir, "../..");
-const argv = process.argv.slice(2);
-const flag = (name: string) => argv.includes(`--${name}`);
-const option = (name: string, fallback: number) => {
-  const arg = argv.find((a) => a.startsWith(`--${name}=`));
-  return arg ? Number(arg.split("=")[1]) : fallback;
-};
 const restarts = option("restarts", 3);
 const portalRestarts = option("portal-restarts", 1);
 const sessionLimit = !flag("no-session-limit");
 
-const log = (msg: string) =>
-  console.log(`[e2e ${new Date().toISOString().slice(11, 19)}] ${msg}`);
-
-const portOpen = (port: number, host = "localhost") =>
-  new Promise<boolean>((done) => {
-    const socket = connect({ host, port });
-    socket.setTimeout(1000);
-    socket.once("connect", () => {
-      socket.destroy();
-      done(true);
-    });
-    socket.once("error", () => done(false));
-    socket.once("timeout", () => {
-      socket.destroy();
-      done(false);
-    });
-  });
-
-const PORT_VARS: [string, number][] = [
-  ["TRADER_PORTAL_WS_PORT", 8191],
-  ["TRADER_PORTAL_HTTPS_PORT", 8543],
-  ["TRADER_TRADING_WS_PORT", 8192],
-  ["TRADER_TRADING_HTTPS_PORT", 8544],
-  ["TRADER_HOST_PORT", 5100],
-  ["TRADER_FEATURES_PORT", 5110],
-];
-
-/** Default ports if all free, else every server port shifted by the offset. */
-const choosePorts = async () => {
-  const env: Record<string, string> = {};
-  if (PORT_VARS.some(([name]) => process.env[name])) return env;
-  const busy = [];
-  for (const [, port] of PORT_VARS) if (await portOpen(port)) busy.push(port);
-  if (!busy.length) return env;
-  const offset = Number(process.env.E2E_PORT_OFFSET ?? 30);
-  log(`ports ${busy.join(", ")} in use: shifting the stack by +${offset}`);
-  for (const [name, port] of PORT_VARS) {
-    if (await portOpen(port + offset))
-      throw Error(`port ${port + offset} is in use too: set E2E_PORT_OFFSET`);
-    env[name] = String(port + offset);
-  }
-  return env;
-};
-
-// ---- processes we own ------------------------------------------------------
-type Proc = ReturnType<typeof Bun.spawn>;
-const owned = new Set<Proc>();
-const output: Record<string, string[]> = {};
-
-const spawn = (
-  name: string,
-  cmd: string[],
-  extraEnv: Record<string, string> = {},
-) => {
-  const proc = Bun.spawn(cmd, {
-    cwd: root,
-    env: { ...process.env, ...extraEnv },
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  owned.add(proc);
-  proc.exited.then(() => owned.delete(proc));
-  output[name] ??= [];
-  const lines = output[name];
-  const pipe = async (stream: ReadableStream<Uint8Array>) => {
-    const decoder = new TextDecoder();
-    for await (const chunk of stream as unknown as AsyncIterable<Uint8Array>)
-      for (const line of decoder.decode(chunk).split("\n"))
-        if (line.trim()) {
-          lines.push(line);
-          if (process.env.E2E_VERBOSE) console.log(`[${name}] ${line}`);
-        }
-  };
-  pipe(proc.stdout as ReadableStream<Uint8Array>);
-  pipe(proc.stderr as ReadableStream<Uint8Array>);
-  return proc;
-};
-
-const stop = async (proc: Proc, signal: "SIGTERM" | "SIGKILL" = "SIGTERM") => {
-  proc.kill(signal);
-  const done = await Promise.race([
-    proc.exited.then(() => true),
-    Bun.sleep(15_000).then(() => false),
-  ]);
-  if (!done) proc.kill("SIGKILL");
-  await proc.exited;
-};
-
-const cleanup = () => Promise.all([...owned].map((p) => stop(p)));
-process.on("SIGINT", () => cleanup().then(() => process.exit(130)));
-process.on("SIGTERM", () => cleanup().then(() => process.exit(143)));
-
-/** Resolves with the time taken, or -1 on timeout. */
-const waitUntil = async (
-  probe: () => Promise<boolean> | boolean,
-  timeoutMs = 120_000,
-) => {
-  const started = Date.now();
-  while (!(await probe())) {
-    if (Date.now() - started > timeoutMs) return -1;
-    await Bun.sleep(250);
-  }
-  return Date.now() - started;
-};
-const mustWait = async (
-  what: string,
-  probe: () => Promise<boolean> | boolean,
-  timeoutMs?: number,
-) => {
-  if ((await waitUntil(probe, timeoutMs)) < 0) throw Error(`${what}: timeout`);
-};
-
 // ---- checks ----------------------------------------------------------------
-const failures: string[] = [];
-const check = (ok: boolean, what: string) => {
-  log(`${ok ? "ok  " : "FAIL"} ${what}`);
-  if (!ok) failures.push(what);
-};
-
-const indicatorState = (page: Page) =>
-  page
-    .locator(".traderHostConnectionStatus")
-    .getAttribute("data-connection-state", { timeout: 2_000 })
-    .catch(() => null);
-
 const ticketState = (page: Page) =>
   page.evaluate(() => {
     const form = document.querySelector<HTMLElement>(".tradingOrderTicket");
@@ -188,15 +72,6 @@ const gridRows = (page: Page) =>
       ).length,
   );
 
-const moduleError = (page: Page) =>
-  page.evaluate(() =>
-    document.body.textContent?.includes(
-      "An error occurred while creating the remote module",
-    )
-      ? document.body.textContent.slice(0, 300)
-      : undefined,
-  );
-
 const staleCount = (page: Page) =>
   page.evaluate(() => document.querySelectorAll("[data-stale]").length);
 
@@ -208,55 +83,9 @@ const gridText = (page: Page) =>
 
 // ---- run -------------------------------------------------------------------
 const main = async () => {
-  Object.assign(process.env, await choosePorts());
-  const cfg = stackConfig();
-
-  log(`preparing${flag("no-build") ? "" : " (building host + features)"}`);
-  const prepare = Bun.spawnSync(
-    [
-      "bun",
-      "./scripts/start-all.ts",
-      "--prepare",
-      ...(flag("no-build") ? [] : ["--build"]),
-    ],
-    { cwd: root, env: process.env, stdout: "ignore", stderr: "inherit" },
-  );
-  if (prepare.exitCode !== 0) throw Error("start-all --prepare failed");
-
-  const keycloak = spawn("keycloak", [
-    "bun",
-    "./scripts/start-all.ts",
-    "--keycloak-only",
-  ]);
-  await mustWait(
-    "keycloak",
-    () => {
-      if (keycloak.exitCode !== null)
-        throw Error(
-          `keycloak exited:\n${output.keycloak.slice(-20).join("\n")}`,
-        );
-      return output.keycloak.some((l) => l.includes("ready: keycloak only"));
-    },
-    240_000,
-  );
-  log(`keycloak ready at ${cfg.keycloakUrl}`);
-
-  const startTrading = (extraEnv?: Record<string, string>) =>
-    spawn("trading", ["bun", "./scripts/stack/serve.ts", "trading"], extraEnv);
-  const startPortal = () =>
-    spawn("portal", ["bun", "./scripts/stack/serve.ts", "portal"]);
-  let portal = startPortal();
-  let trading = startTrading();
-  spawn("features", ["bun", "./scripts/stack/serve.ts", "features"]);
-  spawn("host", ["bun", "./scripts/stack/serve.ts", "host"]);
-  for (const port of [
-    cfg.portalWsPort,
-    cfg.tradingWsPort,
-    cfg.hostPort,
-    cfg.featuresPort,
-  ])
-    await mustWait(`port ${port}`, () => portOpen(port));
-  log(`stack up: ${cfg.hostOrigin}`);
+  const stack = await startStack();
+  const { cfg, startPortal, startTrading } = stack;
+  let { portal, trading } = stack;
 
   const browser = await chromium.launch({
     headless: !flag("headed"),
@@ -285,9 +114,7 @@ const main = async () => {
 
   try {
     await page.goto(`${cfg.hostOrigin}/trading/workspace`);
-    await page.locator("#username").fill("alice");
-    await page.locator("#password").fill("password");
-    await page.locator("#kc-login").click();
+    await login(page);
 
     await mustWait(
       "indicator connected",
@@ -516,20 +343,4 @@ const main = async () => {
   }
 };
 
-let code = 0;
-try {
-  await main();
-  code = failures.length ? 1 : 0;
-  log(
-    failures.length
-      ? `${failures.length} check(s) failed:\n  ${failures.join("\n  ")}`
-      : "all checks passed",
-  );
-} catch (error) {
-  log(`error: ${(error as Error).message}`);
-  code = 1;
-} finally {
-  log("stopping the stack");
-  await cleanup();
-}
-process.exit(code);
+await run(main);

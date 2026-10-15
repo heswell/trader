@@ -42,7 +42,8 @@ portal user's token by token exchange.
 
 All ports can be changed with `TRADER_*` env vars, and busy ports are reported, not taken over. Flags: `--build`
 (rebuild the features), `--reseed` (reset the portal module list) and `--prepare` (build and generate config only,
-for the `Procfile`). Ctrl-C stops everything. See
+for the `Procfile`) and `--restart-trading` (restart the trading server when it exits on a signal; its pid is in
+`.run/trading.pid`). Ctrl-C stops everything. See
 [docs/portal-integration.md](docs/portal-integration.md#running) for details and troubleshooting.
 
 ## Layout
@@ -88,6 +89,11 @@ The portal server is the stock vuu-portal: `bunx vuu-portal --config apps/portal
 per process from the `TRADER_*` settings. See [Sessions per user](docs/portal-integration.md#sessions-per-user) for
 `VUU_MAX_SESSIONS_PER_USER` / `VUU_SESSION_LIMIT_POLICY`.
 
+Order state persists: the trading server keeps its books, orders, fills, positions and ids in `.data/trading`
+(gitignored), so they survive a restart or a `kill -9`. `bun run persistence:reset` clears it (with the server
+stopped), or start with `TRADER_PERSISTENCE_RESET=1`; `TRADER_PERSISTENCE_STORE=memory` turns it off. See
+[docs/persistence.md](docs/persistence.md).
+
 ## Other commands
 
 - `bun run build`: the portal host and features.
@@ -95,8 +101,12 @@ per process from the `TRADER_*` settings. See [Sessions per user](docs/portal-in
   `features:check` verifies them.
 - `bun run typecheck`: `tsc --noEmit` against the published `.d.ts` of the vuu packages.
 - `bun run lint`, `bun run format`.
-- `bun run test`: `test:server` (no DOM: schemas, exchange-sim, oms, trading-test-data) + `test:ui` (trading-ui, with
+- `bun run test`: `test:server` (no DOM: schemas, persistence, exchange-sim, oms, trading-test-data) + `test:ui` (trading-ui, with
   a happy-dom preload for React rendering).
+- `bun run persistence:reset [dir]`: delete the trading server's persisted state ([docs/persistence.md](docs/persistence.md)).
+- `bun run e2e:resilience` / `bun run e2e:persistence`: opt-in browser e2e against their own stack (Keycloak and
+  `bunx playwright install chromium` needed; not in CI). See [docs/resilience.md](docs/resilience.md) and
+  [docs/persistence.md](docs/persistence.md#tests).
 - `bun run keycloak:realm export|bootstrap`: write `infra/keycloak/realm-vuu.json`, or apply it to a running
   Keycloak.
 - `bun run perf:ws [--preset=smoke|heavy] [--target=local|stack]`: end-to-end WS throughput (N clients × M
@@ -129,6 +139,11 @@ Keycloak 26.4.2 (real OIDC login and token exchange), driven by headless Chrome 
 - Not verified: `docker-compose.yml` (no Docker) and the `Procfile` under a process manager.
 
 See [docs/portal-integration.md](docs/portal-integration.md#verified).
+
+Verified (Phase 5C persistence): `bun run e2e:persistence`. alice gets a fill and leaves a resting order, then the
+trading server is killed with SIGKILL and restarted on the same store. The UI reconnects and shows the same working
+order and position, and the next order id follows on. `start:all --restart-trading` was also checked by hand, with
+a graceful restart and a `kill -9`. See [docs/persistence.md](docs/persistence.md#verified).
 
 Verified (Phase 2): OMS tests (68, including WebSocket tests against a real VuuServer with EXCHANGE + OMS). Also
 the then portal launcher (`start-portal.ts`, since replaced by the stock vuu-portal), using an alternate-port permissive copy of the config: REST login as `alice`, then `CREATE_VP` on

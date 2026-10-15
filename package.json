@@ -30,6 +30,7 @@
     "features:sync": "bun ./scripts/features/sync-build-config.ts",
     "features:check": "bun ./scripts/features/sync-build-config.ts --check",
     "keycloak:realm": "bun ./scripts/stack/keycloak-realm.ts",
+    "e2e:persistence": "bun ./scripts/e2e/persistence.ts",
     "e2e:resilience": "bun ./scripts/e2e/resilience.ts",
     "perf:ws": "bun ./packages/perf/src/ws-load.ts",
     "perf:ui": "bun ./packages/perf/src/ui-profile.ts",

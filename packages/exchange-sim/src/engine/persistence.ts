@@ -5,7 +5,7 @@ import type { ExecutionReport } from "../gateway/types";
 import type { SessionStats } from "./InstrumentBook";
 import type { SessionPhase } from "./TradingSession";
 
-/** hft-limit-order-book does not export `Snapshot` / `ILimitOrder` (trader upstream issue 81). */
+/** hft-limit-order-book does not export `Snapshot` / `ILimitOrder` (trader upstream issue 90). */
 export type BookSnapshot = NonNullable<OrderBookOptions["snapshot"]>;
 export type ILimitOrder = BookSnapshot["bids"][number]["orders"][number];
 
