@@ -1,0 +1,56 @@
+.tradingConnectionStatus {
+  align-items: center;
+  display: inline-flex;
+  font-size: var(--salt-text-label-fontSize);
+  gap: var(--salt-spacing-75);
+  white-space: nowrap;
+}
+
+.tradingConnectionStatus-dot {
+  background: var(--salt-status-success-foreground-decorative);
+  border-radius: 50%;
+  display: inline-block;
+  flex: none;
+  height: 8px;
+  width: 8px;
+}
+
+.tradingConnectionStatus[data-connection-state="connecting"]
+  .tradingConnectionStatus-dot,
+.tradingConnectionStatus[data-connection-state="reconnecting"]
+  .tradingConnectionStatus-dot {
+  animation: tradingConnectionStatus-pulse 1s ease-in-out infinite alternate;
+  background: var(--salt-status-warning-foreground-decorative);
+}
+
+.tradingConnectionStatus[data-connection-state="disconnected"]
+  .tradingConnectionStatus-dot,
+.tradingConnectionStatus[data-connection-state="failed"]
+  .tradingConnectionStatus-dot {
+  background: var(--salt-status-error-foreground-decorative);
+}
+
+.tradingConnectionStatus[data-connection-state="disconnected"],
+.tradingConnectionStatus[data-connection-state="failed"] {
+  color: var(--salt-status-error-foreground-informative);
+}
+
+.tradingConnectionStatus-retry.saltButton {
+  min-height: 0;
+  padding: 0 var(--salt-spacing-50);
+}
+
+@keyframes tradingConnectionStatus-pulse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tradingConnectionStatus[data-connection-state] .tradingConnectionStatus-dot {
+    animation: none;
+  }
+}

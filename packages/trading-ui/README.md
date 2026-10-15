@@ -11,9 +11,9 @@ inside vuu-portal. **Conventions: [docs/ui-guide.md](../../docs/ui-guide.md).**
 | Formatting | `formatPrice`, `priceDecimals`, `formatQuantity`, `formatNotional`, `formatPercent` |
 | Colours | `TradingColour`, `sideColour`, `directionColour`, `orderStatusCategory`, `orderStatusColour`, `tradingPhaseColour` |
 | User settings | `UserSettingsStorage`, `UserSettingsProvider`, `useUserSettingsStorage`, `createLocalSettingsStorage`, `createMemorySettingsStorage` |
-| Components | `SideLabel` (reference component), `InstrumentGrid`, `Sparkline` / `trading.sparkline` renderer, `OrderTicket` / `OrderTicketDialog` / `OrderTicketPanel` + `useOrderTicketLauncher` ([README](src/components/OrderTicket/README.md)), `InstrumentPicker`, `ConnectionBanner`, `StaleIndicator` |
+| Components | `SideLabel` (reference component), `InstrumentGrid`, `Sparkline` / `trading.sparkline` renderer, `OrderTicket` / `OrderTicketDialog` / `OrderTicketPanel` + `useOrderTicketLauncher` ([README](src/components/OrderTicket/README.md)), `InstrumentPicker`, `ConnectionBanner`, `ConnectionStatusIndicator`, `StaleIndicator` |
 | Rows | `useDataSourceRows(dataSource, config)` → `{ rows, size, loaded, version }`, `useTradingRows(table, { filter, rowCount })` → `{ dataSource, rows, size, loaded }`, `subscribeTradingRows(dataSource, config, listener)`, `toTradingRow`, `TradingRow` ([ui-guide §12](../../docs/ui-guide.md#12-order-ticket-notifications-and-connection-state-p36-p312)) |
-| Notifications, connection | `TradingNotificationsProvider`, `useTradingNotifications`, `TradingOrderEvent`, `useTradingConnectionStatus`, `useStaleIndicator` ([README](src/notifications/README.md)) |
+| Notifications, connection | `TradingNotificationsProvider`, `useTradingNotifications`, `TradingOrderEvent`, `useTradingConnectionStatus`, `useVuuConnectionStatuses`, `useStaleIndicator`, `useStaleData` ([README](src/notifications/README.md)); reconnect: `createResilientConnectionRegistry`, `ReconnectSupervisor`, `ReconnectPolicy`, `connectionStateStore` ([resilience.md](../../docs/resilience.md)) |
 
 ```tsx
 const Orders = () => {

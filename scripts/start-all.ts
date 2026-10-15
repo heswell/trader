@@ -19,7 +19,9 @@
  * never taken over. Flags: --build (rebuild host + features first),
  * --reseed (reset the portal's runtime module list to the defaults),
  * --prepare (certs, builds and the generated portal module list only, then
- * exit: used by the Procfile).
+ * exit: used by the Procfile), --keycloak-only (Keycloak + realm only, kept
+ * running until stopped: used by scripts/e2e/resilience.ts, which runs and
+ * restarts the servers itself).
  * The servers use the committed apps/portal-config/*.conf; TRADER_* settings
  * reach them as per-process VUU_* env vars (scripts/stack/config.ts serverEnv).
  * TRADER_TRADING_CLIENT_SECRET overrides the trading server's Keycloak client
@@ -218,7 +220,7 @@ const ports: [string, number, string][] = [
   ["portal host", cfg.hostPort, "TRADER_HOST_PORT"],
   ["features", cfg.featuresPort, "TRADER_FEATURES_PORT"],
 ];
-for (const [what, port, env] of ports)
+for (const [what, port, env] of args.has("--keycloak-only") ? [] : ports)
   if (await portOpen(port))
     fail(`port ${port} (${what}) is in use: stop that process or set ${env}`);
 
@@ -286,6 +288,10 @@ const realm = await bootstrapRealm(cfg).catch((error: Error) =>
   fail(`realm bootstrap: ${error.message}`),
 );
 log(`realm "${cfg.keycloakRealm}" ${realm}`);
+if (args.has("--keycloak-only")) {
+  log(`ready: keycloak only (${cfg.keycloakUrl})`);
+  await new Promise(() => undefined);
+}
 
 // ---- 4. servers ------------------------------------------------------------
 spawn("portal", ["bun", "./scripts/stack/serve.ts", "portal"]);

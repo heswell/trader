@@ -141,6 +141,10 @@ return <Table config={config} dataSource={dataSource} />;
     `PRICE_OUTSIDE_COLLAR`.
   - Send order RPCs through an OMS-table data source, and admin RPCs through an EXCHANGE one. The data source must
     be subscribed (for example rendered by a Table, or call `subscribe`).
+  - Pass `{ connectionState }` (from `useTradingConnectionStatus()` or `useStaleData()`) so an RPC fails at once
+    while disconnected instead of being dropped, and rely on the default 10 s `timeoutMs`: vuu-ui requests never
+    time out on their own. Failures carry `transport: "disconnected" | "timeout"`. See
+    [resilience.md](resilience.md).
 - **Editing.** Amend through a parentOrders edit session (`ds.beginEditSession()` → `editCell` → `endEditSession`).
   Only `quantity` and `price` can be edited, or use `amendOrder`.
 - **Visual links.**
@@ -335,8 +339,16 @@ alpha.20/alpha.21 constraints behind the design choices.
   never reach the OMS. See the [notifications README](../packages/trading-ui/src/notifications/README.md).
 - **Mounting.** The host mounts `TradingNotificationsProvider`, `OrderTicketLauncherProvider` and
   `ConnectionBanner` once (the showcase does this in `ShowcaseTradingHost.tsx`).
-- **Staleness.** Components that show live prices can use `useStaleIndicator({ lastUpdate })` or
-  `<StaleIndicator lastUpdate={…} />`.
+- **Connection state.** `useTradingConnectionStatus()` gives `connected | connecting | reconnecting | disconnected
+  | failed | local`. Block anything that sends orders while it is not `connected` or `local` (the OrderTicket and
+  PriceLadder do). The host mounts `ConnectionStatusIndicator` once (the portal host puts it by the header) and
+  creates its registry with `createResilientConnectionRegistry()` for backoff + jitter reconnects and first-connect
+  retries. See [resilience.md](resilience.md) for behaviour per failure and the configuration.
+- **Staleness.** Ticking views spread `useStaleData().staleProps` on their data element so they grey out while
+  disconnected / reconnecting (or after `staleAfterMs` with no update). Lower level: `useStaleIndicator({
+  lastUpdate, staleAfterMs })` or `<StaleIndicator lastUpdate={…} />`.
+- **Table callbacks.** Pass vuu `Table` an `onSelect` that never changes identity (`useStableCallback`): a new
+  one while the viewport is (re)subscribing makes vuu-table throw (trader upstream issue 87).
 - **Rows as objects.** There is one primitive, in `data/useDataSourceRows.ts`:
   - `subscribeTradingRows(dataSource, { rowCount | range, filter?, groupBy?, aggregations? }, listener)` is
     framework-free. Every viewport message calls `listener({ rows, updated, size, messageSize, loaded, cleared })`.

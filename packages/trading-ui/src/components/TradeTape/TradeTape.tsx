@@ -12,6 +12,7 @@ import {
   useComponentLinkGroup,
 } from "../../instrument-context/useComponentLinkGroup";
 import { LinkGroupSelector } from "../LinkGroupSelector";
+import { useStaleData } from "../StaleIndicator/useStaleData";
 import { sideColour } from "../../utils/colours";
 import { formatPrice, formatQuantity } from "../../utils/formatting";
 import { formatTime } from "../../utils/time";
@@ -70,6 +71,7 @@ const Inner = forwardRef<HTMLDivElement, TradeTapeProps>(
     },
     ref,
   ) {
+    const { staleProps } = useStaleData();
     const targetWindow = useWindow();
     useComponentCssInjection({
       testId: "trading-trade-tape",
@@ -125,7 +127,8 @@ const Inner = forwardRef<HTMLDivElement, TradeTapeProps>(
     return (
       <div
         {...htmlAttributes}
-        className={cx(classBase, className)}
+        {...staleProps}
+        className={cx(classBase, className, staleProps.className)}
         data-link-group={linkGroup}
         data-testid="trading-trade-tape"
         ref={ref}

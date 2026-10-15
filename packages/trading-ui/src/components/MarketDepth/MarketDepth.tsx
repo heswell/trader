@@ -35,6 +35,7 @@ import {
   useComponentLinkGroup,
 } from "../../instrument-context/useComponentLinkGroup";
 import { LinkGroupSelector } from "../LinkGroupSelector";
+import { useStaleData } from "../StaleIndicator/useStaleData";
 import marketDepthCss from "./MarketDepth.css";
 
 const classBase = "tradingMarketDepth";
@@ -62,6 +63,11 @@ export interface MarketDepthProps
   showDepthBars?: boolean;
   /** A price was clicked / activated (e.g. to prefill an order ticket). */
   onLevelClick?: (level: MarketDepthLevelClick) => void;
+  /**
+   * Grey the book out if it has not updated for this long (ms). Default:
+   * only while disconnected / reconnecting (a quiet book is not stale).
+   */
+  staleAfterMs?: number;
 }
 
 const decimalsIn = (text: string) => {
@@ -109,6 +115,7 @@ export const MarketDepth = forwardRef<HTMLDivElement, MarketDepthProps>(
       showDepthBars = true,
       showLinkGroupSelector = false,
       showOwnOrders = true,
+      staleAfterMs,
       ...htmlAttributes
     },
     ref,
@@ -132,6 +139,10 @@ export const MarketDepth = forwardRef<HTMLDivElement, MarketDepthProps>(
       linkGroup: channel,
     });
     const { bids, asks, loaded, version } = useMarketDepth(ric, { levels });
+    const { staleProps } = useStaleData({
+      lastUpdate: `${ric}:${version}`,
+      staleAfterMs: loaded ? staleAfterMs : undefined,
+    });
     const own = useOwnWorkingOrders(showOwnOrders ? ric : undefined, {
       account,
     });
@@ -306,7 +317,8 @@ export const MarketDepth = forwardRef<HTMLDivElement, MarketDepthProps>(
     return (
       <div
         {...htmlAttributes}
-        className={cx(classBase, className)}
+        {...staleProps}
+        className={cx(classBase, className, staleProps.className)}
         data-phase={phase}
         data-inactive={inactive || undefined}
         data-link-group={linkGroup}

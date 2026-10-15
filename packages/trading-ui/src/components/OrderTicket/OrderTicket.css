@@ -145,6 +145,7 @@
 }
 
 .tradingOrderTicket-status,
+.tradingOrderTicket-blocked,
 .tradingOrderTicket-formError {
   font-size: var(--salt-text-label-fontSize);
 }
@@ -152,6 +153,10 @@
 .tradingOrderTicket-status-rejected,
 .tradingOrderTicket-formError {
   color: var(--salt-status-error-foreground-informative);
+}
+
+.tradingOrderTicket-blocked {
+  color: var(--salt-status-warning-foreground-informative);
 }
 
 .tradingOrderTicket-orderId {
@@ -192,6 +197,7 @@
 
 .tradingOrderTicket-compact .tradingOrderTicket-preview,
 .tradingOrderTicket-compact .tradingOrderTicket-status,
+.tradingOrderTicket-compact .tradingOrderTicket-blocked,
 .tradingOrderTicket-compact .tradingOrderTicket-formError {
   flex-basis: 100%;
 }
