@@ -14,9 +14,22 @@ import { createContext, type ReactNode, useContext, useMemo } from "react";
 export type TradingDataMode = "inherit" | "local" | "remote";
 
 export type TradingDataProviderProps = { children: ReactNode } & (
-  | { mode: "inherit" }
-  | { mode: "local"; localServer: LocalVuuServer }
-  | { mode: "remote"; connectionId: string }
+  | {
+      /** Use the enclosing @vuu-ui/core DataProvider (portal host). */
+      mode: "inherit";
+    }
+  | {
+      /** In-browser data. */
+      mode: "local";
+      /** e.g. `createTradingLocalServer()` from @heswell/trading-test-data/react. */
+      localServer: LocalVuuServer;
+    }
+  | {
+      /** A Vuu server connection. */
+      mode: "remote";
+      /** The id passed to connectToVuuServer / ConnectionManager.connectTo. */
+      connectionId: string;
+    }
 );
 
 export interface TradingDataModeContextValue {

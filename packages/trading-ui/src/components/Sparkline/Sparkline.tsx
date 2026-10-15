@@ -101,6 +101,11 @@ export interface SparklineCellOptions {
 
 export const DEFAULT_SPARKLINE_LENGTH = 40;
 
+/**
+ * Sparkline cell options from a column renderer's `componentProps`:
+ * `valueColumn` (default "last"), `length` (>= 2, default
+ * DEFAULT_SPARKLINE_LENGTH) and `bucketMs` (default 0, every update).
+ */
 export const sparklineOptions = (
   componentProps: Record<string, string | number | boolean> | undefined,
 ): SparklineCellOptions => ({

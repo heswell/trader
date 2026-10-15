@@ -234,6 +234,10 @@ const PHASE_LABELS: Record<string, string> = {
   [TradingPhase.Halted]: "Halted",
 };
 
+/**
+ * Display label of a trading phase, e.g. "Opening auction" (CONTINUOUS is
+ * "Open"); unknown values are returned as is.
+ */
 export const phaseLabel = (phase: unknown) =>
   typeof phase === "string" && phase ? (PHASE_LABELS[phase] ?? phase) : "";
 

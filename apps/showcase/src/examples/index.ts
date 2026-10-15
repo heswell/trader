@@ -9,7 +9,13 @@ import {
   InstrumentGridPrices,
   InstrumentGridTicking200,
 } from "./InstrumentGridExamples";
+import {
+  ConnectionOverrideExample,
+  FeatureRootExample,
+  UserSettingsExample,
+} from "./HostingExamples";
 import { InstrumentPricesTicking } from "./InstrumentPricesTicking";
+import { LinkingProvidersExample, SelectorsExample } from "./LinkingExamples";
 import { MarketDepthExamples } from "./MarketDepthExamples";
 import { PriceLadderLive, PriceLadderStress } from "./PriceLadderExamples";
 import {
@@ -22,6 +28,10 @@ import {
   OrderTicketDocked,
   OrderTicketLauncherExample,
 } from "./OrderTicketExamples";
+import {
+  CellRenderersExample,
+  StatusPrimitivesExample,
+} from "./PrimitivesExamples";
 import { SideLabelExamples } from "./SideLabelExamples";
 import { TraderWorkspace } from "./TraderWorkspaceExamples";
 import type { ShowcaseExample } from "./types";
@@ -169,5 +179,60 @@ export const examples: ShowcaseExample[] = [
     group: "Notifications",
     title: "Connection banner + stale",
     Component: ConnectionStateExample,
+  },
+  {
+    id: "linking-providers",
+    group: "Linking",
+    title: "Link groups and providers",
+    description:
+      "InstrumentContextProvider (private bus), LinkGroupProvider subtrees and useSelectedInstrument.",
+    Component: LinkingProvidersExample,
+  },
+  {
+    id: "selectors",
+    group: "Selectors",
+    title: "Account, link group and lookup",
+    description:
+      "AccountSelector + useSelectedAccount, LinkGroupSelector, InstrumentLookupProvider + useInstrumentLookup.",
+    Component: SelectorsExample,
+  },
+  {
+    id: "primitives-status",
+    group: "Primitives",
+    title: "Status, progress, P&L, sparkline",
+    description: "OrderStatusBadge, FillProgressBar, PnlValue and Sparkline.",
+    Component: StatusPrimitivesExample,
+  },
+  {
+    id: "primitives-cell-renderers",
+    group: "Primitives",
+    title: "Cell renderers in a vuu Table",
+    description:
+      "trading.price-move, trading.change, trading.quantity, trading.phase and trading.sparkline, by name in a TableConfig.",
+    Component: CellRenderersExample,
+  },
+  {
+    id: "hosting-feature-root",
+    group: "Hosting",
+    title: "TradingFeatureRoot",
+    description:
+      "The root an MF feature renders (banner + notifications); nested roots render children only.",
+    Component: FeatureRootExample,
+  },
+  {
+    id: "hosting-connection-override",
+    group: "Hosting",
+    title: "Connection state override",
+    description:
+      "TradingConnectionStateOverride forces a connection state below it, e.g. to see a ticket disable while reconnecting.",
+    Component: ConnectionOverrideExample,
+  },
+  {
+    id: "hosting-user-settings",
+    group: "Hosting",
+    title: "User settings storage",
+    description:
+      "UserSettingsProvider with in-memory storage: InstrumentGrid watchlists are written to it.",
+    Component: UserSettingsExample,
   },
 ];

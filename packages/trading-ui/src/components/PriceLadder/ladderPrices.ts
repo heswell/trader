@@ -27,6 +27,7 @@ export const ladderPrices = (
   return prices;
 };
 
+/** Index of the centre row of a ladder of `rowCount` rows. */
 export const centreIndex = (rowCount: number) => Math.floor(rowCount / 2);
 
 /**

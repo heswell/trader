@@ -1,5 +1,21 @@
 # OrderTicket (P3.6)
 
+Reference: [OrderTicket](../api/trading-ui.md#orderticket), [OrderTicketDialog](../api/trading-ui.md#orderticketdialog),
+[OrderTicketPanel](../api/trading-ui.md#orderticketpanel),
+[OrderTicketLauncherProvider](../api/trading-ui.md#orderticketlauncherprovider),
+[useOrderTicket](../api/trading-ui.md#useorderticket).
+
+Showcase: `#order-ticket-docked`, `#order-ticket-dialog`, `#order-ticket-compact`, `#order-ticket-launcher`,
+`#hosting-connection-override` (the ticket while the connection is down).
+
+| | |
+| --- | --- |
+| Tables | `instruments` (picker, `showInstrumentPicker`), `instrumentPrices` (live header), `accounts` (account list and limits), `parentOrders` (the submitted order, filter `clOrdId = …`) |
+| RPCs | `createOrder` |
+| Roles | Submitting needs `trading-execute` (the OMS answers `PERMISSION_DENIED` otherwise). Do not mount a ticket for view-only users: the portal features gate the Ticket and Ladder modules on `trading-execute` (see [permissions](README.md#permissions)). |
+| Connection | Submit (button, F9, Ctrl+Enter) is blocked with a reason (`connectionBlockedReason`) unless the connection state is `connected` (`data-connection-state`). |
+| Class base | `tradingOrderTicket`; `data-side`, `data-submission`, `data-status`, `data-field`, `data-warning`, `--tradingOrderTicket-sideColor` |
+
 One form core (`useOrderTicket`), shown in three layouts:
 
 | Export | Use |

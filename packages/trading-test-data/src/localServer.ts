@@ -18,6 +18,10 @@ export const getTradingTestData = (options?: TradingTestDataOptions) => {
   return instance;
 };
 
+/**
+ * Disposes the shared in-browser trading data and recreates it with `options`
+ * (tests, showcase reset).
+ */
 export const resetTradingTestData = (options?: TradingTestDataOptions) => {
   instance?.dispose();
   instance = createTradingTestData(options);

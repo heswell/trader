@@ -246,12 +246,6 @@ const OrderEventStreams = ({
   return null;
 };
 
-/**
- * Order notifications for a host: toasts for acks, rejects, fills, cancels
- * and expiries of the user's orders, from the parentOrders / fills streams
- * and from components that call `notify` (deduplicated). Mount once, inside
- * the data provider and the vuu NotificationsProvider. See docs/ui-guide.md.
- */
 const EMPTY_LOOKUP: InstrumentLookup = new Map();
 
 const lookupPriceFormat =
@@ -269,6 +263,12 @@ const LookupBridge = ({
   return null;
 };
 
+/**
+ * Order notifications for a host: toasts for acks, rejects, fills, cancels
+ * and expiries of the user's orders, from the parentOrders / fills streams
+ * and from components that call `notify` (deduplicated). Mount once, inside
+ * the data provider and the vuu NotificationsProvider. See docs/ui-guide.md.
+ */
 export const TradingNotificationsProvider = ({
   children,
   trader: traderProp,

@@ -92,6 +92,11 @@ const UserSettingsContext = createContext<UserSettingsStorage | undefined>(
 );
 
 export interface UserSettingsProviderProps {
+  /**
+   * Where descendants that use useUserSettingsStorage persist settings
+   * (currently InstrumentGrid watchlists), e.g. a server-backed or in-memory
+   * store.
+   */
   storage: UserSettingsStorage;
   children?: ReactNode;
 }

@@ -70,6 +70,10 @@ export type ColumnName<T extends TableDefinition> =
 /** Positional row, in column order (the shape Vuu tables store). */
 export type RowArray = (string | number | boolean)[];
 
+/**
+ * Declares a table definition; throws on duplicate column names. `const`
+ * columns keep row types precise.
+ */
 export const defineTable = <const C extends readonly ColumnDefinition[]>(
   def: TableDefinition<C>,
 ): TableDefinition<C> => {
@@ -91,6 +95,10 @@ export const defineTable = <const C extends readonly ColumnDefinition[]>(
   return Object.freeze(def);
 };
 
+/**
+ * Declares a join table definition; throws if the join columns are not in the
+ * base / join tables.
+ */
 export const defineJoin = (def: JoinDefinition): JoinDefinition => {
   const has = (t: TableDefinition, c: string) =>
     t.columns.some(({ name }) => name === c);
@@ -127,9 +135,11 @@ export const joinTableColumns = (
   ];
 };
 
+/** Column names of a table definition, in order. */
 export const columnNames = <T extends TableDefinition>(def: T) =>
   def.columns.map(({ name }) => name) as ColumnName<T>[];
 
+/** Column name -> index of a table definition. */
 export const columnIndices = <T extends TableDefinition>(def: T) =>
   Object.fromEntries(def.columns.map(({ name }, i) => [name, i])) as Record<
     ColumnName<T>,
@@ -154,6 +164,7 @@ export const toRowArray = <T extends TableDefinition>(
       : value;
   });
 
+/** Positional row -> object row (inverse of toRowArray). */
 export const fromRowArray = <T extends TableDefinition>(
   def: T,
   row: readonly unknown[],

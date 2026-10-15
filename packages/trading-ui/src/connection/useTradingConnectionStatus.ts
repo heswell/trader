@@ -82,6 +82,10 @@ export const CONNECTION_STATE_SEVERITY: Record<TradingConnectionState, number> =
     failed: 4,
   };
 
+/**
+ * The most severe state (per CONNECTION_STATE_SEVERITY) of several connections;
+ * `connected` when there are none.
+ */
 export const worstConnectionState = (
   states: Iterable<TradingConnectionState>,
 ): TradingConnectionState => {
@@ -241,6 +245,7 @@ export const TradingConnectionStateOverride = ({
   state,
   children,
 }: {
+  /** State to report; undefined reports the real state. */
   state?: TradingConnectionState;
   children: ReactNode;
 }) =>

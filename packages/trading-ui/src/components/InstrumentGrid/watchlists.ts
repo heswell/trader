@@ -59,6 +59,10 @@ export const parseWatchlists = (json: string | null | undefined) => {
   }
 };
 
+/**
+ * Adds a watchlist named `name` (with optional initial rics); returns the new
+ * state and the new list's id.
+ */
 export const createWatchlist = (
   state: WatchlistState,
   name: string,
@@ -76,11 +80,13 @@ export const createWatchlist = (
   };
 };
 
+/** Removes a watchlist. */
 export const deleteWatchlist = (
   state: WatchlistState,
   id: string,
 ): WatchlistState => ({ lists: state.lists.filter((l) => l.id !== id) });
 
+/** Renames a watchlist (a blank name keeps the old one). */
 export const renameWatchlist = (
   state: WatchlistState,
   id: string,
@@ -91,6 +97,7 @@ export const renameWatchlist = (
   ),
 });
 
+/** Adds a ric to a watchlist (no-op if already there). */
 export const addToWatchlist = (
   state: WatchlistState,
   id: string,
@@ -101,6 +108,7 @@ export const addToWatchlist = (
   ),
 });
 
+/** Removes a ric from a watchlist. */
 export const removeFromWatchlist = (
   state: WatchlistState,
   id: string,

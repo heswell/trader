@@ -14,7 +14,25 @@ bun run dev:trading-server      # optional: standalone EXCHANGE + OMS server for
   `http://localhost:5001` and `http://127.0.0.1:5001` in `vuu.auth.cors.allowedOrigins`. Override the targets with
   `TRADING_REMOTE_AUTH` and `TRADING_REMOTE_WS` (full URLs).
 
+Open an example with `#<id>` (e.g. http://localhost:5001/#primitives-status). Each group links to its guide in
+[docs/components](../../docs/components/README.md), and the generated [API reference](../../docs/api/components.md)
+lists the showcase ids of every component.
+
+| Group | Guide |
+| --- | --- |
+| InstrumentGrid | [instrument-grid](../../docs/components/instrument-grid.md) |
+| MarketDepth, PriceLadder | [market-depth-and-ladder](../../docs/components/market-depth-and-ladder.md) |
+| OrderTicket | [order-ticket](../../docs/components/order-ticket.md) |
+| OrderBlotter, FillsBlotter, TradeTape, PositionsView | [blotters](../../docs/components/blotters.md) |
+| Notifications | [notifications-and-connection](../../docs/components/notifications-and-connection.md) |
+| Linking, Selectors | [selection-and-linking](../../docs/components/selection-and-linking.md) |
+| Primitives, SideLabel | [primitives](../../docs/components/primitives.md) |
+| Hosting | [hosting](../../docs/components/hosting.md) |
+| Stack, Workspace | [components](../../docs/components/README.md) (composite screens) |
+
 To add an example, see [docs/ui-guide.md §7](../../docs/ui-guide.md#7-showcase): add
-`src/examples/<Component>Examples.tsx` and register it in `src/examples/index.ts`.
+`src/examples/<Component>Examples.tsx` and register it in `src/examples/index.ts`. A new
+group (or a new reusable component) also needs a guide entry in `src/examples/docs.ts`; `bun run docs:check` fails
+without one.
 
 `bun run --filter @heswell/trading-showcase build` produces a static build in `dist/`.

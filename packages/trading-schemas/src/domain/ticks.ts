@@ -55,6 +55,9 @@ const tickSizeBelow = (schedule: TickSchedule, price: number): number => {
 
 const ratio = (price: number, tickSize: number) => price / tickSize;
 
+/**
+ * Whether `price` is a multiple of the tick size that applies at that price.
+ */
 export const isOnTick = (price: number, schedule: TickSchedule): boolean => {
   const tick = tickSizeAt(schedule, price);
   if (!(tick > 0)) return false;
@@ -64,6 +67,7 @@ export const isOnTick = (price: number, schedule: TickSchedule): boolean => {
 
 export type RoundingMode = "nearest" | "up" | "down";
 
+/** Rounds `price` to the tick schedule (`nearest`, `up` or `down`). */
 export const roundToTick = (
   price: number,
   schedule: TickSchedule,
@@ -131,12 +135,14 @@ export const ticksBetween = (
   return n;
 };
 
+/** Whether `quantity` is a positive multiple of `lotSize`. */
 export const isValidLot = (quantity: number, lotSize: number): boolean =>
   Number.isFinite(quantity) &&
   quantity > 0 &&
   lotSize > 0 &&
   Math.abs(quantity / lotSize - Math.round(quantity / lotSize)) < EPSILON;
 
+/** Rounds `quantity` to a multiple of `lotSize` (`nearest`, `up` or `down`). */
 export const roundToLot = (
   quantity: number,
   lotSize: number,
@@ -175,6 +181,10 @@ export const parseTickBands = (
   return bands;
 };
 
+/**
+ * Tick bands as the `tickBands` column string, `from:tickSize;...` (inverse of
+ * parseTickBands).
+ */
 export const formatTickBands = (bands: readonly TickBand[]): string =>
   bands.map(({ from, tickSize }) => `${from}:${tickSize}`).join(";");
 

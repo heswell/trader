@@ -69,18 +69,24 @@ export const ORDER_STATUS_TRANSITIONS: Readonly<
 
 export const INITIAL_ORDER_STATUS: OrdStatus = OrdStatus.PendingNew;
 
+/** Whether ORDER_STATUS_TRANSITIONS allows `from` -> `to`. */
 export const canTransition = (from: OrdStatus, to: OrdStatus): boolean =>
   ORDER_STATUS_TRANSITIONS[from]?.includes(to) ?? false;
 
+/** Throws if ORDER_STATUS_TRANSITIONS does not allow `from` -> `to`. */
 export const assertTransition = (from: OrdStatus, to: OrdStatus) => {
   if (!canTransition(from, to)) {
     throw Error(`Invalid order status transition ${from} -> ${to}`);
   }
 };
 
+/**
+ * A status with no further transitions (FILLED, CANCELLED, REJECTED, EXPIRED).
+ */
 export const isTerminalStatus = (status: OrdStatus) =>
   ORDER_STATUS_TRANSITIONS[status].length === 0;
 
+/** PENDING_NEW, PENDING_CANCEL or PENDING_REPLACE: a request is in flight. */
 export const isPendingStatus = (status: OrdStatus) =>
   status === OrdStatus.PendingNew ||
   status === OrdStatus.PendingCancel ||

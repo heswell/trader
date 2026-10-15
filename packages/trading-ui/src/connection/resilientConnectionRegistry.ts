@@ -25,6 +25,10 @@ type VuuConnectionClient = NonNullable<
 /** Default time allowed for one websocket open + LOGIN (ms). */
 export const DEFAULT_LOGIN_TIMEOUT_MS = 20_000;
 
+/**
+ * A connection attempt got no LOGIN_SUCCESS within the login timeout
+ * (DEFAULT_LOGIN_TIMEOUT_MS); the attempt is retried per the reconnect policy.
+ */
 export class ConnectionAttemptTimeoutError extends Error {
   constructor(
     readonly connectionId: string,
@@ -66,6 +70,10 @@ export const withConnectTimeout = <T>(
   ]).finally(() => clearTimeout(timer));
 };
 
+/**
+ * The server closed the WebSocket during login (e.g. a rejected token);
+ * `status` is the connection status reported.
+ */
 export class ConnectionAttemptClosedError extends Error {
   constructor(
     readonly connectionId: string,

@@ -64,10 +64,14 @@ export const useSelectedAccount = (
 };
 
 export interface AccountSelectorProps {
+  /** Accounts to offer, e.g. from useSelectedAccount / useTradingAccounts. */
   accounts: readonly OrderTicketAccount[];
+  /** Accessible name (default "Account"). */
   "aria-label"?: string;
   className?: string;
+  /** Called with the account id the user picked. */
   onChange: (account: string) => void;
+  /** The selected account id. */
   value?: string;
 }
 

@@ -124,6 +124,10 @@ export const parsePrice = (text: string): number | undefined => {
   return Number.isFinite(value) ? value : Number.NaN;
 };
 
+/**
+ * Tick schedule of an order ticket instrument (tickBands over tickSize);
+ * undefined without a tickSize.
+ */
 export const scheduleOf = (
   instrument: OrderTicketInstrument | undefined,
 ): TickSchedule | undefined =>

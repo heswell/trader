@@ -143,6 +143,10 @@ export const connectToVuuServer = async (connection: VuuServerConnection) => {
   return status;
 };
 
+/**
+ * Stops supervising (reconnecting) a connection opened by connectToVuuServer
+ * and destroys it.
+ */
 export const disconnectFromVuuServer = (connectionId: string) => {
   stopSupervising(connectionId);
   return ConnectionManager.destroyConnection(connectionId);

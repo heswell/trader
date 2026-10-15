@@ -27,6 +27,10 @@ export const DEFAULT_RECONNECT_POLICY: Required<ReconnectPolicy> = {
   maxAttempts: Number.POSITIVE_INFINITY,
 };
 
+/**
+ * A policy with every field set: `policy` over DEFAULT_RECONNECT_POLICY
+ * (undefined fields keep the default).
+ */
 export const resolveReconnectPolicy = (
   policy: ReconnectPolicy = {},
 ): Required<ReconnectPolicy> => {

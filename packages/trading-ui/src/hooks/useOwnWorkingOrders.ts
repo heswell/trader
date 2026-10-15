@@ -56,6 +56,10 @@ export interface OwnWorkingOrders {
   loaded: boolean;
 }
 
+/**
+ * Key of a price level (`side|price`) in the map returned by
+ * useOwnWorkingOrders.
+ */
 export const ownOrdersKey = (side: Side | string, price: number) =>
   `${side}|${priceKey(price)}`;
 

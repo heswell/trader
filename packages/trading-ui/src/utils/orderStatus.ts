@@ -26,6 +26,10 @@ const ACTIONABLE: readonly string[] = [
   OrdStatus.Replaced,
 ];
 
+/**
+ * Amend is offered only for NEW, PARTIALLY_FILLED and REPLACED (not PENDING_*:
+ * the server answers ORDER_PENDING while a request is in flight).
+ */
 export const isOrderAmendable = (status: unknown) =>
   typeof status === "string" && ACTIONABLE.includes(status);
 
@@ -44,6 +48,10 @@ const LABELS: Record<string, string> = {
   [OrdStatus.Expired]: "Expired",
 };
 
+/**
+ * Display label of an order status, e.g. "Part filled"; unknown values are
+ * returned as is.
+ */
 export const orderStatusLabel = (status: unknown) =>
   typeof status === "string" ? (LABELS[status] ?? status) : "";
 
