@@ -18,6 +18,7 @@ export const Side = Object.freeze({
 export type Side = ValueOf<typeof Side>;
 export const SIDES = values(Side);
 
+/** BUY for SELL and SELL for BUY. */
 export const oppositeSide = (side: Side): Side =>
   side === Side.Buy ? Side.Sell : Side.Buy;
 
@@ -34,6 +35,7 @@ export const SUPPORTED_ORD_TYPES: readonly OrdType[] = Object.freeze([
   OrdType.Market,
   OrdType.Limit,
 ]);
+/** Whether an order type needs a limit price (LIMIT, STOP_LIMIT). */
 export const isPricedOrdType = (ordType: OrdType) =>
   ordType === OrdType.Limit || ordType === OrdType.StopLimit;
 
@@ -157,6 +159,7 @@ export const BotType = Object.freeze({
 export type BotType = ValueOf<typeof BotType>;
 export const BOT_TYPES = values(BotType);
 
+/** Type guard: `value` is one of the `allowed` enum values. */
 export const isEnumValue = <T extends string>(
   allowed: readonly T[],
   value: unknown,

@@ -17,6 +17,7 @@ import {
 import { type SyntheticEvent, useEffect, useState } from "react";
 import "./ShowcaseApp.css";
 import { examples } from "./examples";
+import { COMPONENT_GUIDES } from "./examples/docs";
 import { ShowcaseTradingHost } from "./ShowcaseTradingHost";
 import {
   REMOTE_CONNECTION_ID,
@@ -28,6 +29,11 @@ const exampleFromHash = () =>
   examples.find(({ id }) => `#${id}` === window.location.hash) ?? examples[0];
 
 const groups = [...new Set(examples.map(({ group }) => group))];
+
+// Guides are rendered on GitHub; the API reference is linked from each guide.
+const DOCS_BASE = "https://github.com/heswell/trader/blob/main/";
+const guideUrl = (group: string) =>
+  COMPONENT_GUIDES[group] ? DOCS_BASE + COMPONENT_GUIDES[group] : undefined;
 
 const linkBus = getInstrumentLinkBus();
 // Link popouts / other showcase tabs of the same origin.
@@ -106,8 +112,19 @@ export const ShowcaseApp = () => {
         ))}
       </nav>
       <main className="showcaseApp-main">
-        {example.description ? (
-          <p className="showcaseApp-description">{example.description}</p>
+        {example.description || guideUrl(example.group) ? (
+          <p className="showcaseApp-description">
+            {example.description}{" "}
+            {guideUrl(example.group) ? (
+              <Link
+                href={guideUrl(example.group)}
+                target="_blank"
+                data-testid="showcase-docs-link"
+              >
+                {example.group} docs
+              </Link>
+            ) : null}
+          </p>
         ) : null}
         <div className="showcaseApp-example">
           {mode === "local" && localServer ? (

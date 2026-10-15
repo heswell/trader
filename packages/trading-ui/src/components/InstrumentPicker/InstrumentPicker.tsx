@@ -67,6 +67,7 @@ export const instrumentSearchFilter = (text: string) => {
   return `ric starts "${query.toUpperCase()}" or description contains "${query}"`;
 };
 
+/** SelectedInstrument from an `instruments` (or `instrumentPrices`) row. */
 export const toSelectedInstrument = (row: TradingRow): SelectedInstrument => ({
   ric: String(row.ric),
   description: row.description as string | undefined,
@@ -78,14 +79,15 @@ export const toSelectedInstrument = (row: TradingRow): SelectedInstrument => ({
   priceDecimals: row.priceDecimals as number | undefined,
 });
 
+/** Notification / selection source id of InstrumentPicker. */
+export const INSTRUMENT_PICKER_SOURCE = "InstrumentPicker";
+
 /**
  * Instrument search over the `instruments` table: type a ric prefix or part
  * of the description, pick from the list. Controlled by `value` (a ric).
  * A thin Salt ComboBox (vuu TablePicker has no controlled value - see
  * docs/upstream-issues.md).
  */
-export const INSTRUMENT_PICKER_SOURCE = "InstrumentPicker";
-
 export const InstrumentPicker = ({
   className,
   defaultLinkGroup,

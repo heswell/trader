@@ -23,6 +23,10 @@ export interface StringOptions {
   maxLength?: number;
 }
 
+/**
+ * Validator for a required, trimmed string of `minLength` (default 1) to
+ * `maxLength` (default 128) characters.
+ */
 export const string =
   ({ minLength = 1, maxLength = 128 }: StringOptions = {}): Validator<string> =>
   (value, path) => {
@@ -45,6 +49,10 @@ export interface NumberOptions {
   max?: number;
 }
 
+/**
+ * Validator for a finite number (numeric strings are accepted), optionally
+ * `integer`, `min`, `greaterThan`, `max`.
+ */
 export const number =
   ({ integer, min, greaterThan, max }: NumberOptions = {}): Validator<number> =>
   (value, path) => {
@@ -64,6 +72,7 @@ export const number =
     return ok(n);
   };
 
+/** Validator for a boolean (`"true"` / `"false"` strings are accepted). */
 export const boolean = (): Validator<boolean> => (value, path) =>
   typeof value === "boolean"
     ? ok(value)
@@ -71,6 +80,7 @@ export const boolean = (): Validator<boolean> => (value, path) =>
       ? ok(value === "true")
       : fail(`${path} must be a boolean`);
 
+/** Validator for one of the `allowed` string values. */
 export const oneOf =
   <T extends string>(allowed: readonly T[]): Validator<T> =>
   (value, path) =>

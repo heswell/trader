@@ -23,6 +23,7 @@ export const TradingColour = Object.freeze({
   done: "var(--trading-status-done, var(--salt-content-secondary-foreground))",
 } as const);
 
+/** Colour for an order side: buy / sell, neutral for anything else. */
 export const sideColour = (side: unknown) =>
   side === Side.Buy
     ? TradingColour.buy
@@ -65,9 +66,14 @@ export const orderStatusCategory = (status: unknown): OrderStatusCategory => {
   }
 };
 
+/** Colour for an order status, by its orderStatusCategory. */
 export const orderStatusColour = (status: unknown) =>
   TradingColour[orderStatusCategory(status)];
 
+/**
+ * Colour for a trading phase: CONTINUOUS as filled, HALTED as rejected, CLOSED
+ * / POST_CLOSE as done, auctions and pre-open as pending.
+ */
 export const tradingPhaseColour = (phase: unknown) =>
   phase === TradingPhase.Continuous
     ? TradingColour.filled

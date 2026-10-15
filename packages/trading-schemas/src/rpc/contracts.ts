@@ -219,14 +219,20 @@ export const tradingRpcRequest = <N extends RpcName>(
   params,
 });
 
+/** A SUCCESS_RESULT carrying the typed response data of an RPC. */
 export const rpcSuccess = <N extends RpcName>(
   _rpcName: N,
   data: RpcResponseData<N>,
 ): TradingRpcSuccess<N> => ({ type: "SUCCESS_RESULT", data });
 
+/**
+ * Error message of a reject: `REASON: text` (or the reason alone); parsed by
+ * parseRpcError.
+ */
 export const formatRpcError = (reason: RejectReason, text?: string) =>
   text ? `${reason}: ${text}` : reason;
 
+/** An ERROR_RESULT with the message formatted by formatRpcError. */
 export const rpcError = (
   reason: RejectReason,
   text?: string,

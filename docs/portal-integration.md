@@ -89,7 +89,7 @@ its `mf-manifest.json` (a @vuu-ui 4.0.0-alpha.21 mechanism):
 features server (`scripts/stack/serve.ts`) regenerates it on every request from its own environment. To point the
 remotes at a trading server elsewhere, set `TRADER_TRADING_REST_URL` and `TRADER_TRADING_WEBSOCKET_URL`.
 `RemoteModule` treats a missing `config.json` as an error, so every remote must publish one (`{}` means "use the
-portal server"; upstream #57).
+portal server"; trader upstream issue 57).
 
 There is no proxy. The host fetches the remotes directly, and the features server sends CORS headers. The
 vuu-portal client in finos/vuu uses no haproxy either.
@@ -207,7 +207,7 @@ The Keycloak admin console is at `https://localhost:8180/admin` (admin / admin).
 ## Features
 
 All features are built from one package, `apps/features/trading`, as **one MF remote per feature**. The portal
-requires a unique `mfScope` per module (upstream #45). `src/catalog.ts` is the source of truth.
+requires a unique `mfScope` per module (trader upstream issue 45). `src/catalog.ts` is the source of truth.
 `bun run features:sync` generates `portal-build.json` and `apps/portal-config/default-modules.yaml` from it.
 `bun run features:check` (run in CI) fails on drift and validates the yaml with the portal server's own loader.
 
@@ -274,18 +274,18 @@ connection from `config.json` (see [Two Vuu servers](#two-vuu-servers)). `@vuu-u
 There are two deviations from the P3.11 plan:
 
 - **`@vuu-ui/vuu-layout` is not shared.** As a shared singleton it deadlocks startup: its shared chunk bundles
-  vuu-data-react, which imports `@vuu-ui/vuu-layout` again, and the host page stays blank (upstream #43). Each
+  vuu-data-react, which imports `@vuu-ui/vuu-layout` again, and the host page stays blank (trader upstream issue 43). Each
   remote has its own copy instead.
   - Consequence: `@heswell/trading-ui`, a singleton bound to the host's copy, does not see a remote's `View`s.
     Components therefore save their link group in the module's portal state (`trading.linkGroup.<id>`), not in View
-    state (upstream #50).
+    state (trader upstream issue 50).
 - **The chunk-loading global is renamed per remote.** All remotes from one package get the same JSONP global, so
   loading two at once fails with `__webpack_modules__[moduleId] is not a function`. portal-build has no option for
-  this, so `scripts/features/build.ts` renames it to `rspackChunk_<mfScope>` after each build (upstream #44).
+  this, so `scripts/features/build.ts` renames it to `rspackChunk_<mfScope>` after each build (trader upstream issue 44).
 
 `cssInline` includes `/packages/trading-ui/` for every package, and the feature package's own path for the
 remotes. Do not include the host's own path: cssInline turns plain `.css` imports in included paths into strings,
-so the host's CSS would not be applied (upstream #47).
+so the host's CSS would not be applied (trader upstream issue 47).
 
 ## Layouts and saved state
 
@@ -296,13 +296,13 @@ A green instrument picker sits in the toolbar, next to an account selector.
 - Red follows the instrument grid, and green follows the picker. Every component has a link group selector.
 - **Saved state** goes through the portal's `usePersistedState`. There is one state document per user and module,
   stored by PortalShell's default `LocalStoragePersistenceBackend`, so it is per browser. The vuu-portal server has
-  no state persistence (upstream #49).
+  no state persistence (trader upstream issue 49).
   - The workspace saves each View's state (`trader-workspace.views`) and each component's link group, and restores
     them on load.
   - A user's change of link group survives a reload; this was verified in a browser. **Reset layout** returns to
     the defaults.
 - The arrangement (splitter sizes, moved views) is not saved. Restoring vuu-layout JSON needs the component
-  registry, which is per bundle (upstream #53). The child modules (ticket, ladder) keep their own state, which Reset
+  registry, which is per bundle (trader upstream issue 53). The child modules (ticket, ladder) keep their own state, which Reset
   layout does not clear.
 - The standalone features save their link groups the same way, keyed by component id.
 
@@ -316,7 +316,7 @@ A green instrument picker sits in the toolbar, next to an account selector.
 | `port N (...) is in use` | Another process has it. Set the `TRADER_*` variable shown. |
 | `no Keycloak` | Set `KEYCLOAK_HOME`, unpack Keycloak 26.x into `~/keycloak/`, or `docker compose up -d keycloak`. |
 | A new or renamed feature is missing from the nav | `bun run start:all --build --reseed`. The portal keeps its runtime module list in `modules.stack.yaml`. |
-| Blank page after changing `shared` | Do not share `@vuu-ui/vuu-layout` (upstream #43). Check the browser console for MF `RUNTIME-` errors. |
+| Blank page after changing `shared` | Do not share `@vuu-ui/vuu-layout` (trader upstream issue 43). Check the browser console for MF `RUNTIME-` errors. |
 | `__webpack_modules__[moduleId] is not a function` | A remote was built without the chunk-global rename. Use `bun run build`, not portal-build directly. |
 | Feature has no styles | Its CSS path is missing from `cssInline.include` (run `bun run features:sync`). |
 | Docker Keycloak cannot read the key | `key.pem` is mode 600. On Linux, `chmod 644 apps/portal-config/certs/key.pem` (dev cert only). |

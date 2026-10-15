@@ -6,6 +6,10 @@ const SEP = "|";
 export const depthKey = (ric: string, side: Side, level: number) =>
   `${ric}${SEP}${side}${SEP}${level}`;
 
+/**
+ * Splits a `depth` row key into ric, side and level (inverse of depthKey);
+ * throws if malformed.
+ */
 export const parseDepthKey = (key: string) => {
   const parts = key.split(SEP);
   if (parts.length !== 3) throw Error(`invalid depth key '${key}'`);
@@ -17,6 +21,10 @@ export const parseDepthKey = (key: string) => {
 export const positionKey = (account: string, ric: string) =>
   `${account}${SEP}${ric}`;
 
+/**
+ * Splits a `positions` row key into account and ric (inverse of positionKey);
+ * throws if malformed.
+ */
 export const parsePositionKey = (key: string) => {
   const parts = key.split(SEP);
   if (parts.length !== 2) throw Error(`invalid position key '${key}'`);

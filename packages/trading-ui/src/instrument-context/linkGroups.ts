@@ -58,6 +58,11 @@ export const DEFAULT_LINK_GROUP: LinkGroupId = "red";
 export const isUnlinkedGroup = (group: LinkGroupId | undefined) =>
   group === UNLINKED || (group?.startsWith(`${UNLINKED}:`) ?? false);
 
+/**
+ * The definition (label, colour) of a link group id: UNLINKED_GROUP for
+ * unlinked / private groups, else the entry in `groups`, else a definition
+ * labelled with the id.
+ */
 export const linkGroupDefinition = (
   group: LinkGroupId,
   groups: readonly LinkGroupDefinition[] = DEFAULT_LINK_GROUPS,

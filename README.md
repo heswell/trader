@@ -2,7 +2,7 @@
 
 Reusable trading front-end (instrument grids, market depth / price ladder, order ticket, order & trade blotters) built on [Vuu](https://github.com/finos/vuu) UI components and the `vuu-portal`, exercised by a simulated backend (exchange simulator + OMS) running on [vuu-websocket](https://github.com/heswell/vuu-websocket).
 
-Status: Phase 4. The trading UI runs in vuu-portal as role-gated module-federation features (Watchlist, Depth,
+Status: Phase 5 (hardening). The trading UI runs in vuu-portal as role-gated module-federation features (Watchlist, Depth,
 Ladder, Ticket, Orders, Fills, Positions, Tape, a prebuilt trader Workspace and a supervisor desk overview). The
 features connect to a standalone trading Vuu server (exchange simulator + OMS), separate from the portal's own Vuu
 server, through @vuu-ui's per-module `config.json`. One command starts the whole stack. See
@@ -46,14 +46,28 @@ for the `Procfile`) and `--restart-trading` (restart the trading server when it 
 `.run/trading.pid`). Ctrl-C stops everything. See
 [docs/portal-integration.md](docs/portal-integration.md#running) for details and troubleshooting.
 
+## Documentation
+
+Start with [docs/README.md](docs/README.md), the index of all docs.
+
+| I want to | Read |
+| --- | --- |
+| Understand the system | [Architecture](docs/architecture.md): processes and ports, data, order, auth and persistence flows, package map, design decisions |
+| Use the components in my own app | [Getting started](docs/getting-started.md) (remote vuu-server or engine-local), then the [component guides](docs/components/README.md) and the generated [API reference](docs/api/README.md) |
+| See every component running | The [showcase](apps/showcase/README.md): `bun run dev:showcase`, http://localhost:5001, no servers needed |
+| Write or change a component | [UI guide](docs/ui-guide.md) |
+| Run, configure, reset or debug the stack | The [operations runbook](docs/operations.md) |
+| Know about dependency problems | [Upstream issues](docs/upstream-issues.md) |
+
 ## Layout
 
 ```
 packages/
   trading-schemas/    shared table defs, enums, RPC contracts, tick/lot utils
+  persistence/        journal + snapshot stores (memory, file, sqlite) for the trading server
   exchange-sim/       exchange simulator: order books, bots, EXCHANGE module, OMS gateway (see its README)
   oms/                OMS module: orders, risk, routing, positions, background flow (see its README)
-  trading-ui/         reusable React components, data hooks, instrument linking, TradingFeatureRoot (docs/ui-guide.md)
+  trading-ui/         reusable React components, data hooks, instrument linking, TradingFeatureRoot (docs/components/)
   trading-test-data/  in-browser EXCHANGE + OMS (real engines on @heswell/vuu-data-engine-local)
   perf/               perf tools: WS load harness, UI tick-rate profiler, ladder frame budget (docs/performance.md)
 apps/
@@ -62,108 +76,59 @@ apps/
   portal-config/      portal + trading server configs and launchers, default-modules.yaml (generated)
   showcase/           rsbuild dev app: trading-ui examples on local data or a server, :5001
 infra/keycloak/       realm export (roles, clients, seeded users) for docker-compose
-docs/                 ui-guide, portal-integration, protocol-parity, performance, upstream-issues, screenshots/
-scripts/              start-all, stack/ (config, Keycloak realm, static server), features/ (sync, build), certs
+docs/                 architecture, getting-started, operations, components/ (guides), api/ (generated), ...
+scripts/              start-all, stack/ (config, Keycloak realm, static server), features/ (sync, build), e2e/, docs/, certs
 ```
 
 ## Prerequisites
 
-- [bun](https://bun.sh) >= 1.3 (CI uses 1.3.14), openssl, Keycloak (realm `vuu`) for portal login.
+- [bun](https://bun.sh) >= 1.3 (CI uses 1.3.14), openssl, Keycloak 26.x (realm `vuu`) for portal login.
 - **trader must be installed with `bun install` only.** npm, yarn and pnpm are unsupported (workspace protocol);
   a `preinstall` guard fails fast with a clear message.
 
-All dependencies come from npm: the server side from [heswell/vuu-websocket](https://github.com/heswell/vuu-websocket)
-(`@heswell/vuu-server@^4.1.0`, `@heswell/vuu-portal@^2.1.1`, which bring `@heswell/service-utils`), the UI from
-`@vuu-ui/*@4.0.0-alpha.21` and `@vuu-ui/portal-build`. The @heswell packages only peer `@vuu-ui/*`
-(`^4.0.0-alpha.20`), so every workspace that uses vuu-server lists the `@vuu-ui` packages it needs at alpha.21 and the
-install has one copy of each; there are no root `overrides`.
+All dependencies come from npm:
 
-```sh
-bun install
-```
+- **Server side**, from [heswell/vuu-websocket](https://github.com/heswell/vuu-websocket):
+  `@heswell/vuu-server@^4.2.0` and `@heswell/vuu-portal@^2.2.0`, which bring `@heswell/service-utils`.
+- **UI**: `@vuu-ui/*@4.0.0-alpha.21` and `@vuu-ui/portal-build`.
+- **Matching** uses `@heswell/hft-limit-order-book`, and engine-local mode uses `@heswell/vuu-data-engine-local`.
 
-The portal server is the stock vuu-portal: `bunx vuu-portal --config apps/portal-config/application.conf`
-(or `bun run --filter @heswell/trading-portal-config start`). The trading server is
-`bun apps/portal-config/src/start-trading.ts` (`application.trading.conf`). Both confs take `${?VUU_*}` env overrides
-(`VUU_HTTPS_PORT`, `VUU_WEBSOCKET_PORT`, `VUU_CORS_ALLOWED_ORIGINS`, `VUU_KEYCLOAK_URL`, ...); `start:all` sets them
-per process from the `TRADER_*` settings. See [Sessions per user](docs/portal-integration.md#sessions-per-user) for
-`VUU_MAX_SESSIONS_PER_USER` / `VUU_SESSION_LIMIT_POLICY`.
+The @heswell packages only peer `@vuu-ui/*`. Every workspace that uses vuu-server therefore lists the `@vuu-ui`
+packages it needs at alpha.21, and the install has one copy of each. The root `overrides` pins only
+`@heswell/vuu-viewport` (`^1.1.5`).
 
-Order state persists: the trading server keeps its books, orders, fills, positions and ids in `.data/trading`
-(gitignored), so they survive a restart or a `kill -9`. `bun run persistence:reset` clears it (with the server
-stopped), or start with `TRADER_PERSISTENCE_RESET=1`; `TRADER_PERSISTENCE_STORE=memory` turns it off. See
-[docs/persistence.md](docs/persistence.md).
+## Common commands
 
-## Other commands
+| Command | |
+| --- | --- |
+| `bun run start:all` | The whole stack ([operations](docs/operations.md#start-and-stop)) |
+| `bun run dev:showcase` | Component showcase on in-browser data |
+| `bun run typecheck`, `lint`, `format:check`, `test` | The checks CI runs, with `features:check`, `build`, `docs:check` and `perf:ws --preset=smoke --assert` |
+| `bun run docs:api` | Regenerate the [API reference](docs/api/README.md) after changing an export |
+| `bun run persistence:reset` | Clear the trading server's persisted order state |
 
-- `bun run build`: the portal host and features.
-- `bun run features:sync`: regenerate `portal-build.json` and `default-modules.yaml` from the feature catalog.
-  `features:check` verifies them.
-- `bun run typecheck`: `tsc --noEmit` against the published `.d.ts` of the vuu packages.
-- `bun run lint`, `bun run format`.
-- `bun run test`: `test:server` (no DOM: schemas, persistence, exchange-sim, oms, trading-test-data) + `test:ui` (trading-ui, with
-  a happy-dom preload for React rendering).
-- `bun run persistence:reset [dir]`: delete the trading server's persisted state ([docs/persistence.md](docs/persistence.md)).
-- `bun run e2e:resilience` / `bun run e2e:persistence`: opt-in browser e2e against their own stack (Keycloak and
-  `bunx playwright install chromium` needed; not in CI). See [docs/resilience.md](docs/resilience.md) and
-  [docs/persistence.md](docs/persistence.md#tests).
-- `bun run keycloak:realm export|bootstrap`: write `infra/keycloak/realm-vuu.json`, or apply it to a running
-  Keycloak.
-- `bun run perf:ws [--preset=smoke|heavy] [--target=local|stack]`: end-to-end WS throughput (N clients × M
-  viewports on the ticking tables).
-- `bun run perf:ui [--scenario=trader-workspace] [--throttle=4]` and `bun run perf:ladder`: UI tick-rate profile and
-  depth-ladder frame budget in headless Chrome (opt-in). See [docs/performance.md](docs/performance.md) for flags
-  and baseline numbers.
+All scripts, the e2e and perf tools, and troubleshooting are in the
+[operations runbook](docs/operations.md#checks-tests-perf-and-e2e).
 
-UI showcase: `bun run dev:showcase` (http://localhost:5001, local data; its "Remote server" toggle uses
-`bun run dev:trading-server`).
+## Verified
 
-Stand-alone exchange-sim (permissive auth over plain HTTP, `ws://localhost:8094/websocket-exchange-sim`):
-`bun run --filter @heswell/exchange-sim start`. Benchmark: `bun run --filter @heswell/exchange-sim bench`.
-Simulator knobs (`exchangeSim.*` / `EXCHANGE_SIM_*`) are documented in
-[packages/exchange-sim/README.md](packages/exchange-sim/README.md).
+Each phase was verified end to end. The details are kept with the docs:
 
-Stand-alone EXCHANGE + OMS (permissive auth over plain HTTP, `ws://localhost:8095/websocket-trading`):
-`bun run --filter @heswell/oms start`. OMS knobs (`oms.*` / `OMS_*`), RPCs, roles (`trading-view` /
-`trading-execute` / `trading-supervisor`) and seeded accounts (owners alice, bob, carol, dave, erin) are in
-[packages/oms/README.md](packages/oms/README.md).
+- the portal stack with real Keycloak login and token exchange, driven by headless Chrome
+  ([portal-integration](docs/portal-integration.md#verified));
+- reconnect and resubscribe under server kills ([resilience](docs/resilience.md#6-testing));
+- crash recovery with `kill -9` ([persistence](docs/persistence.md#verified));
+- throughput and frame budgets ([performance](docs/performance.md#baselines)).
 
-### Verified / not verified
-
-Verified (Phase 4, re-run on @vuu-ui 4.0.0-alpha.21 with the separate trading server): `bun run start:all` with
-Keycloak 26.4.2 (real OIDC login and token exchange), driven by headless Chrome through the portal UI.
-- alice places an order in Ticket, and it shows in Orders, Fills and Positions.
-- dave has no Ticket or Ladder, and a read-only blotter. sam gets the supervisor desk.
-- Link groups work across separately loaded remotes, and a changed link group survives a reload (Phase 4).
-- Screenshots are in [docs/screenshots](docs/screenshots).
-- Not verified: `docker-compose.yml` (no Docker) and the `Procfile` under a process manager.
-
-See [docs/portal-integration.md](docs/portal-integration.md#verified).
-
-Verified (Phase 5C persistence): `bun run e2e:persistence`. alice gets a fill and leaves a resting order, then the
-trading server is killed with SIGKILL and restarted on the same store. The UI reconnects and shows the same working
-order and position, and the next order id follows on. `start:all --restart-trading` was also checked by hand, with
-a graceful restart and a `kill -9`. See [docs/persistence.md](docs/persistence.md#verified).
-
-Verified (Phase 2): OMS tests (68, including WebSocket tests against a real VuuServer with EXCHANGE + OMS). Also
-the then portal launcher (`start-portal.ts`, since replaced by the stock vuu-portal), using an alternate-port permissive copy of the config: REST login as `alice`, then `CREATE_VP` on
-`OMS/parentOrders` streams background-flow orders (NEW/FILLED/CANCELLED) filtered to `ACC-US-01`. The stand-alone
-OMS server starts on :8095. Keycloak roles were not verified in Phase 2; Phase 4 adds them to the realm.
-
-
-Verified (Phase 1): tests (including a VuuServer + websocket integration test); remote build. The composite
-portal server (the former `start-portal.ts`), using an alternate-port copy of the config
-with permissive auth: login works, and `CREATE_VP` on `EXCHANGE/prices`, `depth`, `trades` and `instrumentPrices`
-streams ticking updates. A `haltInstrument` RPC returns `SUCCESS_RESULT`. The same was checked on the
-stand-alone server. Not verified in a browser: the full Keycloak login and host UI, because ports
-5001/8091/8443 were occupied by other local services during development.
+Not verified: `docker-compose.yml` (no Docker) and the `Procfile` under a process manager.
 
 ## CI
 
-`.github/workflows/ci.yml` installs, typechecks, lints, format-checks, tests, checks the generated feature config
-(`features:check`), builds the host and features, and runs the `perf:ws` smoke preset (5 clients × 5 viewports,
-`--assert`).
+`.github/workflows/ci.yml` runs these steps:
 
-## Upstream
-
-See [docs/upstream-issues.md](docs/upstream-issues.md).
+1. install;
+2. typecheck, lint, format-check and the tests;
+3. `features:check` on the generated feature config;
+4. `docs:check`: the generated API reference is current, and relative links and anchors resolve;
+5. build the host and features;
+6. the `perf:ws` smoke preset (5 clients × 5 viewports, `--assert`).

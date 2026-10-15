@@ -44,6 +44,11 @@ jobs:
       - name: Features check
         run: bun run features:check
 
+      # docs/api generated from the sources is current; every reusable
+      # component has a showcase example and guide; relative links resolve
+      - name: Docs check
+        run: bun run docs:check
+
       - name: Build portal host and trading features
         run: bun run build
 

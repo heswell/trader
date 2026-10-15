@@ -47,6 +47,10 @@ export const sanitizeSelectedInstrument = (
   return instrument;
 };
 
+/**
+ * Whether two selections are the same instrument with the same static fields
+ * (shallow compare; both undefined counts as equal).
+ */
 export const sameInstrument = (
   a: SelectedInstrument | undefined,
   b: SelectedInstrument | undefined,

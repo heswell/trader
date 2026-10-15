@@ -29,6 +29,8 @@
     "start:all": "bun ./scripts/start-all.ts",
     "features:sync": "bun ./scripts/features/sync-build-config.ts",
     "features:check": "bun ./scripts/features/sync-build-config.ts --check",
+    "docs:api": "bun ./scripts/docs/api-reference.ts",
+    "docs:check": "bun ./scripts/docs/api-reference.ts --check && bun ./scripts/docs/check-links.ts",
     "keycloak:realm": "bun ./scripts/stack/keycloak-realm.ts",
     "e2e:persistence": "bun ./scripts/e2e/persistence.ts",
     "e2e:resilience": "bun ./scripts/e2e/resilience.ts",

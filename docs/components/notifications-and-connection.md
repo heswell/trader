@@ -1,5 +1,23 @@
 # Order notifications and connection state (P3.12)
 
+Reference: [TradingNotificationsProvider](../api/trading-ui.md#tradingnotificationsprovider),
+[useTradingNotifications](../api/trading-ui.md#usetradingnotifications),
+[ConnectionBanner](../api/trading-ui.md#connectionbanner),
+[ConnectionStatusIndicator](../api/trading-ui.md#connectionstatusindicator),
+[StaleIndicator](../api/trading-ui.md#staleindicator),
+[useTradingConnectionStatus](../api/trading-ui.md#usetradingconnectionstatus). Reconnect and resubscribe:
+[resilience.md](../resilience.md).
+
+Showcase: `#notifications-settings`, `#notifications-connection`, `#hosting-connection-override`. The showcase host
+mounts `TradingNotificationsProvider` and `ConnectionBanner` around every example.
+
+| | |
+| --- | --- |
+| Tables | `parentOrders`, `fills` (filtered to the trader, or every visible account with `scope="visibleAccounts"`); `instruments` for price formatting |
+| RPCs | none |
+| Roles | none in the component; the OMS row filter decides which orders stream (see [permissions](README.md#permissions)) |
+| Class bases | `tradingConnectionBanner`, `tradingConnectionStatus`, `tradingStaleIndicator`; `data-connection-state`, `data-stale`, `data-stale-reason` |
+
 ## Mounting (host / portal): once
 
 ```tsx
@@ -15,7 +33,7 @@
 
 - `notificationsCenter` wraps the children in vuu's `NotificationsProvider` (`@vuu-ui/vuu-notifications`). Leave
   it off when the host (vuu-portal shell) already mounts one. The published provider uses one shared context, so
-  nested providers shadow each other (upstream #35). Mount exactly one.
+  nested providers shadow each other (trader upstream issue 35). Mount exactly one.
 - The provider subscribes to `parentOrders` and `fills`, filtered to the trader (default: the authenticated user,
   or the `trader` prop). It toasts every order event, including fills arriving later for resting orders, flow from
   other screens and amends or cancels done elsewhere. It does not toast the initial snapshot.
@@ -58,6 +76,8 @@ Helpers: `orderEventKindForStatus`, `orderEventKey`, `describeOrderEvent`, `orde
 `ParentOrderEventTracker`, `FillEventTracker` and `FillSound`.
 
 ## Connection state and staleness
+
+In a portal, `TradingFeatureRoot` mounts the provider, launcher and banner for you (see [hosting.md](hosting.md#tradingfeatureroot)).
 
 | Export | |
 | --- | --- |

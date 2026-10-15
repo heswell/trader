@@ -89,6 +89,7 @@ export const LinkGroupProvider = ({
   linkGroup,
 }: {
   children: ReactNode;
+  /** Group of the components below that have no `linkGroup` prop. */
   linkGroup: LinkGroupId;
 }) => (
   <LinkGroupContext.Provider value={linkGroup}>

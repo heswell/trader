@@ -6,6 +6,18 @@ through `useTradingDataSource`, so they work against both the local test data an
 
 Showcase examples: `#market-depth-selected`, `#price-ladder-live` and `#price-ladder-stress`.
 
+Reference: [MarketDepth](../api/trading-ui.md#marketdepth), [PriceLadder](../api/trading-ui.md#priceladder),
+[PriceLadderView](../api/trading-ui.md#priceladderview).
+
+| Component | Tables | RPCs | Roles |
+| --- | --- | --- | --- |
+| `MarketDepth` | `depth`, `instrumentPrices`, `trades`, `parentOrders` (own orders) | – | view only |
+| `PriceLadder` | `depth`, `instrumentPrices`, `trades`, `parentOrders` | `createOrder`, `amendOrder`, `cancelOrder`, `cancelAll` | Trading needs `trading-execute`; the component has no read-only mode, so mount it only for users who can trade (the portal Ladder module is gated, see [permissions](README.md#permissions)). Clicks are blocked while the connection is down. |
+
+Class bases `tradingMarketDepth` and `tradingPriceLadder`; bar colours `--trading-depth-bid` / `--trading-depth-ask`
+(see [primitives.md](primitives.md#theming)). Account selection for own orders: `account` prop, e.g. from
+[`useSelectedAccount`](selection-and-linking.md#accounts).
+
 ## MarketDepth
 
 Aggregated two-sided book (bid | ask). Each side shows orders, quantity and price columns.

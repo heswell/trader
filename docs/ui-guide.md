@@ -298,7 +298,7 @@ registry line per example.
 ## 10. Packaging a component as an MF feature (`apps/features/trading`)
 
 All features live in one package, `apps/features/trading`, and are built as one MF remote each (the portal needs a
-unique `mfScope` per module, upstream #45). See [portal-integration.md](portal-integration.md) for the architecture,
+unique `mfScope` per module, trader upstream issue 45). See [portal-integration.md](portal-integration.md) for the architecture,
 the roles and the run-all command.
 
 1. Add `src/features/<Name>.tsx`. It renders trading-ui components wrapped in `withFeatureRoot` /
@@ -312,12 +312,12 @@ the roles and the run-all command.
    for `trading-view`, `trading-execute` or `trading-supervisor`, via `TRADING_ACCESS_ROLE`), and either `location` + `path` (nav entry) or `parent` (child module
    rendered by another feature through `usePortalModuleRegistry()` + `RemoteModule`).
 4. Run `bun run features:sync`. This regenerates `portal-build.json` (one remote per entry, the shared block and
-   `cssInline`, upstream #23) and `apps/portal-config/default-modules.yaml`. Then run `bun run build`, which renames
-   each remote's chunk global (upstream #44). `bun run features:check` (CI) fails on drift.
+   `cssInline`, trader upstream issue 23) and `apps/portal-config/default-modules.yaml`. Then run `bun run build`, which renames
+   each remote's chunk global (trader upstream issue 44). `bun run features:check` (CI) fails on drift.
 5. Shared singletons are react, react-dom, react-router-dom, `@vuu-ui/core` (+ `/portal`), vuu-data-remote,
    vuu-notifications, `@salt-ds/core` and `@heswell/trading-ui`, so instrument linking works across features
-   through the one window bus. **`@vuu-ui/vuu-layout` is not shared**: sharing it deadlocks startup (upstream
-   #43), so View state from a remote is not visible to trading-ui (upstream #50) and components fall back to portal
+   through the one window bus. **`@vuu-ui/vuu-layout` is not shared**: sharing it deadlocks startup (trader upstream issue
+   43), so View state from a remote is not visible to trading-ui (trader upstream issue 50) and components fall back to portal
    state (§5).
 
 ## 11. Shared renderers and hooks (P3.7–P3.10)
@@ -325,18 +325,19 @@ the roles and the run-all command.
 Grids that need status, side, progress, price, P&L, time or liquidity cells should use the registered renderers
 in `TradingRenderer` (`registerTradingCellRenderers()`; call it at module level because `sideEffects` only lists
 CSS) rather than writing new ones. Non-Table views (e.g. the tape) use `useDataSourceRows` for rAF-coalesced
-rows (see §12, "Rows as objects"). See `packages/trading-ui/README.md` for the component props and `docs/upstream-issues.md` #28–32 for the
+rows (see §12, "Rows as objects"). See the [component guides](components/README.md) and the [API reference](api/trading-ui.md) for the component props,
+and [upstream-issues.md](upstream-issues.md) (trader upstream issues 28–32) for the
 alpha.20/alpha.21 constraints behind the design choices.
 
 ## 12. Order ticket, notifications and connection state (P3.6, P3.12)
 
 - **Opening a ticket.** Any component can open the order ticket with
   `useOrderTicketLauncher().openOrderTicket({ ric, side, price, quantity })` (see the
-  [OrderTicket README](../packages/trading-ui/src/components/OrderTicket/README.md)). Do not build your own ticket.
+  [order ticket guide](components/order-ticket.md)). Do not build your own ticket.
   For an inline ticket, render `<OrderTicket variant="compact" prefill={…} />`.
 - **Toasts.** Order toasts come from `TradingNotificationsProvider`, which watches `parentOrders` and `fills`, so
   components do not toast their own orders. Use `useTradingNotifications().notify(event)` only for failures that
-  never reach the OMS. See the [notifications README](../packages/trading-ui/src/notifications/README.md).
+  never reach the OMS. See the [notifications guide](components/notifications-and-connection.md).
 - **Mounting.** The host mounts `TradingNotificationsProvider`, `OrderTicketLauncherProvider` and
   `ConnectionBanner` once (the showcase does this in `ShowcaseTradingHost.tsx`).
 - **Connection state.** `useTradingConnectionStatus()` gives `connected | connecting | reconnecting | disconnected

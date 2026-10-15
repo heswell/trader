@@ -61,5 +61,6 @@ export const useLevelFlash = (
   return flashes;
 };
 
+/** Key of a depth level (`side|price`) used by useLevelFlash. */
 export const levelKey = (side: string, price: number) =>
   `${side}|${priceKey(price)}`;

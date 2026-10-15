@@ -41,6 +41,10 @@ const reject = (reason: RejectReason, text: string): OrderReject => ({
   text,
 });
 
+/**
+ * An INVALID_QUANTITY reject unless `quantity` is > 0 and a multiple of the
+ * instrument's lot size.
+ */
 export const validateQuantity = (
   quantity: number,
   instrument: Pick<InstrumentStatic, "lotSize">,
@@ -56,6 +60,10 @@ export const validateQuantity = (
   }
 };
 
+/**
+ * An INVALID_PRICE reject unless `price` is > 0 and on the instrument's tick
+ * schedule.
+ */
 export const validatePrice = (
   price: number,
   instrument: Pick<InstrumentStatic, "tickSize" | "tickBands">,
