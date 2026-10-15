@@ -3,14 +3,6 @@ import type {
   DataSourceSubscribeCallback,
 } from "@vuu-ui/vuu-data-types";
 
-// engine-local 4.0.0's DOM-free main entry still calls a bare
-// requestAnimationFrame when a viewport subscribes (trader upstream issue 78).
-globalThis.requestAnimationFrame ??= ((cb: FrameRequestCallback) =>
-  setTimeout(
-    () => cb(performance.now()),
-    0,
-  ) as unknown as number) as typeof requestAnimationFrame;
-
 export const tick = (ms = 20) =>
   new Promise<void>((resolve) => setTimeout(resolve, ms));
 
