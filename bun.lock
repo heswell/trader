@@ -144,7 +144,7 @@
         "@heswell/exchange-sim": "workspace:*",
         "@heswell/oms": "workspace:*",
         "@heswell/trading-schemas": "workspace:*",
-        "@heswell/vuu-data-engine-local": "^4.1.0",
+        "@heswell/vuu-data-engine-local": "^4.2.0",
         "@vuu-ui/core": "4.0.0-alpha.21",
         "@vuu-ui/vuu-data-types": "4.0.0-alpha.21",
         "@vuu-ui/vuu-filter-types": "4.0.0-alpha.21",
@@ -277,7 +277,7 @@
 
     "@heswell/user-admin": ["@heswell/user-admin@1.0.2", "", {}, "sha512-mrpf769m/0SmClauaxBvU1g8r0xi0GZdSEU2AXRjdkrowhwnyQwwctNv+UxrbAMJreSGryhoZeO4fPJJrIGQBw=="],
 
-    "@heswell/vuu-data-engine-local": ["@heswell/vuu-data-engine-local@4.1.0", "", { "dependencies": { "@heswell/module-admin": "^2.0.1", "@heswell/user-admin": "^1.0.2", "@heswell/vuu-table": "^1.0.2", "@heswell/vuu-viewport": "^1.1.5" }, "peerDependencies": { "@vuu-ui/core": "^4.0.0-alpha.20", "@vuu-ui/vuu-data-types": "^4.0.0-alpha.20", "@vuu-ui/vuu-filter-parser": "^4.0.0-alpha.20", "@vuu-ui/vuu-filter-types": "^4.0.0-alpha.20", "@vuu-ui/vuu-protocol-types": "^4.0.0-alpha.20", "@vuu-ui/vuu-table-types": "^4.0.0-alpha.20", "@vuu-ui/vuu-utils": "^4.0.0-alpha.20", "react": "^19.2.3" } }, "sha512-+u9zvabSXlvUUqcQ6WaISHMKevN4ffasPXSCEORIqQflqTHKYXS9zIm1GXqD7TYMoFBSXRG5OL/mKH535cRcDQ=="],
+    "@heswell/vuu-data-engine-local": ["@heswell/vuu-data-engine-local@4.2.0", "", { "dependencies": { "@heswell/module-admin": "^2.0.1", "@heswell/user-admin": "^1.0.2", "@heswell/vuu-table": "^1.0.2", "@heswell/vuu-viewport": "^1.1.5" }, "peerDependencies": { "@vuu-ui/core": "^4.0.0-alpha.20", "@vuu-ui/vuu-data-types": "^4.0.0-alpha.20", "@vuu-ui/vuu-filter-parser": "^4.0.0-alpha.20", "@vuu-ui/vuu-filter-types": "^4.0.0-alpha.20", "@vuu-ui/vuu-protocol-types": "^4.0.0-alpha.20", "@vuu-ui/vuu-table-types": "^4.0.0-alpha.20", "@vuu-ui/vuu-utils": "^4.0.0-alpha.20", "react": "^19.2.3" } }, "sha512-+KlqPWax4iSnu5xRaFLOylp0ipmGZNXqZfZTwmdqG6Zo1YH0qXu/Yxt+w9GWJfLeAdsP3sszN6BtAvHnPo3WeQ=="],
 
     "@heswell/vuu-portal": ["@heswell/vuu-portal@2.2.0", "", { "dependencies": { "@heswell/module-admin": "^2.0.1" }, "peerDependencies": { "@heswell/vuu-server": "^3.1.0 || ^4.0.0", "@heswell/vuu-table": "^1.0.1", "@vuu-ui/vuu-protocol-types": "^4.0.0-alpha.20" }, "bin": { "vuu-portal": "bin.js" } }, "sha512-wWWecZ/d4/XxArDN0SuzLvs7XpW2bZLvEtQb+5dqSXiH5AldhIzsYk+KCEI/3aa/gc4Y+cctoJyGUmRN64XDDg=="],
 
