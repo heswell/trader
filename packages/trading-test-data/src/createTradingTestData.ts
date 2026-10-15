@@ -18,7 +18,6 @@ import {
   EXCHANGE_ADMIN_RPC_NAMES,
   EXCHANGE_MODULE,
   exchangeTables,
-  getTradingSchemas,
   instrumentPrices,
   OMS_MODULE,
   OMS_RPC_NAMES,
@@ -140,7 +139,9 @@ const joinTableFor = (def: JoinDefinition, base: Table, join: Table) => {
       `[trading-test-data] ${def.name}: createJoinTable needs left === right (${def.left}/${def.right})`,
     );
   }
-  const table = createJoinTable(
+  // The module that publishes the join destroys it (detaching it from its
+  // sources) when the engine disposes the module.
+  return createJoinTable(
     { module: def.module, table: def.name },
     base,
     join,
@@ -150,12 +151,6 @@ const joinTableFor = (def: JoinDefinition, base: Table, join: Table) => {
       joinType: def.type === "InnerJoin" ? "inner" : "leftOuter",
     },
   );
-  // The engine table is a JoinTable at runtime, but typed as the base engine
-  // Table; destroy() detaches it from its sources (trader upstream issue 79).
-  const engineTable = table.engineTable as typeof table.engineTable & {
-    destroy(): void;
-  };
-  return { table, engineTable };
 };
 
 const isExchangeRpc = (name: string): name is ExchangeAdminRpcName =>
@@ -289,14 +284,11 @@ export const createTradingTestData = ({
     prices,
     depth,
     trades,
-    instrumentPrices: instrumentPricesJoin.table,
+    instrumentPrices: instrumentPricesJoin,
   };
-  // Published schemas are the declared ones (the server's TABLE_META_RESP);
-  // createJoinTable adds default rangeLimits to the joins' engine schemas.
-  const declaredSchemas = getTradingSchemas();
   const exchangeSchemas = forEachTable(
     EXCHANGE_TABLE_NAMES,
-    (name) => declaredSchemas[name],
+    (name) => exchangeTablesByName[name].schema,
   );
   const exchangeServices = rpcServices(
     EXCHANGE_ADMIN_RPC_NAMES,
@@ -318,11 +310,11 @@ export const createTradingTestData = ({
   // ------------------------------------------------------------ OMS
   const omsTablesByName: Record<OmsLocalTableName, Table> = {
     ...omsTableMap,
-    positionPrices: positionPricesJoin.table,
+    positionPrices: positionPricesJoin,
   };
   const omsSchemas = forEachTable(
     OMS_TABLE_NAMES,
-    (name) => declaredSchemas[name],
+    (name) => omsTablesByName[name].schema,
   );
   const omsServices: RpcService[] = [
     ...rpcServices(OMS_RPC_NAMES, () => oms),
@@ -396,8 +388,6 @@ export const createTradingTestData = ({
       stop();
       omsService.dispose();
       engine.dispose();
-      instrumentPricesJoin.engineTable.destroy();
-      positionPricesJoin.engineTable.destroy();
     },
   };
 };

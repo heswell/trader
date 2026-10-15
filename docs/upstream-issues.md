@@ -416,13 +416,19 @@ and the `@vuu-ui/vuu-icons` main entry (#52) still lack types; `PersistedStateAP
 
 ## Found in the engine-local 4.1.0 upgrade
 
-79. **`createJoinTable` gives no typed way to dispose the join.** (vuu-websocket, vuu-data-engine-local 4.1.0.)
+79. ~~**`createJoinTable` gives no typed way to dispose the join.**~~ *Resolved: vuu-websocket#99;
+    vuu-data-engine-local 4.2.0.* `createJoinTable` returns a `JoinTableHandle` (`engineTable` typed `JoinTable`),
+    `Table.destroy()` detaches a join, and `engine.dispose()` disposes the modules, which destroy their join tables.
+    `createTradingTestData` dropped the cast and the manual destroy; a test checks source updates stop reaching the
+    joins after `dispose()`. (vuu-websocket, vuu-data-engine-local 4.1.0.)
     The returned `Table`'s `engineTable` is an `@heswell/vuu-table` `JoinTable` at runtime but is typed as the base
     engine `Table`, so `destroy()` (which detaches the join's listeners from its source tables) is not visible, and
     `Table` has no `destroy()` of its own. A `Table.destroy()` that forwards to the engine table, or a `JoinTable`
     type on joins, would fix it. *Workaround:* `createTradingTestData`'s `joinTableFor` narrows `engineTable` with a
     structural `{ destroy(): void }` cast and calls it on `dispose()`.
-80. **`createJoinTable({ schema })` adds `rangeLimits` the declared schema did not have.** (vuu-websocket,
+80. ~~**`createJoinTable({ schema })` adds `rangeLimits` the declared schema did not have.**~~ *Resolved:
+    vuu-websocket#99; vuu-data-engine-local 4.2.0.* The join's `Table.schema` is now the declared schema (defaults
+    go to `Table.rangeLimits`), so the modules publish each table's own `schema` again. (vuu-websocket,
     vuu-data-engine-local 4.1.0.) A declared schema without `rangeLimits` gets the engine default
     (`maxRangeEnd: 1000000, maxRangeWidth: 1000`), so the join's `Table.schema` no longer matches the schema the
     server returns in TABLE_META_RESP, while plain `createTable`/`new Table(schema)` keep it unchanged. Preserving

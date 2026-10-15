@@ -151,6 +151,36 @@ describe("determinism", () => {
   });
 });
 
+describe("dispose", () => {
+  test("detaches the joins from their sources (no leaked listeners)", () => {
+    const other = createTradingTestData({
+      seed: 3,
+      manualClock: true,
+      exchange: { activeInstruments: 5 },
+      oms: { flowRate: 0 },
+    });
+    other.advance(500);
+    const ric = other.sim.books[0].ric;
+    const prices = other.exchange.getTable("prices");
+    const joins = [
+      other.exchange.getTable("instrumentPrices"),
+      other.oms.getTable("positionPrices"),
+    ];
+    const bidOf = () =>
+      other.exchange.getTable("instrumentPrices").findByKey(ric)?.[
+        other.exchange.getTable("instrumentPrices").map.bid
+      ];
+
+    prices.update(ric, "bid", 101.5);
+    expect(bidOf()).toBe(101.5);
+
+    other.dispose();
+    for (const join of joins) expect(join.destroyed).toBe(true);
+    prices.update(ric, "bid", 202.5);
+    expect(bidOf()).toBe(101.5);
+  });
+});
+
 describe("data sources", () => {
   test("prices tick through a subscribed data source", async () => {
     const ds = createDs(td.exchange, "prices");
