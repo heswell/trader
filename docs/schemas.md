@@ -13,6 +13,8 @@ flowchart LR
     prices --- instrumentPrices
     depth -. link ric .-> prices
     trades -. link ric .-> prices
+    bars -. link ric .-> prices
+    bookSamples -. link ric .-> prices
   end
   subgraph OMS [OMS module - oms]
     accounts
@@ -21,14 +23,16 @@ flowchart LR
     fills -. orderId .-> parentOrders
     positions -. account .-> accounts
     positions --- positionPrices
+    pnlHistory -. account .-> accounts
+    accountPnlHistory -. account .-> accounts
   end
   prices --- positionPrices
 ```
 
 | Module | Tables | Joins |
 |---|---|---|
-| `EXCHANGE` | instruments, prices, depth (`ric\|side\|level`), trades | instrumentPrices = instruments ⟕ prices |
-| `OMS` | accounts, parentOrders, childOrders, fills, positions (`account\|ric`) | positionPrices = positions ⟕ prices (cross-module) |
+| `EXCHANGE` | instruments, prices, depth (`ric\|side\|level`), trades, bars (`ric\|interval\|start`), bookSamples (`ric\|time`) | instrumentPrices = instruments ⟕ prices |
+| `OMS` | accounts, parentOrders, childOrders, fills, positions (`account\|ric`), pnlHistory (`account\|ric\|time`), accountPnlHistory (`account\|time`) | positionPrices = positions ⟕ prices (cross-module) |
 
 Order entry follows the protocol parity decision (`docs/protocol-parity.md`, #1): direct
 `RPC_REQUEST`s (`createOrder`, `amendOrder`, `cancelOrder`, `cancelAll`) with
