@@ -45,6 +45,10 @@ serverConfig.withModule(ExchangeModule(sim));   // starts ticking once its table
 | `depth` | `ric\|side\|level` | Top `depthLevels` (10) levels per side: price, size, cumSize, orderCount, seq. Updates are deltas; a level is touched only when its values change, and vanished levels are deleted. |
 | `trades` | `tradeId` | Time and sales across all instruments. It is a ring buffer of `tradesCapacity` (50k) rows; the oldest rows are deleted. `aggressorSide` is the taker side. |
 | `instrumentPrices` | `ric` | A join of instruments and prices. |
+| `bars` | `ric\|interval\|start` | OHLCV candles per instrument and `barIntervals` interval (`1s`, `1m`, `5m`), built from trades. The current bar updates in place on each flush; `barHistory` closed bars are kept per series (oldest deleted). Intervals are exchange-clock (wall) time; intervals with no trades are gaps. `barBackfill` seeds synthetic history at startup. |
+| `bookSamples` | `ric\|time` | Every `bookSampleIntervalMs`, a snapshot of each book's published top 5 levels: bid/ask/mid, spreadBps, touch sizes, top-5 cumulative depth, imbalance. `bookSampleHistory` samples per instrument. |
+
+See [docs/charting-data.md](../../docs/charting-data.md) for the chart data semantics.
 
 Publishing is coalesced. Every `publishIntervalMs`, each book that changed is written once: one prices
 row plus a depth delta. Trades since the last flush are then appended. A prices row is skipped when
@@ -108,6 +112,11 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | `publishIntervalMs` | 100 | Table flush interval (ms). |
 | `depthLevels` | 10 | Depth levels per side. |
 | `tradesCapacity` | 50000 | Trades ring buffer size. |
+| `barIntervals` | `1s,1m,5m` | `bars` intervals (`<n>s\|m\|h\|d`); empty disables bars. |
+| `barHistory` | 500 | Closed bars kept per ric and interval. |
+| `barBackfill` | 1 | 1 = seed `barHistory` synthetic closed bars per series from the price model at startup. |
+| `bookSampleIntervalMs` | 1000 | `bookSamples` interval (ms); 0 disables. |
+| `bookSampleHistory` | 300 | Book samples kept per instrument. |
 | `priceBandPct` | 0.2 | Static band around refPrice (±20%). |
 | `timeScale` | 10 | Price-model time multiplier. |
 | `defaultVolatility` | 0 | Annualised vol for all instruments (0 = per-instrument 20–50%). |

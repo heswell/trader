@@ -1,3 +1,4 @@
+import { parseBarInterval } from "@heswell/trading-schemas";
 import { validateSessionConfig } from "./engine/TradingSession";
 
 /**
@@ -56,6 +57,20 @@ export interface ExchangeSimConfig {
    * 08:00/16:30 when unset.
    */
   sessionDayMs: number;
+  /**
+   * Comma separated OHLCV bar intervals for the `bars` table, e.g.
+   * "1s,1m,5m" (units s, m, h). Intervals are exchange-clock time; empty
+   * disables bars.
+   */
+  barIntervals: string;
+  /** Closed bars kept per ric and interval (oldest deleted). */
+  barHistory: number;
+  /** 1 = seed `barHistory` synthetic closed bars per series at startup; 0 = off. */
+  barBackfill: number;
+  /** Interval of `bookSamples` snapshots per instrument (ms); 0 disables. */
+  bookSampleIntervalMs: number;
+  /** Samples kept per instrument (oldest deleted). */
+  bookSampleHistory: number;
 }
 
 export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
@@ -80,6 +95,11 @@ export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
   sessionClose: "",
   preOpenMinutes: 0,
   sessionDayMs: 0,
+  barIntervals: "1s,1m,5m",
+  barHistory: 500,
+  barBackfill: 1,
+  bookSampleIntervalMs: 1_000,
+  bookSampleHistory: 300,
 });
 
 /** Structural subset of service-utils Config. */
@@ -120,6 +140,13 @@ export const loadExchangeSimConfig = (
   });
 };
 
+/** Parsed `barIntervals` labels (empty list = bars disabled). */
+export const barIntervalList = (barIntervals: string) =>
+  barIntervals
+    .split(",")
+    .map((label) => label.trim())
+    .filter(Boolean);
+
 export const validateConfig = (config: ExchangeSimConfig) => {
   const positive: (keyof ExchangeSimConfig)[] = [
     "botStepMs",
@@ -146,8 +173,30 @@ export const validateConfig = (config: ExchangeSimConfig) => {
     "mmRate",
     "takerRate",
     "defaultVolatility",
+    "bookSampleIntervalMs",
   ] as const) {
     if (!(config[key] >= 0)) throw Error(`exchangeSim.${key} must be >= 0`);
+  }
+  for (const key of ["barHistory", "bookSampleHistory"] as const) {
+    if (!(Number.isInteger(config[key]) && config[key] > 0)) {
+      throw Error(`exchangeSim.${key} must be a positive integer`);
+    }
+  }
+  if (config.barBackfill !== 0 && config.barBackfill !== 1) {
+    throw Error("exchangeSim.barBackfill must be 0 or 1");
+  }
+  const intervals = barIntervalList(config.barIntervals);
+  if (new Set(intervals).size !== intervals.length) {
+    throw Error(
+      `exchangeSim.barIntervals has duplicates: ${config.barIntervals}`,
+    );
+  }
+  for (const label of intervals) {
+    try {
+      parseBarInterval(label);
+    } catch (err) {
+      throw Error(`exchangeSim.barIntervals: ${(err as Error).message}`);
+    }
   }
   validateSessionConfig(config);
   return config;

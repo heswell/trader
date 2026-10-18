@@ -31,3 +31,36 @@ export const parsePositionKey = (key: string) => {
   const [account, ric] = parts;
   return { account, ric };
 };
+
+/** Key of a `bars` row. */
+export const barKey = (ric: string, interval: string, start: number) =>
+  `${ric}${SEP}${interval}${SEP}${start}`;
+
+/** Key of a `bookSamples` row. */
+export const bookSampleKey = (ric: string, time: number) =>
+  `${ric}${SEP}${time}`;
+
+/** Key of a `pnlHistory` row. */
+export const pnlHistoryKey = (account: string, ric: string, time: number) =>
+  `${account}${SEP}${ric}${SEP}${time}`;
+
+/** Key of an `accountPnlHistory` row. */
+export const accountPnlHistoryKey = (account: string, time: number) =>
+  `${account}${SEP}${time}`;
+
+const INTERVAL_UNITS: Record<string, number> = {
+  s: 1_000,
+  m: 60_000,
+  h: 3_600_000,
+};
+
+/**
+ * Bar interval label -> milliseconds, e.g. "1s" -> 1000, "5m" -> 300000.
+ * Units: s, m, h. Throws if malformed.
+ */
+export const parseBarInterval = (interval: string) => {
+  const match = /^(\d+)([smh])$/.exec(interval.trim());
+  const ms = match ? Number(match[1]) * INTERVAL_UNITS[match[2]] : 0;
+  if (!(ms > 0)) throw Error(`invalid bar interval '${interval}'`);
+  return ms;
+};

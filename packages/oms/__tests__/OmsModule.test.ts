@@ -72,7 +72,12 @@ describe("OmsModule over the Vuu protocol", () => {
   });
   const oms = createOms(sim.gateway, {
     // strict: a user without trading roles sees nothing (eve below)
-    config: { flowRate: 0, markIntervalMs: 20, permissionMode: "strict" },
+    config: {
+      flowRate: 0,
+      markIntervalMs: 20,
+      pnlHistoryIntervalMs: 40,
+      permissionMode: "strict",
+    },
     rics: () => sim.books.map((b) => b.ric),
     log: () => {},
   });
@@ -167,7 +172,15 @@ describe("OmsModule over the Vuu protocol", () => {
   test("module starts the OMS once its tables are loaded; accounts are seeded", async () => {
     expect(oms.running).toBe(true);
     expect([...oms.tables.attached].sort() as string[]).toEqual(
-      ["accounts", "childOrders", "fills", "parentOrders", "positions"].sort(),
+      [
+        "accounts",
+        "childOrders",
+        "fills",
+        "parentOrders",
+        "positions",
+        "pnlHistory",
+        "accountPnlHistory",
+      ].sort(),
     );
     const vp = await sam.createViewport(OMS_MODULE, "accounts", [
       "account",
@@ -232,6 +245,53 @@ describe("OmsModule over the Vuu protocol", () => {
         (r) => r.id === "ACC-US-01|AAPL.OQ" && r.quantity === 60,
       ),
     ).toMatchObject({ avgCost: 170, markPx: 170 });
+  });
+
+  test("pnlHistory / accountPnlHistory are permission filtered like positions", async () => {
+    const columns = ["id", "account", "ric", "time", "quantity", "markPx"];
+    const accountColumns = [
+      "id",
+      "account",
+      "time",
+      "positions",
+      "netExposure",
+    ];
+    const aliceHistory = await alice.createViewport(
+      OMS_MODULE,
+      "pnlHistory",
+      columns,
+    );
+    const bobHistory = await bob.createViewport(
+      OMS_MODULE,
+      "pnlHistory",
+      columns,
+    );
+    const samTotals = await sam.createViewport(
+      OMS_MODULE,
+      "accountPnlHistory",
+      accountColumns,
+    );
+    const bobTotals = await bob.createViewport(
+      OMS_MODULE,
+      "accountPnlHistory",
+      accountColumns,
+    );
+    expect(
+      await alice.row(
+        aliceHistory,
+        (r) => r.account === "ACC-US-01" && r.ric === AAPL,
+      ),
+    ).toMatchObject({ quantity: 60, markPx: 170 });
+    expect(
+      await sam.row(samTotals, (r) => r.account === "ACC-US-01"),
+    ).toMatchObject({ positions: 1, netExposure: 60 * 170 });
+    // a few more samples: bob (ACC-US-02 only, no position) sees nothing
+    await Bun.sleep(150);
+    expect(bob.rowsOf(bobHistory)).toEqual([]);
+    expect(bob.rowsOf(bobTotals)).toEqual([]);
+    expect(
+      alice.rowsOf(aliceHistory).every((r) => r.account === "ACC-US-01"),
+    ).toBe(true);
   });
 
   test("positionPrices join carries market data and the OMS RPCs", async () => {
@@ -768,6 +828,21 @@ describe("OmsModule over the Vuu protocol", () => {
       "last",
     ]);
     await alice.row(vp, (r) => r.ric === AAPL && r.last === 170);
+    const bars = await alice.createViewport(EXCHANGE_MODULE, "bars", [
+      "id",
+      "ric",
+      "interval",
+      "close",
+      "volume",
+      "backfilled",
+    ]);
+    // the live fill at 170 (backfilled history is also present)
+    expect(
+      await alice.row(
+        bars,
+        (r) => r.ric === AAPL && r.interval === "1m" && r.backfilled === false,
+      ),
+    ).toMatchObject({ close: 170 });
   });
 
   test("session limit: a user may hold five tabs; a sixth is refused (4003) until one closes", async () => {

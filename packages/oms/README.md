@@ -32,8 +32,8 @@ const oms = createOms(sim.gateway, {
 
 ## Tables
 
-These are the `trading-schemas` OMS tables: `accounts`, `parentOrders`, `childOrders`, `fills`, `positions`, plus the
-`positionPrices` join (positions ⟕ EXCHANGE prices). EXCHANGE must be registered first.
+These are the `trading-schemas` OMS tables: `accounts`, `parentOrders`, `childOrders`, `fills`, `positions`, `pnlHistory`,
+`accountPnlHistory`, plus the `positionPrices` join (positions ⟕ EXCHANGE prices). EXCHANGE must be registered first.
 
 - `accounts` is seeded with 3 desks, 5 traders and 7 accounts.
   - Each account has `maxOrderQty`, `maxOrderNotional` and `maxPositionNotional`.
@@ -44,9 +44,16 @@ These are the `trading-schemas` OMS tables: `accounts`, `parentOrders`, `childOr
 - `parentOrders` holds one row per client order, keyed by `orderId` (`O-<n>`).
   - Risk rejects are recorded here too: status `REJECTED` with `rejectReason` and `text`.
   - `version` increments on every applied amend.
+  - Execution quality: `arrivalPrice` (mid at creation, else the reference price), `slippageBps` (avgPx vs arrival,
+    positive = worse: buys above / sells below arrival), `timeToFirstFill` and `timeToComplete` (ms from creation;
+    0 until it happens; `timeToComplete` only for `FILLED`).
 - `childOrders` holds the exchange-facing order (`<orderId>-1`, routed 1:1) with the exchange `exchangeOrderId`.
 - `fills` has one row per execution (`execId`), keyed by parent `orderId` and `childOrderId`.
 - `positions` has one row per `account|ric`.
+- `pnlHistory` (`account|ric|time`) and `accountPnlHistory` (`account|time`) are P&L / exposure snapshots taken by the
+  mark timer every `pnlHistoryIntervalMs`, `pnlHistoryLength` per key (oldest deleted). A position row is written only
+  when its quantity, mark or realised P&L changed; account totals are in USD. Not persisted. See
+  [docs/charting-data.md](../../docs/charting-data.md).
 
 ## RPCs
 
@@ -212,6 +219,8 @@ Set in `application.conf` as `oms.<key>`, or with the env var `OMS_<UPPER_SNAKE>
 | `flowStepMs` | 100 | Flow timer interval. |
 | `collarPct` | 0.1 | Limit price collar vs reference. |
 | `markIntervalMs` | 500 | Position mark timer. 0 disables it. |
+| `pnlHistoryIntervalMs` | 10000 | P&L history sample interval (aligned). 0 disables `pnlHistory` / `accountPnlHistory`. |
+| `pnlHistoryLength` | 180 | Samples kept per position / account (30 min at the default interval). |
 | `restrictedRics` | `""` | Comma-separated restricted list. |
 | `permissionMode` | `auto` | `auto` or `strict` (see above). |
 | `gatewayLatencyMs` | 0 | Simulated one-way OMS↔exchange latency. More than 0 makes `PENDING_*` states visible. |

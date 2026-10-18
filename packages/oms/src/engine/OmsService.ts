@@ -16,6 +16,7 @@ import { type Account, SEED_ACCOUNTS } from "../reference/accounts";
 import { TableSink } from "../modules/oms/TableSink";
 import { DelayedGateway, type OmsGateway, type Scheduler } from "./gateway";
 import { OmsEngine } from "./OmsEngine";
+import { PnlHistory } from "./PnlHistory";
 
 /** Structurally a vuu-server Logger, so getLogger("trader.oms") fits. */
 export interface OmsLogger {
@@ -54,6 +55,8 @@ export class OmsService {
   readonly tables = new TableSink();
   readonly gateway: OmsGateway;
   readonly logger: OmsLogger;
+  /** P&L history sampler; undefined when oms.pnlHistoryIntervalMs is 0. */
+  readonly pnlHistory: PnlHistory | undefined;
   #timers: ReturnType<typeof setInterval>[] = [];
   #clock: () => number;
 
@@ -83,6 +86,14 @@ export class OmsService {
       restrictedRics: splitList(config.restrictedRics),
       log: options.log ?? ((message) => this.logger.warn(message)),
     });
+    if (config.pnlHistoryIntervalMs > 0) {
+      this.pnlHistory = new PnlHistory(this.tables, {
+        intervalMs: config.pnlHistoryIntervalMs,
+        length: config.pnlHistoryLength,
+        usdPerPriceUnit: (ric) =>
+          this.gateway.getInstrument(ric)?.usdPerPriceUnit ?? 1,
+      });
+    }
     const flowAccountIds = new Set(splitList(config.flowAccounts));
     const { rics = [] } = options;
     this.flow = new BackgroundFlow({
@@ -120,10 +131,21 @@ export class OmsService {
     return this.#timers.length > 0;
   }
 
+  /**
+   * Mark positions to market, then take a P&L history sample when one is
+   * due. Driven by the mark timer (tests and the engine-local data call it).
+   */
+  mark(now = this.#clock()) {
+    const changed = this.engine.markToMarket();
+    const history = this.pnlHistory;
+    if (history?.due(now)) history.sample(now, this.engine.positions.values());
+    return changed;
+  }
+
   /** Start the background flow and mark-to-market timers. */
   start() {
     if (this.running) return;
-    const { flowStepMs, markIntervalMs } = this.config;
+    const { flowStepMs, markIntervalMs, pnlHistoryIntervalMs } = this.config;
     let last = this.#clock();
     this.#timers.push(
       setInterval(() => {
@@ -132,10 +154,10 @@ export class OmsService {
         last = now;
       }, flowStepMs),
     );
-    if (markIntervalMs > 0) {
-      this.#timers.push(
-        setInterval(() => this.engine.markToMarket(), markIntervalMs),
-      );
+    // Without a mark timer, P&L history still samples on its own interval.
+    const markEvery = markIntervalMs || pnlHistoryIntervalMs;
+    if (markEvery > 0) {
+      this.#timers.push(setInterval(() => this.mark(), markEvery));
     }
   }
 

@@ -151,6 +151,37 @@ Without throttling, the workspace holds 60 FPS at 4× the default tick rate. Und
 
 The ladder is well inside its budget: a 200 updates/s book costs under 2 ms per React commit, even at 4× throttle.
 
+## Chart data
+
+The chart tables ([charting-data.md](charting-data.md)) were measured on 2026-10-18 on the same shared machine
+(load average 3–5). The `perf:ws` smoke (local target, 336 active rics) was run back to back with the defaults and
+with chart data off (`EXCHANGE_SIM_BAR_INTERVALS= EXCHANGE_SIM_BOOK_SAMPLE_INTERVAL_MS=0
+OMS_PNL_HISTORY_INTERVAL_MS=0`):
+
+| smoke, 336 rics | chart data off | defaults (on) |
+| --- | --- | --- |
+| client rows/s | 10,963 | 10,792 |
+| e2e prices p95 / trades p95 ms | 64 / 97 | 64 / 108 |
+| server CPU (stats file) | 49.5% | 47.5% |
+| server heap max / RSS max | 282 MB / 641 MB | 545 MB / 922 MB |
+| event-loop lag p99 | 5.2 ms | 14.2 ms |
+
+- **CPU and throughput** don't change measurably. Bars are updated per trade in memory and written once per
+  publish cycle (one row update per active series), and book samples reuse the levels already published to
+  `depth`.
+- **Memory** is the cost, almost all from the `bars` rolling window: 3 intervals × (`barHistory` 500 + 1) rows
+  per ric, about 0.5 KB of heap per row through vuu-server's table. With backfill that's paid at startup: about
+  300k rows with the server default of 200 rics (a fully grown window without backfill is the same). Book samples
+  add up to `bookSampleHistory` (300) × rics rows (60k at 200 rics) and P&L history at most `pnlHistoryLength`
+  (180) × positions.
+- **Startup**: backfilling 200 rics × 3 intervals × 500 bars takes about 1.4 s before the server listens
+  (~130 MB of engine heap).
+- The higher event-loop lag p99 comes from GC on the larger heap.
+- In `start:all` (200 rics, background OMS flow) the trading server was at ~945 MB RSS after 90 s.
+
+To trim: lower `exchangeSim.barHistory`, drop `1s` from `barIntervals`, or set `barBackfill=0` (the window then
+fills only as trades arrive).
+
 ## Hot-spot fixes
 
 The CPU profiles (`perf:ui --cpu-profile`, inclusive time per function) showed that components with no per-tick data still re-rendered on every price or depth tick:

@@ -22,6 +22,13 @@ export interface OmsConfig {
   collarPct: number;
   /** Interval at which positions are marked to market (ms). 0 disables the timer. */
   markIntervalMs: number;
+  /**
+   * Interval of pnlHistory / accountPnlHistory samples (ms), taken on the
+   * mark timer. 0 disables P&L history.
+   */
+  pnlHistoryIntervalMs: number;
+  /** Samples kept per position and per account (oldest deleted). */
+  pnlHistoryLength: number;
   /** Comma separated restricted rics (orders rejected RESTRICTED_INSTRUMENT). */
   restrictedRics: string;
   /**
@@ -43,6 +50,8 @@ export const DEFAULT_OMS_CONFIG: Readonly<OmsConfig> = Object.freeze({
   flowStepMs: 100,
   collarPct: 0.1,
   markIntervalMs: 500,
+  pnlHistoryIntervalMs: 10_000,
+  pnlHistoryLength: 180,
   restrictedRics: "",
   permissionMode: "auto",
   gatewayLatencyMs: 0,
@@ -91,8 +100,14 @@ export const validateOmsConfig = (config: OmsConfig) => {
     "flowMaxWorking",
     "markIntervalMs",
     "gatewayLatencyMs",
+    "pnlHistoryIntervalMs",
   ] as const) {
     if (!(config[key] >= 0)) throw Error(`oms.${key} must be >= 0`);
+  }
+  if (
+    !(Number.isInteger(config.pnlHistoryLength) && config.pnlHistoryLength > 0)
+  ) {
+    throw Error("oms.pnlHistoryLength must be a positive integer");
   }
   for (const key of ["flowNotionalUsd", "flowStepMs"] as const) {
     if (!(config[key] > 0)) throw Error(`oms.${key} must be > 0`);

@@ -43,16 +43,22 @@ ModuleFactory.withNameSpace(EXCHANGE_MODULE)
 | `prices` | `ric` | bid, ask, bidSize, askSize, last, lastSize, open, high, low, close (prev), volume, turnover, vwap, change, changePct, phase (`TradingPhase`), seq, timestamp |
 | `depth` | `id` = `ric\|side\|level` | ric, side, level (0 = best), price, size, cumSize, orderCount, ownSize?, seq |
 | `trades` | `tradeId` | ric, price, size, aggressorSide, timestamp, seq |
+| `bars` | `id` = `ric\|interval\|start` (`barKey`) | ric, interval (`1s`, `1m`, ...; `parseBarInterval`), start, end, open, high, low, close, volume, turnover, vwap, trades, closed, backfilled |
+| `bookSamples` | `id` = `ric\|time` (`bookSampleKey`) | ric, time, bid, ask, mid, spreadBps, bidSize, askSize, bidDepth, askDepth (top 5), imbalance, bidPx0..4, bidSz0..4, askPx0..4, askSz0..4 |
 
 ### `OMS` module
 
 | Table | Key | Columns |
 |---|---|---|
 | `accounts` | `account` | name, desk, owner, currency, maxOrderQty, maxOrderNotional, maxPositionNotional, enabled |
-| `parentOrders` | `orderId` | clOrdId?, trader, *order columns*, version, notional |
+| `parentOrders` | `orderId` | clOrdId?, trader, *order columns*, version, notional, arrivalPrice, slippageBps, timeToFirstFill, timeToComplete |
 | `childOrders` | `childOrderId` | parentOrderId, exchangeOrderId?, *order columns* |
 | `fills` | `execId` | orderId (parent), childOrderId, tradeId, account, trader, ric, side, quantity, price, notional, currency, liquidity, timestamp |
 | `positions` | `id` = `account\|ric` | account, ric, quantity (net), boughtQty, soldQty, avgCost, markPx, marketValue, realizedPnl, unrealizedPnl, totalPnl, currency, lastUpdate |
+| `pnlHistory` | `id` = `account\|ric\|time` (`pnlHistoryKey`) | account, ric, time, quantity, avgCost, markPx, marketValue, realizedPnl, unrealizedPnl, totalPnl, grossExposure, netExposure, totalPnlUsd, marketValueUsd, currency |
+| `accountPnlHistory` | `id` = `account\|time` (`accountPnlHistoryKey`) | account, time, positions, realizedPnl, unrealizedPnl, totalPnl, grossExposure, netExposure (USD) |
+
+Chart data semantics: [docs/charting-data.md](../../docs/charting-data.md).
 
 *Order columns*: ric, side, ordType, timeInForce, quantity, price, stopPrice?,
 status, cumQty, leavesQty, avgPx, lastQty, lastPx, account, currency,
@@ -69,9 +75,10 @@ rejectReason?, text?, created, lastUpdate.
 
 ### Visual links (child → parent)
 
-depth.ric, trades.ric → prices / instrumentPrices; childOrders.parentOrderId →
+depth.ric, trades.ric, bars.ric, bookSamples.ric → prices / instrumentPrices; childOrders.parentOrderId →
 parentOrders.orderId; fills.orderId → parentOrders, fills.childOrderId →
-childOrders; parentOrders.account, positions.account → accounts.
+childOrders; parentOrders.account, positions.account, pnlHistory.account, accountPnlHistory.account →
+accounts.
 
 ## Enums
 

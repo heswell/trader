@@ -34,6 +34,8 @@ const TABLES: readonly OmsTableName[] = [
   "childOrders",
   "fills",
   "positions",
+  "pnlHistory",
+  "accountPnlHistory",
 ];
 
 class OmsTableProvider extends Provider {
@@ -68,8 +70,8 @@ export const omsPermissionFunction =
   };
 
 /**
- * The OMS Vuu module: accounts, parentOrders, childOrders, fills, positions
- * and the positionPrices join, written by `oms`. Every table (and the join)
+ * The OMS Vuu module: accounts, parentOrders, childOrders, fills, positions,
+ * pnlHistory, accountPnlHistory and the positionPrices join, written by `oms`. Every table (and the join)
  * carries the OMS RPC service, so order RPCs work from any OMS viewport.
  */
 export const OmsModule = (

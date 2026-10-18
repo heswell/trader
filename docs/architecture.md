@@ -71,7 +71,7 @@ flowchart LR
     Bots["bots: market makers, takers<br/>(step every botStepMs)"] --> Books["hft-limit-order-book<br/>one book per instrument"]
     GBM["fair value model (GBM)"] --> Bots
     Session["TradingSession phases<br/>CLOSED / PRE_OPEN / CONTINUOUS"] --> Books
-    Books -- "coalesced every publishIntervalMs" --> ET["EXCHANGE tables<br/>instruments, prices, depth,<br/>trades, instrumentPrices"]
+    Books -- "coalesced every publishIntervalMs" --> ET["EXCHANGE tables<br/>instruments, prices, depth,<br/>trades, bars, bookSamples,<br/>instrumentPrices"]
     ET -- "mark timer" --> OT["OMS positionPrices"]
   end
   ET -- "vuu viewports<br/>(sort, filter, visual links)" --> WS(("WebSocket"))

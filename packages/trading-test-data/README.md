@@ -7,8 +7,11 @@ browser Vuu engine with the same viewport, sort, filter, group, visual-link, edi
 vuu-server. Local data therefore matches the server:
 
 - Every table publishes the exact `@heswell/trading-schemas` `TableSchema`:
-  - EXCHANGE: `instruments`, `prices`, `depth`, `trades`, `instrumentPrices`
-  - OMS: `accounts`, `parentOrders`, `childOrders`, `fills`, `positions`, `positionPrices`
+  - EXCHANGE: `instruments`, `prices`, `depth`, `trades`, `bars`, `bookSamples`, `instrumentPrices`
+  - OMS: `accounts`, `parentOrders`, `childOrders`, `fills`, `positions`, `pnlHistory`, `accountPnlHistory`,
+    `positionPrices`
+  - Chart data ([docs/charting-data.md](../../docs/charting-data.md)) uses the server defaults except
+    `barHistory: 200`; `advance(ms)` also takes P&L history samples when due.
 - RPCs use the server handlers (`handleOmsRpc`, `handleExchangeAdminRpc`), so the same validation and
   `CODE: message` errors apply:
   - order RPCs: `createOrder`, `amendOrder`, `cancelOrder`, `cancelAll`

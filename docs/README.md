@@ -26,6 +26,7 @@
 | [exchange-sim](../packages/exchange-sim/README.md) | Exchange simulator: market model, trading session, bots, config, admin RPCs |
 | [oms](../packages/oms/README.md) | OMS: orders, risk, state machine, positions, permissions, RPCs, edit session |
 | [trading-test-data](../packages/trading-test-data/README.md) | The real engines in the browser (engine-local) |
+| [charting-data.md](charting-data.md) | Chart data: `bars`, `bookSamples`, `pnlHistory`, execution quality, suggested charts |
 | [persistence.md](persistence.md) | Journal + snapshots, stores, recovery, reset |
 | [resilience.md](resilience.md) | Reconnect, resubscribe, stale data, RPC timeouts |
 | [performance.md](performance.md) | `perf:ws`, `perf:ui`, `perf:ladder`, baselines |

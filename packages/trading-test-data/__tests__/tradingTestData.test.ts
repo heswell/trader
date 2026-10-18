@@ -141,7 +141,7 @@ describe("determinism", () => {
     expect(other.oms.getTable("parentOrders").data.length).toBe(1);
     expect(td.oms.getTable("parentOrders").data.length).toBe(0);
     other.dispose();
-    expect(td.engine.getTableList().length).toBe(11);
+    expect(td.engine.getTableList().length).toBe(15);
   });
 
   test("advance requires a manual clock", () => {
@@ -550,5 +550,62 @@ describe("OMS rpc", () => {
   test("exchange admin rpc (haltInstrument) is available", () => {
     const result = td.rpc("haltInstrument", { ric: ricAt(0) }, ADMIN);
     expect(result.type).toBe("SUCCESS_RESULT");
+  });
+});
+
+describe("chart data", () => {
+  test("bars, bookSamples and P&L history populate; P&L history is permission filtered", async () => {
+    const local = createTradingTestData({
+      seed: 1,
+      manualClock: true,
+      exchange: { activeInstruments: 5 },
+      oms: { flowRate: 0, pnlHistoryIntervalMs: 1_000 },
+    });
+    try {
+      local.advance(500);
+      for (const [account, i] of [
+        ["ACC-US-01", 0],
+        ["ACC-EU-01", 1],
+      ] as const) {
+        expect(
+          local.rpc(
+            "createOrder",
+            {
+              account,
+              ric: local.sim.books[i].ric,
+              side: "BUY",
+              ordType: "MARKET",
+              quantity: 10,
+            },
+            ADMIN,
+          ),
+        ).toMatchObject({ type: "SUCCESS_RESULT" });
+      }
+      local.advance(3_000);
+      expect(local.exchange.getTable("bars").data.length).toBeGreaterThan(0);
+      expect(
+        local.exchange.getTable("bookSamples").data.length,
+      ).toBeGreaterThan(0);
+      expect(local.oms.getTable("pnlHistory").data.length).toBeGreaterThan(0);
+      expect(
+        local.oms.getTable("accountPnlHistory").data.length,
+      ).toBeGreaterThan(0);
+
+      setCurrentUser({ name: "alice", authorizations: [] });
+      for (const table of ["pnlHistory", "accountPnlHistory"] as const) {
+        const ds = local.oms.createDataSource(table) as ModuleDataSource;
+        const c = collector();
+        await ds.subscribe({ range: RANGE }, c.callback);
+        await tick();
+        expect(c.size).toBeGreaterThan(0);
+        const accounts = new Set(
+          c.rows().map((row) => row[ds.columnMap.account]),
+        );
+        expect([...accounts]).toEqual(["ACC-US-01"]);
+        ds.unsubscribe();
+      }
+    } finally {
+      local.dispose();
+    }
   });
 });
