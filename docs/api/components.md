@@ -4,7 +4,7 @@
 
 Every React component exported by `@heswell/trading-ui`, with facts read from the source. Hand-written guides: [components/README.md](../components/README.md).
 
-- **Tables**: Vuu tables the component subscribes to itself (`useTradingDataSource` / `useTradingRows`, following imports within its folder and the shared hooks in `src/hooks`).
+- **Tables**: Vuu tables the component subscribes to itself (`useTradingDataSource` / `useTradingRows` / `useChartDataSource`, following imports within its folder and the shared hooks in `src/hooks`).
 - **RPCs**: RPCs it sends with `sendTradingRpc`; *edit session* means it amends through a `parentOrders` edit session.
 - **Composes**: other component folders it renders or uses; their tables and RPCs are on their own rows.
 - **Showcase**: example ids, opened at `http://localhost:5001/#<id>` (`bun run dev:showcase`, local data). *host* means the showcase host mounts it around every example.
@@ -17,16 +17,18 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [ChangeCell](trading-ui.md#changecell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
 | [ConnectionBanner](trading-ui.md#connectionbanner) | `components/ConnectionBanner` |  |  |  | `notifications-connection` | [guide](../components/notifications-and-connection.md) |
 | [ConnectionStatusIndicator](trading-ui.md#connectionstatusindicator) | `components/ConnectionStatusIndicator` |  |  |  | *host* | [guide](../components/notifications-and-connection.md) |
+| [DepthChartView](trading-ui.md#depthchartview) | `components/DepthChartView` | `depth`, `instrumentPrices`, `trades` |  | ChartFrame, LinkGroupSelector | `chart-workspace`, `depth-chart`, `trader-workspace` | [guide](../components/charts.md#depthchartview) |
+| [ExposureTreemap](trading-ui.md#exposuretreemap) | `components/ExposureTreemap` | `positionPrices` |  | ChartFrame | `exposure-treemap` | [guide](../components/charts.md#exposuretreemap) |
 | [FillProgressBar](trading-ui.md#fillprogressbar) | `components/FillProgressBar` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
 | [FillsBlotter](trading-ui.md#fillsblotter) | `components/FillsBlotter` | `fills` |  | InstrumentLookup, LinkGroupSelector, StaleIndicator, TradingCellRenderers | `fills-blotter`, `trader-workspace` | [guide](../components/blotters.md) |
 | [InstrumentContextProvider](trading-ui.md#instrumentcontextprovider) | `instrument-context` |  |  | InstrumentLookup | `linking-providers` | [guide](../components/selection-and-linking.md#how-linking-works) |
-| [InstrumentGrid](trading-ui.md#instrumentgrid) | `components/InstrumentGrid` | `instrumentPrices` |  | InstrumentLookup, LinkGroupSelector, OrderTicket, Sparkline, StaleIndicator, TradingCellRenderers | `hosting-feature-root`, `hosting-user-settings`, `instrument-grid`, `instrument-grid-200`, `instrument-grid-prices`, `market-depth-selected`, `price-ladder-live`, `trader-workspace` | [guide](../components/instrument-grid.md#instrumentgrid) |
+| [InstrumentGrid](trading-ui.md#instrumentgrid) | `components/InstrumentGrid` | `instrumentPrices` |  | InstrumentLookup, LinkGroupSelector, OrderTicket, Sparkline, StaleIndicator, TradingCellRenderers | `chart-workspace`, `depth-chart`, `hosting-feature-root`, `hosting-user-settings`, `instrument-grid`, `instrument-grid-200`, `instrument-grid-prices`, `market-depth-selected`, `price-chart`, `price-ladder-live`, `spread-chart`, `trader-workspace` | [guide](../components/instrument-grid.md#instrumentgrid) |
 | [InstrumentLookupProvider](trading-ui.md#instrumentlookupprovider) | `components/InstrumentLookup` | `instruments` |  |  | `selectors` | [guide](../components/selection-and-linking.md) |
-| [InstrumentPicker](trading-ui.md#instrumentpicker) | `components/InstrumentPicker` | `instruments` |  | LinkGroupSelector | `linking-providers`, `market-depth-selected`, `price-ladder-live`, `selectors`, `trader-workspace` | [guide](../components/selection-and-linking.md) |
+| [InstrumentPicker](trading-ui.md#instrumentpicker) | `components/InstrumentPicker` | `instruments` |  | LinkGroupSelector | `chart-workspace`, `depth-chart`, `linking-providers`, `market-depth-selected`, `price-chart`, `price-ladder-live`, `selectors`, `spread-chart`, `trader-workspace` | [guide](../components/selection-and-linking.md) |
 | [LinkGroupProvider](trading-ui.md#linkgroupprovider) | `instrument-context` |  |  | InstrumentLookup | `linking-providers` | [guide](../components/selection-and-linking.md#how-linking-works) |
 | [LinkGroupSelector](trading-ui.md#linkgroupselector) | `components/LinkGroupSelector` |  |  |  | `linking-providers`, `selectors` | [guide](../components/selection-and-linking.md) |
 | [LinkGroupSwatch](trading-ui.md#linkgroupswatch) | `components/LinkGroupSelector` |  |  |  | `linking-providers` | [guide](../components/selection-and-linking.md) |
-| [MarketDepth](trading-ui.md#marketdepth) | `components/MarketDepth` | `depth`, `instrumentPrices`, `parentOrders`, `trades` |  | LinkGroupSelector, StaleIndicator | `market-depth-selected`, `price-ladder-live`, `trader-workspace` | [guide](../components/market-depth-and-ladder.md#marketdepth) |
+| [MarketDepth](trading-ui.md#marketdepth) | `components/MarketDepth` | `depth`, `instrumentPrices`, `parentOrders`, `trades` |  | LinkGroupSelector, StaleIndicator | `chart-workspace`, `market-depth-selected`, `price-ladder-live`, `trader-workspace` | [guide](../components/market-depth-and-ladder.md#marketdepth) |
 | [OrderBlotter](trading-ui.md#orderblotter) | `components/OrderBlotter` | `childOrders`, `parentOrders` | *edit session*, `amendOrder`, `cancelAll`, `cancelOrder` | InstrumentLookup, LinkGroupSelector, StaleIndicator, TradingCellRenderers | `order-blotter`, `trade-tape`, `trader-workspace` | [guide](../components/blotters.md) |
 | [OrderStatusBadge](trading-ui.md#orderstatusbadge) | `components/OrderStatusBadge` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
 | [OrderTicket](trading-ui.md#orderticket) | `components/OrderTicket` | `accounts`, `instrumentPrices`, `parentOrders` | `createOrder` | InstrumentPicker, LinkGroupSelector, StaleIndicator | `hosting-connection-override`, `order-ticket-compact` | [guide](../components/order-ticket.md) |
@@ -34,15 +36,19 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [OrderTicketLauncherProvider](trading-ui.md#orderticketlauncherprovider) | `components/OrderTicket` | `accounts`, `instrumentPrices`, `parentOrders` | `createOrder` | InstrumentPicker, LinkGroupSelector, StaleIndicator | *host* | [guide](../components/order-ticket.md#prefill) |
 | [OrderTicketPanel](trading-ui.md#orderticketpanel) | `components/OrderTicket` | `accounts`, `instrumentPrices`, `parentOrders` | `createOrder` | InstrumentPicker, LinkGroupSelector, StaleIndicator | `order-ticket-docked`, `trader-workspace` | [guide](../components/order-ticket.md) |
 | [PhaseCell](trading-ui.md#phasecell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
+| [PnlHistoryChart](trading-ui.md#pnlhistorychart) | `components/PnlHistoryChart` | `accountPnlHistory` |  | AccountSelector, ChartFrame | `pnl-history-chart` | [guide](../components/charts.md#pnlhistorychart) |
 | [PnlValue](trading-ui.md#pnlvalue) | `components/PnlValue` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
 | [PositionsView](trading-ui.md#positionsview) | `components/PositionsView` | `positionPrices` |  | InstrumentLookup, LinkGroupSelector, PnlValue, StaleIndicator, TradingCellRenderers | `positions-view`, `trader-workspace` | [guide](../components/blotters.md) |
+| [PriceChart](trading-ui.md#pricechart) | `components/PriceChart` | `bars`, `depth`, `fills`, `instrumentPrices`, `trades` |  | ChartFrame, LinkGroupSelector | `chart-workspace`, `price-chart`, `trader-workspace` | [guide](../components/charts.md#pricechart) |
 | [PriceLadder](trading-ui.md#priceladder) | `components/PriceLadder` | `depth`, `instrumentPrices`, `parentOrders`, `trades` | `amendOrder`, `cancelAll`, `cancelOrder`, `createOrder` | LinkGroupSelector, OrderTicket, StaleIndicator | `price-ladder-live`, `trader-workspace` | [guide](../components/market-depth-and-ladder.md) |
 | [PriceLadderView](trading-ui.md#priceladderview) | `components/PriceLadder` | `depth`, `instrumentPrices`, `parentOrders`, `trades` |  |  | `price-ladder-stress` | [guide](../components/market-depth-and-ladder.md) |
 | [PriceMoveCell](trading-ui.md#pricemovecell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
 | [QuantityCell](trading-ui.md#quantitycell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
 | [SideLabel](trading-ui.md#sidelabel) | `components/SideLabel` |  |  |  | `side-label-variants`, `stack-instrument-prices` | [guide](../components/primitives.md) |
+| [SlippageChart](trading-ui.md#slippagechart) | `components/SlippageChart` | `parentOrders` |  | ChartFrame | `slippage-chart` | [guide](../components/charts.md#slippagechart) |
 | [Sparkline](trading-ui.md#sparkline) | `components/Sparkline` |  |  |  | `primitives-status` | [guide](../components/instrument-grid.md#sparkline) |
 | [SparklineCell](trading-ui.md#sparklinecell) | `components/Sparkline` |  |  |  | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#sparkline) |
+| [SpreadChart](trading-ui.md#spreadchart) | `components/SpreadChart` | `bookSamples`, `depth`, `instrumentPrices`, `trades` |  | ChartFrame, LinkGroupSelector | `chart-workspace`, `depth-chart`, `spread-chart` | [guide](../components/charts.md#spreadchart) |
 | [StaleIndicator](trading-ui.md#staleindicator) | `components/StaleIndicator` |  |  |  | `hosting-connection-override`, `notifications-connection` | [guide](../components/notifications-and-connection.md) |
 | [TradeTape](trading-ui.md#tradetape) | `components/TradeTape` | `trades` |  | InstrumentLookup, LinkGroupSelector, StaleIndicator | `trade-tape`, `trader-workspace` | [guide](../components/blotters.md) |
 | [TradingConnectionStateOverride](trading-ui.md#tradingconnectionstateoverride) | `connection` |  |  |  | `hosting-connection-override` | [guide](../components/hosting.md#tradingconnectionstateoverride) |
@@ -59,6 +65,8 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | --- | --- | --- | --- |
 | `components/ConnectionBanner` | `tradingConnectionBanner` |  | `data-connection-state` |
 | `components/ConnectionStatusIndicator` | `tradingConnectionStatus` |  | `data-connection-state` |
+| `components/DepthChartView` | `tradingDepthChartView` |  | `data-link-group` |
+| `components/ExposureTreemap` | `tradingExposureTreemap` |  | `data-measure` |
 | `components/FillProgressBar` | `tradingFillProgressBar` | `--tradingFillProgressBar-colour`, `--tradingFillProgressBar-pct` | `data-pct` |
 | `components/FillsBlotter` | `tradingFillsBlotter` |  | `data-link-group`, `data-testid` |
 | `components/InstrumentGrid` | `tradingInstrumentCell`, `tradingInstrumentGrid` | `--trading-down`, `--trading-neutral`, `--trading-up` | `data-direction`, `data-link-group`, `data-phase` |
@@ -68,11 +76,15 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | `components/OrderBlotter` | `tradingOrderBlotter` |  | `data-connection-state`, `data-error`, `data-link-group`, `data-testid` |
 | `components/OrderStatusBadge` | `tradingOrderStatusBadge` | `--tradingOrderStatusBadge-color` | `data-category`, `data-status` |
 | `components/OrderTicket` | `tradingOrderTicket` | `--tradingOrderTicket-sideColor`, `--tradingOrderTicket-toggleSide` | `data-connection-state`, `data-direction`, `data-field`, `data-link-group`, `data-order-ticket-field`, `data-phase`, `data-reason`, `data-side`, `data-status`, `data-submission`, `data-warning` |
+| `components/PnlHistoryChart` | `tradingPnlHistoryChart` |  | `data-account` |
 | `components/PnlValue` | `tradingPnlValue` | `--tradingPnlValue-color` | `data-direction` |
 | `components/PositionsView` | `tradingPositionsView` |  | `data-currency`, `data-link-group`, `data-testid` |
+| `components/PriceChart` | `tradingPriceChart` |  | `data-interval`, `data-link-group` |
 | `components/PriceLadder` | `tradingPriceLadder` | `--tradingPriceLadder-ask-bar`, `--tradingPriceLadder-bid-bar`, `--tradingPriceLadder-columns`, `--tradingPriceLadder-ltp`, `--tradingPriceLadder-own`, `--tradingPriceLadder-rowHeight` | `data-auto-centre`, `data-best-ask`, `data-best-bid`, `data-col`, `data-columns`, `data-connection-state`, `data-cursor`, `data-cursor-row`, `data-dragging`, `data-drop-target`, `data-kind`, `data-link-group`, `data-ltp`, `data-moving`, `data-own`, `data-phase`, `data-price`, `data-side`, `data-spread`, `data-trade-mode` |
 | `components/SideLabel` | `tradingSideLabel` | `--tradingSideLabel-color` | `data-side` |
+| `components/SlippageChart` | `tradingSlippageChart` |  |  |
 | `components/Sparkline` | `tradingSparkline` | `--trading-neutral` | `data-trend` |
+| `components/SpreadChart` | `tradingSpreadChart` |  | `data-link-group` |
 | `components/StaleIndicator` | `tradingStaleIndicator` |  | `data-stale`, `data-stale-reason` |
 | `components/TradeTape` | `tradingTradeTape` | `--trading-buy` | `data-aggressor`, `data-large`, `data-link-group`, `data-testid` |
 | `components/TradingCellRenderers` |  |  | `data-liquidity`, `data-position` |
@@ -88,6 +100,9 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 
 | Group | Examples | Guide |
 | --- | --- | --- |
+| Charts | `chart-workspace` | [guide](../components/charts.md) |
+| DepthChartView | `depth-chart` | [guide](../components/charts.md#depthchartview) |
+| ExposureTreemap | `exposure-treemap` | [guide](../components/charts.md#exposuretreemap) |
 | FillsBlotter | `fills-blotter` | [guide](../components/blotters.md) |
 | Hosting | `hosting-connection-override`, `hosting-feature-root`, `hosting-user-settings` | [guide](../components/hosting.md) |
 | InstrumentGrid | `instrument-grid`, `instrument-grid-200`, `instrument-grid-prices` | [guide](../components/instrument-grid.md#instrumentgrid) |
@@ -96,11 +111,15 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | Notifications | `notifications-connection`, `notifications-settings` | [guide](../components/notifications-and-connection.md) |
 | OrderBlotter | `order-blotter` | [guide](../components/blotters.md) |
 | OrderTicket | `order-ticket-compact`, `order-ticket-dialog`, `order-ticket-docked`, `order-ticket-launcher` | [guide](../components/order-ticket.md) |
+| PnlHistoryChart | `pnl-history-chart` | [guide](../components/charts.md#pnlhistorychart) |
 | PositionsView | `positions-view` | [guide](../components/blotters.md) |
+| PriceChart | `price-chart` | [guide](../components/charts.md#pricechart) |
 | PriceLadder | `price-ladder-live`, `price-ladder-stress` | [guide](../components/market-depth-and-ladder.md) |
 | Primitives | `primitives-cell-renderers`, `primitives-status` | [guide](../components/primitives.md) |
 | Selectors | `selectors` | [guide](../components/selection-and-linking.md) |
 | SideLabel | `side-label-variants` | [guide](../components/primitives.md) |
+| SlippageChart | `slippage-chart` | [guide](../components/charts.md#slippagechart) |
+| SpreadChart | `spread-chart` | [guide](../components/charts.md#spreadchart) |
 | Stack | `stack-instrument-prices` | [guide](../components/README.md) |
 | TradeTape | `trade-tape` | [guide](../components/blotters.md) |
 | Workspace | `trader-workspace` | [guide](../components/README.md) |

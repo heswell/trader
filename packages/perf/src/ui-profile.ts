@@ -164,6 +164,9 @@ async function primeScenario(page: Page) {
       "trader-workspace",
       "price-ladder-live",
       "market-depth-selected",
+      "chart-workspace",
+      "price-chart",
+      "depth-chart",
     ].includes(scenario)
   ) {
     return;

@@ -4,9 +4,11 @@ import {
   InstrumentGrid,
   InstrumentPicker,
   LINK_GROUP_PERSIST_PREFIX,
+  DepthChartView,
   MarketDepth,
   OrderBlotter,
   PositionsView,
+  PriceChart,
   TradeTape,
   useSelectedAccount,
 } from "@heswell/trading-ui";
@@ -37,7 +39,10 @@ export const VIEW_ID = {
   positions: "tw-positions",
   middle: "tw-middle",
   ticket: "tw-ticket",
+  market: "tw-market",
+  chart: "tw-chart",
   depth: "tw-depth",
+  depthChart: "tw-depth-chart",
   right: "tw-right",
   ladder: "tw-ladder",
   tape: "tw-tape",
@@ -111,8 +116,8 @@ const ChildModule = ({
 
 /**
  * The prebuilt trader workspace: the default layout below, two link groups
- * (red follows the instrument grid: ticket, depth, orders, fills; green
- * follows the picker: ladder, tape, positions). Ticket and ladder are nested
+ * (red follows the instrument grid: ticket, chart, depth, depth chart,
+ * orders, fills; green follows the picker: ladder, tape, positions). Ticket and ladder are nested
  * child modules gated by trading-execute. View states and each component's
  * link group are saved in the module's portal saved state and restored on
  * load; "Reset layout" returns to the default.
@@ -242,20 +247,38 @@ const TraderWorkspace = () => {
                 name={CHILD_MODULE.ticket}
               />
             </View>
-            <View
-              id={VIEW_ID.depth}
-              header
-              resizeable
-              style={fill}
-              title="Depth"
+            <StackLayout
+              active={0}
+              id={VIEW_ID.market}
+              showTabs="top"
+              style={{ ...fill, flexGrow: 1.5 }}
             >
-              <MarketDepth
-                account={account}
-                defaultLinkGroup="red"
-                showLinkGroupSelector
-                style={content}
-              />
-            </View>
+              <View id={VIEW_ID.chart} title="Chart">
+                <PriceChart
+                  account={account}
+                  defaultLinkGroup="red"
+                  id="tw-price-chart"
+                  showLinkGroupSelector
+                  style={content}
+                />
+              </View>
+              <View id={VIEW_ID.depth} title="Depth">
+                <MarketDepth
+                  account={account}
+                  defaultLinkGroup="red"
+                  showLinkGroupSelector
+                  style={content}
+                />
+              </View>
+              <View id={VIEW_ID.depthChart} title="Depth chart">
+                <DepthChartView
+                  defaultLinkGroup="red"
+                  id="tw-depth-chart-view"
+                  showLinkGroupSelector
+                  style={content}
+                />
+              </View>
+            </StackLayout>
           </FlexboxLayout>
           <FlexboxLayout
             id={VIEW_ID.right}

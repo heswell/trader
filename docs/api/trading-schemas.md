@@ -1283,7 +1283,7 @@ toTableSchema(def: TableDefinition | JoinDefinition): TableSchema
 
 #### accountPnlHistory
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L480)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L490)
 
 ```ts
 const accountPnlHistory: TableDefinition<readonly [{ readonly name: "id"; readonly dataType: "string"; }, { readonly name: "account"; readonly dataType: "string"; }, { readonly name: "time"; readonly dataType: "epochtimestamp"; readonly description: "Sample time, aligned to oms.pnlHistoryIntervalMs."; }, ... 5 more ..., { ...; }]>
@@ -1351,7 +1351,7 @@ const EXCHANGE_MODULE: "EXCHANGE"
 
 #### exchangeTables
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L535)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L545)
 
 ```ts
 const exchangeTables: { readonly instruments: TableDefinition<readonly [{ readonly name: "ric"; readonly dataType: "string"; }, { readonly name: "description"; readonly dataType: "string"; }, { readonly name: "isin"; readonly dataType: "string"; readonly optional: true; }, ... 8 more ..., { ...; }]>; ... 4 more ...; readonly bookSamples:...
@@ -1367,7 +1367,7 @@ const fills: TableDefinition<readonly [{ readonly name: "execId"; readonly dataT
 
 #### instrumentPrices
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L507)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L517)
 
 Instrument grid: static + live prices.
 
@@ -1395,7 +1395,7 @@ const OMS_MODULE: "OMS"
 
 #### omsTables
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L543)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L553)
 
 ```ts
 const omsTables: { readonly accounts: TableDefinition<readonly [{ readonly name: "account"; readonly dataType: "string"; }, { readonly name: "name"; readonly dataType: "string"; }, { readonly name: "desk"; readonly dataType: "string"; }, ... 5 more ..., { ...; }]>; ... 5 more ...; readonly accountPnlHistory: TableDefinition<...>; }
@@ -1411,7 +1411,7 @@ const parentOrders: TableDefinition<readonly [{ readonly name: "orderId"; readon
 
 #### pnlHistory
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L453)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L463)
 
 ```ts
 const pnlHistory: TableDefinition<readonly [{ readonly name: "id"; readonly dataType: "string"; }, { readonly name: "account"; readonly dataType: "string"; }, { readonly name: "ric"; readonly dataType: "string"; }, { readonly name: "time"; readonly dataType: "epochtimestamp"; readonly description: "Sample time, aligned to oms.pnlHist...
@@ -1419,7 +1419,7 @@ const pnlHistory: TableDefinition<readonly [{ readonly name: "id"; readonly data
 
 #### positionPrices
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L523)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L533)
 
 Positions with live prices. Cross-module: requires EXCHANGE and OMS modules
 in the same VuuServer, with EXCHANGE registered first. When the OMS runs
@@ -1455,7 +1455,7 @@ const trades: TableDefinition<readonly [{ readonly name: "tradeId"; readonly dat
 
 #### tradingJoins
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L553)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L563)
 
 ```ts
 const tradingJoins: { readonly instrumentPrices: JoinDefinition; readonly positionPrices: JoinDefinition; }
@@ -1463,7 +1463,7 @@ const tradingJoins: { readonly instrumentPrices: JoinDefinition; readonly positi
 
 #### tradingTables
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L552)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L562)
 
 ```ts
 const tradingTables: { readonly accounts: TableDefinition<readonly [{ readonly name: "account"; readonly dataType: "string"; }, { readonly name: "name"; readonly dataType: "string"; }, { readonly name: "desk"; readonly dataType: "string"; }, ... 5 more ..., { ...; }]>; ... 11 more ...; readonly bookSamples: TableDefinition<...>; }
@@ -1526,7 +1526,7 @@ const tradingTables: { readonly accounts: TableDefinition<readonly [{ readonly n
 
 #### AccountPnlHistoryRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L570)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L580)
 
 ```ts
 type AccountPnlHistoryRow = RowOf<typeof accountPnlHistory>
@@ -1534,7 +1534,7 @@ type AccountPnlHistoryRow = RowOf<typeof accountPnlHistory>
 
 #### AccountRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L562)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L572)
 
 ```ts
 type AccountRow = RowOf<typeof accounts>
@@ -1542,7 +1542,7 @@ type AccountRow = RowOf<typeof accounts>
 
 #### BarRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L567)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L577)
 
 ```ts
 type BarRow = RowOf<typeof bars>
@@ -1550,7 +1550,7 @@ type BarRow = RowOf<typeof bars>
 
 #### BookSampleRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L568)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L578)
 
 ```ts
 type BookSampleRow = RowOf<typeof bookSamples>
@@ -1558,7 +1558,7 @@ type BookSampleRow = RowOf<typeof bookSamples>
 
 #### ChildOrderRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L564)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L574)
 
 ```ts
 type ChildOrderRow = RowOf<typeof childOrders>
@@ -1574,7 +1574,7 @@ type ColumnName<T extends TableDefinition> = T["columns"][number]["name"]
 
 #### DepthRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L560)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L570)
 
 ```ts
 type DepthRow = RowOf<typeof depth>
@@ -1582,7 +1582,7 @@ type DepthRow = RowOf<typeof depth>
 
 #### FillRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L565)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L575)
 
 ```ts
 type FillRow = RowOf<typeof fills>
@@ -1590,7 +1590,7 @@ type FillRow = RowOf<typeof fills>
 
 #### InstrumentRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L558)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L568)
 
 ```ts
 type InstrumentRow = RowOf<typeof instruments>
@@ -1606,7 +1606,7 @@ type JoinType = "LeftOuterJoin" | "InnerJoin"
 
 #### ParentOrderRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L563)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L573)
 
 ```ts
 type ParentOrderRow = RowOf<typeof parentOrders>
@@ -1614,7 +1614,7 @@ type ParentOrderRow = RowOf<typeof parentOrders>
 
 #### PnlHistoryRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L569)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L579)
 
 ```ts
 type PnlHistoryRow = RowOf<typeof pnlHistory>
@@ -1622,7 +1622,7 @@ type PnlHistoryRow = RowOf<typeof pnlHistory>
 
 #### PositionRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L566)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L576)
 
 ```ts
 type PositionRow = RowOf<typeof positions>
@@ -1630,7 +1630,7 @@ type PositionRow = RowOf<typeof positions>
 
 #### PriceRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L559)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L569)
 
 ```ts
 type PriceRow = RowOf<typeof prices>
@@ -1660,7 +1660,7 @@ type RowOf<T extends TableDefinition> = {
 
 #### TradeRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L561)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L571)
 
 ```ts
 type TradeRow = RowOf<typeof trades>
@@ -1681,7 +1681,7 @@ type TradingColumnDataType = Extract<
 
 #### TradingJoinName
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L556)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L566)
 
 ```ts
 type TradingJoinName = keyof typeof tradingJoins
@@ -1706,7 +1706,7 @@ type TradingSchemaName = | keyof typeof tradingTables
 
 #### TradingTableName
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L555)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L565)
 
 ```ts
 type TradingTableName = keyof typeof tradingTables

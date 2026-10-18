@@ -14,6 +14,15 @@ import {
   FeatureRootExample,
   UserSettingsExample,
 } from "./HostingExamples";
+import {
+  ChartWorkspace,
+  DepthChartExample,
+  ExposureTreemapExample,
+  PnlHistoryChartExample,
+  PriceChartExample,
+  SlippageChartExample,
+  SpreadChartExample,
+} from "./ChartExamples";
 import { InstrumentPricesTicking } from "./InstrumentPricesTicking";
 import { LinkingProvidersExample, SelectorsExample } from "./LinkingExamples";
 import { MarketDepthExamples } from "./MarketDepthExamples";
@@ -121,6 +130,62 @@ export const examples: ShowcaseExample[] = [
     description:
       "Aggregated depth following the selected instrument: own orders (ACC-US-01), flashes, depth bars, halt / resume, and a second depth pinned to a ric.",
     Component: MarketDepthExamples,
+  },
+  {
+    id: "price-chart",
+    group: "PriceChart",
+    title: "Price chart (candles + fills)",
+    description:
+      "Candlesticks from the exchange bars table for the selected instrument, with volume, VWAP, the visible accounts' fills as BUY / SELL markers and last / average-fill mark lines. Switch interval in the chart toolbar; trade in the Stack examples to see new fill markers.",
+    Component: PriceChartExample,
+  },
+  {
+    id: "depth-chart",
+    group: "DepthChartView",
+    title: "Depth chart",
+    description:
+      "Live cumulative depth (stepped) for the selected instrument, above the spread / imbalance chart from bookSamples.",
+    Component: DepthChartExample,
+  },
+  {
+    id: "spread-chart",
+    group: "SpreadChart",
+    title: "Spread / imbalance",
+    description:
+      "Spread in bps and top-5 book imbalance (-1..+1) over the last 5 minutes of bookSamples for the selected instrument.",
+    Component: SpreadChartExample,
+  },
+  {
+    id: "pnl-history-chart",
+    group: "PnlHistoryChart",
+    title: "P&L history",
+    description:
+      "Total / realized / unrealized P&L in USD from accountPnlHistory for the selected account.",
+    Component: PnlHistoryChartExample,
+  },
+  {
+    id: "exposure-treemap",
+    group: "ExposureTreemap",
+    title: "Exposure treemap",
+    description:
+      "positionPrices grouped by sector then instrument; tile area is |USD market value| (or |USD P&L|), colour the sign. Left: every account; right: ACC-US-01.",
+    Component: ExposureTreemapExample,
+  },
+  {
+    id: "slippage-chart",
+    group: "SlippageChart",
+    title: "Slippage vs arrival",
+    description:
+      "Execution quality: slippage (bps, positive = worse) of each filled parent order against its arrival price, coloured by side.",
+    Component: SlippageChartExample,
+  },
+  {
+    id: "chart-workspace",
+    group: "Charts",
+    title: "Chart workspace (perf)",
+    description:
+      "Price chart (1s bars), depth chart, spread / imbalance and MarketDepth for one instrument at once - the perf:ui chart scenario.",
+    Component: ChartWorkspace,
   },
   {
     id: "price-ladder-live",

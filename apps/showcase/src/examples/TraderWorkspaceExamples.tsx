@@ -1,4 +1,5 @@
 import {
+  DepthChartView,
   FillsBlotter,
   InstrumentGrid,
   InstrumentPicker,
@@ -6,6 +7,7 @@ import {
   OrderBlotter,
   OrderTicketPanel,
   PositionsView,
+  PriceChart,
   PriceLadder,
   TradeTape,
 } from "@heswell/trading-ui";
@@ -30,7 +32,10 @@ const ID = {
   positions: "tw-positions",
   middle: "tw-middle",
   ticket: "tw-ticket",
+  market: "tw-market",
+  chart: "tw-chart",
   depth: "tw-depth",
+  depthChart: "tw-depth-chart",
   right: "tw-right",
   ladder: "tw-ladder",
   tape: "tw-tape",
@@ -72,8 +77,8 @@ const restoreViewState = () => {
 
 /**
  * A trader workspace in a vuu-layout: two link groups. Red follows the
- * instrument grid (ticket, depth, blotters); green follows the picker and
- * positions (ladder, tape). Every View has a link group selector: move a
+ * instrument grid (ticket, chart, depth, depth chart, blotters); green
+ * follows the picker and positions (ladder, tape). Every View has a link group selector: move a
  * component to the other group (or unlink it) and the choice is saved with
  * the layout (reload the page to see it restored). Buy / Sell in the grid
  * opens the docked ticket; order toasts come from the notifications provider.
@@ -174,13 +179,35 @@ export const TraderWorkspace = () => {
                 style={content}
               />
             </View>
-            <View id={ID.depth} header resizeable style={fill} title="Depth">
-              <MarketDepth
-                account={ACCOUNT}
-                defaultLinkGroup="red"
-                showLinkGroupSelector
-              />
-            </View>
+            <StackLayout
+              active={0}
+              id={ID.market}
+              showTabs="top"
+              style={{ ...fill, flexGrow: 1.5 }}
+            >
+              <View id={ID.chart} title="Chart">
+                <PriceChart
+                  account={ACCOUNT}
+                  defaultLinkGroup="red"
+                  showLinkGroupSelector
+                  style={content}
+                />
+              </View>
+              <View id={ID.depth} title="Depth">
+                <MarketDepth
+                  account={ACCOUNT}
+                  defaultLinkGroup="red"
+                  showLinkGroupSelector
+                />
+              </View>
+              <View id={ID.depthChart} title="Depth chart">
+                <DepthChartView
+                  defaultLinkGroup="red"
+                  showLinkGroupSelector
+                  style={content}
+                />
+              </View>
+            </StackLayout>
           </FlexboxLayout>
           <FlexboxLayout
             id={ID.right}
