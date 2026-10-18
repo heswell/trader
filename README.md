@@ -90,11 +90,11 @@ All dependencies come from npm:
 
 - **Server side**, from [heswell/vuu-websocket](https://github.com/heswell/vuu-websocket):
   `@heswell/vuu-server@^4.2.0` and `@heswell/vuu-portal@^2.2.0`, which bring `@heswell/service-utils`.
-- **UI**: `@vuu-ui/*@4.0.0-alpha.21` and `@vuu-ui/portal-build`.
+- **UI**: `@vuu-ui/*@4.0.0-alpha.22` (including `@vuu-ui/vuu-chart`, on echarts) and `@vuu-ui/portal-build`.
 - **Matching** uses `@heswell/hft-limit-order-book`, and engine-local mode uses `@heswell/vuu-data-engine-local`.
 
 The @heswell packages only peer `@vuu-ui/*`. Every workspace that uses vuu-server therefore lists the `@vuu-ui`
-packages it needs at alpha.21, and the install has one copy of each. The root `overrides` pins only
+packages it needs at alpha.22, and the install has one copy of each. The root `overrides` pins only
 `@heswell/vuu-viewport` (`^1.1.5`).
 
 ## Common commands

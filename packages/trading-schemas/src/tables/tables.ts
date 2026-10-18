@@ -429,6 +429,16 @@ export const positions = defineTable({
       dataType: "string",
       description: "Instrument GICS sector (from instruments).",
     },
+    {
+      name: "marketValueUsd",
+      dataType: "double",
+      description: "marketValue in USD (instrument usdPerPriceUnit).",
+    },
+    {
+      name: "totalPnlUsd",
+      dataType: "double",
+      description: "totalPnl in USD (instrument usdPerPriceUnit).",
+    },
     { name: "lastUpdate", dataType: "epochtimestamp" },
   ],
   links: [{ fromColumn: "account", toTable: "accounts", toColumn: "account" }],

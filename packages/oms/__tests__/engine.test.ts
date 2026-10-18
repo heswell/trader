@@ -552,8 +552,34 @@ describe("positions", () => {
       marketValue: 60 * 171,
       unrealizedPnl: 60,
       totalPnl: 100,
+      // USD instrument: the USD columns equal the native ones
+      marketValueUsd: 60 * 171,
+      totalPnlUsd: 100,
     });
     // unchanged mark: nothing republished
     expect(engine.markToMarket()).toBe(0);
+  });
+
+  test("USD columns convert GBX positions with usdPerPriceUnit", () => {
+    const { engine, create, rest, sim } = setup();
+    const usdPerPriceUnit = sim.gateway.getInstrument(VOD)?.usdPerPriceUnit;
+    expect(usdPerPriceUnit).toBeGreaterThan(0);
+    expect(usdPerPriceUnit).toBeLessThan(0.1); // pence, not pounds
+    rest(VOD, BookSide.SELL, 224, 1_000);
+    create({ account: "ACC-EU-01", ric: VOD, quantity: 1_000, price: 224 });
+    rest(VOD, BookSide.BUY, 226, 10);
+    rest(VOD, BookSide.SELL, 226, 10);
+    sim.getBook(VOD)?.market({ id: "taker", side: BookSide.BUY, size: 10 });
+    engine.markToMarket();
+    const position = engine.getPosition("ACC-EU-01", VOD);
+    expect(position?.currency).toBe("GBX");
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+    expect(position?.marketValueUsd).toBe(
+      round2((position?.marketValue ?? 0) * (usdPerPriceUnit ?? 0)),
+    );
+    expect(position?.totalPnlUsd).toBe(
+      round2((position?.totalPnl ?? 0) * (usdPerPriceUnit ?? 0)),
+    );
+    expect(position?.totalPnlUsd).not.toBe(0);
   });
 });

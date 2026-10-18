@@ -4,6 +4,7 @@ export * from "./data/TradingDataProvider";
 export * from "./data/tradingRpc";
 export * from "./data/tradingTables";
 export * from "./data/useTradingDataSource";
+export * from "./data/useChartDataSource";
 export * from "./data/useDataSourceRows";
 export * from "./data/useTradingRows";
 
@@ -61,6 +62,14 @@ export * from "./components/PriceLadder";
 export * from "./components/InstrumentGrid";
 export * from "./components/Sparkline";
 export * from "./components/StaleIndicator";
+
+// charts (vuu-chart / echarts)
+export * from "./components/PriceChart";
+export * from "./components/DepthChartView";
+export * from "./components/SpreadChart";
+export * from "./components/PnlHistoryChart";
+export * from "./components/ExposureTreemap";
+export * from "./components/SlippageChart";
 
 // MF feature root: per-host services mounted once (P4.1)
 export * from "./feature-root";

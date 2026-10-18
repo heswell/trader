@@ -182,6 +182,40 @@ OMS_PNL_HISTORY_INTERVAL_MS=0`):
 To trim: lower `exchangeSim.barHistory`, drop `1s` from `barIntervals`, or set `barBackfill=0` (the window then
 fills only as trades arrive).
 
+## Charts
+
+The chart components ([components/charts.md](components/charts.md)) were profiled with a new `perf:ui` scenario on
+2026-10-18 (same shared machine). The `chart-workspace` showcase page shows a price chart (1s bars, VWAP, fills
+overlay), a depth chart, a spread/imbalance chart and `MarketDepth` for one instrument. The `trader-workspace`
+was re-run for comparison. Remote data, tick ×4:
+
+| scenario, CPU throttle | FPS | long tasks / 15 s | scripting ms/s | style recalc ms/s | main-thread busy ms/s |
+| --- | --- | --- | --- | --- | --- |
+| chart-workspace, ×1 | 59.9 | 0 | 167 | 49 | 330 |
+| trader-workspace, ×1 | 59.9 | 0 | 107 | 17 | 296 |
+| chart-workspace, ×4 | 15.9 | 144 | 632 | 78 | 984 |
+| trader-workspace, ×4 | 16.1 | 89 | 459 | 41 | 993 |
+
+- **Unthrottled, the charts are smooth at tick ×4**: 60 FPS, no long tasks and no dropped frames. They add about
+  60 ms/s of scripting over the trader workspace.
+- **At ×4 CPU throttle** both pages are saturated (main thread ~990 ms/s busy), so FPS is the same. The chart page
+  has more long tasks (all under 100 ms) because each echarts redraw is a single task. On a loaded machine the
+  trader-workspace ×4/×4 number also fell from the earlier 21–23 FPS to 16.
+- **The CPU profile** (`--cpu-profile`) has no single hot spot. The time is spread across echarts' own model and
+  style code (`Model.getShallow`, `getItemStyle`, `clone`, `DataDiffer`), at 10–30 ms/s each. vuu-chart already
+  batches updates to one merge `setOption` per animation frame.
+- **Series animation is off** in every trading-ui chart (`disableSeriesAnimation`). Echarts series default to
+  `animation: true`, which overrides vuu-chart's global `animation: false`. With it on, every tick restarted a
+  900 ms transition, so the treemap never settled and the cartesian charts tweened constantly (trader upstream
+  issue 95).
+- **Row budget:** each chart subscribes at most `maxRows` rows per DataSource (vuu-chart default 1000;
+  `PriceChart` uses 500 bars). The trading-ui charts filter server-side by ric, interval or account, so each
+  redraw stays small.
+- **Bundle:** echarts adds about 1.1 MB (~370 kB gzip) to the showcase and portal bundles. It isn't code-split yet
+  (see Follow-ups).
+
+To profile: `bun run perf:ui --scenario=chart-workspace --tick=4 [--throttle=4] [--cpu-profile]`.
+
 ## Hot-spot fixes
 
 The CPU profiles (`perf:ui --cpu-profile`, inclusive time per function) showed that components with no per-tick data still re-rendered on every price or depth tick:
@@ -230,4 +264,5 @@ These were found while profiling and are too large or too risky for this pass:
 - **Cell renderers.** Sparkline and flash cells in `InstrumentGrid` account for a large share of style recalculation. Try CSS-only flashes and batched sparkline updates.
 - **Server.** Event-loop lag p99 reaches 38 ms in the heavy preset. Profile the OMS join (`positionPrices`) and order-book publish paths. Investigate whether sorted viewports re-send whole ranges on insert.
 - **Send cycle.** vuu-server's 60 ms / 300-row send cycle sets the e2e latency floor and is not configurable (trader upstream issue 92).
+- **Charts.** Lazy-load echarts (`React.lazy` around the chart features) to take it out of the initial bundle. Under CPU throttle, echarts redraws are single long tasks; consider throttling chart redraws to 2–4/s for 1m/5m bars.
 - **Intermittent blank workspace** on remote load (trader upstream issue 87). `perf:ui` retries the page load.

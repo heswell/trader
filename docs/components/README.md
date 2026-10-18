@@ -1,7 +1,7 @@
 # Trading UI components
 
 `@heswell/trading-ui` is the reusable front end: React components, hooks and host services built on vuu-ui
-(`@vuu-ui/*` 4.0.0-alpha.21) and Salt. The same component runs inside vuu-portal, against a stand-alone Vuu server
+(`@vuu-ui/*` 4.0.0-alpha.22) and Salt. The same component runs inside vuu-portal, against a stand-alone Vuu server
 or on in-browser data (see [hosting.md](hosting.md) and [getting-started.md](../getting-started.md)).
 
 - **Guides** (this folder, hand-written): what each component is for, how to compose it, data, RPCs, roles and CSS.
@@ -23,6 +23,7 @@ or on in-browser data (see [hosting.md](hosting.md) and [getting-started.md](../
 | [market-depth-and-ladder.md](market-depth-and-ladder.md) | `MarketDepth`, `PriceLadder`, `PriceLadderView` and the depth hooks | `#market-depth-selected`, `#price-ladder-*` |
 | [notifications-and-connection.md](notifications-and-connection.md) | `TradingNotificationsProvider`, `ConnectionBanner`, `ConnectionStatusIndicator`, `StaleIndicator` | `#notifications-*`, `#hosting-connection-override` |
 | [selection-and-linking.md](selection-and-linking.md) | `InstrumentPicker`, `InstrumentContextProvider`, `LinkGroupProvider`, `LinkGroupSelector`, `LinkGroupSwatch`, `AccountSelector`, `InstrumentLookupProvider` | `#linking-providers`, `#selectors` |
+| [charts.md](charts.md) | `PriceChart`, `DepthChartView`, `SpreadChart`, `PnlHistoryChart`, `ExposureTreemap`, `SlippageChart`, `useChartDataSource` | `#price-chart`, `#depth-chart`, `#spread-chart`, `#pnl-history-chart`, `#exposure-treemap`, `#slippage-chart`, `#chart-workspace` |
 | [primitives.md](primitives.md) | `SideLabel`, `OrderStatusBadge`, `FillProgressBar`, `PnlValue`, `Sparkline`; theming tokens | `#side-label-variants`, `#primitives-status` |
 
 Conventions shared by every component (placement, CSS injection, utilities, testing, accessibility, MF packaging)
@@ -45,7 +46,8 @@ The components contain **no role logic**. Roles are enforced on the server and s
     modules to users with the `trading-execute-access` nav role).
 - Users and their roles in the dev stack: [portal-integration.md](../portal-integration.md#users-and-roles).
 
-Exchange tables (`instruments`, `prices`, `depth`, `trades`, `instrumentPrices`) are visible to every user.
+Exchange tables (`instruments`, `prices`, `depth`, `trades`, `instrumentPrices`, `bars`, `bookSamples`) are visible to
+every user.
 
 ## Theming and CSS hooks
 

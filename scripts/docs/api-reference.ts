@@ -761,7 +761,7 @@ const relativeImports = (file: string) => {
 };
 
 const TABLE_RE =
-  /(?:use(?:TradingDataSource|TradingRows)\(\s*|subscribeTradingRows\([^,]+,\s*|\btable = )"(\w+)"/g;
+  /(?:use(?:TradingDataSource|TradingRows|ChartDataSource)\(\s*|subscribeTradingRows\([^,]+,\s*|\btable = )"(\w+)"/g;
 const RPC_RE = /sendTradingRpc\(\s*[\w.]+,\s*(?:"(\w+)"|RpcName\.(\w+))/g;
 /** Shared hooks are counted as part of the unit that uses them. */
 const DESCEND = /\/src\/hooks\//;
@@ -963,7 +963,7 @@ const renderCatalogue = (uiItems: ApiItem[]) => {
     "",
     "Every React component exported by `@heswell/trading-ui`, with facts read from the source. Hand-written guides: [components/README.md](../components/README.md).",
     "",
-    "- **Tables**: Vuu tables the component subscribes to itself (`useTradingDataSource` / `useTradingRows`, following imports within its folder and the shared hooks in `src/hooks`).",
+    "- **Tables**: Vuu tables the component subscribes to itself (`useTradingDataSource` / `useTradingRows` / `useChartDataSource`, following imports within its folder and the shared hooks in `src/hooks`).",
     "- **RPCs**: RPCs it sends with `sendTradingRpc`; *edit session* means it amends through a `parentOrders` edit session.",
     "- **Composes**: other component folders it renders or uses; their tables and RPCs are on their own rows.",
     "- **Showcase**: example ids, opened at `http://localhost:5001/#<id>` (`bun run dev:showcase`, local data). *host* means the showcase host mounts it around every example.",

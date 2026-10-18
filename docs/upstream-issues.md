@@ -542,3 +542,31 @@ See [persistence.md](persistence.md).
     *Workaround:* `exchange-sim/src/engine/persistence.ts` derives `BookSnapshot` / `ILimitOrder` from
     `OrderBookOptions["snapshot"]`; the simulator keeps its own trade-id counter (journaled in blocks) and fair
     value, and uses no stop orders, so the missing market price has no effect today.
+
+## Found in the vuu-chart alpha.22 upgrade (charting)
+
+See [components/charts.md](components/charts.md). Bumping every `@vuu-ui/*` package from 4.0.0-alpha.21 to
+4.0.0-alpha.22 needed no code changes (a clean `bun install` was needed to drop stale duplicate copies).
+
+94. **`@vuu-ui/vuu-chart` ships no type declarations.** (finos `@vuu-ui/vuu-chart`, 4.0.0-alpha.22.) The package
+    has only `.js` files and no `types` entry, so a TypeScript consumer gets an implicit-`any` module error and no
+    prop checking. Publishing the `.d.ts` files (as the other `@vuu-ui/*` packages do) would fix it.
+    *Workaround:* `packages/trading-ui/src/vuu-chart.d.ts` declares the subset trader uses (chart components,
+    props, mark lines, overlays, item events), written from the package README and source.
+95. **Series animations override vuu-chart's `animation: false`, so a live treemap never settles.** (finos
+    `@vuu-ui/vuu-chart`, 4.0.0-alpha.22.) The chart models set the global `animation: false`, but echarts series
+    default to `animation: true` and the series flag wins. Every data update (merged once per frame) restarts the
+    series' update transition: a `TreemapChart` on ticking `positionPrices` stays a faded, shrunken box in the corner
+    (its 900 ms transition never completes), and line / scatter series spend CPU animating every tick. Setting
+    `animation: false` on each generated series would fix it. *Workaround:* every trading chart passes
+    `echartsOptions={disableSeriesAnimation}` (`components/ChartFrame`), which sets it per series.
+96. **`DepthChart`'s legend overlaps the chart.** (finos `@vuu-ui/vuu-chart`, 4.0.0-alpha.22.) With
+    `legend="top"` (the default) the legend sits on the "Mid" mark-line label; with `"bottom"` the grid leaves
+    32 px, which the legend and the price-axis labels then share. Reserving room for the axis labels (or
+    `grid.containLabel`) and placing the mid label clear of the legend would fix it. *Workaround:*
+    `DepthChartView` uses `legend="none"`; bid / ask are colour-coded and named in the tooltip.
+97. **Mark-line labels cannot be formatted.** (finos `@vuu-ui/vuu-chart`, 4.0.0-alpha.22.) `MarkLineDef` has
+    `label` and `labelPosition` but no formatter: values print with `toPrecision(6)` (e.g. "Avg 9.55286" bps,
+    "Avg fill 436.243" on a 0.1 tick), and labels of lines at similar values overlap. A `formatValue` on
+    `MarkLineDef` (or reuse of the chart's value formatter) would fix it. *Workaround:* the avg-fill label sits at
+    the start of the line (`labelPosition: "insideStartTop"`) so it does not cover "Last"; precision is left as is.

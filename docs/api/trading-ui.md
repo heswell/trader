@@ -4,11 +4,11 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 378 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 395 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
-- **data**: [applySelectionChange](#applyselectionchange), [connectToVuuServer](#connecttovuuserver), [DataSourceRows](#datasourcerows), [DataSourceRowsConfig](#datasourcerowsconfig), [DataSourceRowsUpdate](#datasourcerowsupdate), [DEFAULT_RPC_TIMEOUT_MS](#default_rpc_timeout_ms), [disconnectedRpcError](#disconnectedrpcerror), [disconnectFromVuuServer](#disconnectfromvuuserver), [editOrdersInSession](#editordersinsession), [openOrderEditSession](#openordereditsession), [OrderEdits](#orderedits), [OrderEditSession](#ordereditsession), [rpcTimeoutError](#rpctimeouterror), [RpcTransportFailure](#rpctransportfailure), [sendTradingRpc](#sendtradingrpc), [StaleOrderEditError](#staleorderediterror), [subscribeTradingRows](#subscribetradingrows), [toTradingRow](#totradingrow), [tradingColumnNames](#tradingcolumnnames), [TradingDataMode](#tradingdatamode), [TradingDataModeContextValue](#tradingdatamodecontextvalue), [TradingDataProvider](#tradingdataprovider), [TradingDataProviderProps](#tradingdataproviderprops), [TradingDataSourceOptions](#tradingdatasourceoptions), [TradingRow](#tradingrow), [TradingRows](#tradingrows), [TradingRowsOptions](#tradingrowsoptions), [TradingRpcError](#tradingrpcerror), [TradingRpcOptions](#tradingrpcoptions), [tradingTableSchema](#tradingtableschema), [tradingVuuTable](#tradingvuutable), [useDataSourceRows](#usedatasourcerows), [UseDataSourceRowsOptions](#usedatasourcerowsoptions), [useHasDataProvider](#usehasdataprovider), [useTableSelectedKeys](#usetableselectedkeys), [useTradingDataMode](#usetradingdatamode), [useTradingDataSource](#usetradingdatasource), [useTradingRows](#usetradingrows), [VuuServerConnection](#vuuserverconnection), [withRpcTimeout](#withrpctimeout)
+- **data**: [applySelectionChange](#applyselectionchange), [ChartDataSourceOptions](#chartdatasourceoptions), [connectToVuuServer](#connecttovuuserver), [DataSourceRows](#datasourcerows), [DataSourceRowsConfig](#datasourcerowsconfig), [DataSourceRowsUpdate](#datasourcerowsupdate), [DEFAULT_RPC_TIMEOUT_MS](#default_rpc_timeout_ms), [disconnectedRpcError](#disconnectedrpcerror), [disconnectFromVuuServer](#disconnectfromvuuserver), [editOrdersInSession](#editordersinsession), [openOrderEditSession](#openordereditsession), [OrderEdits](#orderedits), [OrderEditSession](#ordereditsession), [rpcTimeoutError](#rpctimeouterror), [RpcTransportFailure](#rpctransportfailure), [sendTradingRpc](#sendtradingrpc), [StaleOrderEditError](#staleorderediterror), [subscribeTradingRows](#subscribetradingrows), [toTradingRow](#totradingrow), [tradingColumnNames](#tradingcolumnnames), [TradingDataMode](#tradingdatamode), [TradingDataModeContextValue](#tradingdatamodecontextvalue), [TradingDataProvider](#tradingdataprovider), [TradingDataProviderProps](#tradingdataproviderprops), [TradingDataSourceOptions](#tradingdatasourceoptions), [TradingRow](#tradingrow), [TradingRows](#tradingrows), [TradingRowsOptions](#tradingrowsoptions), [TradingRpcError](#tradingrpcerror), [TradingRpcOptions](#tradingrpcoptions), [tradingTableSchema](#tradingtableschema), [tradingVuuTable](#tradingvuutable), [useChartDataSource](#usechartdatasource), [useDataSourceRows](#usedatasourcerows), [UseDataSourceRowsOptions](#usedatasourcerowsoptions), [useHasDataProvider](#usehasdataprovider), [useTableSelectedKeys](#usetableselectedkeys), [useTradingDataMode](#usetradingdatamode), [useTradingDataSource](#usetradingdatasource), [useTradingRows](#usetradingrows), [VuuServerConnection](#vuuserverconnection), [withRpcTimeout](#withrpctimeout)
 - **instrument-context**: [BroadcastChannelLike](#broadcastchannellike), [ComponentLinkGroup](#componentlinkgroup), [connectBroadcastChannel](#connectbroadcastchannel), [ConnectBroadcastChannelOptions](#connectbroadcastchanneloptions), [createInstrumentLinkBus](#createinstrumentlinkbus), [CreateInstrumentLinkBusOptions](#createinstrumentlinkbusoptions), [DEFAULT_LINK_CHANNEL_NAME](#default_link_channel_name), [DEFAULT_LINK_GROUP](#default_link_group), [DEFAULT_LINK_GROUPS](#default_link_groups), [getInstrumentLinkBus](#getinstrumentlinkbus), [INSTRUMENT_LINK_BUS_VERSION](#instrument_link_bus_version), [InstrumentContextProvider](#instrumentcontextprovider), [InstrumentContextProviderProps](#instrumentcontextproviderprops), [InstrumentContextValue](#instrumentcontextvalue), [InstrumentLinkBus](#instrumentlinkbus), [InstrumentLinkListener](#instrumentlinklistener), [InstrumentLinkSelection](#instrumentlinkselection), [InstrumentLinkTransport](#instrumentlinktransport), [InstrumentSelection](#instrumentselection), [isUnlinkedGroup](#isunlinkedgroup), [LINK_GROUP_PERSIST_PREFIX](#link_group_persist_prefix), [LINK_GROUP_STATE_KEY](#link_group_state_key), [linkGroupDefinition](#linkgroupdefinition), [LinkGroupDefinition](#linkgroupdefinition-1), [LinkGroupId](#linkgroupid), [LinkGroupProps](#linkgroupprops), [LinkGroupProvider](#linkgroupprovider), [sameInstrument](#sameinstrument), [sanitizeSelectedInstrument](#sanitizeselectedinstrument), [SelectedInstrument](#selectedinstrument), [UNLINKED](#unlinked), [UNLINKED_GROUP](#unlinked_group), [useComponentLinkGroup](#usecomponentlinkgroup), [UseComponentLinkGroupOptions](#usecomponentlinkgroupoptions), [useInheritedLinkGroup](#useinheritedlinkgroup), [useInstrumentLinkBus](#useinstrumentlinkbus), [useSelectedInstrument](#useselectedinstrument), [UseSelectedInstrumentOptions](#useselectedinstrumentoptions)
 - **hooks**: [actionableOrders](#actionableorders), [DepthLevel](#depthlevel), [FlashDirection](#flashdirection), [FollowedInstrument](#followedinstrument), [InstrumentPrice](#instrumentprice), [LevelFlash](#levelflash), [levelKey](#levelkey), [MarketDepthState](#marketdepthstate), [OWN_ORDER_STATUSES](#own_order_statuses), [OwnOrder](#ownorder), [OwnOrdersAtPrice](#ownordersatprice), [ownOrdersKey](#ownorderskey), [OwnWorkingOrders](#ownworkingorders), [OwnWorkingOrdersOptions](#ownworkingordersoptions), [priceKey](#pricekey), [useFollowedInstrument](#usefollowedinstrument), [useInstrumentPrice](#useinstrumentprice), [useLevelFlash](#uselevelflash), [useMarketDepth](#usemarketdepth), [useOwnWorkingOrders](#useownworkingorders), [useStableCallback](#usestablecallback), [useTradedVolume](#usetradedvolume)
 - **connection**: [combineConnectionState](#combineconnectionstate), [CONNECTION_STATE_SEVERITY](#connection_state_severity), [ConnectionAttemptClosedError](#connectionattemptclosederror), [ConnectionAttemptTimeoutError](#connectionattempttimeouterror), [connectionClientWithTimeout](#connectionclientwithtimeout), [ConnectionReconnectInfo](#connectionreconnectinfo), [connectionStateStore](#connectionstatestore), [createResilientConnectionRegistry](#createresilientconnectionregistry), [DEFAULT_LOGIN_TIMEOUT_MS](#default_login_timeout_ms), [DEFAULT_RECONNECT_POLICY](#default_reconnect_policy), [observeConnectionRegistry](#observeconnectionregistry), [observeDefaultConnectionRegistry](#observedefaultconnectionregistry), [reconnectDelay](#reconnectdelay), [ReconnectPolicy](#reconnectpolicy), [reconnectSchedule](#reconnectschedule), [ReconnectState](#reconnectstate), [ReconnectSupervisor](#reconnectsupervisor), [ReconnectSupervisorOptions](#reconnectsupervisoroptions), [ReconnectTimers](#reconnecttimers), [ResilientConnectionRegistryOptions](#resilientconnectionregistryoptions), [resolveReconnectPolicy](#resolvereconnectpolicy), [StaleIndicatorOptions](#staleindicatoroptions), [StaleIndicatorState](#staleindicatorstate), [StaleReason](#stalereason), [SupervisorSnapshot](#supervisorsnapshot), [SupervisorState](#supervisorstate), [toConnectionState](#toconnectionstate), [TradingConnectionState](#tradingconnectionstate), [TradingConnectionStateOverride](#tradingconnectionstateoverride), [TradingConnectionStatus](#tradingconnectionstatus), [useStaleIndicator](#usestaleindicator), [useTradingConnectionStatus](#usetradingconnectionstatus), [useVuuConnectionStatuses](#usevuuconnectionstatuses), [withConnectTimeout](#withconnecttimeout), [worstConnectionState](#worstconnectionstate)
@@ -17,6 +17,8 @@ Imports: `@heswell/trading-ui`. 378 exports. Types are shown as written in the s
 - **components/AccountSelector**: [AccountSelector](#accountselector), [AccountSelectorProps](#accountselectorprops), [useSelectedAccount](#useselectedaccount), [useTradingAccounts](#usetradingaccounts)
 - **components/ConnectionBanner**: [ConnectionBanner](#connectionbanner), [ConnectionBannerProps](#connectionbannerprops)
 - **components/ConnectionStatusIndicator**: [CONNECTION_STATE_LABELS](#connection_state_labels), [ConnectionStatusIndicator](#connectionstatusindicator), [ConnectionStatusIndicatorProps](#connectionstatusindicatorprops)
+- **components/DepthChartView**: [DepthChartView](#depthchartview), [DepthChartViewProps](#depthchartviewprops)
+- **components/ExposureTreemap**: [ExposureMeasure](#exposuremeasure), [ExposureTreemap](#exposuretreemap), [ExposureTreemapProps](#exposuretreemapprops)
 - **components/FillProgressBar**: [FillProgressBar](#fillprogressbar), [FillProgressBarProps](#fillprogressbarprops)
 - **components/FillsBlotter**: [FillsBlotter](#fillsblotter), [FillsBlotterProps](#fillsblotterprops), [FillsGrouping](#fillsgrouping), [FillsLinkContext](#fillslinkcontext)
 - **components/InstrumentGrid**: [addToWatchlist](#addtowatchlist), [buildInstrumentGridFilter](#buildinstrumentgridfilter), [cellUnchanged](#cellunchanged), [ChangeCell](#changecell), [createWatchlist](#createwatchlist), [DEFAULT_INSTRUMENT_GRID_COLUMNS](#default_instrument_grid_columns), [deleteWatchlist](#deletewatchlist), [EMPTY_WATCHLISTS](#empty_watchlists), [GROUPABLE_COLUMNS](#groupable_columns), [InstrumentAction](#instrumentaction), [InstrumentGrid](#instrumentgrid), [instrumentGridColumn](#instrumentgridcolumn), [InstrumentGridColumnOptions](#instrumentgridcolumnoptions), [instrumentGridColumns](#instrumentgridcolumns), [InstrumentGridFilterParts](#instrumentgridfilterparts), [InstrumentGridProps](#instrumentgridprops), [parseWatchlists](#parsewatchlists), [PhaseCell](#phasecell), [phaseLabel](#phaselabel), [priceFormatOf](#priceformatof), [PriceMoveCell](#pricemovecell), [QuantityCell](#quantitycell), [quickFilterExpression](#quickfilterexpression), [registerInstrumentGridRenderers](#registerinstrumentgridrenderers), [removeFromWatchlist](#removefromwatchlist), [renameWatchlist](#renamewatchlist), [SPARKLINE_COLUMN](#sparkline_column), [useWatchlists](#usewatchlists), [UseWatchlistsResult](#usewatchlistsresult), [Watchlist](#watchlist), [watchlistFilterExpression](#watchlistfilterexpression), [WATCHLISTS_SETTINGS_KEY](#watchlists_settings_key), [WatchlistState](#watchliststate)
@@ -27,11 +29,15 @@ Imports: `@heswell/trading-ui`. 378 exports. Types are shown as written in the s
 - **components/OrderBlotter**: [CHILD_ORDER_COLUMNS](#child_order_columns), [childOrdersTableConfig](#childorderstableconfig), [ORDER_BLOTTER_COLUMNS](#order_blotter_columns), [ORDER_BLOTTER_TABS](#order_blotter_tabs), [OrderBlotter](#orderblotter), [OrderBlotterContext](#orderblottercontext), [OrderBlotterProps](#orderblotterprops), [OrderBlotterTab](#orderblottertab), [orderBlotterTabFilter](#orderblottertabfilter), [orderBlotterTableConfig](#orderblottertableconfig), [OrderRowActions](#orderrowactions)
 - **components/OrderStatusBadge**: [OrderStatusBadge](#orderstatusbadge), [OrderStatusBadgeProps](#orderstatusbadgeprops)
 - **components/OrderTicket**: [connectionBlockedReason](#connectionblockedreason), [DEFAULT_COLLAR_PCT](#default_collar_pct), [defaultLimitPrice](#defaultlimitprice), [draftFromPrefill](#draftfromprefill), [DraftValidation](#draftvalidation), [EMPTY_DRAFT](#empty_draft), [fieldForRejectReason](#fieldforrejectreason), [formatPriceInput](#formatpriceinput), [INDICATIVE_USD_PER_PRICE_UNIT](#indicative_usd_per_price_unit), [isTimeInForceAllowed](#istimeinforceallowed), [LAST_ACCOUNT_STORAGE_KEY](#last_account_storage_key), [marketValuationPrice](#marketvaluationprice), [newClOrdId](#newclordid), [nudgePrice](#nudgeprice), [nudgeQuantity](#nudgequantity), [ORDER_TICKET_ORD_TYPES](#order_ticket_ord_types), [ORDER_TICKET_SELECTION_SOURCE](#order_ticket_selection_source), [ORDER_TICKET_TIFS](#order_ticket_tifs), [OrderDraft](#orderdraft), [OrderDraftErrors](#orderdrafterrors), [OrderDraftField](#orderdraftfield), [OrderTicket](#orderticket), [OrderTicketAccount](#orderticketaccount), [OrderTicketDialog](#orderticketdialog), [OrderTicketDialogProps](#orderticketdialogprops), [OrderTicketInstrument](#orderticketinstrument), [OrderTicketLauncher](#orderticketlauncher), [OrderTicketLauncherProvider](#orderticketlauncherprovider), [OrderTicketLauncherProviderProps](#orderticketlauncherproviderprops), [OrderTicketPanel](#orderticketpanel), [OrderTicketPanelProps](#orderticketpanelprops), [OrderTicketPrefill](#orderticketprefill), [OrderTicketProps](#orderticketprops), [OrderTicketState](#orderticketstate), [OrderTicketSubmission](#orderticketsubmission), [OrderTicketTarget](#ordertickettarget), [OrderTicketVariant](#orderticketvariant), [parsePrice](#parseprice), [parseQuantity](#parsequantity), [previewRisk](#previewrisk), [referencePrice](#referenceprice), [RiskPreview](#riskpreview), [RiskPreviewOptions](#riskpreviewoptions), [RiskWarning](#riskwarning), [scheduleOf](#scheduleof), [useOrderTicket](#useorderticket), [useOrderTicketLauncher](#useorderticketlauncher), [UseOrderTicketProps](#useorderticketprops), [useOrderTicketTarget](#useordertickettarget), [validateDraft](#validatedraft)
+- **components/PnlHistoryChart**: [PnlHistoryChart](#pnlhistorychart), [PnlHistoryChartProps](#pnlhistorychartprops)
 - **components/PnlValue**: [PnlValue](#pnlvalue), [PnlValueProps](#pnlvalueprops)
 - **components/PositionsView**: [CurrencyTotals](#currencytotals), [POSITIONS_GROUP_BY](#positions_group_by), [PositionsGrouping](#positionsgrouping), [PositionsView](#positionsview), [PositionsViewProps](#positionsviewprops), [totalsByCurrency](#totalsbycurrency)
+- **components/PriceChart**: [PRICE_CHART_INTERVALS](#price_chart_intervals), [PriceChart](#pricechart), [PriceChartInterval](#pricechartinterval), [PriceChartProps](#pricechartprops)
 - **components/PriceLadder**: [centreIndex](#centreindex), [LadderLevel](#ladderlevel), [ladderPrices](#ladderprices), [ladderReferencePrice](#ladderreferenceprice), [LadderTradeIntent](#laddertradeintent), [needsRecentre](#needsrecentre), [PRICE_LADDER_SOURCE](#price_ladder_source), [PriceLadder](#priceladder), [PriceLadderAction](#priceladderaction), [PriceLadderColumn](#priceladdercolumn), [PriceLadderOrderEvent](#priceladderorderevent), [PriceLadderProps](#priceladderprops), [PriceLadderTradeMode](#priceladdertrademode), [PriceLadderView](#priceladderview), [PriceLadderViewProps](#priceladderviewprops)
 - **components/SideLabel**: [SideLabel](#sidelabel), [SideLabelProps](#sidelabelprops)
+- **components/SlippageChart**: [SlippageChart](#slippagechart), [SlippageChartProps](#slippagechartprops)
 - **components/Sparkline**: [DEFAULT_SPARKLINE_LENGTH](#default_sparkline_length), [recordSample](#recordsample), [registerSparklineRenderer](#registersparklinerenderer), [Sparkline](#sparkline), [SparklineBuffer](#sparklinebuffer), [SparklineCell](#sparklinecell), [SparklineCellOptions](#sparklinecelloptions), [sparklineOptions](#sparklineoptions), [sparklinePoints](#sparklinepoints), [SparklineProps](#sparklineprops), [SparklineSampling](#sparklinesampling), [sparklineStore](#sparklinestore-1), [SparklineStore](#sparklinestore), [SparklineTrend](#sparklinetrend)
+- **components/SpreadChart**: [SpreadChart](#spreadchart), [SpreadChartProps](#spreadchartprops)
 - **components/StaleIndicator**: [STALE_DATA_CLASS](#stale_data_class), [StaleDataProps](#staledataprops), [StaleDataState](#staledatastate), [StaleIndicator](#staleindicator), [StaleIndicatorProps](#staleindicatorprops), [useStaleData](#usestaledata)
 - **components/TradeTape**: [sizePercentile](#sizepercentile), [TradeTape](#tradetape), [TradeTapeProps](#tradetapeprops)
 - **components/TradingCellRenderers**: [registerTradingCellRenderers](#registertradingcellrenderers), [TradingRenderer](#tradingrenderer)
@@ -72,6 +78,23 @@ One of:
 | `connectionId` | `string` |  | The id passed to connectToVuuServer / ConnectionManager.connectTo. |
 
 ### Hooks (data)
+
+#### useChartDataSource
+
+*hook* · [data/useChartDataSource.ts](../../packages/trading-ui/src/data/useChartDataSource.ts#L31)
+
+A DataSource dedicated to one vuu-chart (or one chart overlay).
+
+vuu-chart subscribes with no filter or sort of its own and *unsubscribes*
+its DataSources on unmount or when a DataSource prop changes, so charts
+must never share a DataSource with a table or another chart. This hook
+creates a fresh DataSource whenever table, filter, sort or columns change,
+with the filter and sort applied server-side (charts only read the first
+`maxRows` rows). Unsubscribing is left to the chart.
+
+```ts
+useChartDataSource(table: TradingSchemaName, { columns, disabled = false, filter, sort }: ChartDataSourceOptions = {}): DataSource | undefined
+```
 
 #### useDataSourceRows
 
@@ -367,6 +390,17 @@ const DEFAULT_RPC_TIMEOUT_MS: 10000
 ```
 
 ### Interfaces (data)
+
+#### ChartDataSourceOptions
+
+*interface* · [data/useChartDataSource.ts](../../packages/trading-ui/src/data/useChartDataSource.ts#L7)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `columns?` | `string[]` |  | Columns to subscribe to (default: every column of the schema). |
+| `filter?` | `string` |  | Vuu filter expression, e.g. `ric = "VOD.L" and interval = "1m"`. |
+| `sort?` | `{ column: string; direction?: "A" \| "D" }` |  | Sort column; charts read the first `maxRows` rows so sort newest first. |
+| `disabled?` | `boolean` |  | When true no DataSource is created (returns undefined), e.g. while no instrument is selected. |
 
 #### DataSourceRows
 
@@ -2358,6 +2392,86 @@ const CONNECTION_STATE_LABELS: Record<TradingConnectionState, string>
 
 Props of [`ConnectionStatusIndicator`](#connectionstatusindicator).
 
+## components/DepthChartView
+
+### Components (components/DepthChartView)
+
+#### DepthChartView
+
+*component* · [components/DepthChartView/DepthChartView.tsx](../../packages/trading-ui/src/components/DepthChartView/DepthChartView.tsx#L47)
+
+Live stepped depth chart (EXCHANGE `depth`) for the followed instrument:
+cumulative bid and ask size against price, with the mid price marked.
+A chart view of the same data as MarketDepth; it follows the link group
+and creates its own ric-filtered DataSource per instrument.
+
+Props: `DepthChartViewProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `ric?` | `string` |  | Instrument to chart; defaults to the followed (linked) instrument. |
+| `showMidPrice?` | `boolean` | `true` | Draw the mid-price line. Default true. |
+| `showToolbar?` | `boolean` | `true` | Show the toolbar (RIC and link group selector). Default true. |
+| `linkGroup?` | `LinkGroupId` |  | Link group (channel) to join: e.g. "red", "green", or "unlinked". The initial group when the user can change it (`showLinkGroupSelector`); a later change of the prop is applied too. Default: the saved group, then `defaultLinkGroup`, then the inherited group. (from `LinkGroupProps`) |
+| `defaultLinkGroup?` | `LinkGroupId` |  | Group used when there is no `linkGroup` prop and nothing saved. (from `LinkGroupProps`) |
+| `onLinkGroupChange?` | `(linkGroup: LinkGroupId) => void` |  | The user picked another group in the selector. (from `LinkGroupProps`) |
+| `showLinkGroupSelector?` | `boolean` | `false` | Show a LinkGroupSelector in the component header / toolbar. (from `LinkGroupProps`) |
+
+Also accepts the standard HTML attributes and `ref`.
+
+### Interfaces (components/DepthChartView)
+
+#### DepthChartViewProps
+
+*interface* · [components/DepthChartView/DepthChartView.tsx](../../packages/trading-ui/src/components/DepthChartView/DepthChartView.tsx#L30)
+
+Props of [`DepthChartView`](#depthchartview).
+
+## components/ExposureTreemap
+
+### Components (components/ExposureTreemap)
+
+#### ExposureTreemap
+
+*component* · [components/ExposureTreemap/ExposureTreemap.tsx](../../packages/trading-ui/src/components/ExposureTreemap/ExposureTreemap.tsx#L63)
+
+Position treemap grouped by sector then instrument, from the OMS
+`positionPrices` join. Tile area is |USD market value| (exposure) or
+|USD total P&L|; colour is the sign (long / profit = up, short / loss =
+down). Flat positions are hidden. Positions are account-filtered by the
+OMS, so users only see accounts they are entitled to.
+
+Props: `ExposureTreemapProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `account?` | `string` |  | Restrict to one account (default: every account the user can see). |
+| `measure?` | `ExposureMeasure` |  | Measure (controlled). |
+| `defaultMeasure?` | `ExposureMeasure` | `"exposure"` | Initial measure when uncontrolled. Default "exposure". |
+| `showMeasureSelector?` | `boolean` | `true` | Show the Exposure / P&L toggle. Default true. |
+
+Also accepts the standard HTML attributes and `ref`.
+
+### Interfaces (components/ExposureTreemap)
+
+#### ExposureTreemapProps
+
+*interface* · [components/ExposureTreemap/ExposureTreemap.tsx](../../packages/trading-ui/src/components/ExposureTreemap/ExposureTreemap.tsx#L44)
+
+Props of [`ExposureTreemap`](#exposuretreemap).
+
+### Types (components/ExposureTreemap)
+
+#### ExposureMeasure
+
+*type* · [components/ExposureTreemap/ExposureTreemap.tsx](../../packages/trading-ui/src/components/ExposureTreemap/ExposureTreemap.tsx#L23)
+
+What the tile areas measure (both in USD).
+
+```ts
+type ExposureMeasure = "exposure" | "pnl"
+```
+
 ## components/FillProgressBar
 
 ### Components (components/FillProgressBar)
@@ -3805,6 +3919,36 @@ type OrderTicketTarget = (prefill: OrderTicketPrefill) => void
 type OrderTicketVariant = "panel" | "compact"
 ```
 
+## components/PnlHistoryChart
+
+### Components (components/PnlHistoryChart)
+
+#### PnlHistoryChart
+
+*component* · [components/PnlHistoryChart/PnlHistoryChart.tsx](../../packages/trading-ui/src/components/PnlHistoryChart/PnlHistoryChart.tsx#L64)
+
+Account P&L over time in USD - total, realized and unrealized - from the
+OMS `accountPnlHistory` table (periodic samples, rolling window). Only
+accounts the user is entitled to see are offered (the OMS filters the
+table by account).
+
+Props: `PnlHistoryChartProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `account?` | `string` |  | Account to chart (controlled). Default: the user's selected account (see useSelectedAccount), switchable with the toolbar selector. |
+| `showAccountSelector?` | `boolean` | `true` | Show the account selector. Default true (ignored when `account` is set). |
+
+Also accepts the standard HTML attributes and `ref`.
+
+### Interfaces (components/PnlHistoryChart)
+
+#### PnlHistoryChartProps
+
+*interface* · [components/PnlHistoryChart/PnlHistoryChart.tsx](../../packages/trading-ui/src/components/PnlHistoryChart/PnlHistoryChart.tsx#L47)
+
+Props of [`PnlHistoryChart`](#pnlhistorychart).
+
 ## components/PnlValue
 
 ### Components (components/PnlValue)
@@ -3918,6 +4062,72 @@ first so aggregated amounts are never summed across currencies.
 
 ```ts
 type PositionsGrouping = "none" | "sector" | "account" | "ric"
+```
+
+## components/PriceChart
+
+### Components (components/PriceChart)
+
+#### PriceChart
+
+*component* · [components/PriceChart/PriceChart.tsx](../../packages/trading-ui/src/components/PriceChart/PriceChart.tsx#L96)
+
+Candlestick price chart (EXCHANGE `bars`) for the followed instrument: an
+interval selector, volume pane, per-bar VWAP line, the user's own fills
+(OMS `fills`) as BUY / SELL markers with an average-fill mark line, and a
+last-price mark line. Follows the link group like MarketDepth and creates
+its own server-filtered DataSources (one per series) whenever the
+instrument or interval changes.
+
+Props: `PriceChartProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `ric?` | `string` |  | Instrument to chart; defaults to the followed (linked) instrument. |
+| `interval?` | `PriceChartInterval` |  | Bar interval (controlled). |
+| `defaultInterval?` | `PriceChartInterval` | `"1m"` | Initial bar interval when uncontrolled. Default "1m". |
+| `intervals?` | `readonly PriceChartInterval[]` | `PRICE_CHART_INTERVALS` | Intervals offered by the selector. Default 1s / 1m / 5m. |
+| `onIntervalChange?` | `(interval: PriceChartInterval) => void` |  | The user picked another interval. |
+| `showFills?` | `boolean` | `true` | Overlay the user's fills as BUY / SELL markers. Default true. |
+| `account?` | `string` |  | Restrict the fill markers to one account (default: all visible). |
+| `showVwap?` | `boolean` | `true` | Overlay the per-bar VWAP line. Default true. |
+| `showVolume?` | `boolean` | `true` | Show the volume pane. Default true. |
+| `maxRows?` | `number` | `500` | Bars (and fills) read per DataSource. Default 500. |
+| `linkGroup?` | `LinkGroupId` |  | Link group (channel) to join: e.g. "red", "green", or "unlinked". The initial group when the user can change it (`showLinkGroupSelector`); a later change of the prop is applied too. Default: the saved group, then `defaultLinkGroup`, then the inherited group. (from `LinkGroupProps`) |
+| `defaultLinkGroup?` | `LinkGroupId` |  | Group used when there is no `linkGroup` prop and nothing saved. (from `LinkGroupProps`) |
+| `onLinkGroupChange?` | `(linkGroup: LinkGroupId) => void` |  | The user picked another group in the selector. (from `LinkGroupProps`) |
+| `showLinkGroupSelector?` | `boolean` | `false` | Show a LinkGroupSelector in the component header / toolbar. (from `LinkGroupProps`) |
+
+Also accepts the standard HTML attributes and `ref`.
+
+### Constants (components/PriceChart)
+
+#### PRICE_CHART_INTERVALS
+
+*const* · [components/PriceChart/PriceChart.tsx](../../packages/trading-ui/src/components/PriceChart/PriceChart.tsx#L32)
+
+Bar intervals published by the exchange (`exchangeSim.barIntervals`).
+
+```ts
+const PRICE_CHART_INTERVALS: readonly ["1s", "1m", "5m"]
+```
+
+### Interfaces (components/PriceChart)
+
+#### PriceChartProps
+
+*interface* · [components/PriceChart/PriceChart.tsx](../../packages/trading-ui/src/components/PriceChart/PriceChart.tsx#L63)
+
+Props of [`PriceChart`](#pricechart).
+
+### Types (components/PriceChart)
+
+#### PriceChartInterval
+
+*type* · [components/PriceChart/PriceChart.tsx](../../packages/trading-ui/src/components/PriceChart/PriceChart.tsx#L34)
+
+```ts
+type PriceChartInterval = string
 ```
 
 ## components/PriceLadder
@@ -4193,6 +4403,36 @@ Also accepts the standard HTML attributes and `ref`.
 
 Props of [`SideLabel`](#sidelabel).
 
+## components/SlippageChart
+
+### Components (components/SlippageChart)
+
+#### SlippageChart
+
+*component* · [components/SlippageChart/SlippageChart.tsx](../../packages/trading-ui/src/components/SlippageChart/SlippageChart.tsx#L56)
+
+Execution quality: slippage versus arrival price (bps, positive = worse)
+of each (partly) filled parent order over time, coloured by side, from the
+OMS `parentOrders` table, with zero (arrival) and average mark lines.
+
+Props: `SlippageChartProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `account?` | `string` |  | Restrict to one account (default: every account the user can see). |
+| `ric?` | `string` |  | Restrict to one instrument. |
+| `maxRows?` | `number` | `1000` | Parent orders read (newest first). Default 1000. |
+
+Also accepts the standard HTML attributes and `ref`.
+
+### Interfaces (components/SlippageChart)
+
+#### SlippageChartProps
+
+*interface* · [components/SlippageChart/SlippageChart.tsx](../../packages/trading-ui/src/components/SlippageChart/SlippageChart.tsx#L41)
+
+Props of [`SlippageChart`](#slippagechart).
+
 ## components/Sparkline
 
 ### Components (components/Sparkline)
@@ -4379,6 +4619,39 @@ Props of [`Sparkline`](#sparkline).
 ```ts
 type SparklineTrend = "up" | "down" | "flat"
 ```
+
+## components/SpreadChart
+
+### Components (components/SpreadChart)
+
+#### SpreadChart
+
+*component* · [components/SpreadChart/SpreadChart.tsx](../../packages/trading-ui/src/components/SpreadChart/SpreadChart.tsx#L58)
+
+Bid/ask spread (bps) and top-5 book imbalance over time for the followed
+instrument, from the EXCHANGE `bookSamples` table (one sample per second,
+rolling window). Imbalance runs from -1 (all asks) to +1 (all bids) on the
+right-hand axis.
+
+Props: `SpreadChartProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `ric?` | `string` |  | Instrument to chart; defaults to the followed (linked) instrument. |
+| `linkGroup?` | `LinkGroupId` |  | Link group (channel) to join: e.g. "red", "green", or "unlinked". The initial group when the user can change it (`showLinkGroupSelector`); a later change of the prop is applied too. Default: the saved group, then `defaultLinkGroup`, then the inherited group. (from `LinkGroupProps`) |
+| `defaultLinkGroup?` | `LinkGroupId` |  | Group used when there is no `linkGroup` prop and nothing saved. (from `LinkGroupProps`) |
+| `onLinkGroupChange?` | `(linkGroup: LinkGroupId) => void` |  | The user picked another group in the selector. (from `LinkGroupProps`) |
+| `showLinkGroupSelector?` | `boolean` | `false` | Show a LinkGroupSelector in the component header / toolbar. (from `LinkGroupProps`) |
+
+Also accepts the standard HTML attributes and `ref`.
+
+### Interfaces (components/SpreadChart)
+
+#### SpreadChartProps
+
+*interface* · [components/SpreadChart/SpreadChart.tsx](../../packages/trading-ui/src/components/SpreadChart/SpreadChart.tsx#L45)
+
+Props of [`SpreadChart`](#spreadchart).
 
 ## components/StaleIndicator
 

@@ -145,6 +145,10 @@ export interface Position extends PositionState, PositionMarks {
   /** Instrument static, denormalised so positions can group by it. */
   exchange: string;
   sector: string;
+  /** marketValue converted to USD with the instrument's usdPerPriceUnit. */
+  marketValueUsd: number;
+  /** totalPnl converted to USD with the instrument's usdPerPriceUnit. */
+  totalPnlUsd: number;
   lastUpdate: number;
 }
 
@@ -387,6 +391,7 @@ export class OmsEngine {
       this.#sink.fill?.(fill);
     }
     for (const position of state.positions) {
+      Object.assign(position, this.#usdMarks(position));
       this.positions.set(position.id, position);
       this.#sink.position?.({ ...position });
     }
@@ -890,13 +895,32 @@ export class OmsEngine {
         this.#gateway.getTopOfBook(position.ric),
       );
       if (px === position.markPx) continue;
-      Object.assign(position, markPosition(position, px), {
-        lastUpdate: this.#clock(),
-      });
+      const marks = markPosition(position, px);
+      Object.assign(
+        position,
+        marks,
+        this.#usdMarks({ ...position, ...marks }),
+        {
+          lastUpdate: this.#clock(),
+        },
+      );
       this.#sink.position?.({ ...position });
       changed++;
     }
     return changed;
+  }
+
+  /** USD market value / P&L (2 dp) via the instrument's usdPerPriceUnit. */
+  #usdMarks({
+    ric,
+    marketValue,
+    totalPnl,
+  }: Pick<Position, "ric" | "marketValue" | "totalPnl">) {
+    const usd = this.#gateway.getInstrument(ric)?.usdPerPriceUnit ?? 1;
+    return {
+      marketValueUsd: Math.round(marketValue * usd * 100) / 100,
+      totalPnlUsd: Math.round(totalPnl * usd * 100) / 100,
+    };
   }
 
   #applyFillToPosition(fill: Fill) {
@@ -910,6 +934,7 @@ export class OmsEngine {
     );
     const markPx = existing?.markPx || fill.price;
     const instrument = this.#gateway.getInstrument(fill.ric);
+    const marks = markPosition(state, markPx);
     const position: Position = {
       id,
       account: fill.account,
@@ -918,7 +943,8 @@ export class OmsEngine {
       exchange: instrument?.exchange ?? "",
       sector: instrument?.sector ?? "",
       ...state,
-      ...markPosition(state, markPx),
+      ...marks,
+      ...this.#usdMarks({ ric: fill.ric, ...marks }),
       lastUpdate: fill.timestamp,
     };
     this.positions.set(id, position);

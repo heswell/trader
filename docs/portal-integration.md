@@ -324,7 +324,7 @@ A green instrument picker sits in the toolbar, next to an account selector.
 
 ## Verified
 
-Verified with @vuu-ui 4.0.0-alpha.21, Keycloak 26.4.2 (real OIDC login and token exchange) and headless Chrome
+Verified with @vuu-ui 4.0.0-alpha.22, Keycloak 26.4.2 (real OIDC login and token exchange) and headless Chrome
 against `bun run start:all`, with the trading modules on the standalone trading server. The scripts are not in the
 repo. Screenshots are in [docs/screenshots](screenshots).
 

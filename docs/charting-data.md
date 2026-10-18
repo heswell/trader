@@ -119,8 +119,20 @@ Times use the OMS clock. The fields are part of the order snapshot and survive a
   position (`totalPnlUsd`); exposure lines from `grossExposure` / `netExposure`.
 - **Slippage scatter.** `parentOrders` with `cumQty > 0`: x = `notional` or `quantity`, y = `slippageBps`, colour by
   side or `ordType`; `timeToFirstFill` / `timeToComplete` histograms.
-- **Exposure treemap.** `positionPrices` grouped by `sector` → `ric`, area = |`marketValue`| (convert to USD per
-  currency), colour = `totalPnl` or side.
+- **Exposure treemap.** `positionPrices` grouped by `sector` → `ric`, area = |`marketValueUsd`|, colour = sign
+  (or area = |`totalPnlUsd`|).
+
+## In the UI
+
+`@heswell/trading-ui` has a component for most of these ([components/charts.md](components/charts.md)), on
+`@vuu-ui/vuu-chart`: `PriceChart` (candles, volume, VWAP, fills, interval selector), `DepthChartView`, `SpreadChart`
+(spread / imbalance), `PnlHistoryChart`, `ExposureTreemap` and `SlippageChart`. The portal has **Chart**,
+**Depth chart** and **Analytics** features; the Trader workspace stacks Chart / Depth / Depth chart in its middle
+column.
+
+`positions` (and so `positionPrices`) also carry `marketValueUsd` and `totalPnlUsd`: the OMS converts the
+instrument-currency values with the instrument's `usdPerPriceUnit` (GBX lines included) on every mark, so positions in
+different currencies can be summed or compared.
 
 ## Configuration
 

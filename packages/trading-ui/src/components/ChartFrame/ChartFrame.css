@@ -1,0 +1,58 @@
+.tradingChartFrame {
+  background: var(--salt-container-primary-background);
+  color: var(--salt-content-primary-foreground);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--salt-text-fontFamily);
+  font-size: var(--salt-text-fontSize);
+  font-variant-numeric: tabular-nums;
+  min-height: 0;
+  min-width: 0;
+
+  /* map the trading semantic colours onto vuu-chart's theme tokens */
+  & .vuuChart {
+    --vuuChart-upColor: var(
+      --trading-up,
+      var(--salt-sentiment-positive-foreground-decorative)
+    );
+    --vuuChart-downColor: var(
+      --trading-down,
+      var(--salt-sentiment-negative-foreground-decorative)
+    );
+  }
+}
+
+.tradingChartFrame-toolbar {
+  align-items: center;
+  border-bottom: var(--salt-size-border) var(--salt-separable-borderStyle)
+    var(--salt-separable-tertiary-borderColor);
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--salt-spacing-200);
+  min-height: calc(var(--salt-size-base) + var(--salt-spacing-100));
+  padding: 0 var(--salt-spacing-100);
+}
+
+.tradingChartFrame-title {
+  font-weight: var(--salt-text-fontWeight-strong);
+  white-space: nowrap;
+}
+
+.tradingChartFrame-spacer {
+  flex: 1 1 auto;
+}
+
+.tradingChartFrame-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  position: relative;
+}
+
+.tradingChartFrame-message {
+  align-items: center;
+  color: var(--salt-content-secondary-foreground);
+  display: flex;
+  height: 100%;
+  justify-content: center;
+}
