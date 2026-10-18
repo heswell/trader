@@ -33,6 +33,7 @@ export {
 } from "./engine/gateway";
 export {
   type ChildOrder,
+  executionQuality,
   type Fill,
   OmsEngine,
   type OmsEngineOptions,
@@ -48,6 +49,13 @@ export {
   type OmsLogger,
   type OmsServiceOptions,
 } from "./engine/OmsService";
+export {
+  type AccountPnlHistoryRow,
+  PnlHistory,
+  type PnlHistoryOptions,
+  type PnlHistoryRow,
+  type PnlHistorySink,
+} from "./engine/PnlHistory";
 export { BackgroundFlow } from "./flow/BackgroundFlow";
 export {
   type AccessScope,

@@ -56,6 +56,8 @@ export const EXCHANGE_TABLE_NAMES: readonly ExchangeTableName[] = [
   "prices",
   "depth",
   "trades",
+  "bars",
+  "bookSamples",
   "instrumentPrices",
 ];
 export const OMS_TABLE_NAMES: readonly OmsLocalTableName[] = [
@@ -64,15 +66,19 @@ export const OMS_TABLE_NAMES: readonly OmsLocalTableName[] = [
   "childOrders",
   "fills",
   "positions",
+  "pnlHistory",
+  "accountPnlHistory",
   "positionPrices",
 ];
 
 /**
- * Browser defaults: lighter than the server (50 instruments) so the showcase
- * stays responsive; everything else is the server default.
+ * Browser defaults: lighter than the server (50 instruments, 200 bars per
+ * series) so the showcase stays responsive; everything else is the server
+ * default.
  */
 export const LOCAL_EXCHANGE_DEFAULTS: Partial<ExchangeSimConfig> = {
   activeInstruments: 50,
+  barHistory: 200,
 };
 
 export interface TradingTestDataOptions {
@@ -116,7 +122,7 @@ export interface TradingTestData {
   /**
    * Deterministic time step (manual clock only): advances the clock in
    * `botStepMs` slices, stepping the exchange and the OMS flow, then
-   * publishes and marks positions.
+   * publishes and marks positions (taking a P&L history sample when due).
    */
   advance(ms: number): void;
   /**
@@ -204,6 +210,8 @@ export const createTradingTestData = ({
   const prices = tableFor(exchangeTables.prices);
   const depth = tableFor(exchangeTables.depth);
   const trades = tableFor(exchangeTables.trades);
+  const bars = tableFor(exchangeTables.bars);
+  const bookSamples = tableFor(exchangeTables.bookSamples);
   const omsTableMap = forEachTable(
     Object.keys(omsTables) as OmsTableName[],
     (name) => tableFor(omsTables[name]),
@@ -224,6 +232,8 @@ export const createTradingTestData = ({
     prices: prices.engineTable,
     depth: depth.engineTable,
     trades: trades.engineTable,
+    bars: bars.engineTable,
+    bookSamples: bookSamples.engineTable,
   });
   for (const name of Object.keys(omsTableMap) as OmsTableName[]) {
     omsService.tables.attach(name, omsTableMap[name].engineTable);
@@ -284,6 +294,8 @@ export const createTradingTestData = ({
     prices,
     depth,
     trades,
+    bars,
+    bookSamples,
     instrumentPrices: instrumentPricesJoin,
   };
   const exchangeSchemas = forEachTable(
@@ -381,7 +393,7 @@ export const createTradingTestData = ({
         elapsed += dt;
       }
       sim.flush();
-      omsService.engine.markToMarket();
+      omsService.mark();
     },
     rpc,
     dispose() {

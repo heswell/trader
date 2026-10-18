@@ -21,7 +21,7 @@ Imports: `@heswell/trading-test-data`, `@heswell/trading-test-data/react`. 18 ex
 
 #### createTradingTestData
 
-*function* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L173)
+*function* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L179)
 
 Create the EXCHANGE and OMS engine-local modules, backed by the real
 
@@ -41,10 +41,11 @@ const EXCHANGE_TABLE_NAMES: readonly ExchangeTableName[]
 
 #### LOCAL_EXCHANGE_DEFAULTS
 
-*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L74)
+*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L79)
 
-Browser defaults: lighter than the server (50 instruments) so the showcase
-stays responsive; everything else is the server default.
+Browser defaults: lighter than the server (50 instruments, 200 bars per
+series) so the showcase stays responsive; everything else is the server
+default.
 
 ```ts
 const LOCAL_EXCHANGE_DEFAULTS: Partial<ExchangeSimConfig>
@@ -52,7 +53,7 @@ const LOCAL_EXCHANGE_DEFAULTS: Partial<ExchangeSimConfig>
 
 #### OMS_TABLE_NAMES
 
-*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L61)
+*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L63)
 
 ```ts
 const OMS_TABLE_NAMES: readonly OmsLocalTableName[]
@@ -62,7 +63,7 @@ const OMS_TABLE_NAMES: readonly OmsLocalTableName[]
 
 #### TradingTestData
 
-*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L101)
+*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L107)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -76,13 +77,13 @@ const OMS_TABLE_NAMES: readonly OmsLocalTableName[]
 | `running` | `boolean` |  |  |
 | `start` | `() => void` |  | Start the exchange step/flush and OMS flow/mark timers. |
 | `stop` | `() => void` |  |  |
-| `advance` | `(ms: number) => void` |  | Deterministic time step (manual clock only): advances the clock in `botStepMs` slices, stepping the exchange and the OMS flow, then publishes and marks positions. |
+| `advance` | `(ms: number) => void` |  | Deterministic time step (manual clock only): advances the clock in `botStepMs` slices, stepping the exchange and the OMS flow, then publishes and marks positions (taking a P&L history sample when due). |
 | `rpc` | `(rpcName: RpcName, params: object, user?: TradingUser) => RpcResult` |  | Invoke an RPC directly, as `user` (default: engine-local current user), exactly as a viewport RPC would be handled. |
 | `dispose` | `() => void` |  | Stop timers and dispose the sim, the OMS and the local engine. |
 
 #### TradingTestDataOptions
 
-*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L78)
+*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L84)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |

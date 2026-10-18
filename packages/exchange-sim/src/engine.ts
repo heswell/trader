@@ -6,6 +6,7 @@
 export {
   DEFAULT_CONFIG,
   type ExchangeSimConfig,
+  barIntervalList,
   loadExchangeSimConfig,
   validateConfig,
 } from "./config";
@@ -35,9 +36,22 @@ export {
 export {
   type ExchangeTables,
   MarketDataPublisher,
+  type PublisherOptions,
   type PublishTable,
   type TapeTrade,
 } from "./publish/MarketDataPublisher";
+export {
+  type Bar,
+  BarAggregator,
+  type BarOptions,
+  type BackfillBar,
+} from "./publish/BarAggregator";
+export {
+  BookSampler,
+  type BookSampleOptions,
+  type SampleLevel,
+} from "./publish/BookSampler";
+export { generateBackfillBars } from "./engine/barBackfill";
 export {
   ALL_INSTRUMENTS,
   type InstrumentDef,

@@ -19,6 +19,14 @@ import { ExchangeAdminRpcHandler } from "./ExchangeAdminService";
 
 type ProviderTable = ConstructorParameters<typeof Provider>[0];
 type TableName = keyof ExchangeTables;
+const TABLE_NAMES: readonly TableName[] = [
+  "instruments",
+  "prices",
+  "depth",
+  "trades",
+  "bars",
+  "bookSamples",
+];
 
 export interface ExchangeModuleOptions {
   /** Start the step/flush timers once tables are loaded (default true). */
@@ -26,7 +34,7 @@ export interface ExchangeModuleOptions {
 }
 
 /**
- * Collects the four EXCHANGE tables as their providers load, then hands them
+ * Collects the EXCHANGE tables as their providers load, then hands them
  * to the simulator (static rows + initial snapshot) and starts it.
  */
 class TableBinder {
@@ -40,9 +48,12 @@ class TableBinder {
 
   bind(name: TableName, table: PublishTable) {
     this.#tables[name] = table;
-    const { instruments, prices, depth, trades } = this.#tables;
-    if (instruments && prices && depth && trades && !this.sim.publisher) {
-      this.sim.attachTables({ instruments, prices, depth, trades });
+    const tables = this.#tables;
+    if (
+      TABLE_NAMES.every((tableName) => tables[tableName]) &&
+      !this.sim.publisher
+    ) {
+      this.sim.attachTables(tables as ExchangeTables);
       if (this.autoStart && !this.#stopped) this.sim.start();
     }
   }
@@ -72,8 +83,8 @@ class SimTableProvider extends Provider {
 }
 
 /**
- * The EXCHANGE Vuu module: instruments, prices, depth, trades and the
- * instrumentPrices join, all driven by `sim`. Every table (including the
+ * The EXCHANGE Vuu module: instruments, prices, depth, trades, bars,
+ * bookSamples and the instrumentPrices join, all driven by `sim`. Every table (including the
  * join) carries the admin RPC service.
  */
 export const ExchangeModule = (
@@ -103,6 +114,8 @@ export const ExchangeModule = (
     .addTable(defs.prices, provider("prices"), serviceFactory)
     .addTable(defs.depth, provider("depth"), serviceFactory)
     .addTable(defs.trades, provider("trades"), serviceFactory)
+    .addTable(defs.bars, provider("bars"), serviceFactory)
+    .addTable(defs.bookSamples, provider("bookSamples"), serviceFactory)
     .addJoinTable(toServerJoinFactory(instrumentPrices), serviceFactory)
     .asModule();
 };

@@ -132,6 +132,117 @@ export const trades = defineTable({
   ],
 });
 
+/** Levels per side carried by a `bookSamples` row (bidPx0..4, askSz0..4, ...). */
+export const BOOK_SAMPLE_LEVELS = 5;
+
+const levelColumns = <const P extends string>(prefix: P, what: string) =>
+  [0, 1, 2, 3, 4].map((level) => ({
+    name: `${prefix}${level}` as `${P}${0 | 1 | 2 | 3 | 4}`,
+    dataType: "double" as const,
+    description: `${what} at level ${level} (0 = best; empty when the book is thinner).`,
+  }));
+
+export const bars = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "bars",
+  keyField: "id",
+  description:
+    "OHLCV bars built from exchange trades; key 'ric|interval|start' (see barKey). The current bar updates in place; closed bars are kept in a rolling window per ric / interval. Intervals are exchange-clock (wall) time.",
+  columns: [
+    { name: "id", dataType: "string" },
+    { name: "ric", dataType: "string" },
+    {
+      name: "interval",
+      dataType: "string",
+      description: "Bar interval, e.g. 1s, 1m, 5m (exchangeSim.barIntervals).",
+    },
+    {
+      name: "start",
+      dataType: "epochtimestamp",
+      description: "Bar open time (inclusive), aligned to the interval.",
+    },
+    {
+      name: "end",
+      dataType: "epochtimestamp",
+      description: "Bar close time (exclusive): start + interval.",
+    },
+    { name: "open", dataType: "double" },
+    { name: "high", dataType: "double" },
+    { name: "low", dataType: "double" },
+    { name: "close", dataType: "double" },
+    { name: "volume", dataType: "long" },
+    { name: "turnover", dataType: "double" },
+    { name: "vwap", dataType: "double" },
+    { name: "trades", dataType: "int", description: "Number of trades." },
+    {
+      name: "closed",
+      dataType: "boolean",
+      description: "False for the bar still being built (updated in place).",
+    },
+    {
+      name: "backfilled",
+      dataType: "boolean",
+      description:
+        "True for synthetic history generated at startup (exchangeSim.barBackfill).",
+    },
+  ],
+  links: [
+    { fromColumn: "ric", toTable: "prices", toColumn: "ric" },
+    { fromColumn: "ric", toTable: "instrumentPrices", toColumn: "ric" },
+  ],
+});
+
+export const bookSamples = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "bookSamples",
+  keyField: "id",
+  description:
+    "Periodic order book samples per instrument (rolling window); key 'ric|time' (see bookSampleKey). For depth heatmaps and spread / imbalance charts.",
+  columns: [
+    { name: "id", dataType: "string" },
+    { name: "ric", dataType: "string" },
+    {
+      name: "time",
+      dataType: "epochtimestamp",
+      description: "Sample time, aligned to exchangeSim.bookSampleIntervalMs.",
+    },
+    { name: "bid", dataType: "double" },
+    { name: "ask", dataType: "double" },
+    { name: "mid", dataType: "double" },
+    {
+      name: "spreadBps",
+      dataType: "double",
+      description: "10000 * (ask - bid) / mid.",
+    },
+    { name: "bidSize", dataType: "long", description: "Size at the best bid." },
+    { name: "askSize", dataType: "long", description: "Size at the best ask." },
+    {
+      name: "bidDepth",
+      dataType: "long",
+      description: "Cumulative bid size of the top 5 levels.",
+    },
+    {
+      name: "askDepth",
+      dataType: "long",
+      description: "Cumulative ask size of the top 5 levels.",
+    },
+    {
+      name: "imbalance",
+      dataType: "double",
+      description:
+        "(bidDepth - askDepth) / (bidDepth + askDepth), in [-1, 1]; > 0 = bid heavy.",
+    },
+    ...levelColumns("bidPx", "Bid price"),
+    ...levelColumns("bidSz", "Bid size"),
+    ...levelColumns("askPx", "Ask price"),
+    ...levelColumns("askSz", "Ask size"),
+  ],
+  links: [
+    { fromColumn: "ric", toTable: "prices", toColumn: "ric" },
+    { fromColumn: "ric", toTable: "instrumentPrices", toColumn: "ric" },
+  ],
+});
+
 // ---------------------------------------------------------------- OMS
 
 export const accounts = defineTable({
@@ -201,6 +312,29 @@ export const parentOrders = defineTable({
     ...orderColumns,
     { name: "version", dataType: "int", description: "Incremented per amend." },
     { name: "notional", dataType: "double", description: "cumQty * avgPx" },
+    {
+      name: "arrivalPrice",
+      dataType: "double",
+      description:
+        "Mid at order creation (last, else refPrice, when the book is one-sided).",
+    },
+    {
+      name: "slippageBps",
+      dataType: "double",
+      description:
+        "avgPx vs arrivalPrice in bps, signed so positive = worse (paid more / sold lower); 0 until filled.",
+    },
+    {
+      name: "timeToFirstFill",
+      dataType: "long",
+      description:
+        "ms from created to the first fill; 0 until filled (check cumQty).",
+    },
+    {
+      name: "timeToComplete",
+      dataType: "long",
+      description: "ms from created to FILLED; 0 unless FILLED.",
+    },
   ],
   links: [{ fromColumn: "account", toTable: "accounts", toColumn: "account" }],
 });
@@ -300,6 +434,73 @@ export const positions = defineTable({
   links: [{ fromColumn: "account", toTable: "accounts", toColumn: "account" }],
 });
 
+const pnlColumns = [
+  { name: "realizedPnl", dataType: "double" },
+  { name: "unrealizedPnl", dataType: "double" },
+  { name: "totalPnl", dataType: "double" },
+  {
+    name: "grossExposure",
+    dataType: "double",
+    description: "Sum of |market value|.",
+  },
+  {
+    name: "netExposure",
+    dataType: "double",
+    description: "Sum of signed market value (+long / -short).",
+  },
+] as const;
+
+export const pnlHistory = defineTable({
+  module: OMS_MODULE,
+  name: "pnlHistory",
+  keyField: "id",
+  description:
+    "Periodic P&L snapshots per position (rolling window); key 'account|ric|time' (see pnlHistoryKey). A row is written only when the position changed since its previous sample; read as a step series. P&L in instrument currency, *Usd columns converted.",
+  columns: [
+    { name: "id", dataType: "string" },
+    { name: "account", dataType: "string" },
+    { name: "ric", dataType: "string" },
+    {
+      name: "time",
+      dataType: "epochtimestamp",
+      description: "Sample time, aligned to oms.pnlHistoryIntervalMs.",
+    },
+    { name: "quantity", dataType: "long" },
+    { name: "avgCost", dataType: "double" },
+    { name: "markPx", dataType: "double" },
+    { name: "marketValue", dataType: "double" },
+    ...pnlColumns,
+    { name: "totalPnlUsd", dataType: "double" },
+    { name: "marketValueUsd", dataType: "double" },
+    { name: "currency", dataType: "string" },
+  ],
+  links: [{ fromColumn: "account", toTable: "accounts", toColumn: "account" }],
+});
+
+export const accountPnlHistory = defineTable({
+  module: OMS_MODULE,
+  name: "accountPnlHistory",
+  keyField: "id",
+  description:
+    "Periodic account totals, in USD (rolling window); key 'account|time' (see accountPnlHistoryKey).",
+  columns: [
+    { name: "id", dataType: "string" },
+    { name: "account", dataType: "string" },
+    {
+      name: "time",
+      dataType: "epochtimestamp",
+      description: "Sample time, aligned to oms.pnlHistoryIntervalMs.",
+    },
+    {
+      name: "positions",
+      dataType: "int",
+      description: "Positions with a non-zero quantity.",
+    },
+    ...pnlColumns,
+  ],
+  links: [{ fromColumn: "account", toTable: "accounts", toColumn: "account" }],
+});
+
 // ---------------------------------------------------------------- joins
 
 /** Instrument grid: static + live prices. */
@@ -331,13 +532,22 @@ export const positionPrices = defineJoin({
   description: "positions x prices on ric (live P&L view).",
 });
 
-export const exchangeTables = { instruments, prices, depth, trades } as const;
+export const exchangeTables = {
+  instruments,
+  prices,
+  depth,
+  trades,
+  bars,
+  bookSamples,
+} as const;
 export const omsTables = {
   accounts,
   parentOrders,
   childOrders,
   fills,
   positions,
+  pnlHistory,
+  accountPnlHistory,
 } as const;
 export const tradingTables = { ...exchangeTables, ...omsTables } as const;
 export const tradingJoins = { instrumentPrices, positionPrices } as const;
@@ -354,3 +564,7 @@ export type ParentOrderRow = RowOf<typeof parentOrders>;
 export type ChildOrderRow = RowOf<typeof childOrders>;
 export type FillRow = RowOf<typeof fills>;
 export type PositionRow = RowOf<typeof positions>;
+export type BarRow = RowOf<typeof bars>;
+export type BookSampleRow = RowOf<typeof bookSamples>;
+export type PnlHistoryRow = RowOf<typeof pnlHistory>;
+export type AccountPnlHistoryRow = RowOf<typeof accountPnlHistory>;

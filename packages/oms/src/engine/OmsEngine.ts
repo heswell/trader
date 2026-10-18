@@ -54,7 +54,57 @@ export interface OrderInfo {
 
 export interface ParentOrder extends OrderInfo {
   childOrderId?: string;
+  /** Mid (else last / reference price) when the order was created; 0 = none. */
+  arrivalPrice?: number;
+  /** OMS clock time of the first fill. */
+  firstFillAt?: number;
+  /** OMS clock time the order became fully FILLED. */
+  completedAt?: number;
 }
+
+/**
+ * Execution quality of a parent order versus its arrival price. Slippage is
+ * signed so positive = worse than arrival (bought above / sold below), in
+ * basis points of arrivalPrice; 0 until filled or without an arrival price.
+ * Times are ms from creation; 0 = not (yet) reached.
+ */
+export const executionQuality = (
+  parent: Pick<
+    ParentOrder,
+    "side" | "created" | "arrivalPrice" | "firstFillAt" | "completedAt"
+  > & { state: Pick<OrderState, "cumQty" | "avgPx"> },
+) => {
+  const arrival = parent.arrivalPrice ?? 0;
+  const { cumQty, avgPx } = parent.state;
+  let slippageBps = 0;
+  if (arrival > 0 && cumQty > 0) {
+    const diff = parent.side === Side.Buy ? avgPx - arrival : arrival - avgPx;
+    slippageBps = Math.round((diff / arrival) * 1e6) / 100;
+  }
+  const since = (time?: number) =>
+    time === undefined ? 0 : Math.max(0, time - parent.created);
+  return {
+    arrivalPrice: arrival,
+    slippageBps,
+    timeToFirstFill: since(parent.firstFillAt),
+    timeToComplete: since(parent.completedAt),
+  };
+};
+
+const orderInfo = (order: OrderInfo): OrderInfo => ({
+  orderId: order.orderId,
+  clOrdId: order.clOrdId,
+  trader: order.trader,
+  account: order.account,
+  ric: order.ric,
+  side: order.side,
+  ordType: order.ordType,
+  timeInForce: order.timeInForce,
+  currency: order.currency,
+  created: order.created,
+  lastUpdate: order.lastUpdate,
+  state: order.state,
+});
 
 export interface ChildOrder extends OrderInfo {
   parentOrderId: string;
@@ -552,6 +602,16 @@ export class OmsEngine {
     const timeInForce = request.timeInForce ?? TimeInForce.Day;
     const price = request.ordType === OrdType.Market ? 0 : (request.price ?? 0);
     const instrument = this.#gateway.getInstrument(request.ric);
+    const top = this.#gateway.getTopOfBook(request.ric);
+    // 1e-8 strips float noise from the mid of two tick prices
+    const arrivalPrice =
+      Math.round(
+        (top && top.bid > 0 && top.ask > 0
+          ? (top.bid + top.ask) / 2
+          : instrument
+            ? referencePrice(instrument, top)
+            : 0) * 1e8,
+      ) / 1e8;
     const parent: ParentOrder = {
       orderId: `O-${++this.#orderSeq}`,
       clOrdId: request.clOrdId,
@@ -565,6 +625,7 @@ export class OmsEngine {
       created: now,
       lastUpdate: now,
       state: newOrderState(request.quantity, price),
+      arrivalPrice,
     };
     this.parents.set(parent.orderId, parent);
 
@@ -580,7 +641,7 @@ export class OmsEngine {
 
     const childOrderId = `${parent.orderId}-1`;
     const child: ChildOrder = {
-      ...parent,
+      ...orderInfo(parent),
       orderId: childOrderId,
       parentOrderId: parent.orderId,
       clOrdId: childOrderId,
@@ -898,6 +959,7 @@ export class OmsEngine {
     if (!event) return;
     try {
       this.#applyChild(child, event);
+      if (event.type === "fill") parent.firstFillAt ??= this.#clock();
       this.#applyParent(parent, event);
     } catch (err) {
       if (!(err instanceof OrderStateError)) throw err;
@@ -977,6 +1039,9 @@ export class OmsEngine {
   #applyParent(parent: ParentOrder, event: OrderEvent) {
     parent.state = reduceOrder(parent.state, event);
     parent.lastUpdate = this.#clock();
+    if (parent.state.status === OrdStatus.Filled) {
+      parent.completedAt ??= parent.lastUpdate;
+    }
     this.#publishParent(parent);
   }
 
@@ -1022,6 +1087,7 @@ export class OmsEngine {
       ...this.#orderRow(parent),
       version: parent.state.version,
       notional: parent.state.cumQty * parent.state.avgPx,
+      ...executionQuality(parent),
     });
   }
 

@@ -70,7 +70,9 @@ export class FakeTable implements PublishTable {
   }
 }
 
-export type FakeExchangeTables = { [K in keyof ExchangeTables]: FakeTable };
+export type FakeExchangeTables = {
+  [K in keyof ExchangeTables]-?: FakeTable;
+};
 
 export const createFakeTables = (): FakeExchangeTables => {
   const defs = createExchangeTableDefs();
@@ -81,5 +83,7 @@ export const createFakeTables = (): FakeExchangeTables => {
     prices: make(defs.prices),
     depth: make(defs.depth),
     trades: make(defs.trades),
+    bars: make(defs.bars),
+    bookSamples: make(defs.bookSamples),
   };
 };

@@ -9,6 +9,11 @@ import {
   toRowArray,
 } from "@heswell/trading-schemas";
 import type { OmsSink } from "../../engine/OmsEngine";
+import type {
+  AccountPnlHistoryRow,
+  PnlHistoryRow,
+  PnlHistorySink,
+} from "../../engine/PnlHistory";
 
 type RowValue = string | number | boolean;
 
@@ -19,6 +24,7 @@ export interface OmsTable {
   insert(row: RowValue[]): unknown;
   updateByKey(key: string, values: Record<string, RowValue>): unknown;
   rowIndexAtKey(key: string): number;
+  delete(key: string): unknown;
 }
 
 export type OmsTableName = keyof typeof omsTables;
@@ -27,16 +33,18 @@ export type OmsTableName = keyof typeof omsTables;
  * OmsSink writing to the Vuu tables. Rows emitted before a table's provider
  * has loaded are buffered (latest per key) and written on attach.
  */
-export class TableSink implements OmsSink {
+export class TableSink implements OmsSink, PnlHistorySink {
   #tables: Partial<Record<OmsTableName, OmsTable>> = {};
   #pending = new Map<OmsTableName, Map<string, Record<string, unknown>>>();
-  /** Rows written (insert + update) per table, for perf stats. */
+  /** Rows written (insert + update + delete) per table, for perf stats. */
   readonly writes: Record<OmsTableName, number> = {
     accounts: 0,
     parentOrders: 0,
     childOrders: 0,
     fills: 0,
     positions: 0,
+    pnlHistory: 0,
+    accountPnlHistory: 0,
   };
 
   attach(name: OmsTableName, table: OmsTable) {
@@ -85,4 +93,19 @@ export class TableSink implements OmsSink {
   fill = (row: object) => this.#write(fills.name as OmsTableName, { ...row });
   position = (row: object) =>
     this.#write(positions.name as OmsTableName, { ...row });
+  pnlHistory = (row: PnlHistoryRow) => this.#write("pnlHistory", { ...row });
+  accountPnlHistory = (row: AccountPnlHistoryRow) =>
+    this.#write("accountPnlHistory", { ...row });
+
+  /** Delete a row (or drop it from the pre-attach buffer). */
+  deleteRow = (name: OmsTableName, key: string) => {
+    const table = this.#tables[name];
+    if (!table) {
+      this.#pending.get(name)?.delete(key);
+      return;
+    }
+    if (table.rowIndexAtKey(key) === -1) return;
+    table.delete(key);
+    this.writes[name]++;
+  };
 }

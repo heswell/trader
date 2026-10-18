@@ -173,6 +173,11 @@ append-heavy WAL. `bun:sqlite` is built in. A DuckDB export for analytics (fills
 - With `oms.gatewayLatencyMs > 0`, requests still in flight in the simulated gateway are lost. Reconciliation
   rejects them (`PENDING_*` → rejected), so the user can retry.
 - Mark-to-market (`positions` mark / unrealised P&L) is not journaled; the mark timer recomputes it.
+- Chart data is not persisted ([charting-data.md](charting-data.md)). `bars` and `bookSamples` are rebuilt from
+  live trading after a restart (`bars` re-backfilled with synthetic history when `exchangeSim.barBackfill=1`);
+  `pnlHistory` / `accountPnlHistory` start empty. The parent order execution-quality fields (`arrivalPrice`,
+  first-fill / completion times) are part of the order snapshot and survive; orders from snapshots taken before
+  they existed show 0.
 - Snapshots grow with the history: every order, fill and position is kept and nothing is purged. With the
   background flow on, a snapshot reached ~3.4 MB after 20 minutes. End-of-day archiving is a follow-up.
 - There is no RPC to reset; use the script or `TRADER_PERSISTENCE_RESET=1`. A reset RPC would have to rebuild

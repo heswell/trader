@@ -5,32 +5,34 @@ import {
   instruments as instrumentsDef,
   prices as pricesDef,
   Side,
-  type TableDefinition,
   TradingPhase,
   trades as tradesDef,
 } from "@heswell/trading-schemas";
 import type { InstrumentBook } from "../engine/InstrumentBook";
 import type { InstrumentDef } from "../reference/instruments";
+import { BarAggregator, type BarOptions } from "./BarAggregator";
+import { BookSampler, type BookSampleOptions } from "./BookSampler";
+import { type PublishTable, RowLayout, round } from "./rows";
 import { TradeRingBuffer } from "./TradeRingBuffer";
 
-/** null = no value (no quote / no trade yet), rendered empty by the UI. */
-export type RowValue = string | number | boolean | null;
-
-/** Structural subset of a vuu-table Table used for publishing. */
-export interface PublishTable {
-  readonly columnMap: Record<string, number>;
-  readonly columns: readonly unknown[];
-  insert(row: RowValue[]): unknown;
-  update(rowIdx: number, row: RowValue[]): unknown;
-  delete(key: string): boolean;
-  rowIndexAtKey(key: string): number;
-}
+export type { PublishTable, RowValue } from "./rows";
 
 export interface ExchangeTables {
   instruments: PublishTable;
   prices: PublishTable;
   depth: PublishTable;
   trades: PublishTable;
+  /** OHLCV bars; omit (or disable in options) to skip bar aggregation. */
+  bars?: PublishTable;
+  /** Periodic book snapshots; omit (or disable in options) to skip sampling. */
+  bookSamples?: PublishTable;
+}
+
+export interface PublisherOptions {
+  /** Bar aggregation (needs `tables.bars`); omit or no intervals = off. */
+  bars?: BarOptions;
+  /** Book sampling (needs `tables.bookSamples`); omit or intervalMs 0 = off. */
+  bookSamples?: BookSampleOptions;
 }
 
 /** A trade as it appears on the public tape. */
@@ -52,6 +54,11 @@ export interface PublisherStats {
   depthUpdates: number;
   tradeInserts: number;
   tradeEvictions: number;
+  barInserts: number;
+  barUpdates: number;
+  barEvictions: number;
+  sampleInserts: number;
+  sampleEvictions: number;
 }
 
 interface PublishedLevel {
@@ -79,39 +86,6 @@ interface BookState {
   price?: PublishedPrice;
 }
 
-const round = (value: number, decimals: number) => {
-  const f = 10 ** decimals;
-  return Math.round(value * f) / f;
-};
-
-class RowLayout<T extends TableDefinition> {
-  readonly #template: RowValue[];
-  readonly idx: Record<T["columns"][number]["name"], number>;
-
-  /**
-   * numeric: the value for numeric columns not set by the caller. Prices use
-   * null (no quote or trade yet), so a LEFT JOIN or a pre-loaded row never
-   * shows a fake 0 (trader upstream issue 33).
-   */
-  constructor(table: PublishTable, def: T, numeric: 0 | null = 0) {
-    const template: RowValue[] = new Array(table.columns.length).fill(numeric);
-    const idx = {} as Record<string, number>;
-    for (const { name, dataType } of def.columns) {
-      const i = table.columnMap[name];
-      if (i === undefined) throw Error(`${def.name}: no column ${name}`);
-      idx[name] = i;
-      template[i] =
-        dataType === "string" ? "" : dataType === "boolean" ? false : numeric;
-    }
-    this.#template = template;
-    this.idx = idx;
-  }
-
-  row() {
-    return this.#template.slice();
-  }
-}
-
 /**
  * Publishes simulator state to the EXCHANGE tables. Book changes are
  * coalesced: each flush publishes the current state of every dirty book
@@ -126,7 +100,16 @@ export class MarketDataPublisher {
     depthUpdates: 0,
     tradeInserts: 0,
     tradeEvictions: 0,
+    barInserts: 0,
+    barUpdates: 0,
+    barEvictions: 0,
+    sampleInserts: 0,
+    sampleEvictions: 0,
   };
+  /** Bar aggregation, when enabled. */
+  readonly bars: BarAggregator | undefined;
+  /** Book sampling, when enabled. */
+  readonly bookSamples: BookSampler | undefined;
   readonly #ring: TradeRingBuffer;
   readonly #pendingTrades: TapeTrade[] = [];
   readonly #books = new Map<InstrumentBook, BookState>();
@@ -138,8 +121,23 @@ export class MarketDataPublisher {
     readonly tables: ExchangeTables,
     readonly depthLevels: number,
     tradesCapacity: number,
+    options: PublisherOptions = {},
   ) {
     this.#ring = new TradeRingBuffer(tradesCapacity);
+    if (tables.bars && options.bars && options.bars.intervals.length > 0) {
+      this.bars = new BarAggregator(tables.bars, options.bars, this.stats);
+    }
+    if (
+      tables.bookSamples &&
+      options.bookSamples &&
+      options.bookSamples.intervalMs > 0
+    ) {
+      this.bookSamples = new BookSampler(
+        tables.bookSamples,
+        options.bookSamples,
+        this.stats,
+      );
+    }
     this.#prices = new RowLayout(tables.prices, pricesDef, null);
     this.#depth = new RowLayout(tables.depth, depthDef);
     this.#trades = new RowLayout(tables.trades, tradesDef);
@@ -183,6 +181,7 @@ export class MarketDataPublisher {
 
   addTrade(trade: TapeTrade) {
     this.#pendingTrades.push(trade);
+    this.bars?.addTrade(trade.ric, trade.price, trade.size, trade.timestamp);
   }
 
   flush(books: Iterable<InstrumentBook>, now: number) {
@@ -191,6 +190,14 @@ export class MarketDataPublisher {
       if (book.dirty) this.publishBook(book, now);
     }
     this.#publishTrades();
+    this.bars?.flush(now);
+    const sampler = this.bookSamples;
+    if (sampler?.due(now)) {
+      const time = sampler.sampleTime(now);
+      for (const [book, state] of this.#books) {
+        sampler.sample(book.ric, time, state.bids, state.asks);
+      }
+    }
   }
 
   publishBook(book: InstrumentBook, now: number) {
@@ -374,7 +381,12 @@ export class MarketDataPublisher {
       s.priceUpdates +
       s.depthUpdates +
       s.tradeInserts +
-      s.tradeEvictions
+      s.tradeEvictions +
+      s.barInserts +
+      s.barUpdates +
+      s.barEvictions +
+      s.sampleInserts +
+      s.sampleEvictions
     );
   }
 }

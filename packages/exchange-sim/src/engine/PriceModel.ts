@@ -2,7 +2,7 @@ import { roundToTick, type TickSchedule } from "@heswell/trading-schemas";
 import type { Random } from "../util/random";
 
 /** Trading seconds per year used to convert elapsed time to GBM dt. */
-const SECONDS_PER_YEAR = 252 * 8.5 * 3600;
+export const SECONDS_PER_YEAR = 252 * 8.5 * 3600;
 
 /**
  * Fair-value process for one instrument: geometric Brownian motion with zero

@@ -12,6 +12,7 @@ import {
   TradingPhase,
 } from "@heswell/trading-schemas";
 import {
+  barIntervalList,
   DEFAULT_CONFIG,
   type ExchangeSimConfig,
   validateConfig,
@@ -33,6 +34,7 @@ import {
 } from "../reference/instruments";
 import { type Clock, systemClock } from "../util/clock";
 import { Random } from "../util/random";
+import { generateBackfillBars } from "./barBackfill";
 import { MarketMaker } from "./bots/MarketMaker";
 import { NoiseTaker } from "./bots/NoiseTaker";
 import { fromBookSide, InstrumentBook, toBookSide } from "./InstrumentBook";
@@ -283,15 +285,62 @@ export class ExchangeSimulator {
   attachTables(tables: ExchangeTables) {
     if (this.#publisher)
       throw Error("ExchangeSimulator: tables already attached");
+    const { config } = this;
+    const decimals = (ric: string) => this.#listed.get(ric)?.priceDecimals ?? 2;
     const publisher = new MarketDataPublisher(
       tables,
-      this.config.depthLevels,
-      this.config.tradesCapacity,
+      config.depthLevels,
+      config.tradesCapacity,
+      {
+        bars: {
+          intervals: barIntervalList(config.barIntervals),
+          history: config.barHistory,
+          decimals,
+        },
+        bookSamples: {
+          intervalMs: config.bookSampleIntervalMs,
+          history: config.bookSampleHistory,
+          decimals,
+        },
+      },
     );
     publisher.loadInstruments(this.universe, this.isSimulated);
     this.#publisher = publisher;
+    if (config.barBackfill && publisher.bars) this.#backfillBars(publisher);
     this.flush();
     return publisher;
+  }
+
+  /**
+   * Seed synthetic closed bars from the price model (see barBackfill), with
+   * a dedicated RNG so the live market's random streams are untouched.
+   */
+  #backfillBars(publisher: MarketDataPublisher) {
+    const bars = publisher.bars as NonNullable<MarketDataPublisher["bars"]>;
+    const { config } = this;
+    const now = this.clock();
+    const rng = new Random((config.seed ^ 0x5bd1e995) >>> 0);
+    for (const [i, book] of this.#books.entries()) {
+      const sim = this.#simulated.get(book.ric) as SimulatedInstrument;
+      const bookRng = rng.fork(i);
+      for (const [j, { label, ms }] of bars.intervals.entries()) {
+        bars.backfill(
+          book.ric,
+          label,
+          generateBackfillBars({
+            model: book.model,
+            lotSize: book.instrument.lotSize,
+            tradeSize: sim.taker.params.baseQty,
+            takerRate: sim.takerRate,
+            timeScale: config.timeScale,
+            intervalMs: ms,
+            count: config.barHistory,
+            now,
+            rng: bookRng.fork(j),
+          }),
+        );
+      }
+    }
   }
 
   // ---------------------------------------------------------------- session
