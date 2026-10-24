@@ -75,6 +75,15 @@ Helpers: `orderEventKindForStatus`, `orderEventKey`, `describeOrderEvent`, `orde
 `orderEventFromFill`. The building blocks can be used on their own: `NotificationGate` (dedupe + rate limit),
 `ParentOrderEventTracker`, `FillEventTracker` and `FillSound`.
 
+## Server notifications and the portal nav
+
+These toasts are client-side, built from the user's order and fill rows. The trading server also publishes a
+`NOTIFICATIONS` module (`OmsNotificationModule`, see [the OMS README](../../packages/oms/README.md#notifications)):
+rejects with `topic: "orders"` (ERROR, silent, since the toast above already shows them) and risk-limit warnings /
+breaches with `topic: "risk"`. The portal routes each row to the modules on the trading connection whose
+`notificationTopics` claim the topic (a dot in `PortalNav`), and anything unclaimed to the bell
+(`NotificationsIndicator scope="unclaimed"`). See [portal-integration.md](../portal-integration.md#portal-host-nav).
+
 ## Connection state and staleness
 
 In a portal, `TradingFeatureRoot` mounts the provider, launcher and banner for you (see [hosting.md](hosting.md#tradingfeatureroot)).

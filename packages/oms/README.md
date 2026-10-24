@@ -10,7 +10,7 @@ const oms = createOms(sim.gateway, {
   config: loadOmsConfig(config),
   rics: () => sim.books.map((book) => book.ric), // instruments for the background flow
 });
-// VuuServerConfig(...).withModule(ExchangeModule(sim)).withModule(OmsModule(oms))
+// VuuServerConfig(...).withModule(ExchangeModule(sim)).withModule(OmsModule(oms)).withModule(OmsNotificationModule(oms))
 ```
 
 - `apps/portal-config/src/start-trading.ts` runs EXCHANGE + OMS as the portal stack's trading server (keycloak auth with token exchange, `application.trading.conf`).
@@ -29,6 +29,8 @@ const oms = createOms(sim.gateway, {
 | `src/engine/OmsService.ts` | Engine + background flow + mark timer + table sink. `createOms(gateway, options)`. |
 | `src/flow/BackgroundFlow.ts` | Simulated "other traders". |
 | `src/modules/oms/*` | Vuu module: tables, RPC handler, edit session, permission filter. |
+| `src/notifications/OmsNotifier.ts` | Turns engine events into notifications: rejects, and risk-limit warnings / breaches. |
+| `src/modules/notifications/OmsNotificationModule.ts` | vuu-server's generic `NOTIFICATIONS` module fed by `OmsNotifier`. |
 
 ## Tables
 
@@ -54,6 +56,22 @@ These are the `trading-schemas` OMS tables: `accounts`, `parentOrders`, `childOr
   mark timer every `pnlHistoryIntervalMs`, `pnlHistoryLength` per key (oldest deleted). A position row is written only
   when its quantity, mark or realised P&L changed; account totals are in USD. Not persisted. See
   [docs/charting-data.md](../../docs/charting-data.md).
+
+## Notifications
+
+`OmsNotificationModule(oms)` registers vuu-server's generic `NOTIFICATIONS` module with a `notifications` table
+plus `account`, `ric` and `orderId` columns. Rows are filtered per user by `account`, as the OMS tables are, and
+each row's audience is the account owner. `OmsEngine.observe()` feeds `OmsNotifier`:
+
+| Event | topic | level | type | expires |
+| --- | --- | --- | --- | --- |
+| Parent order rejected | `orders` | ERROR | silent | 15 min |
+| Position notional ≥ 80% of `maxPositionNotional` | `risk` | WARNING | toast | 30 min |
+| Position notional ≥ `maxPositionNotional` | `risk` | ERROR | toast | 30 min |
+
+The risk alert fires once per crossing (0.05 hysteresis before it can fire again). Fills are not published: the
+background flow fills continuously. The provider sweeps expired rows every 15 s (`sweepIntervalMs`). The portal maps
+`topic` to the modules whose `notificationTopics` claim it.
 
 ## RPCs
 
@@ -276,7 +294,8 @@ periodically and on shutdown. `createTradingPersistence` (`@heswell/oms/persiste
 | config | 3 | Config |
 | engine | 22 | Lifecycle, partial fills, amend/cancel races, IOC/FOK/market, end of day, positions. Uses a real exchange-sim with a manual clock and scheduler. |
 | flow | 3 | Deterministic background flow |
-| OmsModule | 15 | Over WebSocket against a real `VuuServer` with EXCHANGE + OMS: RPC → fill → rows, the join, amend/cancel, rejects, permission filtering, the edit session (amend / cancel, stale rows, edit validation, hidden rows and other sessions, strict mode). |
+| notifications | 4 | `OmsNotifier`: one reject row, risk warn / breach / hysteresis, unknown accounts, `engine.observe`. |
+| OmsModule | 16 | Over WebSocket against a real `VuuServer` with EXCHANGE + OMS: RPC → fill → rows, the join, amend/cancel, rejects, permission filtering, the edit session (amend / cancel, stale rows, edit validation, hidden rows and other sessions, strict mode), a reject reaching the owner's `notifications` with `topic=orders`. |
 | session | 3 | Exchange trading session: DAY expiry at the close, `MARKET_CLOSED`, `endOfDay`. |
 | persistence | 16 | Restart from memory / file stores (graceful and crash), fill replay from exec reports, idempotence, reconcile (lost requests, orphans), DAY expiry while down, session / admin state, compaction, `kill -9` of a child process, config, reset. See [docs/persistence.md](../../docs/persistence.md#tests). |
 | persistenceServer | 1 | A real `VuuServer` on a file store: order and partial fill over WebSocket, stop, a new server recovers the rows, and the order then fills. |

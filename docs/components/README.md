@@ -1,7 +1,7 @@
 # Trading UI components
 
 `@heswell/trading-ui` is the reusable front end: React components, hooks and host services built on vuu-ui
-(`@vuu-ui/*` 4.0.0-alpha.22) and Salt. The same component runs inside vuu-portal, against a stand-alone Vuu server
+(`@vuu-ui/*` 4.0.0-alpha.25) and Salt. The same component runs inside vuu-portal, against a stand-alone Vuu server
 or on in-browser data (see [hosting.md](hosting.md) and [getting-started.md](../getting-started.md)).
 
 - **Guides** (this folder, hand-written): what each component is for, how to compose it, data, RPCs, roles and CSS.

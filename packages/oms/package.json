@@ -20,10 +20,10 @@
     "@heswell/exchange-sim": "workspace:*",
     "@heswell/trading-persistence": "workspace:*",
     "@heswell/trading-schemas": "workspace:*",
-    "@heswell/vuu-server": "^4.2.0",
-    "@vuu-ui/vuu-data-types": "4.0.0-alpha.22",
-    "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.22",
-    "@vuu-ui/vuu-utils": "4.0.0-alpha.22"
+    "@heswell/vuu-server": "^4.2.2",
+    "@vuu-ui/vuu-data-types": "4.0.0-alpha.25",
+    "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.25",
+    "@vuu-ui/vuu-utils": "4.0.0-alpha.25"
   },
   "devDependencies": {
     "@heswell/hft-limit-order-book": "2.0.0"

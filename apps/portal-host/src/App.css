@@ -6,45 +6,71 @@ body {
   overflow: hidden;
 }
 
-/*
- * @vuu-ui/core (alpha.21) lays the shell out with a fixed 56px icon rail; our
- * modules have no nav icons, so widen it to fit the labels. Keep the rows in
- * step with PortalShell.css (alpha.21 added the "banners" row).
- */
-#trader-portal {
-  --vuuPortalShell-leftPanel-width: 168px;
-  grid-template:
-    "nav header" 56px
-    "nav banners"
-    "nav content" 1fr
-    / var(--vuuPortalShell-leftPanel-width) 1fr;
-
-  .vuuNavContainer {
-    justify-items: stretch;
-    min-width: 0;
-  }
-
-  .vuuNavContainer .vuuPortalLogo {
-    grid-area: logo;
-    justify-self: center;
-  }
-
-  .vuuPortalShell-content {
-    min-width: 0;
-    min-height: 0;
-  }
+#trader-portal .vuuPortalShell-content {
+  min-width: 0;
+  min-height: 0;
 }
 
-#trader-portal .vuuPortalAppSwitcher a {
-  color: inherit;
-  text-decoration: none;
-}
+.traderNav {
+  .traderNavBrand-logo {
+    align-items: center;
+    display: inline-flex;
+    flex: none;
+    height: 26px;
+    justify-content: center;
+    width: 26px;
 
-/* Global connection status, overlaid on the header (docs/resilience.md) */
-#trader-portal .traderHostConnectionStatus {
-  align-self: center;
-  grid-area: header;
-  justify-self: center;
-  position: relative;
-  z-index: 1;
+    svg {
+      height: 22px;
+      width: 22px;
+    }
+  }
+
+  .traderNavBrand-logoButton {
+    background: none;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 0;
+
+    &:hover {
+      background: var(--salt-navigable-background-hover);
+    }
+
+    &:focus-visible {
+      outline: var(--salt-focused-outline);
+    }
+  }
+
+  .traderNavBrand-name {
+    font-size: 15px;
+    font-weight: var(--salt-text-fontWeight-strong, 600);
+  }
+
+  .traderNavBrand-env {
+    border: 1px solid var(--salt-separable-tertiary-borderColor);
+    border-radius: 4px;
+    color: var(--salt-content-secondary-foreground);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    padding: 1px 5px;
+    text-transform: uppercase;
+  }
+
+  .traderNavBrand-bell {
+    margin-left: auto;
+  }
+
+  .traderNavPnl {
+    font-weight: 600;
+  }
+
+  .traderNavPnl-up {
+    color: var(--salt-status-success-foreground, #24874b);
+  }
+
+  .traderNavPnl-down {
+    color: var(--salt-status-error-foreground, #e52135);
+  }
 }

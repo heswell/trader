@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@heswell/oms": "workspace:*",
-    "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.22"
+    "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.25"
   },
   "devDependencies": {
     "playwright": "^1.64.1"

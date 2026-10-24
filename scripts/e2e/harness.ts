@@ -145,11 +145,26 @@ export const check = (ok: boolean, what: string) => {
   if (!ok) failures.push(what);
 };
 
-/** The header connection indicator's state. */
+/** The nav footer's PortalConnectionStatus (worst of all connections). */
+export const CONNECTION_STATUS_SELECTOR =
+  ".vuuPortalNav-footer .vuuPortalConnectionStatus";
+
+/** PortalConnectionStatus `data-severity` as the e2e connection states. */
+const SEVERITY_STATE: Record<string, string> = {
+  ok: "connected",
+  warning: "reconnecting",
+  error: "disconnected",
+  unknown: "connecting",
+};
+
+/** The nav connection status: connected / reconnecting / disconnected / connecting. */
 export const indicatorState = (page: Page) =>
   page
-    .locator(".traderHostConnectionStatus")
-    .getAttribute("data-connection-state", { timeout: 2_000 })
+    .locator(CONNECTION_STATUS_SELECTOR)
+    .getAttribute("data-severity", { timeout: 2_000 })
+    .then((severity) =>
+      severity ? (SEVERITY_STATE[severity] ?? severity) : null,
+    )
     .catch(() => null);
 
 /** The host's error page text if a remote module failed to load. */

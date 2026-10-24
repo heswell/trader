@@ -4,7 +4,13 @@
  * this package's source. scripts/features/build.ts builds them into
  * dist/<key>/ and scripts/features/sync-build-config.ts generates
  * apps/portal-config/default-modules.yaml from this list.
+ *
+ * Nav: a module's `location` is "/<Section>/<Entry>". PortalNav sorts entries
+ * by `navOrder` and sections by their lowest entry's navOrder, so each
+ * section owns a hundreds band (Workspaces 10, Trading 100s, Market 200s,
+ * Portfolio 300s, Oversight 400s).
  */
+import type { TradingNavIcon } from "./navIcons";
 
 /**
  * Trading server roles: client roles of the trading Vuu server's own Keycloak
@@ -49,12 +55,35 @@ export interface TradingFeature {
   title: string;
   description: string;
   accessRole: TradingAccessRole;
-  /** Top-level modules: nav location and route. */
+  /** Top-level modules: nav location ("/<Section>/<Entry>") and route. */
   location?: string;
   path?: string;
+  /** Top-level modules: nav sort key (sections sort by their lowest). */
+  navOrder?: number;
+  /** Top-level modules: nav icon (navIcons.ts, emitted as navIconUrl). */
+  navIcon?: TradingNavIcon;
+  /** Key of a live nav badge the host renders (TradingNavBadgeKey). */
+  navBadge?: TradingNavBadgeKey;
+  /**
+   * Notification topics this module claims on the trading connection: the
+   * portal routes NOTIFICATIONS rows with a matching `topic` to it (nav dot,
+   * mark-read when opened). Unclaimed topics go to the bell only.
+   */
+  notificationTopics?: readonly TradingNotificationTopic[];
   /** Child modules: the parent's key (rendered by the parent, no nav entry). */
   parent?: string;
 }
+
+/** Live nav badges, rendered by the portal host (apps/portal-host). */
+export type TradingNavBadgeKey = "orders.working" | "positions.dayPnl";
+
+/** `topic` values the trading server writes to its NOTIFICATIONS table. */
+export type TradingNotificationTopic =
+  | "orders"
+  | "fills"
+  | "marketdata"
+  | "positions"
+  | "risk";
 
 const view = TRADING_ACCESS_ROLE["trading-view"];
 const execute = TRADING_ACCESS_ROLE["trading-execute"];
@@ -71,8 +100,11 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     description:
       "Prebuilt trader layout: watchlist, price / depth charts, depth, ticket, ladder, blotters, positions and tape with red / green link groups",
     accessRole: view,
-    location: "/Trading/Workspace",
-    path: "/trading/workspace",
+    location: "/Workspaces/Trader",
+    path: "/workspaces/trader",
+    navOrder: 10,
+    navIcon: "workspace",
+    notificationTopics: ["orders", "fills", "marketdata", "risk"],
   },
   {
     key: "workspace-ticket",
@@ -110,45 +142,9 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     accessRole: view,
     location: "/Trading/Watchlist",
     path: "/trading/watchlist",
-  },
-  {
-    key: "depth",
-    id: 111,
-    name: "TradingDepth",
-    mfScope: "tradingDepth",
-    expose: "./Depth",
-    source: "./src/features/Depth",
-    title: "Market depth",
-    description: "Order book depth for the linked instrument",
-    accessRole: view,
-    location: "/Trading/Depth",
-    path: "/trading/depth",
-  },
-  {
-    key: "ladder",
-    id: 112,
-    name: "TradingLadder",
-    mfScope: "tradingLadder",
-    expose: "./Ladder",
-    source: "./src/features/Ladder",
-    title: "Price ladder",
-    description: "Click-to-trade price ladder",
-    accessRole: execute,
-    location: "/Trading/Ladder",
-    path: "/trading/ladder",
-  },
-  {
-    key: "ticket",
-    id: 113,
-    name: "TradingTicket",
-    mfScope: "tradingTicket",
-    expose: "./Ticket",
-    source: "./src/features/Ticket",
-    title: "Order ticket",
-    description: "Docked order ticket following its link group",
-    accessRole: execute,
-    location: "/Trading/Ticket",
-    path: "/trading/ticket",
+    navOrder: 100,
+    navIcon: "watchlist",
+    notificationTopics: ["marketdata"],
   },
   {
     key: "orders",
@@ -162,6 +158,10 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     accessRole: view,
     location: "/Trading/Orders",
     path: "/trading/orders",
+    navOrder: 110,
+    navIcon: "orders",
+    navBadge: "orders.working",
+    notificationTopics: ["orders"],
   },
   {
     key: "fills",
@@ -170,24 +170,46 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     mfScope: "tradingFills",
     expose: "./Fills",
     source: "./src/features/Fills",
-    title: "Fills",
-    description: "Executions blotter",
+    title: "Executions",
+    description: "Executions (fills) blotter",
     accessRole: view,
-    location: "/Trading/Fills",
-    path: "/trading/fills",
+    location: "/Trading/Executions",
+    path: "/trading/executions",
+    navOrder: 120,
+    navIcon: "executions",
+    notificationTopics: ["fills"],
   },
   {
-    key: "positions",
-    id: 116,
-    name: "TradingPositions",
-    mfScope: "tradingPositions",
-    expose: "./Positions",
-    source: "./src/features/Positions",
-    title: "Positions",
-    description: "Positions and P&L by account / instrument",
+    key: "ladder",
+    id: 112,
+    name: "TradingLadder",
+    mfScope: "tradingLadder",
+    expose: "./Ladder",
+    source: "./src/features/Ladder",
+    title: "Price ladder",
+    description: "Click-to-trade price ladder",
+    accessRole: execute,
+    location: "/Trading/Price ladder",
+    path: "/trading/price-ladder",
+    navOrder: 130,
+    navIcon: "ladder",
+    notificationTopics: ["orders"],
+  },
+  {
+    key: "depth",
+    id: 111,
+    name: "TradingDepth",
+    mfScope: "tradingDepth",
+    expose: "./Depth",
+    source: "./src/features/Depth",
+    title: "Market depth",
+    description: "Order book depth for the linked instrument",
     accessRole: view,
-    location: "/Trading/Positions",
-    path: "/trading/positions",
+    location: "/Market/Market depth",
+    path: "/market/depth",
+    navOrder: 200,
+    navIcon: "depth",
+    notificationTopics: ["marketdata"],
   },
   {
     key: "tape",
@@ -196,11 +218,14 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     mfScope: "tradingTape",
     expose: "./Tape",
     source: "./src/features/Tape",
-    title: "Trade tape",
-    description: "Time and sales for the linked instrument",
+    title: "Time & sales",
+    description: "Time and sales (trade tape) for the linked instrument",
     accessRole: view,
-    location: "/Trading/Tape",
-    path: "/trading/tape",
+    location: "/Market/Time & sales",
+    path: "/market/time-and-sales",
+    navOrder: 210,
+    navIcon: "tape",
+    notificationTopics: ["marketdata"],
   },
   {
     key: "chart",
@@ -213,8 +238,10 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     description:
       "Candlestick price chart (1s / 1m / 5m bars) for the linked instrument with VWAP and the account's fills",
     accessRole: view,
-    location: "/Trading/Chart",
-    path: "/trading/chart",
+    location: "/Market/Chart",
+    path: "/market/chart",
+    navOrder: 220,
+    navIcon: "chart",
   },
   {
     key: "depth-chart",
@@ -226,22 +253,73 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     title: "Depth chart",
     description: "Live cumulative depth chart for the linked instrument",
     accessRole: view,
-    location: "/Trading/Depth chart",
-    path: "/trading/depth-chart",
+    location: "/Market/Depth chart",
+    path: "/market/depth-chart",
+    navOrder: 230,
+    navIcon: "depth-chart",
   },
   {
-    key: "analytics",
-    id: 121,
-    name: "TradingAnalytics",
-    mfScope: "tradingAnalytics",
-    expose: "./Analytics",
-    source: "./src/features/Analytics",
-    title: "Analytics",
-    description:
-      "Account P&L history, exposure / P&L treemap by sector and execution slippage vs arrival",
+    key: "positions",
+    id: 116,
+    name: "TradingPositions",
+    mfScope: "tradingPositions",
+    expose: "./Positions",
+    source: "./src/features/Positions",
+    title: "Positions",
+    description: "Positions and P&L by account / instrument",
     accessRole: view,
-    location: "/Trading/Analytics",
-    path: "/trading/analytics",
+    location: "/Portfolio/Positions",
+    path: "/portfolio/positions",
+    navOrder: 300,
+    navIcon: "positions",
+    navBadge: "positions.dayPnl",
+    notificationTopics: ["positions", "risk"],
+  },
+  {
+    key: "pnl",
+    id: 121,
+    name: "TradingPnl",
+    mfScope: "tradingPnl",
+    expose: "./Pnl",
+    source: "./src/features/Pnl",
+    title: "P&L",
+    description: "Account P&L history (realised / unrealised)",
+    accessRole: view,
+    location: "/Portfolio/P&L",
+    path: "/portfolio/pnl",
+    navOrder: 310,
+    navIcon: "pnl",
+  },
+  {
+    key: "exposure",
+    id: 122,
+    name: "TradingExposure",
+    mfScope: "tradingExposure",
+    expose: "./Exposure",
+    source: "./src/features/Exposure",
+    title: "Exposure",
+    description: "Account exposure / P&L treemap by sector",
+    accessRole: view,
+    location: "/Portfolio/Exposure",
+    path: "/portfolio/exposure",
+    navOrder: 320,
+    navIcon: "exposure",
+    notificationTopics: ["risk"],
+  },
+  {
+    key: "execution-quality",
+    id: 123,
+    name: "TradingExecutionQuality",
+    mfScope: "tradingExecutionQuality",
+    expose: "./ExecutionQuality",
+    source: "./src/features/ExecutionQuality",
+    title: "Execution quality",
+    description: "Account execution slippage vs arrival price",
+    accessRole: view,
+    location: "/Portfolio/Execution quality",
+    path: "/portfolio/execution-quality",
+    navOrder: 330,
+    navIcon: "execution-quality",
   },
   {
     key: "supervisor",
@@ -250,11 +328,14 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     mfScope: "tradingSupervisor",
     expose: "./Supervisor",
     source: "./src/features/Supervisor",
-    title: "Supervisor",
+    title: "Desk overview",
     description:
       "All desks' orders (incl. child orders) and positions by account",
     accessRole: TRADING_ACCESS_ROLE["trading-supervisor"],
-    location: "/Supervision/Desk overview",
-    path: "/supervision/desk",
+    location: "/Oversight/Desk overview",
+    path: "/oversight/desk",
+    navOrder: 400,
+    navIcon: "oversight",
+    notificationTopics: ["risk", "orders"],
   },
 ];

@@ -5,7 +5,9 @@
 # when this file changes). Roles are vuu-portal client roles, see
 # docs/portal-integration.md. Child modules (parentModuleId != 0) have no
 # menu location: the parent renders them, and the server lists them only
-# when the user also holds the parent's role.
+# when the user also holds the parent's role. navOrder sorts the nav
+# (sections by their lowest entry), navBadge keys a live badge the host
+# renders, notificationTopics routes NOTIFICATIONS rows by topic.
 modules:
   - id: 100
     version: 1
@@ -14,13 +16,15 @@ modules:
     title: "Trader workspace"
     description: "Prebuilt trader layout: watchlist, price / depth charts, depth, ticket, ladder, blotters, positions and tape with red / green link groups"
     enabled: true
-    location: "/Trading/Workspace"
-    path: "/trading/workspace"
+    location: "/Workspaces/Trader"
+    path: "/workspaces/trader"
     mfComponent: "TraderWorkspace"
     mfScope: "tradingWorkspace"
     mfUrl: "http://localhost:5110/workspace"
-    navIconUrl: ""
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%228%22%20height%3D%228%22%20rx%3D%221.5%22%2F%3E%3Crect%20x%3D%2213%22%20y%3D%223%22%20width%3D%228%22%20height%3D%225%22%20rx%3D%221.5%22%2F%3E%3Crect%20x%3D%2213%22%20y%3D%2210%22%20width%3D%228%22%20height%3D%2211%22%20rx%3D%221.5%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%2213%22%20width%3D%228%22%20height%3D%228%22%20rx%3D%221.5%22%2F%3E%3C%2Fsvg%3E"
     accessRole: "trading-access"
+    navOrder: 10
+    notificationTopics: ["orders", "fills", "marketdata", "risk"]
   - id: 101
     version: 1
     parentModuleId: 100
@@ -61,50 +65,10 @@ modules:
     mfComponent: "Watchlist"
     mfScope: "tradingWatchlist"
     mfUrl: "http://localhost:5110/watchlist"
-    navIconUrl: ""
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%206h9M4%2012h9M4%2018h9%22%2F%3E%3Cpath%20d%3D%22M16%209.5l2.5-2.5L21%209.5%22%2F%3E%3Cpath%20d%3D%22M16%2014.5l2.5%202.5%202.5-2.5%22%2F%3E%3C%2Fsvg%3E"
     accessRole: "trading-access"
-  - id: 111
-    version: 1
-    parentModuleId: 0
-    name: "TradingDepth"
-    title: "Market depth"
-    description: "Order book depth for the linked instrument"
-    enabled: true
-    location: "/Trading/Depth"
-    path: "/trading/depth"
-    mfComponent: "Depth"
-    mfScope: "tradingDepth"
-    mfUrl: "http://localhost:5110/depth"
-    navIconUrl: ""
-    accessRole: "trading-access"
-  - id: 112
-    version: 1
-    parentModuleId: 0
-    name: "TradingLadder"
-    title: "Price ladder"
-    description: "Click-to-trade price ladder"
-    enabled: true
-    location: "/Trading/Ladder"
-    path: "/trading/ladder"
-    mfComponent: "Ladder"
-    mfScope: "tradingLadder"
-    mfUrl: "http://localhost:5110/ladder"
-    navIconUrl: ""
-    accessRole: "trading-execute-access"
-  - id: 113
-    version: 1
-    parentModuleId: 0
-    name: "TradingTicket"
-    title: "Order ticket"
-    description: "Docked order ticket following its link group"
-    enabled: true
-    location: "/Trading/Ticket"
-    path: "/trading/ticket"
-    mfComponent: "Ticket"
-    mfScope: "tradingTicket"
-    mfUrl: "http://localhost:5110/ticket"
-    navIconUrl: ""
-    accessRole: "trading-execute-access"
+    navOrder: 100
+    notificationTopics: ["marketdata"]
   - id: 114
     version: 1
     parentModuleId: 0
@@ -117,50 +81,75 @@ modules:
     mfComponent: "Orders"
     mfScope: "tradingOrders"
     mfUrl: "http://localhost:5110/orders"
-    navIconUrl: ""
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%224%22%20y%3D%223%22%20width%3D%2216%22%20height%3D%2218%22%20rx%3D%222%22%2F%3E%3Cpath%20d%3D%22M8%208h8M8%2012h8M8%2016h5%22%2F%3E%3C%2Fsvg%3E"
     accessRole: "trading-access"
+    navOrder: 110
+    navBadge: "orders.working"
+    notificationTopics: ["orders"]
   - id: 115
     version: 1
     parentModuleId: 0
     name: "TradingFills"
-    title: "Fills"
-    description: "Executions blotter"
+    title: "Executions"
+    description: "Executions (fills) blotter"
     enabled: true
-    location: "/Trading/Fills"
-    path: "/trading/fills"
+    location: "/Trading/Executions"
+    path: "/trading/executions"
     mfComponent: "Fills"
     mfScope: "tradingFills"
     mfUrl: "http://localhost:5110/fills"
-    navIconUrl: ""
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22M8.5%2012.2l2.4%202.4%204.6-5%22%2F%3E%3C%2Fsvg%3E"
     accessRole: "trading-access"
-  - id: 116
+    navOrder: 120
+    notificationTopics: ["fills"]
+  - id: 112
     version: 1
     parentModuleId: 0
-    name: "TradingPositions"
-    title: "Positions"
-    description: "Positions and P&L by account / instrument"
+    name: "TradingLadder"
+    title: "Price ladder"
+    description: "Click-to-trade price ladder"
     enabled: true
-    location: "/Trading/Positions"
-    path: "/trading/positions"
-    mfComponent: "Positions"
-    mfScope: "tradingPositions"
-    mfUrl: "http://localhost:5110/positions"
-    navIconUrl: ""
+    location: "/Trading/Price ladder"
+    path: "/trading/price-ladder"
+    mfComponent: "Ladder"
+    mfScope: "tradingLadder"
+    mfUrl: "http://localhost:5110/ladder"
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M7%203v18M17%203v18M7%207h10M7%2011h10M7%2015h10M7%2019h10%22%2F%3E%3C%2Fsvg%3E"
+    accessRole: "trading-execute-access"
+    navOrder: 130
+    notificationTopics: ["orders"]
+  - id: 111
+    version: 1
+    parentModuleId: 0
+    name: "TradingDepth"
+    title: "Market depth"
+    description: "Order book depth for the linked instrument"
+    enabled: true
+    location: "/Market/Market depth"
+    path: "/market/depth"
+    mfComponent: "Depth"
+    mfScope: "tradingDepth"
+    mfUrl: "http://localhost:5110/depth"
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2020h18%22%2F%3E%3Cpath%20d%3D%22M3%2017h3v-3h3v-3h3%22%2F%3E%3Cpath%20d%3D%22M21%2017h-3v-4h-3v-3h-3%22%2F%3E%3C%2Fsvg%3E"
     accessRole: "trading-access"
+    navOrder: 200
+    notificationTopics: ["marketdata"]
   - id: 117
     version: 1
     parentModuleId: 0
     name: "TradingTape"
-    title: "Trade tape"
-    description: "Time and sales for the linked instrument"
+    title: "Time & sales"
+    description: "Time and sales (trade tape) for the linked instrument"
     enabled: true
-    location: "/Trading/Tape"
-    path: "/trading/tape"
+    location: "/Market/Time & sales"
+    path: "/market/time-and-sales"
     mfComponent: "Tape"
     mfScope: "tradingTape"
     mfUrl: "http://localhost:5110/tape"
-    navIconUrl: ""
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228.5%22%2F%3E%3Cpath%20d%3D%22M12%207.5V12l3%202%22%2F%3E%3C%2Fsvg%3E"
     accessRole: "trading-access"
+    navOrder: 210
+    notificationTopics: ["marketdata"]
   - id: 118
     version: 1
     parentModuleId: 0
@@ -168,13 +157,14 @@ modules:
     title: "Chart"
     description: "Candlestick price chart (1s / 1m / 5m bars) for the linked instrument with VWAP and the account's fills"
     enabled: true
-    location: "/Trading/Chart"
-    path: "/trading/chart"
+    location: "/Market/Chart"
+    path: "/market/chart"
     mfComponent: "Chart"
     mfScope: "tradingChart"
     mfUrl: "http://localhost:5110/chart"
-    navIconUrl: ""
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M7%203v3M7%2016v5M17%204v4M17%2015v4%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%226%22%20width%3D%224%22%20height%3D%2210%22%20rx%3D%221%22%2F%3E%3Crect%20x%3D%2215%22%20y%3D%228%22%20width%3D%224%22%20height%3D%227%22%20rx%3D%221%22%2F%3E%3C%2Fsvg%3E"
     accessRole: "trading-access"
+    navOrder: 220
   - id: 119
     version: 1
     parentModuleId: 0
@@ -182,38 +172,90 @@ modules:
     title: "Depth chart"
     description: "Live cumulative depth chart for the linked instrument"
     enabled: true
-    location: "/Trading/Depth chart"
-    path: "/trading/depth-chart"
+    location: "/Market/Depth chart"
+    path: "/market/depth-chart"
     mfComponent: "DepthChart"
     mfScope: "tradingDepthChart"
     mfUrl: "http://localhost:5110/depth-chart"
-    navIconUrl: ""
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2020h18%22%2F%3E%3Cpath%20d%3D%22M3%206c3%200%205%204%206%208l1%206%22%2F%3E%3Cpath%20d%3D%22M21%206c-3%200-5%204-6%208l-1%206%22%2F%3E%3C%2Fsvg%3E"
     accessRole: "trading-access"
+    navOrder: 230
+  - id: 116
+    version: 1
+    parentModuleId: 0
+    name: "TradingPositions"
+    title: "Positions"
+    description: "Positions and P&L by account / instrument"
+    enabled: true
+    location: "/Portfolio/Positions"
+    path: "/portfolio/positions"
+    mfComponent: "Positions"
+    mfScope: "tradingPositions"
+    mfUrl: "http://localhost:5110/positions"
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203l8%204.5-8%204.5-8-4.5z%22%2F%3E%3Cpath%20d%3D%22M4%2012l8%204.5%208-4.5%22%2F%3E%3Cpath%20d%3D%22M4%2016.5L12%2021l8-4.5%22%2F%3E%3C%2Fsvg%3E"
+    accessRole: "trading-access"
+    navOrder: 300
+    navBadge: "positions.dayPnl"
+    notificationTopics: ["positions", "risk"]
   - id: 121
     version: 1
     parentModuleId: 0
-    name: "TradingAnalytics"
-    title: "Analytics"
-    description: "Account P&L history, exposure / P&L treemap by sector and execution slippage vs arrival"
+    name: "TradingPnl"
+    title: "P&L"
+    description: "Account P&L history (realised / unrealised)"
     enabled: true
-    location: "/Trading/Analytics"
-    path: "/trading/analytics"
-    mfComponent: "Analytics"
-    mfScope: "tradingAnalytics"
-    mfUrl: "http://localhost:5110/analytics"
-    navIconUrl: ""
+    location: "/Portfolio/P&L"
+    path: "/portfolio/pnl"
+    mfComponent: "Pnl"
+    mfScope: "tradingPnl"
+    mfUrl: "http://localhost:5110/pnl"
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2020h18%22%2F%3E%3Cpath%20d%3D%22M4%2015l5-5%204%203%207-7%22%2F%3E%3Cpath%20d%3D%22M15%206h5v5%22%2F%3E%3C%2Fsvg%3E"
     accessRole: "trading-access"
+    navOrder: 310
+  - id: 122
+    version: 1
+    parentModuleId: 0
+    name: "TradingExposure"
+    title: "Exposure"
+    description: "Account exposure / P&L treemap by sector"
+    enabled: true
+    location: "/Portfolio/Exposure"
+    path: "/portfolio/exposure"
+    mfComponent: "Exposure"
+    mfScope: "tradingExposure"
+    mfUrl: "http://localhost:5110/exposure"
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%2218%22%20height%3D%2218%22%20rx%3D%222%22%2F%3E%3Cpath%20d%3D%22M12%203v18M12%2012h9M3%209h9%22%2F%3E%3C%2Fsvg%3E"
+    accessRole: "trading-access"
+    navOrder: 320
+    notificationTopics: ["risk"]
+  - id: 123
+    version: 1
+    parentModuleId: 0
+    name: "TradingExecutionQuality"
+    title: "Execution quality"
+    description: "Account execution slippage vs arrival price"
+    enabled: true
+    location: "/Portfolio/Execution quality"
+    path: "/portfolio/execution-quality"
+    mfComponent: "ExecutionQuality"
+    mfScope: "tradingExecutionQuality"
+    mfUrl: "http://localhost:5110/execution-quality"
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%227%22%20cy%3D%2216%22%20r%3D%221.3%22%2F%3E%3Ccircle%20cx%3D%2211%22%20cy%3D%2210%22%20r%3D%221.3%22%2F%3E%3Ccircle%20cx%3D%2215%22%20cy%3D%2214%22%20r%3D%221.3%22%2F%3E%3Ccircle%20cx%3D%2218%22%20cy%3D%227%22%20r%3D%221.3%22%2F%3E%3Cpath%20d%3D%22M3%204v17h18%22%2F%3E%3C%2Fsvg%3E"
+    accessRole: "trading-access"
+    navOrder: 330
   - id: 120
     version: 1
     parentModuleId: 0
     name: "TradingSupervisor"
-    title: "Supervisor"
+    title: "Desk overview"
     description: "All desks' orders (incl. child orders) and positions by account"
     enabled: true
-    location: "/Supervision/Desk overview"
-    path: "/supervision/desk"
+    location: "/Oversight/Desk overview"
+    path: "/oversight/desk"
     mfComponent: "Supervisor"
     mfScope: "tradingSupervisor"
     mfUrl: "http://localhost:5110/supervisor"
-    navIconUrl: ""
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203l7%203v6c0%204.5-3%207.6-7%209-4-1.4-7-4.5-7-9V6z%22%2F%3E%3Cpath%20d%3D%22M9%2012l2%202%204-4%22%2F%3E%3C%2Fsvg%3E"
     accessRole: "trading-supervisor-access"
+    navOrder: 400
+    notificationTopics: ["risk", "orders"]

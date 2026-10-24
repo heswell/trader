@@ -1,4 +1,5 @@
 import { TRADING_FEATURES } from "../../apps/features/trading/src/catalog";
+import { navIconDataUri } from "../../apps/features/trading/src/navIcons";
 
 /** The default features origin (scripts/stack/config.ts TRADER_FEATURES_PORT). */
 export const DEFAULT_FEATURES_ORIGIN = "http://localhost:5110";
@@ -19,7 +20,9 @@ export const modulesYaml = (featuresOrigin = DEFAULT_FEATURES_ORIGIN) => {
     "# when this file changes). Roles are vuu-portal client roles, see",
     "# docs/portal-integration.md. Child modules (parentModuleId != 0) have no",
     "# menu location: the parent renders them, and the server lists them only",
-    "# when the user also holds the parent's role.",
+    "# when the user also holds the parent's role. navOrder sorts the nav",
+    "# (sections by their lowest entry), navBadge keys a live badge the host",
+    "# renders, notificationTopics routes NOTIFICATIONS rows by topic.",
     "modules:",
   ];
   for (const f of TRADING_FEATURES) {
@@ -37,9 +40,16 @@ export const modulesYaml = (featuresOrigin = DEFAULT_FEATURES_ORIGIN) => {
       `    mfComponent: ${q(f.expose.replace(/^\.\//, ""))}`,
       `    mfScope: ${q(f.mfScope)}`,
       `    mfUrl: ${q(`${featuresOrigin}/${f.key}`)}`,
-      `    navIconUrl: ""`,
+      `    navIconUrl: ${q(f.navIcon ? navIconDataUri(f.navIcon) : "")}`,
       `    accessRole: ${q(f.accessRole)}`,
     );
+    if (f.navOrder !== undefined) lines.push(`    navOrder: ${f.navOrder}`);
+    if (f.navBadge) lines.push(`    navBadge: ${q(f.navBadge)}`);
+    if (f.notificationTopics?.length) {
+      lines.push(
+        `    notificationTopics: [${f.notificationTopics.map(q).join(", ")}]`,
+      );
+    }
   }
   return `${lines.join("\n")}\n`;
 };

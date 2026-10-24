@@ -15,6 +15,7 @@ import {
   VuuUserWithAuthorizations,
 } from "@heswell/vuu-server";
 import { createOms } from "../src/engine/OmsService";
+import { OmsNotificationModule } from "../src/modules/notifications/OmsNotificationModule";
 import { OmsModule } from "../src/modules/oms/OmsModule";
 import { TradingRole } from "../src/permissions/access";
 import { AAPL, BookSide } from "./fixture";
@@ -137,7 +138,11 @@ describe("OmsModule over the Vuu protocol", () => {
       config,
       defaultHttpsPort: 0,
       defaultWebSocketPort: 0,
-      modules: [ExchangeModule(sim), OmsModule(oms)],
+      modules: [
+        ExchangeModule(sim),
+        OmsModule(oms),
+        OmsNotificationModule(oms),
+      ],
     });
     await application.lifecycle.start();
     server = application.server;
@@ -438,6 +443,51 @@ describe("OmsModule over the Vuu protocol", () => {
         r.rejectReason === RejectReason.ExceedsMaxQuantity &&
         r.quantity === 60_000,
     );
+  });
+
+  test("rejects publish topic-tagged rows to NOTIFICATIONS, filtered by account", async () => {
+    const columns = [
+      "id",
+      "type",
+      "level",
+      "topic",
+      "title",
+      "audience",
+      "account",
+      "orderId",
+    ];
+    const aliceNotes = await alice.createViewport(
+      "NOTIFICATIONS",
+      "notifications",
+      columns,
+    );
+    const bobNotes = await bob.createViewport(
+      "NOTIFICATIONS",
+      "notifications",
+      columns,
+    );
+    await alice.rpc(OMS_MODULE, aliceOrders, "createOrder", {
+      account: "ACC-US-01",
+      ric: AAPL,
+      side: "SELL",
+      ordType: "LIMIT",
+      quantity: 70_000,
+      price: 170,
+    });
+    const note = await alice.row(
+      aliceNotes,
+      (r) => r.topic === "orders" && String(r.title).includes("SELL 70000"),
+    );
+    expect(note).toMatchObject({
+      type: "silent",
+      level: "ERROR",
+      audience: "alice",
+      account: "ACC-US-01",
+    });
+    await Bun.sleep(100);
+    expect(
+      bob.rowsOf(bobNotes).filter((r) => r.account === "ACC-US-01"),
+    ).toEqual([]);
   });
 
   test("permission filter: traders see own accounts, supervisor sees all", async () => {

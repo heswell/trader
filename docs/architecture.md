@@ -1,7 +1,7 @@
 # Architecture
 
 trader's main deliverable is a **reusable trading front-end**: `@heswell/trading-ui` components, hooks and
-features built on `@vuu-ui/*` 4.0.0-alpha.22 and vuu-portal. Everything else exists to run that front-end against
+features built on `@vuu-ui/*` 4.0.0-alpha.25 and vuu-portal. Everything else exists to run that front-end against
 realistic data:
 
 - an exchange simulator;

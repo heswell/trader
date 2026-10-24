@@ -15,19 +15,22 @@
     "@heswell/trading-ui": "workspace:*",
     "@module-federation/enhanced": "2.8.0",
     "@salt-ds/core": "1.67.0",
-    "@vuu-ui/core": "4.0.0-alpha.22",
-    "@vuu-ui/vuu-data-remote": "4.0.0-alpha.22",
-    "@vuu-ui/vuu-icons": "4.0.0-alpha.22",
-    "@vuu-ui/vuu-layout": "4.0.0-alpha.22",
-    "@vuu-ui/vuu-notifications": "4.0.0-alpha.22",
-    "@vuu-ui/vuu-theme": "4.0.0-alpha.22",
-    "@vuu-ui/vuu-utils": "4.0.0-alpha.22",
+    "@vuu-ui/core": "4.0.0-alpha.25",
+    "@vuu-ui/vuu-data-remote": "4.0.0-alpha.25",
+    "@vuu-ui/vuu-icons": "4.0.0-alpha.25",
+    "@vuu-ui/vuu-layout": "4.0.0-alpha.25",
+    "@vuu-ui/vuu-notifications": "4.0.0-alpha.25",
+    "@vuu-ui/vuu-theme": "4.0.0-alpha.25",
+    "@vuu-ui/vuu-utils": "4.0.0-alpha.25",
     "clsx": "^2.1.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router-dom": "7.18.3"
   },
   "devDependencies": {
+    "@heswell/trading-test-data": "workspace:*",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/react": "16.3.0",
     "@vuu-ui/portal-build": "0.3.0"
   }
 }
