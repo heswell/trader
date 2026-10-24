@@ -577,13 +577,10 @@ See [components/charts.md](components/charts.md). Bumping every `@vuu-ui/*` pack
 98. ~~**`@vuu-ui/vuu-chart@4.0.0-alpha.23` is published without its chart components.**~~ *Resolved in
     @vuu-ui 4.0.0-alpha.24:* every `@vuu-ui/*` package moved to alpha.24, and the vuu-chart pin and the root
     `@vuu-ui` overrides were removed.
-99. **`@heswell/vuu-portal@2.2.1` needs a `@heswell/module-admin` that is not published.** (heswell/vuu-websocket,
-    vuu-portal 2.2.1, module-admin 2.0.1.) vuu-portal imports `splitNotificationTopics` from module-admin, which
-    2.0.1 (the latest on npm) does not export, so the portal server fails to start and `features:check` (which loads
-    the modules yaml with the portal's own loader) fails. Publishing a module-admin with the `notificationTopics`
-    support, and a vuu-portal that depends on it, would fix it. *No workaround in the repo.*
+99. ~~**`@heswell/vuu-portal@2.2.1` needs a `@heswell/module-admin` that is not published.**~~ *Resolved:*
+    module-admin 2.1.0 exports `splitNotificationTopics`, and vuu-portal 2.2.3 depends on it.
 100. **The vuu theme makes the nav footer's hover / open state coral.** (finos `@vuu-ui/vuu-theme` and
-     `@vuu-ui/core` portal, 4.0.0-alpha.23.) `PortalNavUserMenu` and `PortalConnectionStatus` use
+     `@vuu-ui/core` portal, 4.0.0-alpha.23, still in alpha.25.) `PortalNavUserMenu` and `PortalConnectionStatus` use
      `--salt-actionable-subtle-background-hover` for a hovered or open trigger, which `vuu-theme`
      (`css/next/characteristics/actionable.css`) maps to `--vuu-color-coral`, so the user row and the rail status
      button turn bright coral instead of the subtle grey in the design. A neutral token (e.g.

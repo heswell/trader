@@ -90,13 +90,13 @@ scripts/              start-all, stack/ (config, Keycloak realm, static server),
 All dependencies come from npm:
 
 - **Server side**, from [heswell/vuu-websocket](https://github.com/heswell/vuu-websocket):
-  `@heswell/vuu-server@^4.2.1` and `@heswell/vuu-portal@^2.2.1`, which bring `@heswell/service-utils`.
-- **UI**: `@vuu-ui/*@4.0.0-alpha.24` (including `@vuu-ui/vuu-chart`, on echarts) and `@vuu-ui/portal-build`.
+  `@heswell/vuu-server@^4.2.2` and `@heswell/vuu-portal@^2.2.3`, which bring `@heswell/service-utils`,
+  `@heswell/vuu-table`, `@heswell/vuu-viewport` and `@heswell/module-admin`.
+- **UI**: `@vuu-ui/*@4.0.0-alpha.25` (including `@vuu-ui/vuu-chart`, on echarts) and `@vuu-ui/portal-build`.
 - **Matching** uses `@heswell/hft-limit-order-book`, and engine-local mode uses `@heswell/vuu-data-engine-local`.
 
 The @heswell packages only peer `@vuu-ui/*`. Every workspace that uses vuu-server therefore lists the `@vuu-ui`
-packages it needs at alpha.24, and the install has one copy of each. The root `overrides` pin
-`@heswell/vuu-viewport` (`^1.1.5`).
+packages it needs at alpha.25, and the install has one copy of each. No `overrides` are needed.
 
 ## Common commands
 

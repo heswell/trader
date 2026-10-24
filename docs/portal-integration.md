@@ -373,11 +373,11 @@ A green instrument picker sits in the toolbar, next to an account selector.
 
 ## Verified
 
-### PortalNav (alpha.23)
+### PortalNav (alpha.25)
 
-Verified with @vuu-ui 4.0.0-alpha.23 (vuu-chart alpha.22), vuu-portal 2.2.1 and headless Chrome against
-`bun run start:all`, with `OMS_FLOW_ACCOUNTS=ACC-US-02,ACC-EU-01,ACC-ASIA-01,ACC-ASIA-02`. vuu-portal 2.2.1 could
-only start with a locally built `@heswell/module-admin` (trader upstream issue 99).
+Verified with @vuu-ui 4.0.0-alpha.25, vuu-server 4.2.2, vuu-portal 2.2.3, module-admin 2.1.0 and headless Chrome
+against `bun run start:all`, with `OMS_FLOW_ACCOUNTS=ACC-US-02,ACC-EU-01,ACC-ASIA-01,ACC-ASIA-02`. (First verified
+on alpha.23 with a locally built module-admin; trader upstream issue 99, now resolved.)
 
 - **IA and roles:** alice sees Workspaces, Trading, Market and Portfolio with the account ACC-US-01
   (`nav-badges-dots.png`); dave has no Price ladder, ACC-EU-02 and the workspace placeholders (`nav-dave.png`); sam
@@ -385,7 +385,8 @@ only start with a locally built `@heswell/module-admin` (trader upstream issue 9
 - **Badges:** a limit buy below the bid takes Orders from 0 to 1; after a market buy, Positions shows a signed red /
   green P&L that moves with the market.
 - **Notification topics:** a limit buy at half the price, placed from the Watchlist's Buy dialog, is rejected;
-  Trader, Orders and Price ladder (which claim `orders`) get a red dot. Opening Orders clears them.
+  Trader, Orders and Price ladder (which claim `orders`) get a red dot. Opening Orders clears them. Read state is per browser session: a new session shows the dots again until the
+  rows expire.
 - **Modes:** icons and text, text (`nav-text.png`), icons (⌘B; the connection popover lists Portal and Trading,
   `nav-rail-connection.png`) and hidden (edge handle, overlay, "Keep navigation open"). The mode survives a reload.
 - **User menu:** identity, account and roles, Saved state…, the display modes and Log out (`nav-user-menu.png`).

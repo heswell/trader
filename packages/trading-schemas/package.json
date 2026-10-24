@@ -14,9 +14,9 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@heswell/vuu-server": "^4.2.1",
-    "@vuu-ui/vuu-data-types": "4.0.0-alpha.24",
-    "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.24",
-    "@vuu-ui/vuu-utils": "4.0.0-alpha.24"
+    "@heswell/vuu-server": "^4.2.2",
+    "@vuu-ui/vuu-data-types": "4.0.0-alpha.25",
+    "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.25",
+    "@vuu-ui/vuu-utils": "4.0.0-alpha.25"
   }
 }

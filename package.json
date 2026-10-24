@@ -43,17 +43,14 @@
     "@biomejs/biome": "2.2.4",
     "@happy-dom/global-registrator": "20.14.5",
     "@heswell/trading-persistence": "workspace:*",
-    "@heswell/vuu-portal": "^2.2.1",
-    "@heswell/vuu-server": "^4.2.1",
-    "@heswell/vuu-table": "^1.0.2",
+    "@heswell/vuu-portal": "^2.2.3",
+    "@heswell/vuu-server": "^4.2.2",
+    "@heswell/vuu-table": "^1.0.3",
     "@types/bun": "1.3.3",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "playwright": "^1.64.1",
     "typescript": "^5.5.3"
-  },
-  "overrides": {
-    "@heswell/vuu-viewport": "^1.1.5"
   },
   "packageManager": "bun@1.3.14"
 }
