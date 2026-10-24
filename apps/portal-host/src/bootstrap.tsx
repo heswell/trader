@@ -29,7 +29,14 @@ new PageVisibilityObserver({
 
 // set by public/index.html from /config.json; vuu-utils types the global as
 // VuuConfig, which lacks the Keycloak clientId/realm that AuthConfig carries
-const config = (await vuuConfig) as unknown as AuthConfig;
+const config = (await vuuConfig) as unknown as AuthConfig & {
+  environment?: unknown;
+};
+// Optional environment label (e.g. "UAT") for the nav brand chip.
+const environment =
+  typeof config.environment === "string" && config.environment.trim()
+    ? config.environment.trim()
+    : undefined;
 
 // Reconnect with backoff + jitter, never giving up, and a per-attempt login
 // timeout; publishes reconnect state to the connection status indicator
@@ -50,7 +57,7 @@ createRoot(container).render(
       mode="identity"
       registry={registry}
     >
-      <App />
+      <App environment={environment} />
     </AuthenticationProvider>
   </AuthenticationErrorBoundary>,
 );

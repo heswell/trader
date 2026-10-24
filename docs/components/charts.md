@@ -17,9 +17,9 @@ Reference: [PriceChart](../api/trading-ui.md#pricechart), [DepthChartView](../ap
 | `PriceChart` | `bars`, `fills` | linked instrument | **Chart** (also in the Trader workspace) |
 | `DepthChartView` | `depth` | linked instrument | **Depth chart** (also in the Trader workspace) |
 | `SpreadChart` | `bookSamples` | linked instrument | showcase only (`#depth-chart`, `#spread-chart`) |
-| `PnlHistoryChart` | `accountPnlHistory` | selected account | **Analytics** |
-| `ExposureTreemap` | `positionPrices` | `account` prop | **Analytics** |
-| `SlippageChart` | `parentOrders` | `account` / `ric` props | **Analytics** |
+| `PnlHistoryChart` | `accountPnlHistory` | selected account | **P&L** |
+| `ExposureTreemap` | `positionPrices` | `account` prop | **Exposure** |
+| `SlippageChart` | `parentOrders` | `account` / `ric` props | **Execution quality** |
 
 None of them call RPCs, so they are all view-only: `trading-view` users (dave) get the same charts as traders. OMS
 tables are account-filtered on the server, so fills, P&L, positions and slippage only show accounts the user can see.

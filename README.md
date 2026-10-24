@@ -2,8 +2,9 @@
 
 Reusable trading front-end (instrument grids, market depth / price ladder, order ticket, order & trade blotters) built on [Vuu](https://github.com/finos/vuu) UI components and the `vuu-portal`, exercised by a simulated backend (exchange simulator + OMS) running on [vuu-websocket](https://github.com/heswell/vuu-websocket).
 
-Status: Phase 5 (hardening). The trading UI runs in vuu-portal as role-gated module-federation features (Watchlist, Depth,
-Ladder, Ticket, Orders, Fills, Positions, Tape, a prebuilt trader Workspace and a supervisor desk overview). The
+Status: Phase 5 (hardening). The trading UI runs in vuu-portal as role-gated module-federation features under a `PortalNav`
+(Workspaces: Trader; Trading: Watchlist, Orders, Executions, Price ladder; Market: Market depth, Time & sales, Chart,
+Depth chart; Portfolio: Positions, P&L, Exposure, Execution quality; Oversight: Desk overview). The
 features connect to a standalone trading Vuu server (exchange simulator + OMS), separate from the portal's own Vuu
 server, through @vuu-ui's per-module `config.json`. One command starts the whole stack. See
 [docs/portal-integration.md](docs/portal-integration.md).
@@ -29,7 +30,7 @@ portal user's token by token exchange.
 | --- | --- |
 | alice, bob, carol, erin | view and trade (ticket, ladder, amend / cancel) |
 | dave | view only |
-| sam | view, plus Supervision › Desk overview |
+| sam | view, plus Oversight › Desk overview |
 | admin | supervision and portal module admin |
 
 | What | Where |
@@ -89,13 +90,15 @@ scripts/              start-all, stack/ (config, Keycloak realm, static server),
 All dependencies come from npm:
 
 - **Server side**, from [heswell/vuu-websocket](https://github.com/heswell/vuu-websocket):
-  `@heswell/vuu-server@^4.2.0` and `@heswell/vuu-portal@^2.2.0`, which bring `@heswell/service-utils`.
-- **UI**: `@vuu-ui/*@4.0.0-alpha.22` (including `@vuu-ui/vuu-chart`, on echarts) and `@vuu-ui/portal-build`.
+  `@heswell/vuu-server@^4.2.1` and `@heswell/vuu-portal@^2.2.1`, which bring `@heswell/service-utils`.
+- **UI**: `@vuu-ui/*@4.0.0-alpha.23` and `@vuu-ui/portal-build`. `@vuu-ui/vuu-chart` (on echarts) stays at
+  alpha.22, because the alpha.23 publish is missing its chart components (trader upstream issue 98).
 - **Matching** uses `@heswell/hft-limit-order-book`, and engine-local mode uses `@heswell/vuu-data-engine-local`.
 
 The @heswell packages only peer `@vuu-ui/*`. Every workspace that uses vuu-server therefore lists the `@vuu-ui`
-packages it needs at alpha.22, and the install has one copy of each. The root `overrides` pins only
-`@heswell/vuu-viewport` (`^1.1.5`).
+packages it needs at alpha.23, and the install has one copy of each. The root `overrides` pin
+`@heswell/vuu-viewport` (`^1.1.5`), and `@vuu-ui/vuu-utils`, `vuu-ui-controls` and `vuu-context-menu` at alpha.23,
+so vuu-chart alpha.22's exact dependencies do not pull in second copies.
 
 ## Common commands
 

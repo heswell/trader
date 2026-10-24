@@ -342,7 +342,8 @@ alpha.20/alpha.21 constraints behind the design choices.
   `ConnectionBanner` once (the showcase does this in `ShowcaseTradingHost.tsx`).
 - **Connection state.** `useTradingConnectionStatus()` gives `connected | connecting | reconnecting | disconnected
   | failed | local`. Block anything that sends orders while it is not `connected` or `local` (the OrderTicket and
-  PriceLadder do). The host mounts `ConnectionStatusIndicator` once (the portal host puts it by the header) and
+  PriceLadder do). The host mounts a connection status once (`ConnectionStatusIndicator` in a stand-alone host; the portal host uses
+  `PortalConnectionStatus` in its nav footer) and
   creates its registry with `createResilientConnectionRegistry()` for backoff + jitter reconnects and first-connect
   retries. See [resilience.md](resilience.md) for behaviour per failure and the configuration.
 - **Staleness.** Ticking views spread `useStaleData().staleProps` on their data element so they grey out while

@@ -260,6 +260,7 @@ export class OmsEngine {
   #clOrdIdsByTrader = new Map<string, Set<string>>();
   #unsubscribe: () => void;
   #fillListeners = new Set<(fill: Fill) => void>();
+  #observers = new Set<OmsSink>();
   #journal: OmsJournal | undefined;
   #dirtyParents = new Set<ParentOrder>();
   #dirtyChildren = new Set<ChildOrder>();
@@ -278,7 +279,30 @@ export class OmsEngine {
   }: OmsEngineOptions) {
     this.#gateway = gateway;
     this.#clock = clock;
-    this.#sink = sink;
+    // Every row goes to the sink, then to observers (e.g. the notifier).
+    const observers = this.#observers;
+    this.#sink = {
+      account: (row) => {
+        sink.account?.(row);
+        for (const o of observers) o.account?.(row);
+      },
+      parentOrder: (row) => {
+        sink.parentOrder?.(row);
+        for (const o of observers) o.parentOrder?.(row);
+      },
+      childOrder: (row) => {
+        sink.childOrder?.(row);
+        for (const o of observers) o.childOrder?.(row);
+      },
+      fill: (row) => {
+        sink.fill?.(row);
+        for (const o of observers) o.fill?.(row);
+      },
+      position: (row) => {
+        sink.position?.(row);
+        for (const o of observers) o.position?.(row);
+      },
+    };
     this.#log = log;
     this.collarPct = collarPct;
     this.restricted = new Set(restrictedRics);
@@ -510,6 +534,17 @@ export class OmsEngine {
       }
     }
     return result;
+  }
+
+  /**
+   * Receive every row published from now on, after the sink (rows already
+   * published, e.g. on recovery, are not replayed). Returns unsubscribe.
+   */
+  observe(observer: OmsSink) {
+    this.#observers.add(observer);
+    return () => {
+      this.#observers.delete(observer);
+    };
   }
 
   onFill(listener: (fill: Fill) => void) {

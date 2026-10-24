@@ -166,7 +166,7 @@ const main = async () => {
     });
 
   try {
-    await page.goto(`${cfg.hostOrigin}/trading/workspace`);
+    await page.goto(`${cfg.hostOrigin}/workspaces/trader`);
     await login(page);
     await mustWait(
       "indicator connected",

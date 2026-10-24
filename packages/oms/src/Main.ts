@@ -12,6 +12,7 @@ import {
 } from "@heswell/exchange-sim";
 import { loadOmsConfig } from "./config";
 import { createOms } from "./engine/OmsService";
+import { OmsNotificationModule } from "./modules/notifications/OmsNotificationModule";
 import { OmsModule } from "./modules/oms/OmsModule";
 import { startPerfStatsReporter } from "./perf/PerfStatsReporter";
 import { createTradingPersistence, loadPersistenceConfig } from "./persistence";
@@ -71,7 +72,7 @@ export default async function main(
     defaultWebSocketPath: "/websocket-trading",
     defaultWebSocketPort: 8095,
     // EXCHANGE first: the positionPrices join needs the prices table.
-    modules: [ExchangeModule(sim), OmsModule(oms)],
+    modules: [ExchangeModule(sim), OmsModule(oms), OmsNotificationModule(oms)],
   });
   await application.start();
   // perf harness hook (scripts/perf/ws-load.ts); off unless the env var is set

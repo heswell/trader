@@ -258,8 +258,9 @@ and the `@vuu-ui/vuu-icons` main entry (#52) still lack types; `PersistedStateAP
     and a portal-build `remoteConfig` option would help.
 58. **`[ConnectionManager] subscribed message received, viewport not found`** is logged when navigating between
     modules: a subscribe ack arrives after the component unmounted. It looks harmless but is noisy.
-59. **The `PortalAppSwitcher` nav groups are collapsed by default** (state persisted as `nav/expanded`), so a new
-    user sees only group headers. A default-expanded option would help a portal with few groups.
+59. ~~**The `PortalAppSwitcher` nav groups are collapsed by default** (state persisted as `nav/expanded`), so a new
+    user sees only group headers. A default-expanded option would help a portal with few groups.~~ *No longer
+    applies: the host uses `PortalNav` (alpha.23) with `sections="headings"`.*
 60. **The `@vuu-ui/*` packages depend on exact alpha versions**, and ~~`@heswell/vuu-data-engine-local` pins
     alpha.20, so bun installs two copies of `@vuu-ui/core` (two React contexts) unless the root `package.json`
     `overrides` every `@vuu-ui/*` package.~~ *Resolved on the @heswell side: vuu-websocket#93; engine-local 2.1.0
@@ -477,10 +478,10 @@ See [resilience.md](resilience.md) for the behaviour these work around.
     would fix it. *Workaround:* `createResilientConnectionRegistry` passes a jittered, unbounded `retryIntervals`
     iterable and wraps `acquire` to retry first connects with the same backoff (one shared wait per connection id,
     403 not retried), publishing the next attempt time.
-85. **`PortalHeader` has no slot for status items.** (finos `@vuu-ui/core` portal, 4.0.0-alpha.21.) A host cannot put
-    a connection indicator (or anything else) in the header. A `children` / `endAdornment` slot would fix it.
-    *Workaround:* the portal host renders `ConnectionStatusIndicator` after `PortalHeader` and positions it over the
-    header with CSS (`apps/portal-host/src/App.css`).
+85. ~~**`PortalHeader` has no slot for status items.** (finos `@vuu-ui/core` portal, 4.0.0-alpha.21.) A host cannot put
+    a connection indicator (or anything else) in the header. A `children` / `endAdornment` slot would fix it.~~
+    *Resolved in alpha.23: the host uses `PortalShell header={false}` with `PortalNav`, whose footer slot holds
+    `PortalConnectionStatus`; the CSS workaround is gone.*
 86. **`WebSocketConnection.openWebSocket`'s timeout throws inside `setTimeout`.** (finos `@vuu-ui/vuu-data-remote`,
     4.0.0-alpha.21.) When the socket does not open in time the timer throws `Failed to open WebSocket connection to
     …`, an uncaught error in the worker, instead of rejecting the open promise, so the caller waits forever and the
@@ -570,3 +571,24 @@ See [components/charts.md](components/charts.md). Bumping every `@vuu-ui/*` pack
     "Avg fill 436.243" on a 0.1 tick), and labels of lines at similar values overlap. A `formatValue` on
     `MarkLineDef` (or reuse of the chart's value formatter) would fix it. *Workaround:* the avg-fill label sits at
     the start of the line (`labelPosition: "insideStartTop"`) so it does not cover "Last"; precision is left as is.
+
+## Found in the alpha.23 upgrade (PortalNav)
+
+98. **`@vuu-ui/vuu-chart@4.0.0-alpha.23` is published without its chart components.** (finos `@vuu-ui/vuu-chart`,
+    4.0.0-alpha.23.) The package exports only `Chart` and `ChartSeries`; `CartesianChart`, `CandlestickChart`,
+    `DepthChart` and `TreemapChart` (all in alpha.22) are missing, so every trading chart fails to import.
+    Republishing with the full entry would fix it. *Workaround:* `packages/trading-ui` pins vuu-chart at
+    4.0.0-alpha.22, and the root `overrides` pin `@vuu-ui/vuu-utils`, `vuu-ui-controls` and `vuu-context-menu` at
+    alpha.23 so vuu-chart's exact alpha.22 dependencies do not install second copies.
+99. **`@heswell/vuu-portal@2.2.1` needs a `@heswell/module-admin` that is not published.** (heswell/vuu-websocket,
+    vuu-portal 2.2.1, module-admin 2.0.1.) vuu-portal imports `splitNotificationTopics` from module-admin, which
+    2.0.1 (the latest on npm) does not export, so the portal server fails to start and `features:check` (which loads
+    the modules yaml with the portal's own loader) fails. Publishing a module-admin with the `notificationTopics`
+    support, and a vuu-portal that depends on it, would fix it. *No workaround in the repo.*
+100. **The vuu theme makes the nav footer's hover / open state coral.** (finos `@vuu-ui/vuu-theme` and
+     `@vuu-ui/core` portal, 4.0.0-alpha.23.) `PortalNavUserMenu` and `PortalConnectionStatus` use
+     `--salt-actionable-subtle-background-hover` for a hovered or open trigger, which `vuu-theme`
+     (`css/next/characteristics/actionable.css`) maps to `--vuu-color-coral`, so the user row and the rail status
+     button turn bright coral instead of the subtle grey in the design. A neutral token (e.g.
+     `--salt-container-primary-background-hover`) would fix it. *No workaround in the repo.*
+

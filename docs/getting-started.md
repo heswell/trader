@@ -26,7 +26,7 @@ The app needs:
   - `@heswell/trading-ui` (`workspace:*`);
   - `@heswell/trading-test-data` (`workspace:*`), for engine-local mode only;
   - `@salt-ds/core` 1.67.0;
-  - the `@vuu-ui/*` packages at `4.0.0-alpha.22`: `core`, `vuu-icons`, `vuu-theme`, `vuu-table-extras` and
+  - the `@vuu-ui/*` packages at `4.0.0-alpha.23`: `core`, `vuu-icons`, `vuu-theme`, `vuu-table-extras` and
     the others in [apps/showcase/package.json](../apps/showcase/package.json);
   - React 19.
 - **Component CSS as strings.** trading-ui components `import css from "./X.css"` and inject it at runtime

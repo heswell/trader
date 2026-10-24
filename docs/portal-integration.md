@@ -21,8 +21,8 @@ flowchart LR
       WS --> WL[Workspace ladder]
       W[Watchlist]
       D[Depth]
-      O[Orders / Fills / Positions / Tape / Ticket / Ladder]
-      SV[Supervision]
+      O[Orders / Executions / Positions / Time &amp; sales / Ladder / Charts]
+      SV[Desk overview]
     end
     Host -- "loads mf-manifest.json,<br/>reads config.json" --> Remotes
     Bus(("instrument link bus<br/>+ BroadcastChannel"))
@@ -195,10 +195,10 @@ standard token exchange requires.
 
 | User (password `password`) | Server roles (`trader-trading-server`) | Sees |
 | --- | --- | --- |
-| alice, bob, carol, erin | trading-view, trading-execute | All of Trading (Workspace with ticket and ladder; Ticket; Ladder) |
-| dave | trading-view | Workspace, Watchlist, Depth, Orders, Fills, Positions, Tape. No Ticket or Ladder, and a read-only order blotter. |
-| sam | trading-view, trading-supervisor | As dave, plus Supervision › Desk overview (all accounts) |
-| admin | trading-view, trading-supervisor (plus `vuu-portal` module-admin-access, vuu-table-viewer-access) | Supervision, plus portal module admin |
+| alice, bob, carol, erin | trading-view, trading-execute | Every entry except Oversight (the Trader workspace with its docked ticket and ladder; Price ladder) |
+| dave | trading-view | As alice, but no Price ladder; the workspace shows placeholders for the ticket and ladder, and the order blotter is read-only. |
+| sam | trading-view, trading-supervisor | As dave, plus Oversight › Desk overview (all accounts) |
+| admin | trading-view, trading-supervisor (plus `vuu-portal` module-admin-access, vuu-table-viewer-access) | As sam, plus portal module admin |
 
 The Keycloak admin console is at `https://localhost:8180/admin` (admin / admin). These are dev credentials only.
 `bun run keycloak:realm export` rewrites `infra/keycloak/realm-vuu.json`, which docker-compose imports. Use
@@ -214,20 +214,32 @@ requires a unique `mfScope` per module (trader upstream issue 45). `src/catalog.
 The Role column is the server role. The module's `accessRole` is the matching nav role (`trading-view` →
 `trading-access`, and so on).
 
-| Nav | Module | Role | Content |
-| --- | --- | --- | --- |
-| Trading › Workspace | TradingWorkspace | trading-view | Prebuilt trader layout (below) |
-| *(child)* | TradingWorkspaceTicket | trading-execute | Order ticket docked in the workspace |
-| *(child)* | TradingWorkspaceLadder | trading-execute | Price ladder docked in the workspace |
-| Trading › Watchlist | TradingWatchlist | trading-view | InstrumentGrid (sparklines, watchlists, Buy / Sell) |
-| Trading › Depth | TradingDepth | trading-view | MarketDepth (own orders for the chosen account) |
-| Trading › Ladder | TradingLadder | trading-execute | PriceLadder (click-to-trade) |
-| Trading › Ticket | TradingTicket | trading-execute | OrderTicketPanel |
-| Trading › Orders | TradingOrders | trading-view | OrderBlotter (read-only without trading-execute) |
-| Trading › Fills | TradingFills | trading-view | FillsBlotter |
-| Trading › Positions | TradingPositions | trading-view | PositionsView |
-| Trading › Tape | TradingTape | trading-view | TradeTape |
-| Supervision › Desk overview | TradingSupervisor | trading-supervisor | All visible accounts' orders and positions |
+The nav is sorted by `navOrder`; a section sorts by its lowest entry. `navBadge` names a live badge the host
+renders, and `notificationTopics` are the trading server's notification topics the entry claims (see
+[the portal host](#portal-host-nav)).
+
+| id | Nav | Path | Module | Role | navOrder | Badge / topics | Content |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 100 | Workspaces › Trader | `/workspaces/trader` | TradingWorkspace | trading-view | 10 | orders, fills, marketdata, risk | Prebuilt trader layout (below) |
+| 101 | *(child)* | | TradingWorkspaceTicket | trading-execute | | | Order ticket docked in the workspace |
+| 102 | *(child)* | | TradingWorkspaceLadder | trading-execute | | | Price ladder docked in the workspace |
+| 110 | Trading › Watchlist | `/trading/watchlist` | TradingWatchlist | trading-view | 100 | marketdata | InstrumentGrid (sparklines, watchlists, Buy / Sell) |
+| 114 | Trading › Orders | `/trading/orders` | TradingOrders | trading-view | 110 | `orders.working`; orders | OrderBlotter (read-only without trading-execute) |
+| 115 | Trading › Executions | `/trading/executions` | TradingFills | trading-view | 120 | fills | FillsBlotter |
+| 112 | Trading › Price ladder | `/trading/price-ladder` | TradingLadder | trading-execute | 130 | orders | PriceLadder (click-to-trade) |
+| 111 | Market › Market depth | `/market/depth` | TradingDepth | trading-view | 200 | marketdata | MarketDepth (own orders for the chosen account) |
+| 117 | Market › Time & sales | `/market/time-and-sales` | TradingTape | trading-view | 210 | marketdata | TradeTape |
+| 118 | Market › Chart | `/market/chart` | TradingChart | trading-view | 220 | | PriceChart |
+| 119 | Market › Depth chart | `/market/depth-chart` | TradingDepthChart | trading-view | 230 | | DepthChartView |
+| 116 | Portfolio › Positions | `/portfolio/positions` | TradingPositions | trading-view | 300 | `positions.dayPnl`; positions, risk | PositionsView |
+| 121 | Portfolio › P&L | `/portfolio/pnl` | TradingPnl | trading-view | 310 | | Account P&L history (PnlHistoryChart) |
+| 122 | Portfolio › Exposure | `/portfolio/exposure` | TradingExposure | trading-view | 320 | risk | ExposureTreemap |
+| 123 | Portfolio › Execution quality | `/portfolio/execution-quality` | TradingExecutionQuality | trading-view | 330 | | SlippageChart |
+| 120 | Oversight › Desk overview | `/oversight/desk` | TradingSupervisor | trading-supervisor | 400 | risk, orders | All visible accounts' orders and positions |
+
+There is no standalone order ticket entry (module 113 was removed): the ticket is docked in the Trader workspace
+(child 101) and opens as a dialog from Buy / Sell anywhere. The former Analytics feature (121) is split into P&L
+(121), Exposure (122) and Execution quality (123). Module ids are stable.
 
 The workspace renders the ticket and ladder as **child modules** (`parentModuleId`, no nav entry), through
 `usePortalModuleRegistry()` and `RemoteModule`. A user without trading-execute is not sent those modules, so the
@@ -237,8 +249,9 @@ workspace shows a placeholder in their place.
 
 1. Add `src/features/<Name>.tsx`. Wrap the content with `withFeatureRoot` (see below) and give components stable
    `id`s, because they key saved state.
-2. Add a catalog entry: unique `key`, `id`, `name`, `mfScope`; `location: "/Section/Label"` and `path` for a nav
-   entry, or `parent` for a child module.
+2. Add a catalog entry: unique `key`, `id`, `name`, `mfScope`; for a nav entry `location: "/Section/Label"`,
+   `path`, `navOrder` and `navIcon` (an outline icon in `navIcons.ts`), optionally `navBadge` and
+   `notificationTopics`; or `parent` for a child module.
 3. Run `bun run features:sync && bun run build`, then restart `start:all`. The module list is reseeded because the
    defaults changed.
 
@@ -287,6 +300,42 @@ There are two deviations from the P3.11 plan:
 remotes. Do not include the host's own path: cssInline turns plain `.css` imports in included paths into strings,
 so the host's CSS would not be applied (trader upstream issue 47).
 
+## Portal host nav
+
+`apps/portal-host` renders `<PortalShell header={false}>` with `PortalNav` (`src/nav/TraderNav.tsx`) as its only
+chrome; there is no `PortalHeader` or `PortalAppSwitcher`.
+
+- **Display modes.** Icons and text by default, all four modes allowed, `collapseTo="icons"`, section headings.
+  ⌘B / Ctrl+B (or the chevron) toggles between the expanded mode and icons; the user menu's Icons and text / Text
+  only / Icons only / Hidden items pick any mode (PortalNav has no built-in picker). The mode is saved
+  (`nav/displayMode`). In Hidden, the edge handle opens the nav as an overlay with a "Keep navigation open" pin.
+- **Brand.** The logo, "Trader", an environment chip when `config.json` has an `environment` string (e.g.
+  `"UAT"`), and the notifications bell (`NotificationsIndicator scope="unclaimed"`). In the icon rail, the logo
+  expands the nav and the bell stacks under it.
+- **Footer.** `PortalConnectionStatus` labels the portal's own connection "Portal" and the trading server's
+  "Trading", each with its impact when down. `PortalNavUserMenu` shows the user's trading account (none for a
+  supervisor) and has Saved state… and Log out. Both use the `rail` variant in the icon rail.
+- **Badges.** `TradingNavFeed` opens three small viewports on the trading connection (the one the modules'
+  `config.json` names, found as the `ConnectionStatusIndicator` did): `parentOrders` with the Orders blotter's
+  Working-tab filter (`orders.working`: the row count), `positionPrices` (`positions.dayPnl`: the sum of
+  `totalPnlUsd`, i.e. total P&L in USD, shown compact, signed and green / red), and `accounts` filtered to
+  `owner = <user>` (the user menu's account). The server's permission filter scopes all three, so a supervisor's
+  badges cover every account.
+- **Notification topics.** The trading server publishes a `NOTIFICATIONS` module (vuu-server's generic
+  `notifications` table plus `account`, `ric` and `orderId`, filtered per user by account like the OMS tables).
+  The OMS writes:
+
+  | Event | topic | level | type |
+  | --- | --- | --- | --- |
+  | Parent order rejected (risk or exchange) | `orders` | ERROR | silent (the feature already toasts it) |
+  | Position at 80% of the account's `maxPositionNotional` | `risk` | WARNING | toast |
+  | Position at or over the limit | `risk` | ERROR | toast |
+
+  The portal routes each row to the modules on the trading connection that claim its topic in
+  `notificationTopics` (a dot in the nav, worst unread severity; opening the page marks it read). An unclaimed
+  topic goes to the bell only. Rows expire after 15 minutes (rejects) or 30 minutes (risk). Fills are not
+  published (the background flow fills continuously); the features still toast the user's own fills.
+
 ## Layouts and saved state
 
 The **trader workspace** is the prebuilt default layout. It contains the watchlist (red), Orders / Fills /
@@ -323,6 +372,25 @@ A green instrument picker sits in the toolbar, next to an account selector.
 | Toasts appear twice | Each feature must use `TradingFeatureRoot` (or `withFeatureRoot`), not its own `TradingNotificationsProvider`. |
 
 ## Verified
+
+### PortalNav (alpha.23)
+
+Verified with @vuu-ui 4.0.0-alpha.23 (vuu-chart alpha.22), vuu-portal 2.2.1 and headless Chrome against
+`bun run start:all`, with `OMS_FLOW_ACCOUNTS=ACC-US-02,ACC-EU-01,ACC-ASIA-01,ACC-ASIA-02`. vuu-portal 2.2.1 could
+only start with a locally built `@heswell/module-admin` (trader upstream issue 99).
+
+- **IA and roles:** alice sees Workspaces, Trading, Market and Portfolio with the account ACC-US-01
+  (`nav-badges-dots.png`); dave has no Price ladder, ACC-EU-02 and the workspace placeholders (`nav-dave.png`); sam
+  also gets Oversight › Desk overview, no account, and desk-wide badges (`nav-sam.png`).
+- **Badges:** a limit buy below the bid takes Orders from 0 to 1; after a market buy, Positions shows a signed red /
+  green P&L that moves with the market.
+- **Notification topics:** a limit buy at half the price, placed from the Watchlist's Buy dialog, is rejected;
+  Trader, Orders and Price ladder (which claim `orders`) get a red dot. Opening Orders clears them.
+- **Modes:** icons and text, text (`nav-text.png`), icons (⌘B; the connection popover lists Portal and Trading,
+  `nav-rail-connection.png`) and hidden (edge handle, overlay, "Keep navigation open"). The mode survives a reload.
+- **User menu:** identity, account and roles, Saved state…, the display modes and Log out (`nav-user-menu.png`).
+
+### Earlier phases
 
 Verified with @vuu-ui 4.0.0-alpha.22, Keycloak 26.4.2 (real OIDC login and token exchange) and headless Chrome
 against `bun run start:all`, with the trading modules on the standalone trading server. The scripts are not in the

@@ -56,7 +56,7 @@ export const serveHost = (cfg = stackConfig()) => {
         const html = file.endsWith(".html");
         return new Response(Bun.file(file), { headers: html ? noStore : {} });
       }
-      // Client-side routes (/trading/...) get the app; missing assets 404.
+      // Client-side routes (/trading/..., /market/..., ...) get the app; missing assets 404.
       if (extname(pathname)) return new Response("Not found", { status: 404 });
       return new Response(Bun.file(resolve(dist, "index.html")), {
         headers: noStore,

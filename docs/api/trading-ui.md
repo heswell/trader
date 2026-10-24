@@ -2355,12 +2355,15 @@ Props of [`ConnectionBanner`](#connectionbanner).
 
 #### ConnectionStatusIndicator
 
-*component* · [components/ConnectionStatusIndicator/ConnectionStatusIndicator.tsx](../../packages/trading-ui/src/components/ConnectionStatusIndicator/ConnectionStatusIndicator.tsx#L76)
+*component* · [components/ConnectionStatusIndicator/ConnectionStatusIndicator.tsx](../../packages/trading-ui/src/components/ConnectionStatusIndicator/ConnectionStatusIndicator.tsx#L79)
 
 Global connection status: a dot and label (Connected / Connecting… /
 Reconnecting… / Disconnected / Connection failed) for the worst of the
 observed Vuu connections, with the next retry countdown when known and a
 "Retry now" button. Mount once in a header (docs/resilience.md).
+
+For standalone apps (e.g. the showcase). Inside the portal, the nav footer's
+`PortalConnectionStatus` (@vuu-ui/core/portal) shows connection status.
 
 Props: `ConnectionStatusIndicatorProps`
 

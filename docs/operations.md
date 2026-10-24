@@ -90,8 +90,8 @@ All users have the password `password`. Keycloak's own admin is `admin` / `admin
 | User | Can |
 | --- | --- |
 | alice, bob, carol, erin | view and trade (ticket, ladder, amend / cancel) |
-| dave | view only (no Ticket or Ladder, read-only blotters) |
-| sam | view, plus Supervision › Desk overview |
+| dave | view only (no Price ladder, read-only blotters) |
+| sam | view, plus Oversight › Desk overview |
 | admin | supervision and portal module admin |
 
 - **Realm.** `bun run keycloak:realm export|bootstrap` writes `infra/keycloak/realm-vuu.json`, or applies it to a

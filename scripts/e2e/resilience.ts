@@ -29,6 +29,7 @@ import { chromium, type Page } from "playwright";
 import {
   check,
   flag,
+  CONNECTION_STATUS_SELECTOR,
   indicatorState,
   log,
   login,
@@ -113,7 +114,7 @@ const main = async () => {
     page.screenshot({ path: resolve(root, `.run/e2e-resilience-${name}.png`) });
 
   try {
-    await page.goto(`${cfg.hostOrigin}/trading/workspace`);
+    await page.goto(`${cfg.hostOrigin}/workspaces/trader`);
     await login(page);
 
     await mustWait(
@@ -284,7 +285,7 @@ const main = async () => {
           if (/maximum sessions/i.test(text)) secondRefusals.push(text);
         }),
       );
-      await second.goto(`${cfg.hostOrigin}/trading/workspace`);
+      await second.goto(`${cfg.hostOrigin}/workspaces/trader`);
       await waitUntil(async () => secondRefusals.length > 0, 60_000);
       check(
         secondRefusals.length > 0,
@@ -311,7 +312,7 @@ const main = async () => {
       if (connectedIn < 0)
         log(
           `second tab indicator: ${await second
-            .locator(".traderHostConnectionStatus")
+            .locator(CONNECTION_STATUS_SELECTOR)
             .first()
             .evaluate((el) => el.outerHTML)
             .catch(() => "n/a")}`,

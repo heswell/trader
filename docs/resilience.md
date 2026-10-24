@@ -14,7 +14,7 @@ persistence: after a restart the UI shows whatever state the server has.
 | `VuuConnectionRegistry` (`@vuu-ui/core`) | Ref-counted connection per `connectionId`. After a drop, reconnects on `retryIntervals` (default 1, 2, 3, 5, 10, 30, 60, 120 s), exchanging a fresh token for each attempt, then the worker resubscribes the viewports. | No jitter; gives up after ~4 minutes and the module shows its error boundary. A *first* connect that fails is not retried at all (trader upstream issue 84). No per-attempt timeout, so a hung login stops the loop for good (issue 83). |
 | `VuuServerMonitor` / `ConnectionLostOverlay` (`@vuu-ui/core`) | Marks a connection lost while it reconnects; the portal overlays and inerts the lost module. Probes again after a failed acquire. | — |
 | `RemoteModule` / `AuthenticationProvider mode="vuu-connection"` | Acquires the module's connection from the registry. | An acquire failure is thrown to the module's error boundary ("An error occurred while creating the remote module"). |
-| `PortalHeader` | — | No slot for a status item (trader upstream issue 85). |
+| `PortalNav` / `PortalConnectionStatus` (`@vuu-ui/core/portal`, alpha.23) | The nav footer shows the worst connection, with a popover listing each connection, its state, retry time and impact, and a retry action. | — |
 | `useDataSource` (`@vuu-ui/vuu-table`) | — | Throws "a resumed dataSource must have a tableSchema" if its effect re-runs while the viewport is still subscribing, e.g. a changed `onSelect` during a cold start or a resubscribe (trader upstream issue 87). |
 
 ## 2. What trader adds (`packages/trading-ui/src/connection`)
@@ -55,7 +55,7 @@ persistence: after a restart the UI shows whatever state the server has.
 
 | Component | Behaviour |
 | --- | --- |
-| `ConnectionStatusIndicator` | Dot and label for the worst observed connection: Connected, Connecting…, Reconnecting…, Disconnected, Connection failed. While retrying with a known next attempt: "retry in Ns" and a "Retry now" button. Tooltip lists each connection. `data-connection-state` on the root. The portal host mounts it next to `PortalHeader`. |
+| `ConnectionStatusIndicator` | Dot and label for the worst observed connection: Connected, Connecting…, Reconnecting…, Disconnected, Connection failed. While retrying with a known next attempt: "retry in Ns" and a "Retry now" button. Tooltip lists each connection. `data-connection-state` on the root. Used by stand-alone hosts (the showcase); the portal host uses `PortalConnectionStatus` in the nav footer instead. |
 | `OrderTicket` | While not connected: submit disabled, F9 / Ctrl+Enter ignored, a banner ("Connection lost, reconnecting: orders cannot be sent", "Connecting to the trading server…", …), `data-connection-state` and `.tradingOrderTicket-blocked`. Re-enabled when connected. Local data is always enabled. |
 | `PriceLadder` | Click-to-trade and cancel blocked while not connected; greyed while stale (`staleAfterMs` optional). |
 | `InstrumentGrid`, `MarketDepth`, `TradeTape`, `PositionsView`, `FillsBlotter`, `OrderBlotter` | Greyed (`data-stale`) while disconnected / reconnecting. MarketDepth and PriceLadder also take `staleAfterMs` (a quiet book is not stale by default). Blotter actions (cancel, cancel all, amend) fail at once with a toast while disconnected. |
