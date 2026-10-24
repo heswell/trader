@@ -91,14 +91,12 @@ All dependencies come from npm:
 
 - **Server side**, from [heswell/vuu-websocket](https://github.com/heswell/vuu-websocket):
   `@heswell/vuu-server@^4.2.1` and `@heswell/vuu-portal@^2.2.1`, which bring `@heswell/service-utils`.
-- **UI**: `@vuu-ui/*@4.0.0-alpha.23` and `@vuu-ui/portal-build`. `@vuu-ui/vuu-chart` (on echarts) stays at
-  alpha.22, because the alpha.23 publish is missing its chart components (trader upstream issue 98).
+- **UI**: `@vuu-ui/*@4.0.0-alpha.24` (including `@vuu-ui/vuu-chart`, on echarts) and `@vuu-ui/portal-build`.
 - **Matching** uses `@heswell/hft-limit-order-book`, and engine-local mode uses `@heswell/vuu-data-engine-local`.
 
 The @heswell packages only peer `@vuu-ui/*`. Every workspace that uses vuu-server therefore lists the `@vuu-ui`
-packages it needs at alpha.23, and the install has one copy of each. The root `overrides` pin
-`@heswell/vuu-viewport` (`^1.1.5`), and `@vuu-ui/vuu-utils`, `vuu-ui-controls` and `vuu-context-menu` at alpha.23,
-so vuu-chart alpha.22's exact dependencies do not pull in second copies.
+packages it needs at alpha.24, and the install has one copy of each. The root `overrides` pin
+`@heswell/vuu-viewport` (`^1.1.5`).
 
 ## Common commands
 

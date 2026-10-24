@@ -14,8 +14,8 @@
     "@heswell/vuu-portal": "^2.2.1",
     "@heswell/vuu-server": "^4.2.1",
     "@heswell/vuu-table": "^1.0.2",
-    "@vuu-ui/vuu-data-types": "4.0.0-alpha.23",
-    "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.23",
-    "@vuu-ui/vuu-utils": "4.0.0-alpha.23"
+    "@vuu-ui/vuu-data-types": "4.0.0-alpha.24",
+    "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.24",
+    "@vuu-ui/vuu-utils": "4.0.0-alpha.24"
   }
 }

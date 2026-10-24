@@ -574,12 +574,9 @@ See [components/charts.md](components/charts.md). Bumping every `@vuu-ui/*` pack
 
 ## Found in the alpha.23 upgrade (PortalNav)
 
-98. **`@vuu-ui/vuu-chart@4.0.0-alpha.23` is published without its chart components.** (finos `@vuu-ui/vuu-chart`,
-    4.0.0-alpha.23.) The package exports only `Chart` and `ChartSeries`; `CartesianChart`, `CandlestickChart`,
-    `DepthChart` and `TreemapChart` (all in alpha.22) are missing, so every trading chart fails to import.
-    Republishing with the full entry would fix it. *Workaround:* `packages/trading-ui` pins vuu-chart at
-    4.0.0-alpha.22, and the root `overrides` pin `@vuu-ui/vuu-utils`, `vuu-ui-controls` and `vuu-context-menu` at
-    alpha.23 so vuu-chart's exact alpha.22 dependencies do not install second copies.
+98. ~~**`@vuu-ui/vuu-chart@4.0.0-alpha.23` is published without its chart components.**~~ *Resolved in
+    @vuu-ui 4.0.0-alpha.24:* every `@vuu-ui/*` package moved to alpha.24, and the vuu-chart pin and the root
+    `@vuu-ui` overrides were removed.
 99. **`@heswell/vuu-portal@2.2.1` needs a `@heswell/module-admin` that is not published.** (heswell/vuu-websocket,
     vuu-portal 2.2.1, module-admin 2.0.1.) vuu-portal imports `splitNotificationTopics` from module-admin, which
     2.0.1 (the latest on npm) does not export, so the portal server fails to start and `features:check` (which loads
