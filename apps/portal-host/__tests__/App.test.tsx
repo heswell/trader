@@ -30,6 +30,7 @@ const modules: RemoteModuleDescriptor[] = TRADING_FEATURES.map((f) => ({
   path: f.path ?? "",
   title: f.title,
   version: 1,
+  ...(f.workspace ? { workspace: f.workspace } : {}),
 }));
 
 // Every remote's config.json: the trading server, simulated in the browser.
@@ -98,14 +99,20 @@ describe("portal host", () => {
       ),
     ]);
     expect(sections).toEqual([
-      ["Workspaces", ["Trader"]],
-      ["Trading", ["Watchlist", "Orders", "Executions", "Price ladder"]],
+      ["Workspaces", ["Trader", "New workspace"]],
+      [
+        "Trading",
+        ["Watchlist", "Orders", "Executions", "Price ladder", "Order ticket"],
+      ],
       ["Market", ["Market depth", "Time & sales", "Chart", "Depth chart"]],
       ["Portfolio", ["Positions", "P&L", "Exposure", "Execution quality"]],
       ["Oversight", ["Desk overview"]],
     ]);
     expect(entry(nav, "Executions")?.getAttribute("href")).toBe(
       "/trading/executions",
+    );
+    expect(entry(nav, "Trader")?.getAttribute("href")).toBe(
+      "/workspaces/trader",
     );
     // navIconUrl renders as a CSS mask (url('…')), one per entry
     expect(
@@ -127,6 +134,37 @@ describe("portal host", () => {
     expect(footer.querySelector(".vuuPortalConnectionStatus")).not.toBeNull();
     expect(footer.querySelector(".vuuPortalNavUserMenu")).not.toBeNull();
     expect(footer.textContent).toContain("ACC-US-01");
+  });
+
+  test("Workspaces › Trader opens the Trader system workspace", async () => {
+    const nav = await renderApp();
+    await act(async () => entry(nav, "Trader")?.click());
+    await wait(300);
+    expect(window.location.pathname).toBe("/workspaces/trader");
+    const header = document.querySelector<HTMLElement>(
+      ".vuuPortalWorkspaceHeader",
+    );
+    expect(header?.dataset.workspaceId).toBe("trader");
+    expect(
+      header?.querySelector(".vuuPortalWorkspaceHeader-title")?.textContent,
+    ).toBe("Trader");
+    expect(
+      [...document.querySelectorAll(".vuuGridLayoutItemHeader-title")].map(
+        (title) => title.textContent,
+      ),
+    ).toEqual(["Instruments", "Ticket", "Ladder", "Tape"]);
+    expect(
+      [...document.querySelectorAll('[role="tab"]')].map(
+        (tab) => tab.textContent,
+      ),
+    ).toEqual([
+      "Orders",
+      "Fills",
+      "Positions",
+      "Chart",
+      "Depth",
+      "Depth chart",
+    ]);
   });
 
   test("badges show working orders and P&L, and tick", async () => {
