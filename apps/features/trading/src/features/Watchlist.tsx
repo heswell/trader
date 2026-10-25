@@ -4,15 +4,16 @@ import {
   fillStyle,
   useEntitlements,
   withFeatureRoot,
+  type LinkedFeatureProps,
 } from "./shared";
 
 /** Instrument grid with sparklines; Buy / Sell open the ticket (traders only). */
-const Watchlist = () => {
+const Watchlist = ({ defaultLinkGroup = "red" }: LinkedFeatureProps) => {
   const { canTrade } = useEntitlements();
   return (
     <FeatureFrame>
       <InstrumentGrid
-        defaultLinkGroup="red"
+        defaultLinkGroup={defaultLinkGroup}
         id="watchlist"
         launchOrderTicket={canTrade}
         showLinkGroupSelector

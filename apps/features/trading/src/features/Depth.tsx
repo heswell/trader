@@ -4,16 +4,17 @@ import {
   fillStyle,
   useAccountToolbar,
   withFeatureRoot,
+  type LinkedFeatureProps,
 } from "./shared";
 
 /** Market depth for the linked instrument, with the account's own orders. */
-const Depth = () => {
+const Depth = ({ defaultLinkGroup = "red" }: LinkedFeatureProps) => {
   const { account, toolbar } = useAccountToolbar();
   return (
     <FeatureFrame toolbar={toolbar}>
       <MarketDepth
         account={account}
-        defaultLinkGroup="red"
+        defaultLinkGroup={defaultLinkGroup}
         id="depth"
         showLinkGroupSelector
         style={fillStyle}

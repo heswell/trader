@@ -5,11 +5,11 @@
  * mask in the text colour, so the stroke colour here doesn't matter.
  */
 export type TradingNavIcon =
-  | "workspace"
   | "watchlist"
   | "orders"
   | "executions"
   | "ladder"
+  | "ticket"
   | "depth"
   | "tape"
   | "chart"
@@ -21,14 +21,14 @@ export type TradingNavIcon =
   | "oversight";
 
 const NAV_ICON_SHAPES: Readonly<Record<TradingNavIcon, string>> = {
-  workspace:
-    '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/>',
   watchlist:
     '<path d="M4 6h9M4 12h9M4 18h9"/><path d="M16 9.5l2.5-2.5L21 9.5"/><path d="M16 14.5l2.5 2.5 2.5-2.5"/>',
   orders:
     '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
   executions:
     '<circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/>',
+  ticket:
+    '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h3"/><path d="M14 14.5l2 2 3.5-4"/>',
   ladder: '<path d="M7 3v18M17 3v18M7 7h10M7 11h10M7 15h10M7 19h10"/>',
   depth:
     '<path d="M3 20h18"/><path d="M3 17h3v-3h3v-3h3"/><path d="M21 17h-3v-4h-3v-3h-3"/>',

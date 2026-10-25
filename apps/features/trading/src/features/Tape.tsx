@@ -1,10 +1,25 @@
 import { TradeTape } from "@heswell/trading-ui";
-import { FeatureFrame, fillStyle, withFeatureRoot } from "./shared";
+import {
+  FeatureFrame,
+  fillStyle,
+  type PickerFeatureProps,
+  ToolbarPicker,
+  withFeatureRoot,
+} from "./shared";
 
-const Tape = () => (
-  <FeatureFrame>
+const Tape = ({
+  defaultLinkGroup = "green",
+  showInstrumentPicker = false,
+}: PickerFeatureProps) => (
+  <FeatureFrame
+    toolbar={
+      showInstrumentPicker ? (
+        <ToolbarPicker id="tape-picker" linkGroup={defaultLinkGroup} />
+      ) : undefined
+    }
+  >
     <TradeTape
-      defaultLinkGroup="green"
+      defaultLinkGroup={defaultLinkGroup}
       id="tape"
       showLinkGroupSelector
       style={fillStyle}

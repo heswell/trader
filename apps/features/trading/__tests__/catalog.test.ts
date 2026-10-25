@@ -15,6 +15,7 @@ interface YamlModule {
   navOrder?: number;
   navBadge?: string;
   notificationTopics?: string[];
+  workspace?: unknown;
 }
 
 const parse = (yaml: string) =>
@@ -29,11 +30,11 @@ describe("trading catalog information architecture", () => {
         .sort((a, b) => (a.navOrder ?? 0) - (b.navOrder ?? 0))
         .map((f) => [f.id, f.location, f.path, f.navOrder]),
     ).toEqual([
-      [100, "/Workspaces/Trader", "/workspaces/trader", 10],
       [110, "/Trading/Watchlist", "/trading/watchlist", 100],
       [114, "/Trading/Orders", "/trading/orders", 110],
       [115, "/Trading/Executions", "/trading/executions", 120],
       [112, "/Trading/Price ladder", "/trading/price-ladder", 130],
+      [124, "/Trading/Order ticket", "/trading/ticket", 140],
       [111, "/Market/Market depth", "/market/depth", 200],
       [117, "/Market/Time & sales", "/market/time-and-sales", 210],
       [118, "/Market/Chart", "/market/chart", 220],
@@ -58,33 +59,47 @@ describe("trading catalog information architecture", () => {
     expect(TRADING_FEATURES.filter((f) => f.navBadge).map((f) => f.id)).toEqual(
       [114, 116],
     );
-    expect(byId.get(100)?.notificationTopics).toEqual([
-      "orders",
-      "fills",
-      "marketdata",
-      "risk",
-    ]);
+    expect(byId.get(124)?.notificationTopics).toEqual(["orders"]);
     expect(byId.get(116)?.notificationTopics).toEqual(["positions", "risk"]);
     expect(byId.get(120)?.notificationTopics).toEqual(["risk", "orders"]);
     expect(byId.get(112)?.accessRole).toBe("trading-execute-access");
+    expect(byId.get(124)?.accessRole).toBe("trading-execute-access");
     expect(byId.get(120)?.accessRole).toBe("trading-supervisor-access");
   });
 
-  test("ids and names are unique; the standalone ticket (113) is gone", () => {
+  test("ids and names are unique; the workspace modules (100-102) are retired", () => {
     const ids = TRADING_FEATURES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);
     expect(new Set(TRADING_FEATURES.map((f) => f.name)).size).toBe(ids.length);
     expect(new Set(TRADING_FEATURES.map((f) => f.mfScope)).size).toBe(
       ids.length,
     );
-    expect(ids).not.toContain(113);
-    const children = TRADING_FEATURES.filter((f) => f.parent);
-    expect(children.map((f) => f.id).sort()).toEqual([101, 102]);
-    for (const child of children) {
-      expect(child.location).toBeUndefined();
-      expect(child.navOrder).toBeUndefined();
-    }
+    // 113 was an earlier standalone ticket; 100-102 the vuu-layout Trader
+    // workspace and its child modules (now a portal system workspace)
+    for (const retired of [100, 101, 102, 113])
+      expect(ids).not.toContain(retired);
+    expect(TRADING_FEATURES.filter((f) => f.parent)).toEqual([]);
     for (const f of topLevel) expect(f.navIcon).toBeDefined();
+  });
+
+  test("Panels palette: every feature but the desk overview, grouped by nav section", () => {
+    const palette = TRADING_FEATURES.filter((f) => f.workspace);
+    expect(
+      TRADING_FEATURES.filter((f) => !f.workspace).map((f) => f.name),
+    ).toEqual(["TradingSupervisor"]);
+    for (const f of palette) {
+      expect(f.location?.split("/")[1]).toBe(f.workspace?.paletteGroup);
+      const { cols = 0, rows = 0 } = f.workspace?.defaultSize ?? {};
+      expect(cols).toBeGreaterThan(0);
+      expect(rows).toBeGreaterThan(0);
+    }
+    const tall = palette
+      .filter(
+        ({ workspace: w }) =>
+          (w?.defaultSize?.rows ?? 0) > (w?.defaultSize?.cols ?? 0),
+      )
+      .map((f) => f.key);
+    expect(tall).toEqual(["ladder", "ticket", "depth", "tape"]);
   });
 });
 
@@ -109,10 +124,16 @@ describe("default-modules.yaml generation", () => {
       navBadge: "orders.working",
       notificationTopics: ["orders"],
     });
-    const ticket = modules.find((m) => m.id === 101);
-    expect(ticket).toMatchObject({ parentModuleId: 100, location: "" });
-    expect(ticket?.navOrder).toBeUndefined();
-    expect(ticket?.notificationTopics).toBeUndefined();
+    expect(modules.find((m) => m.id === 124)).toMatchObject({
+      parentModuleId: 0,
+      location: "/Trading/Order ticket",
+      workspace: { paletteGroup: "Trading", defaultSize: { cols: 1, rows: 2 } },
+    });
+    expect(orders?.workspace).toEqual({
+      paletteGroup: "Trading",
+      defaultSize: { cols: 2, rows: 1 },
+    });
+    expect(modules.find((m) => m.id === 120)?.workspace).toBeUndefined();
     for (const m of modules.filter((m) => m.parentModuleId === 0)) {
       expect(m.navIconUrl).toStartWith("data:image/svg+xml");
       expect(m.navIconUrl).not.toContain("'");

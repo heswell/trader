@@ -22,7 +22,8 @@ export const modulesYaml = (featuresOrigin = DEFAULT_FEATURES_ORIGIN) => {
     "# menu location: the parent renders them, and the server lists them only",
     "# when the user also holds the parent's role. navOrder sorts the nav",
     "# (sections by their lowest entry), navBadge keys a live badge the host",
-    "# renders, notificationTopics routes NOTIFICATIONS rows by topic.",
+    "# renders, notificationTopics routes NOTIFICATIONS rows by topic, workspace",
+    "# lists the module in the Panels palette (VuuModuleDescriptor.workspace).",
     "modules:",
   ];
   for (const f of TRADING_FEATURES) {
@@ -50,6 +51,7 @@ export const modulesYaml = (featuresOrigin = DEFAULT_FEATURES_ORIGIN) => {
         `    notificationTopics: [${f.notificationTopics.map(q).join(", ")}]`,
       );
     }
+    if (f.workspace) lines.push(`    workspace: ${JSON.stringify(f.workspace)}`);
   }
   return `${lines.join("\n")}\n`;
 };

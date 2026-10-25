@@ -1,11 +1,16 @@
 import { DepthChartView } from "@heswell/trading-ui";
-import { FeatureFrame, fillStyle, withFeatureRoot } from "./shared";
+import {
+  FeatureFrame,
+  fillStyle,
+  withFeatureRoot,
+  type LinkedFeatureProps,
+} from "./shared";
 
 /** Live cumulative depth chart for the linked instrument. */
-const DepthChart = () => (
+const DepthChart = ({ defaultLinkGroup = "red" }: LinkedFeatureProps) => (
   <FeatureFrame>
     <DepthChartView
-      defaultLinkGroup="red"
+      defaultLinkGroup={defaultLinkGroup}
       id="depth-chart"
       showLinkGroupSelector
       style={fillStyle}
