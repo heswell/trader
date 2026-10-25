@@ -61,17 +61,21 @@ const workingOrders = async (page: Page) =>
 const orderIds = (rows: string[]) =>
   rows.flatMap((r) => r.match(/\bO-\d+\b/g) ?? []);
 
+/** The ticket's instrument search (the ladder panel has its own picker). */
+const TICKET_SEARCH =
+  ".tradingOrderTicket input[placeholder='Search instrument']";
+
+/** Opens Workspaces › Trader (the system workspace) and waits for the ticket. */
 const openWorkspace = async (page: Page) => {
   for (let attempt = 0; attempt < 4; attempt++) {
     await page
-      .locator(".saltVerticalNavigationItemLabel", { hasText: /^Workspace$/ })
+      .locator(".vuuPortalNav-label", { hasText: /^Trader$/ })
       .click({ timeout: 10_000 })
       .catch(() => undefined);
     const ready = await waitUntil(
       async () =>
         !(await moduleError(page)) &&
-        (await page.locator("input[placeholder='Search instrument']").count()) >
-          0,
+        (await page.locator(TICKET_SEARCH).count()) > 0,
       20_000,
     );
     if (ready >= 0) return;
@@ -176,7 +180,7 @@ const main = async () => {
     await openWorkspace(page);
 
     // ---- 1. a fill and a resting order ------------------------------------
-    await page.locator("input[placeholder='Search instrument']").fill("AAPL");
+    await page.locator(TICKET_SEARCH).fill("AAPL");
     await page.locator("[role=option]", { hasText: RIC }).first().click();
     let ask = Number.NaN;
     await mustWait("best ask", async () => {
@@ -292,7 +296,7 @@ const main = async () => {
     // allowed; any extra order only gets a higher id.
     let placed = false;
     for (let attempt = 1; attempt <= 2 && !placed; attempt++) {
-      await page.locator("input[placeholder='Search instrument']").fill("AAPL");
+      await page.locator(TICKET_SEARCH).fill("AAPL");
       await page.locator("[role=option]", { hasText: RIC }).first().click();
       await submitBuy(page, 300, nextPrice);
       placed =

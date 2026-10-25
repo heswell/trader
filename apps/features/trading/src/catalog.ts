@@ -355,5 +355,8 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     navOrder: 400,
     navIcon: "oversight",
     notificationTopics: ["risk", "orders"],
+    // Not in the Panels palette: a page-sized, desk-wide composite (two
+    // blotters over every account) that follows no link group, so it gains
+    // nothing beside instrument panels and is cramped as one.
   },
 ];

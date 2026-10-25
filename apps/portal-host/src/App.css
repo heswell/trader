@@ -11,6 +11,28 @@ body {
   min-height: 0;
 }
 
+/*
+ * The workspace grid and its items keep the default min-width / min-height:
+ * auto, so the grid grows past the page and an `fr` track grows to its
+ * widest / tallest panel (trader upstream issue 101). Let tracks keep their
+ * ratios within the page.
+ */
+#trader-portal .vuuPortalWorkspace-grid > .vuuGridLayout,
+#trader-portal .vuuGridLayout > .vuuGridLayoutItem {
+  min-height: 0;
+  min-width: 0;
+}
+
+#trader-portal .vuuGridLayout > .vuuGridLayoutItem {
+  overflow: hidden;
+}
+
+/* A panel taller than its track (the ticket) scrolls instead of clipping. */
+#trader-portal .vuuGridLayoutItem > .vuuGridLayoutItemContent {
+  min-height: 0;
+  overflow: auto;
+}
+
 .traderNav {
   .traderNavBrand-logo {
     align-items: center;

@@ -2,9 +2,10 @@
  * bun run e2e:resilience [--no-build] [--restarts=N] [--headed]
  *
  * Opt-in end-to-end resilience check (not part of CI: it needs Keycloak and
- * takes a few minutes). Starts its own stack, opens the Trader workspace in
- * headless Chromium as alice, then kills and restarts the trading Vuu server
- * N times (default 3; the first kill is SIGKILL, i.e. a crash) and checks:
+ * takes a few minutes). Starts its own stack, opens the Trader system
+ * workspace in headless Chromium as alice, then kills and restarts the
+ * trading Vuu server N times (default 3; the first kill is SIGKILL, i.e. a
+ * crash) and checks:
  *
  *  - the header connection indicator goes connected -> reconnecting/
  *    disconnected -> connected,

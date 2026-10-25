@@ -86,8 +86,8 @@ export const useComponentLinkGroup = ({
         : inView
           ? view.load?.(LINK_GROUP_STATE_KEY)
           : portalKey
-          ? persisted.load(portalKey)
-          : undefined;
+            ? persisted.load(portalKey)
+            : undefined;
     } catch {
       saved = undefined;
     }

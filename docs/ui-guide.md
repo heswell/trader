@@ -218,7 +218,9 @@ const { selectedInstrument, selectionSource, setSelectedInstrument, linkGroup } 
   and validate without another lookup.
 - **Persistence.** The group the user picks is saved with the layout. Inside a vuu-layout `View` it is saved in the
   View's state (`save(group, "linkGroup")`) and returned by `load("linkGroup")`, so it travels in the layout JSON
-  (the Trader workspace example restores it after a reload). Outside a View, with a `persistKey`, it goes to vuu-portal
+  (the showcase's Trader workspace example). In an item of a portal workspace (`portal-module`), with a `persistKey`, it goes to
+  the item's workspace component state (`trading.feature-state`, key `trading.linkGroup.<persistKey>`), so it is saved
+  with that workspace and each item has its own. Otherwise, with a `persistKey`, it goes to vuu-portal
   `usePersistedState()` under `trading.linkGroup.<persistKey>`. The order of precedence is: `linkGroup` prop, then
   saved, then `defaultLinkGroup`, then inherited.
 
@@ -307,7 +309,7 @@ the roles and the run-all command.
    `RemoteModule` provides is used. That is the trading server, named in the remote's `config.json`, which
    `bun run build` writes for every feature.
 2. Give components stable `id`s. They key the saved state (e.g. `trading.linkGroup.<id>` in the module's portal
-   state).
+   state, or in the item's state when the module is a portal workspace panel).
 3. Add an entry to `src/catalog.ts`: a unique `key`, module `id`, `mfScope`, `accessRole` (the `vuu-portal` nav role
    for `trading-view`, `trading-execute` or `trading-supervisor`, via `TRADING_ACCESS_ROLE`), and either `location` + `path` (nav entry) or `parent` (child module
    rendered by another feature through `usePortalModuleRegistry()` + `RemoteModule`).

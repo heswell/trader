@@ -18,7 +18,7 @@ export interface WorkspaceItemState {
   save: (key: string, value: string) => void;
 }
 
-const valueOf = (state: ComponentPersistentStateV1 | undefined) =>
+const itemStateValue = (state: ComponentPersistentStateV1 | undefined) =>
   state?.componentType === WORKSPACE_ITEM_STATE_TYPE &&
   state.value !== null &&
   typeof state.value === "object" &&
@@ -26,8 +26,11 @@ const valueOf = (state: ComponentPersistentStateV1 | undefined) =>
     ? (state.value as Record<string, unknown>)
     : {};
 
+// The hook reads a context on every render, and throws only outside a
+// workspace: core has no optional variant (trader upstream issue 106).
 const useOptionalWorkspaceStore = () => {
   try {
+    // biome-ignore lint/correctness/useHookAtTopLevel: called unconditionally; try only catches its missing-provider error
     return useWorkspacePersistentStateStore();
   } catch {
     // not in a portal workspace (a module page, or no portal at all)
@@ -40,12 +43,15 @@ export const workspaceItemState = (
   store: WorkspacePersistentStateStore,
   instanceId: string,
 ): WorkspaceItemState => ({
-  load: (key) => valueOf(store.get(instanceId))[key],
+  load: (key) => itemStateValue(store.get(instanceId))[key],
   save: (key, value) =>
     store.update(instanceId, (current) => ({
       componentType: WORKSPACE_ITEM_STATE_TYPE,
       schemaVersion: WORKSPACE_ITEM_STATE_VERSION,
-      value: { ...(valueOf(current) as Record<string, string>), [key]: value },
+      value: {
+        ...(itemStateValue(current) as Record<string, string>),
+        [key]: value,
+      },
     })),
 });
 

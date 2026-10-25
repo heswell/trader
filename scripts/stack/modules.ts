@@ -51,7 +51,8 @@ export const modulesYaml = (featuresOrigin = DEFAULT_FEATURES_ORIGIN) => {
         `    notificationTopics: [${f.notificationTopics.map(q).join(", ")}]`,
       );
     }
-    if (f.workspace) lines.push(`    workspace: ${JSON.stringify(f.workspace)}`);
+    if (f.workspace)
+      lines.push(`    workspace: ${JSON.stringify(f.workspace)}`);
   }
   return `${lines.join("\n")}\n`;
 };
