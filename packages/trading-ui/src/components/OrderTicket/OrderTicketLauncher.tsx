@@ -5,7 +5,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import type { TradingOrderEvent } from "../../notifications/tradingOrderEvents";
@@ -21,7 +20,8 @@ export type OrderTicketTarget = (prefill: OrderTicketPrefill) => void;
 export interface OrderTicketLauncher {
   /**
    * Open a ticket with these values: a docked OrderTicketPanel if one is
-   * mounted (the most recently mounted), otherwise a dialog.
+   * mounted anywhere in the window (the most recently mounted), otherwise a
+   * dialog.
    */
   openOrderTicket: (prefill?: OrderTicketPrefill) => void;
   closeOrderTicket: () => void;
@@ -42,6 +42,22 @@ const NO_LAUNCHER: LauncherContextValue = {
 
 const OrderTicketLauncherContext =
   createContext<LauncherContextValue>(NO_LAUNCHER);
+
+const TARGETS_KEY = Symbol.for("@heswell/trading-ui/order-ticket-targets");
+
+/**
+ * The window's docked tickets, most recently mounted last. Window-wide, not
+ * per provider: each item of a portal workspace is its own feature root, and
+ * Buy / Sell in one item must reach the ticket docked in another.
+ */
+const dockedTargets = () => {
+  const g = globalThis as unknown as Record<
+    symbol,
+    { current: OrderTicketTarget[] } | undefined
+  >;
+  g[TARGETS_KEY] ??= { current: [] };
+  return g[TARGETS_KEY];
+};
 
 export interface OrderTicketLauncherProviderProps {
   children: ReactNode;
@@ -64,7 +80,6 @@ export const OrderTicketLauncherProvider = ({
   dialogProps,
   onOrderEvent,
 }: OrderTicketLauncherProviderProps) => {
-  const targets = useRef<OrderTicketTarget[]>([]);
   const [dialog, setDialog] = useState<{
     open: boolean;
     prefill?: OrderTicketPrefill;
@@ -73,7 +88,7 @@ export const OrderTicketLauncherProvider = ({
   });
 
   const openOrderTicket = useCallback((prefill: OrderTicketPrefill = {}) => {
-    const target = targets.current.at(-1);
+    const target = dockedTargets().current.at(-1);
     if (target) target({ ...prefill });
     else setDialog({ open: true, prefill: { ...prefill } });
   }, []);
@@ -82,6 +97,7 @@ export const OrderTicketLauncherProvider = ({
     [],
   );
   const registerTarget = useCallback((target: OrderTicketTarget) => {
+    const targets = dockedTargets();
     targets.current = targets.current.concat(target);
     return () => {
       targets.current = targets.current.filter((t) => t !== target);

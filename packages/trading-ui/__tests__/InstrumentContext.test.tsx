@@ -1,4 +1,9 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import {
+  PortalModuleInstanceContext,
+  WorkspacePersistentStateProvider,
+  WorkspacePersistentStateStore,
+} from "@vuu-ui/core";
 import { ViewContext, type ViewContextAPI } from "@vuu-ui/vuu-layout";
 import {
   act,
@@ -20,6 +25,7 @@ import {
   type SelectedInstrument,
   useComponentLinkGroup,
   useSelectedInstrument,
+  WORKSPACE_ITEM_STATE_TYPE,
 } from "../src";
 
 afterEach(() => {
@@ -169,6 +175,40 @@ describe("useComponentLinkGroup", () => {
 
     const restored = renderHook(() => useComponentLinkGroup(), { wrapper });
     expect(restored.result.current.linkGroup).toBe("green");
+  });
+
+  test("in a portal workspace item, saves the group in the item's workspace state", () => {
+    const store = new WorkspacePersistentStateStore();
+    const itemWrapper =
+      (instanceId: string) =>
+      ({ children }: { children: ReactNode }) => (
+        <WorkspacePersistentStateProvider store={store}>
+          <PortalModuleInstanceContext.Provider value={instanceId}>
+            {children}
+          </PortalModuleInstanceContext.Provider>
+        </WorkspacePersistentStateProvider>
+      );
+    const hook = () =>
+      useComponentLinkGroup({ defaultLinkGroup: "red", persistKey: "orders" });
+    const first = renderHook(hook, { wrapper: itemWrapper("item-1") });
+    expect(first.result.current.linkGroup).toBe("red");
+    act(() => first.result.current.setLinkGroup("blue"));
+    expect(store.get("item-1")).toEqual({
+      componentType: WORKSPACE_ITEM_STATE_TYPE,
+      schemaVersion: 1,
+      value: { "trading.linkGroup.orders": "blue" },
+    });
+    first.unmount();
+
+    expect(
+      renderHook(hook, { wrapper: itemWrapper("item-1") }).result.current
+        .linkGroup,
+    ).toBe("blue");
+    // another item of the same module keeps its own group
+    expect(
+      renderHook(hook, { wrapper: itemWrapper("item-2") }).result.current
+        .linkGroup,
+    ).toBe("red");
   });
 
   test("prop wins over saved state and later prop changes apply", () => {

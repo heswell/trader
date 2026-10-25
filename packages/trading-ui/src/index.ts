@@ -18,6 +18,7 @@ export {
   sanitizeSelectedInstrument,
 } from "./instrument-context/selectedInstrument";
 export * from "./instrument-context/useComponentLinkGroup";
+export * from "./instrument-context/workspaceItemState";
 
 // shared market-data / own-order hooks (P3.4, P3.5)
 export * from "./hooks/useLevelFlash";

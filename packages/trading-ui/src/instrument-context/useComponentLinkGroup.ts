@@ -3,6 +3,7 @@ import { useViewContext } from "@vuu-ui/vuu-layout";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useInheritedLinkGroup } from "./InstrumentContext";
 import { type LinkGroupId, UNLINKED } from "./linkGroups";
+import { useWorkspaceItemState } from "./workspaceItemState";
 
 /** Props every linkable component accepts. */
 export interface LinkGroupProps {
@@ -52,8 +53,10 @@ export interface UseComponentLinkGroupOptions
 
 /**
  * The link group of one component instance. The user's choice is saved
- * with the layout: in the enclosing vuu-layout View's state (restored as the
- * `linkGroup` prop) or, in a vuu-portal remote module, its persisted state.
+ * with the layout: in a portal workspace item, the item's workspace
+ * component state; in the enclosing vuu-layout View's state (restored as the
+ * `linkGroup` prop); or, in a vuu-portal remote module page, its persisted
+ * state.
  */
 export const useComponentLinkGroup = ({
   defaultLinkGroup,
@@ -64,19 +67,25 @@ export const useComponentLinkGroup = ({
   const inherited = useInheritedLinkGroup();
   const view = useViewContext();
   const persisted = usePersistedState();
+  const workspaceItem = useWorkspaceItemState();
   const inView =
     typeof view?.save === "function" && typeof view?.load === "function";
   const portalKey = persistKey
     ? `${LINK_GROUP_PERSIST_PREFIX}${persistKey}`
     : undefined;
+  // In a portal workspace item, the group is saved with the workspace (per
+  // item), so a personal copy keeps it and Reset to default discards it.
+  const inWorkspace = workspaceItem !== undefined && portalKey !== undefined;
 
   const [linkGroup, setState] = useState<LinkGroupId>(() => {
     if (linkGroupProp) return linkGroupProp;
     let saved: unknown;
     try {
-      saved = inView
-        ? view.load?.(LINK_GROUP_STATE_KEY)
-        : portalKey
+      saved = inWorkspace
+        ? workspaceItem?.load(portalKey as string)
+        : inView
+          ? view.load?.(LINK_GROUP_STATE_KEY)
+          : portalKey
           ? persisted.load(portalKey)
           : undefined;
     } catch {
@@ -99,19 +108,37 @@ export const useComponentLinkGroup = ({
     view,
     persisted,
     inView,
+    inWorkspace,
     portalKey,
+    workspaceItem,
   });
-  callbacks.current = { onLinkGroupChange, view, persisted, inView, portalKey };
+  callbacks.current = {
+    onLinkGroupChange,
+    view,
+    persisted,
+    inView,
+    inWorkspace,
+    portalKey,
+    workspaceItem,
+  };
 
   const groupRef = useRef(linkGroup);
   groupRef.current = linkGroup;
   const setLinkGroup = useCallback((next: LinkGroupId) => {
     if (!next || groupRef.current === next) return;
     groupRef.current = next;
-    const { inView, view, persisted, portalKey, onLinkGroupChange } =
-      callbacks.current;
+    const {
+      inView,
+      inWorkspace,
+      view,
+      persisted,
+      portalKey,
+      onLinkGroupChange,
+      workspaceItem,
+    } = callbacks.current;
     setState(next);
-    if (inView) view.save?.(next, LINK_GROUP_STATE_KEY);
+    if (inWorkspace && portalKey) workspaceItem?.save(portalKey, next);
+    else if (inView) view.save?.(next, LINK_GROUP_STATE_KEY);
     else if (portalKey) persisted.save(next, portalKey);
     onLinkGroupChange?.(next);
   }, []);
