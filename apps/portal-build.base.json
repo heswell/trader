@@ -1,0 +1,49 @@
+{
+  "moduleFederation": {
+    "shared": {
+      "react": {
+        "singleton": true,
+        "requiredVersion": "^19.2.3",
+        "strictVersion": true
+      },
+      "react-dom": {
+        "singleton": true,
+        "requiredVersion": "^19.2.3",
+        "strictVersion": true
+      },
+      "react-router-dom": {
+        "singleton": true,
+        "requiredVersion": "^7.18.3",
+        "strictVersion": true
+      },
+      "@vuu-ui/core": {
+        "singleton": true,
+        "requiredVersion": "package",
+        "strictVersion": true
+      },
+      "@vuu-ui/core/portal": {
+        "singleton": true,
+        "requiredVersion": "package:@vuu-ui/core",
+        "strictVersion": true
+      },
+      "@vuu-ui/vuu-data-remote": {
+        "singleton": true,
+        "requiredVersion": "package:@vuu-ui/core",
+        "strictVersion": true
+      },
+      "@vuu-ui/vuu-notifications": {
+        "singleton": true,
+        "requiredVersion": "package:@vuu-ui/core",
+        "strictVersion": true
+      },
+      "@salt-ds/core": {
+        "singleton": true,
+        "requiredVersion": "^1.67.0"
+      },
+      "@heswell/trading-ui": {
+        "singleton": true,
+        "requiredVersion": "^0.1.0"
+      }
+    }
+  }
+}

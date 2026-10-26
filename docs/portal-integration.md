@@ -84,7 +84,7 @@ its `mf-manifest.json` (a @vuu-ui 4.0.0-alpha.21 mechanism):
    connection, so the trading-ui data sources and `useVuuAuthorizations()` use the trading session without any
    code changes.
 
-`scripts/features/build.ts` writes `dist/<feature>/config.json` from the `TRADER_*` variables below, and the
+`scripts/features/build.ts` has portal-build write `dist/<feature>/config.json` (the remote's `manifest`) from the `TRADER_*` variables below, and the
 features server (`scripts/stack/serve.ts`) regenerates it on every request from its own environment. To point the
 remotes at a trading server elsewhere, set `TRADER_TRADING_REST_URL` and `TRADER_TRADING_WEBSOCKET_URL`.
 `RemoteModule` treats a missing `config.json` as an error, so every remote must publish one (`{}` means "use the
@@ -207,7 +207,7 @@ The Keycloak admin console is at `https://localhost:8180/admin` (admin / admin).
 
 All features are built from one package, `apps/features/trading`, as **one MF remote per feature**. The portal
 requires a unique `mfScope` per module (trader upstream issue 45). `src/catalog.ts` is the source of truth.
-`bun run features:sync` generates `portal-build.json` and `apps/portal-config/default-modules.yaml` from it.
+`bun run features:sync` generates the `portal-build.json` files and `apps/portal-config/default-modules.yaml` from it.
 `bun run features:check` (run in CI) fails on drift and validates the yaml with the portal server's own loader.
 
 The Role column is the server role. The module's `accessRole` is the matching nav role (`trading-view` →
@@ -284,7 +284,9 @@ connection from `config.json` (see [Two Vuu servers](#two-vuu-servers)). `@vuu-u
 
 ### MF sharing
 
-`scripts/features/sync-build-config.ts` writes the same `shared` block into the host and every remote:
+`scripts/features/sync-build-config.ts` writes one `shared` block into `apps/portal-build.base.json`, which the
+host's and every remote's `portal-build.json` `extends` (portal-build 0.4.0). Every package must resolve every
+shared entry; the sync fails otherwise:
 
 | Shared singleton | Why |
 | --- | --- |
@@ -506,9 +508,9 @@ Verified with @vuu-ui 4.0.0-alpha.30, vuu-portal 2.3.0, module-admin 2.3.0 and h
   opens the Trader workspace (`portal-home.png`).
 - **Empty workspace:** a new workspace shows Trader's copy; after the palette is closed, Open Panels palette reopens
   it (`workspace-new.png`).
-- **Not done:** portal-build `extends` and the default `serve.json` (finos/vuu#2628) are not in a published
-  `@vuu-ui/portal-build` (0.3.0 predates them; trader upstream issue 109), so the two `portal-build.json` files are
-  unchanged.
+- **portal-build 0.4.0:** the two `portal-build.json` files `extends` `apps/portal-build.base.json` (trader upstream
+  issue 109, resolved), and each remote's output includes the default `serve.json`. 0.4.0 also requires a remote
+  `manifest` (trader upstream issue 111).
 - **Upgrading in place:** after the bump, a stale `node_modules` held two peer variants of `@vuu-ui/core`, and the
   UI tests failed with "no DataProvider has been installed". `rm -rf node_modules */*/node_modules
   apps/features/*/node_modules && bun install` fixes it.

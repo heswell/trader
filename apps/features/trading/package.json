@@ -22,7 +22,7 @@
     "react-router-dom": "7.18.3"
   },
   "devDependencies": {
-    "@vuu-ui/portal-build": "0.3.0"
+    "@vuu-ui/portal-build": "0.4.0"
   },
   "peerDependencies": {
     "clsx": "^2.0.0",
