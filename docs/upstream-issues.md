@@ -681,15 +681,13 @@ Found adopting the @vuu-ui 4.0.0-alpha.28 Panels palette (`docs/portal-integrati
 
 Found moving to @vuu-ui 4.0.0-alpha.30 (`docs/portal-integration.md`, "Panels palette").
 
-109. **`@vuu-ui/portal-build` with `extends` and the default `serve.json` is not published.** (finos
-     `@vuu-ui/portal-build`.) finos/vuu#2628 (merged 2026-10-26) adds `extends` (base configs merged in order) and a
-     default `serve.json` for remote builds, but did not bump the package: npm's latest is still 0.3.0 (published
-     2026-09-30), whose `dist/config.js` has no `extends`, and `serve-cli.js` still requires a `serve.json` in every
-     output directory. *Repro:* `npm view @vuu-ui/portal-build version` gives 0.3.0;
-     `grep -n extends node_modules/.bun/@vuu-ui+portal-build@0.3.0*/node_modules/@vuu-ui/portal-build/dist/config.js`
-     finds nothing. *Proposed:* publish 0.4.0. *No workaround needed:* Trader keeps its two full configs
-     (`apps/portal-host/portal-build.json`, `apps/features/trading/portal-build.json`), which repeat the shared
-     module-federation block; they can move to `extends` once a release exists.
+109. ~~**`@vuu-ui/portal-build` with `extends` and the default `serve.json` is not published.**~~ *Resolved in
+     `@vuu-ui/portal-build` 0.4.0* (finos/vuu#2628). The module-federation `shared` block now lives once in
+     `apps/portal-build.base.json` (written by `features:sync`), and `apps/portal-host/portal-build.json` and
+     `apps/features/trading/portal-build.json` `extends` it (140 → 101 config lines). The resolved build plans and
+     MF manifests are unchanged for the host and all 14 remotes. Each remote's output now also has the default
+     `serve.json`. Trader had no `public/serve.json` copies to remove; `scripts/stack/serve.ts` serves the remotes
+     itself.
 110. **The compact drop compass's centre can resolve to an edge.** (finos `@vuu-ui/grid-layout`, alpha.30,
      `drag-drop-next/DropCompass`.) On a panel narrower than 160px the compass is compact (22px tiles, 3px gaps). A
      pointer in a gap between tiles is not over any tile, so the zone falls back to edge geometry
@@ -699,3 +697,17 @@ Found moving to @vuu-ui 4.0.0-alpha.30 (`docs/portal-integration.md`, "Panels pa
      centre tile itself it is `centre` and stacks. *Proposed:* treat the compass's bounding box as one hit area
      (nearest tile wins), or no gaps in the compact layout. *No workaround in the repo*; `e2e:palette` aims at the
      centre tile.
+
+## Found in the portal-build 0.4.0 upgrade
+
+111. **portal-build 0.4.0 requires `manifest` on `remote-module` configs, without a release note.** (finos
+     `@vuu-ui/portal-build` 0.4.0, `dist/config.js` `parsePortalBuildConfig`.) 0.3.0 required `manifest` only for
+     `host` targets; 0.4.0 also requires it for `remote-module` and writes `manifest.remote` as `config.json` next to
+     `mf-manifest.json`. The README documents the new rule, but the 0.4.0 announcement (finos/vuu#2628: `extends`,
+     default `serve.json`) does not, so a remote config that built under 0.3.0 fails after the bump. *Repro:* with
+     0.4.0, `bunx portal-build --config <remote config without "manifest">` (e.g. the pre-upgrade
+     `apps/features/trading/portal-build.json`) fails with `Invalid portal build config: manifest must be an object`;
+     0.3.0 builds it. *Proposed:* call out the change in release notes / a CHANGELOG. *Workaround in this repo:* the
+     remote config declares `"manifest": { "filename": "./config.json", "remote": {} }` and
+     `scripts/features/build.ts` fills `manifest.remote` per feature, replacing the `config.json` it used to write
+     after each build (same content).

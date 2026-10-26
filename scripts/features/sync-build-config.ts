@@ -2,11 +2,12 @@
  * bun scripts/features/sync-build-config.ts [--check]
  *
  * Module federation only shares a dependency when the host and every remote
- * declare it identically. This writes the canonical `shared` block and the
- * `cssInline` include list into apps/portal-host/portal-build.json and every
- * apps/features/<name>/portal-build.json (only the entries each package can
- * resolve), and generates apps/portal-config/default-modules.yaml from
- * apps/features/trading/src/catalog.ts. With --check it reports drift and
+ * declare it identically. This writes the canonical `shared` block into
+ * apps/portal-build.base.json, which apps/portal-host/portal-build.json and
+ * every apps/features/<name>/portal-build.json `extends` (portal-build 0.4.0;
+ * each package must resolve every shared entry), writes each package's
+ * `cssInline` include list, and generates apps/portal-config/default-modules.yaml
+ * from apps/features/trading/src/catalog.ts. With --check it reports drift and
  * exits 1 instead (CI).
  */
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -84,11 +85,25 @@ const resolvable = (name: string, dir: string) => {
   }
 };
 
+const baseConfig = resolve(root, "apps/portal-build.base.json");
+
+/** Shared settings every portal-build.json extends: the one `shared` block. */
+const expectedBase = (current: Record<string, unknown>) => {
+  const mf = (current.moduleFederation ?? {}) as Record<string, unknown>;
+  return { ...current, moduleFederation: { ...mf, shared: SHARED } };
+};
+
 const expected = (dir: string, current: Record<string, unknown>) => {
-  const shared = Object.fromEntries(
-    Object.entries(SHARED).filter(([name]) => resolvable(name, dir)),
-  );
-  const mf = current.moduleFederation as Record<string, unknown>;
+  const missing = Object.keys(SHARED).filter((name) => !resolvable(name, dir));
+  if (missing.length)
+    throw new Error(
+      `${relative(root, dir)} cannot resolve shared ${missing.join(", ")}: add the dependencies (every package shares the full set from ${relative(root, baseConfig)})`,
+    );
+  const { extends: _extends, ...rest } = current;
+  const { shared: _shared, ...mf } = current.moduleFederation as Record<
+    string,
+    unknown
+  >;
   // cssInline turns `import "x.css"` in matching files into a string import
   // (for useComponentCssInjection). trading-ui is written that way, and so are
   // feature remotes; the host's plain stylesheet imports must stay as-is.
@@ -96,8 +111,9 @@ const expected = (dir: string, current: Record<string, unknown>) => {
   const include = ["/packages/trading-ui/"];
   if (!isHost) include.push(`/${relative(root, dir)}/`);
   return {
-    ...current,
-    moduleFederation: { ...mf, shared },
+    extends: relative(dir, baseConfig),
+    ...rest,
+    moduleFederation: mf,
     cssInline: { include },
   };
 };
@@ -114,6 +130,14 @@ const biomeJson = (file: string, text: string) => {
 
 const check = process.argv.includes("--check");
 const outputs: [string, (before: string) => string][] = [
+  [
+    baseConfig,
+    (before) =>
+      biomeJson(
+        baseConfig,
+        `${JSON.stringify(expectedBase(before ? JSON.parse(before) : {}), null, 2)}\n`,
+      ),
+  ],
   ...packageDirs().map((dir): [string, (before: string) => string] => [
     resolve(dir, "portal-build.json"),
     (before) =>

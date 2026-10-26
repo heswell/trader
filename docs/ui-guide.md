@@ -230,7 +230,7 @@ const { selectedInstrument, selectionSource, setSelectedInstrument, linkGroup } 
   document that wants a follower sets `showInstrumentPicker: false` (the Trader Tape). See
   [portal-integration.md](portal-integration.md#panels-palette-phase-6-x2-x3).
 
-**MF features (Phase 4).** In each feature's `portal-build.json` `shared` block, add `@heswell/trading-ui`,
+**MF features (Phase 4).** In the `shared` block (now `apps/portal-build.base.json`, written by `features:sync`), add `@heswell/trading-ui`,
 `react`, `react-dom` and `@vuu-ui/vuu-layout` as **singletons**. trading-ui keeps the React context and the
 InstrumentLookup in one copy. vuu-layout keeps View state in a module-level map (`setPersistentState`), so every
 feature must use the host's copy for the saved group to be found. The bus itself still links features that end up
@@ -319,8 +319,8 @@ the roles and the run-all command.
 3. Add an entry to `src/catalog.ts`: a unique `key`, module `id`, `mfScope`, `accessRole` (the `vuu-portal` nav role
    for `trading-view`, `trading-execute` or `trading-supervisor`, via `TRADING_ACCESS_ROLE`), and either `location` + `path` (nav entry) or `parent` (child module
    rendered by another feature through `usePortalModuleRegistry()` + `RemoteModule`).
-4. Run `bun run features:sync`. This regenerates `portal-build.json` (one remote per entry, the shared block and
-   `cssInline`, trader upstream issue 23) and `apps/portal-config/default-modules.yaml`. Then run `bun run build`, which renames
+4. Run `bun run features:sync`. This regenerates the `portal-build.json` files (the shared block in
+   `apps/portal-build.base.json`, which each package `extends`, and `cssInline`, trader upstream issue 23) and `apps/portal-config/default-modules.yaml`. Then run `bun run build`, which renames
    each remote's chunk global (trader upstream issue 44). `bun run features:check` (CI) fails on drift.
 5. Shared singletons are react, react-dom, react-router-dom, `@vuu-ui/core` (+ `/portal`), vuu-data-remote,
    vuu-notifications, `@salt-ds/core` and `@heswell/trading-ui`, so instrument linking works across features

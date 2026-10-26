@@ -122,7 +122,7 @@ See [persistence.md](persistence.md) for the guarantees and recovery.
 | `bun run typecheck` / `lint` / `format:check` (`format` writes) | tsc and Biome | yes |
 | `bun run test:server` | schemas, persistence, exchange-sim, OMS and trading-test-data tests (no DOM) | yes (`test`) |
 | `bun run test:ui` | trading-ui tests with happy-dom | yes (`test`) |
-| `bun run features:check` (`features:sync` writes) | Generated `portal-build.json` / `default-modules.yaml` match `catalog.ts` | yes |
+| `bun run features:check` (`features:sync` writes) | Generated `portal-build.json` files (and `apps/portal-build.base.json`) / `default-modules.yaml` match `catalog.ts` | yes |
 | `bun run build` | Portal host and features | yes |
 | `bun run docs:check` (`docs:api` writes) | Generated API reference is up to date, and relative links and anchors resolve | yes |
 | `bun run perf:ws [--preset=smoke\|heavy] [--target=local\|stack] [--assert]` | WS throughput, N clients × M viewports | smoke preset with `--assert` |

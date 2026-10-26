@@ -5,9 +5,10 @@
  * a unique mfScope per module) from apps/features/trading: for each entry in
  * src/catalog.ts it derives a portal-build config from the package's
  * portal-build.json (MF name = mfScope, a single expose, output dist/<key>)
- * and runs portal-build. Each remote also gets a config.json next to its
- * mf-manifest.json naming the trading Vuu server it connects to
- * (scripts/stack/config.ts featureConfigJson, TRADER_TRADING_* env vars).
+ * and runs portal-build. portal-build writes each remote's manifest, a
+ * config.json next to its mf-manifest.json naming the trading Vuu server it
+ * connects to (scripts/stack/config.ts featureConfigJson, TRADER_TRADING_*
+ * env vars), and a default serve.json (CORS + SPA fallback) for static hosts.
  * Serve dist/ with scripts/stack/serve.ts features.
  */
 import { readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -60,6 +61,7 @@ for (const feature of features) {
     ...base,
     paths: { ...base.paths, output: `./dist/${feature.key}` },
     html: { title: `${feature.title} (standalone)` },
+    manifest: { ...base.manifest, remote: featureConfigJson(stackConfig()) },
     moduleFederation: {
       ...base.moduleFederation,
       name: feature.mfScope,
@@ -84,10 +86,6 @@ for (const feature of features) {
     process.exit(result.exitCode ?? 1);
   }
   renameChunkGlobal(resolve(pkg, `dist/${feature.key}`), feature.mfScope);
-  writeFileSync(
-    resolve(pkg, `dist/${feature.key}/config.json`),
-    `${JSON.stringify(featureConfigJson(stackConfig()), null, 2)}\n`,
-  );
   console.log(
     `[features] ${feature.key.padEnd(18)} ${feature.mfScope.padEnd(24)} ${Math.round(performance.now() - started)}ms`,
   );
