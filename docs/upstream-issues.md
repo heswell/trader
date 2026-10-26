@@ -643,3 +643,29 @@ Found adopting @vuu-ui 4.0.0-alpha.27 portal workspaces with module-admin 2.2.0 
      WorkspacePersistentStateProvider". *Workaround:* `useOptionalWorkspaceStore` in
      `packages/trading-ui/src/instrument-context/workspaceItemState.ts` wraps it in try / catch (with a biome-ignore
      for `useHookAtTopLevel`).)
+
+## Found in Phase 6 X2 (Panels palette)
+
+Found adopting the @vuu-ui 4.0.0-alpha.28 Panels palette (`docs/portal-integration.md`, "Panels palette").
+
+107. **The host cannot choose the palette's tabs, or the empty drop zone's copy.** (finos `@vuu-ui/core` portal
+     workspaces / panels-palette, alpha.28.) `PanelsPalette`'s tabs are a fixed `modules / tables / recent`, and
+     `PortalWorkspace` renders it with no host props: `PortalWorkspaceGrid` has `paletteProps` and `emptyContent`, but
+     neither `PortalShell` nor `PortalWorkspacesOptions` passes them through. Trader wants Modules and Recent only (its
+     tables are reached through modules with ticket actions, link groups and formatting; a raw `vuu-table` panel has
+     none), and the `WorkspaceDropZone` default copy says "Drag modules or tables from the Panels palette". *Repro:*
+     `bun run start:all`, log in as alice, Workspaces › Trader › Add panel: the palette has a Tables tab listing the
+     trading server's tables; + New workspace shows the "modules or tables" copy. *Proposed:* a
+     `tabs?: PanelsPaletteTab[]` option on `PanelsPalette` (default `["modules", "recent"]`, tables opt-in), reachable
+     from `PortalWorkspacesOptions` (e.g. `palette: {tabs}`), and `emptyContent` (or copy that follows the tabs) on the
+     same options. *No workaround in the repo* (the tab is not hidden with CSS); the Tables tab is documented as
+     harmless.
+108. **No drop compass when dragging a palette module.** (finos `@vuu-ui/grid-layout`, alpha.28.) The agreed design
+     (mock scene T2) shows a compass (N / S / E / W / centre targets) over the panel under the pointer, plus the ghost
+     and the hint bar. alpha.28 renders the ghost (`vuuDropTarget-north|south|east|west|centre|header`) and the core
+     hint bar, but no compass: the drop position is only shown by the ghost, which depends on how near the pointer is
+     to an edge. *Repro:* Workspaces › Trader › Add panel, drag Depth chart over the Instruments panel: the panel is
+     shaded for the target edge and the hint bar says "Drop on a panel edge to split, centre to tab", but there is no
+     compass; `grep -ri compass` finds nothing in `@vuu-ui/grid-layout`. *Proposed:* a compass overlay in the
+     grid-layout drop target (pointer-over targets for the four edges and centre). *No workaround in the repo*; drag
+     works with the ghost.

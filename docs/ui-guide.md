@@ -223,6 +223,12 @@ const { selectedInstrument, selectionSource, setSelectedInstrument, linkGroup } 
   with that workspace and each item has its own. Otherwise, with a `persistKey`, it goes to vuu-portal
   `usePersistedState()` under `trading.linkGroup.<persistKey>`. The order of precedence is: `linkGroup` prop, then
   saved, then `defaultLinkGroup`, then inherited.
+- **Panels added at runtime.** A module added from the portal Panels palette gets no props, so it starts on its
+  feature's own default group (red for the grid, blotters, ticket, depth and charts; green for the ladder, tape and
+  positions) and saves the user's change per item as above. Ladder and Tape show their own instrument picker by
+  default (`showInstrumentPicker`, default `true`), so a lone Ladder or Tape can choose an instrument; a workspace
+  document that wants a follower sets `showInstrumentPicker: false` (the Trader Tape). See
+  [portal-integration.md](portal-integration.md#panels-palette-phase-6-x2).
 
 **MF features (Phase 4).** In each feature's `portal-build.json` `shared` block, add `@heswell/trading-ui`,
 `react`, `react-dom` and `@vuu-ui/vuu-layout` as **singletons**. trading-ui keeps the React context and the
