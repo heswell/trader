@@ -5,16 +5,22 @@
  * needs Keycloak). Starts its own stack and, in headless Chromium:
  *
  *  alice, Workspaces › Trader (the system workspace):
- *   1. Add panel opens the Panels palette in the shell context panel, modules
- *      grouped Trading / Market / Portfolio,
+ *   1. Add panel opens the Panels palette in the shell context panel, with
+ *      the Modules and Recent tabs only (no Tables), modules grouped
+ *      Trading / Market / Portfolio,
  *   2. + adds an Order ticket (red), which makes the personal copy,
  *   3. clicking a row with more than one panel prompts: Esc cancels, T opens
  *      it as a new tab,
- *   4. dragging a row onto a panel edge places it (hint bar, no prompt),
+ *   4. dragging a row shows the drop compass: a panel edge splits (hint bar,
+ *      no prompt), the centre stacks it as a tab, and the centre is disabled
+ *      on a panel already in a stack,
  *   5. the added panels survive a reload and are listed under Recent,
- *   6. Reset to default restores the eight default panels.
- *  alice, + New workspace: the empty drop zone, click adds (0 panels), click
- *   replaces (1 panel), + adds; a palette Time & sales shows its picker.
+ *   6. Reset to default restores the eight default panels,
+ *   7. the Trader brand goes to the portal root, from a workspace and from a
+ *      module page.
+ *  alice, + New workspace: Trader's empty content (its button opens the
+ *   palette), click adds (0 panels), click replaces (1 panel), + adds; a
+ *   palette Time & sales shows its picker.
  *  dave (view only) and sam (view + supervisor): no Order ticket or Price
  *   ladder rows (they need trading-execute), and no Desk overview for sam.
  *
@@ -55,6 +61,7 @@ const EXECUTE_ONLY = ["Order ticket", "Price ladder"];
 const DEFAULT_PANELS = 8;
 
 const PALETTE = ".vuuPanelsPalette";
+const COMPASS = ".vuuDropCompass";
 const ITEM = ".vuuPortalWorkspace .vuuGridLayoutItem";
 const HEADER = ".vuuPortalWorkspaceHeader";
 
@@ -98,6 +105,33 @@ const row = (page: Page, label: string) =>
       hasText: new RegExp(`^${label.replace(/[&]/g, "\\$&")}$`),
     }),
   });
+
+/** The panel (grid item) whose header title or selected stack tab is `title`. */
+const panelBox = async (page: Page, title: string) => {
+  const box = await page
+    .locator(ITEM, {
+      has: page.locator(".vuuGridLayoutItemHeader-title", {
+        hasText: new RegExp(`^${title}$`),
+      }),
+    })
+    .boundingBox();
+  if (!box) throw Error(`no ${title} panel`);
+  return box;
+};
+
+/** The visible compass: its active zone and whether its centre is disabled. */
+const compassState = (page: Page) =>
+  page.evaluate((selector) => {
+    const compass = document.querySelector<HTMLElement>(selector);
+    return compass
+      ? {
+          activeZone: compass.dataset.activeZone,
+          centreDisabled: !!compass.querySelector(
+            "[data-compass-zone=centre][data-disabled]",
+          ),
+        }
+      : undefined;
+  }, COMPASS);
 
 /** Opens the palette unless it is open (or opening: a new workspace opens it). */
 const openPalette = async (page: Page) => {
@@ -224,6 +258,12 @@ const main = async () => {
       JSON.stringify(groups) === JSON.stringify(GROUPS),
       "modules grouped Trading / Market / Portfolio",
     );
+    const tabs = await page.locator(".vuuPanelsPalette-tab").allTextContents();
+    log(`palette tabs: ${tabs.join(", ")}`);
+    check(
+      tabs.join() === "Modules,Recent",
+      "the palette offers Modules and Recent only (no Tables)",
+    );
     await shot("palette");
 
     // 2. + adds an Order ticket, on red, and makes the personal copy
@@ -273,17 +313,11 @@ const main = async () => {
       "T opens P&L as a new tab",
     );
 
-    // 4. drag onto a panel edge places it, without a prompt
+    // 4. drag: the compass; an edge splits, without a prompt
     await openPalette(page);
-    const target = await page
-      .locator(ITEM, {
-        has: page.locator(".vuuGridLayoutItemHeader-title", {
-          hasText: /^Instruments$/,
-        }),
-      })
-      .boundingBox();
-    if (!target) throw Error("no Instruments panel");
+    const target = await panelBox(page, "Instruments");
     let hint = "";
+    let edge: Awaited<ReturnType<typeof compassState>>;
     await dragRowTo(
       page,
       "Exposure",
@@ -294,15 +328,108 @@ const main = async () => {
             /Add\s+Exposure[\s\S]{0,80}/,
           )?.[0] ?? ""
         ).replace(/\s+/g, " ");
+        edge = await compassState(page);
         await shot("drag");
       },
     );
-    log(`drag hint: ${hint}`);
+    log(`drag hint: ${hint}; compass: ${JSON.stringify(edge)}`);
     check(hint.includes("Drop on a panel edge"), "drag shows the hint bar");
+    check(edge?.activeZone === "south", "the compass shows the south edge");
     await waitItems(page, "drag Exposure", DEFAULT_PANELS + 3);
     check(
       (await page.getByLabel("Open Exposure").count()) === 0,
       "drag places Exposure without a prompt",
+    );
+    check(
+      (await page.locator(COMPASS).count()) === 0,
+      "the compass is gone after the drop",
+    );
+
+    // the centre is disabled on a panel already in a stack (Orders / Fills / …)
+    await openPalette(page);
+    const stacked = await page
+      .locator(".vuuPortalWorkspace [role=tab]", { hasText: /^Orders$/ })
+      .first()
+      .evaluate((tab) => {
+        const r = (
+          tab.closest(".vuuGridLayoutItem") ?? tab
+        ).getBoundingClientRect();
+        return { x: r.x, y: r.y, width: r.width, height: r.height };
+      });
+    const before = await itemCount(page);
+    let centreOfStack: Awaited<ReturnType<typeof compassState>>;
+    await dragRowTo(
+      page,
+      "Positions",
+      { x: stacked.x + stacked.width / 2, y: stacked.y + stacked.height / 2 },
+      async () => {
+        centreOfStack = await compassState(page);
+        await shot("compass-disabled");
+        await page.keyboard.press("Escape");
+      },
+    );
+    log(`compass over a stack: ${JSON.stringify(centreOfStack)}`);
+    check(
+      centreOfStack?.centreDisabled === true,
+      "the compass centre is disabled on a panel already in a stack",
+    );
+    await Bun.sleep(500);
+    check(
+      (await itemCount(page)) === before,
+      "Esc cancels the drag (no change)",
+    );
+
+    // the centre stacks the panel as a tab (alpha.30: no longer replaces)
+    await openPalette(page);
+    const tapeBox = await panelBox(page, "Tape");
+    let centre: Awaited<ReturnType<typeof compassState>>;
+    await dragRowTo(
+      page,
+      "Execution quality",
+      { x: tapeBox.x + tapeBox.width / 2, y: tapeBox.y + tapeBox.height / 2 },
+      async () => {
+        // a narrow panel has a compact compass: aim at its centre tile
+        const tile = await page
+          .locator(`${COMPASS} [data-compass-zone=centre]`)
+          .boundingBox();
+        if (tile) {
+          await page.mouse.move(
+            tile.x + tile.width / 2,
+            tile.y + tile.height / 2,
+            {
+              steps: 4,
+            },
+          );
+          await Bun.sleep(300);
+        }
+        centre = await compassState(page);
+        await shot("compass-centre");
+      },
+    );
+    log(`compass centre: ${JSON.stringify(centre)}`);
+    check(
+      centre?.activeZone === "centre" && !centre.centreDisabled,
+      "the compass shows the centre over a single panel",
+    );
+    await waitItems(page, "centre Execution quality", DEFAULT_PANELS + 4);
+    const stackTabs = await page
+      .locator(".vuuPortalWorkspace [role=tab]", {
+        hasText: /^Execution quality$/,
+      })
+      .evaluate((tab) =>
+        [
+          ...(tab.closest("[role=tablist]")?.querySelectorAll("[role=tab]") ??
+            []),
+        ].map((t) => t.textContent ?? ""),
+      )
+      .catch(() => [] as string[]);
+    log(`stack: ${stackTabs.join(", ")}`);
+    check(
+      stackTabs.includes("Tape") && stackTabs.includes("Execution quality"),
+      "a centre drop stacks the panel as a tab with Tape (no replace)",
+    );
+    await mustWait("panel titles rendered", async () =>
+      (await panelTitles(page)).every(Boolean),
     );
     const editedTitles = await panelTitles(page);
     await shot("edited");
@@ -312,7 +439,7 @@ const main = async () => {
     await waitForWorkspace(page, "after reload");
     await mustWait(
       "panels after reload",
-      async () => (await itemCount(page)) === DEFAULT_PANELS + 3,
+      async () => (await itemCount(page)) === DEFAULT_PANELS + 4,
       20_000,
     ).catch(() => undefined);
     check(
@@ -326,7 +453,9 @@ const main = async () => {
       .allTextContents();
     log(`recent: ${recent.join(", ")}`);
     check(
-      ["Order ticket", "P&L", "Exposure"].every((l) => recent.includes(l)),
+      ["Order ticket", "P&L", "Exposure", "Execution quality"].every((l) =>
+        recent.includes(l),
+      ),
       "Recent lists the added panels",
     );
     await selectTab(page, "Modules");
@@ -346,6 +475,29 @@ const main = async () => {
       "Reset to default restores the default panels",
     );
 
+    // 7. the brand goes to the portal root, from a workspace and a module page
+    const brand = page.getByRole("link", { name: "Trader home" });
+    await brand.click();
+    await mustWait("brand → /", () => new URL(page.url()).pathname === "/");
+    check(true, "the brand goes to the portal root from a workspace");
+    await page
+      .locator(".vuuPortalNav-label", { hasText: /^Watchlist$/ })
+      .click();
+    await mustWait("Watchlist page", () =>
+      page.url().endsWith("/trading/watchlist"),
+    );
+    await brand.click();
+    await mustWait("brand → /", () => new URL(page.url()).pathname === "/");
+    check(true, "the brand goes to the portal root from a module page");
+    const home = await waitUntil(
+      async () =>
+        (await page.locator(".vuuPortalLandingPage .traderHome h1").count()) ===
+        1,
+      5_000,
+    );
+    check(home >= 0, "the portal root shows Trader's home page");
+    await shot("root");
+
     // ---- alice: + New workspace ---------------------------------------------
     await page
       .locator(".vuuPortalNav-label", { hasText: "New workspace" })
@@ -354,9 +506,31 @@ const main = async () => {
       /\/workspaces\/workspace-/.test(page.url()),
     );
     await page.getByText("This workspace is empty").waitFor();
-    check(true, "a new workspace shows the empty drop zone");
+    check(
+      (await page.locator(".vuuWorkspaceDropZone").innerText()).includes(
+        "Drag a module from the Panels palette",
+      ),
+      "a new workspace shows Trader's empty content",
+    );
     await openPalette(page);
     await shot("blank");
+    await page
+      .locator(".vuuContextPanel")
+      .getByRole("button", { name: /close/i })
+      .first()
+      .click();
+    await mustWait(
+      "palette closed",
+      async () =>
+        !(await page
+          .locator(PALETTE)
+          .isVisible()
+          .catch(() => false)),
+    );
+    await page.getByRole("button", { name: "Open Panels palette" }).click();
+    await page.locator(PALETTE).waitFor();
+    check(true, "the empty content's button opens the palette");
+    await Bun.sleep(1_500);
     await row(page, "Watchlist").locator(".vuuPanelsPalette-label").click();
     await waitItems(page, "click Watchlist (0 panels)", 1);
     check(true, "click adds the first panel");
@@ -375,7 +549,11 @@ const main = async () => {
       }),
     });
     check(
-      (await tape.locator("input[placeholder='Search ric']").count()) > 0,
+      (await waitUntil(
+        async () =>
+          (await tape.locator("input[placeholder='Search ric']").count()) > 0,
+        20_000,
+      )) >= 0,
       "a palette Time & sales shows its instrument picker",
     );
     check(

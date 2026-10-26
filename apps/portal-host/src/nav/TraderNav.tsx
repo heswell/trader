@@ -176,6 +176,7 @@ export const TraderNav = ({ environment, remoteModules }: TraderNavProps) => {
       <PortalNav
         allowedDisplayModes={TRADER_NAV_DISPLAY_MODES}
         brand={brand}
+        brandLabel="Trader home"
         className="traderNav"
         collapseTo="icons"
         defaultDisplayMode="icons-and-text"
