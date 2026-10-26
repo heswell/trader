@@ -1,5 +1,6 @@
 import { useModuleRegistry } from "@vuu-ui/core";
 import {
+  AddPanelButton,
   createPortalComponentRegistries,
   PortalShell,
   type PortalWorkspacesOptions,
@@ -16,10 +17,13 @@ const registries = createPortalComponentRegistries();
 
 /**
  * Portal workspaces: the Trader system workspace and the user's own, made
- * of `portal-module` (and `vuu-table`) items.
+ * of `portal-module` items. "Add panel" in the workspace header opens the
+ * Panels palette (the modules with `workspace` metadata) in the shell's
+ * context panel.
  */
 export const WORKSPACES: PortalWorkspacesOptions = {
   componentRenderers: registries.renderers,
+  headerActions: <AddPanelButton />,
   settingsCodecs: registries.settingsCodecs,
   systemWorkspaces: SYSTEM_WORKSPACES,
 };
@@ -29,10 +33,17 @@ export interface AppProps {
   environment?: string;
 }
 
+/**
+ * The context panel (the Panels palette, the ticket launcher) takes its own
+ * column beside the content rather than covering it.
+ */
+const CONTEXT_PANEL = { placement: "inline" } as const;
+
 export const App = ({ environment }: AppProps) => {
   const { modules: remoteModules } = useModuleRegistry();
   return (
     <PortalShell
+      contextPanel={CONTEXT_PANEL}
       header={false}
       id={PORTAL_ID}
       remoteModules={remoteModules}

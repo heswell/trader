@@ -195,7 +195,7 @@ standard token exchange requires.
 | User (password `password`) | Server roles (`trader-trading-server`) | Sees |
 | --- | --- | --- |
 | alice, bob, carol, erin | trading-view, trading-execute | Every entry except Oversight (the Trader workspace with its ticket and ladder panels; Price ladder) |
-| dave | trading-view | As alice, but no Price ladder; the workspace's Ticket and Ladder panels say the module is not available, and the order blotter is read-only. |
+| dave | trading-view | As alice, but no Price ladder; the workspace's Ticket and Ladder panels say the module is not available, the Panels palette has no Order ticket or Price ladder, and the order blotter is read-only. |
 | sam | trading-view, trading-supervisor | As dave, plus Oversight › Desk overview (all accounts) |
 | admin | trading-view, trading-supervisor (plus `vuu-portal` module-admin-access, vuu-table-viewer-access) | As sam, plus portal module admin |
 
@@ -356,7 +356,7 @@ naming a palette module and its props:
 | --- | --- | --- |
 | Left | Instruments (Watchlist, red) | stack: Orders, Fills (red), Positions (green) |
 | Middle | Ticket (red) | stack: Chart, Depth, Depth chart (red) |
-| Right | Ladder (green, with an instrument picker) | Tape (green) |
+| Right | Ladder (green, with an instrument picker) | Tape (green, `showInstrumentPicker: false`) |
 
 Red follows the instruments grid, green follows the ladder's picker. Every panel has a link group selector.
 
@@ -364,8 +364,8 @@ Red follows the instruments grid, green follows the ladder's picker. Every panel
   closing a panel, changing a link group) saves a personal copy with the same id ("Your
   copy" in the nav and header). Selecting a stack tab is view state: it is saved but is not an edit. **Reset to default** in the header (only on a copy) restores the system document,
   optionally saving the copy as a new workspace first.
-- **New workspace** (nav entry or +) creates an empty named workspace (renamed and deleted from its nav menu).
-  Adding panels to it is the Panels palette, which the host adopts next (Phase 6 X2).
+- **New workspace** (nav entry or +) creates an empty named workspace (renamed and deleted from its nav menu). It
+  opens with the Panels palette and the empty-workspace drop zone: drop a module on it, or click one.
 - **Per-panel state.** A panel's link group is saved in its item's workspace component state
   (`trading.feature-state`, key `trading.linkGroup.<id>`), so it travels with the workspace and resets with it.
   `defaultLinkGroup` (an item prop) sets a panel's group until the user picks one.
@@ -374,6 +374,50 @@ Red follows the instruments grid, green follows the ladder's picker. Every panel
   state persistence (trader upstream issue 49).
 - **Panel access.** A panel whose module the user is not sent (e.g. Ticket and Ladder for dave) shows the
   portal's "module not available" message.
+
+### Panels palette (Phase 6 X2)
+
+The workspace header's **Add panel** (`AddPanelButton` from `@vuu-ui/core/portal`, passed as PortalShell
+`workspaces.headerActions`) opens the core `PanelsPalette` in the shell context panel. The host sets
+`contextPanel={{placement: "inline"}}`, so the palette sits beside the workspace (which narrows) instead of over it:
+the user can see where a panel will go while dragging. The palette closes after a click or + adds a panel and can be
+pinned open.
+
+- **Modules tab:** every module the user is sent that has `workspace` metadata, grouped by `paletteGroup` (Trading:
+  Watchlist, Orders, Executions, Price ladder, Order ticket; Market: Market depth, Time & sales, Chart, Depth
+  chart; Portfolio: Positions, P&L, Exposure, Execution quality), with a search box. Desk overview has no
+  `workspace` metadata (it is a page, not a panel), so it is not offered.
+- **Recent tab:** the panels the user added last (portal saved state `workspace/recentPanels`, per browser).
+- **Tables tab: not wanted, but shown.** Trader's tables are reached through its modules (a raw `vuu-table` panel
+  has no ticket actions, link group or formatting), so the palette should offer only Modules and Recent. The core tab
+  set is fixed and the host cannot pass `PanelsPalette` props, so the Tables tab (listing the trading server's
+  tables) is still there, as is the "Drag modules or tables" copy of the empty drop zone (trader upstream issue
+  107). It is harmless: a table added from it is an ordinary `vuu-table` panel.
+- **Row actions** (core `useOpenPanel()` / `usePortalDragSource()`):
+  - **click** follows the click rule: no panel → add; one panel → replace it; more → a prompt *Replace
+    <focused>* (R) / *Open as new tab* (T), Esc to cancel (`workspace-palette-prompt.png`);
+  - **drag** places the panel exactly: the drop target ghost (edge to split, centre or header to tab) and a hint bar
+    at the bottom, Esc to cancel. Dragging never prompts (`workspace-palette-drag.png`);
+  - **+** adds the panel beside the focused one (or into empty space), never prompting.
+- **Link groups of added panels.** A palette panel is the module's `portalModuleTemplate()` with no props, so it
+  joins the module's own default group: red for Watchlist, Orders, Executions, Order ticket, Market depth, Chart and
+  Depth chart; green for Price ladder, Time & sales and Positions. An added Order ticket therefore follows the
+  Instruments grid at once, and an added Time & sales follows the Ladder's picker. The user changes it with the
+  panel's link group selector, which is saved per item as above. Following the focused panel's group was rejected:
+  it makes the result depend on what happened to be focused, and a Ticket dropped next to the Ladder would follow
+  the picker rather than the grid.
+- **Instrument pickers.** Price ladder and Time & sales show their instrument picker unless
+  `showInstrumentPicker: false`, so a palette Ladder or Tape (and their nav pages) can choose an instrument on its
+  own. The Trader document sets `false` on its Tape, which follows the Ladder. A personal copy saved before this
+  change has no such prop, so its Tape shows a picker too until Reset to default.
+- **Persistence.** Adding a panel is an edit: the default becomes "Your copy", and the added panels (and their link
+  groups) survive a reload. Reset to default removes them.
+- **Permissions: hidden, not disabled.** The palette lists only modules the portal server sends the user, and
+  Order ticket and Price ladder need trading-execute (`accessRole`), so dave and sam do not see them
+  (`workspace-palette-dave.png`). Showing them disabled with a reason would need the descriptors of modules the
+  user may not load, which vuu-portal deliberately does not send; it would also suggest the user could ask for them
+  from the palette. The nav already hides them, so the palette matches it. Panels already in a document (the
+  Trader Ticket and Ladder) keep the "module not available" placeholder.
 
 ## Troubleshooting
 
@@ -412,6 +456,31 @@ Verified with @vuu-ui 4.0.0-alpha.28, vuu-server 4.3.0, vuu-portal 2.3.0, module
 - **Roles:** dave's Ticket and Ladder panels say the module is not available, and he has no Buy / Sell
   (`workspace-dave-view-only.png`); sam also has Oversight › Desk overview (`workspace-sam.png`).
 - `bun run e2e:persistence` and `bun run e2e:resilience` pass against the workspace.
+
+### Panels palette (alpha.28)
+
+Verified with @vuu-ui 4.0.0-alpha.28, vuu-portal 2.3.0, module-admin 2.3.0 and headless Chrome (1600×1000)
+against `bun run start:all --build`. `bun run e2e:palette` (`scripts/e2e/palette.ts`) repeats it on its own
+stack.
+
+- **Palette:** Add panel opens the palette inline in the context panel, grouped Trading / Market / Portfolio
+  (`workspace-palette.png`).
+- **+:** + on Order ticket adds a red ticket that shows the grid's instrument at once and makes "Your copy"
+  (`workspace-personal-copy.png`).
+- **Click rule:** with more than one panel, clicking P&L prompts "Replace Order ticket (R) / Open as new tab (T)";
+  Esc changes nothing, T stacks P&L with the ticket (`workspace-palette-prompt.png`).
+- **Drag:** dragging Exposure shows the hint bar and the drop ghost, and dropping it on the Instruments panel's
+  bottom edge splits it, with no prompt (`workspace-palette-drag.png`).
+- **Reload and Recent:** the added panels survive a reload, and Recent lists them.
+- **Reset to default** (`workspace-reset-confirm.png`) removes them and restores the eight default panels.
+- **New workspace:** opens with the palette and the drop zone (`workspace-new.png`); clicking Watchlist adds it,
+  clicking Price ladder then replaces it, and + adds Time & sales and Order ticket. Watchlist (red) drives the
+  ticket; the Ladder's picker (green) drives Time & sales (`workspace-palette-linked.png`).
+- **Roles:** dave's and sam's palettes have no Order ticket or Price ladder (`workspace-palette-dave.png`); sam's
+  has no Desk overview.
+- **Not available upstream:** the design's drop compass (trader upstream issue 108) and hiding the Tables tab
+  (107).
+- `bun run e2e:persistence`, `bun run e2e:resilience` and `bun run e2e:palette` pass.
 
 ### PortalNav (alpha.25)
 

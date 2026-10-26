@@ -34,6 +34,7 @@
     "keycloak:realm": "bun ./scripts/stack/keycloak-realm.ts",
     "e2e:persistence": "bun ./scripts/e2e/persistence.ts",
     "e2e:resilience": "bun ./scripts/e2e/resilience.ts",
+    "e2e:palette": "bun ./scripts/e2e/palette.ts",
     "perf:ws": "bun ./packages/perf/src/ws-load.ts",
     "perf:ui": "bun ./packages/perf/src/ui-profile.ts",
     "perf:ladder": "bun ./packages/perf/src/ladder-budget.ts",

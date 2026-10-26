@@ -129,6 +129,7 @@ See [persistence.md](persistence.md) for the guarantees and recovery.
 | `bun run perf:ui` / `bun run perf:ladder` | UI tick-rate profile and ladder frame budget in headless Chrome | no |
 | `bun run e2e:resilience` | Kills and restarts servers under a logged-in browser | no |
 | `bun run e2e:persistence` | `kill -9` of the trading server, then checks the UI shows the same state | no |
+| `bun run e2e:palette` | Workspace Panels palette: add, click rule, drag, reload, Reset, new workspace, roles | no |
 | `bun run --filter @heswell/exchange-sim bench` | Matching-engine benchmark | no |
 
 The e2e scripts use their own ports: they shift them by `E2E_PORT_OFFSET` when the defaults are busy, and stop

@@ -9,7 +9,7 @@ import {
 
 const Tape = ({
   defaultLinkGroup = "green",
-  showInstrumentPicker = false,
+  showInstrumentPicker = true,
 }: PickerFeatureProps) => (
   <FeatureFrame
     toolbar={
