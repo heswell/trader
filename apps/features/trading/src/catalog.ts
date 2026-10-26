@@ -7,8 +7,13 @@
  *
  * Nav: a module's `location` is "/<Section>/<Entry>". PortalNav sorts entries
  * by `navOrder` and sections by their lowest entry's navOrder, so each
- * section owns a hundreds band (Workspaces 10, Trading 100s, Market 200s,
- * Portfolio 300s, Oversight 400s).
+ * section owns a hundreds band (Trading 100s, Market 200s, Portfolio 300s,
+ * Oversight 400s). Workspaces (incl. the Trader system workspace,
+ * apps/portal-host/src/workspaces) are the portal's own nav section.
+ *
+ * Panels palette: modules with `workspace` can be added as workspace panels.
+ * Not in the palette: the Desk overview (a supervisor's desk-wide, tabbed
+ * console of every desk's orders and positions: a page, not a panel).
  */
 import type { TradingNavIcon } from "./navIcons";
 
@@ -55,7 +60,10 @@ export interface TradingFeature {
   title: string;
   description: string;
   accessRole: TradingAccessRole;
-  /** Top-level modules: nav location ("/<Section>/<Entry>") and route. */
+  /**
+   * Top-level modules: nav location ("/<Section>/<Entry>") and route. Omit both
+   * for a palette-only module (needs `workspace`).
+   */
   location?: string;
   path?: string;
   /** Top-level modules: nav sort key (sections sort by their lowest). */
@@ -72,6 +80,27 @@ export interface TradingFeature {
   notificationTopics?: readonly TradingNotificationTopic[];
   /** Child modules: the parent's key (rendered by the parent, no nav entry). */
   parent?: string;
+  /**
+   * Panels palette entry (the portal's `VuuModuleDescriptor.workspace`):
+   * only modules with it can be added to a portal workspace. The palette
+   * icon defaults to the nav icon; `defaultSize` (grid tracks) only orients
+   * the split of a new panel (wider: below the target, taller: beside it).
+   */
+  workspace?: TradingModuleWorkspace;
+}
+
+/** Panels palette groups (match the nav sections). */
+export const TRADING_PALETTE_GROUP = {
+  trading: "Trading",
+  market: "Market",
+  portfolio: "Portfolio",
+} as const;
+
+export interface TradingModuleWorkspace {
+  paletteGroup: (typeof TRADING_PALETTE_GROUP)[keyof typeof TRADING_PALETTE_GROUP];
+  /** Palette icon (data URL), when it differs from the nav icon. */
+  iconUrl?: string;
+  defaultSize?: { cols?: number; rows?: number };
 }
 
 /** Live nav badges, rendered by the portal host (apps/portal-host). */
@@ -87,49 +116,11 @@ export type TradingNotificationTopic =
 
 const view = TRADING_ACCESS_ROLE["trading-view"];
 const execute = TRADING_ACCESS_ROLE["trading-execute"];
+const TRADING = TRADING_PALETTE_GROUP.trading;
+const MARKET = TRADING_PALETTE_GROUP.market;
+const PORTFOLIO = TRADING_PALETTE_GROUP.portfolio;
 
 export const TRADING_FEATURES: readonly TradingFeature[] = [
-  {
-    key: "workspace",
-    id: 100,
-    name: "TradingWorkspace",
-    mfScope: "tradingWorkspace",
-    expose: "./TraderWorkspace",
-    source: "./src/features/TraderWorkspace",
-    title: "Trader workspace",
-    description:
-      "Prebuilt trader layout: watchlist, price / depth charts, depth, ticket, ladder, blotters, positions and tape with red / green link groups",
-    accessRole: view,
-    location: "/Workspaces/Trader",
-    path: "/workspaces/trader",
-    navOrder: 10,
-    navIcon: "workspace",
-    notificationTopics: ["orders", "fills", "marketdata", "risk"],
-  },
-  {
-    key: "workspace-ticket",
-    id: 101,
-    name: "TradingWorkspaceTicket",
-    mfScope: "tradingWorkspaceTicket",
-    expose: "./Ticket",
-    source: "./src/features/Ticket",
-    title: "Workspace order ticket",
-    description: "Order ticket docked in the trader workspace",
-    accessRole: execute,
-    parent: "workspace",
-  },
-  {
-    key: "workspace-ladder",
-    id: 102,
-    name: "TradingWorkspaceLadder",
-    mfScope: "tradingWorkspaceLadder",
-    expose: "./Ladder",
-    source: "./src/features/Ladder",
-    title: "Workspace price ladder",
-    description: "Price ladder docked in the trader workspace",
-    accessRole: execute,
-    parent: "workspace",
-  },
   {
     key: "watchlist",
     id: 110,
@@ -145,6 +136,7 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     navOrder: 100,
     navIcon: "watchlist",
     notificationTopics: ["marketdata"],
+    workspace: { paletteGroup: TRADING, defaultSize: { cols: 2, rows: 1 } },
   },
   {
     key: "orders",
@@ -162,6 +154,7 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     navIcon: "orders",
     navBadge: "orders.working",
     notificationTopics: ["orders"],
+    workspace: { paletteGroup: TRADING, defaultSize: { cols: 2, rows: 1 } },
   },
   {
     key: "fills",
@@ -178,6 +171,7 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     navOrder: 120,
     navIcon: "executions",
     notificationTopics: ["fills"],
+    workspace: { paletteGroup: TRADING, defaultSize: { cols: 2, rows: 1 } },
   },
   {
     key: "ladder",
@@ -194,6 +188,23 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     navOrder: 130,
     navIcon: "ladder",
     notificationTopics: ["orders"],
+    workspace: { paletteGroup: TRADING, defaultSize: { cols: 1, rows: 2 } },
+  },
+  {
+    key: "ticket",
+    id: 124,
+    name: "TradingTicket",
+    mfScope: "tradingTicket",
+    expose: "./Ticket",
+    source: "./src/features/Ticket",
+    title: "Order ticket",
+    description:
+      "Order entry for the linked instrument; the launch target for Buy / Sell in the same window",
+    accessRole: execute,
+    // Palette-only: no nav location or route; navIcon is its palette icon.
+    navIcon: "ticket",
+    notificationTopics: ["orders"],
+    workspace: { paletteGroup: TRADING, defaultSize: { cols: 1, rows: 2 } },
   },
   {
     key: "depth",
@@ -210,6 +221,7 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     navOrder: 200,
     navIcon: "depth",
     notificationTopics: ["marketdata"],
+    workspace: { paletteGroup: MARKET, defaultSize: { cols: 1, rows: 2 } },
   },
   {
     key: "tape",
@@ -226,6 +238,7 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     navOrder: 210,
     navIcon: "tape",
     notificationTopics: ["marketdata"],
+    workspace: { paletteGroup: MARKET, defaultSize: { cols: 1, rows: 2 } },
   },
   {
     key: "chart",
@@ -242,6 +255,7 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     path: "/market/chart",
     navOrder: 220,
     navIcon: "chart",
+    workspace: { paletteGroup: MARKET, defaultSize: { cols: 2, rows: 1 } },
   },
   {
     key: "depth-chart",
@@ -257,6 +271,7 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     path: "/market/depth-chart",
     navOrder: 230,
     navIcon: "depth-chart",
+    workspace: { paletteGroup: MARKET, defaultSize: { cols: 2, rows: 1 } },
   },
   {
     key: "positions",
@@ -274,6 +289,7 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     navIcon: "positions",
     navBadge: "positions.dayPnl",
     notificationTopics: ["positions", "risk"],
+    workspace: { paletteGroup: PORTFOLIO, defaultSize: { cols: 2, rows: 1 } },
   },
   {
     key: "pnl",
@@ -289,6 +305,7 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     path: "/portfolio/pnl",
     navOrder: 310,
     navIcon: "pnl",
+    workspace: { paletteGroup: PORTFOLIO, defaultSize: { cols: 2, rows: 1 } },
   },
   {
     key: "exposure",
@@ -305,6 +322,7 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     navOrder: 320,
     navIcon: "exposure",
     notificationTopics: ["risk"],
+    workspace: { paletteGroup: PORTFOLIO, defaultSize: { cols: 2, rows: 1 } },
   },
   {
     key: "execution-quality",
@@ -320,6 +338,7 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     path: "/portfolio/execution-quality",
     navOrder: 330,
     navIcon: "execution-quality",
+    workspace: { paletteGroup: PORTFOLIO, defaultSize: { cols: 2, rows: 1 } },
   },
   {
     key: "supervisor",
@@ -337,5 +356,8 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     navOrder: 400,
     navIcon: "oversight",
     notificationTopics: ["risk", "orders"],
+    // Not in the Panels palette: a page-sized, desk-wide composite (two
+    // blotters over every account) that follows no link group, so it gains
+    // nothing beside instrument panels and is cramped as one.
   },
 ];

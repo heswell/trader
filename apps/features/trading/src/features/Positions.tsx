@@ -1,10 +1,15 @@
 import { PositionsView } from "@heswell/trading-ui";
-import { FeatureFrame, fillStyle, withFeatureRoot } from "./shared";
+import {
+  FeatureFrame,
+  fillStyle,
+  withFeatureRoot,
+  type LinkedFeatureProps,
+} from "./shared";
 
-const Positions = () => (
+const Positions = ({ defaultLinkGroup = "green" }: LinkedFeatureProps) => (
   <FeatureFrame>
     <PositionsView
-      defaultLinkGroup="green"
+      defaultLinkGroup={defaultLinkGroup}
       id="positions"
       showLinkGroupSelector
       style={fillStyle}

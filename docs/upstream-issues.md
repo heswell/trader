@@ -220,13 +220,16 @@ Workarounds are noted. Resolved issues are struck through.
     vuu-portal would make layouts follow the user.
 50. **A shared singleton library cannot see a remote's `View`s.** `@heswell/trading-ui` is bound to the host's
     vuu-layout (#43), so `useViewContext()` in a remote returns the host's default context. *Workaround:*
-    `useComponentLinkGroup` stores link groups in the module's portal state (`trading.linkGroup.<id>`).
+    `useComponentLinkGroup` stores link groups in the module's portal state (`trading.linkGroup.<id>`). *Since
+    Phase 6 X1* the Trader workspace has no vuu-layout Views (its panels save their group in the workspace item's
+    state); the workaround remains for the nav pages.
 51. **The vuu-utils global `vuuConfig: Promise<VuuConfig>` lacks the auth fields** (`clientId`, `realm`, ...) that
     `PortalShell` needs, so hosts cast. Declaring another global clashes with it.
 52. **`@vuu-ui/vuu-icons` ships no type declarations.** *Workaround:* `apps/portal-host/src/vuu-icons.d.ts`.
-53. **Restoring vuu-layout JSON needs the component registry, which is per bundle.** A remote cannot restore a
-    layout containing components it did not register, so the workspace saves View states but not its
-    arrangement.
+53. ~~**Restoring vuu-layout JSON needs the component registry, which is per bundle.**~~ *No longer applies
+    (Phase 6 X1):* the Trader workspace is a portal workspace (v2 `GridLayoutDocument` of `portal-module` items),
+    which saves its arrangement. A remote still cannot restore a vuu-layout layout containing components it did not
+    register.
 54. ~~**`vuu.auth.cors.allowedOrigin` takes a single origin**, so a host served from two origins (e.g. localhost and
     a LAN name) needs two configs.~~ *Resolved: vuu-websocket#95; vuu-server 4.2.0 / vuu-portal 2.1.2.* Both portal-config confs list the host and features origins
     via `localhost` and `127.0.0.1`. `start:all` passes the list derived from the `TRADER_*` settings as
@@ -234,8 +237,9 @@ Workarounds are noted. Resolved issues are struck through.
     from either origin.
 55. **`PersistedStateAPI` has no delete or clear.** *Workaround:* `save(key, null)`, and the whole document is
     read with `load()` to find keys by prefix.
-56. **A parent module cannot reset its child modules' persisted state.** The children are separate modules with
-    their own state documents. The workspace's Reset layout clears only its own keys.
+56. ~~**A parent module cannot reset its child modules' persisted state.**~~ *No longer applies (Phase 6 X1):*
+    the workspace's child modules (101, 102) and Reset layout are gone; the portal's Reset to default restores the
+    whole workspace, including each panel's state.
 
 ## Re-tested against @vuu-ui 4.0.0-alpha.21
 
@@ -584,5 +588,58 @@ See [components/charts.md](components/charts.md). Bumping every `@vuu-ui/*` pack
      `--salt-actionable-subtle-background-hover` for a hovered or open trigger, which `vuu-theme`
      (`css/next/characteristics/actionable.css`) maps to `--vuu-color-coral`, so the user row and the rail status
      button turn bright coral instead of the subtle grey in the design. A neutral token (e.g.
-     `--salt-container-primary-background-hover`) would fix it. *No workaround in the repo.*
+     `--salt-container-primary-background-hover`) would fix it. *No workaround in the repo.* Still in alpha.27.
 
+## Found in Phase 6 X1 (workspaces)
+
+Found adopting @vuu-ui 4.0.0-alpha.27 portal workspaces with module-admin 2.2.0 / vuu-portal 2.2.5
+(`docs/portal-integration.md`, "Workspaces and saved state").
+
+101. ~~**Workspace grid tracks grow to their content and overflow the page.**~~ *Resolved in @vuu-ui 4.0.0-alpha.28 (finos/vuu#2625).* The host CSS workaround is
+     removed. (Was: finos `@vuu-ui/core` portal-workspaces
+     and `@vuu-ui/grid-layout`, alpha.27.) `.vuuGridLayout` inside `.vuuPortalWorkspace-grid` (a flex column; the
+     grid is `flex: auto`), each `.vuuGridLayoutItem` and its `.vuuGridLayoutItemContent` keep the default
+     `min-width` / `min-height: auto`. An `fr` track therefore sizes to its widest / tallest panel. *Repro:* open
+     Workspaces › Trader at 1600×1000 without the host CSS: `.vuuGridLayout` is 1229 px tall in a 940 px
+     `.vuuPortalWorkspace-grid`, the Tape panel is below the page, the columns are not 7 : 5 : 5, and the
+     instruments table renders its rows outside its visible area; the Ticket panel clips its lower fields.
+     `min-height: 0` / `min-width: 0` on those three (and `overflow: auto` on the item content) would fix it.
+     *Workaround (removed):* `apps/portal-host/src/App.css` set them under `#trader-portal`.)
+102. ~~**A palette-only top-level module is not possible.**~~ *Resolved in @heswell/module-admin 2.3.0 / vuu-portal
+     2.3.0 (heswell/vuu-websocket#107) with @vuu-ui 4.0.0-alpha.28 (nav and routes skip a top-level module with no
+     location).* Order ticket (124) is now palette-only. (Was: `@heswell/module-admin` 2.2.0.) `validateModuleConfig`
+     requires `location` and `path` for every module with `parentModuleId` 0 ("Menu location is required",
+     "Route is required"), so a module meant only as a workspace panel still needs a nav entry. *Repro:* drop `location` / `path`
+     from the `TradingTicket` entry in `apps/features/trading/src/catalog.ts`, then
+     `bun run features:sync && bun run features:check`. *Workaround (removed):* the ticket was a nav page too,
+     Trading › Order ticket.)
+103. ~~**Selecting a stack tab is an edit, so it makes a personal copy.**~~ *Resolved in @vuu-ui 4.0.0-alpha.28 (finos/vuu#2625).* Verified: a tab click keeps
+     "default". (finos `@vuu-ui/core` portal-workspaces,
+     alpha.27.) The stack's `selectedItemId` is part of the persisted document, so clicking e.g. Fills in the
+     Trader workspace turns the default into "Your copy", and Reset to default is then offered for a tab change.
+     *Repro:* open Workspaces › Trader (chip "default"), click the Fills tab: the header shows "Your copy · edited
+     just now". Treating the selected tab as view state (saved, but not a divergence from the system document)
+     would fix it. *No workaround in the repo.*)
+104. ~~**Creating the personal copy blanks a scrolled table.**~~ *Resolved in @vuu-ui 4.0.0-alpha.28 (finos/vuu#2625).* Verified: the scrolled grid keeps its
+     rows when the copy is created. (finos `@vuu-ui/core` portal-workspaces, alpha.27.)
+     When the first edit turns the default into a copy, each panel's scroll container `scrollTop` drops to 0
+     without a scroll event (the panels appear to be re-parented), so a virtualised `vuu-table` keeps rendering the rows of its old
+     scroll position and shows an empty body until the user scrolls. *Repro:* open Workspaces › Trader, scroll the
+     Instruments grid down ~600 px, click the Fills tab (#103): the grid is blank; scrolling it repaints it. Once a
+     copy exists, the same steps do not blank it. Keeping the item elements mounted (or restoring scroll positions)
+     when the copy is created would fix it. *No workaround in the repo.*)
+105. ~~**ConnectionManager logs "viewport-update message received, viewport not found"**~~ *Resolved in @vuu-ui 4.0.0-alpha.28 (finos/vuu#2625).* Verified:
+     no console errors across Reset to default. (finos
+     `@vuu-ui/vuu-data-remote`, alpha.27) when Reset to default remounts the panels: updates already in flight for
+     the unsubscribed viewports are logged as console errors. *Repro:* make a personal copy of Trader, click Reset
+     to default › Reset, and watch the console (seen intermittently). Dropping updates for a viewport that was just
+     unsubscribed silently would fix it. *No workaround in the repo.*)
+106. ~~**No optional accessor for the workspace item store.**~~ *Resolved in @vuu-ui 4.0.0-alpha.28 (finos/vuu#2625).* `workspaceItemState.ts` now uses
+     `useOptionalWorkspacePersistentStateStore()`. (finos `@vuu-ui/core` workspace, alpha.27.)
+     `useWorkspacePersistentStateStore()` throws outside a `WorkspacePersistentStateProvider`, and neither the
+     context nor a `useOptional…` variant is exported (unlike `useOptionalWorkspace`). A module that renders both as
+     a nav page and as a workspace panel must catch the error. *Repro:* render any trading feature on its nav page
+     (e.g. `/trading/watchlist`): `useWorkspacePersistentStateStore()` throws "requires
+     WorkspacePersistentStateProvider". *Workaround:* `useOptionalWorkspaceStore` in
+     `packages/trading-ui/src/instrument-context/workspaceItemState.ts` wraps it in try / catch (with a biome-ignore
+     for `useHookAtTopLevel`).)

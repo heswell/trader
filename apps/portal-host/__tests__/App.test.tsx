@@ -24,12 +24,13 @@ const modules: RemoteModuleDescriptor[] = TRADING_FEATURES.map((f) => ({
   name: f.name,
   navBadge: f.navBadge,
   navIconUrl: f.navIcon ? navIconDataUri(f.navIcon) : undefined,
-  navLocation: f.location ?? "",
+  navLocation: f.location,
   navOrder: f.navOrder,
   notificationTopics: f.notificationTopics && [...f.notificationTopics],
-  path: f.path ?? "",
+  path: f.path,
   title: f.title,
   version: 1,
+  ...(f.workspace ? { workspace: f.workspace } : {}),
 }));
 
 // Every remote's config.json: the trading server, simulated in the browser.
@@ -98,7 +99,7 @@ describe("portal host", () => {
       ),
     ]);
     expect(sections).toEqual([
-      ["Workspaces", ["Trader"]],
+      ["Workspaces", ["Trader", "New workspace"]],
       ["Trading", ["Watchlist", "Orders", "Executions", "Price ladder"]],
       ["Market", ["Market depth", "Time & sales", "Chart", "Depth chart"]],
       ["Portfolio", ["Positions", "P&L", "Exposure", "Execution quality"]],
@@ -107,10 +108,13 @@ describe("portal host", () => {
     expect(entry(nav, "Executions")?.getAttribute("href")).toBe(
       "/trading/executions",
     );
+    expect(entry(nav, "Trader")?.getAttribute("href")).toBe(
+      "/workspaces/trader",
+    );
     // navIconUrl renders as a CSS mask (url('…')), one per entry
     expect(
       nav.querySelectorAll('.vuuPortalNav-icon [data-icon="custom"]'),
-    ).toHaveLength(14);
+    ).toHaveLength(13);
 
     const brand = nav.querySelector(".vuuPortalNav-brand") as HTMLElement;
     expect(brand.querySelector(".traderNavBrand-name")?.textContent).toBe(
@@ -127,6 +131,37 @@ describe("portal host", () => {
     expect(footer.querySelector(".vuuPortalConnectionStatus")).not.toBeNull();
     expect(footer.querySelector(".vuuPortalNavUserMenu")).not.toBeNull();
     expect(footer.textContent).toContain("ACC-US-01");
+  });
+
+  test("Workspaces › Trader opens the Trader system workspace", async () => {
+    const nav = await renderApp();
+    await act(async () => entry(nav, "Trader")?.click());
+    await wait(300);
+    expect(window.location.pathname).toBe("/workspaces/trader");
+    const header = document.querySelector<HTMLElement>(
+      ".vuuPortalWorkspaceHeader",
+    );
+    expect(header?.dataset.workspaceId).toBe("trader");
+    expect(
+      header?.querySelector(".vuuPortalWorkspaceHeader-title")?.textContent,
+    ).toBe("Trader");
+    expect(
+      [...document.querySelectorAll(".vuuGridLayoutItemHeader-title")].map(
+        (title) => title.textContent,
+      ),
+    ).toEqual(["Instruments", "Ticket", "Ladder", "Tape"]);
+    expect(
+      [...document.querySelectorAll('[role="tab"]')].map(
+        (tab) => tab.textContent,
+      ),
+    ).toEqual([
+      "Orders",
+      "Fills",
+      "Positions",
+      "Chart",
+      "Depth",
+      "Depth chart",
+    ]);
   });
 
   test("badges show working orders and P&L, and tick", async () => {

@@ -1,15 +1,20 @@
 import { OrderTicketPanel } from "@heswell/trading-ui";
-import { FeatureFrame, fillStyle, withFeatureRoot } from "./shared";
+import {
+  FeatureFrame,
+  fillStyle,
+  withFeatureRoot,
+  type LinkedFeatureProps,
+} from "./shared";
 
 /**
  * Docked order ticket (module gated by trading-execute). It follows its
- * link group and is the launch target for Buy / Sell in the same window's
- * feature root (the Trader workspace).
+ * link group and is the launch target for Buy / Sell anywhere in the window
+ * (e.g. the Watchlist panel of a workspace).
  */
-const Ticket = () => (
+const Ticket = ({ defaultLinkGroup = "red" }: LinkedFeatureProps) => (
   <FeatureFrame>
     <OrderTicketPanel
-      defaultLinkGroup="red"
+      defaultLinkGroup={defaultLinkGroup}
       id="ticket"
       showLinkGroupSelector
       style={fillStyle}

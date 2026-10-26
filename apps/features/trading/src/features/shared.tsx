@@ -1,5 +1,7 @@
 import {
   AccountSelector,
+  InstrumentPicker,
+  type LinkGroupId,
   TradingFeatureRoot,
   useSelectedAccount,
 } from "@heswell/trading-ui";
@@ -66,10 +68,47 @@ export const FeatureFrame = ({
 );
 
 /**
+ * Props of a feature that follows a link group. A portal workspace item
+ * passes them as its `portal-module` props (see the Trader system
+ * workspace); the user's later choice in the selector is saved per item.
+ */
+export interface LinkedFeatureProps {
+  /** Link group used until the user picks another. */
+  defaultLinkGroup?: LinkGroupId;
+}
+
+/** Props of a feature that can host an instrument picker in its toolbar. */
+export interface PickerFeatureProps extends LinkedFeatureProps {
+  /**
+   * Show an InstrumentPicker (with its own link group selector, initially
+   * the feature's group) that publishes to the group.
+   */
+  showInstrumentPicker?: boolean;
+}
+
+/** Toolbar picker of a PickerFeatureProps feature (saved under `id`). */
+export const ToolbarPicker = ({
+  id,
+  linkGroup,
+}: {
+  id: string;
+  linkGroup: LinkGroupId;
+}) => (
+  <InstrumentPicker
+    aria-label="Instrument"
+    defaultLinkGroup={linkGroup}
+    id={id}
+    placeholder="Search ric"
+    showLinkGroupSelector
+    style={{ width: 240 }}
+  />
+);
+
+/**
  * Every exposed feature renders inside a TradingFeatureRoot: the first one
  * in a window mounts the notification toasts / connection banner / ticket
- * launcher, nested ones (e.g. child modules of the Trader workspace) reuse
- * the enclosing root.
+ * launcher, nested ones reuse the enclosing root. Each item of a portal
+ * workspace is its own remote module and so its own root.
  */
 export const withFeatureRoot = <P extends object>(
   Component: (props: P) => ReactNode,
@@ -85,14 +124,17 @@ export const withFeatureRoot = <P extends object>(
 };
 
 /** An account dropdown + the selected account (for depth / ladder). */
-export const useAccountToolbar = () => {
+export const useAccountToolbar = (before?: ReactNode) => {
   const [account, setAccount, accounts] = useSelectedAccount();
   const toolbar = (
-    <AccountSelector
-      accounts={accounts}
-      onChange={setAccount}
-      value={account}
-    />
+    <>
+      {before}
+      <AccountSelector
+        accounts={accounts}
+        onChange={setAccount}
+        value={account}
+      />
+    </>
   );
   return { account, toolbar };
 };

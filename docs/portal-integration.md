@@ -1,7 +1,7 @@
 # Portal integration and the trader workspace
 
 How the trading UI (`@heswell/trading-ui`) is delivered through vuu-portal: as module-federation (MF) features,
-registered with the portal server, gated by roles, and composed into a prebuilt trader workspace. One command runs
+registered with the portal server, gated by roles, and composed into a Trader system workspace. One command runs
 the whole stack.
 
 ```sh
@@ -15,16 +15,15 @@ Log in as `alice` / `password` (see [Users and roles](#users-and-roles)).
 ```mermaid
 flowchart LR
   subgraph Browser
-    Host["portal host :5100<br/>PortalShell, auth, nav<br/>(apps/portal-host)"]
+    Host["portal host :5100<br/>PortalShell, auth, nav,<br/>workspaces (apps/portal-host)"]
     subgraph Remotes["MF remotes :5110/&lt;feature&gt;/<br/>mf-manifest.json + config.json"]
-      WS[Workspace] --> WT[Workspace ticket]
-      WS --> WL[Workspace ladder]
       W[Watchlist]
+      T[Order ticket / Ladder]
       D[Depth]
-      O[Orders / Executions / Positions / Time &amp; sales / Ladder / Charts]
+      O[Orders / Executions / Positions / Time &amp; sales / Charts]
       SV[Desk overview]
     end
-    Host -- "loads mf-manifest.json,<br/>reads config.json" --> Remotes
+    Host -- "loads mf-manifest.json,<br/>reads config.json<br/>(nav pages and workspace panels)" --> Remotes
     Bus(("instrument link bus<br/>+ BroadcastChannel"))
     Remotes <--> Bus
   end
@@ -195,8 +194,8 @@ standard token exchange requires.
 
 | User (password `password`) | Server roles (`trader-trading-server`) | Sees |
 | --- | --- | --- |
-| alice, bob, carol, erin | trading-view, trading-execute | Every entry except Oversight (the Trader workspace with its docked ticket and ladder; Price ladder) |
-| dave | trading-view | As alice, but no Price ladder; the workspace shows placeholders for the ticket and ladder, and the order blotter is read-only. |
+| alice, bob, carol, erin | trading-view, trading-execute | Every entry except Oversight (the Trader workspace with its ticket and ladder panels; Price ladder) |
+| dave | trading-view | As alice, but no Price ladder; the workspace's Ticket and Ladder panels say the module is not available, and the order blotter is read-only. |
 | sam | trading-view, trading-supervisor | As dave, plus Oversight › Desk overview (all accounts) |
 | admin | trading-view, trading-supervisor (plus `vuu-portal` module-admin-access, vuu-table-viewer-access) | As sam, plus portal module admin |
 
@@ -218,32 +217,40 @@ The nav is sorted by `navOrder`; a section sorts by its lowest entry. `navBadge`
 renders, and `notificationTopics` are the trading server's notification topics the entry claims (see
 [the portal host](#portal-host-nav)).
 
-| id | Nav | Path | Module | Role | navOrder | Badge / topics | Content |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 100 | Workspaces › Trader | `/workspaces/trader` | TradingWorkspace | trading-view | 10 | orders, fills, marketdata, risk | Prebuilt trader layout (below) |
-| 101 | *(child)* | | TradingWorkspaceTicket | trading-execute | | | Order ticket docked in the workspace |
-| 102 | *(child)* | | TradingWorkspaceLadder | trading-execute | | | Price ladder docked in the workspace |
-| 110 | Trading › Watchlist | `/trading/watchlist` | TradingWatchlist | trading-view | 100 | marketdata | InstrumentGrid (sparklines, watchlists, Buy / Sell) |
-| 114 | Trading › Orders | `/trading/orders` | TradingOrders | trading-view | 110 | `orders.working`; orders | OrderBlotter (read-only without trading-execute) |
-| 115 | Trading › Executions | `/trading/executions` | TradingFills | trading-view | 120 | fills | FillsBlotter |
-| 112 | Trading › Price ladder | `/trading/price-ladder` | TradingLadder | trading-execute | 130 | orders | PriceLadder (click-to-trade) |
-| 111 | Market › Market depth | `/market/depth` | TradingDepth | trading-view | 200 | marketdata | MarketDepth (own orders for the chosen account) |
-| 117 | Market › Time & sales | `/market/time-and-sales` | TradingTape | trading-view | 210 | marketdata | TradeTape |
-| 118 | Market › Chart | `/market/chart` | TradingChart | trading-view | 220 | | PriceChart |
-| 119 | Market › Depth chart | `/market/depth-chart` | TradingDepthChart | trading-view | 230 | | DepthChartView |
-| 116 | Portfolio › Positions | `/portfolio/positions` | TradingPositions | trading-view | 300 | `positions.dayPnl`; positions, risk | PositionsView |
-| 121 | Portfolio › P&L | `/portfolio/pnl` | TradingPnl | trading-view | 310 | | Account P&L history (PnlHistoryChart) |
-| 122 | Portfolio › Exposure | `/portfolio/exposure` | TradingExposure | trading-view | 320 | risk | ExposureTreemap |
-| 123 | Portfolio › Execution quality | `/portfolio/execution-quality` | TradingExecutionQuality | trading-view | 330 | | SlippageChart |
-| 120 | Oversight › Desk overview | `/oversight/desk` | TradingSupervisor | trading-supervisor | 400 | risk, orders | All visible accounts' orders and positions |
+| id | Nav | Path | Module | Role | navOrder | Badge / topics | Palette | Content |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 110 | Trading › Watchlist | `/trading/watchlist` | TradingWatchlist | trading-view | 100 | marketdata | Trading, 2×1 | InstrumentGrid (sparklines, watchlists, Buy / Sell) |
+| 114 | Trading › Orders | `/trading/orders` | TradingOrders | trading-view | 110 | `orders.working`; orders | Trading, 2×1 | OrderBlotter (read-only without trading-execute) |
+| 115 | Trading › Executions | `/trading/executions` | TradingFills | trading-view | 120 | fills | Trading, 2×1 | FillsBlotter |
+| 112 | Trading › Price ladder | `/trading/price-ladder` | TradingLadder | trading-execute | 130 | orders | Trading, 1×2 | PriceLadder (click-to-trade) |
+| 124 | — (palette only) | — | TradingTicket | trading-execute | — | orders | Trading, 1×2 | OrderTicket (`showInstrumentPicker`) |
+| 111 | Market › Market depth | `/market/depth` | TradingDepth | trading-view | 200 | marketdata | Market, 1×2 | MarketDepth (own orders for the chosen account) |
+| 117 | Market › Time & sales | `/market/time-and-sales` | TradingTape | trading-view | 210 | marketdata | Market, 1×2 | TradeTape |
+| 118 | Market › Chart | `/market/chart` | TradingChart | trading-view | 220 | | Market, 2×1 | PriceChart |
+| 119 | Market › Depth chart | `/market/depth-chart` | TradingDepthChart | trading-view | 230 | | Market, 2×1 | DepthChartView |
+| 116 | Portfolio › Positions | `/portfolio/positions` | TradingPositions | trading-view | 300 | `positions.dayPnl`; positions, risk | Portfolio, 2×1 | PositionsView |
+| 121 | Portfolio › P&L | `/portfolio/pnl` | TradingPnl | trading-view | 310 | | Portfolio, 2×1 | Account P&L history (PnlHistoryChart) |
+| 122 | Portfolio › Exposure | `/portfolio/exposure` | TradingExposure | trading-view | 320 | risk | Portfolio, 2×1 | ExposureTreemap |
+| 123 | Portfolio › Execution quality | `/portfolio/execution-quality` | TradingExecutionQuality | trading-view | 330 | | Portfolio, 2×1 | SlippageChart |
+| 120 | Oversight › Desk overview | `/oversight/desk` | TradingSupervisor | trading-supervisor | 400 | risk, orders | — | All visible accounts' orders and positions |
 
-There is no standalone order ticket entry (module 113 was removed): the ticket is docked in the Trader workspace
-(child 101) and opens as a dialog from Buy / Sell anywhere. The former Analytics feature (121) is split into P&L
-(121), Exposure (122) and Execution quality (123). Module ids are stable.
+Module ids are stable. The vuu-layout Trader workspace (100) and its child modules (101 ticket, 102 ladder) are
+retired: the Trader workspace is now a portal workspace (below) made of the modules above, and the ticket is module
+124. The former standalone ticket (113) and Analytics feature (split into 121–123) are gone too.
 
-The workspace renders the ticket and ladder as **child modules** (`parentModuleId`, no nav entry), through
-`usePortalModuleRegistry()` and `RemoteModule`. A user without trading-execute is not sent those modules, so the
-workspace shows a placeholder in their place.
+**Palette** is the module's `workspace` descriptor (`VuuModuleDescriptor.workspace`: `paletteGroup` and
+`defaultSize` in grid tracks, cols × rows). Only modules with it are offered in the portal's Panels palette and can
+be panels of a workspace; the palette icon is the nav icon. Groups follow the nav sections. Wide blotters and
+charts default to 2×1 (split below the target), tall ladder / depth / tape / ticket panels to 1×2 (split beside
+it).
+
+- **Excluded: Desk overview (120).** It is a page-sized, desk-wide composite (orders with child orders, and
+  positions, over every account) that follows no link group. It gains nothing next to instrument panels and is
+  cramped as one, so it stays a nav page.
+- **Order ticket (124) is palette-only:** it has `workspace` metadata but no nav location or route, so PortalNav
+  and the routes skip it while the Panels palette lists it (module-admin / vuu-portal 2.3.0, @vuu-ui alpha.28).
+  `modulesYaml` omits `location` / `path` when a feature has none. Buy / Sell anywhere opens the ticket as a
+  dialog unless a ticket panel is open (see below).
 
 ### Adding a feature
 
@@ -251,7 +258,8 @@ workspace shows a placeholder in their place.
    `id`s, because they key saved state.
 2. Add a catalog entry: unique `key`, `id`, `name`, `mfScope`; for a nav entry `location: "/Section/Label"`,
    `path`, `navOrder` and `navIcon` (an outline icon in `navIcons.ts`), optionally `navBadge` and
-   `notificationTopics`; or `parent` for a child module.
+   `notificationTopics`; or `parent` for a child module. Add `workspace: {paletteGroup, defaultSize}` if it can be
+   a workspace panel (most features), and accept `defaultLinkGroup` so a workspace can set its group.
 3. Run `bun run features:sync && bun run build`, then restart `start:all`. The module list is reseeded because the
    defaults changed.
 
@@ -265,8 +273,9 @@ Each feature wraps its content in `TradingFeatureRoot` (from `@heswell/trading-u
   under a `Symbol.for` key) lets exactly one root stream order and fill notifications. When that feature closes,
   the lease passes to the oldest waiting root. With five features open, each fill is toasted once. The toast centre
   itself is the host's: PortalShell mounts the vuu NotificationsProvider.
-- **Nested roots render children only.** The workspace's child modules render inside the parent's root, so Buy /
-  Sell in the workspace grid targets the docked ticket.
+- **Nested roots render children only,** so a feature can render inside another one's root.
+- **Buy / Sell targets an open ticket panel.** A ticket rendered as a workspace panel registers itself as a docked
+  target window-wide, so Buy / Sell in any panel (each its own root) prefills it rather than opening a dialog.
 - **The link bus is connected to `BroadcastChannel` once per window** (`ensureLinkBusBroadcast`, also called by the
   host). Popped-out features and other tabs stay linked.
 
@@ -336,24 +345,35 @@ chrome; there is no `PortalHeader` or `PortalAppSwitcher`.
   topic goes to the bell only. Rows expire after 15 minutes (rejects) or 30 minutes (risk). Fills are not
   published (the background flow fills continuously); the features still toast the user's own fills.
 
-## Layouts and saved state
+## Workspaces and saved state
 
-The **trader workspace** is the prebuilt default layout. It contains the watchlist (red), Orders / Fills /
-Positions tabs, the ticket (red, child module), depth (red), the ladder (green, child module) and the tape (green).
-A green instrument picker sits in the toolbar, next to an account selector.
+The host passes PortalShell `workspaces` (`apps/portal-host/src/workspaces`): the portal component registries
+(`createPortalComponentRegistries()`, i.e. `portal-module` and `vuu-table` items) and one **system workspace**,
+Trader (`/workspaces/trader`). It is a v2 `GridLayoutDocument` (`traderWorkspace.ts`) of `portal-module` items, each
+naming a palette module and its props:
 
-- Red follows the instrument grid, and green follows the picker. Every component has a link group selector.
-- **Saved state** goes through the portal's `usePersistedState`. There is one state document per user and module,
-  stored by PortalShell's default `LocalStoragePersistenceBackend`, so it is per browser. The vuu-portal server has
-  no state persistence (trader upstream issue 49).
-  - The workspace saves each View's state (`trader-workspace.views`) and each component's link group, and restores
-    them on load.
-  - A user's change of link group survives a reload; this was verified in a browser. **Reset layout** returns to
-    the defaults.
-- The arrangement (splitter sizes, moved views) is not saved. Restoring vuu-layout JSON needs the component
-  registry, which is per bundle (trader upstream issue 53). The child modules (ticket, ladder) keep their own state, which Reset
-  layout does not clear.
-- The standalone features save their link groups the same way, keyed by component id.
+| Column (7 : 5 : 5) | Top | Bottom |
+| --- | --- | --- |
+| Left | Instruments (Watchlist, red) | stack: Orders, Fills (red), Positions (green) |
+| Middle | Ticket (red) | stack: Chart, Depth, Depth chart (red) |
+| Right | Ladder (green, with an instrument picker) | Tape (green) |
+
+Red follows the instruments grid, green follows the ladder's picker. Every panel has a link group selector.
+
+- **Default and personal copy.** Trader opens as the default (nav chip "default"). The first edit (moving or
+  closing a panel, changing a link group) saves a personal copy with the same id ("Your
+  copy" in the nav and header). Selecting a stack tab is view state: it is saved but is not an edit. **Reset to default** in the header (only on a copy) restores the system document,
+  optionally saving the copy as a new workspace first.
+- **New workspace** (nav entry or +) creates an empty named workspace (renamed and deleted from its nav menu).
+  Adding panels to it is the Panels palette, which the host adopts next (Phase 6 X2).
+- **Per-panel state.** A panel's link group is saved in its item's workspace component state
+  (`trading.feature-state`, key `trading.linkGroup.<id>`), so it travels with the workspace and resets with it.
+  `defaultLinkGroup` (an item prop) sets a panel's group until the user picks one.
+- **Storage.** Workspaces and the nav pages' own state (`usePersistedState`, `trading.linkGroup.<id>`) use
+  PortalShell's default `LocalStoragePersistenceBackend`, so they are per browser; the vuu-portal server has no
+  state persistence (trader upstream issue 49).
+- **Panel access.** A panel whose module the user is not sent (e.g. Ticket and Ladder for dave) shows the
+  portal's "module not available" message.
 
 ## Troubleshooting
 
@@ -372,6 +392,26 @@ A green instrument picker sits in the toolbar, next to an account selector.
 | Toasts appear twice | Each feature must use `TradingFeatureRoot` (or `withFeatureRoot`), not its own `TradingNotificationsProvider`. |
 
 ## Verified
+
+### Workspaces (alpha.28)
+
+Verified with @vuu-ui 4.0.0-alpha.28, vuu-server 4.3.0, vuu-portal 2.3.0, module-admin 2.3.0 and headless Chrome
+(1600×1000) against `bun run start:all --build --reseed`.
+
+- **Trader system workspace:** alice opens Workspaces › Trader as the default, with panels Instruments, Ticket,
+  Ladder and Tape and the two stacks (`workspace-trader.png`).
+- **Linking:** a grid row drives the ticket, chart and depth (red); the ladder's picker drives the ladder and tape
+  (green) and leaves the ticket alone (`workspace-linked.png`). Neither is an edit, nor is selecting a stack tab.
+- **Docked ticket:** Sell in the instruments grid prefills the Ticket panel (side Sell), with no dialog.
+- **Personal copy:** switching the ticket to green and closing Tape makes "Your copy"; both survive a reload
+  (`workspace-personal-copy.png`). Reset to default (`workspace-reset-confirm.png`) restores the default, Tape and
+  red. The scrolled instruments grid keeps its rows when the copy is created, and the console stays free of
+  errors throughout.
+- **Palette-only ticket:** Order ticket is not in the nav, and its Ticket panel still loads.
+- **New workspace** opens an empty, renamable workspace (`workspace-new.png`).
+- **Roles:** dave's Ticket and Ladder panels say the module is not available, and he has no Buy / Sell
+  (`workspace-dave-view-only.png`); sam also has Oversight › Desk overview (`workspace-sam.png`).
+- `bun run e2e:persistence` and `bun run e2e:resilience` pass against the workspace.
 
 ### PortalNav (alpha.25)
 

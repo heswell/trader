@@ -7,52 +7,9 @@
 # menu location: the parent renders them, and the server lists them only
 # when the user also holds the parent's role. navOrder sorts the nav
 # (sections by their lowest entry), navBadge keys a live badge the host
-# renders, notificationTopics routes NOTIFICATIONS rows by topic.
+# renders, notificationTopics routes NOTIFICATIONS rows by topic, workspace
+# lists the module in the Panels palette (VuuModuleDescriptor.workspace).
 modules:
-  - id: 100
-    version: 1
-    parentModuleId: 0
-    name: "TradingWorkspace"
-    title: "Trader workspace"
-    description: "Prebuilt trader layout: watchlist, price / depth charts, depth, ticket, ladder, blotters, positions and tape with red / green link groups"
-    enabled: true
-    location: "/Workspaces/Trader"
-    path: "/workspaces/trader"
-    mfComponent: "TraderWorkspace"
-    mfScope: "tradingWorkspace"
-    mfUrl: "http://localhost:5110/workspace"
-    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%228%22%20height%3D%228%22%20rx%3D%221.5%22%2F%3E%3Crect%20x%3D%2213%22%20y%3D%223%22%20width%3D%228%22%20height%3D%225%22%20rx%3D%221.5%22%2F%3E%3Crect%20x%3D%2213%22%20y%3D%2210%22%20width%3D%228%22%20height%3D%2211%22%20rx%3D%221.5%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%2213%22%20width%3D%228%22%20height%3D%228%22%20rx%3D%221.5%22%2F%3E%3C%2Fsvg%3E"
-    accessRole: "trading-access"
-    navOrder: 10
-    notificationTopics: ["orders", "fills", "marketdata", "risk"]
-  - id: 101
-    version: 1
-    parentModuleId: 100
-    name: "TradingWorkspaceTicket"
-    title: "Workspace order ticket"
-    description: "Order ticket docked in the trader workspace"
-    enabled: true
-    location: ""
-    path: ""
-    mfComponent: "Ticket"
-    mfScope: "tradingWorkspaceTicket"
-    mfUrl: "http://localhost:5110/workspace-ticket"
-    navIconUrl: ""
-    accessRole: "trading-execute-access"
-  - id: 102
-    version: 1
-    parentModuleId: 100
-    name: "TradingWorkspaceLadder"
-    title: "Workspace price ladder"
-    description: "Price ladder docked in the trader workspace"
-    enabled: true
-    location: ""
-    path: ""
-    mfComponent: "Ladder"
-    mfScope: "tradingWorkspaceLadder"
-    mfUrl: "http://localhost:5110/workspace-ladder"
-    navIconUrl: ""
-    accessRole: "trading-execute-access"
   - id: 110
     version: 1
     parentModuleId: 0
@@ -69,6 +26,7 @@ modules:
     accessRole: "trading-access"
     navOrder: 100
     notificationTopics: ["marketdata"]
+    workspace: {"paletteGroup":"Trading","defaultSize":{"cols":2,"rows":1}}
   - id: 114
     version: 1
     parentModuleId: 0
@@ -86,6 +44,7 @@ modules:
     navOrder: 110
     navBadge: "orders.working"
     notificationTopics: ["orders"]
+    workspace: {"paletteGroup":"Trading","defaultSize":{"cols":2,"rows":1}}
   - id: 115
     version: 1
     parentModuleId: 0
@@ -102,6 +61,7 @@ modules:
     accessRole: "trading-access"
     navOrder: 120
     notificationTopics: ["fills"]
+    workspace: {"paletteGroup":"Trading","defaultSize":{"cols":2,"rows":1}}
   - id: 112
     version: 1
     parentModuleId: 0
@@ -118,6 +78,21 @@ modules:
     accessRole: "trading-execute-access"
     navOrder: 130
     notificationTopics: ["orders"]
+    workspace: {"paletteGroup":"Trading","defaultSize":{"cols":1,"rows":2}}
+  - id: 124
+    version: 1
+    parentModuleId: 0
+    name: "TradingTicket"
+    title: "Order ticket"
+    description: "Order entry for the linked instrument; the launch target for Buy / Sell in the same window"
+    enabled: true
+    mfComponent: "Ticket"
+    mfScope: "tradingTicket"
+    mfUrl: "http://localhost:5110/ticket"
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%224%22%20y%3D%223%22%20width%3D%2216%22%20height%3D%2218%22%20rx%3D%222%22%2F%3E%3Cpath%20d%3D%22M8%208h8M8%2012h3%22%2F%3E%3Cpath%20d%3D%22M14%2014.5l2%202%203.5-4%22%2F%3E%3C%2Fsvg%3E"
+    accessRole: "trading-execute-access"
+    notificationTopics: ["orders"]
+    workspace: {"paletteGroup":"Trading","defaultSize":{"cols":1,"rows":2}}
   - id: 111
     version: 1
     parentModuleId: 0
@@ -134,6 +109,7 @@ modules:
     accessRole: "trading-access"
     navOrder: 200
     notificationTopics: ["marketdata"]
+    workspace: {"paletteGroup":"Market","defaultSize":{"cols":1,"rows":2}}
   - id: 117
     version: 1
     parentModuleId: 0
@@ -150,6 +126,7 @@ modules:
     accessRole: "trading-access"
     navOrder: 210
     notificationTopics: ["marketdata"]
+    workspace: {"paletteGroup":"Market","defaultSize":{"cols":1,"rows":2}}
   - id: 118
     version: 1
     parentModuleId: 0
@@ -165,6 +142,7 @@ modules:
     navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M7%203v3M7%2016v5M17%204v4M17%2015v4%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%226%22%20width%3D%224%22%20height%3D%2210%22%20rx%3D%221%22%2F%3E%3Crect%20x%3D%2215%22%20y%3D%228%22%20width%3D%224%22%20height%3D%227%22%20rx%3D%221%22%2F%3E%3C%2Fsvg%3E"
     accessRole: "trading-access"
     navOrder: 220
+    workspace: {"paletteGroup":"Market","defaultSize":{"cols":2,"rows":1}}
   - id: 119
     version: 1
     parentModuleId: 0
@@ -180,6 +158,7 @@ modules:
     navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2020h18%22%2F%3E%3Cpath%20d%3D%22M3%206c3%200%205%204%206%208l1%206%22%2F%3E%3Cpath%20d%3D%22M21%206c-3%200-5%204-6%208l-1%206%22%2F%3E%3C%2Fsvg%3E"
     accessRole: "trading-access"
     navOrder: 230
+    workspace: {"paletteGroup":"Market","defaultSize":{"cols":2,"rows":1}}
   - id: 116
     version: 1
     parentModuleId: 0
@@ -197,6 +176,7 @@ modules:
     navOrder: 300
     navBadge: "positions.dayPnl"
     notificationTopics: ["positions", "risk"]
+    workspace: {"paletteGroup":"Portfolio","defaultSize":{"cols":2,"rows":1}}
   - id: 121
     version: 1
     parentModuleId: 0
@@ -212,6 +192,7 @@ modules:
     navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2020h18%22%2F%3E%3Cpath%20d%3D%22M4%2015l5-5%204%203%207-7%22%2F%3E%3Cpath%20d%3D%22M15%206h5v5%22%2F%3E%3C%2Fsvg%3E"
     accessRole: "trading-access"
     navOrder: 310
+    workspace: {"paletteGroup":"Portfolio","defaultSize":{"cols":2,"rows":1}}
   - id: 122
     version: 1
     parentModuleId: 0
@@ -228,6 +209,7 @@ modules:
     accessRole: "trading-access"
     navOrder: 320
     notificationTopics: ["risk"]
+    workspace: {"paletteGroup":"Portfolio","defaultSize":{"cols":2,"rows":1}}
   - id: 123
     version: 1
     parentModuleId: 0
@@ -243,6 +225,7 @@ modules:
     navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%227%22%20cy%3D%2216%22%20r%3D%221.3%22%2F%3E%3Ccircle%20cx%3D%2211%22%20cy%3D%2210%22%20r%3D%221.3%22%2F%3E%3Ccircle%20cx%3D%2215%22%20cy%3D%2214%22%20r%3D%221.3%22%2F%3E%3Ccircle%20cx%3D%2218%22%20cy%3D%227%22%20r%3D%221.3%22%2F%3E%3Cpath%20d%3D%22M3%204v17h18%22%2F%3E%3C%2Fsvg%3E"
     accessRole: "trading-access"
     navOrder: 330
+    workspace: {"paletteGroup":"Portfolio","defaultSize":{"cols":2,"rows":1}}
   - id: 120
     version: 1
     parentModuleId: 0

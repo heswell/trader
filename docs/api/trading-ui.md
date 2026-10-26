@@ -4,12 +4,12 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 395 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 400 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
 - **data**: [applySelectionChange](#applyselectionchange), [ChartDataSourceOptions](#chartdatasourceoptions), [connectToVuuServer](#connecttovuuserver), [DataSourceRows](#datasourcerows), [DataSourceRowsConfig](#datasourcerowsconfig), [DataSourceRowsUpdate](#datasourcerowsupdate), [DEFAULT_RPC_TIMEOUT_MS](#default_rpc_timeout_ms), [disconnectedRpcError](#disconnectedrpcerror), [disconnectFromVuuServer](#disconnectfromvuuserver), [editOrdersInSession](#editordersinsession), [openOrderEditSession](#openordereditsession), [OrderEdits](#orderedits), [OrderEditSession](#ordereditsession), [rpcTimeoutError](#rpctimeouterror), [RpcTransportFailure](#rpctransportfailure), [sendTradingRpc](#sendtradingrpc), [StaleOrderEditError](#staleorderediterror), [subscribeTradingRows](#subscribetradingrows), [toTradingRow](#totradingrow), [tradingColumnNames](#tradingcolumnnames), [TradingDataMode](#tradingdatamode), [TradingDataModeContextValue](#tradingdatamodecontextvalue), [TradingDataProvider](#tradingdataprovider), [TradingDataProviderProps](#tradingdataproviderprops), [TradingDataSourceOptions](#tradingdatasourceoptions), [TradingRow](#tradingrow), [TradingRows](#tradingrows), [TradingRowsOptions](#tradingrowsoptions), [TradingRpcError](#tradingrpcerror), [TradingRpcOptions](#tradingrpcoptions), [tradingTableSchema](#tradingtableschema), [tradingVuuTable](#tradingvuutable), [useChartDataSource](#usechartdatasource), [useDataSourceRows](#usedatasourcerows), [UseDataSourceRowsOptions](#usedatasourcerowsoptions), [useHasDataProvider](#usehasdataprovider), [useTableSelectedKeys](#usetableselectedkeys), [useTradingDataMode](#usetradingdatamode), [useTradingDataSource](#usetradingdatasource), [useTradingRows](#usetradingrows), [VuuServerConnection](#vuuserverconnection), [withRpcTimeout](#withrpctimeout)
-- **instrument-context**: [BroadcastChannelLike](#broadcastchannellike), [ComponentLinkGroup](#componentlinkgroup), [connectBroadcastChannel](#connectbroadcastchannel), [ConnectBroadcastChannelOptions](#connectbroadcastchanneloptions), [createInstrumentLinkBus](#createinstrumentlinkbus), [CreateInstrumentLinkBusOptions](#createinstrumentlinkbusoptions), [DEFAULT_LINK_CHANNEL_NAME](#default_link_channel_name), [DEFAULT_LINK_GROUP](#default_link_group), [DEFAULT_LINK_GROUPS](#default_link_groups), [getInstrumentLinkBus](#getinstrumentlinkbus), [INSTRUMENT_LINK_BUS_VERSION](#instrument_link_bus_version), [InstrumentContextProvider](#instrumentcontextprovider), [InstrumentContextProviderProps](#instrumentcontextproviderprops), [InstrumentContextValue](#instrumentcontextvalue), [InstrumentLinkBus](#instrumentlinkbus), [InstrumentLinkListener](#instrumentlinklistener), [InstrumentLinkSelection](#instrumentlinkselection), [InstrumentLinkTransport](#instrumentlinktransport), [InstrumentSelection](#instrumentselection), [isUnlinkedGroup](#isunlinkedgroup), [LINK_GROUP_PERSIST_PREFIX](#link_group_persist_prefix), [LINK_GROUP_STATE_KEY](#link_group_state_key), [linkGroupDefinition](#linkgroupdefinition), [LinkGroupDefinition](#linkgroupdefinition-1), [LinkGroupId](#linkgroupid), [LinkGroupProps](#linkgroupprops), [LinkGroupProvider](#linkgroupprovider), [sameInstrument](#sameinstrument), [sanitizeSelectedInstrument](#sanitizeselectedinstrument), [SelectedInstrument](#selectedinstrument), [UNLINKED](#unlinked), [UNLINKED_GROUP](#unlinked_group), [useComponentLinkGroup](#usecomponentlinkgroup), [UseComponentLinkGroupOptions](#usecomponentlinkgroupoptions), [useInheritedLinkGroup](#useinheritedlinkgroup), [useInstrumentLinkBus](#useinstrumentlinkbus), [useSelectedInstrument](#useselectedinstrument), [UseSelectedInstrumentOptions](#useselectedinstrumentoptions)
+- **instrument-context**: [BroadcastChannelLike](#broadcastchannellike), [ComponentLinkGroup](#componentlinkgroup), [connectBroadcastChannel](#connectbroadcastchannel), [ConnectBroadcastChannelOptions](#connectbroadcastchanneloptions), [createInstrumentLinkBus](#createinstrumentlinkbus), [CreateInstrumentLinkBusOptions](#createinstrumentlinkbusoptions), [DEFAULT_LINK_CHANNEL_NAME](#default_link_channel_name), [DEFAULT_LINK_GROUP](#default_link_group), [DEFAULT_LINK_GROUPS](#default_link_groups), [getInstrumentLinkBus](#getinstrumentlinkbus), [INSTRUMENT_LINK_BUS_VERSION](#instrument_link_bus_version), [InstrumentContextProvider](#instrumentcontextprovider), [InstrumentContextProviderProps](#instrumentcontextproviderprops), [InstrumentContextValue](#instrumentcontextvalue), [InstrumentLinkBus](#instrumentlinkbus), [InstrumentLinkListener](#instrumentlinklistener), [InstrumentLinkSelection](#instrumentlinkselection), [InstrumentLinkTransport](#instrumentlinktransport), [InstrumentSelection](#instrumentselection), [isUnlinkedGroup](#isunlinkedgroup), [LINK_GROUP_PERSIST_PREFIX](#link_group_persist_prefix), [LINK_GROUP_STATE_KEY](#link_group_state_key), [linkGroupDefinition](#linkgroupdefinition), [LinkGroupDefinition](#linkgroupdefinition-1), [LinkGroupId](#linkgroupid), [LinkGroupProps](#linkgroupprops), [LinkGroupProvider](#linkgroupprovider), [sameInstrument](#sameinstrument), [sanitizeSelectedInstrument](#sanitizeselectedinstrument), [SelectedInstrument](#selectedinstrument), [UNLINKED](#unlinked), [UNLINKED_GROUP](#unlinked_group), [useComponentLinkGroup](#usecomponentlinkgroup), [UseComponentLinkGroupOptions](#usecomponentlinkgroupoptions), [useInheritedLinkGroup](#useinheritedlinkgroup), [useInstrumentLinkBus](#useinstrumentlinkbus), [useSelectedInstrument](#useselectedinstrument), [UseSelectedInstrumentOptions](#useselectedinstrumentoptions), [useWorkspaceItemState](#useworkspaceitemstate), [WORKSPACE_ITEM_STATE_TYPE](#workspace_item_state_type), [WORKSPACE_ITEM_STATE_VERSION](#workspace_item_state_version), [workspaceItemState](#workspaceitemstate), [WorkspaceItemState](#workspaceitemstate-1)
 - **hooks**: [actionableOrders](#actionableorders), [DepthLevel](#depthlevel), [FlashDirection](#flashdirection), [FollowedInstrument](#followedinstrument), [InstrumentPrice](#instrumentprice), [LevelFlash](#levelflash), [levelKey](#levelkey), [MarketDepthState](#marketdepthstate), [OWN_ORDER_STATUSES](#own_order_statuses), [OwnOrder](#ownorder), [OwnOrdersAtPrice](#ownordersatprice), [ownOrdersKey](#ownorderskey), [OwnWorkingOrders](#ownworkingorders), [OwnWorkingOrdersOptions](#ownworkingordersoptions), [priceKey](#pricekey), [useFollowedInstrument](#usefollowedinstrument), [useInstrumentPrice](#useinstrumentprice), [useLevelFlash](#uselevelflash), [useMarketDepth](#usemarketdepth), [useOwnWorkingOrders](#useownworkingorders), [useStableCallback](#usestablecallback), [useTradedVolume](#usetradedvolume)
 - **connection**: [combineConnectionState](#combineconnectionstate), [CONNECTION_STATE_SEVERITY](#connection_state_severity), [ConnectionAttemptClosedError](#connectionattemptclosederror), [ConnectionAttemptTimeoutError](#connectionattempttimeouterror), [connectionClientWithTimeout](#connectionclientwithtimeout), [ConnectionReconnectInfo](#connectionreconnectinfo), [connectionStateStore](#connectionstatestore), [createResilientConnectionRegistry](#createresilientconnectionregistry), [DEFAULT_LOGIN_TIMEOUT_MS](#default_login_timeout_ms), [DEFAULT_RECONNECT_POLICY](#default_reconnect_policy), [observeConnectionRegistry](#observeconnectionregistry), [observeDefaultConnectionRegistry](#observedefaultconnectionregistry), [reconnectDelay](#reconnectdelay), [ReconnectPolicy](#reconnectpolicy), [reconnectSchedule](#reconnectschedule), [ReconnectState](#reconnectstate), [ReconnectSupervisor](#reconnectsupervisor), [ReconnectSupervisorOptions](#reconnectsupervisoroptions), [ReconnectTimers](#reconnecttimers), [ResilientConnectionRegistryOptions](#resilientconnectionregistryoptions), [resolveReconnectPolicy](#resolvereconnectpolicy), [StaleIndicatorOptions](#staleindicatoroptions), [StaleIndicatorState](#staleindicatorstate), [StaleReason](#stalereason), [SupervisorSnapshot](#supervisorsnapshot), [SupervisorState](#supervisorstate), [toConnectionState](#toconnectionstate), [TradingConnectionState](#tradingconnectionstate), [TradingConnectionStateOverride](#tradingconnectionstateoverride), [TradingConnectionStatus](#tradingconnectionstatus), [useStaleIndicator](#usestaleindicator), [useTradingConnectionStatus](#usetradingconnectionstatus), [useVuuConnectionStatuses](#usevuuconnectionstatuses), [withConnectTimeout](#withconnecttimeout), [worstConnectionState](#worstconnectionstate)
 - **notifications**: [DEFAULT_DEDUPE_MS](#default_dedupe_ms), [DEFAULT_NOTIFICATION_KINDS](#default_notification_kinds), [DEFAULT_RATE_LIMIT](#default_rate_limit), [describeOrderEvent](#describeorderevent), [describeSuppressed](#describesuppressed), [FillEventTracker](#filleventtracker), [FillSound](#fillsound), [NotificationGate](#notificationgate), [NotificationGateOptions](#notificationgateoptions), [orderEventFromFill](#ordereventfromfill), [orderEventFromParentOrder](#ordereventfromparentorder), [orderEventKey](#ordereventkey), [orderEventKindForStatus](#ordereventkindforstatus), [OrderEventPriceFormat](#ordereventpriceformat), [OrderEventToast](#ordereventtoast), [ParentOrderEventTracker](#parentordereventtracker), [RateLimit](#ratelimit), [rpcRejectEvent](#rpcrejectevent), [ToastStatus](#toaststatus), [TRADING_ORDER_EVENT_KINDS](#trading_order_event_kinds), [TradingNotificationKinds](#tradingnotificationkinds), [TradingNotificationsContextValue](#tradingnotificationscontextvalue), [TradingNotificationSettings](#tradingnotificationsettings), [TradingNotificationsProvider](#tradingnotificationsprovider), [TradingNotificationsProviderProps](#tradingnotificationsproviderprops), [TradingNotificationToast](#tradingnotificationtoast), [TradingOrderEvent](#tradingorderevent), [TradingOrderEventKind](#tradingordereventkind), [useTradingNotifications](#usetradingnotifications)
@@ -641,11 +641,13 @@ children of a component). Components with their own `linkGroup` win.
 
 #### useComponentLinkGroup
 
-*hook* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L58)
+*hook* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L61)
 
 The link group of one component instance. The user's choice is saved
-with the layout: in the enclosing vuu-layout View's state (restored as the
-`linkGroup` prop) or, in a vuu-portal remote module, its persisted state.
+with the layout: in a portal workspace item, the item's workspace
+component state; in the enclosing vuu-layout View's state (restored as the
+`linkGroup` prop); or, in a vuu-portal remote module page, its persisted
+state.
 
 ```ts
 useComponentLinkGroup({ defaultLinkGroup, linkGroup: linkGroupProp, onLinkGroupChange, persistKey, }: UseComponentLinkGroupOptions = {}): ComponentLinkGroup
@@ -682,6 +684,19 @@ provider (window-wide bus, default group).
 
 ```ts
 useSelectedInstrument({ linkGroup: linkGroupOption, }: UseSelectedInstrumentOptions = {}): InstrumentContextValue
+```
+
+#### useWorkspaceItemState
+
+*hook* · [instrument-context/workspaceItemState.ts](../../packages/trading-ui/src/instrument-context/workspaceItemState.ts#L52)
+
+State of the portal workspace item this feature renders in: saved with the
+workspace, so a personal copy of a system workspace keeps it, Reset to
+default discards it, and removing the item purges it. Undefined outside a
+workspace item (e.g. on the module's own page).
+
+```ts
+useWorkspaceItemState(): WorkspaceItemState | undefined
 ```
 
 ### Functions (instrument-context)
@@ -770,6 +785,16 @@ Undefined if there is no usable ric (missing, not a string, blank).
 sanitizeSelectedInstrument(value: unknown): SelectedInstrument | undefined
 ```
 
+#### workspaceItemState
+
+*function* · [instrument-context/workspaceItemState.ts](../../packages/trading-ui/src/instrument-context/workspaceItemState.ts#L30)
+
+Read / write one key of this item's state in a workspace store.
+
+```ts
+workspaceItemState(store: WorkspacePersistentStateStore, instanceId: string): WorkspaceItemState
+```
+
 ### Constants (instrument-context)
 
 #### DEFAULT_LINK_CHANNEL_NAME
@@ -814,7 +839,7 @@ const INSTRUMENT_LINK_BUS_VERSION: 1
 
 #### LINK_GROUP_PERSIST_PREFIX
 
-*const* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L27)
+*const* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L28)
 
 Prefix of the key in portal persisted state (`trading.linkGroup.<key>`).
 
@@ -824,7 +849,7 @@ const LINK_GROUP_PERSIST_PREFIX: "trading.linkGroup."
 
 #### LINK_GROUP_STATE_KEY
 
-*const* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L25)
+*const* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L26)
 
 Key the group is saved under in the vuu-layout View state.
 
@@ -850,6 +875,25 @@ const UNLINKED: LinkGroupId
 const UNLINKED_GROUP: LinkGroupDefinition
 ```
 
+#### WORKSPACE_ITEM_STATE_TYPE
+
+*const* · [instrument-context/workspaceItemState.ts](../../packages/trading-ui/src/instrument-context/workspaceItemState.ts#L13)
+
+Component type of the state a trading feature keeps for its workspace item.
+The value is a map of keys (e.g. `trading.linkGroup.<id>`) to strings.
+
+```ts
+const WORKSPACE_ITEM_STATE_TYPE: "trading.feature-state"
+```
+
+#### WORKSPACE_ITEM_STATE_VERSION
+
+*const* · [instrument-context/workspaceItemState.ts](../../packages/trading-ui/src/instrument-context/workspaceItemState.ts#L14)
+
+```ts
+const WORKSPACE_ITEM_STATE_VERSION: 1
+```
+
 ### Interfaces (instrument-context)
 
 #### BroadcastChannelLike
@@ -867,7 +911,7 @@ The part of BroadcastChannel we use (lets tests inject a fake).
 
 #### ComponentLinkGroup
 
-*interface* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L29)
+*interface* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L30)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -969,7 +1013,7 @@ The current selection of one link group.
 
 #### LinkGroupProps
 
-*interface* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L8)
+*interface* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L9)
 
 Props every linkable component accepts.
 
@@ -1001,7 +1045,7 @@ can format prices / validate quantities without another lookup.
 
 #### UseComponentLinkGroupOptions
 
-*interface* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L40)
+*interface* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L41)
 
 Extends `Pick< LinkGroupProps, "linkGroup" \| "defaultLinkGroup" \| "onLinkGroupChange" >`.
 
@@ -1019,6 +1063,15 @@ Extends `Pick< LinkGroupProps, "linkGroup" \| "defaultLinkGroup" \| "onLinkGroup
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
 | `linkGroup?` | `LinkGroupId` |  | Group to read / publish. Default: the enclosing LinkGroupProvider's or InstrumentContextProvider's group, else DEFAULT_LINK_GROUP. `unlinked` gives this hook call its own private selection. |
+
+#### WorkspaceItemState
+
+*interface* · [instrument-context/workspaceItemState.ts](../../packages/trading-ui/src/instrument-context/workspaceItemState.ts#L16)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `load` | `(key: string) => unknown` |  |  |
+| `save` | `(key: string, value: string) => void` |  |  |
 
 ### Types (instrument-context)
 
@@ -3363,7 +3416,7 @@ Also accepts the standard HTML attributes.
 
 #### OrderTicketLauncherProvider
 
-*component* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L62)
+*component* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L78)
 
 Lets any component open the order ticket with a prefill
 (`useOrderTicketLauncher().openOrderTicket({ ric, side, price, quantity })`)
@@ -3380,7 +3433,7 @@ Props: `OrderTicketLauncherProviderProps`
 
 #### OrderTicketPanel
 
-*component* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L152)
+*component* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L168)
 
 The docked order ticket: a panel-variant OrderTicket that also receives
 `openOrderTicket` prefills while mounted (instead of a dialog opening).
@@ -3426,7 +3479,7 @@ useOrderTicket({ prefill, followSelection = true, linkGroup, publishSelection = 
 
 #### useOrderTicketLauncher
 
-*hook* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L118)
+*hook* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L134)
 
 Open the order ticket from anywhere (see OrderTicketLauncherProvider).
 
@@ -3436,7 +3489,7 @@ useOrderTicketLauncher(): OrderTicketLauncher
 
 #### useOrderTicketTarget
 
-*hook* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L132)
+*hook* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L148)
 
 Receive launcher prefills in a custom docked ticket; returns the latest
 prefill (a new object per openOrderTicket call).
@@ -3759,23 +3812,23 @@ it loads.
 
 #### OrderTicketLauncher
 
-*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L21)
+*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L20)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
-| `openOrderTicket` | `(prefill?: OrderTicketPrefill) => void` |  | Open a ticket with these values: a docked OrderTicketPanel if one is mounted (the most recently mounted), otherwise a dialog. |
+| `openOrderTicket` | `(prefill?: OrderTicketPrefill) => void` |  | Open a ticket with these values: a docked OrderTicketPanel if one is mounted anywhere in the window (the most recently mounted), otherwise a dialog. |
 | `closeOrderTicket` | `() => void` |  |  |
 | `available` | `boolean` |  | False outside an OrderTicketLauncherProvider (openOrderTicket is a no-op). |
 
 #### OrderTicketLauncherProviderProps
 
-*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L46)
+*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L62)
 
 Props of [`OrderTicketLauncherProvider`](#orderticketlauncherprovider).
 
 #### OrderTicketPanelProps
 
-*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L142)
+*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L158)
 
 Props of [`OrderTicketPanel`](#orderticketpanel).
 
@@ -3908,7 +3961,7 @@ type OrderTicketSubmission = | { state: "idle" }
 
 #### OrderTicketTarget
 
-*type* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L19)
+*type* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L18)
 
 ```ts
 type OrderTicketTarget = (prefill: OrderTicketPrefill) => void

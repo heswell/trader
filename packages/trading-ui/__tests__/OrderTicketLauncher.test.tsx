@@ -89,6 +89,26 @@ describe("OrderTicketLauncher", () => {
       form.querySelector('[data-field="ric"]')?.textContent ?? "",
     ).toContain("VOD.L");
   });
+
+  test("routes prefills to a panel docked under a sibling provider", () => {
+    render(
+      <TradingDataProvider localServer={localServer} mode="local">
+        <OrderTicketLauncherProvider>
+          <Grab />
+        </OrderTicketLauncherProvider>
+        <OrderTicketLauncherProvider>
+          <OrderTicketPanel
+            followSelection={false}
+            showInstrumentPicker={false}
+          />
+        </OrderTicketLauncherProvider>
+      </TradingDataProvider>,
+    );
+    const form = screen.getByRole("form");
+    act(() => launcher.openOrderTicket({ ric: "VOD.L", side: Side.Sell }));
+    expect(form.getAttribute("data-side")).toBe(Side.Sell);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
 });
 
 describe("ConnectionBanner / StaleIndicator", () => {
