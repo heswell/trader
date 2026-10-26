@@ -11,7 +11,7 @@ import {
 /** Click-to-trade price ladder (module gated by trading-execute). */
 const Ladder = ({
   defaultLinkGroup = "green",
-  showInstrumentPicker = false,
+  showInstrumentPicker = true,
 }: PickerFeatureProps) => {
   const { account, toolbar } = useAccountToolbar(
     showInstrumentPicker ? (

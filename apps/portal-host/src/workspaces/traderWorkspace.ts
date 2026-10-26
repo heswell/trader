@@ -33,8 +33,10 @@ const right = { start: 3, span: 1 };
 /*
  * Link groups: red follows the instruments grid (orders, fills, ticket and
  * the market panels), green follows the ladder's picker (ladder, tape,
- * positions). Each module's own default group is the one it has here, so
- * only the ladder needs props (its picker).
+ * positions). Each module's own default group is the one it has here, as
+ * for a panel added from the Panels palette. The Ladder and Tape show an
+ * instrument picker by default; here only the ladder's drives green, so the
+ * tape turns its picker off.
  */
 const PANELS: readonly Panel[] = [
   {
@@ -105,6 +107,7 @@ const PANELS: readonly Panel[] = [
     id: "trader-tape",
     module: "TradingTape",
     title: "Tape",
+    props: { showInstrumentPicker: false },
     column: right,
     row: { start: 4, span: 1 },
   },

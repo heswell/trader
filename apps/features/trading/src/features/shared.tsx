@@ -81,7 +81,8 @@ export interface LinkedFeatureProps {
 export interface PickerFeatureProps extends LinkedFeatureProps {
   /**
    * Show an InstrumentPicker (with its own link group selector, initially
-   * the feature's group) that publishes to the group.
+   * the feature's group) that publishes to the group. Default `true`, so a
+   * panel added from the Panels palette (no props) drives its own group.
    */
   showInstrumentPicker?: boolean;
 }

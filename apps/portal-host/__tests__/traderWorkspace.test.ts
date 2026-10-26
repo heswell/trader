@@ -59,5 +59,11 @@ describe("Trader system workspace", () => {
       moduleId: "TradingLadder",
       props: { showInstrumentPicker: true },
     });
+    // The Tape follows the ladder's picker rather than showing its own.
+    const tape = layout.components.find((c) => c.id === "trader-tape");
+    expect(tape?.settings).toEqual({
+      moduleId: "TradingTape",
+      props: { showInstrumentPicker: false },
+    });
   });
 });

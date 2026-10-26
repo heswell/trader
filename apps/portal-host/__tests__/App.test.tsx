@@ -164,6 +164,51 @@ describe("portal host", () => {
     ]);
   });
 
+  test("Add panel opens the Panels palette, grouped by paletteGroup", async () => {
+    const nav = await renderApp();
+    await act(async () => entry(nav, "Trader")?.click());
+    await wait(300);
+    const addPanel = [
+      ...document.querySelectorAll<HTMLButtonElement>(
+        ".vuuPortalWorkspaceHeader button",
+      ),
+    ].find((button) => button.textContent?.includes("Add panel"));
+    if (!addPanel) throw Error("no Add panel button");
+    await act(async () => addPanel.click());
+    await wait(300);
+    const palette = document.querySelector(".vuuPanelsPalette");
+    if (!palette) throw Error("Panels palette not open");
+    const groups = [...palette.querySelectorAll(".vuuPanelsPalette-group")].map(
+      (group) => ({
+        label: group.querySelector(".vuuPanelsPalette-groupHeader")
+          ?.textContent,
+        rows: [...group.querySelectorAll(".vuuPanelsPalette-label")].map(
+          (label) => label.textContent,
+        ),
+      }),
+    );
+    expect(groups).toEqual([
+      {
+        label: "Trading",
+        rows: [
+          "Watchlist",
+          "Orders",
+          "Executions",
+          "Price ladder",
+          "Order ticket",
+        ],
+      },
+      {
+        label: "Market",
+        rows: ["Market depth", "Time & sales", "Chart", "Depth chart"],
+      },
+      {
+        label: "Portfolio",
+        rows: ["Positions", "P&L", "Exposure", "Execution quality"],
+      },
+    ]);
+  });
+
   test("badges show working orders and P&L, and tick", async () => {
     const nav = await renderApp();
     const count = () =>
