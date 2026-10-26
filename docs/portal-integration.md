@@ -194,8 +194,8 @@ standard token exchange requires.
 
 | User (password `password`) | Server roles (`trader-trading-server`) | Sees |
 | --- | --- | --- |
-| alice, bob, carol, erin | trading-view, trading-execute | Every entry except Oversight (the Trader workspace with its ticket and ladder panels; Price ladder; Order ticket) |
-| dave | trading-view | As alice, but no Price ladder or Order ticket; the workspace's Ticket and Ladder panels say the module is not available, and the order blotter is read-only. |
+| alice, bob, carol, erin | trading-view, trading-execute | Every entry except Oversight (the Trader workspace with its ticket and ladder panels; Price ladder) |
+| dave | trading-view | As alice, but no Price ladder; the workspace's Ticket and Ladder panels say the module is not available, and the order blotter is read-only. |
 | sam | trading-view, trading-supervisor | As dave, plus Oversight › Desk overview (all accounts) |
 | admin | trading-view, trading-supervisor (plus `vuu-portal` module-admin-access, vuu-table-viewer-access) | As sam, plus portal module admin |
 
@@ -223,7 +223,7 @@ renders, and `notificationTopics` are the trading server's notification topics t
 | 114 | Trading › Orders | `/trading/orders` | TradingOrders | trading-view | 110 | `orders.working`; orders | Trading, 2×1 | OrderBlotter (read-only without trading-execute) |
 | 115 | Trading › Executions | `/trading/executions` | TradingFills | trading-view | 120 | fills | Trading, 2×1 | FillsBlotter |
 | 112 | Trading › Price ladder | `/trading/price-ladder` | TradingLadder | trading-execute | 130 | orders | Trading, 1×2 | PriceLadder (click-to-trade) |
-| 124 | Trading › Order ticket | `/trading/ticket` | TradingTicket | trading-execute | 140 | orders | Trading, 1×2 | OrderTicket (`showInstrumentPicker`) |
+| 124 | — (palette only) | — | TradingTicket | trading-execute | — | orders | Trading, 1×2 | OrderTicket (`showInstrumentPicker`) |
 | 111 | Market › Market depth | `/market/depth` | TradingDepth | trading-view | 200 | marketdata | Market, 1×2 | MarketDepth (own orders for the chosen account) |
 | 117 | Market › Time & sales | `/market/time-and-sales` | TradingTape | trading-view | 210 | marketdata | Market, 1×2 | TradeTape |
 | 118 | Market › Chart | `/market/chart` | TradingChart | trading-view | 220 | | Market, 2×1 | PriceChart |
@@ -247,10 +247,10 @@ it).
 - **Excluded: Desk overview (120).** It is a page-sized, desk-wide composite (orders with child orders, and
   positions, over every account) that follows no link group. It gains nothing next to instrument panels and is
   cramped as one, so it stays a nav page.
-- **Order ticket (124) is a nav entry,** though only the workspace needed it: module-admin requires a nav location
-  and route for every top-level module (trader upstream issue 102). It is also the place to trade a typed ric
-  (it shows an instrument picker). Buy / Sell anywhere still opens the ticket as a dialog unless a ticket panel
-  is open (see below).
+- **Order ticket (124) is palette-only:** it has `workspace` metadata but no nav location or route, so PortalNav
+  and the routes skip it while the Panels palette lists it (module-admin / vuu-portal 2.3.0, @vuu-ui alpha.28).
+  `modulesYaml` omits `location` / `path` when a feature has none. Buy / Sell anywhere opens the ticket as a
+  dialog unless a ticket panel is open (see below).
 
 ### Adding a feature
 
@@ -361,8 +361,8 @@ naming a palette module and its props:
 Red follows the instruments grid, green follows the ladder's picker. Every panel has a link group selector.
 
 - **Default and personal copy.** Trader opens as the default (nav chip "default"). The first edit (moving or
-  closing a panel, changing a link group, selecting a stack tab) saves a personal copy with the same id ("Your
-  copy" in the nav and header). **Reset to default** in the header (only on a copy) restores the system document,
+  closing a panel, changing a link group) saves a personal copy with the same id ("Your
+  copy" in the nav and header). Selecting a stack tab is view state: it is saved but is not an edit. **Reset to default** in the header (only on a copy) restores the system document,
   optionally saving the copy as a new workspace first.
 - **New workspace** (nav entry or +) creates an empty named workspace (renamed and deleted from its nav menu).
   Adding panels to it is the Panels palette, which the host adopts next (Phase 6 X2).
@@ -374,8 +374,6 @@ Red follows the instruments grid, green follows the ladder's picker. Every panel
   state persistence (trader upstream issue 49).
 - **Panel access.** A panel whose module the user is not sent (e.g. Ticket and Ladder for dave) shows the
   portal's "module not available" message.
-- **Grid sizing.** `App.css` lets the grid and its items shrink below their content, so the tracks keep their
-  ratios within the page and a tall panel (the ticket) scrolls (trader upstream issue 101).
 
 ## Troubleshooting
 
@@ -395,19 +393,21 @@ Red follows the instruments grid, green follows the ladder's picker. Every panel
 
 ## Verified
 
-### Workspaces (alpha.27)
+### Workspaces (alpha.28)
 
-Verified with @vuu-ui 4.0.0-alpha.27, vuu-server 4.3.0, vuu-portal 2.2.5, module-admin 2.2.0 and headless Chrome
+Verified with @vuu-ui 4.0.0-alpha.28, vuu-server 4.3.0, vuu-portal 2.3.0, module-admin 2.3.0 and headless Chrome
 (1600×1000) against `bun run start:all --build --reseed`.
 
 - **Trader system workspace:** alice opens Workspaces › Trader as the default, with panels Instruments, Ticket,
   Ladder and Tape and the two stacks (`workspace-trader.png`).
 - **Linking:** a grid row drives the ticket, chart and depth (red); the ladder's picker drives the ladder and tape
-  (green) and leaves the ticket alone (`workspace-linked.png`). Neither is an edit.
+  (green) and leaves the ticket alone (`workspace-linked.png`). Neither is an edit, nor is selecting a stack tab.
 - **Docked ticket:** Sell in the instruments grid prefills the Ticket panel (side Sell), with no dialog.
 - **Personal copy:** switching the ticket to green and closing Tape makes "Your copy"; both survive a reload
   (`workspace-personal-copy.png`). Reset to default (`workspace-reset-confirm.png`) restores the default, Tape and
-  red.
+  red. The scrolled instruments grid keeps its rows when the copy is created, and the console stays free of
+  errors throughout.
+- **Palette-only ticket:** Order ticket is not in the nav, and its Ticket panel still loads.
 - **New workspace** opens an empty, renamable workspace (`workspace-new.png`).
 - **Roles:** dave's Ticket and Ladder panels say the module is not available, and he has no Buy / Sell
   (`workspace-dave-view-only.png`); sam also has Oversight › Desk overview (`workspace-sam.png`).

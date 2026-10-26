@@ -8,7 +8,7 @@
         "@biomejs/biome": "2.2.4",
         "@happy-dom/global-registrator": "20.14.5",
         "@heswell/trading-persistence": "workspace:*",
-        "@heswell/vuu-portal": "^2.2.5",
+        "@heswell/vuu-portal": "^2.3.0",
         "@heswell/vuu-server": "^4.3.0",
         "@heswell/vuu-table": "^1.0.3",
         "@types/bun": "1.3.3",
@@ -24,11 +24,11 @@
       "dependencies": {
         "@heswell/trading-ui": "workspace:*",
         "@salt-ds/core": "1.67.0",
-        "@vuu-ui/core": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-data-remote": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-layout": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-notifications": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-theme": "4.0.0-alpha.27",
+        "@vuu-ui/core": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-data-remote": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-layout": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-notifications": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-theme": "4.0.0-alpha.28",
         "react-router-dom": "7.18.3",
       },
       "devDependencies": {
@@ -46,12 +46,12 @@
       "dependencies": {
         "@heswell/exchange-sim": "workspace:*",
         "@heswell/oms": "workspace:*",
-        "@heswell/vuu-portal": "^2.2.5",
+        "@heswell/vuu-portal": "^2.3.0",
         "@heswell/vuu-server": "^4.3.0",
         "@heswell/vuu-table": "^1.0.3",
-        "@vuu-ui/vuu-data-types": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-utils": "4.0.0-alpha.27",
+        "@vuu-ui/vuu-data-types": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-utils": "4.0.0-alpha.28",
       },
     },
     "apps/portal-host": {
@@ -61,13 +61,13 @@
         "@heswell/trading-ui": "workspace:*",
         "@module-federation/enhanced": "2.8.0",
         "@salt-ds/core": "1.67.0",
-        "@vuu-ui/core": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-data-remote": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-icons": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-layout": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-notifications": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-theme": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-utils": "4.0.0-alpha.27",
+        "@vuu-ui/core": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-data-remote": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-icons": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-layout": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-notifications": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-theme": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-utils": "4.0.0-alpha.28",
         "clsx": "^2.1.1",
         "react": "^19.2.3",
         "react-dom": "^19.2.3",
@@ -77,7 +77,7 @@
         "@heswell/trading-test-data": "workspace:*",
         "@testing-library/dom": "10.4.1",
         "@testing-library/react": "16.3.0",
-        "@vuu-ui/grid-layout": "4.0.0-alpha.27",
+        "@vuu-ui/grid-layout": "4.0.0-alpha.28",
         "@vuu-ui/portal-build": "0.3.0",
       },
     },
@@ -89,14 +89,14 @@
         "@heswell/trading-test-data": "workspace:*",
         "@heswell/trading-ui": "workspace:*",
         "@salt-ds/core": "1.67.0",
-        "@vuu-ui/core": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-data-types": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-icons": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-layout": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-table": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-table-extras": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-table-types": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-theme": "4.0.0-alpha.27",
+        "@vuu-ui/core": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-data-types": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-icons": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-layout": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-table": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-table-extras": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-table-types": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-theme": "4.0.0-alpha.28",
         "clsx": "^2.1.1",
         "react": "^19.2.3",
         "react-dom": "^19.2.3",
@@ -114,9 +114,9 @@
         "@heswell/trading-persistence": "workspace:*",
         "@heswell/trading-schemas": "workspace:*",
         "@heswell/vuu-server": "^4.3.0",
-        "@vuu-ui/vuu-data-types": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-utils": "4.0.0-alpha.27",
+        "@vuu-ui/vuu-data-types": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-utils": "4.0.0-alpha.28",
       },
     },
     "packages/oms": {
@@ -127,9 +127,9 @@
         "@heswell/trading-persistence": "workspace:*",
         "@heswell/trading-schemas": "workspace:*",
         "@heswell/vuu-server": "^4.3.0",
-        "@vuu-ui/vuu-data-types": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-utils": "4.0.0-alpha.27",
+        "@vuu-ui/vuu-data-types": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-utils": "4.0.0-alpha.28",
       },
       "devDependencies": {
         "@heswell/hft-limit-order-book": "2.0.0",
@@ -140,7 +140,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@heswell/oms": "workspace:*",
-        "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.27",
+        "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.28",
       },
       "devDependencies": {
         "playwright": "^1.64.1",
@@ -155,9 +155,9 @@
       "version": "0.1.0",
       "dependencies": {
         "@heswell/vuu-server": "^4.3.0",
-        "@vuu-ui/vuu-data-types": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-utils": "4.0.0-alpha.27",
+        "@vuu-ui/vuu-data-types": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-utils": "4.0.0-alpha.28",
       },
     },
     "packages/trading-test-data": {
@@ -168,12 +168,12 @@
         "@heswell/oms": "workspace:*",
         "@heswell/trading-schemas": "workspace:*",
         "@heswell/vuu-data-engine-local": "^4.2.4",
-        "@vuu-ui/core": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-data-types": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-filter-types": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-table-types": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-utils": "4.0.0-alpha.27",
+        "@vuu-ui/core": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-data-types": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-filter-types": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-table-types": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-utils": "4.0.0-alpha.28",
       },
       "devDependencies": {
         "@heswell/hft-limit-order-book": "2.0.0",
@@ -191,18 +191,18 @@
         "@salt-ds/core": "1.67.0",
         "@salt-ds/styles": "0.2.1",
         "@salt-ds/window": "0.1.1",
-        "@vuu-ui/core": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-chart": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-context-menu": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-data-remote": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-data-types": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-layout": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-notifications": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-table": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-table-extras": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-table-types": "4.0.0-alpha.27",
-        "@vuu-ui/vuu-utils": "4.0.0-alpha.27",
+        "@vuu-ui/core": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-chart": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-context-menu": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-data-remote": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-data-types": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-layout": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-notifications": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-table": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-table-extras": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-table-types": "4.0.0-alpha.28",
+        "@vuu-ui/vuu-utils": "4.0.0-alpha.28",
       },
       "devDependencies": {
         "@heswell/trading-test-data": "workspace:*",
@@ -276,7 +276,7 @@
 
     "@heswell/hft-limit-order-book": ["@heswell/hft-limit-order-book@2.0.0", "", { "dependencies": { "denque": "2.1.0", "functional-red-black-tree": "1.0.1" } }, "sha512-eKsZWLZpC4Byv3xCnPo4DnZiilo0CFwEK4UTP1ZrdBkSe3Xcdc+ByOVNfY94kMWPfVYB8mlqy2xZ6mgDVrqYmQ=="],
 
-    "@heswell/module-admin": ["@heswell/module-admin@2.2.0", "", {}, "sha512-V27WOHE1G/x0GdQsmGDCEqVIQ3TLUM/zVH6oiQMDvCAfQvIsPvq1n33Ug/c8SxhdrRSQg10oJW1IAVQl1MZyHg=="],
+    "@heswell/module-admin": ["@heswell/module-admin@2.3.0", "", {}, "sha512-b5bmUmfoZuA5vKSOOQl4EJsOBb1AINHLtmoFJgo6+9J5UgTBHY/yvpYLIxC5jUmvL5OVQQ/pE6DdeZpchhT1SA=="],
 
     "@heswell/oms": ["@heswell/oms@workspace:packages/oms"],
 
@@ -304,7 +304,7 @@
 
     "@heswell/vuu-data-engine-local": ["@heswell/vuu-data-engine-local@4.2.4", "", { "dependencies": { "@heswell/module-admin": "^2.2.0", "@heswell/user-admin": "^1.0.2", "@heswell/vuu-table": "^1.0.3", "@heswell/vuu-viewport": "^1.1.6" }, "peerDependencies": { "@vuu-ui/core": "^4.0.0-alpha.26", "@vuu-ui/vuu-data-types": "^4.0.0-alpha.26", "@vuu-ui/vuu-filter-parser": "^4.0.0-alpha.26", "@vuu-ui/vuu-filter-types": "^4.0.0-alpha.26", "@vuu-ui/vuu-protocol-types": "^4.0.0-alpha.26", "@vuu-ui/vuu-table-types": "^4.0.0-alpha.26", "@vuu-ui/vuu-utils": "^4.0.0-alpha.26", "react": "^19.2.3" } }, "sha512-Cp7Up1UL7LOmkH8iriSVEDQDEZZ+lJ3uPcW0tZXEFRu2wwkEyDFVKkorN+SJ7FX+t+hRjVnQwYGpoJuzjkkEHA=="],
 
-    "@heswell/vuu-portal": ["@heswell/vuu-portal@2.2.5", "", { "dependencies": { "@heswell/module-admin": "^2.2.0" }, "peerDependencies": { "@heswell/vuu-server": "^3.1.0 || ^4.0.0", "@heswell/vuu-table": "^1.0.1", "@vuu-ui/vuu-protocol-types": "^4.0.0-alpha.26" }, "bin": { "vuu-portal": "bin.js" } }, "sha512-V56Nhm4L0D5hSfdq60CzWcgcpHuMg2DmgopDPf5/8cCP1x42T+i3/PGnmFbFXm3nOaxnnNsiUdEpYJJrhIZ4bQ=="],
+    "@heswell/vuu-portal": ["@heswell/vuu-portal@2.3.0", "", { "dependencies": { "@heswell/module-admin": "^2.3.0" }, "peerDependencies": { "@heswell/vuu-server": "^3.1.0 || ^4.0.0", "@heswell/vuu-table": "^1.0.1", "@vuu-ui/vuu-protocol-types": "^4.0.0-alpha.26" }, "bin": { "vuu-portal": "bin.js" } }, "sha512-sz9C1t1hYPp4Xp1QhfzAESc7q/a5ycTYI431tQW33iNbrEecYfnqL7ji6je91PmysbTDHH9nA2PFSzVmYN98qw=="],
 
     "@heswell/vuu-server": ["@heswell/vuu-server@4.3.0", "", { "dependencies": { "@heswell/service-utils": "^1.2.2", "@heswell/vuu-table": "^1.0.3", "@heswell/vuu-viewport": "^1.1.6" }, "peerDependencies": { "@types/bun": ">=1.3.0", "@vuu-ui/vuu-data-types": "^4.0.0-alpha.25", "@vuu-ui/vuu-protocol-types": "^4.0.0-alpha.25", "@vuu-ui/vuu-utils": "^4.0.0-alpha.25" }, "optionalPeers": ["@types/bun"] }, "sha512-ubmW3I5WkZfr/U3QQglAzah3pXKbiE0xRQDc5dOoNLrln8wRAiw31XNufXncCYwTmIjojSfMhSFhyS5qzGGunw=="],
 
@@ -474,59 +474,59 @@
 
     "@types/ws": ["@types/ws@8.18.2", "", { "dependencies": { "@types/node": "*" } }, "sha512-67MQl+fpWKVTT1NYdnmo3U4sc/xPo/zQBncVnI74qmQa0z/b+1g6iYqNmGCPbxO+zz2aklb08a0oHfegiVd0/w=="],
 
-    "@vuu-ui/core": ["@vuu-ui/core@4.0.0-alpha.27", "", { "dependencies": { "@module-federation/enhanced": "2.8.0", "@salt-ds/core": "1.72.0", "@salt-ds/icons": "1.18.3", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/grid-layout": "4.0.0-alpha.27", "@vuu-ui/vuu-context-menu": "4.0.0-alpha.27", "@vuu-ui/vuu-data-react": "4.0.0-alpha.27", "@vuu-ui/vuu-data-remote": "4.0.0-alpha.27", "@vuu-ui/vuu-data-types": "4.0.0-alpha.27", "@vuu-ui/vuu-icons": "4.0.0-alpha.27", "@vuu-ui/vuu-notifications": "4.0.0-alpha.27", "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.27", "@vuu-ui/vuu-table": "4.0.0-alpha.27", "@vuu-ui/vuu-table-types": "4.0.0-alpha.27", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.27", "@vuu-ui/vuu-utils": "4.0.0-alpha.27", "keycloak-js": "26.2.4", "react-router-dom": "7.18.3" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-421PUrVMiyUH5aj5oVzZ4p2bmOoWgmcacyCIIzr1H9f471jKwXd/ffClZn8k8iDtSw3vZ3/gOXGfO6ja88EtuQ=="],
+    "@vuu-ui/core": ["@vuu-ui/core@4.0.0-alpha.28", "", { "dependencies": { "@module-federation/enhanced": "2.8.0", "@salt-ds/core": "1.72.0", "@salt-ds/icons": "1.18.3", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/grid-layout": "4.0.0-alpha.28", "@vuu-ui/vuu-context-menu": "4.0.0-alpha.28", "@vuu-ui/vuu-data-react": "4.0.0-alpha.28", "@vuu-ui/vuu-data-remote": "4.0.0-alpha.28", "@vuu-ui/vuu-data-types": "4.0.0-alpha.28", "@vuu-ui/vuu-icons": "4.0.0-alpha.28", "@vuu-ui/vuu-notifications": "4.0.0-alpha.28", "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.28", "@vuu-ui/vuu-table": "4.0.0-alpha.28", "@vuu-ui/vuu-table-types": "4.0.0-alpha.28", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.28", "@vuu-ui/vuu-utils": "4.0.0-alpha.28", "keycloak-js": "26.2.4", "react-router-dom": "7.18.3" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-JBAYBhu3k9ACZbFur5/Jca5lz7YkRSO8+9GiMmrS56LtwveZKPE6boG9T7trqIsABc3s0Ows5V34rh/gIKwY3Q=="],
 
-    "@vuu-ui/grid-layout": ["@vuu-ui/grid-layout@4.0.0-alpha.27", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-utils": "4.0.0-alpha.27" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-6fQtL+cuRMRM/mKoZ/VnkknQeXtQJSCiPYdX8nxhVtYxU+N326yngHT/ivALZ2IlJRYV/SuSc+jjd9EqExZpTA=="],
+    "@vuu-ui/grid-layout": ["@vuu-ui/grid-layout@4.0.0-alpha.28", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-utils": "4.0.0-alpha.28" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-Q9fqdhEyUKoy2IBfI5YbiTi4TFO+Qh9QyMNvtoNK7D8OTCl3avRKECtt5uzlrU2VKrEOc3QU0ru2DVf9hmCD0Q=="],
 
     "@vuu-ui/portal-build": ["@vuu-ui/portal-build@0.3.0", "", { "dependencies": { "@module-federation/enhanced": "2.8.0", "@rsbuild/core": "^2.1.3", "@rsbuild/plugin-react": "^2.0.0", "@rsdoctor/rspack-plugin": "^1.6.1", "serve": "^14.2.4" }, "bin": { "portal-build": "dist/cli.js", "portal-serve": "dist/serve-cli.js" } }, "sha512-vJXN2TT+B4bygdLrRS9DBPNpOwFWYvchfsRfj2xj1LYq1Aj3mC5qXtvYPjJD4ZVFV60F5uDuJNtP83s4aItRYw=="],
 
-    "@vuu-ui/vuu-chart": ["@vuu-ui/vuu-chart@4.0.0-alpha.27", "", { "dependencies": { "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-context-menu": "4.0.0-alpha.27", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.27", "@vuu-ui/vuu-utils": "4.0.0-alpha.27", "clsx": "^2.0.0", "echarts": "6.1.0" }, "peerDependencies": { "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-2Np7uh7C+yZHHB1FqisH2pudikkZWiFq6VW/6Tbu3lE8co1mDpcbJBqo1QXVdT6Bt1iCEkkPvSfqAu37LAlebg=="],
+    "@vuu-ui/vuu-chart": ["@vuu-ui/vuu-chart@4.0.0-alpha.28", "", { "dependencies": { "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-context-menu": "4.0.0-alpha.28", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.28", "@vuu-ui/vuu-utils": "4.0.0-alpha.28", "clsx": "^2.0.0", "echarts": "6.1.0" }, "peerDependencies": { "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-hdSJDxrF9oczWmZC73eFDVHRZM5vULG9WgSIOyvhmZHeotPG4xPirhHUIEdKPighhEue0eVu235Gzegjr1zorw=="],
 
-    "@vuu-ui/vuu-codemirror": ["@vuu-ui/vuu-codemirror@4.0.0-alpha.27", "", { "dependencies": { "@codemirror/autocomplete": "^6.4.2", "@codemirror/commands": "^6.2.1", "@codemirror/language": "^6.6.0", "@codemirror/state": "^6.2.0", "@codemirror/view": "^6.9.3", "@lezer/common": "1.2.3", "@lezer/highlight": "^1.1.3", "@vuu-ui/vuu-utils": "4.0.0-alpha.27" } }, "sha512-Rqxs2Cvdl3L2dwRRq9p0ukaXCyobjisRj27sNTIC3OaBGxLb5HrRL89Mxi93GttvtcvqcmsCM0mvG77D5rbMbQ=="],
+    "@vuu-ui/vuu-codemirror": ["@vuu-ui/vuu-codemirror@4.0.0-alpha.28", "", { "dependencies": { "@codemirror/autocomplete": "^6.4.2", "@codemirror/commands": "^6.2.1", "@codemirror/language": "^6.6.0", "@codemirror/state": "^6.2.0", "@codemirror/view": "^6.9.3", "@lezer/common": "1.2.3", "@lezer/highlight": "^1.1.3", "@vuu-ui/vuu-utils": "4.0.0-alpha.28" } }, "sha512-3A61f7JVHh1cqZTPqLoYfLj1wa7O9eyptUSvRdyXYqvfvkYtjDwq/g18DTra18FTFckiQ4zrYFJ1EAYlALIrQw=="],
 
-    "@vuu-ui/vuu-context-menu": ["@vuu-ui/vuu-context-menu@4.0.0-alpha.27", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-utils": "4.0.0-alpha.27" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-OSZlAH1+JnMCnJkK+xDzDnvzawDOsh+0zpnE/WjVhb1eQReZ/wzpzcBE4FSm3+B+QsoOEkfwgRhZ43wa+pkyUw=="],
+    "@vuu-ui/vuu-context-menu": ["@vuu-ui/vuu-context-menu@4.0.0-alpha.28", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-utils": "4.0.0-alpha.28" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-i5SYi5yQjYscE04Zd9yD4P5kneXVAFbXsnBSCZ2WtRHvZxfTZwm/Pwul+UWo/QhMnOhCx8jPa4x7Ufjk1BPxPA=="],
 
-    "@vuu-ui/vuu-data-editing": ["@vuu-ui/vuu-data-editing@4.0.0-alpha.27", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.27", "@vuu-ui/vuu-utils": "4.0.0-alpha.27" }, "peerDependencies": { "react": "^19.2.3" } }, "sha512-lyN/nZvaIU8aBFmHYKpwvujEojvoqx4FG7Y1Ed5UdEb1KaYVOwrQg1EZs6sziIqY7Oy77zDAdIgjbRLDk/riwA=="],
+    "@vuu-ui/vuu-data-editing": ["@vuu-ui/vuu-data-editing@4.0.0-alpha.28", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.28", "@vuu-ui/vuu-utils": "4.0.0-alpha.28" }, "peerDependencies": { "react": "^19.2.3" } }, "sha512-EZmvQXWyWhvdTpjZzxDV9pkVQhztnPXlXqVUL2ep5uUzIsOMC6AWNFB3ACuF2c9tukDVor+kmEcptsIEHXmRDw=="],
 
-    "@vuu-ui/vuu-data-local": ["@vuu-ui/vuu-data-local@4.0.0-alpha.27", "", { "dependencies": { "@vuu-ui/vuu-filter-parser": "4.0.0-alpha.27", "@vuu-ui/vuu-utils": "4.0.0-alpha.27" } }, "sha512-9DyKyth7N/YqtnuNzQuZHfjMa8CbnQIRY2zgDmHbMi24kvY9slJ5XSKdrS+fLiAKQnriLWX1rcupTp+GXNgK/A=="],
+    "@vuu-ui/vuu-data-local": ["@vuu-ui/vuu-data-local@4.0.0-alpha.28", "", { "dependencies": { "@vuu-ui/vuu-filter-parser": "4.0.0-alpha.28", "@vuu-ui/vuu-utils": "4.0.0-alpha.28" } }, "sha512-7icun1mdUtsxnU2a87PEe/ojs51Q8O6arjjcecMp7USPXAH6mmTxq+N/QYrpM1D9AK5ojGoMBLWD9YyVZNf6Xg=="],
 
-    "@vuu-ui/vuu-data-react": ["@vuu-ui/vuu-data-react@4.0.0-alpha.27", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/core": "4.0.0-alpha.27", "@vuu-ui/vuu-context-menu": "4.0.0-alpha.27", "@vuu-ui/vuu-data-remote": "4.0.0-alpha.27", "@vuu-ui/vuu-filter-parser": "4.0.0-alpha.27", "@vuu-ui/vuu-filters": "4.0.0-alpha.27", "@vuu-ui/vuu-layout": "4.0.0-alpha.27", "@vuu-ui/vuu-notifications": "4.0.0-alpha.27", "@vuu-ui/vuu-table": "4.0.0-alpha.27", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.27", "@vuu-ui/vuu-utils": "4.0.0-alpha.27" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-c6baVgUx4v6Ex9FNrvuma0CSByt/GZrR3r9iuARL/xvYk4QVFNYTR3JyWxcDTjVFvMefNR6GcL9WogpmR4WWBg=="],
+    "@vuu-ui/vuu-data-react": ["@vuu-ui/vuu-data-react@4.0.0-alpha.28", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/core": "4.0.0-alpha.28", "@vuu-ui/vuu-context-menu": "4.0.0-alpha.28", "@vuu-ui/vuu-data-remote": "4.0.0-alpha.28", "@vuu-ui/vuu-filter-parser": "4.0.0-alpha.28", "@vuu-ui/vuu-filters": "4.0.0-alpha.28", "@vuu-ui/vuu-layout": "4.0.0-alpha.28", "@vuu-ui/vuu-notifications": "4.0.0-alpha.28", "@vuu-ui/vuu-table": "4.0.0-alpha.28", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.28", "@vuu-ui/vuu-utils": "4.0.0-alpha.28" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-UEBOlxuNC8soWVML4tY4G70MMT4vbnPcdw4yYhDA0ac+Yg1PgQjo1q+WKMpkg9iVfpWlZZKtrbgYyHgbK/lkIA=="],
 
-    "@vuu-ui/vuu-data-remote": ["@vuu-ui/vuu-data-remote@4.0.0-alpha.27", "", { "dependencies": { "@vuu-ui/vuu-data-editing": "4.0.0-alpha.27", "@vuu-ui/vuu-filter-parser": "4.0.0-alpha.27", "@vuu-ui/vuu-utils": "4.0.0-alpha.27" } }, "sha512-3vb5RhaCI2W5hV6FA8ptc1EyX7B4SRGErQX2tmrINWc80quWQKSQvc2mZ4N5GGoD8KMj5XCHXkO7SFtqYtj6Ww=="],
+    "@vuu-ui/vuu-data-remote": ["@vuu-ui/vuu-data-remote@4.0.0-alpha.28", "", { "dependencies": { "@vuu-ui/vuu-data-editing": "4.0.0-alpha.28", "@vuu-ui/vuu-filter-parser": "4.0.0-alpha.28", "@vuu-ui/vuu-utils": "4.0.0-alpha.28" } }, "sha512-4V9LmVn6BomM5didUw1UzB56q3OiFwRjYKfYydBBGR2jD+s38KHEoyFeH7Euvc70HCs2vbIUPR9JppOjpb5g/w=="],
 
-    "@vuu-ui/vuu-data-types": ["@vuu-ui/vuu-data-types@4.0.0-alpha.27", "", {}, "sha512-C7rre3ZI9xoRd2JbhOV6LLzxWmHmeWaXcqZ1iBRrkX9zxAJY3d22rRlM9DK8OX+xuXKR3Zzlw0QK21+1/Bl8uQ=="],
+    "@vuu-ui/vuu-data-types": ["@vuu-ui/vuu-data-types@4.0.0-alpha.28", "", {}, "sha512-pgC5BrnMN7G15pMRixKM/hkub782RyYGr18ax3ACvSdMpuJucmptGuMKCs9yVlSjDZDXQs+KHHyDGUrw94x2Nw=="],
 
-    "@vuu-ui/vuu-datatable": ["@vuu-ui/vuu-datatable@4.0.0-alpha.27", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-data-local": "4.0.0-alpha.27", "@vuu-ui/vuu-filters": "4.0.0-alpha.27", "@vuu-ui/vuu-layout": "4.0.0-alpha.27", "@vuu-ui/vuu-popups": "4.0.0-alpha.27", "@vuu-ui/vuu-shell": "4.0.0-alpha.27", "@vuu-ui/vuu-table": "4.0.0-alpha.27", "@vuu-ui/vuu-table-extras": "4.0.0-alpha.27", "@vuu-ui/vuu-table-types": "4.0.0-alpha.27", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.27", "@vuu-ui/vuu-utils": "4.0.0-alpha.27" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-lwGMROzQot5kG4fhtQrobyQ6KagASPmmWRg56DEvhPa8x9jFz15BHVikIoVu++5PHRTUhjwRX2rqEt8KcXqCIw=="],
+    "@vuu-ui/vuu-datatable": ["@vuu-ui/vuu-datatable@4.0.0-alpha.28", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-data-local": "4.0.0-alpha.28", "@vuu-ui/vuu-filters": "4.0.0-alpha.28", "@vuu-ui/vuu-layout": "4.0.0-alpha.28", "@vuu-ui/vuu-popups": "4.0.0-alpha.28", "@vuu-ui/vuu-shell": "4.0.0-alpha.28", "@vuu-ui/vuu-table": "4.0.0-alpha.28", "@vuu-ui/vuu-table-extras": "4.0.0-alpha.28", "@vuu-ui/vuu-table-types": "4.0.0-alpha.28", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.28", "@vuu-ui/vuu-utils": "4.0.0-alpha.28" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-GgZ2CK2jxBwZGBUKJTWLXK1EncFZuP7v+Y03K8K2ytOysKD5r7ZNn1DMwTIiuMfiDYVGzdKgTqid6NlMG+J0vg=="],
 
-    "@vuu-ui/vuu-filter-parser": ["@vuu-ui/vuu-filter-parser@4.0.0-alpha.27", "", { "dependencies": { "@lezer/common": "^1.0.2", "@lezer/lr": "1.4.2", "@vuu-ui/vuu-utils": "4.0.0-alpha.27" } }, "sha512-ma3ewNxU/xSB8mnACDyi8w3mRniRq3OAVcdiK/vuqkktUqffWp217V5TUcqTvwY+yZGvj9gyuNkCW3dUj0ahCw=="],
+    "@vuu-ui/vuu-filter-parser": ["@vuu-ui/vuu-filter-parser@4.0.0-alpha.28", "", { "dependencies": { "@lezer/common": "^1.0.2", "@lezer/lr": "1.4.2", "@vuu-ui/vuu-utils": "4.0.0-alpha.28" } }, "sha512-jjLTk33FhAnUBiXB7h2HDgO5D9JRGdYsQ0MMCoDVT1zFc+ujI35HW7njmZ70CvY3JG9lPMKylWuIqa8aZpMCSA=="],
 
-    "@vuu-ui/vuu-filter-types": ["@vuu-ui/vuu-filter-types@4.0.0-alpha.27", "", {}, "sha512-xphIrI1xvGrVeMV6h3uAXyGU0ijCmb8hS3uqppTSfgeGYIjYMR+xH8T/BSl+6qIquhGXqenPfI2hoEOnfz3ZCg=="],
+    "@vuu-ui/vuu-filter-types": ["@vuu-ui/vuu-filter-types@4.0.0-alpha.28", "", {}, "sha512-a7+8ak3EZajz0HGXg3XR+B9ztpM+mtP5cJ7X+wt095k6u8DpoS8lwPXp3tcKRjVIaAnpNUflqlBECc5+R4ztAw=="],
 
-    "@vuu-ui/vuu-filters": ["@vuu-ui/vuu-filters@4.0.0-alpha.27", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-context-menu": "4.0.0-alpha.27", "@vuu-ui/vuu-data-react": "4.0.0-alpha.27", "@vuu-ui/vuu-filter-parser": "4.0.0-alpha.27", "@vuu-ui/vuu-popups": "4.0.0-alpha.27", "@vuu-ui/vuu-table": "4.0.0-alpha.27", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.27", "@vuu-ui/vuu-utils": "4.0.0-alpha.27" }, "peerDependencies": { "@internationalized/date": "^3.0.0", "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-T/QLTJQUCs4jk5scD8acOMTBLVAfjFxNCTdet5k/lmHpRM5DMSx4wpj0idy/ozYgjCvf2e+ULGCzsm/ubyX21A=="],
+    "@vuu-ui/vuu-filters": ["@vuu-ui/vuu-filters@4.0.0-alpha.28", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-context-menu": "4.0.0-alpha.28", "@vuu-ui/vuu-data-react": "4.0.0-alpha.28", "@vuu-ui/vuu-filter-parser": "4.0.0-alpha.28", "@vuu-ui/vuu-popups": "4.0.0-alpha.28", "@vuu-ui/vuu-table": "4.0.0-alpha.28", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.28", "@vuu-ui/vuu-utils": "4.0.0-alpha.28" }, "peerDependencies": { "@internationalized/date": "^3.0.0", "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-C/w/yL+mFO+kfmypWvouzF7DLyFUwa1mvLEA0dHUrarJRjMuoq63qam63hOdPI97iCnOGr96EvWN+ANy/LqI3Q=="],
 
-    "@vuu-ui/vuu-icons": ["@vuu-ui/vuu-icons@4.0.0-alpha.27", "", { "peerDependencies": { "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-Pjm5nk4OOgt5N4dNv3qX2HijDelercuZbapCOn8OQBaW+fOYYg4on/kcXVq7sh0jPh0FRYrd3K4fUGKXdJLwuA=="],
+    "@vuu-ui/vuu-icons": ["@vuu-ui/vuu-icons@4.0.0-alpha.28", "", { "peerDependencies": { "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-WID7+lzjdyJ3Y9hDf1yVulBjWjvGaXRS6N26AG+vQQhBUSn/KV4otJ1XFDrRO4JD4Twb+YkbmdJxQ03UxUoxKw=="],
 
-    "@vuu-ui/vuu-layout": ["@vuu-ui/vuu-layout@4.0.0-alpha.27", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-data-react": "4.0.0-alpha.27", "@vuu-ui/vuu-datatable": "4.0.0-alpha.27", "@vuu-ui/vuu-filters": "4.0.0-alpha.27", "@vuu-ui/vuu-popups": "4.0.0-alpha.27", "@vuu-ui/vuu-table": "4.0.0-alpha.27", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.27", "@vuu-ui/vuu-utils": "4.0.0-alpha.27" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-shbAHOSWiOxKxM3dSTrSBGL7SToVYTvLDJobNrpZBI8UUBUhHe7moVAtMQEVXpTB05VluXVSeZDG/FNZg6/Lwg=="],
+    "@vuu-ui/vuu-layout": ["@vuu-ui/vuu-layout@4.0.0-alpha.28", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-data-react": "4.0.0-alpha.28", "@vuu-ui/vuu-datatable": "4.0.0-alpha.28", "@vuu-ui/vuu-filters": "4.0.0-alpha.28", "@vuu-ui/vuu-popups": "4.0.0-alpha.28", "@vuu-ui/vuu-table": "4.0.0-alpha.28", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.28", "@vuu-ui/vuu-utils": "4.0.0-alpha.28" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-lknoheH/MNq0TBOP25+UDCx2VaqDou3DeTY9jG7U9xDrNzvBOpwpB7/npOwP56/s1OC8A/oUIzExcGnrxtgrFw=="],
 
-    "@vuu-ui/vuu-notifications": ["@vuu-ui/vuu-notifications@4.0.0-alpha.27", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.27", "@vuu-ui/vuu-utils": "4.0.0-alpha.27" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-1mLVtYjBKtQnzDTvWPCFGYUDTVG2hnoglSONR04G/s8+PGZSKfitPtevs4+fTozEneC9U/LThRXJrvdiH9+BRA=="],
+    "@vuu-ui/vuu-notifications": ["@vuu-ui/vuu-notifications@4.0.0-alpha.28", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.28", "@vuu-ui/vuu-utils": "4.0.0-alpha.28" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-YTGJAS/Q98URl/B48MHRWcAt1Lc3o7Hug2RWYGpb9v8Gy3IZ1hvo/MUAR+bMOAfaCP/WrGKKsZbwPy3oWOmkEg=="],
 
-    "@vuu-ui/vuu-popups": ["@vuu-ui/vuu-popups@4.0.0-alpha.27", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-context-menu": "4.0.0-alpha.27", "@vuu-ui/vuu-data-types": "4.0.0-alpha.27", "@vuu-ui/vuu-layout": "4.0.0-alpha.27", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.27", "@vuu-ui/vuu-utils": "4.0.0-alpha.27" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-vr3dlfOwGefCxbkEUChgIaIEs14pKjHkgShEpzN4Op4nsbYEpO6QOzP0Q+9NUHsqp5zB7nJ7U+MmElV1GtHf5Q=="],
+    "@vuu-ui/vuu-popups": ["@vuu-ui/vuu-popups@4.0.0-alpha.28", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-context-menu": "4.0.0-alpha.28", "@vuu-ui/vuu-data-types": "4.0.0-alpha.28", "@vuu-ui/vuu-layout": "4.0.0-alpha.28", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.28", "@vuu-ui/vuu-utils": "4.0.0-alpha.28" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-4v6A8P+smrwZcjr7d4DJ+Fs9x+q07HNrS+kqqlVyjeKAIVj0dCDk28Yc7R3grRk+6qSuIeF1+PB2sG0VihSsQA=="],
 
-    "@vuu-ui/vuu-protocol-types": ["@vuu-ui/vuu-protocol-types@4.0.0-alpha.27", "", {}, "sha512-p8Cxf8mlZFobFsclEVDx0J3ZCZ/ciXOXAXn0ipQAz8wbgGST3Q5NB/uTG/Gz3Lb37xXLUGQi7Uw+wSGSQ9YqOQ=="],
+    "@vuu-ui/vuu-protocol-types": ["@vuu-ui/vuu-protocol-types@4.0.0-alpha.28", "", {}, "sha512-lbuNEoRfojdpArbQ883Mu9Oo09U+DOoi1DZXe87/+OKpUB1BdpPgrVzFlwynTSMSxFdKrBhP6NOX9VaTvmMbMA=="],
 
-    "@vuu-ui/vuu-shell": ["@vuu-ui/vuu-shell@4.0.0-alpha.27", "", { "dependencies": { "@module-federation/enhanced": "2.8.0", "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/core": "4.0.0-alpha.27", "@vuu-ui/grid-layout": "4.0.0-alpha.27", "@vuu-ui/vuu-context-menu": "4.0.0-alpha.27", "@vuu-ui/vuu-data-react": "4.0.0-alpha.27", "@vuu-ui/vuu-data-remote": "4.0.0-alpha.27", "@vuu-ui/vuu-icons": "4.0.0-alpha.27", "@vuu-ui/vuu-layout": "4.0.0-alpha.27", "@vuu-ui/vuu-notifications": "4.0.0-alpha.27", "@vuu-ui/vuu-table": "4.0.0-alpha.27", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.27", "@vuu-ui/vuu-utils": "4.0.0-alpha.27", "html-to-image": "^1.11.11" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-GP4H3a2wNiWMu0Qkxw7Ab0Jp9rLU4urTmtRlipXBTihd0uyenTuJ0/BBA52iLXFdMPuZQcAQkdP4YlbwXd3Avg=="],
+    "@vuu-ui/vuu-shell": ["@vuu-ui/vuu-shell@4.0.0-alpha.28", "", { "dependencies": { "@module-federation/enhanced": "2.8.0", "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/core": "4.0.0-alpha.28", "@vuu-ui/grid-layout": "4.0.0-alpha.28", "@vuu-ui/vuu-context-menu": "4.0.0-alpha.28", "@vuu-ui/vuu-data-react": "4.0.0-alpha.28", "@vuu-ui/vuu-data-remote": "4.0.0-alpha.28", "@vuu-ui/vuu-icons": "4.0.0-alpha.28", "@vuu-ui/vuu-layout": "4.0.0-alpha.28", "@vuu-ui/vuu-notifications": "4.0.0-alpha.28", "@vuu-ui/vuu-table": "4.0.0-alpha.28", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.28", "@vuu-ui/vuu-utils": "4.0.0-alpha.28", "html-to-image": "^1.11.11" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-+ofuG8k96+Y20x6xwHyJ/nKziOYEoFMMr8OCL9BnLOX/zx2Ez7Yi1pVKpfPEPGmSCBH6rP86S8fxXWHpT6o/uA=="],
 
-    "@vuu-ui/vuu-table": ["@vuu-ui/vuu-table@4.0.0-alpha.27", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-context-menu": "4.0.0-alpha.27", "@vuu-ui/vuu-data-editing": "4.0.0-alpha.27", "@vuu-ui/vuu-data-react": "4.0.0-alpha.27", "@vuu-ui/vuu-popups": "4.0.0-alpha.27", "@vuu-ui/vuu-table-extras": "4.0.0-alpha.27", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.27", "@vuu-ui/vuu-utils": "4.0.0-alpha.27" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-zqH74Z6vwyhEwP0pG6iIv+hYPIyy2vMSd2I2nq1VCSljilTcT7m/I6Ex591yu7es+Y6qZ3ET+z+9wGxTZWpJWQ=="],
+    "@vuu-ui/vuu-table": ["@vuu-ui/vuu-table@4.0.0-alpha.28", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-context-menu": "4.0.0-alpha.28", "@vuu-ui/vuu-data-editing": "4.0.0-alpha.28", "@vuu-ui/vuu-data-react": "4.0.0-alpha.28", "@vuu-ui/vuu-popups": "4.0.0-alpha.28", "@vuu-ui/vuu-table-extras": "4.0.0-alpha.28", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.28", "@vuu-ui/vuu-utils": "4.0.0-alpha.28" }, "peerDependencies": { "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-fMdn/gsTHOlgX4sHZyo3vm2eKqbOJnbaAgN+wE7HNE8QjruKJfO8PyL9OczbcNDBdKCABWbJLzAhosVGtA6GMg=="],
 
-    "@vuu-ui/vuu-table-extras": ["@vuu-ui/vuu-table-extras@4.0.0-alpha.27", "", { "dependencies": { "@lezer/lr": "1.4.2", "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/core": "4.0.0-alpha.27", "@vuu-ui/vuu-codemirror": "4.0.0-alpha.27", "@vuu-ui/vuu-data-editing": "4.0.0-alpha.27", "@vuu-ui/vuu-data-react": "4.0.0-alpha.27", "@vuu-ui/vuu-data-types": "4.0.0-alpha.27", "@vuu-ui/vuu-popups": "4.0.0-alpha.27", "@vuu-ui/vuu-table": "4.0.0-alpha.27", "@vuu-ui/vuu-table-types": "4.0.0-alpha.27", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.27", "@vuu-ui/vuu-utils": "4.0.0-alpha.27", "csv-parse": "^7.0.0" }, "peerDependencies": { "@floating-ui/react": "^0.27.19", "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-tbDV473VP6kNs0rS/RKYUBn2yOxkOpcG0lljbr8W2K5o/QdsLUTiLtjZ+0ns+tbOJoINaLFBOBMXjnp4X96lcA=="],
+    "@vuu-ui/vuu-table-extras": ["@vuu-ui/vuu-table-extras@4.0.0-alpha.28", "", { "dependencies": { "@lezer/lr": "1.4.2", "@salt-ds/core": "1.72.0", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/core": "4.0.0-alpha.28", "@vuu-ui/vuu-codemirror": "4.0.0-alpha.28", "@vuu-ui/vuu-data-editing": "4.0.0-alpha.28", "@vuu-ui/vuu-data-react": "4.0.0-alpha.28", "@vuu-ui/vuu-data-types": "4.0.0-alpha.28", "@vuu-ui/vuu-popups": "4.0.0-alpha.28", "@vuu-ui/vuu-table": "4.0.0-alpha.28", "@vuu-ui/vuu-table-types": "4.0.0-alpha.28", "@vuu-ui/vuu-ui-controls": "4.0.0-alpha.28", "@vuu-ui/vuu-utils": "4.0.0-alpha.28", "csv-parse": "^7.0.0" }, "peerDependencies": { "@floating-ui/react": "^0.27.19", "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-UfDyTH2SojZFEa8FcEk1Ua6NLBlMtsmilw9c3c4cvt+qUtPIP2L0LdxAqmcB6Mw5L8ec1mxwE6edQtLq757fKA=="],
 
-    "@vuu-ui/vuu-table-types": ["@vuu-ui/vuu-table-types@4.0.0-alpha.27", "", {}, "sha512-c0UsQ7X6XY19p23jgD+uOEacPaKZoaR8Mdtczw8Oz0yYB33VynI43yDZ8M1NYklFYR3GBON/WgiCHUdtKZss5Q=="],
+    "@vuu-ui/vuu-table-types": ["@vuu-ui/vuu-table-types@4.0.0-alpha.28", "", {}, "sha512-+eINIz+wIsc7ME5hrioFwD2v3bWUetGnPDT/flBklnCWRvgzm8JXE7e0F9gD34u9SKcJMJXhCmHL6HfLgjuZyQ=="],
 
-    "@vuu-ui/vuu-theme": ["@vuu-ui/vuu-theme@4.0.0-alpha.27", "", {}, "sha512-qHptAJjl8SKF9qUzx7k9Crnl/tzbkUP7wYEpMGYQ5JnFYB1uQRxWmn90DEEob/RC1U9CvVto9oU6bh9/crj4/g=="],
+    "@vuu-ui/vuu-theme": ["@vuu-ui/vuu-theme@4.0.0-alpha.28", "", {}, "sha512-0VX3+jwhnmTRkReieyRyOpKWguIV65R4zaSbHMHaCf7fgjUd6IE1Co45sNnD5UBIDiKpfVWXEhy4dr5f6yCosQ=="],
 
-    "@vuu-ui/vuu-ui-controls": ["@vuu-ui/vuu-ui-controls@4.0.0-alpha.27", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/icons": "1.18.3", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-context-menu": "4.0.0-alpha.27", "@vuu-ui/vuu-data-react": "4.0.0-alpha.27", "@vuu-ui/vuu-layout": "4.0.0-alpha.27", "@vuu-ui/vuu-popups": "4.0.0-alpha.27", "@vuu-ui/vuu-table": "4.0.0-alpha.27", "@vuu-ui/vuu-utils": "4.0.0-alpha.27", "tabbable": "^6.0.0" }, "peerDependencies": { "@floating-ui/react": "^0.27.19", "@internationalized/date": "^3.0.0", "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-NequTf/cns+vJEiATubnXwNMYx/RXRsi2k36q8MnjFM3ZR9PTucJQWryHimfDny4U7E958psF9k1/Zggoa2mVA=="],
+    "@vuu-ui/vuu-ui-controls": ["@vuu-ui/vuu-ui-controls@4.0.0-alpha.28", "", { "dependencies": { "@salt-ds/core": "1.72.0", "@salt-ds/icons": "1.18.3", "@salt-ds/styles": "0.4.1", "@salt-ds/window": "0.1.2", "@vuu-ui/vuu-context-menu": "4.0.0-alpha.28", "@vuu-ui/vuu-data-react": "4.0.0-alpha.28", "@vuu-ui/vuu-layout": "4.0.0-alpha.28", "@vuu-ui/vuu-popups": "4.0.0-alpha.28", "@vuu-ui/vuu-table": "4.0.0-alpha.28", "@vuu-ui/vuu-utils": "4.0.0-alpha.28", "tabbable": "^6.0.0" }, "peerDependencies": { "@floating-ui/react": "^0.27.19", "@internationalized/date": "^3.0.0", "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-myELST92qSAPljbyI0beHz6j/yBVch+JLqhSw1U+jXdyGepdcWQwDLFmjnjlQ7csT1/6zw98355SFsVEqBEORw=="],
 
-    "@vuu-ui/vuu-utils": ["@vuu-ui/vuu-utils@4.0.0-alpha.27", "", { "dependencies": { "@salt-ds/core": "1.72.0" }, "peerDependencies": { "@internationalized/date": "^3.0.0", "@vuu-ui/vuu-filter-parser": "4.0.0-alpha.27", "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-IiHqvqLkzsRb8Uz3AWksdWzTnQ6yh9PiFCrZ31q3iH1PsiBbXtpvPWB+e9737UFl5J/NWSjdp0x33SM0nI3c3g=="],
+    "@vuu-ui/vuu-utils": ["@vuu-ui/vuu-utils@4.0.0-alpha.28", "", { "dependencies": { "@salt-ds/core": "1.72.0" }, "peerDependencies": { "@internationalized/date": "^3.0.0", "@vuu-ui/vuu-filter-parser": "4.0.0-alpha.28", "clsx": "^2.0.0", "react": "^19.2.3", "react-dom": "^19.2.3" } }, "sha512-bbyjLxiXXhnfx0Yy86/FUGbOTh9MrtRZptJFZRDh3QAirsuqtBP8bTrQJ9xGxKMk1moojwIiQIyOB/DMiA97Yg=="],
 
     "@zeit/schemas": ["@zeit/schemas@2.36.0", "", {}, "sha512-7kjMwcChYEzMKjeex9ZFXkt1AyNov9R5HZtjBKVsmVpw7pa7ZtlCGvCBC2vnnXctaYN+aRI61HjIqeetZW5ROg=="],
 
@@ -875,6 +875,7 @@
     "ws": ["ws@8.21.0", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g=="],
 
     "zrender": ["zrender@6.1.0", "", { "dependencies": { "tslib": "2.3.0" } }, "sha512-oEGMDB6pOP2S6OwRR4PdVv610zrjnA3Bh+JnSG12fYJlBKjtNAoEb5fSUoCOOINlH96I2fU38/A2UpRKs67xYQ=="],
+
 
     "@rsdoctor/sdk/tapable": ["tapable@2.3.3", "", {}, "sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A=="],
 

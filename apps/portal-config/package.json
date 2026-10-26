@@ -11,11 +11,11 @@
   "dependencies": {
     "@heswell/exchange-sim": "workspace:*",
     "@heswell/oms": "workspace:*",
-    "@heswell/vuu-portal": "^2.2.5",
+    "@heswell/vuu-portal": "^2.3.0",
     "@heswell/vuu-server": "^4.3.0",
     "@heswell/vuu-table": "^1.0.3",
-    "@vuu-ui/vuu-data-types": "4.0.0-alpha.27",
-    "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.27",
-    "@vuu-ui/vuu-utils": "4.0.0-alpha.27"
+    "@vuu-ui/vuu-data-types": "4.0.0-alpha.28",
+    "@vuu-ui/vuu-protocol-types": "4.0.0-alpha.28",
+    "@vuu-ui/vuu-utils": "4.0.0-alpha.28"
   }
 }

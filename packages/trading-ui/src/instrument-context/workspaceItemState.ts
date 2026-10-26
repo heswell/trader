@@ -1,7 +1,7 @@
 import {
   type ComponentPersistentStateV1,
   usePortalModuleInstanceId,
-  useWorkspacePersistentStateStore,
+  useOptionalWorkspacePersistentStateStore,
   type WorkspacePersistentStateStore,
 } from "@vuu-ui/core";
 import { useMemo } from "react";
@@ -25,18 +25,6 @@ const itemStateValue = (state: ComponentPersistentStateV1 | undefined) =>
   !Array.isArray(state.value)
     ? (state.value as Record<string, unknown>)
     : {};
-
-// The hook reads a context on every render, and throws only outside a
-// workspace: core has no optional variant (trader upstream issue 106).
-const useOptionalWorkspaceStore = () => {
-  try {
-    // biome-ignore lint/correctness/useHookAtTopLevel: called unconditionally; try only catches its missing-provider error
-    return useWorkspacePersistentStateStore();
-  } catch {
-    // not in a portal workspace (a module page, or no portal at all)
-    return undefined;
-  }
-};
 
 /** Read / write one key of this item's state in a workspace store. */
 export const workspaceItemState = (
@@ -63,7 +51,7 @@ export const workspaceItemState = (
  */
 export const useWorkspaceItemState = (): WorkspaceItemState | undefined => {
   const instanceId = usePortalModuleInstanceId();
-  const store = useOptionalWorkspaceStore();
+  const store = useOptionalWorkspacePersistentStateStore();
   return useMemo(
     () =>
       store && instanceId ? workspaceItemState(store, instanceId) : undefined,

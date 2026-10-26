@@ -129,7 +129,9 @@ const positionRow = async (page: Page) => {
   const row = (await rowTexts(page)).find(
     (r) => r.startsWith(ACCOUNT) && r.includes(RIC),
   );
-  const match = row?.match(/([+-]?[\d,]+) (Long|Short|Flat)(\d[\d,]*\.\d{2})/);
+  const match = row?.match(
+    /([+-]?[\d,]+) (Long|Short|Flat)(\d[\d,]*(?:\.\d+)?)/,
+  );
   return match ? `${match[1]} ${match[2]} @ ${match[3]}` : undefined;
 };
 
@@ -209,7 +211,11 @@ const main = async () => {
 
     // ---- 2. the position ------------------------------------------------------
     await openPositions(page);
-    await mustWait("position row", async () => !!(await positionRow(page)));
+    await mustWait("position row", async () => {
+      // the group row can arrive after openPositions expanded the groups
+      await expandGroups(page);
+      return !!(await positionRow(page));
+    });
     const positionBefore = (await positionRow(page)) ?? "";
     log(`position before: ${positionBefore}`);
     check(

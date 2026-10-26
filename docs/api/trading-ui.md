@@ -688,7 +688,7 @@ useSelectedInstrument({ linkGroup: linkGroupOption, }: UseSelectedInstrumentOpti
 
 #### useWorkspaceItemState
 
-*hook* · [instrument-context/workspaceItemState.ts](../../packages/trading-ui/src/instrument-context/workspaceItemState.ts#L64)
+*hook* · [instrument-context/workspaceItemState.ts](../../packages/trading-ui/src/instrument-context/workspaceItemState.ts#L52)
 
 State of the portal workspace item this feature renders in: saved with the
 workspace, so a personal copy of a system workspace keeps it, Reset to
@@ -787,7 +787,7 @@ sanitizeSelectedInstrument(value: unknown): SelectedInstrument | undefined
 
 #### workspaceItemState
 
-*function* · [instrument-context/workspaceItemState.ts](../../packages/trading-ui/src/instrument-context/workspaceItemState.ts#L42)
+*function* · [instrument-context/workspaceItemState.ts](../../packages/trading-ui/src/instrument-context/workspaceItemState.ts#L30)
 
 Read / write one key of this item's state in a workspace store.
 

@@ -8,8 +8,8 @@ interface YamlModule {
   id: number;
   parentModuleId: number;
   name: string;
-  location: string;
-  path: string;
+  location?: string;
+  path?: string;
   navIconUrl: string;
   accessRole: string;
   navOrder?: number;
@@ -26,7 +26,8 @@ const topLevel = TRADING_FEATURES.filter((f) => !f.parent);
 describe("trading catalog information architecture", () => {
   test("nav entries, in navOrder", () => {
     expect(
-      [...topLevel]
+      topLevel
+        .filter((f) => f.location)
         .sort((a, b) => (a.navOrder ?? 0) - (b.navOrder ?? 0))
         .map((f) => [f.id, f.location, f.path, f.navOrder]),
     ).toEqual([
@@ -34,7 +35,6 @@ describe("trading catalog information architecture", () => {
       [114, "/Trading/Orders", "/trading/orders", 110],
       [115, "/Trading/Executions", "/trading/executions", 120],
       [112, "/Trading/Price ladder", "/trading/price-ladder", 130],
-      [124, "/Trading/Order ticket", "/trading/ticket", 140],
       [111, "/Market/Market depth", "/market/depth", 200],
       [117, "/Market/Time & sales", "/market/time-and-sales", 210],
       [118, "/Market/Chart", "/market/chart", 220],
@@ -50,6 +50,15 @@ describe("trading catalog information architecture", () => {
       ],
       [120, "/Oversight/Desk overview", "/oversight/desk", 400],
     ]);
+  });
+
+  test("the order ticket is palette-only: no nav location or route", () => {
+    const ticket = TRADING_FEATURES.find((f) => f.id === 124);
+    expect(ticket?.location).toBeUndefined();
+    expect(ticket?.path).toBeUndefined();
+    expect(ticket?.navOrder).toBeUndefined();
+    expect(ticket?.workspace?.paletteGroup).toBe("Trading");
+    expect(topLevel.filter((f) => !f.location).map((f) => f.id)).toEqual([124]);
   });
 
   test("badges, topics and roles", () => {
@@ -88,7 +97,8 @@ describe("trading catalog information architecture", () => {
       TRADING_FEATURES.filter((f) => !f.workspace).map((f) => f.name),
     ).toEqual(["TradingSupervisor"]);
     for (const f of palette) {
-      expect(f.location?.split("/")[1]).toBe(f.workspace?.paletteGroup);
+      if (f.location)
+        expect(f.location.split("/")[1]).toBe(f.workspace?.paletteGroup);
       const { cols = 0, rows = 0 } = f.workspace?.defaultSize ?? {};
       expect(cols).toBeGreaterThan(0);
       expect(rows).toBeGreaterThan(0);
@@ -124,11 +134,14 @@ describe("default-modules.yaml generation", () => {
       navBadge: "orders.working",
       notificationTopics: ["orders"],
     });
-    expect(modules.find((m) => m.id === 124)).toMatchObject({
+    const ticket = modules.find((m) => m.id === 124);
+    expect(ticket).toMatchObject({
       parentModuleId: 0,
-      location: "/Trading/Order ticket",
       workspace: { paletteGroup: "Trading", defaultSize: { cols: 1, rows: 2 } },
     });
+    // palette-only: the fields are omitted, not written as ""
+    expect(ticket && "location" in ticket).toBe(false);
+    expect(ticket && "path" in ticket).toBe(false);
     expect(orders?.workspace).toEqual({
       paletteGroup: "Trading",
       defaultSize: { cols: 2, rows: 1 },

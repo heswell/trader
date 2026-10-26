@@ -24,10 +24,10 @@ const modules: RemoteModuleDescriptor[] = TRADING_FEATURES.map((f) => ({
   name: f.name,
   navBadge: f.navBadge,
   navIconUrl: f.navIcon ? navIconDataUri(f.navIcon) : undefined,
-  navLocation: f.location ?? "",
+  navLocation: f.location,
   navOrder: f.navOrder,
   notificationTopics: f.notificationTopics && [...f.notificationTopics],
-  path: f.path ?? "",
+  path: f.path,
   title: f.title,
   version: 1,
   ...(f.workspace ? { workspace: f.workspace } : {}),
@@ -100,10 +100,7 @@ describe("portal host", () => {
     ]);
     expect(sections).toEqual([
       ["Workspaces", ["Trader", "New workspace"]],
-      [
-        "Trading",
-        ["Watchlist", "Orders", "Executions", "Price ladder", "Order ticket"],
-      ],
+      ["Trading", ["Watchlist", "Orders", "Executions", "Price ladder"]],
       ["Market", ["Market depth", "Time & sales", "Chart", "Depth chart"]],
       ["Portfolio", ["Positions", "P&L", "Exposure", "Execution quality"]],
       ["Oversight", ["Desk overview"]],
@@ -117,7 +114,7 @@ describe("portal host", () => {
     // navIconUrl renders as a CSS mask (url('…')), one per entry
     expect(
       nav.querySelectorAll('.vuuPortalNav-icon [data-icon="custom"]'),
-    ).toHaveLength(14);
+    ).toHaveLength(13);
 
     const brand = nav.querySelector(".vuuPortalNav-brand") as HTMLElement;
     expect(brand.querySelector(".traderNavBrand-name")?.textContent).toBe(

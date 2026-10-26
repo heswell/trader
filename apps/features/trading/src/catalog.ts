@@ -60,7 +60,10 @@ export interface TradingFeature {
   title: string;
   description: string;
   accessRole: TradingAccessRole;
-  /** Top-level modules: nav location ("/<Section>/<Entry>") and route. */
+  /**
+   * Top-level modules: nav location ("/<Section>/<Entry>") and route. Omit both
+   * for a palette-only module (needs `workspace`).
+   */
   location?: string;
   path?: string;
   /** Top-level modules: nav sort key (sections sort by their lowest). */
@@ -198,9 +201,7 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     description:
       "Order entry for the linked instrument; the launch target for Buy / Sell in the same window",
     accessRole: execute,
-    location: "/Trading/Order ticket",
-    path: "/trading/ticket",
-    navOrder: 140,
+    // Palette-only: no nav location or route; navIcon is its palette icon.
     navIcon: "ticket",
     notificationTopics: ["orders"],
     workspace: { paletteGroup: TRADING, defaultSize: { cols: 1, rows: 2 } },
