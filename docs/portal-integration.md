@@ -406,7 +406,9 @@ pinned open.
   - **drag** places the panel exactly. A drop compass over the panel under the pointer shows the target: north,
     south, east or west splits the panel on that side; the centre stacks the new panel with it as a tab (alpha.30
     changed this from replacing). On a panel already in a stack the centre is disabled: drop on a tab header to add
-    a tab there. The ghost and the hint bar show the target too, and Esc cancels. Dragging never prompts and never
+    a tab there. Since alpha.31 the gap around the centre tile is part of the centre, on compact (narrow panel)
+    and regular compasses alike, so a drop there stacks rather than splitting (trader upstream issue 110); on a
+    stacked panel it is disabled with the centre. The ghost and the hint bar show the target too, and Esc cancels. Dragging never prompts and never
     replaces (`workspace-palette-compass.png`, `workspace-palette-drag.png`). To replace a panel, click a module
     (one panel) or answer R at the click prompt (several panels);
   - **+** adds the panel beside the focused one (or into empty space), never prompting.
@@ -493,6 +495,21 @@ stack.
   tab (107); both came in alpha.30, below.
 - `bun run e2e:persistence`, `bun run e2e:resilience` and `bun run e2e:palette` pass.
 
+### Compass gap and nav footer (alpha.31)
+
+Verified with @vuu-ui 4.0.0-alpha.31, `@vuu-ui/portal-build` 0.4.0, vuu-portal 2.3.0, module-admin 2.3.0 and
+headless Chrome (1600×1000) on `bun run e2e:palette`'s own stack, plus a full-stack run as alice, dave and sam.
+
+- **Compass gap (trader upstream issue 110, resolved):** Tape is narrow, so its compass is compact. Execution
+  quality dragged into the 3px gap between the centre and north tiles shows the centre, and the drop stacks it with
+  Tape (`workspace-palette-compass-gap.png`). Over the Orders stack the gap is part of the disabled centre, not an
+  edge. `e2e:palette` checks both.
+- **Nav footer hover (trader upstream issue 100, resolved):** the user menu trigger (hovered and open), its items
+  and the connection status use the neutral nav hover, `rgba(0, 0, 0, 0.05)`, not coral `rgb(243, 120, 128)`
+  (`nav-user-menu.png`), for alice, dave and sam. `e2e:palette` checks it.
+- No Trader workaround existed for either issue, so nothing was removed.
+- `bun run e2e:persistence`, `bun run e2e:resilience` and `bun run e2e:palette` pass.
+
 ### Panels palette, compass and home (alpha.30)
 
 Verified with @vuu-ui 4.0.0-alpha.30, vuu-portal 2.3.0, module-admin 2.3.0 and headless Chrome (1600×1000) on
@@ -532,7 +549,8 @@ on alpha.23 with a locally built module-admin; trader upstream issue 99, now res
   rows expire.
 - **Modes:** icons and text, text (`nav-text.png`), icons (⌘B; the connection popover lists Portal and Trading,
   `nav-rail-connection.png`) and hidden (edge handle, overlay, "Keep navigation open"). The mode survives a reload.
-- **User menu:** identity, account and roles, Saved state…, the display modes and Log out (`nav-user-menu.png`).
+- **User menu:** identity, account and roles, Saved state…, the display modes and Log out (`nav-user-menu.png`,
+  retaken on alpha.31 with the neutral hover).
 
 ### Earlier phases
 
