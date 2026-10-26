@@ -588,7 +588,9 @@ See [components/charts.md](components/charts.md). Bumping every `@vuu-ui/*` pack
      `--salt-actionable-subtle-background-hover` for a hovered or open trigger, which `vuu-theme`
      (`css/next/characteristics/actionable.css`) maps to `--vuu-color-coral`, so the user row and the rail status
      button turn bright coral instead of the subtle grey in the design. A neutral token (e.g.
-     `--salt-container-primary-background-hover`) would fix it. *No workaround in the repo.* Still in alpha.27.
+     `--salt-container-primary-background-hover`) would fix it. *No workaround in the repo.* Still in alpha.27, and
+     re-checked in alpha.30: `actionable.css` still maps the token to `--vuu-color-coral` and both footer components
+     still use it.
 
 ## Found in Phase 6 X1 (workspaces)
 
@@ -648,8 +650,11 @@ Found adopting @vuu-ui 4.0.0-alpha.27 portal workspaces with module-admin 2.2.0 
 
 Found adopting the @vuu-ui 4.0.0-alpha.28 Panels palette (`docs/portal-integration.md`, "Panels palette").
 
-107. **The host cannot choose the palette's tabs, or the empty drop zone's copy.** (finos `@vuu-ui/core` portal
-     workspaces / panels-palette, alpha.28.) `PanelsPalette`'s tabs are a fixed `modules / tables / recent`, and
+107. ~~**The host cannot choose the palette's tabs, or the empty drop zone's copy.**~~ *Resolved in @vuu-ui
+     4.0.0-alpha.30 (finos/vuu#2627, finos/vuu#2629):* `PanelsPalette` takes `tabs` (default `["modules", "recent"]`),
+     and `PortalShell` `workspaces` takes `palette` and `emptyContent`. Trader sets `tabs: ["modules", "recent"]` and
+     its own empty-workspace copy with an "Open Panels palette" button. (Was: finos `@vuu-ui/core` portal
+     workspaces / panels-palette, alpha.28: `PanelsPalette`'s tabs are a fixed `modules / tables / recent`, and
      `PortalWorkspace` renders it with no host props: `PortalWorkspaceGrid` has `paletteProps` and `emptyContent`, but
      neither `PortalShell` nor `PortalWorkspacesOptions` passes them through. Trader wants Modules and Recent only (its
      tables are reached through modules with ticket actions, link groups and formatting; a raw `vuu-table` panel has
@@ -659,8 +664,10 @@ Found adopting the @vuu-ui 4.0.0-alpha.28 Panels palette (`docs/portal-integrati
      `tabs?: PanelsPaletteTab[]` option on `PanelsPalette` (default `["modules", "recent"]`, tables opt-in), reachable
      from `PortalWorkspacesOptions` (e.g. `palette: {tabs}`), and `emptyContent` (or copy that follows the tabs) on the
      same options. *No workaround in the repo* (the tab is not hidden with CSS); the Tables tab is documented as
-     harmless.
-108. **No drop compass when dragging a palette module.** (finos `@vuu-ui/grid-layout`, alpha.28.) The agreed design
+     harmless.)
+108. ~~**No drop compass when dragging a palette module.**~~ *Resolved in @vuu-ui 4.0.0-alpha.30 (finos/vuu#2629):*
+     a palette drag shows a compass over the target panel (edges split, centre stacks as a tab; the centre is disabled
+     on a panel already in a stack). `bun run e2e:palette` checks it. (Was: finos `@vuu-ui/grid-layout`, alpha.28: the agreed design
      (mock scene T2) shows a compass (N / S / E / W / centre targets) over the panel under the pointer, plus the ghost
      and the hint bar. alpha.28 renders the ghost (`vuuDropTarget-north|south|east|west|centre|header`) and the core
      hint bar, but no compass: the drop position is only shown by the ghost, which depends on how near the pointer is
@@ -668,4 +675,27 @@ Found adopting the @vuu-ui 4.0.0-alpha.28 Panels palette (`docs/portal-integrati
      shaded for the target edge and the hint bar says "Drop on a panel edge to split, centre to tab", but there is no
      compass; `grep -ri compass` finds nothing in `@vuu-ui/grid-layout`. *Proposed:* a compass overlay in the
      grid-layout drop target (pointer-over targets for the four edges and centre). *No workaround in the repo*; drag
-     works with the ghost.
+     works with the ghost.)
+
+## Found in Phase 6 X3 (alpha.30)
+
+Found moving to @vuu-ui 4.0.0-alpha.30 (`docs/portal-integration.md`, "Panels palette").
+
+109. **`@vuu-ui/portal-build` with `extends` and the default `serve.json` is not published.** (finos
+     `@vuu-ui/portal-build`.) finos/vuu#2628 (merged 2026-10-26) adds `extends` (base configs merged in order) and a
+     default `serve.json` for remote builds, but did not bump the package: npm's latest is still 0.3.0 (published
+     2026-09-30), whose `dist/config.js` has no `extends`, and `serve-cli.js` still requires a `serve.json` in every
+     output directory. *Repro:* `npm view @vuu-ui/portal-build version` gives 0.3.0;
+     `grep -n extends node_modules/.bun/@vuu-ui+portal-build@0.3.0*/node_modules/@vuu-ui/portal-build/dist/config.js`
+     finds nothing. *Proposed:* publish 0.4.0. *No workaround needed:* Trader keeps its two full configs
+     (`apps/portal-host/portal-build.json`, `apps/features/trading/portal-build.json`), which repeat the shared
+     module-federation block; they can move to `extends` once a release exists.
+110. **The compact drop compass's centre can resolve to an edge.** (finos `@vuu-ui/grid-layout`, alpha.30,
+     `drag-drop-next/DropCompass`.) On a panel narrower than 160px the compass is compact (22px tiles, 3px gaps). A
+     pointer in a gap between tiles is not over any tile, so the zone falls back to edge geometry
+     (`getPositionWithinBox`); the panel's exact centre lands in the gap above the centre tile, and the drop splits
+     east instead of stacking. *Repro:* Workspaces › Trader › Add panel, drag Execution quality to the exact centre of
+     the narrow Tape panel: `.vuuDropCompass[data-active-zone]` is `east`, and dropping splits the panel. Over the
+     centre tile itself it is `centre` and stacks. *Proposed:* treat the compass's bounding box as one hit area
+     (nearest tile wins), or no gaps in the compact layout. *No workaround in the repo*; `e2e:palette` aims at the
+     centre tile.

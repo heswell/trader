@@ -117,6 +117,16 @@ describe("portal host", () => {
     ).toHaveLength(13);
 
     const brand = nav.querySelector(".vuuPortalNav-brand") as HTMLElement;
+    const brandLink = brand.querySelector(".vuuPortalNav-brandLink");
+    expect(brandLink?.getAttribute("href")).toBe("/");
+    expect(brandLink?.getAttribute("aria-label")).toBe("Trader home");
+    // the brand's target, `/`, is Trader's landing page
+    expect(window.location.pathname).toBe("/");
+    const home = document.querySelector(".vuuPortalLandingPage .traderHome");
+    expect(home?.querySelector("h1")?.textContent).toBe("Trader");
+    expect(home?.querySelector("a")?.getAttribute("href")).toBe(
+      "/workspaces/trader",
+    );
     expect(brand.querySelector(".traderNavBrand-name")?.textContent).toBe(
       "Trader",
     );
@@ -178,6 +188,12 @@ describe("portal host", () => {
     await wait(300);
     const palette = document.querySelector(".vuuPanelsPalette");
     if (!palette) throw Error("Panels palette not open");
+    // Modules and Recent only: no raw Tables tab
+    expect(
+      [...palette.querySelectorAll(".vuuPanelsPalette-tab")].map(
+        (tab) => tab.textContent,
+      ),
+    ).toEqual(["Modules", "Recent"]);
     const groups = [...palette.querySelectorAll(".vuuPanelsPalette-group")].map(
       (group) => ({
         label: group.querySelector(".vuuPanelsPalette-groupHeader")
@@ -207,6 +223,29 @@ describe("portal host", () => {
         rows: ["Positions", "P&L", "Exposure", "Execution quality"],
       },
     ]);
+  });
+
+  test("a new workspace shows Trader's empty content, which opens the palette", async () => {
+    const nav = await renderApp();
+    await act(async () => entry(nav, "New workspace")?.click());
+    await wait(300);
+    const zone = document.querySelector(".vuuWorkspaceDropZone");
+    if (!zone) throw Error("no empty workspace drop zone");
+    expect(zone.textContent).toContain("Drag a module from the Panels palette");
+    expect(zone.textContent).not.toContain("tables");
+    const open = zone.querySelector<HTMLButtonElement>(
+      ".traderEmptyWorkspace-open",
+    );
+    if (!open) throw Error("no Open Panels palette button");
+    // + New workspace may open the palette itself: close it first
+    for (const close of document.querySelectorAll<HTMLButtonElement>(
+      ".vuuContextPanel [aria-label^='Close']",
+    ))
+      await act(async () => close.click());
+    await wait(300);
+    await act(async () => open.click());
+    await wait(300);
+    expect(document.querySelector(".vuuPanelsPalette")).not.toBeNull();
   });
 
   test("badges show working orders and P&L, and tick", async () => {

@@ -74,3 +74,23 @@ body {
     color: var(--salt-status-error-foreground, #e52135);
   }
 }
+
+.vuuWorkspaceDropZone .traderEmptyWorkspace-open {
+  display: flex;
+  margin: 12px auto 0;
+}
+
+.traderHome {
+  max-width: 480px;
+
+  h1 {
+    font-size: 20px;
+    font-weight: var(--salt-text-fontWeight-strong, 600);
+    margin: 0 0 8px;
+  }
+
+  p {
+    color: var(--salt-content-secondary-foreground);
+    margin: 0 0 12px;
+  }
+}

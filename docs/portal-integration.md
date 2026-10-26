@@ -320,7 +320,11 @@ chrome; there is no `PortalHeader` or `PortalAppSwitcher`.
   (`nav/displayMode`). In Hidden, the edge handle opens the nav as an overlay with a "Keep navigation open" pin.
 - **Brand.** The logo, "Trader", an environment chip when `config.json` has an `environment` string (e.g.
   `"UAT"`), and the notifications bell (`NotificationsIndicator scope="unclaimed"`). In the icon rail, the logo
-  expands the nav and the bell stacks under it.
+  expands the nav and the bell stacks under it. The brand is a link to the portal root `/` (PortalNav `brandHref`,
+  default), with the accessible name "Trader home" (`brandLabel`). The bell and the rail's logo button sit above
+  the link, so in the rail the logo still expands the nav and the link is reached with Tab.
+- **Home.** `/` is PortalShell's landing page (`<PortalLandingPage>` in `App.tsx`, `src/TraderHome.tsx`): a title,
+  one line, and a link to the Trader workspace (`portal-home.png`).
 - **Footer.** `PortalConnectionStatus` labels the portal's own connection "Portal" and the trading server's
   "Trading", each with its impact when down. `PortalNavUserMenu` shows the user's trading account (none for a
   supervisor) and has Saved state… and Log out. Both use the `rail` variant in the icon rail.
@@ -365,7 +369,9 @@ Red follows the instruments grid, green follows the ladder's picker. Every panel
   copy" in the nav and header). Selecting a stack tab is view state: it is saved but is not an edit. **Reset to default** in the header (only on a copy) restores the system document,
   optionally saving the copy as a new workspace first.
 - **New workspace** (nav entry or +) creates an empty named workspace (renamed and deleted from its nav menu). It
-  opens with the Panels palette and the empty-workspace drop zone: drop a module on it, or click one.
+  opens with the Panels palette and Trader's empty-workspace content (PortalShell `workspaces.emptyContent`): the
+  core drop zone with "Drag a module from the Panels palette, or click one to add it." and an **Open Panels
+  palette** button, for when the palette has been closed (`workspace-new.png`).
 - **Per-panel state.** A panel's link group is saved in its item's workspace component state
   (`trading.feature-state`, key `trading.linkGroup.<id>`), so it travels with the workspace and resets with it.
   `defaultLinkGroup` (an item prop) sets a panel's group until the user picks one.
@@ -375,7 +381,7 @@ Red follows the instruments grid, green follows the ladder's picker. Every panel
 - **Panel access.** A panel whose module the user is not sent (e.g. Ticket and Ladder for dave) shows the
   portal's "module not available" message.
 
-### Panels palette (Phase 6 X2)
+### Panels palette (Phase 6 X2, X3)
 
 The workspace header's **Add panel** (`AddPanelButton` from `@vuu-ui/core/portal`, passed as PortalShell
 `workspaces.headerActions`) opens the core `PanelsPalette` in the shell context panel. The host sets
@@ -388,16 +394,19 @@ pinned open.
   chart; Portfolio: Positions, P&L, Exposure, Execution quality), with a search box. Desk overview has no
   `workspace` metadata (it is a page, not a panel), so it is not offered.
 - **Recent tab:** the panels the user added last (portal saved state `workspace/recentPanels`, per browser).
-- **Tables tab: not wanted, but shown.** Trader's tables are reached through its modules (a raw `vuu-table` panel
-  has no ticket actions, link group or formatting), so the palette should offer only Modules and Recent. The core tab
-  set is fixed and the host cannot pass `PanelsPalette` props, so the Tables tab (listing the trading server's
-  tables) is still there, as is the "Drag modules or tables" copy of the empty drop zone (trader upstream issue
-  107). It is harmless: a table added from it is an ordinary `vuu-table` panel.
+- **No Tables tab.** Raw tables are a portal-example dev tool: a `vuu-table` panel has no ticket actions, link
+  group or formatting, and a table Trader needs is packaged as a pre-configured module. The host passes
+  `workspaces.palette = {tabs: ["modules", "recent"]}` (`PALETTE` in `App.tsx`). That is alpha.30's default too; it
+  is explicit so a change of default cannot bring the Tables tab back (`workspace-palette.png`).
 - **Row actions** (core `useOpenPanel()` / `usePortalDragSource()`):
   - **click** follows the click rule: no panel → add; one panel → replace it; more → a prompt *Replace
     <focused>* (R) / *Open as new tab* (T), Esc to cancel (`workspace-palette-prompt.png`);
-  - **drag** places the panel exactly: the drop target ghost (edge to split, centre or header to tab) and a hint bar
-    at the bottom, Esc to cancel. Dragging never prompts (`workspace-palette-drag.png`);
+  - **drag** places the panel exactly. A drop compass over the panel under the pointer shows the target: north,
+    south, east or west splits the panel on that side; the centre stacks the new panel with it as a tab (alpha.30
+    changed this from replacing). On a panel already in a stack the centre is disabled: drop on a tab header to add
+    a tab there. The ghost and the hint bar show the target too, and Esc cancels. Dragging never prompts and never
+    replaces (`workspace-palette-compass.png`, `workspace-palette-drag.png`). To replace a panel, click a module
+    (one panel) or answer R at the click prompt (several panels);
   - **+** adds the panel beside the focused one (or into empty space), never prompting.
 - **Link groups of added panels.** A palette panel is the module's `portalModuleTemplate()` with no props, so it
   joins the module's own default group: red for Watchlist, Orders, Executions, Order ticket, Market depth, Chart and
@@ -478,8 +487,31 @@ stack.
   ticket; the Ladder's picker (green) drives Time & sales (`workspace-palette-linked.png`).
 - **Roles:** dave's and sam's palettes have no Order ticket or Price ladder (`workspace-palette-dave.png`); sam's
   has no Desk overview.
-- **Not available upstream:** the design's drop compass (trader upstream issue 108) and hiding the Tables tab
-  (107).
+- **Not available upstream (then):** the design's drop compass (trader upstream issue 108) and hiding the Tables
+  tab (107); both came in alpha.30, below.
+- `bun run e2e:persistence`, `bun run e2e:resilience` and `bun run e2e:palette` pass.
+
+### Panels palette, compass and home (alpha.30)
+
+Verified with @vuu-ui 4.0.0-alpha.30, vuu-portal 2.3.0, module-admin 2.3.0 and headless Chrome (1600×1000) on
+`bun run e2e:palette`'s own stack, plus a full-stack run as alice, dave and sam.
+
+- **Tabs:** the palette offers Modules and Recent only (`workspace-palette.png`), for alice, dave and sam; dave's
+  and sam's have no Order ticket or Price ladder (`workspace-palette-dave.png`).
+- **Compass:** dragging Exposure over the Instruments panel shows the compass; its south tile splits the panel
+  (`workspace-palette-drag.png`). Over the Orders stack the centre is disabled (`workspace-palette-compass-disabled.png`),
+  and Esc cancels with no change. Execution quality on the centre of Tape (`workspace-palette-compass.png`) stacks
+  with it, replacing nothing (`workspace-palette-stacked.png`).
+- **Brand:** "Trader home" goes to `/` from the workspace and from Watchlist; `/` shows the home page, whose link
+  opens the Trader workspace (`portal-home.png`).
+- **Empty workspace:** a new workspace shows Trader's copy; after the palette is closed, Open Panels palette reopens
+  it (`workspace-new.png`).
+- **Not done:** portal-build `extends` and the default `serve.json` (finos/vuu#2628) are not in a published
+  `@vuu-ui/portal-build` (0.3.0 predates them; trader upstream issue 109), so the two `portal-build.json` files are
+  unchanged.
+- **Upgrading in place:** after the bump, a stale `node_modules` held two peer variants of `@vuu-ui/core`, and the
+  UI tests failed with "no DataProvider has been installed". `rm -rf node_modules */*/node_modules
+  apps/features/*/node_modules && bun install` fixes it.
 - `bun run e2e:persistence`, `bun run e2e:resilience` and `bun run e2e:palette` pass.
 
 ### PortalNav (alpha.25)

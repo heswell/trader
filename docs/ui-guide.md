@@ -228,7 +228,7 @@ const { selectedInstrument, selectionSource, setSelectedInstrument, linkGroup } 
   positions) and saves the user's change per item as above. Ladder and Tape show their own instrument picker by
   default (`showInstrumentPicker`, default `true`), so a lone Ladder or Tape can choose an instrument; a workspace
   document that wants a follower sets `showInstrumentPicker: false` (the Trader Tape). See
-  [portal-integration.md](portal-integration.md#panels-palette-phase-6-x2).
+  [portal-integration.md](portal-integration.md#panels-palette-phase-6-x2-x3).
 
 **MF features (Phase 4).** In each feature's `portal-build.json` `shared` block, add `@heswell/trading-ui`,
 `react`, `react-dom` and `@vuu-ui/vuu-layout` as **singletons**. trading-ui keeps the React context and the
