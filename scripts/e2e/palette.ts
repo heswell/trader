@@ -12,12 +12,15 @@
  *   3. clicking a row with more than one panel prompts: Esc cancels, T opens
  *      it as a new tab,
  *   4. dragging a row shows the drop compass: a panel edge splits (hint bar,
- *      no prompt), the centre stacks it as a tab, and the centre is disabled
- *      on a panel already in a stack,
+ *      no prompt), the centre stacks it as a tab (on a narrow panel's compact
+ *      compass, a drop in the gap around the centre tile too), and the centre
+ *      (gap included) is disabled on a panel already in a stack,
  *   5. the added panels survive a reload and are listed under Recent,
  *   6. Reset to default restores the eight default panels,
  *   7. the Trader brand goes to the portal root, from a workspace and from a
- *      module page.
+ *      module page,
+ *   8. the nav footer's hover is neutral, not the theme's coral: the user
+ *      menu trigger, its items and the connection status (upstream 100).
  *  alice, + New workspace: Trader's empty content (its button opens the
  *   palette), click adds (0 panels), click replaces (1 panel), + adds; a
  *   palette Time & sales shows its picker.
@@ -131,6 +134,28 @@ const compassState = (page: Page) =>
           ),
         }
       : undefined;
+  }, COMPASS);
+
+/**
+ * A point in the gap between the compass's centre and north tiles (the zone
+ * resolved to an edge there before @vuu-ui alpha.31, upstream 110).
+ */
+const compassGapPoint = (page: Page) =>
+  page.evaluate((selector) => {
+    const tile = (zone: string) =>
+      document
+        .querySelector(`${selector} [data-compass-zone=${zone}]`)
+        ?.getBoundingClientRect();
+    const centre = tile("centre");
+    const north = tile("north");
+    const compass = document.querySelector(selector);
+    if (!centre || !north || !compass) return undefined;
+    return {
+      x: centre.left + centre.width / 2,
+      y: (north.bottom + centre.top) / 2,
+      gap: centre.top - north.bottom,
+      compact: compass.classList.contains("vuuDropCompass-compact"),
+    };
   }, COMPASS);
 
 /** Opens the palette unless it is open (or opening: a new workspace opens it). */
@@ -358,6 +383,7 @@ const main = async () => {
       });
     const before = await itemCount(page);
     let centreOfStack: Awaited<ReturnType<typeof compassState>>;
+    let gapOfStack: Awaited<ReturnType<typeof compassState>>;
     await dragRowTo(
       page,
       "Positions",
@@ -365,13 +391,28 @@ const main = async () => {
       async () => {
         centreOfStack = await compassState(page);
         await shot("compass-disabled");
+        const gap = await compassGapPoint(page);
+        if (gap) {
+          await page.mouse.move(gap.x, gap.y, { steps: 4 });
+          await Bun.sleep(300);
+          gapOfStack = await compassState(page);
+        }
         await page.keyboard.press("Escape");
       },
     );
-    log(`compass over a stack: ${JSON.stringify(centreOfStack)}`);
+    log(
+      `compass over a stack: ${JSON.stringify(centreOfStack)}; gap: ${JSON.stringify(gapOfStack)}`,
+    );
     check(
       centreOfStack?.centreDisabled === true,
       "the compass centre is disabled on a panel already in a stack",
+    );
+    check(
+      gapOfStack?.centreDisabled === true &&
+        !["north", "south", "east", "west"].includes(
+          gapOfStack.activeZone ?? "",
+        ),
+      "the gap around a stacked panel's (disabled) centre does not resolve to an edge",
     );
     await Bun.sleep(500);
     check(
@@ -379,37 +420,32 @@ const main = async () => {
       "Esc cancels the drag (no change)",
     );
 
-    // the centre stacks the panel as a tab (alpha.30: no longer replaces)
+    // the centre stacks the panel as a tab (alpha.30: no longer replaces).
+    // Tape is narrow, so its compass is compact: the gap around the centre
+    // tile resolves to the centre (alpha.31, 110), and the drop is made there.
     await openPalette(page);
     const tapeBox = await panelBox(page, "Tape");
     let centre: Awaited<ReturnType<typeof compassState>>;
+    let gap: Awaited<ReturnType<typeof compassGapPoint>>;
     await dragRowTo(
       page,
       "Execution quality",
       { x: tapeBox.x + tapeBox.width / 2, y: tapeBox.y + tapeBox.height / 2 },
       async () => {
-        // a narrow panel has a compact compass: aim at its centre tile
-        const tile = await page
-          .locator(`${COMPASS} [data-compass-zone=centre]`)
-          .boundingBox();
-        if (tile) {
-          await page.mouse.move(
-            tile.x + tile.width / 2,
-            tile.y + tile.height / 2,
-            {
-              steps: 4,
-            },
-          );
+        gap = await compassGapPoint(page);
+        if (gap) {
+          await page.mouse.move(gap.x, gap.y, { steps: 4 });
           await Bun.sleep(300);
         }
         centre = await compassState(page);
         await shot("compass-centre");
       },
     );
-    log(`compass centre: ${JSON.stringify(centre)}`);
+    log(`compass gap ${JSON.stringify(gap)}: ${JSON.stringify(centre)}`);
+    check(gap?.compact === true, "a narrow panel has a compact compass");
     check(
       centre?.activeZone === "centre" && !centre.centreDisabled,
-      "the compass shows the centre over a single panel",
+      "the gap around the compact compass's centre tile resolves to the centre",
     );
     await waitItems(page, "centre Execution quality", DEFAULT_PANELS + 4);
     const stackTabs = await page
@@ -497,6 +533,43 @@ const main = async () => {
     );
     check(home >= 0, "the portal root shows Trader's home page");
     await shot("root");
+
+    // 8. the nav footer hovers are neutral (alpha.31, 100)
+    const hoverBackground = async (selector: string) => {
+      const el = page.locator(selector).first();
+      await el.hover();
+      await Bun.sleep(400);
+      return el.evaluate((e) => getComputedStyle(e).backgroundColor);
+    };
+    const isNeutral = (colour: string) => {
+      const [r, g, b, a = 1] = (colour.match(/[\d.]+/g) ?? []).map(Number);
+      // coral is rgb(243, 120, 128); neutral means grey (r = g = b) or clear
+      return a === 0 || (r === g && g === b);
+    };
+    const footer: Record<string, string> = {};
+    footer.status = await hoverBackground(".vuuPortalConnectionStatus-trigger");
+    footer.trigger = await hoverBackground(".vuuPortalNavUserMenu-trigger");
+    await page.locator(".vuuPortalNavUserMenu-trigger").click();
+    await page.locator(".vuuPortalNavUserMenu-panel").waitFor();
+    footer.open = await page
+      .locator(".vuuPortalNavUserMenu-trigger")
+      .evaluate((e) => getComputedStyle(e).backgroundColor);
+    footer.item = await hoverBackground(
+      '.vuuPortalNavUserMenu-item[role=menuitem]:not([aria-disabled="true"])',
+    );
+    await shot("footer-hover");
+    await page.keyboard.press("Escape");
+    log(`nav footer hover: ${JSON.stringify(footer)}`);
+    check(
+      Object.values(footer).every(
+        (c) => c !== "rgb(243, 120, 128)" && isNeutral(c),
+      ),
+      "the nav footer hover / open backgrounds are neutral, not coral",
+    );
+    check(
+      footer.trigger !== "rgba(0, 0, 0, 0)",
+      "the user menu trigger has a visible hover background",
+    );
 
     // ---- alice: + New workspace ---------------------------------------------
     await page

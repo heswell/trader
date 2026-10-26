@@ -583,14 +583,14 @@ See [components/charts.md](components/charts.md). Bumping every `@vuu-ui/*` pack
     `@vuu-ui` overrides were removed.
 99. ~~**`@heswell/vuu-portal@2.2.1` needs a `@heswell/module-admin` that is not published.**~~ *Resolved:*
     module-admin 2.1.0 exports `splitNotificationTopics`, and vuu-portal 2.2.3 depends on it.
-100. **The vuu theme makes the nav footer's hover / open state coral.** (finos `@vuu-ui/vuu-theme` and
-     `@vuu-ui/core` portal, 4.0.0-alpha.23, still in alpha.25.) `PortalNavUserMenu` and `PortalConnectionStatus` use
+100. ~~**The vuu theme makes the nav footer's hover / open state coral.**~~ *Resolved in @vuu-ui 4.0.0-alpha.31
+     (finos/vuu#2630):* `PortalNavUserMenu` (trigger and items) and `PortalConnectionStatus` now use the neutral nav
+     hover token `--salt-navigable-background-hover`. Verified full-stack as alice, dave and sam: hovered and open
+     backgrounds are `rgba(0, 0, 0, 0.05)`; `bun run e2e:palette` checks it. Trader had no workaround. (Was: finos
+     `@vuu-ui/vuu-theme` and `@vuu-ui/core` portal, alpha.23 to alpha.30: both used
      `--salt-actionable-subtle-background-hover` for a hovered or open trigger, which `vuu-theme`
      (`css/next/characteristics/actionable.css`) maps to `--vuu-color-coral`, so the user row and the rail status
-     button turn bright coral instead of the subtle grey in the design. A neutral token (e.g.
-     `--salt-container-primary-background-hover`) would fix it. *No workaround in the repo.* Still in alpha.27, and
-     re-checked in alpha.30: `actionable.css` still maps the token to `--vuu-color-coral` and both footer components
-     still use it.
+     button turned bright coral, `rgb(243, 120, 128)`, instead of the subtle grey in the design.)
 
 ## Found in Phase 6 X1 (workspaces)
 
@@ -688,15 +688,16 @@ Found moving to @vuu-ui 4.0.0-alpha.30 (`docs/portal-integration.md`, "Panels pa
      MF manifests are unchanged for the host and all 14 remotes. Each remote's output now also has the default
      `serve.json`. Trader had no `public/serve.json` copies to remove; `scripts/stack/serve.ts` serves the remotes
      itself.
-110. **The compact drop compass's centre can resolve to an edge.** (finos `@vuu-ui/grid-layout`, alpha.30,
-     `drag-drop-next/DropCompass`.) On a panel narrower than 160px the compass is compact (22px tiles, 3px gaps). A
-     pointer in a gap between tiles is not over any tile, so the zone falls back to edge geometry
-     (`getPositionWithinBox`); the panel's exact centre lands in the gap above the centre tile, and the drop splits
-     east instead of stacking. *Repro:* Workspaces › Trader › Add panel, drag Execution quality to the exact centre of
-     the narrow Tape panel: `.vuuDropCompass[data-active-zone]` is `east`, and dropping splits the panel. Over the
-     centre tile itself it is `centre` and stacks. *Proposed:* treat the compass's bounding box as one hit area
-     (nearest tile wins), or no gaps in the compact layout. *No workaround in the repo*; `e2e:palette` aims at the
-     centre tile.
+110. ~~**The compact drop compass's centre can resolve to an edge.**~~ *Resolved in @vuu-ui 4.0.0-alpha.31
+     (finos/vuu#2630):* a pointer on the centre tile or in the gap around it resolves to the centre (stack as a tab),
+     on compact and regular compasses; on a panel already in a stack the centre, gap included, stays disabled.
+     `bun run e2e:palette` now drops Execution quality in the gap between Tape's compact centre and north tiles and
+     checks that it stacks, and checks that the gap over the Orders stack is not an edge. Trader had no workaround.
+     (Was: finos `@vuu-ui/grid-layout`, alpha.30, `drag-drop-next/DropCompass`. On a panel narrower than 160px the
+     compass is compact (22px tiles, 3px gaps). A pointer in a gap between tiles was not over any tile, so the zone
+     fell back to edge geometry (`getPositionWithinBox`) and the drop split the panel instead of stacking. *Repro:*
+     Workspaces › Trader › Add panel, drag Execution quality into the gap above the centre tile of the narrow Tape
+     panel: `.vuuDropCompass[data-active-zone]` was `east`.)
 
 ## Found in the portal-build 0.4.0 upgrade
 
