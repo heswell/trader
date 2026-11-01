@@ -196,8 +196,8 @@ describe("portal host", () => {
     ).toEqual(["Modules", "Recent"]);
     const groups = [...palette.querySelectorAll(".vuuPanelsPalette-group")].map(
       (group) => ({
-        label: group.querySelector(".vuuPanelsPalette-groupHeader")
-          ?.textContent,
+        // vuu-ui 5 headers also hold a count (-groupCount); read the label only
+        label: group.querySelector(".vuuPanelsPalette-groupLabel")?.textContent,
         rows: [...group.querySelectorAll(".vuuPanelsPalette-label")].map(
           (label) => label.textContent,
         ),
