@@ -1,7 +1,12 @@
 import { useInstrumentLinkBus } from "../../instrument-context/InstrumentContext";
 import type { LinkGroupId } from "../../instrument-context/linkGroups";
 import type { SelectedInstrument } from "../../instrument-context/selectedInstrument";
-import { Button, ToggleButtonGroup } from "@salt-ds/core";
+import {
+  Button,
+  ToggleButtonGroup,
+  useFloatingComponent,
+  useFloatingUI,
+} from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
 import cx from "clsx";
@@ -117,6 +122,14 @@ export const ChannelPicker = ({
 
   const [searchOpen, setSearchOpen] = useState(false);
   const searchId = useId();
+  // The search floats in a portal: a title bar slot may clip its content
+  // (overflow: hidden), which would hide the dropdown and let the focused
+  // input scroll the strip out of view.
+  const { Component: FloatingComponent } = useFloatingComponent();
+  const { elements, floating, reference, strategy, x, y } = useFloatingUI({
+    open: searchOpen,
+    placement: "bottom",
+  });
   const segmentRefs = useRef(new Map<LinkGroupId, HTMLButtonElement>());
   const activeRef = useRef(activeChannel);
   activeRef.current = activeChannel;
@@ -139,11 +152,17 @@ export const ChannelPicker = ({
   useEffect(() => {
     if (!searchOpen) return;
     const onPointerDown = (evt: PointerEvent) => {
-      if (!rootRef.current?.contains(evt.target as Node)) setSearchOpen(false);
+      const target = evt.target as Node;
+      if (
+        !rootRef.current?.contains(target) &&
+        !elements.floating?.contains(target)
+      ) {
+        setSearchOpen(false);
+      }
     };
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [searchOpen]);
+  }, [searchOpen, elements.floating]);
 
   const selectChannel = (channel: LinkGroupId) => {
     if (channel === activeChannel) {
@@ -238,6 +257,7 @@ export const ChannelPicker = ({
         className={cx(`${classBase}-strip`, {
           [`${classBase}-searchOpen`]: searchOpen,
         })}
+        ref={reference}
       >
         {renderStrip(density)}
       </div>
@@ -251,17 +271,26 @@ export const ChannelPicker = ({
           </div>
         </div>
       ) : null}
-      {searchOpen && active ? (
-        <InstrumentSearch
-          channel={active}
-          channels={channels}
-          id={searchId}
-          onClose={() => closeSearch(true)}
-          onCycleChannel={cycleChannel}
-          onPick={pickInstrument}
-          selections={selections}
-        />
-      ) : null}
+      <FloatingComponent
+        className={`${classBase}-popup`}
+        left={x ?? 0}
+        open={searchOpen && active !== undefined}
+        position={strategy}
+        ref={floating}
+        top={y ?? 0}
+      >
+        {active ? (
+          <InstrumentSearch
+            channel={active}
+            channels={channels}
+            id={searchId}
+            onClose={() => closeSearch(true)}
+            onCycleChannel={cycleChannel}
+            onPick={pickInstrument}
+            selections={selections}
+          />
+        ) : null}
+      </FloatingComponent>
     </div>
   );
 };

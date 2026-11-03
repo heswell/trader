@@ -281,13 +281,14 @@
     0 18px 48px rgb(0 0 0 / 0.16),
     0 2px 6px rgb(0 0 0 / 0.06);
   color: var(--salt-content-primary-foreground);
-  left: 50%;
   overflow: hidden;
-  position: absolute;
-  top: calc(100% + 8px);
-  transform: translateX(-50%);
   width: min(720px, calc(100vw - 32px));
-  z-index: 100;
+}
+
+/* The floating layer the search renders in (a portal below the strip). */
+.tradingChannelPicker-popup {
+  padding-top: 8px;
+  z-index: var(--salt-zIndex-flyover, 1500);
 }
 
 .tradingInstrumentSearch-searchBar {

@@ -1,4 +1,4 @@
-import { TradeTape } from "@heswell/trading-ui";
+import { ACTIVE_LINK_GROUP, TradeTape } from "@heswell/trading-ui";
 import {
   FeatureFrame,
   fillStyle,
@@ -9,7 +9,7 @@ import {
 } from "./shared";
 
 const Tape = ({
-  defaultLinkGroup = "green",
+  defaultLinkGroup = ACTIVE_LINK_GROUP,
   showInstrumentPicker = true,
 }: PickerFeatureProps) => {
   const { followsActive, linkGroup, setLinkGroup } = useFeatureLinkGroup(

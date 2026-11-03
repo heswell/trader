@@ -5,6 +5,7 @@ import {
   type LinkGroupId,
   TradingFeatureRoot,
   useComponentLinkGroup,
+  useOptionalWorkspaceChannel,
   useSelectedAccount,
 } from "@heswell/trading-ui";
 import { useVuuAuthorizations } from "@vuu-ui/core";
@@ -96,7 +97,9 @@ export interface PickerFeatureProps extends LinkedFeatureProps {
  * the component agree. Pass `linkGroup` / `onLinkGroupChange` to the
  * component. While the panel follows the workspace's active channel
  * (`followsActive`), the title-bar ChannelPicker sets its instrument, so
- * the feature drops its toolbar picker.
+ * the feature drops its toolbar picker. Outside a workspace channel (no
+ * ChannelPicker), `active` falls back to the default group and the
+ * toolbar picker stays.
  */
 export const useFeatureLinkGroup = (
   persistKey: string,
@@ -106,8 +109,9 @@ export const useFeatureLinkGroup = (
     defaultLinkGroup,
     persistKey,
   });
+  const inWorkspace = useOptionalWorkspaceChannel() !== undefined;
   return {
-    followsActive: linkGroup === ACTIVE_LINK_GROUP,
+    followsActive: inWorkspace && linkGroup === ACTIVE_LINK_GROUP,
     linkGroup,
     setLinkGroup,
   };

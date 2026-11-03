@@ -1,4 +1,4 @@
-import { OrderTicketPanel } from "@heswell/trading-ui";
+import { ACTIVE_LINK_GROUP, OrderTicketPanel } from "@heswell/trading-ui";
 import {
   FeatureFrame,
   fillStyle,
@@ -11,7 +11,9 @@ import {
  * link group and is the launch target for Buy / Sell anywhere in the window
  * (e.g. the Watchlist panel of a workspace).
  */
-const Ticket = ({ defaultLinkGroup = "red" }: LinkedFeatureProps) => (
+const Ticket = ({
+  defaultLinkGroup = ACTIVE_LINK_GROUP,
+}: LinkedFeatureProps) => (
   <FeatureFrame>
     <OrderTicketPanel
       defaultLinkGroup={defaultLinkGroup}

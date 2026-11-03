@@ -66,10 +66,10 @@ trader portal shows it in the workspace header; showcase: `#channel-picker-works
   Components pinned to a colour keep theirs. Inside a provider the `LinkGroupSelector` offers "Active channel" first;
   its swatch shows the active channel's colour with a ring.
 - **Portal wiring.** `apps/portal-host` wraps `PortalShell` in `PortalWorkspaceChannel` (the active channel is kept
-  per portal in `localStorage`) and renders `WorkspaceChannelPicker` (the picker on the trading server's connection)
-  in the workspace header. `@heswell/trading-ui` is a shared module-federation singleton, so the remote panels see
-  the host's provider. The trader workspace puts the ticket, chart, depth, depth chart, ladder and tape in `active`
-  (`defaultLinkGroup: "active"`); blotters keep their colours. The Ladder and Tape hide their toolbar instrument
+  per portal in `localStorage`) and centres `WorkspaceChannelPicker` (the picker on the trading server's connection)
+  in the workspace header (`workspaces.headerCenter`). `@heswell/trading-ui` is a shared module-federation singleton, so the remote panels see
+  the host's provider. The ticket, chart, depth, depth chart, ladder and tape features default to `active` (so do layouts
+  saved before, and panels added from the palette); blotters keep their colours. The Ladder and Tape hide their toolbar instrument
   picker while they follow the active channel.
 - Built on Salt: the channels are a `ToggleButtonGroup` (radios: ←→ move between them, one tab stop) of
   `ToggleButton`s, then a search `Button`, styled through Salt's `--toggleButton-*` / `--saltButton-*` variables

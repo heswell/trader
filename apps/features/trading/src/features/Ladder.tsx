@@ -1,4 +1,4 @@
-import { PriceLadder } from "@heswell/trading-ui";
+import { ACTIVE_LINK_GROUP, PriceLadder } from "@heswell/trading-ui";
 import {
   FeatureFrame,
   fillStyle,
@@ -11,7 +11,7 @@ import {
 
 /** Click-to-trade price ladder (module gated by trading-execute). */
 const Ladder = ({
-  defaultLinkGroup = "green",
+  defaultLinkGroup = ACTIVE_LINK_GROUP,
   showInstrumentPicker = true,
 }: PickerFeatureProps) => {
   const { followsActive, linkGroup, setLinkGroup } = useFeatureLinkGroup(
