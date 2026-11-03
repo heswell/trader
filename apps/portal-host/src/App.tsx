@@ -48,23 +48,16 @@ export const EMPTY_WORKSPACE: WorkspaceEmptyContent = ({ openPalette }) => (
 
 /**
  * Portal workspaces: the Trader system workspace and the user's own, made
- * of `portal-module` items. The workspace header holds the channel picker
- * (panels in the `active` link group follow its channel) and "Add panel",
- * which opens the Panels palette (the modules with `workspace` metadata) in
- * the shell's context panel.
- *
- * TODO: move the picker to the header's centre slot (`headerCenter`) once a
- * vuu-ui release has it; until then it sits with the actions.
+ * of `portal-module` items. The workspace header centres the channel picker
+ * (panels in the `active` link group follow its channel); its actions hold
+ * "Add panel", which opens the Panels palette (the modules with `workspace`
+ * metadata) in the shell's context panel.
  */
 export const WORKSPACES: PortalWorkspacesOptions = {
   componentRenderers: registries.renderers,
   emptyContent: EMPTY_WORKSPACE,
-  headerActions: (
-    <>
-      <WorkspaceChannelPicker />
-      <AddPanelIconButton />
-    </>
-  ),
+  headerActions: <AddPanelIconButton />,
+  headerCenter: <WorkspaceChannelPicker />,
   palette: PALETTE,
   settingsCodecs: registries.settingsCodecs,
   systemWorkspaces: SYSTEM_WORKSPACES,
