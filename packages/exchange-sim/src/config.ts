@@ -71,6 +71,15 @@ export interface ExchangeSimConfig {
   bookSampleIntervalMs: number;
   /** Samples kept per instrument (oldest deleted). */
   bookSampleHistory: number;
+  /** 1 = publish the L3 `bookOrders` table (one row per resting order); 0 = off. */
+  bookOrders: number;
+  /**
+   * 1 = publish every L3 event to the `bookEvents` tape; 0 = off. Roughly
+   * doubles table updates at the default load.
+   */
+  bookEvents: number;
+  /** `bookEvents` rows kept, across all instruments (oldest deleted). */
+  bookEventsCapacity: number;
 }
 
 export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
@@ -100,6 +109,9 @@ export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
   barBackfill: 1,
   bookSampleIntervalMs: 1_000,
   bookSampleHistory: 300,
+  bookOrders: 1,
+  bookEvents: 0,
+  bookEventsCapacity: 50_000,
 });
 
 /** Structural subset of service-utils Config. */
@@ -177,13 +189,19 @@ export const validateConfig = (config: ExchangeSimConfig) => {
   ] as const) {
     if (!(config[key] >= 0)) throw Error(`exchangeSim.${key} must be >= 0`);
   }
-  for (const key of ["barHistory", "bookSampleHistory"] as const) {
+  for (const key of [
+    "barHistory",
+    "bookSampleHistory",
+    "bookEventsCapacity",
+  ] as const) {
     if (!(Number.isInteger(config[key]) && config[key] > 0)) {
       throw Error(`exchangeSim.${key} must be a positive integer`);
     }
   }
-  if (config.barBackfill !== 0 && config.barBackfill !== 1) {
-    throw Error("exchangeSim.barBackfill must be 0 or 1");
+  for (const key of ["barBackfill", "bookOrders", "bookEvents"] as const) {
+    if (config[key] !== 0 && config[key] !== 1) {
+      throw Error(`exchangeSim.${key} must be 0 or 1`);
+    }
   }
   const intervals = barIntervalList(config.barIntervals);
   if (new Set(intervals).size !== intervals.length) {

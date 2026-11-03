@@ -21,7 +21,7 @@ Imports: `@heswell/trading-test-data`, `@heswell/trading-test-data/react`. 18 ex
 
 #### createTradingTestData
 
-*function* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L179)
+*function* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L181)
 
 Create the EXCHANGE and OMS engine-local modules, backed by the real
 
@@ -41,7 +41,7 @@ const EXCHANGE_TABLE_NAMES: readonly ExchangeTableName[]
 
 #### LOCAL_EXCHANGE_DEFAULTS
 
-*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L79)
+*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L81)
 
 Browser defaults: lighter than the server (50 instruments, 200 bars per
 series) so the showcase stays responsive; everything else is the server
@@ -53,7 +53,7 @@ const LOCAL_EXCHANGE_DEFAULTS: Partial<ExchangeSimConfig>
 
 #### OMS_TABLE_NAMES
 
-*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L63)
+*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L65)
 
 ```ts
 const OMS_TABLE_NAMES: readonly OmsLocalTableName[]
@@ -63,7 +63,7 @@ const OMS_TABLE_NAMES: readonly OmsLocalTableName[]
 
 #### TradingTestData
 
-*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L107)
+*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L109)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -83,7 +83,7 @@ const OMS_TABLE_NAMES: readonly OmsLocalTableName[]
 
 #### TradingTestDataOptions
 
-*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L84)
+*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L86)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |

@@ -8,6 +8,7 @@ import {
   type Trade,
 } from "@heswell/hft-limit-order-book";
 import {
+  BookEventType,
   Side,
   tickScheduleOf,
   type TickSchedule,
@@ -48,6 +49,34 @@ export interface SessionStats {
 /** Called for every trade before fills are routed; returns the exchange trade id. */
 export type BookTradeListener = (book: InstrumentBook, trade: Trade) => string;
 
+/** One order-by-order (L3) change to the resting book. */
+export interface BookEvent {
+  /** Per-book event sequence: gap-free, starts at 1. */
+  seq: number;
+  type: BookEventType;
+  orderId: string;
+  /** Side of the resting order. */
+  side: Side;
+  price: number;
+  /** ADD: shown size. EXECUTE: traded size. REDUCE / DELETE: size removed. */
+  size: number;
+  /** Open size left after the event (0 = gone from the book). */
+  leaves: number;
+  /** EXECUTE only; "" otherwise. */
+  tradeId: string;
+  timestamp: number;
+}
+
+/**
+ * Receives the book's L3 events. The event object is reused: it is only
+ * valid during the call.
+ */
+export interface BookEventSink {
+  onBookEvent(book: InstrumentBook, event: Readonly<BookEvent>): void;
+  /** The whole book was replaced (`restore`); no events describe the change. */
+  onBookReset(book: InstrumentBook): void;
+}
+
 /**
  * One live order book plus the state that hangs off it: fair-value model,
  * trading phase, session statistics and fill routing. All order entry for
@@ -75,7 +104,30 @@ export class InstrumentBook {
   events = 0;
   /** Set on any change; cleared by the publisher. */
   dirty = true;
+  /**
+   * L3 event listener. Events are only built while one is set, so the
+   * matching path costs nothing extra without it.
+   */
+  bookEvents: BookEventSink | undefined;
   readonly #sinks = new Map<string, FillSink>();
+  #eventSeq = 0;
+  readonly #event: BookEvent = {
+    seq: 0,
+    type: BookEventType.Add,
+    orderId: "",
+    side: Side.Buy,
+    price: 0,
+    size: 0,
+    leaves: 0,
+    tradeId: "",
+    timestamp: 0,
+  };
+  /**
+   * An amend's DELETE, held until we know the amend loses priority. It is
+   * sent before the amend's first trade, or after the amend if it re-queued
+   * without trading.
+   */
+  #pendingDelete: ILimitOrder | undefined;
 
   constructor(
     readonly instrument: InstrumentDef,
@@ -143,6 +195,21 @@ export class InstrumentBook {
     for (const order of orders) this.#sinks.set(order.id, sink);
     if (stats) Object.assign(this.stats, stats);
     this.dirty = true;
+    this.bookEvents?.onBookReset(this);
+  }
+
+  /** Last L3 event seq (0 = none yet). */
+  get eventSeq() {
+    return this.#eventSeq;
+  }
+
+  /** Every resting order, bids best first then asks best first, each level in time priority. */
+  restingOrders(): ILimitOrder[] {
+    const { bids, asks } = this.book.snapshot();
+    const orders: ILimitOrder[] = [];
+    for (const level of bids) orders.push(...level.orders);
+    for (const level of asks) orders.push(...level.orders);
+    return orders;
   }
 
   get seq() {
@@ -168,8 +235,10 @@ export class InstrumentBook {
     if (sink) this.#sinks.set(options.id, sink);
     const result = this.book.limit(options);
     this.#afterOp(result);
-    if (sink && this.book.order(options.id) === undefined) {
-      this.#sinks.delete(options.id);
+    if (sink || this.bookEvents) {
+      const resting = this.book.order(options.id);
+      if (sink && resting === undefined) this.#sinks.delete(options.id);
+      if (resting && this.bookEvents) this.#emitAdd(resting);
     }
     return result;
   }
@@ -188,22 +257,116 @@ export class InstrumentBook {
    * re-queues it at the back of the level and may trade if it crosses.
    */
   modify(id: string, update: OrderUpdate) {
+    const before = this.bookEvents ? this.book.order(id) : undefined;
+    this.#pendingDelete = before;
     const result = this.book.modify(id, update);
     this.#afterOp(result);
-    if (this.#sinks.has(id) && this.book.order(id) === undefined) {
-      this.#sinks.delete(id);
+    if (this.#sinks.has(id) || before) {
+      const after = this.book.order(id);
+      if (after === undefined) this.#sinks.delete(id);
+      if (before) this.#emitAmend(before, after, result);
     }
     return result;
   }
 
   cancel(id: string) {
+    const before = this.bookEvents ? this.book.order(id) : undefined;
     const result = this.book.cancel(id);
     this.#sinks.delete(id);
     if (result) {
       this.events++;
       this.dirty = true;
+      if (before) this.#emitRemoved(BookEventType.Delete, before, 0);
     }
     return result;
+  }
+
+  // ------------------------------------------------------------ L3 events
+
+  #emit(
+    type: BookEventType,
+    orderId: string,
+    side: BookSide,
+    price: number,
+    size: number,
+    leaves: number,
+    tradeId = "",
+  ) {
+    const sink = this.bookEvents;
+    if (!sink) return;
+    const event = this.#event;
+    event.seq = ++this.#eventSeq;
+    event.type = type;
+    event.orderId = orderId;
+    event.side = fromBookSide(side);
+    event.price = price;
+    event.size = size;
+    event.leaves = leaves;
+    event.tradeId = tradeId;
+    event.timestamp = this.clock();
+    sink.onBookEvent(this, event);
+  }
+
+  #emitAdd(order: ILimitOrder) {
+    this.#emit(
+      BookEventType.Add,
+      order.id,
+      order.side,
+      order.price,
+      order.size,
+      order.size,
+    );
+  }
+
+  /** DELETE (leaves 0) or REDUCE of `before`, down to `leaves`. */
+  #emitRemoved(type: BookEventType, before: ILimitOrder, leaves: number) {
+    this.#emit(
+      type,
+      before.id,
+      before.side,
+      before.price,
+      before.size - leaves,
+      leaves,
+    );
+  }
+
+  #flushPendingDelete() {
+    const pending = this.#pendingDelete;
+    if (pending === undefined) return;
+    this.#pendingDelete = undefined;
+    this.#emitRemoved(BookEventType.Delete, pending, 0);
+  }
+
+  /**
+   * A size decrease at the same price is a REDUCE (or a DELETE if nothing
+   * is left). Losing priority is a DELETE, any EXECUTEs if the new price
+   * crosses (the DELETE is sent before them, from #handleTrade), then an ADD
+   * if the order still rests. A rejected amend sends nothing.
+   */
+  #emitAmend(
+    before: ILimitOrder,
+    after: ILimitOrder | undefined,
+    result: IProcessOrder,
+  ) {
+    const deleteSent = this.#pendingDelete === undefined;
+    if (result.err !== null && !deleteSent) {
+      this.#pendingDelete = undefined;
+      return;
+    }
+    if (deleteSent || result.priorityKept === false) {
+      this.#flushPendingDelete();
+      if (after) this.#emitAdd(after);
+      return;
+    }
+    this.#pendingDelete = undefined;
+    const leaves = after?.size ?? 0;
+    if (leaves < before.size) {
+      this.#emitRemoved(
+        leaves > 0 ? BookEventType.Reduce : BookEventType.Delete,
+        before,
+        leaves,
+      );
+    }
   }
 
   #afterOp(result: IProcessOrder) {
@@ -232,6 +395,21 @@ export class InstrumentBook {
     const tradeId =
       this.onTradeListener?.(this, trade) ?? `${this.ric}:${trade.tradeId}`;
     const { makerOrderId, takerOrderId } = trade;
+    if (this.bookEvents) {
+      // An amend that crossed: its DELETE goes before its executions.
+      this.#flushPendingDelete();
+      // onTrade fires after the whole operation, so the maker's size is final.
+      const leaves = this.book.order(makerOrderId)?.size ?? 0;
+      this.#emit(
+        BookEventType.Execute,
+        makerOrderId,
+        trade.side === BookSide.BUY ? BookSide.SELL : BookSide.BUY,
+        price,
+        size,
+        leaves,
+        tradeId,
+      );
+    }
     this.#sinks.get(makerOrderId)?.onFill(makerOrderId, trade, true, tradeId);
     this.#sinks.get(takerOrderId)?.onFill(takerOrderId, trade, false, tradeId);
   }

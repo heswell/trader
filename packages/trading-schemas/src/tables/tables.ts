@@ -132,6 +132,88 @@ export const trades = defineTable({
   ],
 });
 
+export const bookOrders = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "bookOrders",
+  keyField: "orderId",
+  description:
+    "Order-by-order (L3) book: one row per resting order, anonymous. Sort by price, then entryTime, for queue order.",
+  columns: [
+    {
+      name: "orderId",
+      dataType: "string",
+      description:
+        "Exchange order id (matches childOrders.exchangeOrderId for OMS orders).",
+    },
+    { name: "ric", dataType: "string" },
+    { name: "side", dataType: "string", description: "Side" },
+    { name: "price", dataType: "double" },
+    { name: "size", dataType: "long", description: "Open (resting) size." },
+    {
+      name: "entryTime",
+      dataType: "epochtimestamp",
+      description:
+        "Time the order took its place in the queue (reset when an amend loses priority).",
+    },
+    {
+      name: "seq",
+      dataType: "long",
+      description: "bookEvents seq of the order's last change.",
+    },
+  ],
+  links: [
+    { fromColumn: "ric", toTable: "prices", toColumn: "ric" },
+    { fromColumn: "ric", toTable: "instrumentPrices", toColumn: "ric" },
+  ],
+});
+
+export const bookEvents = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "bookEvents",
+  keyField: "id",
+  description:
+    "Order-by-order (L3) event tape, ring buffered; key 'ric|seq' (see bookEventKey). Empty unless exchangeSim.bookEvents is on.",
+  columns: [
+    { name: "id", dataType: "string" },
+    { name: "ric", dataType: "string" },
+    {
+      name: "seq",
+      dataType: "long",
+      description: "Per-instrument event sequence: gap-free, starts at 1.",
+    },
+    { name: "type", dataType: "string", description: "BookEventType" },
+    { name: "orderId", dataType: "string" },
+    {
+      name: "side",
+      dataType: "string",
+      description: "Side of the resting order.",
+    },
+    { name: "price", dataType: "double" },
+    {
+      name: "size",
+      dataType: "long",
+      description:
+        "ADD: shown size. EXECUTE: traded size. REDUCE / DELETE: size removed.",
+    },
+    {
+      name: "leaves",
+      dataType: "long",
+      description: "Open size left after the event (0 = gone from the book).",
+    },
+    {
+      name: "tradeId",
+      dataType: "string",
+      optional: true,
+      description: "EXECUTE only: the trades table row.",
+    },
+    { name: "timestamp", dataType: "epochtimestamp" },
+  ],
+  links: [
+    { fromColumn: "ric", toTable: "prices", toColumn: "ric" },
+    { fromColumn: "ric", toTable: "instrumentPrices", toColumn: "ric" },
+  ],
+});
+
 /** Levels per side carried by a `bookSamples` row (bidPx0..4, askSz0..4, ...). */
 export const BOOK_SAMPLE_LEVELS = 5;
 
@@ -549,6 +631,8 @@ export const exchangeTables = {
   trades,
   bars,
   bookSamples,
+  bookOrders,
+  bookEvents,
 } as const;
 export const omsTables = {
   accounts,
@@ -576,5 +660,7 @@ export type FillRow = RowOf<typeof fills>;
 export type PositionRow = RowOf<typeof positions>;
 export type BarRow = RowOf<typeof bars>;
 export type BookSampleRow = RowOf<typeof bookSamples>;
+export type BookOrderRow = RowOf<typeof bookOrders>;
+export type BookEventRow = RowOf<typeof bookEvents>;
 export type PnlHistoryRow = RowOf<typeof pnlHistory>;
 export type AccountPnlHistoryRow = RowOf<typeof accountPnlHistory>;

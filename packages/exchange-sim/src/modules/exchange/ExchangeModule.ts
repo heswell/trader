@@ -26,6 +26,8 @@ const TABLE_NAMES: readonly TableName[] = [
   "trades",
   "bars",
   "bookSamples",
+  "bookOrders",
+  "bookEvents",
 ];
 
 export interface ExchangeModuleOptions {
@@ -84,7 +86,7 @@ class SimTableProvider extends Provider {
 
 /**
  * The EXCHANGE Vuu module: instruments, prices, depth, trades, bars,
- * bookSamples and the instrumentPrices join, all driven by `sim`. Every table (including the
+ * bookSamples, bookOrders, bookEvents and the instrumentPrices join, all driven by `sim`. Every table (including the
  * join) carries the admin RPC service.
  */
 export const ExchangeModule = (
@@ -116,6 +118,8 @@ export const ExchangeModule = (
     .addTable(defs.trades, provider("trades"), serviceFactory)
     .addTable(defs.bars, provider("bars"), serviceFactory)
     .addTable(defs.bookSamples, provider("bookSamples"), serviceFactory)
+    .addTable(defs.bookOrders, provider("bookOrders"), serviceFactory)
+    .addTable(defs.bookEvents, provider("bookEvents"), serviceFactory)
     .addJoinTable(toServerJoinFactory(instrumentPrices), serviceFactory)
     .asModule();
 };
