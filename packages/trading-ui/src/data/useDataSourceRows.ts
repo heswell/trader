@@ -81,7 +81,28 @@ export const subscribeTradingRows = <T extends TradingRow = TradingRow>(
 ): (() => void) => {
   const { from, to } = rangeOf(config);
   const held = new Map<number, T>();
+  /** Index each held key is at, so a key is never held at two indices. */
+  const indexOfKey = new Map<string, number>();
   let size = 0;
+
+  const drop = (index: number) => {
+    const old = held.get(index);
+    if (old === undefined) return;
+    held.delete(index);
+    if (indexOfKey.get(old.$key) === index) indexOfKey.delete(old.$key);
+  };
+
+  // When rows shift (e.g. an insert at the top of a sorted viewport) an
+  // update can bring a row's new index before its old index is overwritten.
+  // Dropping the stale copy keeps keys unique: duplicate keys make React
+  // leave orphaned DOM rows behind, which pile up into a frozen-looking list.
+  const hold = (index: number, value: T) => {
+    drop(index);
+    const previous = indexOfKey.get(value.$key);
+    if (previous !== undefined && previous !== index) drop(previous);
+    held.set(index, value);
+    indexOfKey.set(value.$key, index);
+  };
   let loaded = false;
   let active = true;
 
@@ -128,8 +149,8 @@ export const subscribeTradingRows = <T extends TradingRow = TradingRow>(
     if (message.type === "viewport-update") {
       if (typeof message.size === "number") {
         size = message.size;
-        for (const index of held.keys()) {
-          if (index >= size) held.delete(index);
+        for (const index of [...held.keys()]) {
+          if (index >= size) drop(index);
         }
       }
       const updated: T[] = [];
@@ -139,7 +160,7 @@ export const subscribeTradingRows = <T extends TradingRow = TradingRow>(
           const index = row[metadataKeys.IDX] as number;
           if (index >= from && index < to) {
             const value = toTradingRow(row, columns) as T;
-            held.set(index, value);
+            hold(index, value);
             updated.push(value);
           }
         }
@@ -148,6 +169,7 @@ export const subscribeTradingRows = <T extends TradingRow = TradingRow>(
       emit(updated, message.size);
     } else if (message.type === "viewport-clear") {
       held.clear();
+      indexOfKey.clear();
       size = 0;
       emit([], 0, true);
     }

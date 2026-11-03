@@ -102,6 +102,25 @@ describe("subscribeTradingRows", () => {
     expect(updates).toHaveLength(4);
   });
 
+  test("never holds a key at two indices when rows shift", () => {
+    const fake = fakeDataSource();
+    const updates: DataSourceRowsUpdate[] = [];
+    subscribeTradingRows(fake.ds, { rowCount: 4 }, (u) => updates.push(u));
+    fake.send(
+      [row(0, "A", 1), row(1, "B", 2), row(2, "C", 3), row(3, "D", 4)],
+      4,
+    );
+    // an insert at the top: C and D move down, but index 2 is not resent
+    fake.send([row(0, "N", 9), row(3, "C", 3)], 5);
+    const keys = updates[1].rows.map((r) => r.$key);
+    expect(keys).toEqual(["N", "B", "C"]);
+    expect(new Set(keys).size).toBe(keys.length);
+
+    // the stale index is refilled later
+    fake.send([row(1, "A", 1), row(2, "B", 2)]);
+    expect(updates[2].rows.map((r) => r.$key)).toEqual(["N", "A", "B", "C"]);
+  });
+
   test("leaves the data source's own filter alone when none is given", () => {
     const fake = fakeDataSource();
     subscribeTradingRows(fake.ds, {}, () => undefined);
