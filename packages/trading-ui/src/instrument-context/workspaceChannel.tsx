@@ -1,16 +1,17 @@
 import {
-  DEFAULT_LINK_GROUPS,
-  type LinkGroupDefinition,
-  type LinkGroupId,
-} from "@heswell/trading-ui";
-import {
   createContext,
   type ReactNode,
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
 } from "react";
+import {
+  DEFAULT_LINK_GROUPS,
+  type LinkGroupDefinition,
+  type LinkGroupId,
+} from "./linkGroups";
 
 /** How many rics the search remembers for its "Recent" list. */
 export const MAX_RECENT_RICS = 8;
@@ -40,9 +41,9 @@ export interface WorkspaceChannelProviderProps {
 }
 
 /**
- * The workspace's active channel. Components bound to the workspace channel
- * follow it (`linkGroup={activeChannel}`); components pinned to a channel
- * pass that channel instead.
+ * The workspace's active channel, set by a ChannelPicker. Components in the
+ * `active` link group (ACTIVE_LINK_GROUP) follow it; components pinned to a
+ * channel (red, green, ...) keep theirs.
  */
 export const WorkspaceChannelProvider = ({
   channels = DEFAULT_LINK_GROUPS,
@@ -54,13 +55,15 @@ export const WorkspaceChannelProvider = ({
     defaultActiveChannel ?? channels[0]?.id ?? "red",
   );
   const [recentRics, setRecentRics] = useState<readonly string[]>([]);
+  const activeRef = useRef(activeChannel);
+  activeRef.current = activeChannel;
 
   const setActiveChannel = useCallback(
     (channel: LinkGroupId) => {
-      setActive((current) => {
-        if (current !== channel) onActiveChannelChange?.(channel);
-        return channel;
-      });
+      if (activeRef.current === channel) return;
+      activeRef.current = channel;
+      setActive(channel);
+      onActiveChannelChange?.(channel);
     },
     [onActiveChannelChange],
   );
@@ -87,6 +90,11 @@ export const WorkspaceChannelProvider = ({
     </WorkspaceChannelContext.Provider>
   );
 };
+
+/** The nearest WorkspaceChannelProvider, or undefined outside one. */
+export const useOptionalWorkspaceChannel = ():
+  | WorkspaceChannelContextValue
+  | undefined => useContext(WorkspaceChannelContext);
 
 /** The nearest WorkspaceChannelProvider (required). */
 export const useWorkspaceChannel = (): WorkspaceChannelContextValue => {

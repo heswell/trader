@@ -67,6 +67,7 @@
         "@vuu-ui/vuu-layout": "5.0.0-alpha.2",
         "@vuu-ui/vuu-notifications": "5.0.0-alpha.2",
         "@vuu-ui/vuu-theme": "5.0.0-alpha.2",
+        "@vuu-ui/vuu-ui-controls": "5.0.0-alpha.2",
         "@vuu-ui/vuu-utils": "5.0.0-alpha.2",
         "clsx": "^2.1.1",
         "react": "^19.2.3",

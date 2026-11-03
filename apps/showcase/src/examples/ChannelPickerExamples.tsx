@@ -1,4 +1,7 @@
 import {
+  ACTIVE_LINK_GROUP,
+  ChannelPicker,
+  type ChannelPickerDensity,
   type LinkGroupId,
   linkGroupDefinition,
   MarketDepth,
@@ -6,16 +9,12 @@ import {
   TradeTape,
   useInstrumentLinkBus,
   useSelectedInstrument,
+  useWorkspaceChannel,
+  WorkspaceChannelProvider,
 } from "@heswell/trading-ui";
 import { Button, Text } from "@salt-ds/core";
 import type { CSSProperties, ReactNode } from "react";
 import { useState } from "react";
-import {
-  ChannelPicker,
-  type ChannelPickerDensity,
-  useWorkspaceChannel,
-  WorkspaceChannelProvider,
-} from "./channel-picker";
 
 import "./ChannelPickerExamples.css";
 
@@ -88,7 +87,10 @@ const Panel = ({
   );
 };
 
-/** Panels bound to the active channel, plus one pinned to Blue. */
+/**
+ * Panels in the `active` link group (they follow the picker's channel),
+ * plus one pinned to Blue.
+ */
 const BoundPanels = () => {
   const { activeChannel } = useWorkspaceChannel();
   return (
@@ -97,15 +99,19 @@ const BoundPanels = () => {
         <PriceChart
           account={ACCOUNT}
           defaultInterval="1s"
-          linkGroup={activeChannel}
+          linkGroup={ACTIVE_LINK_GROUP}
           style={{ height: "100%" }}
         />
       </Panel>
       <Panel linkGroup={activeChannel} title="Depth">
-        <MarketDepth account={ACCOUNT} levels={8} linkGroup={activeChannel} />
+        <MarketDepth
+          account={ACCOUNT}
+          levels={8}
+          linkGroup={ACTIVE_LINK_GROUP}
+        />
       </Panel>
       <Panel linkGroup={activeChannel} title="Time & sales">
-        <TradeTape linkGroup={activeChannel} />
+        <TradeTape linkGroup={ACTIVE_LINK_GROUP} />
       </Panel>
       <Panel linkGroup="blue" pinned title="Depth">
         <MarketDepth account={ACCOUNT} levels={8} linkGroup="blue" />

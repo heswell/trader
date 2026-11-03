@@ -1,8 +1,10 @@
 import {
+  ACTIVE_LINK_GROUP,
   AccountSelector,
   InstrumentPicker,
   type LinkGroupId,
   TradingFeatureRoot,
+  useComponentLinkGroup,
   useSelectedAccount,
 } from "@heswell/trading-ui";
 import { useVuuAuthorizations } from "@vuu-ui/core";
@@ -83,9 +85,33 @@ export interface PickerFeatureProps extends LinkedFeatureProps {
    * Show an InstrumentPicker (with its own link group selector, initially
    * the feature's group) that publishes to the group. Default `true`, so a
    * panel added from the Panels palette (no props) drives its own group.
+   * Hidden while the panel follows the workspace's active channel.
    */
   showInstrumentPicker?: boolean;
 }
+
+/**
+ * The link group of a PickerFeatureProps feature's component, read and
+ * saved under the component's own key (`persistKey`) so the feature and
+ * the component agree. Pass `linkGroup` / `onLinkGroupChange` to the
+ * component. While the panel follows the workspace's active channel
+ * (`followsActive`), the title-bar ChannelPicker sets its instrument, so
+ * the feature drops its toolbar picker.
+ */
+export const useFeatureLinkGroup = (
+  persistKey: string,
+  defaultLinkGroup: LinkGroupId,
+) => {
+  const { linkGroup, setLinkGroup } = useComponentLinkGroup({
+    defaultLinkGroup,
+    persistKey,
+  });
+  return {
+    followsActive: linkGroup === ACTIVE_LINK_GROUP,
+    linkGroup,
+    setLinkGroup,
+  };
+};
 
 /** Toolbar picker of a PickerFeatureProps feature (saved under `id`). */
 export const ToolbarPicker = ({

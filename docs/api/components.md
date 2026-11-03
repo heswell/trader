@@ -15,6 +15,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | --- | --- | --- | --- | --- | --- | --- |
 | [AccountSelector](trading-ui.md#accountselector) | `components/AccountSelector` | `accounts` |  | OrderTicket | `selectors` | [guide](../components/selection-and-linking.md#accounts) |
 | [ChangeCell](trading-ui.md#changecell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
+| [ChannelPicker](trading-ui.md#channelpicker) | `components/ChannelPicker` | `instrumentPrices`, `instruments` |  | InstrumentPicker | `channel-picker-fit`, `channel-picker-workspace` | [guide](../components/selection-and-linking.md#workspace-channel-picker) |
 | [ConnectionBanner](trading-ui.md#connectionbanner) | `components/ConnectionBanner` |  |  |  | `notifications-connection` | [guide](../components/notifications-and-connection.md) |
 | [ConnectionStatusIndicator](trading-ui.md#connectionstatusindicator) | `components/ConnectionStatusIndicator` |  |  |  | *host* | [guide](../components/notifications-and-connection.md) |
 | [DepthChartView](trading-ui.md#depthchartview) | `components/DepthChartView` | `depth`, `instrumentPrices`, `trades` |  | ChartFrame, LinkGroupSelector | `chart-workspace`, `depth-chart`, `trader-workspace` | [guide](../components/charts.md#depthchartview) |
@@ -56,6 +57,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [TradingFeatureRoot](trading-ui.md#tradingfeatureroot) | `feature-root` |  |  | ConnectionBanner, OrderTicket | `hosting-feature-root` | [guide](../components/hosting.md#tradingfeatureroot) |
 | [TradingNotificationsProvider](trading-ui.md#tradingnotificationsprovider) | `notifications` | `fills`, `parentOrders` |  | InstrumentLookup | *host* | [guide](../components/notifications-and-connection.md) |
 | [UserSettingsProvider](trading-ui.md#usersettingsprovider) | `utils` |  |  |  | `hosting-user-settings` | [guide](../components/hosting.md#usersettingsprovider) |
+| [WorkspaceChannelProvider](trading-ui.md#workspacechannelprovider) | `instrument-context` |  |  |  | `channel-picker-fit`, `channel-picker-workspace` | [guide](../components/selection-and-linking.md#workspace-channel-picker) |
 
 ## CSS hooks
 
@@ -63,6 +65,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 
 | Folder | Class base | Custom properties | `data-*` |
 | --- | --- | --- | --- |
+| `components/ChannelPicker` | `tradingChannelPicker`, `tradingChannelSegment`, `tradingInstrumentSearch`, `tradingInstrumentSearchRow` |  | `data-channel`, `data-density` |
 | `components/ConnectionBanner` | `tradingConnectionBanner` |  | `data-connection-state` |
 | `components/ConnectionStatusIndicator` | `tradingConnectionStatus` |  | `data-connection-state` |
 | `components/DepthChartView` | `tradingDepthChartView` |  | `data-link-group` |
@@ -100,7 +103,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 
 | Group | Examples | Guide |
 | --- | --- | --- |
-| ChannelPicker | `channel-picker-fit`, `channel-picker-workspace` | [guide](../components/selection-and-linking.md#workspace-channel-picker-showcase-only) |
+| ChannelPicker | `channel-picker-fit`, `channel-picker-workspace` | [guide](../components/selection-and-linking.md#workspace-channel-picker) |
 | Charts | `chart-workspace` | [guide](../components/charts.md) |
 | DepthChartView | `depth-chart` | [guide](../components/charts.md#depthchartview) |
 | ExposureTreemap | `exposure-treemap` | [guide](../components/charts.md#exposuretreemap) |

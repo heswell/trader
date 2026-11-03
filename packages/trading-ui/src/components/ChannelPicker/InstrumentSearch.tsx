@@ -1,13 +1,13 @@
 import {
-  filterString,
   instrumentSearchFilter,
-  type LinkGroupDefinition,
-  type SelectedInstrument,
-  type TradingRow,
   toSelectedInstrument,
-  useTradingDataSource,
-  useTradingRows,
-} from "@heswell/trading-ui";
+} from "../InstrumentPicker/InstrumentPicker";
+import type { TradingRow } from "../../data/useDataSourceRows";
+import { useTradingDataSource } from "../../data/useTradingDataSource";
+import { useTradingRows } from "../../data/useTradingRows";
+import type { LinkGroupDefinition } from "../../instrument-context/linkGroups";
+import type { SelectedInstrument } from "../../instrument-context/selectedInstrument";
+import { filterString } from "../../utils/filters";
 import { Table } from "@vuu-ui/vuu-table";
 import type { DataRow, TableConfig } from "@vuu-ui/vuu-table-types";
 import {
@@ -27,9 +27,9 @@ import {
   searchRowId,
 } from "./InstrumentSearchRow";
 import { type ChannelSelections, channelsByRic } from "./useChannelSelections";
-import { useWorkspaceChannel } from "./workspaceChannel";
+import { useWorkspaceChannel } from "../../instrument-context/workspaceChannel";
 
-const classBase = "InstrumentSearch";
+const classBase = "tradingInstrumentSearch";
 
 /** instrumentPrices columns the row reads. */
 const COLUMNS = [

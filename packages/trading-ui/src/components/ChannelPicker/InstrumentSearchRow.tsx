@@ -1,10 +1,7 @@
 import { TradingPhase } from "@heswell/trading-schemas";
-import {
-  directionColour,
-  formatPercent,
-  formatPrice,
-  type LinkGroupDefinition,
-} from "@heswell/trading-ui";
+import type { LinkGroupDefinition } from "../../instrument-context/linkGroups";
+import { directionColour } from "../../utils/colours";
+import { formatPercent, formatPrice } from "../../utils/formatting";
 import type { DataRow, RowProps } from "@vuu-ui/vuu-table-types";
 import cx from "clsx";
 import {
@@ -16,7 +13,7 @@ import {
 } from "react";
 import { usePriceFlash } from "./usePriceFlash";
 
-const classBase = "InstrumentSearchRow";
+const classBase = "tradingInstrumentSearchRow";
 
 export interface InstrumentSearchRowContextValue {
   /** Channels that show each ric (for the dots). */

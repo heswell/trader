@@ -25,7 +25,9 @@ import {
   type SelectedInstrument,
   useComponentLinkGroup,
   useSelectedInstrument,
+  useWorkspaceChannel,
   WORKSPACE_ITEM_STATE_TYPE,
+  WorkspaceChannelProvider,
 } from "../src";
 
 afterEach(() => {
@@ -235,6 +237,34 @@ describe("useComponentLinkGroup", () => {
     expect(result.current.linkGroup).toBe("unlinked");
     expect(result.current.channel).toStartWith("unlinked:");
   });
+
+  test("active follows the workspace channel; pinned groups keep theirs", () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <WorkspaceChannelProvider defaultActiveChannel="green">
+        {children}
+      </WorkspaceChannelProvider>
+    );
+    const { result } = renderHook(
+      () => ({
+        active: useComponentLinkGroup({ defaultLinkGroup: "active" }),
+        pinned: useComponentLinkGroup({ defaultLinkGroup: "red" }),
+        workspace: useWorkspaceChannel(),
+      }),
+      { wrapper },
+    );
+    expect(result.current.active.linkGroup).toBe("active");
+    expect(result.current.active.channel).toBe("green");
+    act(() => result.current.workspace.setActiveChannel("blue"));
+    expect(result.current.active.channel).toBe("blue");
+    expect(result.current.pinned.channel).toBe("red");
+  });
+
+  test("active outside a workspace uses the default channel", () => {
+    const { result } = renderHook(() =>
+      useComponentLinkGroup({ defaultLinkGroup: "active" }),
+    );
+    expect(result.current.channel).toBe("red");
+  });
 });
 
 describe("LinkGroupSelector", () => {
@@ -243,5 +273,22 @@ describe("LinkGroupSelector", () => {
     const button = screen.getByRole("combobox");
     expect(button.getAttribute("data-link-group")).toBe("green");
     expect(button.getAttribute("aria-label")).toBe("Link group");
+  });
+
+  test("offers Active channel only inside a workspace channel", async () => {
+    render(<LinkGroupSelector value="green" onChange={() => undefined} />);
+    await act(async () => screen.getByRole("combobox").click());
+    expect(screen.queryByRole("option", { name: "Active channel" })).toBeNull();
+    cleanup();
+
+    render(
+      <WorkspaceChannelProvider>
+        <LinkGroupSelector value="active" onChange={() => undefined} />
+      </WorkspaceChannelProvider>,
+    );
+    const button = screen.getByRole("combobox");
+    expect(button.getAttribute("data-link-group")).toBe("active");
+    await act(async () => button.click());
+    expect(screen.getByRole("option", { name: "Active channel" })).toBeTruthy();
   });
 });

@@ -11,6 +11,32 @@ body {
   min-height: 0;
 }
 
+/*
+ * Workspace header: keep its room for the channel picker. vuu-ui has no
+ * props for these, so they are styled here.
+ */
+.vuuPortalWorkspaceHeader {
+  /* "Your copy · edited …": the nav's workspace list already tags copies. */
+  [data-workspace-tag="personal-copy"] {
+    display: none;
+  }
+
+  /* Add panel and Reset to default: 24 x 24 icon buttons. */
+  .vuuPortalWorkspaceHeader-actions > .saltButton {
+    --saltButton-padding: 0;
+    --saltButton-height: calc(var(--salt-size-base) + var(--salt-spacing-100));
+    --saltButton-width: var(--saltButton-height);
+    --saltButton-minWidth: var(--saltButton-height);
+    flex: none;
+  }
+
+  /* Reset to default: hide its label; the text still names the button. */
+  .vuuPortalWorkspaceHeader-actions > .saltButton:not(.vuuIconButton) {
+    font-size: 0;
+    gap: 0;
+  }
+}
+
 .traderNav {
   .traderNavBrand-logo {
     align-items: center;

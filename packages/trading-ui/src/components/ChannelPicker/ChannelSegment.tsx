@@ -1,10 +1,7 @@
-import {
-  directionColour,
-  formatPercent,
-  formatPrice,
-  type LinkGroupDefinition,
-  type SelectedInstrument,
-} from "@heswell/trading-ui";
+import type { LinkGroupDefinition } from "../../instrument-context/linkGroups";
+import type { SelectedInstrument } from "../../instrument-context/selectedInstrument";
+import { directionColour } from "../../utils/colours";
+import { formatPercent, formatPrice } from "../../utils/formatting";
 import { ToggleButton } from "@salt-ds/core";
 import cx from "clsx";
 import { type CSSProperties, forwardRef } from "react";
@@ -18,7 +15,7 @@ import { usePriceFlash } from "./usePriceFlash";
  */
 export type ChannelPickerDensity = "full" | "compact" | "dots";
 
-const classBase = "ChannelSegment";
+const classBase = "tradingChannelSegment";
 
 export interface ChannelSegmentProps {
   active: boolean;

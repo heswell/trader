@@ -4,6 +4,8 @@ import { useWindow } from "@salt-ds/window";
 import cx from "clsx";
 import { type CSSProperties, memo, type SyntheticEvent } from "react";
 import {
+  ACTIVE_GROUP,
+  ACTIVE_LINK_GROUP,
   DEFAULT_LINK_GROUPS,
   isUnlinkedGroup,
   type LinkGroupDefinition,
@@ -11,6 +13,7 @@ import {
   linkGroupDefinition,
   UNLINKED_GROUP,
 } from "../../instrument-context/linkGroups";
+import { useOptionalWorkspaceChannel } from "../../instrument-context/workspaceChannel";
 import linkGroupSelectorCss from "./LinkGroupSelector.css";
 
 const classBase = "tradingLinkGroupSelector";
@@ -19,7 +22,10 @@ export interface LinkGroupSelectorProps {
   /** The current group. */
   value: LinkGroupId;
   onChange: (linkGroup: LinkGroupId) => void;
-  /** Groups to offer (default DEFAULT_LINK_GROUPS); `unlinked` is added. */
+  /**
+   * Groups to offer (default DEFAULT_LINK_GROUPS); `unlinked` is added, and
+   * `active` first inside a WorkspaceChannelProvider.
+   */
   groups?: readonly LinkGroupDefinition[];
   /** Offer `unlinked` (default true). */
   allowUnlinked?: boolean;
@@ -38,7 +44,10 @@ const useLinkGroupCss = () => {
   });
 };
 
-/** The colour dot of a link group (striped for unlinked). */
+/**
+ * The colour dot of a link group (striped for unlinked; for `active`, the
+ * colour of the workspace's active channel, ringed).
+ */
 export const LinkGroupSwatch = ({
   group,
   groups,
@@ -47,13 +56,20 @@ export const LinkGroupSwatch = ({
   groups?: readonly LinkGroupDefinition[];
 }) => {
   useLinkGroupCss();
+  const workspace = useOptionalWorkspaceChannel();
   const { id, color } = linkGroupDefinition(group, groups);
+  const swatchColor =
+    id === ACTIVE_LINK_GROUP && workspace
+      ? linkGroupDefinition(workspace.activeChannel, workspace.channels).color
+      : color;
   return (
     <span
       aria-hidden
       className={`${classBase}-swatch`}
       data-link-group={isUnlinkedGroup(id) ? "unlinked" : id}
-      style={{ "--tradingLinkGroupSelector-color": color } as CSSProperties}
+      style={
+        { "--tradingLinkGroupSelector-color": swatchColor } as CSSProperties
+      }
     />
   );
 };
@@ -75,7 +91,14 @@ export const LinkGroupSelector = memo(function LinkGroupSelector({
   value,
 }: LinkGroupSelectorProps) {
   useLinkGroupCss();
-  const options = allowUnlinked ? [...groups, UNLINKED_GROUP] : groups;
+  // "Active channel" only where a workspace has one (or it is already set).
+  const offerActive =
+    useOptionalWorkspaceChannel() !== undefined || value === ACTIVE_LINK_GROUP;
+  const options = [
+    ...(offerActive ? [ACTIVE_GROUP] : []),
+    ...groups,
+    ...(allowUnlinked ? [UNLINKED_GROUP] : []),
+  ];
   const current = linkGroupDefinition(value, groups);
   return (
     <Dropdown<LinkGroupId>

@@ -1,9 +1,9 @@
-import {
-  type LinkGroupDefinition,
-  type LinkGroupId,
-  type SelectedInstrument,
-  useInstrumentLinkBus,
-} from "@heswell/trading-ui";
+import { useInstrumentLinkBus } from "../../instrument-context/InstrumentContext";
+import type {
+  LinkGroupDefinition,
+  LinkGroupId,
+} from "../../instrument-context/linkGroups";
+import type { SelectedInstrument } from "../../instrument-context/selectedInstrument";
 import { useCallback, useRef, useSyncExternalStore } from "react";
 
 export type ChannelSelections = ReadonlyMap<

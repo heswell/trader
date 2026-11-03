@@ -1,9 +1,9 @@
-import {
-  type LinkGroupId,
-  type SelectedInstrument,
-  useInstrumentLinkBus,
-} from "@heswell/trading-ui";
+import { useInstrumentLinkBus } from "../../instrument-context/InstrumentContext";
+import type { LinkGroupId } from "../../instrument-context/linkGroups";
+import type { SelectedInstrument } from "../../instrument-context/selectedInstrument";
 import { Button, ToggleButtonGroup } from "@salt-ds/core";
+import { useComponentCssInjection } from "@salt-ds/styles";
+import { useWindow } from "@salt-ds/window";
 import cx from "clsx";
 import {
   type CSSProperties,
@@ -24,11 +24,11 @@ import {
 import { InstrumentSearch } from "./InstrumentSearch";
 import { useChannelPrices } from "./useChannelPrices";
 import { useChannelSelections } from "./useChannelSelections";
-import { useWorkspaceChannel } from "./workspaceChannel";
+import { useWorkspaceChannel } from "../../instrument-context/workspaceChannel";
 
-import "./ChannelPicker.css";
+import channelPickerCss from "./ChannelPicker.css";
 
-const classBase = "ChannelPicker";
+const classBase = "tradingChannelPicker";
 
 /** Selection source id of the picker's publishes. */
 export const CHANNEL_PICKER_SOURCE = "ChannelPicker";
@@ -91,6 +91,11 @@ export const ChannelPicker = ({
 }: ChannelPickerProps) => {
   const { channels, activeChannel, setActiveChannel, addRecentRic } =
     useWorkspaceChannel();
+  useComponentCssInjection({
+    testId: "trading-channel-picker",
+    css: channelPickerCss,
+    window: useWindow(),
+  });
   const bus = useInstrumentLinkBus();
   const selections = useChannelSelections(channels);
   const prices = useChannelPrices(
@@ -178,7 +183,8 @@ export const ChannelPicker = ({
     <>
       <ToggleButtonGroup
         aria-label="Workspace channel"
-        appearance="transparent"
+        // Not "solid": vuu-theme paints selected solid toggles dark.
+        appearance="bordered"
         className={`${classBase}-group`}
         value={activeChannel}
       >

@@ -182,7 +182,7 @@ describe("portal host", () => {
       ...document.querySelectorAll<HTMLButtonElement>(
         ".vuuPortalWorkspaceHeader button",
       ),
-    ].find((button) => button.textContent?.includes("Add panel"));
+    ].find((button) => button.getAttribute("aria-label") === "Add panel");
     if (!addPanel) throw Error("no Add panel button");
     await act(async () => addPanel.click());
     await wait(300);

@@ -5,6 +5,7 @@ import {
   type PickerFeatureProps,
   ToolbarPicker,
   useAccountToolbar,
+  useFeatureLinkGroup,
   withFeatureRoot,
 } from "./shared";
 
@@ -13,18 +14,23 @@ const Ladder = ({
   defaultLinkGroup = "green",
   showInstrumentPicker = true,
 }: PickerFeatureProps) => {
+  const { followsActive, linkGroup, setLinkGroup } = useFeatureLinkGroup(
+    "PriceLadder:ladder",
+    defaultLinkGroup,
+  );
   const { account, toolbar } = useAccountToolbar(
-    showInstrumentPicker ? (
-      <ToolbarPicker id="ladder-picker" linkGroup={defaultLinkGroup} />
+    showInstrumentPicker && !followsActive ? (
+      <ToolbarPicker id="ladder-picker" linkGroup={linkGroup} />
     ) : null,
   );
   return (
     <FeatureFrame toolbar={toolbar}>
       <PriceLadder
         account={account}
-        defaultLinkGroup={defaultLinkGroup}
         defaultQuantity={100}
         id="ladder"
+        linkGroup={linkGroup}
+        onLinkGroupChange={setLinkGroup}
         showLinkGroupSelector
         style={fillStyle}
       />

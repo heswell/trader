@@ -1,9 +1,7 @@
-import {
-  type formatPrice,
-  filterString,
-  type TradingRow,
-  useTradingRows,
-} from "@heswell/trading-ui";
+import type { TradingRow } from "../../data/useDataSourceRows";
+import { useTradingRows } from "../../data/useTradingRows";
+import { filterString } from "../../utils/filters";
+import type { formatPrice } from "../../utils/formatting";
 import { useMemo } from "react";
 
 export interface ChannelPrice {
