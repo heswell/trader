@@ -1,5 +1,16 @@
 /* ------------------------------------------------------------ picker */
 
+/* The search floats in a portal outside the picker, so it needs the
+   border colour declared on itself too. */
+.tradingChannelPicker,
+.tradingInstrumentSearch {
+  --channelPicker-border: color-mix(
+    in srgb,
+    var(--salt-separable-primary-borderColor, #dadde2) 45%,
+    transparent
+  );
+}
+
 .tradingChannelPicker {
   /* Same height and corners as a Salt (vuu-theme) button at this density. */
   --channelPicker-height: calc(
@@ -10,11 +21,6 @@
   /* Track padding around the button-height segments. */
   --channelPicker-inset: 1px;
   --channelPicker-track: var(--salt-container-secondary-background, #f1f2f5);
-  --channelPicker-border: color-mix(
-    in srgb,
-    var(--salt-separable-primary-borderColor, #dadde2) 45%,
-    transparent
-  );
   --channelPicker-raised: var(--salt-container-primary-background, #fff);
   /* Row 2 is the hidden measuring copy: it makes the picker's max-content
      width the full (variant B) width, so a `minmax(0, max-content)` grid
