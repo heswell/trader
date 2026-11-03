@@ -52,7 +52,11 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   TradingNotificationsProvider:
     "docs/components/notifications-and-connection.md",
   UserSettingsProvider: "docs/components/hosting.md#usersettingsprovider",
+  WorkspaceChannelProvider:
+    "docs/components/selection-and-linking.md#workspace-channel-picker",
   // showcase groups
+  ChannelPicker:
+    "docs/components/selection-and-linking.md#workspace-channel-picker",
   Charts: "docs/components/charts.md",
   Hosting: "docs/components/hosting.md",
   Linking: "docs/components/selection-and-linking.md",

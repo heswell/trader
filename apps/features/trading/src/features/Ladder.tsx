@@ -1,30 +1,36 @@
-import { PriceLadder } from "@heswell/trading-ui";
+import { ACTIVE_LINK_GROUP, PriceLadder } from "@heswell/trading-ui";
 import {
   FeatureFrame,
   fillStyle,
   type PickerFeatureProps,
   ToolbarPicker,
   useAccountToolbar,
+  useFeatureLinkGroup,
   withFeatureRoot,
 } from "./shared";
 
 /** Click-to-trade price ladder (module gated by trading-execute). */
 const Ladder = ({
-  defaultLinkGroup = "green",
+  defaultLinkGroup = ACTIVE_LINK_GROUP,
   showInstrumentPicker = true,
 }: PickerFeatureProps) => {
+  const { followsActive, linkGroup, setLinkGroup } = useFeatureLinkGroup(
+    "PriceLadder:ladder",
+    defaultLinkGroup,
+  );
   const { account, toolbar } = useAccountToolbar(
-    showInstrumentPicker ? (
-      <ToolbarPicker id="ladder-picker" linkGroup={defaultLinkGroup} />
+    showInstrumentPicker && !followsActive ? (
+      <ToolbarPicker id="ladder-picker" linkGroup={linkGroup} />
     ) : null,
   );
   return (
     <FeatureFrame toolbar={toolbar}>
       <PriceLadder
         account={account}
-        defaultLinkGroup={defaultLinkGroup}
         defaultQuantity={100}
         id="ladder"
+        linkGroup={linkGroup}
+        onLinkGroupChange={setLinkGroup}
         showLinkGroupSelector
         style={fillStyle}
       />

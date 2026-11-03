@@ -11,6 +11,7 @@ import {
 import type { InstrumentBook } from "../engine/InstrumentBook";
 import type { InstrumentDef } from "../reference/instruments";
 import { BarAggregator, type BarOptions } from "./BarAggregator";
+import { BookL3Publisher, type BookL3Options } from "./BookL3Publisher";
 import { BookSampler, type BookSampleOptions } from "./BookSampler";
 import { type PublishTable, RowLayout, round } from "./rows";
 import { TradeRingBuffer } from "./TradeRingBuffer";
@@ -26,6 +27,10 @@ export interface ExchangeTables {
   bars?: PublishTable;
   /** Periodic book snapshots; omit (or disable in options) to skip sampling. */
   bookSamples?: PublishTable;
+  /** L3 resting orders; omit (or disable in options) to skip. */
+  bookOrders?: PublishTable;
+  /** L3 event tape; omit (or disable in options) to skip. */
+  bookEvents?: PublishTable;
 }
 
 export interface PublisherOptions {
@@ -33,6 +38,8 @@ export interface PublisherOptions {
   bars?: BarOptions;
   /** Book sampling (needs `tables.bookSamples`); omit or intervalMs 0 = off. */
   bookSamples?: BookSampleOptions;
+  /** L3 data (needs `tables.bookOrders` / `tables.bookEvents`); omit = off. */
+  l3?: BookL3Options;
 }
 
 /** A trade as it appears on the public tape. */
@@ -59,6 +66,9 @@ export interface PublisherStats {
   barEvictions: number;
   sampleInserts: number;
   sampleEvictions: number;
+  bookOrderUpdates: number;
+  bookEventInserts: number;
+  bookEventEvictions: number;
 }
 
 interface PublishedLevel {
@@ -105,9 +115,14 @@ export class MarketDataPublisher {
     barEvictions: 0,
     sampleInserts: 0,
     sampleEvictions: 0,
+    bookOrderUpdates: 0,
+    bookEventInserts: 0,
+    bookEventEvictions: 0,
   };
   /** Bar aggregation, when enabled. */
   readonly bars: BarAggregator | undefined;
+  /** L3 orders / events, when enabled; the simulator attaches it to the books. */
+  readonly l3: BookL3Publisher | undefined;
   /** Book sampling, when enabled. */
   readonly bookSamples: BookSampler | undefined;
   readonly #ring: TradeRingBuffer;
@@ -137,6 +152,10 @@ export class MarketDataPublisher {
         options.bookSamples,
         this.stats,
       );
+    }
+    if (options.l3) {
+      const l3 = new BookL3Publisher(tables, options.l3, this.stats);
+      if (l3.enabled) this.l3 = l3;
     }
     this.#prices = new RowLayout(tables.prices, pricesDef, null);
     this.#depth = new RowLayout(tables.depth, depthDef);
@@ -190,6 +209,7 @@ export class MarketDataPublisher {
       if (book.dirty) this.publishBook(book, now);
     }
     this.#publishTrades();
+    this.l3?.flush();
     this.bars?.flush(now);
     const sampler = this.bookSamples;
     if (sampler?.due(now)) {
@@ -386,7 +406,10 @@ export class MarketDataPublisher {
       s.barUpdates +
       s.barEvictions +
       s.sampleInserts +
-      s.sampleEvictions
+      s.sampleEvictions +
+      s.bookOrderUpdates +
+      s.bookEventInserts +
+      s.bookEventEvictions
     );
   }
 }

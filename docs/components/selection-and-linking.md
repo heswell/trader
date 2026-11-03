@@ -55,6 +55,37 @@ const { selectedInstrument, setSelectedInstrument } = useSelectedInstrument({ li
 </InstrumentContextProvider>
 ```
 
+## Workspace channel picker
+
+A title-bar picker (`ChannelPicker`) that combines the channel (link group) selector with an instrument search. The
+trader portal shows it in the workspace header; showcase: `#channel-picker-workspace`, `#channel-picker-fit`.
+
+- **Active channel.** `WorkspaceChannelProvider` holds the workspace's active channel (`useWorkspaceChannel`, or
+  `useOptionalWorkspaceChannel` outside one). Components in the `active` link group (`ACTIVE_LINK_GROUP`) follow it:
+  `useComponentLinkGroup` resolves their `channel` to the active channel (the default group outside a provider).
+  Components pinned to a colour keep theirs. Inside a provider the `LinkGroupSelector` offers "Active channel" first;
+  its swatch shows the active channel's colour with a ring.
+- **Portal wiring.** `apps/portal-host` wraps `PortalShell` in `PortalWorkspaceChannel` (the active channel is kept
+  per portal in `localStorage`) and centres `WorkspaceChannelPicker` (the picker on the trading server's connection)
+  in the workspace header (`workspaces.headerCenter`). `@heswell/trading-ui` is a shared module-federation singleton, so the remote panels see
+  the host's provider. The ticket, chart, depth, depth chart, ladder and tape features default to `active` (so do layouts
+  saved before, and panels added from the palette); blotters keep their colours. The Ladder and Tape hide their toolbar instrument
+  picker while they follow the active channel.
+- Built on Salt: the channels are a `ToggleButtonGroup` (radios: ←→ move between them, one tab stop) of
+  `ToggleButton`s, then a search `Button`, styled through Salt's `--toggleButton-*` / `--saltButton-*` variables
+  (24px buttons in a 28px strip). Each segment shows the channel's ric. Clicking one makes it the workspace's
+  **active channel**.
+- The search button (or clicking the active channel again) opens the search: a vuu `Table` over `instrumentPrices`
+  drawn with a custom `Row` (`InstrumentSearchRow`). With no text it lists the channels' and recent rics. ↑↓ move,
+  Enter publishes the instrument to the active channel, Tab / Shift+Tab switch channel, Esc closes. Focus returns to
+  the channel after Enter or Esc, not after a mouse pick.
+- Results come in two sections, each its own `Table`: rics starting with the text, then names containing it. Vuu
+  filters ignore brackets, so "name matches, ric doesn't" can't be one filter: a lookup of `instruments` (ric +
+  description) finds every match and splits them; the name section filters on `ric in [...]`. ↑↓ cross sections.
+- Density: `full` (dot, ric, last, change) when all channels fit, else `compact` (dot, ric), else `dots` (only the
+  active channel keeps its ric). `density="auto"` (default) measures hidden full / compact copies against the space
+  available; give the picker a `minmax(0, max-content)` grid track (or a shrinkable flex item).
+
 ## Accounts
 
 ```tsx

@@ -1,4 +1,4 @@
-import { PriceChart } from "@heswell/trading-ui";
+import { ACTIVE_LINK_GROUP, PriceChart } from "@heswell/trading-ui";
 import {
   FeatureFrame,
   fillStyle,
@@ -11,7 +11,9 @@ import {
  * Candlestick price chart for the linked instrument, with the selected
  * account's fills overlaid.
  */
-const Chart = ({ defaultLinkGroup = "red" }: LinkedFeatureProps) => {
+const Chart = ({
+  defaultLinkGroup = ACTIVE_LINK_GROUP,
+}: LinkedFeatureProps) => {
   const { account, toolbar } = useAccountToolbar();
   return (
     <FeatureFrame toolbar={toolbar}>

@@ -4,17 +4,18 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 400 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 412 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
 - **data**: [applySelectionChange](#applyselectionchange), [ChartDataSourceOptions](#chartdatasourceoptions), [connectToVuuServer](#connecttovuuserver), [DataSourceRows](#datasourcerows), [DataSourceRowsConfig](#datasourcerowsconfig), [DataSourceRowsUpdate](#datasourcerowsupdate), [DEFAULT_RPC_TIMEOUT_MS](#default_rpc_timeout_ms), [disconnectedRpcError](#disconnectedrpcerror), [disconnectFromVuuServer](#disconnectfromvuuserver), [editOrdersInSession](#editordersinsession), [openOrderEditSession](#openordereditsession), [OrderEdits](#orderedits), [OrderEditSession](#ordereditsession), [rpcTimeoutError](#rpctimeouterror), [RpcTransportFailure](#rpctransportfailure), [sendTradingRpc](#sendtradingrpc), [StaleOrderEditError](#staleorderediterror), [subscribeTradingRows](#subscribetradingrows), [toTradingRow](#totradingrow), [tradingColumnNames](#tradingcolumnnames), [TradingDataMode](#tradingdatamode), [TradingDataModeContextValue](#tradingdatamodecontextvalue), [TradingDataProvider](#tradingdataprovider), [TradingDataProviderProps](#tradingdataproviderprops), [TradingDataSourceOptions](#tradingdatasourceoptions), [TradingRow](#tradingrow), [TradingRows](#tradingrows), [TradingRowsOptions](#tradingrowsoptions), [TradingRpcError](#tradingrpcerror), [TradingRpcOptions](#tradingrpcoptions), [tradingTableSchema](#tradingtableschema), [tradingVuuTable](#tradingvuutable), [useChartDataSource](#usechartdatasource), [useDataSourceRows](#usedatasourcerows), [UseDataSourceRowsOptions](#usedatasourcerowsoptions), [useHasDataProvider](#usehasdataprovider), [useTableSelectedKeys](#usetableselectedkeys), [useTradingDataMode](#usetradingdatamode), [useTradingDataSource](#usetradingdatasource), [useTradingRows](#usetradingrows), [VuuServerConnection](#vuuserverconnection), [withRpcTimeout](#withrpctimeout)
-- **instrument-context**: [BroadcastChannelLike](#broadcastchannellike), [ComponentLinkGroup](#componentlinkgroup), [connectBroadcastChannel](#connectbroadcastchannel), [ConnectBroadcastChannelOptions](#connectbroadcastchanneloptions), [createInstrumentLinkBus](#createinstrumentlinkbus), [CreateInstrumentLinkBusOptions](#createinstrumentlinkbusoptions), [DEFAULT_LINK_CHANNEL_NAME](#default_link_channel_name), [DEFAULT_LINK_GROUP](#default_link_group), [DEFAULT_LINK_GROUPS](#default_link_groups), [getInstrumentLinkBus](#getinstrumentlinkbus), [INSTRUMENT_LINK_BUS_VERSION](#instrument_link_bus_version), [InstrumentContextProvider](#instrumentcontextprovider), [InstrumentContextProviderProps](#instrumentcontextproviderprops), [InstrumentContextValue](#instrumentcontextvalue), [InstrumentLinkBus](#instrumentlinkbus), [InstrumentLinkListener](#instrumentlinklistener), [InstrumentLinkSelection](#instrumentlinkselection), [InstrumentLinkTransport](#instrumentlinktransport), [InstrumentSelection](#instrumentselection), [isUnlinkedGroup](#isunlinkedgroup), [LINK_GROUP_PERSIST_PREFIX](#link_group_persist_prefix), [LINK_GROUP_STATE_KEY](#link_group_state_key), [linkGroupDefinition](#linkgroupdefinition), [LinkGroupDefinition](#linkgroupdefinition-1), [LinkGroupId](#linkgroupid), [LinkGroupProps](#linkgroupprops), [LinkGroupProvider](#linkgroupprovider), [sameInstrument](#sameinstrument), [sanitizeSelectedInstrument](#sanitizeselectedinstrument), [SelectedInstrument](#selectedinstrument), [UNLINKED](#unlinked), [UNLINKED_GROUP](#unlinked_group), [useComponentLinkGroup](#usecomponentlinkgroup), [UseComponentLinkGroupOptions](#usecomponentlinkgroupoptions), [useInheritedLinkGroup](#useinheritedlinkgroup), [useInstrumentLinkBus](#useinstrumentlinkbus), [useSelectedInstrument](#useselectedinstrument), [UseSelectedInstrumentOptions](#useselectedinstrumentoptions), [useWorkspaceItemState](#useworkspaceitemstate), [WORKSPACE_ITEM_STATE_TYPE](#workspace_item_state_type), [WORKSPACE_ITEM_STATE_VERSION](#workspace_item_state_version), [workspaceItemState](#workspaceitemstate), [WorkspaceItemState](#workspaceitemstate-1)
+- **instrument-context**: [ACTIVE_GROUP](#active_group), [ACTIVE_LINK_GROUP](#active_link_group), [BroadcastChannelLike](#broadcastchannellike), [ComponentLinkGroup](#componentlinkgroup), [connectBroadcastChannel](#connectbroadcastchannel), [ConnectBroadcastChannelOptions](#connectbroadcastchanneloptions), [createInstrumentLinkBus](#createinstrumentlinkbus), [CreateInstrumentLinkBusOptions](#createinstrumentlinkbusoptions), [DEFAULT_LINK_CHANNEL_NAME](#default_link_channel_name), [DEFAULT_LINK_GROUP](#default_link_group), [DEFAULT_LINK_GROUPS](#default_link_groups), [getInstrumentLinkBus](#getinstrumentlinkbus), [INSTRUMENT_LINK_BUS_VERSION](#instrument_link_bus_version), [InstrumentContextProvider](#instrumentcontextprovider), [InstrumentContextProviderProps](#instrumentcontextproviderprops), [InstrumentContextValue](#instrumentcontextvalue), [InstrumentLinkBus](#instrumentlinkbus), [InstrumentLinkListener](#instrumentlinklistener), [InstrumentLinkSelection](#instrumentlinkselection), [InstrumentLinkTransport](#instrumentlinktransport), [InstrumentSelection](#instrumentselection), [isUnlinkedGroup](#isunlinkedgroup), [LINK_GROUP_PERSIST_PREFIX](#link_group_persist_prefix), [LINK_GROUP_STATE_KEY](#link_group_state_key), [linkGroupDefinition](#linkgroupdefinition), [LinkGroupDefinition](#linkgroupdefinition-1), [LinkGroupId](#linkgroupid), [LinkGroupProps](#linkgroupprops), [LinkGroupProvider](#linkgroupprovider), [MAX_RECENT_RICS](#max_recent_rics), [sameInstrument](#sameinstrument), [sanitizeSelectedInstrument](#sanitizeselectedinstrument), [SelectedInstrument](#selectedinstrument), [UNLINKED](#unlinked), [UNLINKED_GROUP](#unlinked_group), [useComponentLinkGroup](#usecomponentlinkgroup), [UseComponentLinkGroupOptions](#usecomponentlinkgroupoptions), [useInheritedLinkGroup](#useinheritedlinkgroup), [useInstrumentLinkBus](#useinstrumentlinkbus), [useOptionalWorkspaceChannel](#useoptionalworkspacechannel), [useSelectedInstrument](#useselectedinstrument), [UseSelectedInstrumentOptions](#useselectedinstrumentoptions), [useWorkspaceChannel](#useworkspacechannel), [useWorkspaceItemState](#useworkspaceitemstate), [WORKSPACE_ITEM_STATE_TYPE](#workspace_item_state_type), [WORKSPACE_ITEM_STATE_VERSION](#workspace_item_state_version), [WorkspaceChannelContextValue](#workspacechannelcontextvalue), [WorkspaceChannelProvider](#workspacechannelprovider), [WorkspaceChannelProviderProps](#workspacechannelproviderprops), [workspaceItemState](#workspaceitemstate), [WorkspaceItemState](#workspaceitemstate-1)
 - **hooks**: [actionableOrders](#actionableorders), [DepthLevel](#depthlevel), [FlashDirection](#flashdirection), [FollowedInstrument](#followedinstrument), [InstrumentPrice](#instrumentprice), [LevelFlash](#levelflash), [levelKey](#levelkey), [MarketDepthState](#marketdepthstate), [OWN_ORDER_STATUSES](#own_order_statuses), [OwnOrder](#ownorder), [OwnOrdersAtPrice](#ownordersatprice), [ownOrdersKey](#ownorderskey), [OwnWorkingOrders](#ownworkingorders), [OwnWorkingOrdersOptions](#ownworkingordersoptions), [priceKey](#pricekey), [useFollowedInstrument](#usefollowedinstrument), [useInstrumentPrice](#useinstrumentprice), [useLevelFlash](#uselevelflash), [useMarketDepth](#usemarketdepth), [useOwnWorkingOrders](#useownworkingorders), [useStableCallback](#usestablecallback), [useTradedVolume](#usetradedvolume)
 - **connection**: [combineConnectionState](#combineconnectionstate), [CONNECTION_STATE_SEVERITY](#connection_state_severity), [ConnectionAttemptClosedError](#connectionattemptclosederror), [ConnectionAttemptTimeoutError](#connectionattempttimeouterror), [connectionClientWithTimeout](#connectionclientwithtimeout), [ConnectionReconnectInfo](#connectionreconnectinfo), [connectionStateStore](#connectionstatestore), [createResilientConnectionRegistry](#createresilientconnectionregistry), [DEFAULT_LOGIN_TIMEOUT_MS](#default_login_timeout_ms), [DEFAULT_RECONNECT_POLICY](#default_reconnect_policy), [observeConnectionRegistry](#observeconnectionregistry), [observeDefaultConnectionRegistry](#observedefaultconnectionregistry), [reconnectDelay](#reconnectdelay), [ReconnectPolicy](#reconnectpolicy), [reconnectSchedule](#reconnectschedule), [ReconnectState](#reconnectstate), [ReconnectSupervisor](#reconnectsupervisor), [ReconnectSupervisorOptions](#reconnectsupervisoroptions), [ReconnectTimers](#reconnecttimers), [ResilientConnectionRegistryOptions](#resilientconnectionregistryoptions), [resolveReconnectPolicy](#resolvereconnectpolicy), [StaleIndicatorOptions](#staleindicatoroptions), [StaleIndicatorState](#staleindicatorstate), [StaleReason](#stalereason), [SupervisorSnapshot](#supervisorsnapshot), [SupervisorState](#supervisorstate), [toConnectionState](#toconnectionstate), [TradingConnectionState](#tradingconnectionstate), [TradingConnectionStateOverride](#tradingconnectionstateoverride), [TradingConnectionStatus](#tradingconnectionstatus), [useStaleIndicator](#usestaleindicator), [useTradingConnectionStatus](#usetradingconnectionstatus), [useVuuConnectionStatuses](#usevuuconnectionstatuses), [withConnectTimeout](#withconnecttimeout), [worstConnectionState](#worstconnectionstate)
 - **notifications**: [DEFAULT_DEDUPE_MS](#default_dedupe_ms), [DEFAULT_NOTIFICATION_KINDS](#default_notification_kinds), [DEFAULT_RATE_LIMIT](#default_rate_limit), [describeOrderEvent](#describeorderevent), [describeSuppressed](#describesuppressed), [FillEventTracker](#filleventtracker), [FillSound](#fillsound), [NotificationGate](#notificationgate), [NotificationGateOptions](#notificationgateoptions), [orderEventFromFill](#ordereventfromfill), [orderEventFromParentOrder](#ordereventfromparentorder), [orderEventKey](#ordereventkey), [orderEventKindForStatus](#ordereventkindforstatus), [OrderEventPriceFormat](#ordereventpriceformat), [OrderEventToast](#ordereventtoast), [ParentOrderEventTracker](#parentordereventtracker), [RateLimit](#ratelimit), [rpcRejectEvent](#rpcrejectevent), [ToastStatus](#toaststatus), [TRADING_ORDER_EVENT_KINDS](#trading_order_event_kinds), [TradingNotificationKinds](#tradingnotificationkinds), [TradingNotificationsContextValue](#tradingnotificationscontextvalue), [TradingNotificationSettings](#tradingnotificationsettings), [TradingNotificationsProvider](#tradingnotificationsprovider), [TradingNotificationsProviderProps](#tradingnotificationsproviderprops), [TradingNotificationToast](#tradingnotificationtoast), [TradingOrderEvent](#tradingorderevent), [TradingOrderEventKind](#tradingordereventkind), [useTradingNotifications](#usetradingnotifications)
 - **feature-root**: [ensureLinkBusBroadcast](#ensurelinkbusbroadcast), [notificationLease](#notificationlease), [TradingFeatureRoot](#tradingfeatureroot), [TradingFeatureRootProps](#tradingfeaturerootprops), [useInTradingFeatureRoot](#useintradingfeatureroot)
 - **components/AccountSelector**: [AccountSelector](#accountselector), [AccountSelectorProps](#accountselectorprops), [useSelectedAccount](#useselectedaccount), [useTradingAccounts](#usetradingaccounts)
+- **components/ChannelPicker**: [CHANNEL_PICKER_SOURCE](#channel_picker_source), [ChannelPicker](#channelpicker), [ChannelPickerDensity](#channelpickerdensity), [ChannelPickerProps](#channelpickerprops)
 - **components/ConnectionBanner**: [ConnectionBanner](#connectionbanner), [ConnectionBannerProps](#connectionbannerprops)
 - **components/ConnectionStatusIndicator**: [CONNECTION_STATE_LABELS](#connection_state_labels), [ConnectionStatusIndicator](#connectionstatusindicator), [ConnectionStatusIndicatorProps](#connectionstatusindicatorprops)
 - **components/DepthChartView**: [DepthChartView](#depthchartview), [DepthChartViewProps](#depthchartviewprops)
@@ -637,11 +638,28 @@ children of a component). Components with their own `linkGroup` win.
 | `children` | `ReactNode` |  |  |
 | `linkGroup` | `LinkGroupId` |  | Group of the components below that have no `linkGroup` prop. |
 
+#### WorkspaceChannelProvider
+
+*component* · [instrument-context/workspaceChannel.tsx](../../packages/trading-ui/src/instrument-context/workspaceChannel.tsx#L48)
+
+The workspace's active channel, set by a ChannelPicker. Components in the
+`active` link group (ACTIVE_LINK_GROUP) follow it; components pinned to a
+channel (red, green, ...) keep theirs.
+
+Props: `WorkspaceChannelProviderProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `children` | `ReactNode` |  |  |
+| `channels?` | `readonly LinkGroupDefinition[]` | `DEFAULT_LINK_GROUPS` |  |
+| `defaultActiveChannel?` | `LinkGroupId` |  | Initial active channel (default: the first channel). |
+| `onActiveChannelChange?` | `(channel: LinkGroupId) => void` |  | Observe changes of the active channel (to persist it). |
+
 ### Hooks (instrument-context)
 
 #### useComponentLinkGroup
 
-*hook* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L61)
+*hook* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L68)
 
 The link group of one component instance. The user's choice is saved
 with the layout: in a portal workspace item, the item's workspace
@@ -675,6 +693,16 @@ else the window-wide shared bus (getInstrumentLinkBus).
 useInstrumentLinkBus(): InstrumentLinkBus
 ```
 
+#### useOptionalWorkspaceChannel
+
+*hook* · [instrument-context/workspaceChannel.tsx](../../packages/trading-ui/src/instrument-context/workspaceChannel.tsx#L95)
+
+The nearest WorkspaceChannelProvider, or undefined outside one.
+
+```ts
+useOptionalWorkspaceChannel(): | WorkspaceChannelContextValue | undefined
+```
+
 #### useSelectedInstrument
 
 *hook* · [instrument-context/InstrumentContext.tsx](../../packages/trading-ui/src/instrument-context/InstrumentContext.tsx#L168)
@@ -684,6 +712,16 @@ provider (window-wide bus, default group).
 
 ```ts
 useSelectedInstrument({ linkGroup: linkGroupOption, }: UseSelectedInstrumentOptions = {}): InstrumentContextValue
+```
+
+#### useWorkspaceChannel
+
+*hook* · [instrument-context/workspaceChannel.tsx](../../packages/trading-ui/src/instrument-context/workspaceChannel.tsx#L100)
+
+The nearest WorkspaceChannelProvider (required).
+
+```ts
+useWorkspaceChannel(): WorkspaceChannelContextValue
 ```
 
 #### useWorkspaceItemState
@@ -742,7 +780,7 @@ getInstrumentLinkBus(): InstrumentLinkBus
 
 #### isUnlinkedGroup
 
-*function* · [instrument-context/linkGroups.ts](../../packages/trading-ui/src/instrument-context/linkGroups.ts#L58)
+*function* · [instrument-context/linkGroups.ts](../../packages/trading-ui/src/instrument-context/linkGroups.ts#L72)
 
 Private (per component instance) groups are `unlinked:<id>`.
 
@@ -752,7 +790,7 @@ isUnlinkedGroup(group: LinkGroupId | undefined): boolean
 
 #### linkGroupDefinition
 
-*function* · [instrument-context/linkGroups.ts](../../packages/trading-ui/src/instrument-context/linkGroups.ts#L66)
+*function* · [instrument-context/linkGroups.ts](../../packages/trading-ui/src/instrument-context/linkGroups.ts#L80)
 
 The definition (label, colour) of a link group id: UNLINKED_GROUP for
 unlinked / private groups, else the entry in `groups`, else a definition
@@ -797,6 +835,27 @@ workspaceItemState(store: WorkspacePersistentStateStore, instanceId: string): Wo
 
 ### Constants (instrument-context)
 
+#### ACTIVE_GROUP
+
+*const* · [instrument-context/linkGroups.ts](../../packages/trading-ui/src/instrument-context/linkGroups.ts#L58)
+
+```ts
+const ACTIVE_GROUP: LinkGroupDefinition
+```
+
+#### ACTIVE_LINK_GROUP
+
+*const* · [instrument-context/linkGroups.ts](../../packages/trading-ui/src/instrument-context/linkGroups.ts#L56)
+
+Follow the workspace's active channel (the one selected in the
+ChannelPicker of the enclosing WorkspaceChannelProvider). A component in
+this group reads and publishes on that channel and moves with it;
+without a provider it uses DEFAULT_LINK_GROUP.
+
+```ts
+const ACTIVE_LINK_GROUP: LinkGroupId
+```
+
 #### DEFAULT_LINK_CHANNEL_NAME
 
 *const* · [instrument-context/broadcastChannelTransport.ts](../../packages/trading-ui/src/instrument-context/broadcastChannelTransport.ts#L7)
@@ -807,7 +866,7 @@ const DEFAULT_LINK_CHANNEL_NAME: "heswell-trading-instrument-link"
 
 #### DEFAULT_LINK_GROUP
 
-*const* · [instrument-context/linkGroups.ts](../../packages/trading-ui/src/instrument-context/linkGroups.ts#L55)
+*const* · [instrument-context/linkGroups.ts](../../packages/trading-ui/src/instrument-context/linkGroups.ts#L69)
 
 Group of a component with no `linkGroup` prop (and no enclosing
 LinkGroupProvider / InstrumentContextProvider group). Everything is linked
@@ -839,7 +898,7 @@ const INSTRUMENT_LINK_BUS_VERSION: 1
 
 #### LINK_GROUP_PERSIST_PREFIX
 
-*const* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L28)
+*const* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L34)
 
 Prefix of the key in portal persisted state (`trading.linkGroup.<key>`).
 
@@ -849,12 +908,22 @@ const LINK_GROUP_PERSIST_PREFIX: "trading.linkGroup."
 
 #### LINK_GROUP_STATE_KEY
 
-*const* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L26)
+*const* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L32)
 
 Key the group is saved under in the vuu-layout View state.
 
 ```ts
 const LINK_GROUP_STATE_KEY: "linkGroup"
+```
+
+#### MAX_RECENT_RICS
+
+*const* · [instrument-context/workspaceChannel.tsx](../../packages/trading-ui/src/instrument-context/workspaceChannel.tsx#L17)
+
+How many rics the search remembers for its "Recent" list.
+
+```ts
+const MAX_RECENT_RICS: 8
 ```
 
 #### UNLINKED
@@ -911,12 +980,12 @@ The part of BroadcastChannel we use (lets tests inject a fake).
 
 #### ComponentLinkGroup
 
-*interface* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L30)
+*interface* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L36)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
-| `linkGroup` | `LinkGroupId` |  | The group (`unlinked` for a private one). |
-| `channel` | `LinkGroupId` |  | The bus channel to read / publish (a per-instance `unlinked:<id>` for unlinked). Pass to useSelectedInstrument({ linkGroup: channel }). |
+| `linkGroup` | `LinkGroupId` |  | The group (`unlinked` for a private one, `active` to follow the workspace). |
+| `channel` | `LinkGroupId` |  | The bus channel to read / publish (a per-instance `unlinked:<id>` for unlinked, the workspace's active channel for `active`). Pass to useSelectedInstrument({ linkGroup: channel }). |
 | `setLinkGroup` | `(linkGroup: LinkGroupId) => void` |  |  |
 
 #### ConnectBroadcastChannelOptions
@@ -1013,7 +1082,7 @@ The current selection of one link group.
 
 #### LinkGroupProps
 
-*interface* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L9)
+*interface* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L15)
 
 Props every linkable component accepts.
 
@@ -1045,7 +1114,7 @@ can format prices / validate quantities without another lookup.
 
 #### UseComponentLinkGroupOptions
 
-*interface* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L41)
+*interface* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L48)
 
 Extends `Pick< LinkGroupProps, "linkGroup" \| "defaultLinkGroup" \| "onLinkGroupChange" >`.
 
@@ -1063,6 +1132,24 @@ Extends `Pick< LinkGroupProps, "linkGroup" \| "defaultLinkGroup" \| "onLinkGroup
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
 | `linkGroup?` | `LinkGroupId` |  | Group to read / publish. Default: the enclosing LinkGroupProvider's or InstrumentContextProvider's group, else DEFAULT_LINK_GROUP. `unlinked` gives this hook call its own private selection. |
+
+#### WorkspaceChannelContextValue
+
+*interface* · [instrument-context/workspaceChannel.tsx](../../packages/trading-ui/src/instrument-context/workspaceChannel.tsx#L19)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `channels` | `readonly LinkGroupDefinition[]` |  | The channels offered by the picker, in display order. |
+| `activeChannel` | `LinkGroupId` |  | The channel every bound component in the workspace follows. |
+| `setActiveChannel` | `(channel: LinkGroupId) => void` |  |  |
+| `recentRics` | `readonly string[]` |  | Rics picked recently (most recent first). |
+| `addRecentRic` | `(ric: string) => void` |  |  |
+
+#### WorkspaceChannelProviderProps
+
+*interface* · [instrument-context/workspaceChannel.tsx](../../packages/trading-ui/src/instrument-context/workspaceChannel.tsx#L34)
+
+Props of [`WorkspaceChannelProvider`](#workspacechannelprovider).
 
 #### WorkspaceItemState
 
@@ -2372,6 +2459,61 @@ useTradingAccounts(): OrderTicketAccount[]
 
 Props of [`AccountSelector`](#accountselector).
 
+## components/ChannelPicker
+
+### Components (components/ChannelPicker)
+
+#### ChannelPicker
+
+*component* · [components/ChannelPicker/ChannelPicker.tsx](../../packages/trading-ui/src/components/ChannelPicker/ChannelPicker.tsx#L87)
+
+The workspace channel picker: one segment per channel showing the
+channel's instrument. Clicking a segment makes it the active channel
+(bound components follow it); the active segment opens the instrument
+search, which sets that channel's instrument.
+
+Props: `ChannelPickerProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `density?` | `ChannelPickerDensity \| "auto"` | `"auto"` | `auto` (default): `full` when every channel fits, else `compact`, else `dots`. Or force one density. |
+
+Also accepts the standard HTML attributes.
+
+### Constants (components/ChannelPicker)
+
+#### CHANNEL_PICKER_SOURCE
+
+*const* · [components/ChannelPicker/ChannelPicker.tsx](../../packages/trading-ui/src/components/ChannelPicker/ChannelPicker.tsx#L34)
+
+Selection source id of the picker's publishes.
+
+```ts
+const CHANNEL_PICKER_SOURCE: "ChannelPicker"
+```
+
+### Interfaces (components/ChannelPicker)
+
+#### ChannelPickerProps
+
+*interface* · [components/ChannelPicker/ChannelPicker.tsx](../../packages/trading-ui/src/components/ChannelPicker/ChannelPicker.tsx#L36)
+
+Props of [`ChannelPicker`](#channelpicker).
+
+### Types (components/ChannelPicker)
+
+#### ChannelPickerDensity
+
+*type* · [components/ChannelPicker/ChannelSegment.tsx](../../packages/trading-ui/src/components/ChannelPicker/ChannelSegment.tsx#L16)
+
+How much each segment shows: `full` (variant B: dot, ric, last, change),
+`compact` (variant A: dot, ric) or `dots` (the active channel keeps its
+ric; the others are dots).
+
+```ts
+type ChannelPickerDensity = "full" | "compact" | "dots"
+```
+
 ## components/ConnectionBanner
 
 ### Components (components/ConnectionBanner)
@@ -3102,7 +3244,7 @@ Props of [`InstrumentPicker`](#instrumentpicker).
 
 #### LinkGroupSelector
 
-*component* · [components/LinkGroupSelector/LinkGroupSelector.tsx](../../packages/trading-ui/src/components/LinkGroupSelector/LinkGroupSelector.tsx#L68)
+*component* · [components/LinkGroupSelector/LinkGroupSelector.tsx](../../packages/trading-ui/src/components/LinkGroupSelector/LinkGroupSelector.tsx#L84)
 
 A compact dropdown to pick a component's instrument link group (colour
 swatch + name, so it does not rely on colour alone). For component
@@ -3116,7 +3258,7 @@ Props: `LinkGroupSelectorProps`
 | --- | --- | --- | --- |
 | `value` | `LinkGroupId` |  | The current group. |
 | `onChange` | `(linkGroup: LinkGroupId) => void` |  |  |
-| `groups?` | `readonly LinkGroupDefinition[]` | `DEFAULT_LINK_GROUPS` | Groups to offer (default DEFAULT_LINK_GROUPS); `unlinked` is added. |
+| `groups?` | `readonly LinkGroupDefinition[]` | `DEFAULT_LINK_GROUPS` | Groups to offer (default DEFAULT_LINK_GROUPS); `unlinked` is added, and `active` first inside a WorkspaceChannelProvider. |
 | `allowUnlinked?` | `boolean` | `true` | Offer `unlinked` (default true). |
 | `className?` | `string` |  |  |
 | `aria-label?` | `string` | `"Link group"` | Accessible name (default "Link group"). |
@@ -3124,9 +3266,10 @@ Props: `LinkGroupSelectorProps`
 
 #### LinkGroupSwatch
 
-*component* · [components/LinkGroupSelector/LinkGroupSelector.tsx](../../packages/trading-ui/src/components/LinkGroupSelector/LinkGroupSelector.tsx#L42)
+*component* · [components/LinkGroupSelector/LinkGroupSelector.tsx](../../packages/trading-ui/src/components/LinkGroupSelector/LinkGroupSelector.tsx#L51)
 
-The colour dot of a link group (striped for unlinked).
+The colour dot of a link group (striped for unlinked; for `active`, the
+colour of the workspace's active channel, ringed).
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -3137,7 +3280,7 @@ The colour dot of a link group (striped for unlinked).
 
 #### LinkGroupSelectorProps
 
-*interface* · [components/LinkGroupSelector/LinkGroupSelector.tsx](../../packages/trading-ui/src/components/LinkGroupSelector/LinkGroupSelector.tsx#L18)
+*interface* · [components/LinkGroupSelector/LinkGroupSelector.tsx](../../packages/trading-ui/src/components/LinkGroupSelector/LinkGroupSelector.tsx#L21)
 
 Props of [`LinkGroupSelector`](#linkgroupselector).
 

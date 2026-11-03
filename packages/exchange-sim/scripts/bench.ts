@@ -64,16 +64,23 @@ const startServer = async (sim: ExchangeSimulator, autoStart: boolean) => {
 
 const tableUpdates = (publisher: MarketDataPublisher | undefined) => {
   if (!publisher) return 0;
-  const { priceUpdates, depthUpdates, tradeInserts, tradeEvictions } =
-    publisher.stats;
-  return priceUpdates + depthUpdates + tradeInserts + tradeEvictions;
+  const s = publisher.stats;
+  return (
+    s.priceUpdates +
+    s.depthUpdates +
+    s.tradeInserts +
+    s.tradeEvictions +
+    s.bookOrderUpdates +
+    s.bookEventInserts +
+    s.bookEventEvictions
+  );
 };
 
 const fmt = (n: number) => Math.round(n).toLocaleString("en-GB");
 
 const describeConfig = (sim: ExchangeSimulator) => {
   const c = sim.config;
-  return `${sim.books.length} books, mm ${c.mmPerInstrument}x${c.mmLevels} levels @ ${c.mmRate}/s, taker ${c.takerRate}/s, step ${c.botStepMs}ms, flush ${c.publishIntervalMs}ms, timeScale ${c.timeScale}`;
+  return `${sim.books.length} books, mm ${c.mmPerInstrument}x${c.mmLevels} levels @ ${c.mmRate}/s, taker ${c.takerRate}/s, step ${c.botStepMs}ms, flush ${c.publishIntervalMs}ms, timeScale ${c.timeScale}, bookOrders ${c.bookOrders}, bookEvents ${c.bookEvents}`;
 };
 
 async function benchMax() {

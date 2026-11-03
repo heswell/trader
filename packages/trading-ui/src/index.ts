@@ -18,6 +18,7 @@ export {
   sanitizeSelectedInstrument,
 } from "./instrument-context/selectedInstrument";
 export * from "./instrument-context/useComponentLinkGroup";
+export * from "./instrument-context/workspaceChannel";
 export * from "./instrument-context/workspaceItemState";
 
 // shared market-data / own-order hooks (P3.4, P3.5)
@@ -41,6 +42,7 @@ export * from "./components/AccountSelector";
 export * from "./components/ConnectionBanner";
 export * from "./components/ConnectionStatusIndicator";
 export * from "./components/InstrumentPicker";
+export * from "./components/ChannelPicker";
 export * from "./components/LinkGroupSelector";
 export * from "./components/OrderTicket";
 export * from "./components/SideLabel";

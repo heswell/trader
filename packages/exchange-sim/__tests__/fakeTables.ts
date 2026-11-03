@@ -85,5 +85,7 @@ export const createFakeTables = (): FakeExchangeTables => {
     trades: make(defs.trades),
     bars: make(defs.bars),
     bookSamples: make(defs.bookSamples),
+    bookOrders: make(defs.bookOrders),
+    bookEvents: make(defs.bookEvents),
   };
 };

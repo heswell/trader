@@ -31,13 +31,17 @@ const middle = { start: 2, span: 1 };
 const right = { start: 3, span: 1 };
 
 /*
- * Link groups: red follows the instruments grid (orders, fills, ticket and
- * the market panels), green follows the ladder's picker (ladder, tape,
- * positions). Each module's own default group is the one it has here, as
- * for a panel added from the Panels palette. The Ladder and Tape show an
- * instrument picker by default; here only the ladder's drives green, so the
- * tape turns its picker off.
+ * Link groups: the market panels (ticket, chart, depth, depth chart,
+ * ladder, tape) are in the `active` group: they follow the channel picked
+ * in the workspace header's ChannelPicker, and its search sets their
+ * instrument. The instruments grid, orders and fills keep their module
+ * default (red) and positions its own (green): clicking a row drives that
+ * channel, and the market panels follow when it is the active one. The
+ * Ladder and Tape drop their toolbar pickers while they follow the active
+ * channel.
  */
+const FOLLOW_ACTIVE = { defaultLinkGroup: "active" } as const;
+
 const PANELS: readonly Panel[] = [
   {
     id: "trader-instruments",
@@ -69,6 +73,7 @@ const PANELS: readonly Panel[] = [
   },
   {
     id: "trader-ticket",
+    props: FOLLOW_ACTIVE,
     module: "TradingTicket",
     title: "Ticket",
     column: middle,
@@ -76,6 +81,7 @@ const PANELS: readonly Panel[] = [
   },
   {
     id: "trader-chart",
+    props: FOLLOW_ACTIVE,
     module: "TradingChart",
     title: "Chart",
     column: middle,
@@ -83,6 +89,7 @@ const PANELS: readonly Panel[] = [
   },
   {
     id: "trader-depth",
+    props: FOLLOW_ACTIVE,
     module: "TradingDepth",
     title: "Depth",
     column: middle,
@@ -90,6 +97,7 @@ const PANELS: readonly Panel[] = [
   },
   {
     id: "trader-depth-chart",
+    props: FOLLOW_ACTIVE,
     module: "TradingDepthChart",
     title: "Depth chart",
     column: middle,
@@ -99,7 +107,7 @@ const PANELS: readonly Panel[] = [
     id: "trader-ladder",
     module: "TradingLadder",
     title: "Ladder",
-    props: { showInstrumentPicker: true },
+    props: { ...FOLLOW_ACTIVE, showInstrumentPicker: true },
     column: right,
     row: { start: 1, span: 3 },
   },
@@ -107,7 +115,7 @@ const PANELS: readonly Panel[] = [
     id: "trader-tape",
     module: "TradingTape",
     title: "Tape",
-    props: { showInstrumentPicker: false },
+    props: { ...FOLLOW_ACTIVE, showInstrumentPicker: false },
     column: right,
     row: { start: 4, span: 1 },
   },
@@ -127,7 +135,7 @@ const STACKS = [
 ];
 
 /** Date of the current default layout. */
-const UPDATED_AT = "2026-10-25T00:00:00.000Z";
+const UPDATED_AT = "2026-11-03T00:00:00.000Z";
 
 /**
  * The Trader system workspace: a v2 GridLayoutDocument of `portal-module`
@@ -140,7 +148,7 @@ export const TRADER_WORKSPACE: NamedWorkspaceDefinitionV1 = {
   id: TRADER_WORKSPACE_ID,
   name: "Trader",
   description:
-    "Instruments, blotters, ticket, charts, depth, ladder and tape with red / green link groups",
+    "Instruments, blotters, ticket, charts, depth, ladder and tape; the market panels follow the header's channel picker",
   createdAt: UPDATED_AT,
   updatedAt: UPDATED_AT,
   snapshot: {

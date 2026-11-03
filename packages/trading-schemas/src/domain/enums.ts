@@ -159,6 +159,20 @@ export const BotType = Object.freeze({
 export type BotType = ValueOf<typeof BotType>;
 export const BOT_TYPES = values(BotType);
 
+/**
+ * Type of an order-by-order (L3) book event in the EXCHANGE `bookEvents`
+ * table. EXECUTE is reported against the resting (maker) order only; an
+ * amend that loses time priority is a DELETE followed by an ADD.
+ */
+export const BookEventType = Object.freeze({
+  Add: "ADD",
+  Execute: "EXECUTE",
+  Reduce: "REDUCE",
+  Delete: "DELETE",
+} as const);
+export type BookEventType = ValueOf<typeof BookEventType>;
+export const BOOK_EVENT_TYPES = values(BookEventType);
+
 /** Type guard: `value` is one of the `allowed` enum values. */
 export const isEnumValue = <T extends string>(
   allowed: readonly T[],

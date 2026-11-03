@@ -1,7 +1,6 @@
 import { Button } from "@salt-ds/core";
 import { useModuleRegistry } from "@vuu-ui/core";
 import {
-  AddPanelButton,
   createPortalComponentRegistries,
   type PanelsPaletteProps,
   PortalLandingPage,
@@ -10,8 +9,13 @@ import {
   type WorkspaceEmptyContent,
   WorkspaceDropZone,
 } from "@vuu-ui/core/portal";
+import { AddPanelIconButton } from "./AddPanelIconButton";
 import { TraderNav } from "./nav/TraderNav";
 import { TraderHome } from "./TraderHome";
+import {
+  PortalWorkspaceChannel,
+  WorkspaceChannelPicker,
+} from "./WorkspaceChannelPicker";
 import { SYSTEM_WORKSPACES } from "./workspaces/traderWorkspace";
 
 import "./App.css";
@@ -44,14 +48,16 @@ export const EMPTY_WORKSPACE: WorkspaceEmptyContent = ({ openPalette }) => (
 
 /**
  * Portal workspaces: the Trader system workspace and the user's own, made
- * of `portal-module` items. "Add panel" in the workspace header opens the
- * Panels palette (the modules with `workspace` metadata) in the shell's
- * context panel.
+ * of `portal-module` items. The workspace header centres the channel picker
+ * (panels in the `active` link group follow its channel); its actions hold
+ * "Add panel", which opens the Panels palette (the modules with `workspace`
+ * metadata) in the shell's context panel.
  */
 export const WORKSPACES: PortalWorkspacesOptions = {
   componentRenderers: registries.renderers,
   emptyContent: EMPTY_WORKSPACE,
-  headerActions: <AddPanelButton />,
+  headerActions: <AddPanelIconButton />,
+  headerCenter: <WorkspaceChannelPicker />,
   palette: PALETTE,
   settingsCodecs: registries.settingsCodecs,
   systemWorkspaces: SYSTEM_WORKSPACES,
@@ -71,18 +77,21 @@ const CONTEXT_PANEL = { placement: "inline" } as const;
 export const App = ({ environment }: AppProps) => {
   const { modules: remoteModules } = useModuleRegistry();
   return (
-    <PortalShell
-      contextPanel={CONTEXT_PANEL}
-      header={false}
-      id={PORTAL_ID}
-      remoteModules={remoteModules}
-      title="Trader"
-      workspaces={WORKSPACES}
-    >
-      <TraderNav environment={environment} remoteModules={remoteModules} />
-      <PortalLandingPage>
-        <TraderHome />
-      </PortalLandingPage>
-    </PortalShell>
+    <PortalWorkspaceChannel portalId={PORTAL_ID}>
+      <PortalShell
+        contextPanel={CONTEXT_PANEL}
+        density="high"
+        header={false}
+        id={PORTAL_ID}
+        remoteModules={remoteModules}
+        title="Trader"
+        workspaces={WORKSPACES}
+      >
+        <TraderNav environment={environment} remoteModules={remoteModules} />
+        <PortalLandingPage>
+          <TraderHome />
+        </PortalLandingPage>
+      </PortalShell>
+    </PortalWorkspaceChannel>
   );
 };

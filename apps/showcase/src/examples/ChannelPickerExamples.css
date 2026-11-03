@@ -1,0 +1,141 @@
+.cpDemo {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Sides share the space left over; the picker column takes what it needs
+   (its full width) or what is left, and stays centred. */
+.cpDemo-titleBar {
+  align-items: center;
+  background: var(--salt-container-primary-background);
+  border-bottom: 1px solid var(--salt-separable-primary-borderColor);
+  box-sizing: border-box;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(max-content, 1fr) minmax(0, max-content) minmax(
+      max-content,
+      1fr
+    );
+  height: 56px;
+  padding: 0 16px;
+  position: relative;
+  z-index: 2;
+}
+
+.cpDemo-crumb {
+  align-items: baseline;
+  display: flex;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.cpDemo-actions {
+  justify-self: end;
+}
+
+.cpDemo-panels {
+  display: grid;
+  flex: 1;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  min-height: 0;
+  padding: 8px 0 0;
+}
+
+.cpDemo-panel {
+  border: 1px solid var(--salt-separable-primary-borderColor);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cpDemo-panelHeader {
+  align-items: center;
+  background: color-mix(in srgb, var(--channel-color) 12%, transparent);
+  display: flex;
+  flex: 0 0 30px;
+  font-size: 12px;
+  font-weight: 600;
+  justify-content: space-between;
+  padding: 0 10px;
+  transition: background-color 0.2s;
+}
+
+.cpDemo-panelChannel {
+  align-items: center;
+  display: flex;
+  font-weight: 700;
+  gap: 6px;
+}
+
+.cpDemo-pinned {
+  color: var(--salt-content-secondary-foreground);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cpDemo-dot {
+  background: var(--channel-color);
+  border-radius: 50%;
+  height: 8px;
+  width: 8px;
+}
+
+.cpDemo-srOnly {
+  clip: rect(0 0 0 0);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
+}
+
+.cpDemo-panelBody {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* ---------------------------------------------------------------- fit */
+
+.cpDemo-fit {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  /* room for an open dropdown below the last bar */
+  padding-bottom: 520px;
+}
+
+.cpDemo-fitControls {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.cpDemo-fitRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cpDemo-fitFrame {
+  border: 1px dashed var(--salt-separable-primary-borderColor);
+  max-width: 100%;
+}
+
+.cpDemo-fitSlider {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+/* An open dropdown sits above the bars below it. */
+.cpDemo-titleBar:focus-within {
+  z-index: 3;
+}

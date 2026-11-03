@@ -40,6 +40,9 @@ export const barKey = (ric: string, interval: string, start: number) =>
 export const bookSampleKey = (ric: string, time: number) =>
   `${ric}${SEP}${time}`;
 
+/** Key of a `bookEvents` row. */
+export const bookEventKey = (ric: string, seq: number) => `${ric}${SEP}${seq}`;
+
 /** Key of a `pnlHistory` row. */
 export const pnlHistoryKey = (account: string, ric: string, time: number) =>
   `${account}${SEP}${ric}${SEP}${time}`;

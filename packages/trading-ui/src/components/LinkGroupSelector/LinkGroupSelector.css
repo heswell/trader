@@ -22,6 +22,12 @@
   );
 }
 
+/* Follows the workspace's active channel: its colour, ringed. */
+.tradingLinkGroupSelector-swatch[data-link-group="active"] {
+  border-color: var(--salt-container-primary-background);
+  box-shadow: 0 0 0 1px var(--salt-content-secondary-foreground);
+}
+
 .tradingLinkGroupSelector-option {
   align-items: center;
   display: flex;

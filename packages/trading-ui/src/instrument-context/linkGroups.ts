@@ -48,6 +48,20 @@ export const UNLINKED_GROUP: LinkGroupDefinition = Object.freeze({
 });
 
 /**
+ * Follow the workspace's active channel (the one selected in the
+ * ChannelPicker of the enclosing WorkspaceChannelProvider). A component in
+ * this group reads and publishes on that channel and moves with it;
+ * without a provider it uses DEFAULT_LINK_GROUP.
+ */
+export const ACTIVE_LINK_GROUP: LinkGroupId = "active";
+
+export const ACTIVE_GROUP: LinkGroupDefinition = Object.freeze({
+  id: ACTIVE_LINK_GROUP,
+  label: "Active channel",
+  color: "var(--salt-content-secondary-foreground)",
+});
+
+/**
  * Group of a component with no `linkGroup` prop (and no enclosing
  * LinkGroupProvider / InstrumentContextProvider group). Everything is linked
  * by default, as with the single selection of earlier versions.
@@ -69,8 +83,10 @@ export const linkGroupDefinition = (
 ): LinkGroupDefinition =>
   isUnlinkedGroup(group)
     ? UNLINKED_GROUP
-    : (groups.find((g) => g.id === group) ?? {
-        id: group,
-        label: group,
-        color: "var(--salt-separable-primary-borderColor)",
-      });
+    : group === ACTIVE_LINK_GROUP
+      ? ACTIVE_GROUP
+      : (groups.find((g) => g.id === group) ?? {
+          id: group,
+          label: group,
+          color: "var(--salt-separable-primary-borderColor)",
+        });

@@ -54,16 +54,24 @@ describe("Trader system workspace", () => {
       [["trader-orders", "trader-fills", "trader-positions"], "trader-orders"],
       [["trader-chart", "trader-depth", "trader-depth-chart"], "trader-chart"],
     ]);
+    // Market panels follow the workspace's active channel (the header
+    // ChannelPicker); the Ladder keeps a picker for when it is pinned.
     const ladder = layout.components.find((c) => c.id === "trader-ladder");
     expect(ladder?.settings).toEqual({
       moduleId: "TradingLadder",
-      props: { showInstrumentPicker: true },
+      props: { defaultLinkGroup: "active", showInstrumentPicker: true },
     });
-    // The Tape follows the ladder's picker rather than showing its own.
     const tape = layout.components.find((c) => c.id === "trader-tape");
     expect(tape?.settings).toEqual({
       moduleId: "TradingTape",
-      props: { showInstrumentPicker: false },
+      props: { defaultLinkGroup: "active", showInstrumentPicker: false },
     });
+    for (const id of ["trader-ticket", "trader-chart", "trader-depth"]) {
+      const panel = layout.components.find((c) => c.id === id);
+      expect(
+        (panel?.settings as { props?: Record<string, unknown> }).props
+          ?.defaultLinkGroup,
+      ).toBe("active");
+    }
   });
 });

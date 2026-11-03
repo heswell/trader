@@ -302,9 +302,15 @@ export class ExchangeSimulator {
           history: config.bookSampleHistory,
           decimals,
         },
+        l3: {
+          orders: config.bookOrders === 1,
+          events: config.bookEvents === 1,
+          eventsCapacity: config.bookEventsCapacity,
+        },
       },
     );
     publisher.loadInstruments(this.universe, this.isSimulated);
+    publisher.l3?.attach(this.#books);
     this.#publisher = publisher;
     if (config.barBackfill && publisher.bars) this.#backfillBars(publisher);
     this.flush();

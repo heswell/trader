@@ -2,7 +2,13 @@ import { usePersistedState } from "@vuu-ui/core/portal";
 import { useViewContext } from "@vuu-ui/vuu-layout";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useInheritedLinkGroup } from "./InstrumentContext";
-import { type LinkGroupId, UNLINKED } from "./linkGroups";
+import {
+  ACTIVE_LINK_GROUP,
+  DEFAULT_LINK_GROUP,
+  type LinkGroupId,
+  UNLINKED,
+} from "./linkGroups";
+import { useOptionalWorkspaceChannel } from "./workspaceChannel";
 import { useWorkspaceItemState } from "./workspaceItemState";
 
 /** Props every linkable component accepts. */
@@ -28,11 +34,12 @@ export const LINK_GROUP_STATE_KEY = "linkGroup";
 export const LINK_GROUP_PERSIST_PREFIX = "trading.linkGroup.";
 
 export interface ComponentLinkGroup {
-  /** The group (`unlinked` for a private one). */
+  /** The group (`unlinked` for a private one, `active` to follow the workspace). */
   linkGroup: LinkGroupId;
   /**
    * The bus channel to read / publish (a per-instance `unlinked:<id>` for
-   * unlinked). Pass to useSelectedInstrument({ linkGroup: channel }).
+   * unlinked, the workspace's active channel for `active`). Pass to
+   * useSelectedInstrument({ linkGroup: channel }).
    */
   channel: LinkGroupId;
   setLinkGroup: (linkGroup: LinkGroupId) => void;
@@ -144,7 +151,12 @@ export const useComponentLinkGroup = ({
   }, []);
 
   const privateId = useId();
+  const activeChannel = useOptionalWorkspaceChannel()?.activeChannel;
   const channel =
-    linkGroup === UNLINKED ? `${UNLINKED}:${privateId}` : linkGroup;
+    linkGroup === UNLINKED
+      ? `${UNLINKED}:${privateId}`
+      : linkGroup === ACTIVE_LINK_GROUP
+        ? (activeChannel ?? DEFAULT_LINK_GROUP)
+        : linkGroup;
   return { linkGroup, channel, setLinkGroup };
 };

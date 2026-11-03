@@ -9,7 +9,7 @@ GBM reference price drives them. The results are published to the `EXCHANGE` mod
 src/
   reference/      instrument universe (336 listings, 9 venues, tick bands, lot sizes, ref prices)
   engine/         ExchangeSimulator, InstrumentBook, PriceModel, TradingSession, bots/{MarketMaker,NoiseTaker}
-  publish/        MarketDataPublisher (prices / depth deltas / trades ring buffer), TradeRingBuffer
+  publish/        MarketDataPublisher (prices / depth deltas / trades ring buffer), BookL3Publisher (bookOrders / bookEvents), TradeRingBuffer
   gateway/        SimExchangeGateway: in-process order entry + execution reports
   modules/exchange ExchangeModule (Vuu module) and ExchangeAdminService (admin RPCs)
   config.ts       knobs (application.conf `exchangeSim.*` / `EXCHANGE_SIM_*` env)
@@ -44,11 +44,35 @@ serverConfig.withModule(ExchangeModule(sim));   // starts ticking once its table
 | `prices` | `ric` | One row per listing. The row shows bid/ask/sizes, last/lastSize, OHLC, volume, turnover, vwap, change/changePct (vs `close` = refPrice), phase, seq and timestamp. Instruments without a book stay `CLOSED`. |
 | `depth` | `ric\|side\|level` | Top `depthLevels` (10) levels per side: price, size, cumSize, orderCount, seq. Updates are deltas; a level is touched only when its values change, and vanished levels are deleted. |
 | `trades` | `tradeId` | Time and sales across all instruments. It is a ring buffer of `tradesCapacity` (50k) rows; the oldest rows are deleted. `aggressorSide` is the taker side. |
+| `bookOrders` | `orderId` | Order-by-order (L3) book: one row per resting order (`ric`, `side`, `price`, open `size`, `entryTime`, `seq`). Anonymous: no account or owner. Sort by price, then `entryTime`, for queue order. `orderId` matches `childOrders.exchangeOrderId` for OMS orders. Writes are coalesced per flush. Off with `bookOrders=0`. |
+| `bookEvents` | `ric\|seq` | The L3 event tape (off by default, `bookEvents=1`). Ring buffer of `bookEventsCapacity` rows. See [L3 data](#l3-order-by-order-data). |
 | `instrumentPrices` | `ric` | A join of instruments and prices. |
 | `bars` | `ric\|interval\|start` | OHLCV candles per instrument and `barIntervals` interval (`1s`, `1m`, `5m`), built from trades. The current bar updates in place on each flush; `barHistory` closed bars are kept per series (oldest deleted). Intervals are exchange-clock (wall) time; intervals with no trades are gaps. `barBackfill` seeds synthetic history at startup. |
 | `bookSamples` | `ric\|time` | Every `bookSampleIntervalMs`, a snapshot of each book's published top 5 levels: bid/ask/mid, spreadBps, touch sizes, top-5 cumulative depth, imbalance. `bookSampleHistory` samples per instrument. |
 
 See [docs/charting-data.md](../../docs/charting-data.md) for the chart data semantics.
+
+### L3 (order-by-order) data
+
+`prices` is level 1 and `depth` is level 2. Level 3 comes from the books themselves: every operation in
+`InstrumentBook` (bots and gateway) reports what it did to the resting book as `BookEvent`s. Each book numbers
+its events with its own gap-free `seq`, starting at 1.
+
+| Event | When | `size` | `leaves` |
+| --- | --- | --- | --- |
+| `ADD` | An order (or the unfilled rest of one) starts resting | shown size | = size |
+| `EXECUTE` | A resting order trades; reported for the maker only, with `tradeId` | traded | what's left (0 = gone) |
+| `REDUCE` | Amended down at the same price (keeps time priority) | removed | what's left |
+| `DELETE` | Cancelled, expired, or an amend that loses priority | removed | 0 |
+
+The incoming side of a trade (a market order, IOC, or the crossing part of a limit) gets no event, because it never
+rests. An amend that loses priority (new price or larger size) is a `DELETE`, then any `EXECUTE`s if the new price
+crosses, then an `ADD` if it still rests. A rejected amend sends nothing. A restore replaces the book without events:
+`bookOrders` is rebuilt for that instrument, so a `bookEvents` consumer should re-read `bookOrders` after one.
+
+Replaying `bookEvents` in `seq` order reproduces `depth` exactly; `__tests__/bookL3.test.ts` checks this with live bots.
+`bookEvents` is unfiltered across instruments, so subscribe with a `ric` filter: one instrument sees about 90
+events/s at the default load, against about 18k/s for the whole market.
 
 Publishing is coalesced. Every `publishIntervalMs`, each book that changed is written once: one prices
 row plus a depth delta. Trades since the last flush are then appended. A prices row is skipped when
@@ -117,6 +141,9 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | `barBackfill` | 1 | 1 = seed `barHistory` synthetic closed bars per series from the price model at startup. |
 | `bookSampleIntervalMs` | 1000 | `bookSamples` interval (ms); 0 disables. |
 | `bookSampleHistory` | 300 | Book samples kept per instrument. |
+| `bookOrders` | 1 | 1 = publish the L3 `bookOrders` table; 0 = off. |
+| `bookEvents` | 0 | 1 = publish every L3 event to the `bookEvents` tape; 0 = off. |
+| `bookEventsCapacity` | 50000 | `bookEvents` rows kept across all instruments (oldest deleted). |
 | `priceBandPct` | 0.2 | Static band around refPrice (±20%). |
 | `timeScale` | 10 | Price-model time multiplier. |
 | `defaultVolatility` | 0 | Annualised vol for all instruments (0 = per-instrument 20–50%). |
@@ -224,8 +251,9 @@ Silicon laptop, running through a real VuuServer:
 | | |
 | --- | --- |
 | Book events (simulated) | ~13.8k/s (taker ~1.9k trades/s) |
-| Table updates | ~21k/s (prices + depth deltas + trades) |
-| Capacity, max mode | ~57k book events/s and ~88k table updates/s per wall second: about 4x headroom |
+| Table updates | ~31k/s: prices + depth deltas + trades (~21k/s) plus bookOrders (~9k/s) |
+| Capacity, max mode | ~57k book events/s per wall second: about 4.1x headroom (4.2x with `bookOrders=0`) |
 | Realtime event-loop lag | p50 1ms, p99 ~10ms; the websocket client receives ~4.4k rows/s on 3 viewports |
+| With `bookEvents=1` | ~65k table updates/s (the tape adds ~35k: an insert and an eviction per event); headroom about 3.8x, p99 lag ~11ms |
 
 To reach the 5–20k events/s target band, keep the defaults or scale `activeInstruments` or `takerRate`.

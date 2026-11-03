@@ -1,4 +1,4 @@
-import { MarketDepth } from "@heswell/trading-ui";
+import { ACTIVE_LINK_GROUP, MarketDepth } from "@heswell/trading-ui";
 import {
   FeatureFrame,
   fillStyle,
@@ -8,7 +8,9 @@ import {
 } from "./shared";
 
 /** Market depth for the linked instrument, with the account's own orders. */
-const Depth = ({ defaultLinkGroup = "red" }: LinkedFeatureProps) => {
+const Depth = ({
+  defaultLinkGroup = ACTIVE_LINK_GROUP,
+}: LinkedFeatureProps) => {
   const { account, toolbar } = useAccountToolbar();
   return (
     <FeatureFrame toolbar={toolbar}>
