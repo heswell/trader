@@ -55,6 +55,28 @@ const { selectedInstrument, setSelectedInstrument } = useSelectedInstrument({ li
 </InstrumentContextProvider>
 ```
 
+## Workspace channel picker (showcase only)
+
+A title-bar picker that combines the channel (link group) selector with an instrument search. It lives in the
+showcase (`apps/showcase/src/examples/channel-picker`) while it is developed and will move to trading-ui. Showcase:
+`#channel-picker-workspace`, `#channel-picker-fit`.
+
+- Built on Salt: the channels are a `ToggleButtonGroup` (radios: ←→ move between them, one tab stop) of
+  `ToggleButton`s, then a search `Button`, styled through Salt's `--toggleButton-*` / `--saltButton-*` variables
+  (24px buttons in a 28px strip). Each segment shows the channel's ric. Clicking one makes it the workspace's
+  **active channel** (`WorkspaceChannelProvider` / `useWorkspaceChannel`); components bound to the workspace pass
+  `linkGroup={activeChannel}`, pinned ones pass their own channel.
+- The search button (or clicking the active channel again) opens the search: a vuu `Table` over `instrumentPrices`
+  drawn with a custom `Row` (`InstrumentSearchRow`). With no text it lists the channels' and recent rics. ↑↓ move,
+  Enter publishes the instrument to the active channel, Tab / Shift+Tab switch channel, Esc closes. Focus returns to
+  the channel after Enter or Esc, not after a mouse pick.
+- Results come in two sections, each its own `Table`: rics starting with the text, then names containing it. Vuu
+  filters ignore brackets, so "name matches, ric doesn't" can't be one filter: a lookup of `instruments` (ric +
+  description) finds every match and splits them; the name section filters on `ric in [...]`. ↑↓ cross sections.
+- Density: `full` (dot, ric, last, change) when all channels fit, else `compact` (dot, ric), else `dots` (only the
+  active channel keeps its ric). `density="auto"` (default) measures hidden full / compact copies against the space
+  available; give the picker a `minmax(0, max-content)` grid track (or a shrinkable flex item).
+
 ## Accounts
 
 ```tsx

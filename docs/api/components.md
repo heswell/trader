@@ -28,7 +28,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [LinkGroupProvider](trading-ui.md#linkgroupprovider) | `instrument-context` |  |  | InstrumentLookup | `linking-providers` | [guide](../components/selection-and-linking.md#how-linking-works) |
 | [LinkGroupSelector](trading-ui.md#linkgroupselector) | `components/LinkGroupSelector` |  |  |  | `linking-providers`, `selectors` | [guide](../components/selection-and-linking.md) |
 | [LinkGroupSwatch](trading-ui.md#linkgroupswatch) | `components/LinkGroupSelector` |  |  |  | `linking-providers` | [guide](../components/selection-and-linking.md) |
-| [MarketDepth](trading-ui.md#marketdepth) | `components/MarketDepth` | `depth`, `instrumentPrices`, `parentOrders`, `trades` |  | LinkGroupSelector, StaleIndicator | `chart-workspace`, `market-depth-selected`, `price-ladder-live`, `trader-workspace` | [guide](../components/market-depth-and-ladder.md#marketdepth) |
+| [MarketDepth](trading-ui.md#marketdepth) | `components/MarketDepth` | `depth`, `instrumentPrices`, `parentOrders`, `trades` |  | LinkGroupSelector, StaleIndicator | `channel-picker-workspace`, `chart-workspace`, `market-depth-selected`, `price-ladder-live`, `trader-workspace` | [guide](../components/market-depth-and-ladder.md#marketdepth) |
 | [OrderBlotter](trading-ui.md#orderblotter) | `components/OrderBlotter` | `childOrders`, `parentOrders` | *edit session*, `amendOrder`, `cancelAll`, `cancelOrder` | InstrumentLookup, LinkGroupSelector, StaleIndicator, TradingCellRenderers | `order-blotter`, `trade-tape`, `trader-workspace` | [guide](../components/blotters.md) |
 | [OrderStatusBadge](trading-ui.md#orderstatusbadge) | `components/OrderStatusBadge` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
 | [OrderTicket](trading-ui.md#orderticket) | `components/OrderTicket` | `accounts`, `instrumentPrices`, `parentOrders` | `createOrder` | InstrumentPicker, LinkGroupSelector, StaleIndicator | `hosting-connection-override`, `order-ticket-compact` | [guide](../components/order-ticket.md) |
@@ -39,7 +39,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [PnlHistoryChart](trading-ui.md#pnlhistorychart) | `components/PnlHistoryChart` | `accountPnlHistory` |  | AccountSelector, ChartFrame | `pnl-history-chart` | [guide](../components/charts.md#pnlhistorychart) |
 | [PnlValue](trading-ui.md#pnlvalue) | `components/PnlValue` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
 | [PositionsView](trading-ui.md#positionsview) | `components/PositionsView` | `positionPrices` |  | InstrumentLookup, LinkGroupSelector, PnlValue, StaleIndicator, TradingCellRenderers | `positions-view`, `trader-workspace` | [guide](../components/blotters.md) |
-| [PriceChart](trading-ui.md#pricechart) | `components/PriceChart` | `bars`, `depth`, `fills`, `instrumentPrices`, `trades` |  | ChartFrame, LinkGroupSelector | `chart-workspace`, `price-chart`, `trader-workspace` | [guide](../components/charts.md#pricechart) |
+| [PriceChart](trading-ui.md#pricechart) | `components/PriceChart` | `bars`, `depth`, `fills`, `instrumentPrices`, `trades` |  | ChartFrame, LinkGroupSelector | `channel-picker-workspace`, `chart-workspace`, `price-chart`, `trader-workspace` | [guide](../components/charts.md#pricechart) |
 | [PriceLadder](trading-ui.md#priceladder) | `components/PriceLadder` | `depth`, `instrumentPrices`, `parentOrders`, `trades` | `amendOrder`, `cancelAll`, `cancelOrder`, `createOrder` | LinkGroupSelector, OrderTicket, StaleIndicator | `price-ladder-live`, `trader-workspace` | [guide](../components/market-depth-and-ladder.md) |
 | [PriceLadderView](trading-ui.md#priceladderview) | `components/PriceLadder` | `depth`, `instrumentPrices`, `parentOrders`, `trades` |  |  | `price-ladder-stress` | [guide](../components/market-depth-and-ladder.md) |
 | [PriceMoveCell](trading-ui.md#pricemovecell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
@@ -50,7 +50,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [SparklineCell](trading-ui.md#sparklinecell) | `components/Sparkline` |  |  |  | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#sparkline) |
 | [SpreadChart](trading-ui.md#spreadchart) | `components/SpreadChart` | `bookSamples`, `depth`, `instrumentPrices`, `trades` |  | ChartFrame, LinkGroupSelector | `chart-workspace`, `depth-chart`, `spread-chart` | [guide](../components/charts.md#spreadchart) |
 | [StaleIndicator](trading-ui.md#staleindicator) | `components/StaleIndicator` |  |  |  | `hosting-connection-override`, `notifications-connection` | [guide](../components/notifications-and-connection.md) |
-| [TradeTape](trading-ui.md#tradetape) | `components/TradeTape` | `trades` |  | InstrumentLookup, LinkGroupSelector, StaleIndicator | `trade-tape`, `trader-workspace` | [guide](../components/blotters.md) |
+| [TradeTape](trading-ui.md#tradetape) | `components/TradeTape` | `trades` |  | InstrumentLookup, LinkGroupSelector, StaleIndicator | `channel-picker-workspace`, `trade-tape`, `trader-workspace` | [guide](../components/blotters.md) |
 | [TradingConnectionStateOverride](trading-ui.md#tradingconnectionstateoverride) | `connection` |  |  |  | `hosting-connection-override` | [guide](../components/hosting.md#tradingconnectionstateoverride) |
 | [TradingDataProvider](trading-ui.md#tradingdataprovider) | `data` |  |  |  | *host* | [guide](../components/hosting.md#tradingdataprovider) |
 | [TradingFeatureRoot](trading-ui.md#tradingfeatureroot) | `feature-root` |  |  | ConnectionBanner, OrderTicket | `hosting-feature-root` | [guide](../components/hosting.md#tradingfeatureroot) |
@@ -100,6 +100,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 
 | Group | Examples | Guide |
 | --- | --- | --- |
+| ChannelPicker | `channel-picker-fit`, `channel-picker-workspace` | [guide](../components/selection-and-linking.md#workspace-channel-picker-showcase-only) |
 | Charts | `chart-workspace` | [guide](../components/charts.md) |
 | DepthChartView | `depth-chart` | [guide](../components/charts.md#depthchartview) |
 | ExposureTreemap | `exposure-treemap` | [guide](../components/charts.md#exposuretreemap) |

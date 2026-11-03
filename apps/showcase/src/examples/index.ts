@@ -23,6 +23,10 @@ import {
   SlippageChartExample,
   SpreadChartExample,
 } from "./ChartExamples";
+import {
+  ChannelPickerFit,
+  ChannelPickerWorkspace,
+} from "./ChannelPickerExamples";
 import { InstrumentPricesTicking } from "./InstrumentPricesTicking";
 import { LinkingProvidersExample, SelectorsExample } from "./LinkingExamples";
 import { MarketDepthExamples } from "./MarketDepthExamples";
@@ -60,6 +64,22 @@ export const examples: ShowcaseExample[] = [
     description:
       "vuu-layout workspace with two instrument link groups: red follows the grid (ticket, depth, orders, fills), green follows the picker and positions (ladder, tape). Change a View's group with its swatch; the choice is saved with the layout.",
     Component: TraderWorkspace,
+  },
+  {
+    id: "channel-picker-workspace",
+    group: "ChannelPicker",
+    title: "Title bar picker (workspace channel)",
+    description:
+      "Click a channel to switch every bound panel to it (the pinned Depth stays on Blue). Click the active channel, or its search button, to find an instrument: ↑↓ move, Enter links it, Tab switches channel, Esc closes.",
+    Component: ChannelPickerWorkspace,
+  },
+  {
+    id: "channel-picker-fit",
+    group: "ChannelPicker",
+    title: "Fit: full, compact, dots",
+    description:
+      "Full (dot, ric, price) when every channel fits, else compact (dot, ric), else dots with only the active channel's ric. Force a density or drag the width slider.",
+    Component: ChannelPickerFit,
   },
   {
     id: "stack-instrument-prices",
