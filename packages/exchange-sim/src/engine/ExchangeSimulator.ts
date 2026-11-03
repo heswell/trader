@@ -4,12 +4,16 @@ import {
   type Trade,
 } from "@heswell/hft-limit-order-book";
 import {
+  activityAt,
   BotType,
   ExecType,
   OrdType,
   RejectReason,
   roundToLot,
+  type SessionSchedule,
   TradingPhase,
+  VOLUME_PROFILES,
+  type VolumeProfileName,
 } from "@heswell/trading-schemas";
 import {
   barIntervalList,
@@ -58,7 +62,20 @@ export interface SimulatedInstrument {
   mmRate: number;
   /** TAKER orders/s for the instrument (0 = paused). */
   takerRate: number;
+  /** Random variation of taker activity around the volume curve. */
+  readonly noise: ActivityNoise;
 }
+
+/** Log-space activity noise: a per-day level plus a mean-reverting wander. */
+interface ActivityNoise {
+  readonly rng: Random;
+  day: number | undefined;
+  level: number;
+  wander: number;
+}
+
+/** Mean-reversion time of the activity wander, as a fraction of the session. */
+const WANDER_SESSION_FRACTION = 0.05;
 
 export interface ExchangeSimulatorOptions {
   config?: Partial<ExchangeSimConfig>;
@@ -102,6 +119,8 @@ export class ExchangeSimulator {
   readonly universe: readonly InstrumentDef[];
   readonly gateway: SimExchangeGateway;
   readonly session: TradingSession;
+  /** Session times and volume curve, as the OMS sees them. */
+  readonly sessionSchedule: SessionSchedule;
   readonly #listed = new Map<string, InstrumentDef>();
   readonly #simulated = new Map<string, SimulatedInstrument>();
   readonly #books: InstrumentBook[] = [];
@@ -149,8 +168,13 @@ export class ExchangeSimulator {
       clock,
       getInstrument: (ric) => this.#listed.get(ric),
       getBook: (ric) => this.#simulated.get(ric)?.book,
+      getSessionSchedule: () => this.sessionSchedule,
+      onTape: (listener) => this.onTape(listener),
     });
     this.session = new TradingSession(this.config);
+    this.sessionSchedule = this.session.schedule(
+      VOLUME_PROFILES[this.config.volumeProfile as VolumeProfileName],
+    );
     this.updateSession(clock());
   }
 
@@ -208,6 +232,7 @@ export class ExchangeSimulator {
       modelRng: rng.fork(300),
       mmRate: config.mmRate,
       takerRate: config.takerRate,
+      noise: { rng: rng.fork(400), day: undefined, level: 0, wander: 0 },
     });
     this.#books.push(book);
   }
@@ -343,6 +368,7 @@ export class ExchangeSimulator {
             count: config.barHistory,
             now,
             rng: bookRng.fork(j),
+            activity: (time) => activityAt(this.sessionSchedule, time),
           }),
         );
       }
@@ -447,10 +473,39 @@ export class ExchangeSimulator {
         const perMm = sim.mmRate / sim.marketMakers.length;
         for (const mm of sim.marketMakers) mm.step(dt, perMm);
       }
-      if (sim.takerRate > 0) sim.taker.step(dt, sim.takerRate, now);
+      if (sim.takerRate > 0) {
+        sim.taker.step(dt, sim.takerRate * this.#activity(sim, now, dt), now);
+      }
       ops += book.events - before;
     }
     this.#cursor = (this.#cursor + 1) % Math.max(count, 1);
+  }
+
+  /**
+   * Taker activity multiplier at `now`: the intraday volume curve times
+   * random noise while a session schedule is configured, else 1.
+   */
+  #activity(sim: SimulatedInstrument, now: number, dt: number) {
+    const schedule = this.sessionSchedule;
+    if (!schedule.scheduled) return 1;
+    const curve = activityAt(schedule, now);
+    const sigma = this.config.volumeNoise / 2;
+    if (sigma === 0) return curve;
+    const noise = sim.noise;
+    const day = Math.floor(now / schedule.dayMs);
+    if (day !== noise.day) {
+      noise.day = day;
+      noise.level = sigma * noise.rng.normal();
+    }
+    const sessionMs =
+      (((schedule.closeAt - schedule.openAt) % schedule.dayMs) +
+        schedule.dayMs) %
+        schedule.dayMs || schedule.dayMs;
+    const tau = (sessionMs * WANDER_SESSION_FRACTION) / 1000;
+    const a = Math.min(1, dt / tau);
+    noise.wander +=
+      -noise.wander * a + sigma * Math.sqrt(2 * a) * noise.rng.normal();
+    return curve * Math.exp(noise.level + noise.wander);
   }
 
   /** Publish dirty books and pending trades. */

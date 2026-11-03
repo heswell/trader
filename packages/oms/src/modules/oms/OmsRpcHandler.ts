@@ -13,6 +13,7 @@ import {
 } from "@heswell/vuu-server";
 import {
   OMS_RPC_NAMES,
+  PARENT_ORDER_PROGRESS_COLUMNS,
   parentOrders,
   RejectReason,
   RpcName,
@@ -50,10 +51,11 @@ const isParentOrders = (table: DataTable) =>
  * price editable, order validation, trading-execute to save.
  *
  * Stale check: every parentOrders column is compared (the vuu-server
- * default). The columns only change on an order event (ack, fill, replace,
- * cancel, reject), never on a timer, and every such event changes what an
- * amend is based on (a fill moves cumQty / leavesQty, another amend bumps
- * version), so getStaleColumns is deliberately not overridden.
+ * default) except PARENT_ORDER_PROGRESS_COLUMNS. The other columns only
+ * change on an order event (ack, fill, replace, cancel, reject), and every
+ * such event changes what an amend is based on (a fill moves cumQty /
+ * leavesQty, another amend bumps version). targetQty ticks with an algo's
+ * schedule on the algo timer, so it would make every algo amend stale.
  */
 export class OmsRpcHandler extends CreateSessionTableRpcHandler {
   constructor(
@@ -66,6 +68,14 @@ export class OmsRpcHandler extends CreateSessionTableRpcHandler {
         handleOmsRpc(oms, rpcName, namedParams, ctx.user),
       );
     }
+  }
+
+  protected getStaleColumns(
+    ...args: Parameters<CreateSessionTableRpcHandler["getStaleColumns"]>
+  ) {
+    return super
+      .getStaleColumns(...args)
+      .filter((name) => !PARENT_ORDER_PROGRESS_COLUMNS.includes(name));
   }
 
   processRpcRequest(

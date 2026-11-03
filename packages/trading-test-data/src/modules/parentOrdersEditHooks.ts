@@ -1,5 +1,10 @@
 import type { OmsService, TradingUser } from "@heswell/oms/engine";
-import { RejectReason, RpcName, validateAmend } from "@heswell/trading-schemas";
+import {
+  PARENT_ORDER_PROGRESS_COLUMNS,
+  RejectReason,
+  RpcName,
+  validateAmend,
+} from "@heswell/trading-schemas";
 import type { EditHooks } from "@heswell/vuu-data-engine-local";
 import type { RpcResult } from "@vuu-ui/vuu-protocol-types";
 
@@ -24,8 +29,9 @@ const error = (errorMessage: string): RpcResult => ({
  * the session rows to the source table. The source rows then change only
  * through the resulting execution reports.
  *
- * Stale check: every parentOrders column is compared, as on the server. The
- * rows only change on order events, and each one (a fill, another amend)
+ * Stale check: every parentOrders column but the algo progress columns
+ * (PARENT_ORDER_PROGRESS_COLUMNS) is compared, as on the server. The other
+ * columns only change on order events, and each one (a fill, another amend)
  * changes what the amend was based on.
  */
 export const parentOrdersEditHooks = (
@@ -52,6 +58,7 @@ export const parentOrdersEditHooks = (
           .map(({ name }) => name)
           .filter(
             (name) =>
+              !PARENT_ORDER_PROGRESS_COLUMNS.includes(name) &&
               !Object.is(
                 sourceSnapshot[sourceTable.map[name]],
                 sourceRow[sourceTable.map[name]],

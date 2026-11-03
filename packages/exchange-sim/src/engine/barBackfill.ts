@@ -28,6 +28,8 @@ export interface BackfillParams {
   /** Bars end at the start of the interval containing `now`. */
   now: number;
   rng: Random;
+  /** Taker activity multiplier at a clock time (the intraday volume curve); default 1. */
+  activity?: (time: number) => number;
 }
 
 /**
@@ -49,6 +51,7 @@ export const generateBackfillBars = ({
   count,
   now,
   rng,
+  activity,
 }: BackfillParams): BackfillBar[] => {
   const { schedule, volatility: sigma, lowerBand: lo, upperBand: hi } = model;
   const dt = (intervalMs / 1000 / SUBSTEPS) * (timeScale / SECONDS_PER_YEAR);
@@ -71,7 +74,10 @@ export const generateBackfillBars = ({
       if (onTick < low) low = onTick;
     }
     const open = roundToTick(price, schedule);
-    const trades = rng.poisson(tradesPerBar);
+    const start = firstStart + k * intervalMs;
+    const trades = rng.poisson(
+      activity ? tradesPerBar * activity(start + intervalMs / 2) : tradesPerBar,
+    );
     const volume = trades
       ? Math.max(
           lotSize,
@@ -80,7 +86,7 @@ export const generateBackfillBars = ({
       : 0;
     const typical = (open + high + low + close) / 4;
     result[k] = {
-      start: firstStart + k * intervalMs,
+      start,
       open,
       high,
       low,

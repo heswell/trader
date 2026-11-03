@@ -51,7 +51,7 @@ ModuleFactory.withNameSpace(EXCHANGE_MODULE)
 | Table | Key | Columns |
 |---|---|---|
 | `accounts` | `account` | name, desk, owner, currency, maxOrderQty, maxOrderNotional, maxPositionNotional, enabled |
-| `parentOrders` | `orderId` | clOrdId?, trader, *order columns*, version, notional, arrivalPrice, slippageBps, timeToFirstFill, timeToComplete |
+| `parentOrders` | `orderId` | clOrdId?, trader, *order columns*, version, notional, arrivalPrice, slippageBps, timeToFirstFill, timeToComplete, strategy, algoStart, algoEnd, participationPct, targetQty |
 | `childOrders` | `childOrderId` | parentOrderId, exchangeOrderId?, *order columns* |
 | `fills` | `execId` | orderId (parent), childOrderId, tradeId, account, trader, ric, side, quantity, price, notional, currency, liquidity, timestamp |
 | `positions` | `id` = `account\|ric` | account, ric, quantity (net), boughtQty, soldQty, avgCost, markPx, marketValue, realizedPnl, unrealizedPnl, totalPnl, currency, lastUpdate |

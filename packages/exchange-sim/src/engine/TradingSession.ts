@@ -1,4 +1,8 @@
-import { TradingPhase } from "@heswell/trading-schemas";
+import {
+  type SessionSchedule,
+  TradingPhase,
+  type VolumeProfileParams,
+} from "@heswell/trading-schemas";
 
 /** Phases driven by the market-wide session schedule. */
 export type SessionPhase =
@@ -108,6 +112,17 @@ export class TradingSession {
     this.#openAt = toClock(open);
     this.#closeAt = toClock(close);
     this.#preOpenAt = toClock(open - preOpenMinutes);
+  }
+
+  /** The continuous session, as published to the OMS (see SessionSchedule). */
+  schedule(profile: VolumeProfileParams): SessionSchedule {
+    return {
+      scheduled: this.scheduled,
+      dayMs: this.dayMs,
+      openAt: this.#openAt,
+      closeAt: this.#closeAt,
+      profile,
+    };
   }
 
   /** Clock ms since the start of the (possibly compressed) day. */

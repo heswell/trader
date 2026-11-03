@@ -247,6 +247,7 @@ export const createTradingTestData = ({
 
   // ------------------------------------------------------------ lifecycle
   let running = false;
+  let algoElapsed = 0;
   const start = () => {
     if (running || clock) return;
     running = true;
@@ -393,11 +394,17 @@ export const createTradingTestData = ({
         );
       }
       const slice = sim.config.botStepMs;
+      const algoEvery = omsService.config.algoSliceMs;
       for (let elapsed = 0; elapsed < ms; ) {
         const dt = Math.min(slice, ms - elapsed);
         clock.advance(dt);
         sim.step();
         omsService.flow.step(dt);
+        algoElapsed += dt;
+        if (algoElapsed >= algoEvery) {
+          algoElapsed -= algoEvery;
+          omsService.engine.stepAlgos();
+        }
         elapsed += dt;
       }
       sim.flush();

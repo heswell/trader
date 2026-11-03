@@ -152,6 +152,8 @@ const ORDER_COLUMNS = [
   "rejectReason",
   "text",
   "version",
+  "strategy",
+  "targetQty",
 ];
 
 const NO_ORDER_FILTER = 'clOrdId = "-"';
@@ -195,6 +197,10 @@ export const draftFromPrefill = (
         ? formatPriceInput(prefill.price, prefill.instrument)
         : "",
     account: prefill?.account ?? fallback.account,
+    strategy: EMPTY_DRAFT.strategy,
+    algoDuration: "",
+    algoEndTime: "",
+    participationPct: "",
   };
 };
 
@@ -411,8 +417,8 @@ export const useOrderTicket = ({
       setDraft((current) => {
         const next = { ...current, ...change };
         if (
-          change.ordType &&
-          !isTimeInForceAllowed(next.ordType, next.timeInForce)
+          (change.ordType || change.strategy) &&
+          !isTimeInForceAllowed(next.ordType, next.timeInForce, next.strategy)
         ) {
           next.timeInForce = TimeInForce.Day;
         }

@@ -1,4 +1,4 @@
-import { parseBarInterval } from "@heswell/trading-schemas";
+import { parseBarInterval, VOLUME_PROFILES } from "@heswell/trading-schemas";
 import { validateSessionConfig } from "./engine/TradingSession";
 
 /**
@@ -58,6 +58,18 @@ export interface ExchangeSimConfig {
    */
   sessionDayMs: number;
   /**
+   * Intraday volume curve the taker bots follow while a session schedule is
+   * configured: "u" (busy open and close, quiet middle) or "flat". No effect
+   * without a schedule.
+   */
+  volumeProfile: string;
+  /**
+   * Random variation of taker activity around the curve (0 = none), so
+   * actual volume differs from the forecast: a per-day level plus a slowly
+   * wandering component, each roughly +/- this fraction.
+   */
+  volumeNoise: number;
+  /**
    * Comma separated OHLCV bar intervals for the `bars` table, e.g.
    * "1s,1m,5m" (units s, m, h). Intervals are exchange-clock time; empty
    * disables bars.
@@ -104,6 +116,8 @@ export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
   sessionClose: "",
   preOpenMinutes: 0,
   sessionDayMs: 0,
+  volumeProfile: "u",
+  volumeNoise: 0.3,
   barIntervals: "1s,1m,5m",
   barHistory: 500,
   barBackfill: 1,
@@ -188,6 +202,14 @@ export const validateConfig = (config: ExchangeSimConfig) => {
     "bookSampleIntervalMs",
   ] as const) {
     if (!(config[key] >= 0)) throw Error(`exchangeSim.${key} must be >= 0`);
+  }
+  if (!(config.volumeProfile in VOLUME_PROFILES)) {
+    throw Error(
+      `exchangeSim.volumeProfile must be one of ${Object.keys(VOLUME_PROFILES).join(", ")}`,
+    );
+  }
+  if (!(config.volumeNoise >= 0 && config.volumeNoise < 1)) {
+    throw Error("exchangeSim.volumeNoise must be in [0, 1)");
   }
   for (const key of [
     "barHistory",

@@ -417,9 +417,44 @@ export const parentOrders = defineTable({
       dataType: "long",
       description: "ms from created to FILLED; 0 unless FILLED.",
     },
+    {
+      name: "strategy",
+      dataType: "string",
+      description: "AlgoStrategy: DMA, TWAP, VWAP or POV.",
+    },
+    {
+      name: "algoStart",
+      dataType: "epochtimestamp",
+      description: "Clock time the algo starts working; 0 for DMA.",
+    },
+    {
+      name: "algoEnd",
+      dataType: "epochtimestamp",
+      description:
+        "Clock time the algo must finish by; 0 = none (DMA, open-ended POV).",
+    },
+    {
+      name: "participationPct",
+      dataType: "double",
+      description: "POV target share of market volume (%); 0 otherwise.",
+    },
+    {
+      name: "targetQty",
+      dataType: "long",
+      description:
+        "Quantity the algo schedule says should be filled by now (compare cumQty); equals quantity for DMA.",
+    },
   ],
   links: [{ fromColumn: "account", toTable: "accounts", toColumn: "account" }],
 });
+
+/**
+ * parentOrders columns that tick with algo progress (on the algo timer) rather
+ * than on order events: an edit-session amend is not stale because of them.
+ */
+export const PARENT_ORDER_PROGRESS_COLUMNS: readonly string[] = Object.freeze([
+  "targetQty",
+]);
 
 export const childOrders = defineTable({
   module: OMS_MODULE,
