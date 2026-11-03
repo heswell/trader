@@ -4,14 +4,22 @@ import {
   WorkspaceChannelProvider,
 } from "@heswell/trading-ui";
 import { AuthenticationProvider } from "@vuu-ui/core";
-import { type ReactNode, useCallback, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useTradingServer } from "./nav/TradingNavFeed";
 
-const ACTIVE_CHANNEL_KEY = "activeChannel";
+const LEGACY_ACTIVE_CHANNEL_KEY = "activeChannel";
 
-const readActiveChannel = (storageKey: string): LinkGroupId | undefined => {
+/**
+ * The active channel saved by earlier versions straight in localStorage
+ * (`<portalId>.activeChannel`). Read once as the initial channel and
+ * removed: InstrumentLinkPersistence now saves it in the portal's state.
+ */
+const legacyKey = (portalId: string) =>
+  `${portalId}.${LEGACY_ACTIVE_CHANNEL_KEY}`;
+
+const readLegacyActiveChannel = (portalId: string): LinkGroupId | undefined => {
   try {
-    return localStorage.getItem(storageKey) ?? undefined;
+    return localStorage.getItem(legacyKey(portalId)) ?? undefined;
   } catch {
     return undefined;
   }
@@ -20,7 +28,9 @@ const readActiveChannel = (storageKey: string): LinkGroupId | undefined => {
 /**
  * The workspace channel for the whole portal: the ChannelPicker in the
  * workspace header sets it, and panels in the `active` link group follow
- * it. Kept in this browser (per portal) so a reload keeps the channel.
+ * it. It wraps the PortalShell so the header and every workspace item see
+ * it; InstrumentLinkPersistence (inside the shell, where the portal's
+ * persistence service is) saves and restores it.
  */
 export const PortalWorkspaceChannel = ({
   children,
@@ -29,23 +39,18 @@ export const PortalWorkspaceChannel = ({
   children: ReactNode;
   portalId: string;
 }) => {
-  const storageKey = `${portalId}.${ACTIVE_CHANNEL_KEY}`;
-  const [defaultActiveChannel] = useState(() => readActiveChannel(storageKey));
-  const saveActiveChannel = useCallback(
-    (channel: LinkGroupId) => {
-      try {
-        localStorage.setItem(storageKey, channel);
-      } catch {
-        // storage unavailable (private window): keep it for this session only
-      }
-    },
-    [storageKey],
+  const [defaultActiveChannel] = useState(() =>
+    readLegacyActiveChannel(portalId),
   );
+  useEffect(() => {
+    try {
+      localStorage.removeItem(legacyKey(portalId));
+    } catch {
+      // storage unavailable: nothing to remove
+    }
+  }, [portalId]);
   return (
-    <WorkspaceChannelProvider
-      defaultActiveChannel={defaultActiveChannel}
-      onActiveChannelChange={saveActiveChannel}
-    >
+    <WorkspaceChannelProvider defaultActiveChannel={defaultActiveChannel}>
       {children}
     </WorkspaceChannelProvider>
   );

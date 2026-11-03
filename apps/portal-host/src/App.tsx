@@ -1,4 +1,5 @@
 import { Button } from "@salt-ds/core";
+import { InstrumentLinkPersistence } from "@heswell/trading-ui";
 import { useModuleRegistry } from "@vuu-ui/core";
 import {
   createPortalComponentRegistries,
@@ -87,6 +88,7 @@ export const App = ({ environment }: AppProps) => {
         title="Trader"
         workspaces={WORKSPACES}
       >
+        <InstrumentLinkPersistence />
         <TraderNav environment={environment} remoteModules={remoteModules} />
         <PortalLandingPage>
           <TraderHome />

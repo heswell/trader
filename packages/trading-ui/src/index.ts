@@ -12,6 +12,8 @@ export * from "./data/useTradingRows";
 export * from "./instrument-context/broadcastChannelTransport";
 export * from "./instrument-context/InstrumentContext";
 export * from "./instrument-context/instrumentLinkBus";
+export * from "./instrument-context/instrumentLinkPersistence";
+export * from "./instrument-context/persistInstrumentLinks";
 export * from "./instrument-context/linkGroups";
 export {
   sameInstrument,

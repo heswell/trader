@@ -10,6 +10,7 @@ import { ConnectionBanner } from "../components/ConnectionBanner";
 import { OrderTicketLauncherProvider } from "../components/OrderTicket";
 import { connectBroadcastChannel } from "../instrument-context/broadcastChannelTransport";
 import { getInstrumentLinkBus } from "../instrument-context/instrumentLinkBus";
+import { useInstrumentLinkPersistence } from "../instrument-context/persistInstrumentLinks";
 import {
   TradingNotificationsProvider,
   type TradingNotificationsProviderProps,
@@ -69,7 +70,8 @@ export interface TradingFeatureRootProps
  *   window streams order notifications (window-global lease), so several
  *   features open in one portal do not toast each event twice.
  * - Always: the window link bus is connected to BroadcastChannel once, so
- *   popped-out features stay linked.
+ *   popped-out features stay linked, and saved in the portal's persistence
+ *   service once, so channel selections survive a reload.
  *
  * The vuu NotificationsProvider (toast centre) is the host's: vuu-portal
  * mounts it. Data comes from the enclosing DataProvider (mode "inherit").
@@ -84,6 +86,7 @@ export const TradingFeatureRoot = ({
   const nested = useContext(FeatureRootContext);
   const streaming = useNotificationLease(notifications && !nested);
   useEffect(ensureLinkBusBroadcast, []);
+  useInstrumentLinkPersistence();
   if (nested) return <>{children}</>;
   return (
     <FeatureRootContext.Provider value>
