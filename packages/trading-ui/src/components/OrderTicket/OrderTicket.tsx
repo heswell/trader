@@ -1,4 +1,5 @@
 import {
+  AlgoStrategy,
   isPricedOrdType,
   OrdStatus,
   OrdType,
@@ -41,8 +42,10 @@ import { InstrumentPicker } from "../InstrumentPicker";
 import { LinkGroupSelector } from "../LinkGroupSelector";
 import { StaleIndicator } from "../StaleIndicator";
 import {
+  isAlgoStrategy,
   isTimeInForceAllowed,
   ORDER_TICKET_ORD_TYPES,
+  ORDER_TICKET_STRATEGIES,
   ORDER_TICKET_TIFS,
   type OrderTicketInstrument,
 } from "./orderTicketModel";
@@ -79,6 +82,12 @@ const ORD_TYPE_LABEL: Record<string, string> = {
   [OrdType.Stop]: "Stop",
   [OrdType.StopLimit]: "Stop limit",
 };
+const STRATEGY_LABEL: Record<string, string> = {
+  DMA: "DMA",
+  TWAP: "TWAP",
+  VWAP: "VWAP",
+  POV: "POV",
+};
 const TIF_LABEL: Record<string, string> = {
   DAY: "Day",
   IOC: "IOC",
@@ -104,6 +113,79 @@ const fieldInputProps = (field: "price" | "quantity") =>
   };
 
 const sideLabel = (side: string) => (side === Side.Buy ? "Buy" : "Sell");
+
+/** Text input for one algo parameter. */
+const AlgoField = ({
+  ticket,
+  field,
+  label,
+  placeholder,
+  ariaLabel,
+}: {
+  ticket: OrderTicketState;
+  field: "algoDuration" | "algoEndTime" | "participationPct";
+  label: string;
+  placeholder: string;
+  ariaLabel: string;
+}) => {
+  const error = ticket.errors[field];
+  return (
+    <FormField
+      className={`${classBase}-${field}`}
+      validationStatus={error ? "error" : undefined}
+    >
+      <FormFieldLabel>{label}</FormFieldLabel>
+      <Input
+        inputProps={{ "aria-label": ariaLabel, autoComplete: "off" }}
+        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          ticket.update({ [field]: e.target.value })
+        }
+        placeholder={placeholder}
+        textAlign="right"
+        value={ticket.draft[field] ?? ""}
+      />
+      {error ? <FormFieldHelperText>{error}</FormFieldHelperText> : null}
+    </FormField>
+  );
+};
+
+/**
+ * Parameters of the selected algo. Times are session times: with a
+ * compressed simulated day the OMS scales them to clock time.
+ */
+const AlgoFields = ({ ticket }: { ticket: OrderTicketState }) => {
+  const strategy = ticket.draft.strategy;
+  return (
+    <div className={`${classBase}-row`} data-strategy={strategy}>
+      {strategy === AlgoStrategy.Pov ? (
+        <AlgoField
+          ariaLabel="Participation percent"
+          field="participationPct"
+          label="Participation %"
+          placeholder="e.g. 10"
+          ticket={ticket}
+        />
+      ) : null}
+      {strategy === AlgoStrategy.Vwap ? (
+        <AlgoField
+          ariaLabel="End time"
+          field="algoEndTime"
+          label="End time"
+          placeholder="Close"
+          ticket={ticket}
+        />
+      ) : (
+        <AlgoField
+          ariaLabel="Duration in minutes"
+          field="algoDuration"
+          label="Duration (min)"
+          placeholder={strategy === AlgoStrategy.Pov ? "To close" : "30"}
+          ticket={ticket}
+        />
+      )}
+    </div>
+  );
+};
 
 const SubmissionStatus = ({ ticket }: { ticket: OrderTicketState }) => {
   const { submission, order, instrument } = ticket;
@@ -155,6 +237,14 @@ const SubmissionStatus = ({ ticket }: { ticket: OrderTicketState }) => {
       break;
     default:
       text = `${status}${cumQty ? `, ${formatQuantity(cumQty)} filled` : ""}`;
+  }
+  const strategy = order?.strategy as string | undefined;
+  if (
+    strategy &&
+    strategy !== AlgoStrategy.Dma &&
+    (status === OrdStatus.New || status === OrdStatus.PartiallyFilled)
+  ) {
+    text += ` · ${strategy} target ${formatQuantity(order?.targetQty as number | undefined)}`;
   }
   return (
     <div
@@ -352,6 +442,9 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
       update({ side: e.currentTarget.value as Side });
     const ordTypeChange = (e: SyntheticEvent<HTMLButtonElement>) =>
       update({ ordType: e.currentTarget.value as OrdType });
+    const strategyChange = (e: SyntheticEvent<HTMLButtonElement>) =>
+      update({ strategy: e.currentTarget.value as AlgoStrategy });
+    const strategy = draft.strategy ?? AlgoStrategy.Dma;
 
     const submitLabel = `${sideLabel(draft.side)}${
       draft.quantity ? ` ${draft.quantity}` : ""
@@ -423,6 +516,22 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
             ))}
           </ToggleButtonGroup>
         </div>
+
+        <div className={`${classBase}-row`}>
+          <ToggleButtonGroup
+            aria-label="Strategy"
+            className={`${classBase}-strategy`}
+            onChange={strategyChange}
+            value={strategy}
+          >
+            {ORDER_TICKET_STRATEGIES.map((s) => (
+              <ToggleButton key={s} value={s}>
+                {STRATEGY_LABEL[s] ?? s}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        </div>
+        {isAlgoStrategy(strategy) ? <AlgoFields ticket={ticket} /> : null}
 
         <div className={`${classBase}-row`}>
           <FormField
@@ -525,7 +634,9 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
             >
               {ORDER_TICKET_TIFS.map((tif) => (
                 <Option
-                  disabled={!isTimeInForceAllowed(draft.ordType, tif)}
+                  disabled={
+                    !isTimeInForceAllowed(draft.ordType, tif, draft.strategy)
+                  }
                   key={tif}
                   value={tif}
                 >

@@ -70,7 +70,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | `components/ConnectionStatusIndicator` | `tradingConnectionStatus` |  | `data-connection-state` |
 | `components/DepthChartView` | `tradingDepthChartView` |  | `data-link-group` |
 | `components/ExposureTreemap` | `tradingExposureTreemap` |  | `data-measure` |
-| `components/FillProgressBar` | `tradingFillProgressBar` | `--tradingFillProgressBar-colour`, `--tradingFillProgressBar-pct` | `data-pct` |
+| `components/FillProgressBar` | `tradingFillProgressBar` | `--tradingFillProgressBar-colour`, `--tradingFillProgressBar-pct` | `data-pct`, `data-target-pct` |
 | `components/FillsBlotter` | `tradingFillsBlotter` |  | `data-link-group`, `data-testid` |
 | `components/InstrumentGrid` | `tradingInstrumentCell`, `tradingInstrumentGrid` | `--trading-down`, `--trading-neutral`, `--trading-up` | `data-direction`, `data-link-group`, `data-phase` |
 | `components/InstrumentPicker` | `tradingInstrumentPicker` |  | `data-instrument-picker`, `data-link-group` |
@@ -78,7 +78,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | `components/MarketDepth` | `tradingMarketDepth` | `--tradingMarketDepth-ask-bar`, `--tradingMarketDepth-bid-bar`, `--tradingMarketDepth-flash`, `--tradingMarketDepth-own`, `--tradingMarketDepth-rowHeight` | `data-flash`, `data-inactive`, `data-level`, `data-link-group`, `data-own`, `data-phase` |
 | `components/OrderBlotter` | `tradingOrderBlotter` |  | `data-connection-state`, `data-error`, `data-link-group`, `data-testid` |
 | `components/OrderStatusBadge` | `tradingOrderStatusBadge` | `--tradingOrderStatusBadge-color` | `data-category`, `data-status` |
-| `components/OrderTicket` | `tradingOrderTicket` | `--tradingOrderTicket-sideColor`, `--tradingOrderTicket-toggleSide` | `data-connection-state`, `data-direction`, `data-field`, `data-link-group`, `data-order-ticket-field`, `data-phase`, `data-reason`, `data-side`, `data-status`, `data-submission`, `data-warning` |
+| `components/OrderTicket` | `tradingOrderTicket` | `--tradingOrderTicket-sideColor`, `--tradingOrderTicket-toggleSide` | `data-connection-state`, `data-direction`, `data-field`, `data-link-group`, `data-order-ticket-field`, `data-phase`, `data-reason`, `data-side`, `data-status`, `data-strategy`, `data-submission`, `data-warning` |
 | `components/PnlHistoryChart` | `tradingPnlHistoryChart` |  | `data-account` |
 | `components/PnlValue` | `tradingPnlValue` | `--tradingPnlValue-color` | `data-direction` |
 | `components/PositionsView` | `tradingPositionsView` |  | `data-currency`, `data-link-group`, `data-testid` |

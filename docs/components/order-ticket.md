@@ -81,6 +81,9 @@ directly.
   `StaleIndicator`. Clicking Bid or Ask sets the limit price.
 - **Order types and TIF.** MARKET and LIMIT (`SUPPORTED_ORD_TYPES`; the OMS does not support STOP). DAY, GTC,
   IOC and FOK, except MARKET + GTC.
+- **Strategy.** DMA (default), TWAP, VWAP or POV. An algo shows its parameters: duration in minutes (TWAP / POV),
+  end time `HH:MM` (VWAP; empty = the close) and participation % (POV). Times are session times. Algo orders take
+  DAY or GTC only. Once sent, the status line shows the schedule target. See the OMS README "Algo orders".
 - **Validation.**
   - Client side, `validateDraft` uses `validateOrder` and `validateRpcParams("createOrder")` from
     trading-schemas, which cover lot size, tick (tick-band aware), price required and price > 0.

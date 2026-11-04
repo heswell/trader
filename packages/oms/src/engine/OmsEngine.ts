@@ -1,4 +1,5 @@
 import {
+  AlgoStrategy,
   type AmendOrderRequest,
   type CancelAllRequest,
   type CreateOrderRequest,
@@ -15,9 +16,17 @@ import {
   Side,
   TimeInForce,
   TradingPhase,
+  UNSCHEDULED,
   validateAmend,
 } from "@heswell/trading-schemas";
 import type { ExecutionReport } from "@heswell/exchange-sim";
+import {
+  AlgoContainer,
+  type AlgoParent,
+  isAlgoParent,
+} from "../algo/AlgoContainer";
+import { type AlgoState, resolveAlgoParams } from "../algo/params";
+import type { SliceRequest } from "../algo/planSlice";
 import {
   newOrderState,
   type OrderEvent,
@@ -53,7 +62,14 @@ export interface OrderInfo {
 }
 
 export interface ParentOrder extends OrderInfo {
+  /** DMA child (the only child of a DMA order). */
   childOrderId?: string;
+  /** How the order is worked; undefined (older state) = DMA. */
+  strategy?: AlgoStrategy;
+  /** Algo settings and progress (all strategies but DMA). */
+  algo?: AlgoState;
+  /** Children created so far (child ids are `${orderId}-${n}`). */
+  childSeq?: number;
   /** Mid (else last / reference price) when the order was created; 0 = none. */
   arrivalPrice?: number;
   /** OMS clock time of the first fill. */
@@ -235,11 +251,14 @@ export interface OmsEngineOptions {
   collarPct?: number;
   restrictedRics?: Iterable<string>;
   log?: (message: string) => void;
+  /** Algo timer interval: how often algo orders are re-sliced (ms). */
+  algoSliceMs?: number;
 }
 
 /**
- * Transport-independent OMS core: pre-trade risk, 1:1 parent -> child routing
- * to the exchange gateway, execution report handling and positions.
+ * Transport-independent OMS core: pre-trade risk, parent -> child routing to
+ * the exchange gateway (one child for DMA, many for algo orders run by the
+ * AlgoContainer), execution report handling and positions.
  */
 export class OmsEngine {
   readonly accounts = new Map<string, Account>();
@@ -267,6 +286,9 @@ export class OmsEngine {
   #dirtyPositions = new Set<Position>();
   #newFills: Fill[] = [];
   #flushScheduled = false;
+  #childrenByParent = new Map<string, ChildOrder[]>();
+  #algos: AlgoContainer;
+  #unsubscribeTrades: () => void;
 
   constructor({
     gateway,
@@ -276,6 +298,7 @@ export class OmsEngine {
     collarPct = 0.1,
     restrictedRics = [],
     log = (message) => console.warn(`[OMS] ${message}`),
+    algoSliceMs = 250,
   }: OmsEngineOptions) {
     this.#gateway = gateway;
     this.#clock = clock;
@@ -311,10 +334,131 @@ export class OmsEngine {
       sink.account?.(account);
     }
     this.#unsubscribe = gateway.onExecutionReport(this.#onExecutionReport);
+    this.#algos = new AlgoContainer(
+      {
+        clock: () => this.#clock(),
+        schedule: () => this.#schedule(),
+        topOfBook: (ric) => gateway.getTopOfBook(ric),
+        lotSize: (ric) => gateway.getInstrument(ric)?.lotSize,
+        liveChildren: (parent) => this.#liveChildren(parent),
+        sendChild: (parent, request) => this.#sendChild(parent, request),
+        cancelChild: (child) => this.#cancelChild(child),
+        applyParent: (parent, event) => this.#applyParent(parent, event),
+        publishParent: (parent) => this.#publishParent(parent),
+        log: (message) => this.#log(message),
+      },
+      algoSliceMs,
+    );
+    this.#unsubscribeTrades =
+      gateway.onTrade?.((trade) => this.#algos.onTrade(trade)) ??
+      (() => undefined);
   }
 
   dispose() {
     this.#unsubscribe();
+    this.#unsubscribeTrades();
+  }
+
+  // ---------------------------------------------------------------- algos
+
+  /** Algo timer: re-slice running algo orders (OmsService calls this). */
+  stepAlgos(now = this.#clock()) {
+    this.#algos.step(now);
+  }
+
+  /** Algo orders still being worked. */
+  get runningAlgos(): readonly ParentOrder[] {
+    return this.#algos.running;
+  }
+
+  #schedule() {
+    return this.#gateway.getSessionSchedule?.() ?? UNSCHEDULED;
+  }
+
+  #liveChildren(parent: ParentOrder) {
+    return (this.#childrenByParent.get(parent.orderId) ?? []).filter(
+      (c) => !isTerminalStatus(c.state.status),
+    );
+  }
+
+  #addChild(child: ChildOrder) {
+    this.children.set(child.orderId, child);
+    this.#byClOrdId.set(child.orderId, child);
+    const list = this.#childrenByParent.get(child.parentOrderId);
+    if (list) list.push(child);
+    else this.#childrenByParent.set(child.parentOrderId, [child]);
+  }
+
+  /** New algo child (always LIMIT, at a price the slicer chose). */
+  #sendChild(parent: ParentOrder, request: SliceRequest) {
+    const childOrderId = `${parent.orderId}-${(parent.childSeq ?? 0) + 1}`;
+    parent.childSeq = (parent.childSeq ?? 0) + 1;
+    const now = this.#clock();
+    const child: ChildOrder = {
+      ...orderInfo(parent),
+      orderId: childOrderId,
+      parentOrderId: parent.orderId,
+      clOrdId: childOrderId,
+      exchangeClOrdId: childOrderId,
+      ordType: OrdType.Limit,
+      timeInForce: request.timeInForce,
+      created: now,
+      lastUpdate: now,
+      state: newOrderState(request.quantity, request.price),
+      requestSeq: 0,
+    };
+    this.#addChild(child);
+    this.#publishChild(child);
+    this.#publishParent(parent); // childSeq
+    this.#gateway.submit({
+      account: child.account,
+      clOrdId: childOrderId,
+      ric: child.ric,
+      side: child.side,
+      ordType: OrdType.Limit,
+      quantity: request.quantity,
+      price: request.price,
+      timeInForce: request.timeInForce,
+    });
+  }
+
+  #cancelChild(child: ChildOrder) {
+    if (!child.exchangeOrderId || !isWorkingStatus(child.state.status)) return;
+    this.#applyChild(child, { type: "pendingCancel" });
+    child.expiring = false;
+    const clOrdId = `${child.orderId}.c${++child.requestSeq}`;
+    this.#publishChild(child);
+    this.#byClOrdId.set(clOrdId, child);
+    child.lastRequestReject = undefined;
+    this.#gateway.cancel(child.exchangeOrderId, { clOrdId });
+  }
+
+  /**
+   * Apply a child event to its parent: a DMA parent mirrors its child; an
+   * algo parent only takes the fills (its status is set by the container),
+   * and the container is told so it can advance.
+   */
+  #applyChildEventToParent(
+    parent: ParentOrder,
+    child: ChildOrder,
+    event: OrderEvent,
+  ) {
+    if (!isAlgoParent(parent)) {
+      if (event.type === "fill") parent.firstFillAt ??= this.#clock();
+      this.#applyParent(parent, event);
+      return;
+    }
+    if (event.type === "fill") {
+      parent.firstFillAt ??= this.#clock();
+      try {
+        this.#applyParent(parent, event);
+      } catch (err) {
+        if (!(err instanceof OrderStateError)) throw err;
+        this.#log(
+          `${parent.orderId} fill ${event.qty}@${event.px} on ${child.orderId} not applied to the parent: ${err.message}`,
+        );
+      }
+    }
   }
 
   // ---------------------------------------------------------------- persistence
@@ -387,6 +531,7 @@ export class OmsEngine {
     this.#byClOrdId.clear();
     this.#byExchangeId.clear();
     this.#clOrdIdsByTrader.clear();
+    this.#childrenByParent.clear();
     let orderSeq = state.orderSeq;
     for (const parent of state.parents) {
       this.parents.set(parent.orderId, parent);
@@ -400,8 +545,7 @@ export class OmsEngine {
     }
     this.#orderSeq = orderSeq;
     for (const child of state.children) {
-      this.children.set(child.orderId, child);
-      this.#byClOrdId.set(child.orderId, child);
+      this.#addChild(child);
       for (let k = 1; k <= child.requestSeq; k++) {
         this.#byClOrdId.set(`${child.orderId}.r${k}`, child);
         this.#byClOrdId.set(`${child.orderId}.c${k}`, child);
@@ -423,6 +567,7 @@ export class OmsEngine {
     this.#dirtyChildren.clear();
     this.#dirtyPositions.clear();
     this.#newFills = [];
+    this.#algos.restore(this.parents.values());
   }
 
   /**
@@ -462,11 +607,12 @@ export class OmsEngine {
       const apply = (event: OrderEvent) => {
         try {
           this.#applyChild(child, event);
-          this.#applyParent(parent, event);
+          this.#applyChildEventToParent(parent, child, event);
         } catch (err) {
           if (!(err instanceof OrderStateError)) throw err;
           note(`${child.orderId} ${event.type} not applied: ${err.message}`);
         }
+        this.#algos.onChildEvent(parent);
       };
       const { status } = child.state;
       if (!child.exchangeOrderId) {
@@ -634,11 +780,21 @@ export class OmsEngine {
           `duplicate clOrdId ${request.clOrdId}`,
         );
       }
+    }
+    const now = this.#clock();
+    const strategy = request.strategy ?? AlgoStrategy.Dma;
+    let algo: AlgoState | undefined;
+    if (strategy !== AlgoStrategy.Dma) {
+      const resolved = resolveAlgoParams(request, this.#schedule(), now);
+      if (!resolved.ok) return fail(resolved.reason, resolved.text);
+      algo = resolved.algo;
+    }
+    if (request.clOrdId) {
+      const used = this.#clOrdIdsByTrader.get(ctx.user) ?? new Set();
       used.add(request.clOrdId);
       this.#clOrdIdsByTrader.set(ctx.user, used);
     }
 
-    const now = this.#clock();
     const timeInForce = request.timeInForce ?? TimeInForce.Day;
     const price = request.ordType === OrdType.Market ? 0 : (request.price ?? 0);
     const instrument = this.#gateway.getInstrument(request.ric);
@@ -666,6 +822,8 @@ export class OmsEngine {
       lastUpdate: now,
       state: newOrderState(request.quantity, price),
       arrivalPrice,
+      strategy,
+      ...(algo ? { algo, childSeq: 0 } : {}),
     };
     this.parents.set(parent.orderId, parent);
 
@@ -679,6 +837,19 @@ export class OmsEngine {
     }
     this.#publishParent(parent);
 
+    if (isAlgoParent(parent)) {
+      this.#applyParent(parent, { type: "ack" });
+      this.#algos.start(parent);
+      return {
+        ok: true,
+        value: {
+          orderId: parent.orderId,
+          clOrdId: parent.clOrdId,
+          status: parent.state.status,
+        },
+      };
+    }
+
     const childOrderId = `${parent.orderId}-1`;
     const child: ChildOrder = {
       ...orderInfo(parent),
@@ -689,8 +860,7 @@ export class OmsEngine {
       requestSeq: 0,
     };
     parent.childOrderId = childOrderId;
-    this.children.set(childOrderId, child);
-    this.#byClOrdId.set(childOrderId, child);
+    this.#addChild(child);
     this.#publishChild(child);
 
     this.#gateway.submit({
@@ -723,7 +893,7 @@ export class OmsEngine {
     orderId: string,
     ctx: RequestContext,
     tooLate: RejectReason,
-  ): OmsResult<{ parent: ParentOrder; child: ChildOrder }> {
+  ): OmsResult<{ parent: ParentOrder; child?: ChildOrder }> {
     const parent = this.parents.get(orderId);
     const { access } = ctx;
     if (!parent || (access && !canSeeAccount(access, parent.account))) {
@@ -739,6 +909,16 @@ export class OmsEngine {
     const { status } = parent.state;
     if (isTerminalStatus(status)) {
       return fail(tooLate, `order is ${status}`, orderId);
+    }
+    if (isAlgoParent(parent)) {
+      if (!isWorkingStatus(status) || parent.algo.phase !== "WORKING") {
+        return fail(
+          RejectReason.OrderPending,
+          `order is ${status}, retry when the pending request completes`,
+          orderId,
+        );
+      }
+      return { ok: true, value: { parent } };
     }
     const child = parent.childOrderId
       ? this.children.get(parent.childOrderId)
@@ -767,6 +947,7 @@ export class OmsEngine {
     if (!canAmend(parent.state.status)) {
       return fail(RejectReason.OrderPending, "order cannot be amended now");
     }
+    const algoParent = isAlgoParent(parent) ? parent : undefined;
     const quantity = request.quantity ?? parent.state.quantity;
     const price = request.price ?? parent.state.price;
     if (quantity === parent.state.quantity && price === parent.state.price) {
@@ -802,6 +983,14 @@ export class OmsEngine {
       );
     if (invalid) return fail(invalid.reason, invalid.text, parent.orderId);
 
+    if (algoParent || !child) {
+      this.#algos.amend(parent as AlgoParent, quantity, price);
+      return {
+        ok: true,
+        value: { orderId: parent.orderId, status: parent.state.status },
+      };
+    }
+
     const event: OrderEvent = { type: "pendingReplace", quantity, price };
     this.#applyParent(parent, event);
     this.#applyChild(child, event);
@@ -830,6 +1019,13 @@ export class OmsEngine {
     const { parent, child } = found.value;
     if (!canCancel(parent.state.status)) {
       return fail(RejectReason.OrderPending, "order cannot be cancelled now");
+    }
+    if (isAlgoParent(parent) || !child) {
+      this.#algos.cancel(parent as AlgoParent);
+      return {
+        ok: true,
+        value: { orderId: parent.orderId, status: parent.state.status },
+      };
     }
     this.#sendCancel(parent, child);
     return this.#requestResult(parent, child);
@@ -907,6 +1103,12 @@ export class OmsEngine {
       (o) =>
         o.timeInForce === TimeInForce.Day && isWorkingStatus(o.state.status),
     )) {
+      if (isAlgoParent(parent)) {
+        if (parent.algo.phase !== "WORKING") continue;
+        this.#algos.expire(parent, "DAY order expired at end of day");
+        expired.push(parent.orderId);
+        continue;
+      }
       const child = parent.childOrderId
         ? this.children.get(parent.childOrderId)
         : undefined;
@@ -1020,8 +1222,7 @@ export class OmsEngine {
     if (!event) return;
     try {
       this.#applyChild(child, event);
-      if (event.type === "fill") parent.firstFillAt ??= this.#clock();
-      this.#applyParent(parent, event);
+      this.#applyChildEventToParent(parent, child, event);
     } catch (err) {
       if (!(err instanceof OrderStateError)) throw err;
       this.#log(
@@ -1030,6 +1231,7 @@ export class OmsEngine {
       return;
     }
     if (event.type === "fill") this.#recordFill(report, parent, child);
+    this.#algos.onChildEvent(parent);
   };
 
   #toEvent(report: ExecutionReport, child: ChildOrder): OrderEvent | undefined {
@@ -1092,6 +1294,7 @@ export class OmsEngine {
     }
     this.#sink.fill?.(fill);
     this.#applyFillToPosition(fill);
+    this.#algos.onOwnFill(parent, fill.quantity);
     for (const listener of this.#fillListeners) listener(fill);
   }
 
@@ -1149,6 +1352,11 @@ export class OmsEngine {
       version: parent.state.version,
       notional: parent.state.cumQty * parent.state.avgPx,
       ...executionQuality(parent),
+      strategy: parent.strategy ?? AlgoStrategy.Dma,
+      algoStart: parent.algo?.startAt ?? 0,
+      algoEnd: parent.algo?.endAt ?? 0,
+      participationPct: (parent.algo?.participation ?? 0) * 100,
+      targetQty: parent.algo ? parent.algo.targetQty : parent.state.quantity,
     });
   }
 

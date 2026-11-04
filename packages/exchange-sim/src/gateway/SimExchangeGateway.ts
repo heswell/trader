@@ -7,8 +7,10 @@ import {
   OrdStatus,
   OrdType,
   RejectReason,
+  type SessionSchedule,
   TimeInForce,
   TradingPhase,
+  UNSCHEDULED,
   validateAmend,
   validateOrder,
   workingStatusFor,
@@ -28,6 +30,7 @@ import type {
   GatewayCancel,
   GatewayNewOrder,
   GatewayRequestType,
+  MarketTrade,
   TopOfBook,
 } from "./types";
 
@@ -38,6 +41,8 @@ export interface GatewayVenue {
   clock: Clock;
   getInstrument(ric: string): InstrumentDef | undefined;
   getBook(ric: string): InstrumentBook | undefined;
+  getSessionSchedule?(): SessionSchedule;
+  onTape?(listener: (trade: MarketTrade) => void): () => void;
 }
 
 interface OrderState {
@@ -177,6 +182,16 @@ export class SimExchangeGateway implements ExchangeGateway, FillSink {
   getPhase(ric: string) {
     if (!this.venue.getInstrument(ric)) return undefined;
     return this.venue.getBook(ric)?.phase ?? TradingPhase.Closed;
+  }
+
+  /** The exchange's session times and volume curve (unscheduled by default). */
+  getSessionSchedule(): SessionSchedule {
+    return this.venue.getSessionSchedule?.() ?? UNSCHEDULED;
+  }
+
+  /** Every trade on the exchange (the public tape), in execution order. */
+  onTrade(listener: (trade: MarketTrade) => void) {
+    return this.venue.onTape?.(listener) ?? (() => undefined);
   }
 
   getTopOfBook(ric: string): TopOfBook | undefined {

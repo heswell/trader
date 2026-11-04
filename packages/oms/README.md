@@ -49,7 +49,11 @@ These are the `trading-schemas` OMS tables: `accounts`, `parentOrders`, `childOr
   - Execution quality: `arrivalPrice` (mid at creation, else the reference price), `slippageBps` (avgPx vs arrival,
     positive = worse: buys above / sells below arrival), `timeToFirstFill` and `timeToComplete` (ms from creation;
     0 until it happens; `timeToComplete` only for `FILLED`).
-- `childOrders` holds the exchange-facing order (`<orderId>-1`, routed 1:1) with the exchange `exchangeOrderId`.
+  - Algo columns: `strategy` (`DMA` / `TWAP` / `VWAP` / `POV`), `algoStart` / `algoEnd` (clock times; 0 for DMA,
+    `algoEnd` 0 = open-ended POV), `participationPct` (POV) and `targetQty` (what the schedule says should be
+    filled by now; equals `quantity` for DMA). See [Algo orders](#algo-orders).
+- `childOrders` holds the exchange-facing orders (`<orderId>-<n>`) with the exchange `exchangeOrderId`: one for a
+  DMA order, many for an algo order.
 - `fills` has one row per execution (`execId`), keyed by parent `orderId` and `childOrderId`.
 - `positions` has one row per `account|ric`.
 - `pnlHistory` (`account|ric|time`) and `accountPnlHistory` (`account|time`) are P&L / exposure snapshots taken by the
@@ -123,8 +127,36 @@ refused, and values are type-checked. `OmsRpcHandler` only adds the trading rule
   - The live rows change only through execution reports.
 - Stale rows (the order changed since the session began) fail with `stale update` unless `force: true`, and each
   stale row's `vuuMsg` is `stale:<orderId>:<columns>`. vuu-server compares every column of the snapshot taken at
-  session start. `getStaleColumns` is not overridden: `parentOrders` rows only change on order events (ack, fill,
-  replace, cancel, reject, expire, all material to an amend), and nothing ticks on a timer.
+  session start, except the algo progress column `targetQty` (`PARENT_ORDER_PROGRESS_COLUMNS`), which ticks on the
+  algo timer. The other columns only change on order events (ack, fill, replace, cancel, reject, expire, all
+  material to an amend).
+
+## Algo orders
+
+`createOrder` takes an optional `strategy` (default `DMA`). DMA sends one child straight to the exchange, as
+before. `TWAP`, `VWAP` and `POV` are worked by the `AlgoContainer` (`src/algo/`), which re-slices every running
+algo order on the algo timer (`algoSliceMs`).
+
+- **Parameters.** `durationMins` (TWAP default 30; POV runs to the close when omitted), `endTime` (`HH:MM`; VWAP
+  default the close) and `participationPct` (POV, required, 0–50). Times are *session* times: with a compressed
+  exchange day (`sessionDayMs`) they are scaled to clock time. Created while the market is closed, an algo starts at
+  the next open. A DAY order, and any VWAP, never runs past the close. Algo orders take DAY or GTC only.
+- **Schedules** (`src/algo/strategies.ts`). TWAP: linear from start to end. VWAP: the share of the session's
+  forecast volume between start and end, from the exchange's intraday volume curve (flat, so TWAP, when the market
+  has no session schedule). POV: `participation / (1 − participation)` of the volume other traders do since the
+  start (the exchange tape, less the order's own fills).
+- **Slicing** (`src/algo/planSlice.ts`). Each slice keeps a passive LIMIT child at the near touch sized to the next
+  slice of the schedule; crosses the spread with an IOC when more than 5% behind (and for any remainder in the last
+  two slices); cancels children when ahead of schedule or when the touch moves away. Filled + working never exceeds
+  the parent quantity, and children never trade through the parent limit. Children are not risk-checked again: the
+  parent passed pre-trade risk at entry.
+- **Parent state.** The parent's quantities are the sum of its children's fills; its status is set by the container,
+  not copied from a child. Cancel: `PENDING_CANCEL` until the live children are out, then `CANCELLED`. Amend:
+  `PENDING_REPLACE` until the live children are out, then `REPLACED` (or a replace reject if fills went past the new
+  quantity meanwhile), and slicing resumes on the new figures. At the end time any remainder is cancelled and the
+  parent is `EXPIRED` (`text` says how much was left); `endOfDay()` does the same for DAY algos.
+- **Restart.** All algo state is on the parent row (`ParentOrder.algo`), so it is journaled and restored with it;
+  `restoreState` re-registers running algos, and reconcile fixes up their children as for DMA.
 
 ## Order state machine
 
@@ -242,6 +274,7 @@ Set in `application.conf` as `oms.<key>`, or with the env var `OMS_<UPPER_SNAKE>
 | `restrictedRics` | `""` | Comma-separated restricted list. |
 | `permissionMode` | `auto` | `auto` or `strict` (see above). |
 | `gatewayLatencyMs` | 0 | Simulated one-way OMS↔exchange latency. More than 0 makes `PENDING_*` states visible. |
+| `algoSliceMs` | 250 | Algo timer: how often TWAP / VWAP / POV orders are re-sliced. |
 
 ### Persistence
 
@@ -253,8 +286,6 @@ periodically and on shutdown. `createTradingPersistence` (`@heswell/oms/persiste
 
 ## Not done / deferred
 
-- **TWAP / algo slicing.** Skipped. Routing is 1:1 parent → child. The parent/child tables and `childOrderId`
-  plumbing allow N children later.
 - **DAY expiry at close.** With a configured exchange-sim trading session (`sessionOpen` / `sessionClose`, or
   `sessionDayMs` for a fast simulated day; see the exchange-sim README), the exchange expires working DAY orders at
   its close and the OMS records the `EXPIRED` reports. New orders are rejected with `MARKET_CLOSED` while closed.

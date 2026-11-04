@@ -156,6 +156,8 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | `sessionClose` | `""` | Session close, `HH:MM` UTC (`EXCHANGE_SIM_SESSION_CLOSE`). Earlier than `sessionOpen` = overnight session. |
 | `preOpenMinutes` | 0 | Minutes of `PRE_OPEN` before the open (`EXCHANGE_SIM_PRE_OPEN_MINUTES`). |
 | `sessionDayMs` | 0 | Fast simulated day (`EXCHANGE_SIM_SESSION_DAY_MS`): the 24h schedule is compressed into this many ms of clock time (aligned to multiples of it since the epoch); open/close default to 08:00/16:30 when unset. 0 = real 24h day. |
+| `volumeProfile` | `u` | Intraday volume curve the takers follow while a session is configured (`EXCHANGE_SIM_VOLUME_PROFILE`): `u` (busy open, quiet middle, busiest into the close) or `flat`. Published to the OMS through `gateway.getSessionSchedule()`; its VWAP follows the same curve. |
+| `volumeNoise` | 0.3 | Random variation of taker activity around the curve (`EXCHANGE_SIM_VOLUME_NOISE`, 0 = none): a per-day level and a slowly wandering component, each roughly ± this fraction, so actual volume differs from the forecast. |
 
 Book events/s scale roughly linearly with `activeInstruments`, `takerRate` and `mmRate`.
 

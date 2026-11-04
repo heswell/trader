@@ -2,6 +2,7 @@ export * from "./domain/enums";
 export * from "./domain/orderStatus";
 export * from "./domain/orderValidation";
 export * from "./domain/ticks";
+export * from "./domain/session";
 export * from "./tables/tableDefinition";
 export * from "./tables/tables";
 export * from "./tables/keys";

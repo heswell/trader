@@ -38,6 +38,8 @@ export interface OmsConfig {
   permissionMode: string;
   /** Simulated one-way latency (ms) between OMS and exchange; 0 = synchronous. */
   gatewayLatencyMs: number;
+  /** Interval of the algo timer (ms): how often TWAP / VWAP / POV orders are re-sliced. */
+  algoSliceMs: number;
 }
 
 export const DEFAULT_OMS_CONFIG: Readonly<OmsConfig> = Object.freeze({
@@ -55,6 +57,7 @@ export const DEFAULT_OMS_CONFIG: Readonly<OmsConfig> = Object.freeze({
   restrictedRics: "",
   permissionMode: "auto",
   gatewayLatencyMs: 0,
+  algoSliceMs: 250,
 });
 
 export interface ConfigSource {
@@ -109,7 +112,7 @@ export const validateOmsConfig = (config: OmsConfig) => {
   ) {
     throw Error("oms.pnlHistoryLength must be a positive integer");
   }
-  for (const key of ["flowNotionalUsd", "flowStepMs"] as const) {
+  for (const key of ["flowNotionalUsd", "flowStepMs", "algoSliceMs"] as const) {
     if (!(config[key] > 0)) throw Error(`oms.${key} must be > 0`);
   }
   if (!(config.collarPct > 0 && config.collarPct < 1)) {

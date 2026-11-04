@@ -4,12 +4,12 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 412 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 428 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
 - **data**: [applySelectionChange](#applyselectionchange), [ChartDataSourceOptions](#chartdatasourceoptions), [connectToVuuServer](#connecttovuuserver), [DataSourceRows](#datasourcerows), [DataSourceRowsConfig](#datasourcerowsconfig), [DataSourceRowsUpdate](#datasourcerowsupdate), [DEFAULT_RPC_TIMEOUT_MS](#default_rpc_timeout_ms), [disconnectedRpcError](#disconnectedrpcerror), [disconnectFromVuuServer](#disconnectfromvuuserver), [editOrdersInSession](#editordersinsession), [openOrderEditSession](#openordereditsession), [OrderEdits](#orderedits), [OrderEditSession](#ordereditsession), [rpcTimeoutError](#rpctimeouterror), [RpcTransportFailure](#rpctransportfailure), [sendTradingRpc](#sendtradingrpc), [StaleOrderEditError](#staleorderediterror), [subscribeTradingRows](#subscribetradingrows), [toTradingRow](#totradingrow), [tradingColumnNames](#tradingcolumnnames), [TradingDataMode](#tradingdatamode), [TradingDataModeContextValue](#tradingdatamodecontextvalue), [TradingDataProvider](#tradingdataprovider), [TradingDataProviderProps](#tradingdataproviderprops), [TradingDataSourceOptions](#tradingdatasourceoptions), [TradingRow](#tradingrow), [TradingRows](#tradingrows), [TradingRowsOptions](#tradingrowsoptions), [TradingRpcError](#tradingrpcerror), [TradingRpcOptions](#tradingrpcoptions), [tradingTableSchema](#tradingtableschema), [tradingVuuTable](#tradingvuutable), [useChartDataSource](#usechartdatasource), [useDataSourceRows](#usedatasourcerows), [UseDataSourceRowsOptions](#usedatasourcerowsoptions), [useHasDataProvider](#usehasdataprovider), [useTableSelectedKeys](#usetableselectedkeys), [useTradingDataMode](#usetradingdatamode), [useTradingDataSource](#usetradingdatasource), [useTradingRows](#usetradingrows), [VuuServerConnection](#vuuserverconnection), [withRpcTimeout](#withrpctimeout)
-- **instrument-context**: [ACTIVE_GROUP](#active_group), [ACTIVE_LINK_GROUP](#active_link_group), [BroadcastChannelLike](#broadcastchannellike), [ComponentLinkGroup](#componentlinkgroup), [connectBroadcastChannel](#connectbroadcastchannel), [ConnectBroadcastChannelOptions](#connectbroadcastchanneloptions), [createInstrumentLinkBus](#createinstrumentlinkbus), [CreateInstrumentLinkBusOptions](#createinstrumentlinkbusoptions), [DEFAULT_LINK_CHANNEL_NAME](#default_link_channel_name), [DEFAULT_LINK_GROUP](#default_link_group), [DEFAULT_LINK_GROUPS](#default_link_groups), [getInstrumentLinkBus](#getinstrumentlinkbus), [INSTRUMENT_LINK_BUS_VERSION](#instrument_link_bus_version), [InstrumentContextProvider](#instrumentcontextprovider), [InstrumentContextProviderProps](#instrumentcontextproviderprops), [InstrumentContextValue](#instrumentcontextvalue), [InstrumentLinkBus](#instrumentlinkbus), [InstrumentLinkListener](#instrumentlinklistener), [InstrumentLinkSelection](#instrumentlinkselection), [InstrumentLinkTransport](#instrumentlinktransport), [InstrumentSelection](#instrumentselection), [isUnlinkedGroup](#isunlinkedgroup), [LINK_GROUP_PERSIST_PREFIX](#link_group_persist_prefix), [LINK_GROUP_STATE_KEY](#link_group_state_key), [linkGroupDefinition](#linkgroupdefinition), [LinkGroupDefinition](#linkgroupdefinition-1), [LinkGroupId](#linkgroupid), [LinkGroupProps](#linkgroupprops), [LinkGroupProvider](#linkgroupprovider), [MAX_RECENT_RICS](#max_recent_rics), [sameInstrument](#sameinstrument), [sanitizeSelectedInstrument](#sanitizeselectedinstrument), [SelectedInstrument](#selectedinstrument), [UNLINKED](#unlinked), [UNLINKED_GROUP](#unlinked_group), [useComponentLinkGroup](#usecomponentlinkgroup), [UseComponentLinkGroupOptions](#usecomponentlinkgroupoptions), [useInheritedLinkGroup](#useinheritedlinkgroup), [useInstrumentLinkBus](#useinstrumentlinkbus), [useOptionalWorkspaceChannel](#useoptionalworkspacechannel), [useSelectedInstrument](#useselectedinstrument), [UseSelectedInstrumentOptions](#useselectedinstrumentoptions), [useWorkspaceChannel](#useworkspacechannel), [useWorkspaceItemState](#useworkspaceitemstate), [WORKSPACE_ITEM_STATE_TYPE](#workspace_item_state_type), [WORKSPACE_ITEM_STATE_VERSION](#workspace_item_state_version), [WorkspaceChannelContextValue](#workspacechannelcontextvalue), [WorkspaceChannelProvider](#workspacechannelprovider), [WorkspaceChannelProviderProps](#workspacechannelproviderprops), [workspaceItemState](#workspaceitemstate), [WorkspaceItemState](#workspaceitemstate-1)
+- **instrument-context**: [ACTIVE_CHANNEL_STATE_KEY](#active_channel_state_key), [ACTIVE_GROUP](#active_group), [ACTIVE_LINK_GROUP](#active_link_group), [bindInstrumentLinkStore](#bindinstrumentlinkstore), [BroadcastChannelLike](#broadcastchannellike), [ComponentLinkGroup](#componentlinkgroup), [connectBroadcastChannel](#connectbroadcastchannel), [ConnectBroadcastChannelOptions](#connectbroadcastchanneloptions), [createInstrumentLinkBus](#createinstrumentlinkbus), [CreateInstrumentLinkBusOptions](#createinstrumentlinkbusoptions), [DEFAULT_LINK_CHANNEL_NAME](#default_link_channel_name), [DEFAULT_LINK_GROUP](#default_link_group), [DEFAULT_LINK_GROUPS](#default_link_groups), [ensureInstrumentLinkPersistence](#ensureinstrumentlinkpersistence), [getInstrumentLinkBus](#getinstrumentlinkbus), [getInstrumentLinkStore](#getinstrumentlinkstore), [INSTRUMENT_LINK_BUS_VERSION](#instrument_link_bus_version), [INSTRUMENT_LINK_STATE_KEY](#instrument_link_state_key), [INSTRUMENT_LINK_STATE_TITLE](#instrument_link_state_title), [INSTRUMENT_LINK_STATE_VERSION](#instrument_link_state_version), [InstrumentContextProvider](#instrumentcontextprovider), [InstrumentContextProviderProps](#instrumentcontextproviderprops), [InstrumentContextValue](#instrumentcontextvalue), [InstrumentLinkBus](#instrumentlinkbus), [InstrumentLinkListener](#instrumentlinklistener), [InstrumentLinkPersistence](#instrumentlinkpersistence), [InstrumentLinkSelection](#instrumentlinkselection), [InstrumentLinkStateStore](#instrumentlinkstatestore), [InstrumentLinkTransport](#instrumentlinktransport), [InstrumentSelection](#instrumentselection), [isUnlinkedGroup](#isunlinkedgroup), [LINK_GROUP_PERSIST_PREFIX](#link_group_persist_prefix), [LINK_GROUP_STATE_KEY](#link_group_state_key), [LINK_SELECTIONS_KEY](#link_selections_key), [linkGroupDefinition](#linkgroupdefinition), [LinkGroupDefinition](#linkgroupdefinition-1), [LinkGroupId](#linkgroupid), [LinkGroupProps](#linkgroupprops), [LinkGroupProvider](#linkgroupprovider), [MAX_RECENT_RICS](#max_recent_rics), [readSavedSelections](#readsavedselections), [resetInstrumentLinkPersistence](#resetinstrumentlinkpersistence), [sameInstrument](#sameinstrument), [sanitizeSelectedInstrument](#sanitizeselectedinstrument), [SelectedInstrument](#selectedinstrument), [UNLINKED](#unlinked), [UNLINKED_GROUP](#unlinked_group), [useActiveChannelPersistence](#useactivechannelpersistence), [useComponentLinkGroup](#usecomponentlinkgroup), [UseComponentLinkGroupOptions](#usecomponentlinkgroupoptions), [useInheritedLinkGroup](#useinheritedlinkgroup), [useInstrumentLinkBus](#useinstrumentlinkbus), [useInstrumentLinkPersistence](#useinstrumentlinkpersistence), [useOptionalWorkspaceChannel](#useoptionalworkspacechannel), [useSelectedInstrument](#useselectedinstrument), [UseSelectedInstrumentOptions](#useselectedinstrumentoptions), [useWorkspaceChannel](#useworkspacechannel), [useWorkspaceItemState](#useworkspaceitemstate), [WORKSPACE_ITEM_STATE_TYPE](#workspace_item_state_type), [WORKSPACE_ITEM_STATE_VERSION](#workspace_item_state_version), [WorkspaceChannelContextValue](#workspacechannelcontextvalue), [WorkspaceChannelProvider](#workspacechannelprovider), [WorkspaceChannelProviderProps](#workspacechannelproviderprops), [workspaceItemState](#workspaceitemstate), [WorkspaceItemState](#workspaceitemstate-1)
 - **hooks**: [actionableOrders](#actionableorders), [DepthLevel](#depthlevel), [FlashDirection](#flashdirection), [FollowedInstrument](#followedinstrument), [InstrumentPrice](#instrumentprice), [LevelFlash](#levelflash), [levelKey](#levelkey), [MarketDepthState](#marketdepthstate), [OWN_ORDER_STATUSES](#own_order_statuses), [OwnOrder](#ownorder), [OwnOrdersAtPrice](#ownordersatprice), [ownOrdersKey](#ownorderskey), [OwnWorkingOrders](#ownworkingorders), [OwnWorkingOrdersOptions](#ownworkingordersoptions), [priceKey](#pricekey), [useFollowedInstrument](#usefollowedinstrument), [useInstrumentPrice](#useinstrumentprice), [useLevelFlash](#uselevelflash), [useMarketDepth](#usemarketdepth), [useOwnWorkingOrders](#useownworkingorders), [useStableCallback](#usestablecallback), [useTradedVolume](#usetradedvolume)
 - **connection**: [combineConnectionState](#combineconnectionstate), [CONNECTION_STATE_SEVERITY](#connection_state_severity), [ConnectionAttemptClosedError](#connectionattemptclosederror), [ConnectionAttemptTimeoutError](#connectionattempttimeouterror), [connectionClientWithTimeout](#connectionclientwithtimeout), [ConnectionReconnectInfo](#connectionreconnectinfo), [connectionStateStore](#connectionstatestore), [createResilientConnectionRegistry](#createresilientconnectionregistry), [DEFAULT_LOGIN_TIMEOUT_MS](#default_login_timeout_ms), [DEFAULT_RECONNECT_POLICY](#default_reconnect_policy), [observeConnectionRegistry](#observeconnectionregistry), [observeDefaultConnectionRegistry](#observedefaultconnectionregistry), [reconnectDelay](#reconnectdelay), [ReconnectPolicy](#reconnectpolicy), [reconnectSchedule](#reconnectschedule), [ReconnectState](#reconnectstate), [ReconnectSupervisor](#reconnectsupervisor), [ReconnectSupervisorOptions](#reconnectsupervisoroptions), [ReconnectTimers](#reconnecttimers), [ResilientConnectionRegistryOptions](#resilientconnectionregistryoptions), [resolveReconnectPolicy](#resolvereconnectpolicy), [StaleIndicatorOptions](#staleindicatoroptions), [StaleIndicatorState](#staleindicatorstate), [StaleReason](#stalereason), [SupervisorSnapshot](#supervisorsnapshot), [SupervisorState](#supervisorstate), [toConnectionState](#toconnectionstate), [TradingConnectionState](#tradingconnectionstate), [TradingConnectionStateOverride](#tradingconnectionstateoverride), [TradingConnectionStatus](#tradingconnectionstatus), [useStaleIndicator](#usestaleindicator), [useTradingConnectionStatus](#usetradingconnectionstatus), [useVuuConnectionStatuses](#usevuuconnectionstatuses), [withConnectTimeout](#withconnecttimeout), [worstConnectionState](#worstconnectionstate)
 - **notifications**: [DEFAULT_DEDUPE_MS](#default_dedupe_ms), [DEFAULT_NOTIFICATION_KINDS](#default_notification_kinds), [DEFAULT_RATE_LIMIT](#default_rate_limit), [describeOrderEvent](#describeorderevent), [describeSuppressed](#describesuppressed), [FillEventTracker](#filleventtracker), [FillSound](#fillsound), [NotificationGate](#notificationgate), [NotificationGateOptions](#notificationgateoptions), [orderEventFromFill](#ordereventfromfill), [orderEventFromParentOrder](#ordereventfromparentorder), [orderEventKey](#ordereventkey), [orderEventKindForStatus](#ordereventkindforstatus), [OrderEventPriceFormat](#ordereventpriceformat), [OrderEventToast](#ordereventtoast), [ParentOrderEventTracker](#parentordereventtracker), [RateLimit](#ratelimit), [rpcRejectEvent](#rpcrejectevent), [ToastStatus](#toaststatus), [TRADING_ORDER_EVENT_KINDS](#trading_order_event_kinds), [TradingNotificationKinds](#tradingnotificationkinds), [TradingNotificationsContextValue](#tradingnotificationscontextvalue), [TradingNotificationSettings](#tradingnotificationsettings), [TradingNotificationsProvider](#tradingnotificationsprovider), [TradingNotificationsProviderProps](#tradingnotificationsproviderprops), [TradingNotificationToast](#tradingnotificationtoast), [TradingOrderEvent](#tradingorderevent), [TradingOrderEventKind](#tradingordereventkind), [useTradingNotifications](#usetradingnotifications)
@@ -29,7 +29,7 @@ Imports: `@heswell/trading-ui`. 412 exports. Types are shown as written in the s
 - **components/MarketDepth**: [MarketDepth](#marketdepth), [MarketDepthLevelClick](#marketdepthlevelclick), [MarketDepthProps](#marketdepthprops)
 - **components/OrderBlotter**: [CHILD_ORDER_COLUMNS](#child_order_columns), [childOrdersTableConfig](#childorderstableconfig), [ORDER_BLOTTER_COLUMNS](#order_blotter_columns), [ORDER_BLOTTER_TABS](#order_blotter_tabs), [OrderBlotter](#orderblotter), [OrderBlotterContext](#orderblottercontext), [OrderBlotterProps](#orderblotterprops), [OrderBlotterTab](#orderblottertab), [orderBlotterTabFilter](#orderblottertabfilter), [orderBlotterTableConfig](#orderblottertableconfig), [OrderRowActions](#orderrowactions)
 - **components/OrderStatusBadge**: [OrderStatusBadge](#orderstatusbadge), [OrderStatusBadgeProps](#orderstatusbadgeprops)
-- **components/OrderTicket**: [connectionBlockedReason](#connectionblockedreason), [DEFAULT_COLLAR_PCT](#default_collar_pct), [defaultLimitPrice](#defaultlimitprice), [draftFromPrefill](#draftfromprefill), [DraftValidation](#draftvalidation), [EMPTY_DRAFT](#empty_draft), [fieldForRejectReason](#fieldforrejectreason), [formatPriceInput](#formatpriceinput), [INDICATIVE_USD_PER_PRICE_UNIT](#indicative_usd_per_price_unit), [isTimeInForceAllowed](#istimeinforceallowed), [LAST_ACCOUNT_STORAGE_KEY](#last_account_storage_key), [marketValuationPrice](#marketvaluationprice), [newClOrdId](#newclordid), [nudgePrice](#nudgeprice), [nudgeQuantity](#nudgequantity), [ORDER_TICKET_ORD_TYPES](#order_ticket_ord_types), [ORDER_TICKET_SELECTION_SOURCE](#order_ticket_selection_source), [ORDER_TICKET_TIFS](#order_ticket_tifs), [OrderDraft](#orderdraft), [OrderDraftErrors](#orderdrafterrors), [OrderDraftField](#orderdraftfield), [OrderTicket](#orderticket), [OrderTicketAccount](#orderticketaccount), [OrderTicketDialog](#orderticketdialog), [OrderTicketDialogProps](#orderticketdialogprops), [OrderTicketInstrument](#orderticketinstrument), [OrderTicketLauncher](#orderticketlauncher), [OrderTicketLauncherProvider](#orderticketlauncherprovider), [OrderTicketLauncherProviderProps](#orderticketlauncherproviderprops), [OrderTicketPanel](#orderticketpanel), [OrderTicketPanelProps](#orderticketpanelprops), [OrderTicketPrefill](#orderticketprefill), [OrderTicketProps](#orderticketprops), [OrderTicketState](#orderticketstate), [OrderTicketSubmission](#orderticketsubmission), [OrderTicketTarget](#ordertickettarget), [OrderTicketVariant](#orderticketvariant), [parsePrice](#parseprice), [parseQuantity](#parsequantity), [previewRisk](#previewrisk), [referencePrice](#referenceprice), [RiskPreview](#riskpreview), [RiskPreviewOptions](#riskpreviewoptions), [RiskWarning](#riskwarning), [scheduleOf](#scheduleof), [useOrderTicket](#useorderticket), [useOrderTicketLauncher](#useorderticketlauncher), [UseOrderTicketProps](#useorderticketprops), [useOrderTicketTarget](#useordertickettarget), [validateDraft](#validatedraft)
+- **components/OrderTicket**: [connectionBlockedReason](#connectionblockedreason), [DEFAULT_COLLAR_PCT](#default_collar_pct), [defaultLimitPrice](#defaultlimitprice), [draftFromPrefill](#draftfromprefill), [DraftValidation](#draftvalidation), [EMPTY_DRAFT](#empty_draft), [fieldForRejectReason](#fieldforrejectreason), [formatPriceInput](#formatpriceinput), [INDICATIVE_USD_PER_PRICE_UNIT](#indicative_usd_per_price_unit), [isAlgoStrategy](#isalgostrategy), [isTimeInForceAllowed](#istimeinforceallowed), [LAST_ACCOUNT_STORAGE_KEY](#last_account_storage_key), [marketValuationPrice](#marketvaluationprice), [newClOrdId](#newclordid), [nudgePrice](#nudgeprice), [nudgeQuantity](#nudgequantity), [ORDER_TICKET_ORD_TYPES](#order_ticket_ord_types), [ORDER_TICKET_SELECTION_SOURCE](#order_ticket_selection_source), [ORDER_TICKET_STRATEGIES](#order_ticket_strategies), [ORDER_TICKET_TIFS](#order_ticket_tifs), [OrderDraft](#orderdraft), [OrderDraftErrors](#orderdrafterrors), [OrderDraftField](#orderdraftfield), [OrderTicket](#orderticket), [OrderTicketAccount](#orderticketaccount), [OrderTicketDialog](#orderticketdialog), [OrderTicketDialogProps](#orderticketdialogprops), [OrderTicketInstrument](#orderticketinstrument), [OrderTicketLauncher](#orderticketlauncher), [OrderTicketLauncherProvider](#orderticketlauncherprovider), [OrderTicketLauncherProviderProps](#orderticketlauncherproviderprops), [OrderTicketPanel](#orderticketpanel), [OrderTicketPanelProps](#orderticketpanelprops), [OrderTicketPrefill](#orderticketprefill), [OrderTicketProps](#orderticketprops), [OrderTicketState](#orderticketstate), [OrderTicketSubmission](#orderticketsubmission), [OrderTicketTarget](#ordertickettarget), [OrderTicketVariant](#orderticketvariant), [parsePrice](#parseprice), [parseQuantity](#parsequantity), [previewRisk](#previewrisk), [referencePrice](#referenceprice), [RiskPreview](#riskpreview), [RiskPreviewOptions](#riskpreviewoptions), [RiskWarning](#riskwarning), [scheduleOf](#scheduleof), [useOrderTicket](#useorderticket), [useOrderTicketLauncher](#useorderticketlauncher), [UseOrderTicketProps](#useorderticketprops), [useOrderTicketTarget](#useordertickettarget), [validateDraft](#validatedraft)
 - **components/PnlHistoryChart**: [PnlHistoryChart](#pnlhistorychart), [PnlHistoryChartProps](#pnlhistorychartprops)
 - **components/PnlValue**: [PnlValue](#pnlvalue), [PnlValueProps](#pnlvalueprops)
 - **components/PositionsView**: [CurrencyTotals](#currencytotals), [POSITIONS_GROUP_BY](#positions_group_by), [PositionsGrouping](#positionsgrouping), [PositionsView](#positionsview), [PositionsViewProps](#positionsviewprops), [totalsByCurrency](#totalsbycurrency)
@@ -99,7 +99,7 @@ useChartDataSource(table: TradingSchemaName, { columns, disabled = false, filter
 
 #### useDataSourceRows
 
-*hook* · [data/useDataSourceRows.ts](../../packages/trading-ui/src/data/useDataSourceRows.ts#L206)
+*hook* · [data/useDataSourceRows.ts](../../packages/trading-ui/src/data/useDataSourceRows.ts#L228)
 
 Rows of a data source you own (from useTradingDataSource, not one a vuu
 Table drives) as objects, for custom renderers (depth, ladder, tape) and
@@ -405,7 +405,7 @@ const DEFAULT_RPC_TIMEOUT_MS: 10000
 
 #### DataSourceRows
 
-*interface* · [data/useDataSourceRows.ts](../../packages/trading-ui/src/data/useDataSourceRows.ts#L171)
+*interface* · [data/useDataSourceRows.ts](../../packages/trading-ui/src/data/useDataSourceRows.ts#L193)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -517,7 +517,7 @@ Inherits `@vuu-ui/vuu-data-types`, `DataSourceConfig (@vuu-ui/vuu-data-types)`, 
 
 #### UseDataSourceRowsOptions
 
-*interface* · [data/useDataSourceRows.ts](../../packages/trading-ui/src/data/useDataSourceRows.ts#L161)
+*interface* · [data/useDataSourceRows.ts](../../packages/trading-ui/src/data/useDataSourceRows.ts#L183)
 
 Extends `DataSourceRowsConfig`.
 
@@ -657,6 +657,19 @@ Props: `WorkspaceChannelProviderProps`
 
 ### Hooks (instrument-context)
 
+#### useActiveChannelPersistence
+
+*hook* · [instrument-context/persistInstrumentLinks.tsx](../../packages/trading-ui/src/instrument-context/persistInstrumentLinks.tsx#L28)
+
+Save the enclosing WorkspaceChannelProvider's active channel in the
+portal's persistence service, and restore it once the saved state is
+loaded. Must be rendered inside the portal shell (where the service is)
+and inside the WorkspaceChannelProvider. A no-op without either.
+
+```ts
+useActiveChannelPersistence(): void
+```
+
 #### useComponentLinkGroup
 
 *hook* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L68)
@@ -691,6 +704,18 @@ else the window-wide shared bus (getInstrumentLinkBus).
 
 ```ts
 useInstrumentLinkBus(): InstrumentLinkBus
+```
+
+#### useInstrumentLinkPersistence
+
+*hook* · [instrument-context/persistInstrumentLinks.tsx](../../packages/trading-ui/src/instrument-context/persistInstrumentLinks.tsx#L15)
+
+Save the window's instrument link bus (the instrument on each channel) in
+the enclosing portal's persistence service. A no-op outside a portal.
+TradingFeatureRoot calls it, so every feature (and popout) is covered.
+
+```ts
+useInstrumentLinkPersistence(): void
 ```
 
 #### useOptionalWorkspaceChannel
@@ -739,6 +764,22 @@ useWorkspaceItemState(): WorkspaceItemState | undefined
 
 ### Functions (instrument-context)
 
+#### bindInstrumentLinkStore
+
+*function* · [instrument-context/instrumentLinkPersistence.ts](../../packages/trading-ui/src/instrument-context/instrumentLinkPersistence.ts#L93)
+
+Keep the selections of the bus's shared link groups in `store`, so they
+survive a reload. Once the store is loaded, saved selections fill the
+groups that have none yet (a popout that already synced over
+BroadcastChannel keeps what it got). Every later change is saved; changes
+saved by another window are applied last-writer-wins (by seq), like
+BroadcastChannel messages. Clearing the document in the Saved state
+dialog clears the selections. Returns unbind.
+
+```ts
+bindInstrumentLinkStore(bus: InstrumentLinkBus, store: InstrumentLinkStateStore): (() => void)
+```
+
 #### connectBroadcastChannel
 
 *function* · [instrument-context/broadcastChannelTransport.ts](../../packages/trading-ui/src/instrument-context/broadcastChannelTransport.ts#L53)
@@ -765,6 +806,18 @@ InstrumentContextProvider.
 createInstrumentLinkBus({ id = randomId(), }: CreateInstrumentLinkBusOptions = {}): InstrumentLinkBus
 ```
 
+#### ensureInstrumentLinkPersistence
+
+*function* · [instrument-context/instrumentLinkPersistence.ts](../../packages/trading-ui/src/instrument-context/instrumentLinkPersistence.ts#L169)
+
+Save the window's link bus in the portal's persistence service, once per
+window however many features call it (as ensureLinkBusBroadcast does for
+BroadcastChannel). A new service (another user) replaces the binding.
+
+```ts
+ensureInstrumentLinkPersistence(service: PortalPersistenceService, bus: InstrumentLinkBus = getInstrumentLinkBus()): void
+```
+
 #### getInstrumentLinkBus
 
 *function* · [instrument-context/instrumentLinkBus.ts](../../packages/trading-ui/src/instrument-context/instrumentLinkBus.ts#L233)
@@ -776,6 +829,28 @@ package) use the same instance.
 
 ```ts
 getInstrumentLinkBus(): InstrumentLinkBus
+```
+
+#### getInstrumentLinkStore
+
+*function* · [instrument-context/instrumentLinkPersistence.ts](../../packages/trading-ui/src/instrument-context/instrumentLinkPersistence.ts#L34)
+
+The document that holds the instrument channels in `service`.
+
+```ts
+getInstrumentLinkStore(service: PortalPersistenceService): ApplicationStateStore
+```
+
+#### InstrumentLinkPersistence
+
+*function* · [instrument-context/persistInstrumentLinks.tsx](../../packages/trading-ui/src/instrument-context/persistInstrumentLinks.tsx#L82)
+
+Keeps the instrument channels (each channel's instrument and the active
+channel) in the portal's saved state. Render it once inside the portal
+shell, within the WorkspaceChannelProvider; it renders nothing.
+
+```ts
+InstrumentLinkPersistence(): null
 ```
 
 #### isUnlinkedGroup
@@ -798,6 +873,26 @@ labelled with the id.
 
 ```ts
 linkGroupDefinition(group: LinkGroupId, groups: readonly LinkGroupDefinition[] = DEFAULT_LINK_GROUPS): LinkGroupDefinition
+```
+
+#### readSavedSelections
+
+*function* · [instrument-context/instrumentLinkPersistence.ts](../../packages/trading-ui/src/instrument-context/instrumentLinkPersistence.ts#L59)
+
+The saved selections, dropping anything malformed.
+
+```ts
+readSavedSelections(value: unknown): [LinkGroupId, InstrumentLinkSelection][]
+```
+
+#### resetInstrumentLinkPersistence
+
+*function* · [instrument-context/instrumentLinkPersistence.ts](../../packages/trading-ui/src/instrument-context/instrumentLinkPersistence.ts#L197)
+
+Remove the window's binding (tests).
+
+```ts
+resetInstrumentLinkPersistence(): void
 ```
 
 #### sameInstrument
@@ -834,6 +929,16 @@ workspaceItemState(store: WorkspacePersistentStateStore, instanceId: string): Wo
 ```
 
 ### Constants (instrument-context)
+
+#### ACTIVE_CHANNEL_STATE_KEY
+
+*const* · [instrument-context/instrumentLinkPersistence.ts](../../packages/trading-ui/src/instrument-context/instrumentLinkPersistence.ts#L25)
+
+Key of the workspace's active channel in that document.
+
+```ts
+const ACTIVE_CHANNEL_STATE_KEY: "activeChannel"
+```
 
 #### ACTIVE_GROUP
 
@@ -896,6 +1001,34 @@ Bumped on any incompatible change of InstrumentLinkBus / messages.
 const INSTRUMENT_LINK_BUS_VERSION: 1
 ```
 
+#### INSTRUMENT_LINK_STATE_KEY
+
+*const* · [instrument-context/instrumentLinkPersistence.ts](../../packages/trading-ui/src/instrument-context/instrumentLinkPersistence.ts#L19)
+
+The portal saved-state document that holds the instrument channels: the
+instrument selected on each shared link group and the workspace's active
+channel. It is listed as "Instrument channels" in the Saved state dialog.
+
+```ts
+const INSTRUMENT_LINK_STATE_KEY: "trading.instrument-link"
+```
+
+#### INSTRUMENT_LINK_STATE_TITLE
+
+*const* · [instrument-context/instrumentLinkPersistence.ts](../../packages/trading-ui/src/instrument-context/instrumentLinkPersistence.ts#L21)
+
+```ts
+const INSTRUMENT_LINK_STATE_TITLE: "Instrument channels"
+```
+
+#### INSTRUMENT_LINK_STATE_VERSION
+
+*const* · [instrument-context/instrumentLinkPersistence.ts](../../packages/trading-ui/src/instrument-context/instrumentLinkPersistence.ts#L20)
+
+```ts
+const INSTRUMENT_LINK_STATE_VERSION: 1
+```
+
 #### LINK_GROUP_PERSIST_PREFIX
 
 *const* · [instrument-context/useComponentLinkGroup.ts](../../packages/trading-ui/src/instrument-context/useComponentLinkGroup.ts#L34)
@@ -914,6 +1047,16 @@ Key the group is saved under in the vuu-layout View state.
 
 ```ts
 const LINK_GROUP_STATE_KEY: "linkGroup"
+```
+
+#### LINK_SELECTIONS_KEY
+
+*const* · [instrument-context/instrumentLinkPersistence.ts](../../packages/trading-ui/src/instrument-context/instrumentLinkPersistence.ts#L23)
+
+Key of the per-group selections in that document.
+
+```ts
+const LINK_SELECTIONS_KEY: "selections"
 ```
 
 #### MAX_RECENT_RICS
@@ -1171,6 +1314,19 @@ type InstrumentLinkListener = (
   selection: InstrumentLinkSelection,
   group: LinkGroupId,
 ) => void
+```
+
+#### InstrumentLinkStateStore
+
+*type* · [instrument-context/instrumentLinkPersistence.ts](../../packages/trading-ui/src/instrument-context/instrumentLinkPersistence.ts#L28)
+
+The part of ApplicationStateStore the binding uses (lets tests fake it).
+
+```ts
+type InstrumentLinkStateStore = Pick<
+  ApplicationStateStore,
+  "ready" | "get" | "set" | "subscribe"
+>
 ```
 
 #### InstrumentLinkTransport
@@ -2337,7 +2493,7 @@ type TradingOrderEventKind = | "submitted"
 
 #### TradingFeatureRoot
 
-*component* · [feature-root/TradingFeatureRoot.tsx](../../packages/trading-ui/src/feature-root/TradingFeatureRoot.tsx#L77)
+*component* · [feature-root/TradingFeatureRoot.tsx](../../packages/trading-ui/src/feature-root/TradingFeatureRoot.tsx#L79)
 
 What every trading MF feature wraps its content in. It mounts the
 per-host services once:
@@ -2349,7 +2505,8 @@ per-host services once:
   window streams order notifications (window-global lease), so several
   features open in one portal do not toast each event twice.
 - Always: the window link bus is connected to BroadcastChannel once, so
-  popped-out features stay linked.
+  popped-out features stay linked, and saved in the portal's persistence
+  service once, so channel selections survive a reload.
 
 The vuu NotificationsProvider (toast centre) is the host's: vuu-portal
 mounts it. Data comes from the enclosing DataProvider (mode "inherit").
@@ -2368,7 +2525,7 @@ Props: `TradingFeatureRootProps`
 
 #### useInTradingFeatureRoot
 
-*hook* · [feature-root/TradingFeatureRoot.tsx](../../packages/trading-ui/src/feature-root/TradingFeatureRoot.tsx#L22)
+*hook* · [feature-root/TradingFeatureRoot.tsx](../../packages/trading-ui/src/feature-root/TradingFeatureRoot.tsx#L23)
 
 True inside a TradingFeatureRoot.
 
@@ -2380,7 +2537,7 @@ useInTradingFeatureRoot(): boolean
 
 #### ensureLinkBusBroadcast
 
-*function* · [feature-root/TradingFeatureRoot.tsx](../../packages/trading-ui/src/feature-root/TradingFeatureRoot.tsx#L30)
+*function* · [feature-root/TradingFeatureRoot.tsx](../../packages/trading-ui/src/feature-root/TradingFeatureRoot.tsx#L31)
 
 Link the window's instrument link bus with other windows (popouts, other
 tabs) over BroadcastChannel, once per window however many features call it.
@@ -2403,7 +2560,7 @@ const notificationLease: { acquire(token: symbol): () => void; holder: () => sym
 
 #### TradingFeatureRootProps
 
-*interface* · [feature-root/TradingFeatureRoot.tsx](../../packages/trading-ui/src/feature-root/TradingFeatureRoot.tsx#L52)
+*interface* · [feature-root/TradingFeatureRoot.tsx](../../packages/trading-ui/src/feature-root/TradingFeatureRoot.tsx#L53)
 
 Props of [`TradingFeatureRoot`](#tradingfeatureroot).
 
@@ -2465,7 +2622,7 @@ Props of [`AccountSelector`](#accountselector).
 
 #### ChannelPicker
 
-*component* · [components/ChannelPicker/ChannelPicker.tsx](../../packages/trading-ui/src/components/ChannelPicker/ChannelPicker.tsx#L87)
+*component* · [components/ChannelPicker/ChannelPicker.tsx](../../packages/trading-ui/src/components/ChannelPicker/ChannelPicker.tsx#L92)
 
 The workspace channel picker: one segment per channel showing the
 channel's instrument. Clicking a segment makes it the active channel
@@ -2484,7 +2641,7 @@ Also accepts the standard HTML attributes.
 
 #### CHANNEL_PICKER_SOURCE
 
-*const* · [components/ChannelPicker/ChannelPicker.tsx](../../packages/trading-ui/src/components/ChannelPicker/ChannelPicker.tsx#L34)
+*const* · [components/ChannelPicker/ChannelPicker.tsx](../../packages/trading-ui/src/components/ChannelPicker/ChannelPicker.tsx#L39)
 
 Selection source id of the picker's publishes.
 
@@ -2496,7 +2653,7 @@ const CHANNEL_PICKER_SOURCE: "ChannelPicker"
 
 #### ChannelPickerProps
 
-*interface* · [components/ChannelPicker/ChannelPicker.tsx](../../packages/trading-ui/src/components/ChannelPicker/ChannelPicker.tsx#L36)
+*interface* · [components/ChannelPicker/ChannelPicker.tsx](../../packages/trading-ui/src/components/ChannelPicker/ChannelPicker.tsx#L41)
 
 Props of [`ChannelPicker`](#channelpicker).
 
@@ -2676,7 +2833,7 @@ type ExposureMeasure = "exposure" | "pnl"
 
 #### FillProgressBar
 
-*component* · [components/FillProgressBar/FillProgressBar.tsx](../../packages/trading-ui/src/components/FillProgressBar/FillProgressBar.tsx#L23)
+*component* · [components/FillProgressBar/FillProgressBar.tsx](../../packages/trading-ui/src/components/FillProgressBar/FillProgressBar.tsx#L28)
 
 Fill progress as a bar plus `filled / total` text. `role="progressbar"`
 with value text, so it is not conveyed by the bar alone.
@@ -2688,6 +2845,7 @@ Props: `FillProgressBarProps`
 | `filled` | `number \| undefined` |  | Filled quantity (cumQty). |
 | `total` | `number \| undefined` |  | Order quantity. |
 | `muted?` | `boolean` |  | Terminal but unfilled orders (cancelled / rejected) render muted. |
+| `target?` | `number` |  | Quantity an algo schedule says should be filled by now: drawn as a marker, so ahead / behind schedule shows at a glance. |
 
 Also accepts the standard HTML attributes and `ref`.
 
@@ -3381,7 +3539,7 @@ orderBlotterTabFilter(tab: OrderBlotterTab): string
 
 #### CHILD_ORDER_COLUMNS
 
-*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L158)
+*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L162)
 
 ```ts
 const CHILD_ORDER_COLUMNS: readonly ["childOrderId", "parentOrderId", "exchangeOrderId", "ric", "side", "price", "quantity", "status", "cumQty", "avgPx", "lastUpdate", "rejectReason", "text"]
@@ -3389,7 +3547,7 @@ const CHILD_ORDER_COLUMNS: readonly ["childOrderId", "parentOrderId", "exchangeO
 
 #### childOrdersTableConfig
 
-*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L120)
+*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L124)
 
 ```ts
 const childOrdersTableConfig: TableConfig
@@ -3400,7 +3558,7 @@ const childOrdersTableConfig: TableConfig
 *const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L40)
 
 ```ts
-const ORDER_BLOTTER_COLUMNS: readonly ["orderId", "status", "side", "ric", "ordType", "timeInForce", "quantity", "price", "cumQty", "avgPx", "account", "trader", "created", "lastUpdate", "currency", "rejectReason", "text"]
+const ORDER_BLOTTER_COLUMNS: readonly ["orderId", "status", "side", "ric", "ordType", "strategy", "timeInForce", "quantity", "price", "cumQty", "targetQty", "avgPx", "account", "trader", "created", "lastUpdate", "currency", "rejectReason", "text"]
 ```
 
 #### ORDER_BLOTTER_TABS
@@ -3421,7 +3579,7 @@ const OrderBlotterContext: Context<OrderRowActions | undefined>
 
 #### orderBlotterTableConfig
 
-*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L60)
+*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L62)
 
 ```ts
 const orderBlotterTableConfig: TableConfig
@@ -3491,7 +3649,7 @@ Props of [`OrderStatusBadge`](#orderstatusbadge).
 
 #### OrderTicket
 
-*component* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L279)
+*component* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L369)
 
 Order entry: instrument, side, quantity (lot validated), order type,
 limit price (tick validated, band-aware nudges), TIF and account, with a
@@ -3611,7 +3769,7 @@ Also accepts the standard HTML attributes.
 
 #### useOrderTicket
 
-*hook* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L228)
+*hook* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L234)
 
 State and behaviour of the order ticket (one core used by every layout
 variant). Exposed for custom ticket layouts.
@@ -3645,7 +3803,7 @@ useOrderTicketTarget(enabled = true): OrderTicketPrefill | undefined
 
 #### connectionBlockedReason
 
-*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L205)
+*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L211)
 
 Why orders cannot be sent in this connection state, else undefined.
 
@@ -3655,7 +3813,7 @@ connectionBlockedReason(state: TradingConnectionState): string | undefined
 
 #### defaultLimitPrice
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L172)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L239)
 
 Passive price to start from: bid for a buy, ask for a sell.
 
@@ -3665,7 +3823,7 @@ defaultLimitPrice(side: Side, instrument: OrderTicketInstrument | undefined): nu
 
 #### draftFromPrefill
 
-*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L177)
+*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L179)
 
 A draft from a prefill (anything unset takes the empty draft's value).
 
@@ -3675,7 +3833,7 @@ draftFromPrefill(prefill: OrderTicketPrefill | undefined, fallback: { ric?: stri
 
 #### fieldForRejectReason
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L238)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L305)
 
 Draft field a server / validation reject reason relates to, if any.
 
@@ -3685,7 +3843,7 @@ fieldForRejectReason(reason: string): OrderDraftField | "form"
 
 #### formatPriceInput
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L142)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L209)
 
 Price as input text, with the instrument's decimals (no grouping).
 
@@ -3693,19 +3851,30 @@ Price as input text, with the instrument's decimals (no grouping).
 formatPriceInput(price: number, instrument: OrderTicketInstrument | undefined): string
 ```
 
-#### isTimeInForceAllowed
+#### isAlgoStrategy
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L89)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L110)
 
-TIFs the OMS accepts for an order type (GTC is not valid for MARKET).
+Whether the strategy slices the order over time (anything but DMA).
 
 ```ts
-isTimeInForceAllowed(ordType: OrdType, tif: TimeInForce): boolean
+isAlgoStrategy(strategy: AlgoStrategy | undefined): boolean
+```
+
+#### isTimeInForceAllowed
+
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L117)
+
+TIFs the OMS accepts for an order type and strategy (GTC is not valid for
+MARKET; algo orders take DAY or GTC only).
+
+```ts
+isTimeInForceAllowed(ordType: OrdType, tif: TimeInForce, strategy?: AlgoStrategy): boolean
 ```
 
 #### marketValuationPrice
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L180)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L247)
 
 Price a market order is valued at: the far touch, else the reference.
 
@@ -3715,7 +3884,7 @@ marketValuationPrice(side: Side, instrument: OrderTicketInstrument | undefined):
 
 #### newClOrdId
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L436)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L505)
 
 A client order id, unique per session (well under the 64 char limit).
 
@@ -3725,7 +3894,7 @@ newClOrdId(prefix = "TKT"): string
 
 #### nudgePrice
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L191)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L258)
 
 Move the draft price by `ticks` (band aware). An empty price starts from
 the passive touch. Returns undefined if there is nothing to step from.
@@ -3736,7 +3905,7 @@ nudgePrice(draft: Pick<OrderDraft, "price" | "side">, instrument: OrderTicketIns
 
 #### nudgeQuantity
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L210)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L277)
 
 Step quantity by whole lots (never below one lot).
 
@@ -3746,7 +3915,7 @@ nudgeQuantity(quantityText: string, instrument: OrderTicketInstrument | undefine
 
 #### parsePrice
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L121)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L188)
 
 Parse price input (`1,234.5`). NaN if not a number, undefined if empty.
 
@@ -3756,7 +3925,7 @@ parsePrice(text: string): number | undefined
 
 #### parseQuantity
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L113)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L180)
 
 Parse quantity input: `1,000`, `10k`, `1.5m`. NaN if not a number.
 
@@ -3766,7 +3935,7 @@ parseQuantity(text: string): number
 
 #### previewRisk
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L364)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L433)
 
 Notional and pre-trade risk preview, mirroring the OMS checks client side
 (account limits are USD; the limit collar is ±collarPct of the reference).
@@ -3778,7 +3947,7 @@ previewRisk(draft: OrderDraft, instrument: OrderTicketInstrument | undefined, ac
 
 #### referencePrice
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L158)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L225)
 
 Reference for risk checks, as the OMS: last, else mid, else refPrice.
 
@@ -3788,7 +3957,7 @@ referencePrice(instrument: OrderTicketInstrument | undefined): number | undefine
 
 #### scheduleOf
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L131)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L198)
 
 Tick schedule of an order ticket instrument (tickBands over tickSize);
 undefined without a tickSize.
@@ -3799,7 +3968,7 @@ scheduleOf(instrument: OrderTicketInstrument | undefined): TickSchedule | undefi
 
 #### validateDraft
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L253)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L320)
 
 Client-side validation with the shared trading-schemas rules
 (validateOrder + validateRpcParams). The OMS re-validates and also applies
@@ -3813,7 +3982,7 @@ validateDraft(draft: OrderDraft, instrument: OrderTicketInstrument | undefined, 
 
 #### DEFAULT_COLLAR_PCT
 
-*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L108)
+*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L175)
 
 Default OMS limit price collar (oms.collarPct).
 
@@ -3823,7 +3992,7 @@ const DEFAULT_COLLAR_PCT: 0.1
 
 #### EMPTY_DRAFT
 
-*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L441)
+*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L510)
 
 ```ts
 const EMPTY_DRAFT: OrderDraft
@@ -3831,7 +4000,7 @@ const EMPTY_DRAFT: OrderDraft
 
 #### INDICATIVE_USD_PER_PRICE_UNIT
 
-*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L97)
+*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L164)
 
 USD per unit of instrument price, by instrument currency. Mirrors the
 exchange simulator's reference rates (GBX prices are pence). Indicative:
@@ -3851,7 +4020,7 @@ const LAST_ACCOUNT_STORAGE_KEY: "trading.orderTicket.lastAccount"
 
 #### ORDER_TICKET_ORD_TYPES
 
-*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L80)
+*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L93)
 
 Order types the OMS accepts (STOP / STOP_LIMIT are reserved).
 
@@ -3867,9 +4036,19 @@ const ORDER_TICKET_ORD_TYPES: readonly OrdType[]
 const ORDER_TICKET_SELECTION_SOURCE: "orderTicket"
 ```
 
+#### ORDER_TICKET_STRATEGIES
+
+*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L102)
+
+Strategies offered on the ticket, in display order.
+
+```ts
+const ORDER_TICKET_STRATEGIES: readonly AlgoStrategy[]
+```
+
 #### ORDER_TICKET_TIFS
 
-*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L81)
+*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L94)
 
 ```ts
 const ORDER_TICKET_TIFS: readonly TimeInForce[]
@@ -3879,7 +4058,7 @@ const ORDER_TICKET_TIFS: readonly TimeInForce[]
 
 #### DraftValidation
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L242)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L309)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -3888,7 +4067,7 @@ const ORDER_TICKET_TIFS: readonly TimeInForce[]
 
 #### OrderDraft
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L56)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L57)
 
 The editable state of the ticket. Quantity and price are input text.
 
@@ -3901,10 +4080,14 @@ The editable state of the ticket. Quantity and price are input text.
 | `quantity` | `string` |  |  |
 | `price` | `string` |  |  |
 | `account?` | `string` |  |  |
+| `strategy?` | `AlgoStrategy` |  | How the OMS works the order; undefined = DMA. |
+| `algoDuration?` | `string` |  | TWAP / POV: minutes to work the order (input text; empty = default). |
+| `algoEndTime?` | `string` |  | VWAP: session time "HH:MM" to finish by (empty = the close). |
+| `participationPct?` | `string` |  | POV: share of market volume, percent (input text). |
 
 #### OrderTicketAccount
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L43)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L44)
 
 An `accounts` row (limits are in USD).
 
@@ -3928,7 +4111,7 @@ Props of [`OrderTicketDialog`](#orderticketdialog).
 
 #### OrderTicketInstrument
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L23)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L24)
 
 Instrument data the ticket works with: static (instruments) plus the live
 prices of the instrumentPrices join. Everything but `ric` is optional while
@@ -3995,13 +4178,13 @@ a position row ...). Anything omitted keeps its default.
 
 #### OrderTicketProps
 
-*interface* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L61)
+*interface* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L64)
 
 Props of [`OrderTicket`](#orderticket).
 
 #### RiskPreview
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L336)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L405)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -4015,7 +4198,7 @@ Props of [`OrderTicket`](#orderticket).
 
 #### RiskPreviewOptions
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L351)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L420)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -4024,7 +4207,7 @@ Props of [`OrderTicket`](#orderticket).
 
 #### RiskWarning
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L331)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L400)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -4055,7 +4238,7 @@ Extends `RiskPreviewOptions`.
 
 #### OrderDraftErrors
 
-*type* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L75)
+*type* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L88)
 
 ```ts
 type OrderDraftErrors = Partial<
@@ -4065,7 +4248,7 @@ type OrderDraftErrors = Partial<
 
 #### OrderDraftField
 
-*type* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L66)
+*type* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L75)
 
 ```ts
 type OrderDraftField = | "ric"
@@ -4075,11 +4258,15 @@ type OrderDraftField = | "ric"
   | "quantity"
   | "price"
   | "account"
+  | "strategy"
+  | "algoDuration"
+  | "algoEndTime"
+  | "participationPct"
 ```
 
 #### OrderTicketState
 
-*type* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L620)
+*type* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L626)
 
 ```ts
 type OrderTicketState = ReturnType<typeof useOrderTicket>
@@ -4112,7 +4299,7 @@ type OrderTicketTarget = (prefill: OrderTicketPrefill) => void
 
 #### OrderTicketVariant
 
-*type* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L59)
+*type* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L62)
 
 ```ts
 type OrderTicketVariant = "panel" | "compact"
@@ -4987,7 +5174,7 @@ Props of [`TradeTape`](#tradetape).
 
 #### registerTradingCellRenderers
 
-*function* · [components/TradingCellRenderers/TradingCellRenderers.tsx](../../packages/trading-ui/src/components/TradingCellRenderers/TradingCellRenderers.tsx#L137)
+*function* · [components/TradingCellRenderers/TradingCellRenderers.tsx](../../packages/trading-ui/src/components/TradingCellRenderers/TradingCellRenderers.tsx#L149)
 
 Register the generic trading cell renderers with the vuu component registry (idempotent).
 
@@ -4999,7 +5186,7 @@ registerTradingCellRenderers(): void
 
 #### TradingRenderer
 
-*const* · [components/TradingCellRenderers/TradingCellRenderers.tsx](../../packages/trading-ui/src/components/TradingCellRenderers/TradingCellRenderers.tsx#L34)
+*const* · [components/TradingCellRenderers/TradingCellRenderers.tsx](../../packages/trading-ui/src/components/TradingCellRenderers/TradingCellRenderers.tsx#L38)
 
 Names of the generic trading cell renderers. Use them as a column
 `type`:

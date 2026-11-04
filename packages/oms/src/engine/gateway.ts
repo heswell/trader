@@ -4,9 +4,14 @@ import type {
   GatewayAmend,
   GatewayCancel,
   GatewayNewOrder,
+  MarketTrade,
   TopOfBook,
 } from "@heswell/exchange-sim";
-import type { TradingPhase } from "@heswell/trading-schemas";
+import {
+  type SessionSchedule,
+  type TradingPhase,
+  UNSCHEDULED,
+} from "@heswell/trading-schemas";
 import type { RiskInstrument } from "../risk/preTradeRisk";
 
 /**
@@ -22,6 +27,10 @@ export interface OmsGateway {
   getInstrument(ric: string): RiskInstrument | undefined;
   getPhase(ric: string): TradingPhase | undefined;
   getTopOfBook(ric: string): TopOfBook | undefined;
+  /** Session times and volume curve (algos); absent = always open, flat curve. */
+  getSessionSchedule?(): SessionSchedule;
+  /** Every trade on the public tape (POV); absent = no market volume. */
+  onTrade?(listener: (trade: MarketTrade) => void): () => void;
 }
 
 export type Scheduler = (fn: () => void, delayMs: number) => void;
@@ -33,7 +42,9 @@ export type Scheduler = (fn: () => void, delayMs: number) => void;
  */
 export class DelayedGateway implements OmsGateway {
   #listeners = new Set<ExecutionReportListener>();
+  #tradeListeners = new Set<(trade: MarketTrade) => void>();
   #unsubscribe: () => void;
+  #unsubscribeTrades: () => void;
 
   constructor(
     private inner: OmsGateway,
@@ -47,6 +58,12 @@ export class DelayedGateway implements OmsGateway {
         for (const listener of this.#listeners) listener(report);
       }, this.latencyMs),
     );
+    this.#unsubscribeTrades =
+      inner.onTrade?.((trade) =>
+        this.schedule(() => {
+          for (const listener of this.#tradeListeners) listener(trade);
+        }, this.latencyMs),
+      ) ?? (() => undefined);
   }
 
   submit(order: GatewayNewOrder) {
@@ -80,9 +97,20 @@ export class DelayedGateway implements OmsGateway {
   getTopOfBook(ric: string) {
     return this.inner.getTopOfBook(ric);
   }
+  getSessionSchedule() {
+    return this.inner.getSessionSchedule?.() ?? UNSCHEDULED;
+  }
+  onTrade(listener: (trade: MarketTrade) => void) {
+    this.#tradeListeners.add(listener);
+    return () => {
+      this.#tradeListeners.delete(listener);
+    };
+  }
   dispose() {
     this.#unsubscribe();
+    this.#unsubscribeTrades();
     this.#listeners.clear();
+    this.#tradeListeners.clear();
   }
 }
 

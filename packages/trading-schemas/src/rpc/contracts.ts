@@ -4,6 +4,7 @@ import type {
   ViewportRpcContext,
 } from "@vuu-ui/vuu-protocol-types";
 import {
+  ALGO_STRATEGIES,
   BOT_TYPES,
   type OrdStatus,
   ORD_TYPES,
@@ -82,6 +83,21 @@ export const createOrderParams = object({
   timeInForce: optional(oneOf(TIME_IN_FORCE_VALUES)),
   /** Reserved for STOP / STOP_LIMIT. */
   stopPrice: optional(positivePrice),
+  /** How the OMS works the order; default DMA (one child sent at once). */
+  strategy: optional(oneOf(ALGO_STRATEGIES)),
+  /**
+   * TWAP / POV: how long to work the order, in session minutes (scaled when
+   * the exchange runs a compressed day). Default 30 for TWAP; POV runs to
+   * the close when omitted.
+   */
+  durationMins: optional(number({ greaterThan: 0, max: 1440 })),
+  /**
+   * VWAP (or TWAP / POV instead of durationMins): session time "HH:MM" to
+   * finish by. VWAP defaults to the session close.
+   */
+  endTime: optional(string({ maxLength: 5 })),
+  /** POV: target share of market volume, in percent. */
+  participationPct: optional(number({ greaterThan: 0, max: 50 })),
 });
 export type CreateOrderRequest = Infer<typeof createOrderParams>;
 export interface CreateOrderResponse {

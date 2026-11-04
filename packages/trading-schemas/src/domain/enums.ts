@@ -150,6 +150,19 @@ export const RejectReason = Object.freeze({
 export type RejectReason = ValueOf<typeof RejectReason>;
 export const REJECT_REASONS = values(RejectReason);
 
+/**
+ * How the OMS works a parent order. DMA sends one child straight to the
+ * exchange; the others slice the order over time (see the OMS algo container).
+ */
+export const AlgoStrategy = Object.freeze({
+  Dma: "DMA",
+  Twap: "TWAP",
+  Vwap: "VWAP",
+  Pov: "POV",
+} as const);
+export type AlgoStrategy = ValueOf<typeof AlgoStrategy>;
+export const ALGO_STRATEGIES = values(AlgoStrategy);
+
 /** Bot categories driven by the exchange-sim `setBotRate` admin RPC. */
 export const BotType = Object.freeze({
   MarketMaker: "MARKET_MAKER",

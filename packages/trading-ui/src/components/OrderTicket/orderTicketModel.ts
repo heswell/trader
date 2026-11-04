@@ -1,4 +1,5 @@
 import {
+  AlgoStrategy,
   type CreateOrderRequest,
   isPricedOrdType,
   OrdType,
@@ -61,6 +62,14 @@ export interface OrderDraft {
   quantity: string;
   price: string;
   account?: string;
+  /** How the OMS works the order; undefined = DMA. */
+  strategy?: AlgoStrategy;
+  /** TWAP / POV: minutes to work the order (input text; empty = default). */
+  algoDuration?: string;
+  /** VWAP: session time "HH:MM" to finish by (empty = the close). */
+  algoEndTime?: string;
+  /** POV: share of market volume, percent (input text). */
+  participationPct?: string;
 }
 
 export type OrderDraftField =
@@ -70,7 +79,11 @@ export type OrderDraftField =
   | "timeInForce"
   | "quantity"
   | "price"
-  | "account";
+  | "account"
+  | "strategy"
+  | "algoDuration"
+  | "algoEndTime"
+  | "participationPct";
 
 export type OrderDraftErrors = Partial<
   Record<OrderDraftField | "form", string>
@@ -85,9 +98,63 @@ export const ORDER_TICKET_TIFS: readonly TimeInForce[] = [
   TimeInForce.GoodTillCancel,
 ];
 
-/** TIFs the OMS accepts for an order type (GTC is not valid for MARKET). */
-export const isTimeInForceAllowed = (ordType: OrdType, tif: TimeInForce) =>
-  !(ordType === OrdType.Market && tif === TimeInForce.GoodTillCancel);
+/** Strategies offered on the ticket, in display order. */
+export const ORDER_TICKET_STRATEGIES: readonly AlgoStrategy[] = [
+  AlgoStrategy.Dma,
+  AlgoStrategy.Twap,
+  AlgoStrategy.Vwap,
+  AlgoStrategy.Pov,
+];
+
+/** Whether the strategy slices the order over time (anything but DMA). */
+export const isAlgoStrategy = (strategy: AlgoStrategy | undefined) =>
+  strategy !== undefined && strategy !== AlgoStrategy.Dma;
+
+/**
+ * TIFs the OMS accepts for an order type and strategy (GTC is not valid for
+ * MARKET; algo orders take DAY or GTC only).
+ */
+export const isTimeInForceAllowed = (
+  ordType: OrdType,
+  tif: TimeInForce,
+  strategy?: AlgoStrategy,
+) =>
+  !(ordType === OrdType.Market && tif === TimeInForce.GoodTillCancel) &&
+  !(
+    isAlgoStrategy(strategy) &&
+    (tif === TimeInForce.ImmediateOrCancel || tif === TimeInForce.FillOrKill)
+  );
+
+const HH_MM = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+/** Algo fields of the draft: errors, and createOrder params when valid. */
+const validateAlgoFields = (draft: OrderDraft, errors: OrderDraftErrors) => {
+  const strategy = draft.strategy ?? AlgoStrategy.Dma;
+  if (strategy === AlgoStrategy.Dma) return {};
+  const params: Partial<CreateOrderRequest> = { strategy };
+  if (!isTimeInForceAllowed(draft.ordType, draft.timeInForce, strategy)) {
+    errors.timeInForce = `${draft.timeInForce} is not valid for ${strategy} orders`;
+  }
+  const duration = draft.algoDuration?.trim() ?? "";
+  if (strategy !== AlgoStrategy.Vwap && duration !== "") {
+    const mins = Number(duration);
+    if (!(mins > 0 && mins <= 1440)) {
+      errors.algoDuration = "Duration must be 1 to 1440 minutes";
+    } else params.durationMins = mins;
+  }
+  const endTime = draft.algoEndTime?.trim() ?? "";
+  if (strategy === AlgoStrategy.Vwap && endTime !== "") {
+    if (!HH_MM.test(endTime)) errors.algoEndTime = "End time must be HH:MM";
+    else params.endTime = endTime;
+  }
+  if (strategy === AlgoStrategy.Pov) {
+    const pct = Number(draft.participationPct?.trim() || Number.NaN);
+    if (!(pct > 0 && pct <= 50)) {
+      errors.participationPct = "Participation must be 1 to 50%";
+    } else params.participationPct = pct;
+  }
+  return params;
+};
 
 /**
  * USD per unit of instrument price, by instrument currency. Mirrors the
@@ -313,9 +380,11 @@ export const validateDraft = (
     errors.ric ??= "Loading instrument…";
   }
 
+  const algoParams = validateAlgoFields(draft, errors);
   if (Object.keys(errors).length > 0) return { errors };
 
   const parsed = validateRpcParams("createOrder", {
+    ...algoParams,
     account: draft.account,
     ric: draft.ric,
     side: draft.side,
@@ -444,4 +513,8 @@ export const EMPTY_DRAFT: OrderDraft = Object.freeze({
   timeInForce: TimeInForce.Day,
   quantity: "",
   price: "",
+  strategy: AlgoStrategy.Dma,
+  algoDuration: "",
+  algoEndTime: "",
+  participationPct: "",
 });

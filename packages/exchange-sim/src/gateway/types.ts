@@ -1,4 +1,5 @@
 import type {
+  SessionSchedule,
   ExecType,
   Liquidity,
   OrdStatus,
@@ -80,6 +81,14 @@ export interface ExecutionReport {
 
 export type ExecutionReportListener = (report: ExecutionReport) => void;
 
+/** A trade on the public tape, as the OMS sees it. */
+export interface MarketTrade {
+  ric: string;
+  price: number;
+  size: number;
+  timestamp: number;
+}
+
 export interface TopOfBook {
   ric: string;
   bid: number;
@@ -113,6 +122,10 @@ export interface ExchangeGateway {
   isSimulated(ric: string): boolean;
   getPhase(ric: string): TradingPhase | undefined;
   getTopOfBook(ric: string): TopOfBook | undefined;
+  /** Session times and intraday volume curve. */
+  getSessionSchedule(): SessionSchedule;
+  /** Subscribe to every trade on the public tape; returns an unsubscribe function. */
+  onTrade(listener: (trade: MarketTrade) => void): () => void;
   /** Last execution report state of an order, if known. */
   getOrder(exchangeOrderId: string): ExecutionReport | undefined;
 }

@@ -1,4 +1,8 @@
-import { OrdStatus } from "@heswell/trading-schemas";
+import {
+  AlgoStrategy,
+  isTerminalStatus,
+  OrdStatus,
+} from "@heswell/trading-schemas";
 import type { TableCellRendererProps } from "@vuu-ui/vuu-table-types";
 import type { FunctionComponent } from "react";
 import { registerComponent } from "@vuu-ui/vuu-utils";
@@ -66,10 +70,18 @@ const SideCell = ({ column, dataRow }: TableCellRendererProps) => (
 
 const FillProgressCell = ({ column, dataRow }: TableCellRendererProps) => {
   const status = text(dataRow.status);
+  const strategy = text(dataRow.strategy);
+  // Algo orders still working show where their schedule says they should be.
+  const working = !isTerminalStatus(status as OrdStatus);
+  const target =
+    strategy && strategy !== AlgoStrategy.Dma && working
+      ? num(dataRow.targetQty)
+      : undefined;
   return (
     <FillProgressBar
       filled={num(dataRow[column.name])}
       muted={status === OrdStatus.Cancelled || status === OrdStatus.Rejected}
+      target={target}
       total={num(dataRow.quantity)}
     />
   );

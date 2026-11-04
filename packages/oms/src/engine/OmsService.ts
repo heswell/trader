@@ -85,6 +85,7 @@ export class OmsService {
       collarPct: config.collarPct,
       restrictedRics: splitList(config.restrictedRics),
       log: options.log ?? ((message) => this.logger.warn(message)),
+      algoSliceMs: config.algoSliceMs,
     });
     if (config.pnlHistoryIntervalMs > 0) {
       this.pnlHistory = new PnlHistory(this.tables, {
@@ -142,10 +143,12 @@ export class OmsService {
     return changed;
   }
 
-  /** Start the background flow and mark-to-market timers. */
+  /** Start the background flow, algo and mark-to-market timers. */
   start() {
     if (this.running) return;
-    const { flowStepMs, markIntervalMs, pnlHistoryIntervalMs } = this.config;
+    const { flowStepMs, markIntervalMs, pnlHistoryIntervalMs, algoSliceMs } =
+      this.config;
+    this.#timers.push(setInterval(() => this.engine.stepAlgos(), algoSliceMs));
     let last = this.#clock();
     this.#timers.push(
       setInterval(() => {

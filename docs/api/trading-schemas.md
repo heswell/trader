@@ -4,13 +4,13 @@
 
 The client entry of `@heswell/trading-schemas`: table definitions, enums, RPC contracts and validation, tick / lot maths. Shared by the UI, the servers and the in-browser engines. Overview: [schemas.md](../schemas.md), [package README](../../packages/trading-schemas/README.md).
 
-Imports: `@heswell/trading-schemas`. 180 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-schemas`. 202 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
-- **domain**: [acceptsOrders](#acceptsorders), [assertTransition](#asserttransition), [BOOK_EVENT_TYPES](#book_event_types), [BookEventType](#bookeventtype), [BOT_TYPES](#bot_types), [BotType](#bottype), [canAmend](#canamend), [canCancel](#cancancel), [canTransition](#cantransition), [decimalsOf](#decimalsof), [EXEC_TYPES](#exec_types), [ExecType](#exectype), [formatTickBands](#formattickbands), [INITIAL_ORDER_STATUS](#initial_order_status), [InstrumentStatic](#instrumentstatic), [isContinuousMatching](#iscontinuousmatching), [isEnumValue](#isenumvalue), [isOnTick](#isontick), [isPendingStatus](#ispendingstatus), [isPricedOrdType](#ispricedordtype), [isTerminalStatus](#isterminalstatus), [isValidLot](#isvalidlot), [isWorkingStatus](#isworkingstatus), [Liquidity](#liquidity), [LIQUIDITY_VALUES](#liquidity_values), [oppositeSide](#oppositeside), [ORD_STATUSES](#ord_statuses), [ORD_TYPES](#ord_types), [ORDER_STATUS_TRANSITIONS](#order_status_transitions), [OrderReject](#orderreject), [OrderToValidate](#ordertovalidate), [OrdStatus](#ordstatus), [OrdType](#ordtype), [parseTickBands](#parsetickbands), [REJECT_REASONS](#reject_reasons), [RejectReason](#rejectreason), [RoundingMode](#roundingmode), [roundToLot](#roundtolot), [roundToTick](#roundtotick), [Side](#side), [SIDES](#sides), [stepTicks](#stepticks), [SUPPORTED_ORD_TYPES](#supported_ord_types), [TickBand](#tickband), [ticksBetween](#ticksbetween), [TickSchedule](#tickschedule), [tickScheduleOf](#tickscheduleof), [tickSizeAt](#ticksizeat), [TIME_IN_FORCE_VALUES](#time_in_force_values), [TimeInForce](#timeinforce), [TRADING_PHASES](#trading_phases), [TradingPhase](#tradingphase), [validateAmend](#validateamend), [validateOrder](#validateorder), [validatePrice](#validateprice), [validateQuantity](#validatequantity), [workingStatusFor](#workingstatusfor)
+- **domain**: [acceptsOrders](#acceptsorders), [activityAt](#activityat), [ALGO_STRATEGIES](#algo_strategies), [AlgoStrategy](#algostrategy), [assertTransition](#asserttransition), [BOOK_EVENT_TYPES](#book_event_types), [BookEventType](#bookeventtype), [BOT_TYPES](#bot_types), [BotType](#bottype), [canAmend](#canamend), [canCancel](#cancancel), [canTransition](#cantransition), [clockAtSessionMinute](#clockatsessionminute), [cumulativeVolume](#cumulativevolume), [DAY_MS](#day_ms), [decimalsOf](#decimalsof), [EXEC_TYPES](#exec_types), [ExecType](#exectype), [FLAT_PROFILE](#flat_profile), [formatTickBands](#formattickbands), [INITIAL_ORDER_STATUS](#initial_order_status), [InstrumentStatic](#instrumentstatic), [isContinuousMatching](#iscontinuousmatching), [isEnumValue](#isenumvalue), [isOnTick](#isontick), [isPendingStatus](#ispendingstatus), [isPricedOrdType](#ispricedordtype), [isSessionOpen](#issessionopen), [isTerminalStatus](#isterminalstatus), [isValidLot](#isvalidlot), [isWorkingStatus](#isworkingstatus), [Liquidity](#liquidity), [LIQUIDITY_VALUES](#liquidity_values), [nextOpenAt](#nextopenat), [oppositeSide](#oppositeside), [ORD_STATUSES](#ord_statuses), [ORD_TYPES](#ord_types), [ORDER_STATUS_TRANSITIONS](#order_status_transitions), [OrderReject](#orderreject), [OrderToValidate](#ordertovalidate), [OrdStatus](#ordstatus), [OrdType](#ordtype), [parseTickBands](#parsetickbands), [REJECT_REASONS](#reject_reasons), [RejectReason](#rejectreason), [RoundingMode](#roundingmode), [roundToLot](#roundtolot), [roundToTick](#roundtotick), [sessionCloseAt](#sessioncloseat), [sessionFraction](#sessionfraction), [sessionMinuteOfDay](#sessionminuteofday), [SessionSchedule](#sessionschedule), [sessionToClockMs](#sessiontoclockms), [sessionWindow](#sessionwindow), [Side](#side), [SIDES](#sides), [stepTicks](#stepticks), [SUPPORTED_ORD_TYPES](#supported_ord_types), [TickBand](#tickband), [ticksBetween](#ticksbetween), [TickSchedule](#tickschedule), [tickScheduleOf](#tickscheduleof), [tickSizeAt](#ticksizeat), [TIME_IN_FORCE_VALUES](#time_in_force_values), [TimeInForce](#timeinforce), [TRADING_PHASES](#trading_phases), [TradingPhase](#tradingphase), [U_SHAPED_PROFILE](#u_shaped_profile), [UNSCHEDULED](#unscheduled), [validateAmend](#validateamend), [validateOrder](#validateorder), [validatePrice](#validateprice), [validateQuantity](#validatequantity), [VOLUME_PROFILES](#volume_profiles), [volumeProfile](#volumeprofile), [VolumeProfileName](#volumeprofilename), [VolumeProfileParams](#volumeprofileparams), [workingStatusFor](#workingstatusfor)
 - **rpc**: [AdminRpcResponse](#adminrpcresponse), [amendOrderParams](#amendorderparams), [AmendOrderRequest](#amendorderrequest), [AmendOrderResponse](#amendorderresponse), [boolean](#boolean), [cancelAllParams](#cancelallparams), [CancelAllRequest](#cancelallrequest), [CancelAllResponse](#cancelallresponse), [cancelOrderParams](#cancelorderparams), [CancelOrderRequest](#cancelorderrequest), [CancelOrderResponse](#cancelorderresponse), [createOrderParams](#createorderparams), [CreateOrderRequest](#createorderrequest), [CreateOrderResponse](#createorderresponse), [EXCHANGE_ADMIN_RPC_NAMES](#exchange_admin_rpc_names), [formatRpcError](#formatrpcerror), [haltInstrumentParams](#haltinstrumentparams), [HaltInstrumentRequest](#haltinstrumentrequest), [Infer](#infer), [InferShape](#infershape), [MARKET_SESSION_PHASES](#market_session_phases), [number](#number), [NumberOptions](#numberoptions), [object](#object), [OMS_RPC_NAMES](#oms_rpc_names), [oneOf](#oneof), [optional](#optional), [OptionalValidator](#optionalvalidator), [parseRpcError](#parserpcerror), [resumeInstrumentParams](#resumeinstrumentparams), [ResumeInstrumentRequest](#resumeinstrumentrequest), [RpcContracts](#rpccontracts), [rpcError](#rpcerror), [RpcName](#rpcname), [RpcRequestParams](#rpcrequestparams), [RpcResponseData](#rpcresponsedata), [rpcSuccess](#rpcsuccess), [setBotRateParams](#setbotrateparams), [SetBotRateRequest](#setbotraterequest), [setMarketPhaseParams](#setmarketphaseparams), [SetMarketPhaseRequest](#setmarketphaserequest), [setVolatilityParams](#setvolatilityparams), [SetVolatilityRequest](#setvolatilityrequest), [string](#string), [StringOptions](#stringoptions), [tradingRpcRequest](#tradingrpcrequest), [TradingRpcRequest](#tradingrpcrequest-1), [TradingRpcResult](#tradingrpcresult), [TradingRpcSuccess](#tradingrpcsuccess), [validateRpcParams](#validaterpcparams), [ValidationResult](#validationresult), [Validator](#validator)
-- **tables**: [accountPnlHistory](#accountpnlhistory), [accountPnlHistoryKey](#accountpnlhistorykey), [AccountPnlHistoryRow](#accountpnlhistoryrow), [AccountRow](#accountrow), [accounts](#accounts), [barKey](#barkey), [BarRow](#barrow), [bars](#bars), [BOOK_SAMPLE_LEVELS](#book_sample_levels), [bookEventKey](#bookeventkey), [BookEventRow](#bookeventrow), [bookEvents](#bookevents), [BookOrderRow](#bookorderrow), [bookOrders](#bookorders), [bookSampleKey](#booksamplekey), [BookSampleRow](#booksamplerow), [bookSamples](#booksamples), [ChildOrderRow](#childorderrow), [childOrders](#childorders), [ColumnDefinition](#columndefinition), [columnIndices](#columnindices), [ColumnName](#columnname), [columnNames](#columnnames), [defineJoin](#definejoin), [defineTable](#definetable), [depth](#depth), [depthKey](#depthkey), [DepthRow](#depthrow), [EXCHANGE_MODULE](#exchange_module), [exchangeTables](#exchangetables), [FillRow](#fillrow), [fills](#fills), [fromRowArray](#fromrowarray), [getTradingSchemas](#gettradingschemas), [instrumentPrices](#instrumentprices), [InstrumentRow](#instrumentrow), [instruments](#instruments), [JoinDefinition](#joindefinition), [joinTableColumns](#jointablecolumns), [JoinType](#jointype), [LinkDefinition](#linkdefinition), [OMS_MODULE](#oms_module), [omsTables](#omstables), [ParentOrderRow](#parentorderrow), [parentOrders](#parentorders), [parseBarInterval](#parsebarinterval), [parseDepthKey](#parsedepthkey), [parsePositionKey](#parsepositionkey), [pnlHistory](#pnlhistory), [pnlHistoryKey](#pnlhistorykey), [PnlHistoryRow](#pnlhistoryrow), [positionKey](#positionkey), [positionPrices](#positionprices), [PositionRow](#positionrow), [positions](#positions), [PriceRow](#pricerow), [prices](#prices), [RowArray](#rowarray), [RowOf](#rowof), [TableDefinition](#tabledefinition), [toRowArray](#torowarray), [toTableSchema](#totableschema), [TradeRow](#traderow), [trades](#trades), [TradingColumnDataType](#tradingcolumndatatype), [TradingJoinName](#tradingjoinname), [tradingJoins](#tradingjoins), [TradingModule](#tradingmodule), [TradingSchemaName](#tradingschemaname), [TradingTableName](#tradingtablename), [tradingTables](#tradingtables)
+- **tables**: [accountPnlHistory](#accountpnlhistory), [accountPnlHistoryKey](#accountpnlhistorykey), [AccountPnlHistoryRow](#accountpnlhistoryrow), [AccountRow](#accountrow), [accounts](#accounts), [barKey](#barkey), [BarRow](#barrow), [bars](#bars), [BOOK_SAMPLE_LEVELS](#book_sample_levels), [bookEventKey](#bookeventkey), [BookEventRow](#bookeventrow), [bookEvents](#bookevents), [BookOrderRow](#bookorderrow), [bookOrders](#bookorders), [bookSampleKey](#booksamplekey), [BookSampleRow](#booksamplerow), [bookSamples](#booksamples), [ChildOrderRow](#childorderrow), [childOrders](#childorders), [ColumnDefinition](#columndefinition), [columnIndices](#columnindices), [ColumnName](#columnname), [columnNames](#columnnames), [defineJoin](#definejoin), [defineTable](#definetable), [depth](#depth), [depthKey](#depthkey), [DepthRow](#depthrow), [EXCHANGE_MODULE](#exchange_module), [exchangeTables](#exchangetables), [FillRow](#fillrow), [fills](#fills), [fromRowArray](#fromrowarray), [getTradingSchemas](#gettradingschemas), [instrumentPrices](#instrumentprices), [InstrumentRow](#instrumentrow), [instruments](#instruments), [JoinDefinition](#joindefinition), [joinTableColumns](#jointablecolumns), [JoinType](#jointype), [LinkDefinition](#linkdefinition), [OMS_MODULE](#oms_module), [omsTables](#omstables), [PARENT_ORDER_PROGRESS_COLUMNS](#parent_order_progress_columns), [ParentOrderRow](#parentorderrow), [parentOrders](#parentorders), [parseBarInterval](#parsebarinterval), [parseDepthKey](#parsedepthkey), [parsePositionKey](#parsepositionkey), [pnlHistory](#pnlhistory), [pnlHistoryKey](#pnlhistorykey), [PnlHistoryRow](#pnlhistoryrow), [positionKey](#positionkey), [positionPrices](#positionprices), [PositionRow](#positionrow), [positions](#positions), [PriceRow](#pricerow), [prices](#prices), [RowArray](#rowarray), [RowOf](#rowof), [TableDefinition](#tabledefinition), [toRowArray](#torowarray), [toTableSchema](#totableschema), [TradeRow](#traderow), [trades](#trades), [TradingColumnDataType](#tradingcolumndatatype), [TradingJoinName](#tradingjoinname), [tradingJoins](#tradingjoins), [TradingModule](#tradingmodule), [TradingSchemaName](#tradingschemaname), [TradingTableName](#tradingtablename), [tradingTables](#tradingtables)
 
 ## domain
 
@@ -24,6 +24,17 @@ Phases in which new orders / amends may be submitted to the exchange.
 
 ```ts
 acceptsOrders(phase: TradingPhase): boolean
+```
+
+#### activityAt
+
+*function* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L161)
+
+Activity multiplier the exchange bots apply at `now`: the volume curve
+while the session is open, 1 otherwise (and always 1 when unscheduled).
+
+```ts
+activityAt(s: SessionSchedule, now: number): number
 ```
 
 #### assertTransition
@@ -44,6 +55,27 @@ Whether ORDER_STATUS_TRANSITIONS allows `from` -> `to`.
 
 ```ts
 canTransition(from: OrdStatus, to: OrdStatus): boolean
+```
+
+#### clockAtSessionMinute
+
+*function* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L178)
+
+Clock time at which the session clock next reads `minuteOfDay`
+(minutes after midnight), at or after `now`.
+
+```ts
+clockAtSessionMinute(s: SessionSchedule, now: number, minuteOfDay: number): number
+```
+
+#### cumulativeVolume
+
+*function* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L83)
+
+Share of the session's volume traded by session fraction f (0..1).
+
+```ts
+cumulativeVolume(f: number, p: VolumeProfileParams): number
 ```
 
 #### decimalsOf
@@ -79,7 +111,7 @@ isContinuousMatching(phase: TradingPhase): boolean
 
 #### isEnumValue
 
-*function* · [domain/enums.ts](../../packages/trading-schemas/src/domain/enums.ts#L177)
+*function* · [domain/enums.ts](../../packages/trading-schemas/src/domain/enums.ts#L190)
 
 Type guard: `value` is one of the `allowed` enum values.
 
@@ -117,6 +149,16 @@ Whether an order type needs a limit price (LIMIT, STOP_LIMIT).
 isPricedOrdType(ordType: OrdType): boolean
 ```
 
+#### isSessionOpen
+
+*function* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L110)
+
+Whether the continuous session is open at `now` (always true when unscheduled).
+
+```ts
+isSessionOpen(s: SessionSchedule, now: number): boolean
+```
+
 #### isTerminalStatus
 
 *function* · [domain/orderStatus.ts](../../packages/trading-schemas/src/domain/orderStatus.ts#L86)
@@ -145,6 +187,16 @@ Live on the book with no outstanding request: amend/cancel may be sent.
 
 ```ts
 isWorkingStatus(status: OrdStatus): boolean
+```
+
+#### nextOpenAt
+
+*function* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L128)
+
+Clock time of the next session open strictly after `now` (undefined = unscheduled).
+
+```ts
+nextOpenAt(s: SessionSchedule, now: number): number | undefined
 ```
 
 #### oppositeSide
@@ -186,6 +238,59 @@ Rounds `price` to the tick schedule (`nearest`, `up` or `down`).
 
 ```ts
 roundToTick(price: number, schedule: TickSchedule, mode: RoundingMode = "nearest"): number
+```
+
+#### sessionCloseAt
+
+*function* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L135)
+
+Clock time of the close of the session open at `now`, or of the next
+session when closed (undefined = unscheduled).
+
+```ts
+sessionCloseAt(s: SessionSchedule, now: number): number | undefined
+```
+
+#### sessionFraction
+
+*function* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L117)
+
+Fraction of the current continuous session elapsed at `now`: 0..1 while
+open, undefined while closed or when there is no schedule.
+
+```ts
+sessionFraction(s: SessionSchedule, now: number): number | undefined
+```
+
+#### sessionMinuteOfDay
+
+*function* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L171)
+
+Session time of day at `now`, in minutes after midnight.
+
+```ts
+sessionMinuteOfDay(s: SessionSchedule, now: number): number
+```
+
+#### sessionToClockMs
+
+*function* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L167)
+
+Convert a duration in session (simulated) ms to clock ms.
+
+```ts
+sessionToClockMs(s: SessionSchedule, sessionMs: number): number
+```
+
+#### sessionWindow
+
+*function* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L146)
+
+Clock open / close of the session open at `now`, or of the next session
+when closed (undefined = unscheduled).
+
+```ts
+sessionWindow(s: SessionSchedule, now: number): { openAt: number; closeAt: number } | undefined
 ```
 
 #### stepTicks
@@ -273,6 +378,16 @@ instrument's lot size.
 validateQuantity(quantity: number, instrument: Pick<InstrumentStatic, "lotSize">): OrderReject | undefined
 ```
 
+#### volumeProfile
+
+*function* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L71)
+
+Activity multiplier at session fraction f, averaging 1 over the session.
+
+```ts
+volumeProfile(f: number, p: VolumeProfileParams): number
+```
+
 #### workingStatusFor
 
 *function* · [domain/orderStatus.ts](../../packages/trading-schemas/src/domain/orderStatus.ts#L105)
@@ -285,9 +400,28 @@ workingStatusFor(cumQty: number, amended: boolean): "NEW" | "PARTIALLY_FILLED" |
 
 ### Constants (domain)
 
+#### ALGO_STRATEGIES
+
+*const* · [domain/enums.ts](../../packages/trading-schemas/src/domain/enums.ts#L164)
+
+```ts
+const ALGO_STRATEGIES: readonly ValueOf<Readonly<{ readonly Dma: "DMA"; readonly Twap: "TWAP"; readonly Vwap: "VWAP"; readonly Pov: "POV"; }>>[]
+```
+
+#### AlgoStrategy
+
+*const* · [domain/enums.ts](../../packages/trading-schemas/src/domain/enums.ts#L157)
+
+How the OMS works a parent order. DMA sends one child straight to the
+exchange; the others slice the order over time (see the OMS algo container).
+
+```ts
+const AlgoStrategy: Readonly<{ readonly Dma: "DMA"; readonly Twap: "TWAP"; readonly Vwap: "VWAP"; readonly Pov: "POV"; }>
+```
+
 #### BOOK_EVENT_TYPES
 
-*const* · [domain/enums.ts](../../packages/trading-schemas/src/domain/enums.ts#L174)
+*const* · [domain/enums.ts](../../packages/trading-schemas/src/domain/enums.ts#L187)
 
 ```ts
 const BOOK_EVENT_TYPES: readonly ValueOf<Readonly<{ readonly Add: "ADD"; readonly Execute: "EXECUTE"; readonly Reduce: "REDUCE"; readonly Delete: "DELETE"; }>>[]
@@ -295,7 +429,7 @@ const BOOK_EVENT_TYPES: readonly ValueOf<Readonly<{ readonly Add: "ADD"; readonl
 
 #### BookEventType
 
-*const* · [domain/enums.ts](../../packages/trading-schemas/src/domain/enums.ts#L167)
+*const* · [domain/enums.ts](../../packages/trading-schemas/src/domain/enums.ts#L180)
 
 Type of an order-by-order (L3) book event in the EXCHANGE `bookEvents`
 table. EXECUTE is reported against the resting (maker) order only; an
@@ -307,7 +441,7 @@ const BookEventType: Readonly<{ readonly Add: "ADD"; readonly Execute: "EXECUTE"
 
 #### BOT_TYPES
 
-*const* · [domain/enums.ts](../../packages/trading-schemas/src/domain/enums.ts#L160)
+*const* · [domain/enums.ts](../../packages/trading-schemas/src/domain/enums.ts#L173)
 
 ```ts
 const BOT_TYPES: readonly ValueOf<Readonly<{ readonly MarketMaker: "MARKET_MAKER"; readonly Taker: "TAKER"; readonly All: "ALL"; }>>[]
@@ -315,7 +449,7 @@ const BOT_TYPES: readonly ValueOf<Readonly<{ readonly MarketMaker: "MARKET_MAKER
 
 #### BotType
 
-*const* · [domain/enums.ts](../../packages/trading-schemas/src/domain/enums.ts#L154)
+*const* · [domain/enums.ts](../../packages/trading-schemas/src/domain/enums.ts#L167)
 
 Bot categories driven by the exchange-sim `setBotRate` admin RPC.
 
@@ -339,6 +473,23 @@ const canAmend: (status: OrdStatus) => status is "NEW" | "PARTIALLY_FILLED" | "R
 const canCancel: (status: OrdStatus) => status is "NEW" | "PARTIALLY_FILLED" | "REPLACED"
 ```
 
+#### DAY_MS
+
+*const* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L12)
+
+Session time and the intraday volume curve, shared by exchange-sim (which
+scales bot activity by the curve) and the OMS (whose VWAP strategy follows
+the same curve).
+
+"Clock" times are ms since the epoch. "Session" times are the time of day
+of the (possibly compressed) trading day: with `dayMs` < 24h a whole
+simulated day passes in `dayMs` ms of clock time, so session durations are
+scaled by `dayMs / DAY_MS` when converted to clock durations.
+
+```ts
+const DAY_MS: 86400000
+```
+
 #### EXEC_TYPES
 
 *const* · [domain/enums.ts](../../packages/trading-schemas/src/domain/enums.ts#L83)
@@ -356,6 +507,16 @@ TRADE; whether the order is partially or fully filled is carried by OrdStatus.
 
 ```ts
 const ExecType: Readonly<{ readonly PendingNew: "PENDING_NEW"; readonly New: "NEW"; readonly Trade: "TRADE"; readonly PendingCancel: "PENDING_CANCEL"; readonly Cancelled: "CANCELLED"; readonly PendingReplace: "PENDING_REPLACE"; readonly Replaced: "REPLACED"; readonly Rejected: "REJECTED"; readonly Expired: "EXPIRED"; }>
+```
+
+#### FLAT_PROFILE
+
+*const* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L43)
+
+Constant activity: VWAP over a flat profile is TWAP.
+
+```ts
+const FLAT_PROFILE: VolumeProfileParams
 ```
 
 #### INITIAL_ORDER_STATUS
@@ -520,6 +681,34 @@ const TRADING_PHASES: readonly ValueOf<Readonly<{ readonly Closed: "CLOSED"; rea
 const TradingPhase: Readonly<{ readonly Closed: "CLOSED"; readonly PreOpen: "PRE_OPEN"; readonly OpeningAuction: "OPENING_AUCTION"; readonly Continuous: "CONTINUOUS"; readonly ClosingAuction: "CLOSING_AUCTION"; readonly PostClose: "POST_CLOSE"; readonly Halted: "HALTED"; }>
 ```
 
+#### U_SHAPED_PROFILE
+
+*const* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L34)
+
+A typical equity day: busy open, quiet lunch, busiest into the close.
+
+```ts
+const U_SHAPED_PROFILE: VolumeProfileParams
+```
+
+#### UNSCHEDULED
+
+*const* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L188)
+
+Schedule of an always-open market (no session, flat profile).
+
+```ts
+const UNSCHEDULED: SessionSchedule
+```
+
+#### VOLUME_PROFILES
+
+*const* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L51)
+
+```ts
+const VOLUME_PROFILES: Readonly<{ flat: VolumeProfileParams; u: VolumeProfileParams; }>
+```
+
 ### Interfaces (domain)
 
 #### InstrumentStatic
@@ -559,6 +748,20 @@ Instrument static needed for order validation (subset of InstrumentRow).
 | `price?` | `number` |  |  |
 | `timeInForce?` | `TIF` |  |  |
 
+#### SessionSchedule
+
+*interface* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L87)
+
+The exchange's trading day, as the OMS sees it.
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `scheduled` | `boolean` |  | False = no schedule: the market is always open. |
+| `dayMs` | `number` |  | Clock ms per (simulated) 24h day; DAY_MS for a real day. |
+| `openAt` | `number` |  | Continuous session open / close, clock ms after the start of the day. |
+| `closeAt` | `number` |  |  |
+| `profile` | `VolumeProfileParams` |  | Intraday volume curve the exchange bots follow. |
+
 #### TickBand
 
 *interface* · [domain/ticks.ts](../../packages/trading-schemas/src/domain/ticks.ts#L9)
@@ -573,6 +776,23 @@ European venues), each band applying from `from` (inclusive) upwards.
 | --- | --- | --- | --- |
 | `from` | `number` |  | Lower price bound (inclusive) from which `tickSize` applies. |
 | `tickSize` | `number` |  |  |
+
+#### VolumeProfileParams
+
+*interface* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L21)
+
+Shape of the intraday volume curve over the continuous session. The
+activity multiplier at session fraction f (0 = open, 1 = close) is
+`base + curve * (2f - 1)^2 + openSpike * e^(-f/width) + closeSpike * e^(-(1-f)/width)`,
+normalised to average 1 over the session.
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `base` | `number` |  |  |
+| `curve` | `number` |  | U-shape: extra weight towards both ends of the session. |
+| `openSpike` | `number` |  | Extra activity just after the open. |
+| `closeSpike` | `number` |  | Extra activity just before the close. |
+| `spikeWidth` | `number` |  | Width of the open / close spikes, as a fraction of the session. |
 
 ### Types (domain)
 
@@ -592,6 +812,14 @@ type RoundingMode = "nearest" | "up" | "down"
 type TickSchedule = number | readonly TickBand[]
 ```
 
+#### VolumeProfileName
+
+*type* · [domain/session.ts](../../packages/trading-schemas/src/domain/session.ts#L55)
+
+```ts
+type VolumeProfileName = keyof typeof VOLUME_PROFILES
+```
+
 ## rpc
 
 ### Functions (rpc)
@@ -608,7 +836,7 @@ boolean(): Validator<boolean>
 
 #### formatRpcError
 
-*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L232)
+*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L248)
 
 Error message of a reject: `REASON: text` (or the reason alone); parsed by
 parseRpcError.
@@ -661,7 +889,7 @@ optional<T>(validator: Validator<T>): OptionalValidator<T>
 
 #### parseRpcError
 
-*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L245)
+*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L261)
 
 Split an ERROR_RESULT message into reason code + text.
 
@@ -671,7 +899,7 @@ parseRpcError(errorMessage: string): { reason: RejectReason; text: string }
 
 #### rpcError
 
-*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L236)
+*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L252)
 
 An ERROR_RESULT with the message formatted by formatRpcError.
 
@@ -681,7 +909,7 @@ rpcError(reason: RejectReason, text?: string): RpcResultError
 
 #### rpcSuccess
 
-*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L223)
+*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L239)
 
 A SUCCESS_RESULT carrying the typed response data of an RPC.
 
@@ -702,7 +930,7 @@ string({ minLength = 1, maxLength = 128 }: StringOptions = {}): Validator<string
 
 #### tradingRpcRequest
 
-*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L211)
+*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L227)
 
 Build a client RPC_REQUEST message (send via DataSource.rpcRequest).
 
@@ -712,7 +940,7 @@ tradingRpcRequest<N extends RpcName>(rpcName: N, params: RpcRequestParams<N>, vi
 
 #### validateRpcParams
 
-*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L278)
+*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L294)
 
 Structural validation of RPC params (types, enums, required fields).
 createOrder defaults timeInForce to DAY. Business rules against the
@@ -726,7 +954,7 @@ validateRpcParams<N extends RpcName>(rpcName: N, params: unknown): ValidationRes
 
 #### amendOrderParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L94)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L110)
 
 At least one of quantity / price must be supplied. Quantity is the new total.
 
@@ -736,7 +964,7 @@ const amendOrderParams: Validator<InferShape<{ orderId: Validator<string>; quant
 
 #### cancelAllParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L115)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L131)
 
 Filter fields are ANDed; an empty filter cancels all of the caller's working orders.
 
@@ -746,7 +974,7 @@ const cancelAllParams: Validator<InferShape<{ account: OptionalValidator<string>
 
 #### cancelOrderParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L105)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L121)
 
 ```ts
 const cancelOrderParams: Validator<InferShape<{ orderId: Validator<string>; }>>
@@ -754,15 +982,15 @@ const cancelOrderParams: Validator<InferShape<{ orderId: Validator<string>; }>>
 
 #### createOrderParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L72)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L73)
 
 ```ts
-const createOrderParams: Validator<InferShape<{ clOrdId: OptionalValidator<string>; account: Validator<string>; ric: Validator<string>; side: Validator<ValueOf<Readonly<{ readonly Buy: "BUY"; readonly Sell: "SELL"; }>>>; ... 4 more ...; stopPrice: OptionalValidator<...>; }>>
+const createOrderParams: Validator<InferShape<{ clOrdId: OptionalValidator<string>; account: Validator<string>; ric: Validator<string>; side: Validator<ValueOf<Readonly<{ readonly Buy: "BUY"; readonly Sell: "SELL"; }>>>; ... 8 more ...; participationPct: OptionalValidator<...>; }>>
 ```
 
 #### EXCHANGE_ADMIN_RPC_NAMES
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L57)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L58)
 
 ```ts
 const EXCHANGE_ADMIN_RPC_NAMES: readonly ["setVolatility", "haltInstrument", "resumeInstrument", "setBotRate", "setMarketPhase"]
@@ -770,7 +998,7 @@ const EXCHANGE_ADMIN_RPC_NAMES: readonly ["setVolatility", "haltInstrument", "re
 
 #### haltInstrumentParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L136)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L152)
 
 ```ts
 const haltInstrumentParams: Validator<InferShape<{ ric: Validator<string>; reason: OptionalValidator<string>; }>>
@@ -778,7 +1006,7 @@ const haltInstrumentParams: Validator<InferShape<{ ric: Validator<string>; reaso
 
 #### MARKET_SESSION_PHASES
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L159)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L175)
 
 Market-wide phases an exchange session can be forced into.
 
@@ -788,7 +1016,7 @@ const MARKET_SESSION_PHASES: readonly ["PRE_OPEN", "CONTINUOUS", "CLOSED"]
 
 #### OMS_RPC_NAMES
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L51)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L52)
 
 ```ts
 const OMS_RPC_NAMES: readonly ["createOrder", "amendOrder", "cancelOrder", "cancelAll"]
@@ -796,7 +1024,7 @@ const OMS_RPC_NAMES: readonly ["createOrder", "amendOrder", "cancelOrder", "canc
 
 #### resumeInstrumentParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L142)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L158)
 
 ```ts
 const resumeInstrumentParams: Validator<InferShape<{ ric: Validator<string>; auction: OptionalValidator<boolean>; }>>
@@ -804,7 +1032,7 @@ const resumeInstrumentParams: Validator<InferShape<{ ric: Validator<string>; auc
 
 #### RpcName
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L38)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L39)
 
 RPC contracts. All trading RPCs are sent as RPC_REQUEST with
 VIEWPORT_CONTEXT (any viewport on a table of the target module) and are
@@ -821,7 +1049,7 @@ const RpcName: Readonly<{ readonly CreateOrder: "createOrder"; readonly AmendOrd
 
 #### setBotRateParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L150)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L166)
 
 Omitting ric applies to all simulated instruments; bot defaults to ALL.
 
@@ -831,7 +1059,7 @@ const setBotRateParams: Validator<InferShape<{ ric: OptionalValidator<string>; b
 
 #### setMarketPhaseParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L170)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L186)
 
 Force the market-wide session phase now, until the next scheduled phase
 change (indefinitely when no session is configured). CLOSED expires
@@ -843,7 +1071,7 @@ const setMarketPhaseParams: Validator<InferShape<{ phase: Validator<"CLOSED" | "
 
 #### setVolatilityParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L129)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L145)
 
 Omitting ric applies to all simulated instruments.
 
@@ -855,7 +1083,7 @@ const setVolatilityParams: Validator<InferShape<{ ric: OptionalValidator<string>
 
 #### AdminRpcResponse
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L175)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L191)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -863,7 +1091,7 @@ const setVolatilityParams: Validator<InferShape<{ ric: OptionalValidator<string>
 
 #### AmendOrderResponse
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L100)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L116)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -872,7 +1100,7 @@ const setVolatilityParams: Validator<InferShape<{ ric: OptionalValidator<string>
 
 #### CancelAllResponse
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L121)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L137)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -880,7 +1108,7 @@ const setVolatilityParams: Validator<InferShape<{ ric: OptionalValidator<string>
 
 #### CancelOrderResponse
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L109)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L125)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -889,7 +1117,7 @@ const setVolatilityParams: Validator<InferShape<{ ric: OptionalValidator<string>
 
 #### CreateOrderResponse
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L87)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L103)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -910,7 +1138,7 @@ const setVolatilityParams: Validator<InferShape<{ ric: OptionalValidator<string>
 
 #### RpcContracts
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L182)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L198)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -935,7 +1163,7 @@ const setVolatilityParams: Validator<InferShape<{ ric: OptionalValidator<string>
 
 #### TradingRpcRequest
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L196)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L212)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -948,7 +1176,7 @@ const setVolatilityParams: Validator<InferShape<{ ric: OptionalValidator<string>
 
 #### AmendOrderRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L99)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L115)
 
 ```ts
 type AmendOrderRequest = Infer<typeof amendOrderParams>
@@ -956,7 +1184,7 @@ type AmendOrderRequest = Infer<typeof amendOrderParams>
 
 #### CancelAllRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L120)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L136)
 
 ```ts
 type CancelAllRequest = Infer<typeof cancelAllParams>
@@ -964,7 +1192,7 @@ type CancelAllRequest = Infer<typeof cancelAllParams>
 
 #### CancelOrderRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L108)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L124)
 
 ```ts
 type CancelOrderRequest = Infer<typeof cancelOrderParams>
@@ -972,7 +1200,7 @@ type CancelOrderRequest = Infer<typeof cancelOrderParams>
 
 #### CreateOrderRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L86)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L102)
 
 ```ts
 type CreateOrderRequest = Infer<typeof createOrderParams>
@@ -980,7 +1208,7 @@ type CreateOrderRequest = Infer<typeof createOrderParams>
 
 #### HaltInstrumentRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L140)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L156)
 
 ```ts
 type HaltInstrumentRequest = Infer<typeof haltInstrumentParams>
@@ -1018,7 +1246,7 @@ type OptionalValidator<T> = Validator<T | undefined> & {
 
 #### ResumeInstrumentRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L147)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L163)
 
 ```ts
 type ResumeInstrumentRequest = Infer<typeof resumeInstrumentParams>
@@ -1026,7 +1254,7 @@ type ResumeInstrumentRequest = Infer<typeof resumeInstrumentParams>
 
 #### RpcRequestParams
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L193)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L209)
 
 ```ts
 type RpcRequestParams<N extends RpcName> = RpcContracts[N][0]
@@ -1034,7 +1262,7 @@ type RpcRequestParams<N extends RpcName> = RpcContracts[N][0]
 
 #### RpcResponseData
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L194)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L210)
 
 ```ts
 type RpcResponseData<N extends RpcName> = RpcContracts[N][1]
@@ -1042,7 +1270,7 @@ type RpcResponseData<N extends RpcName> = RpcContracts[N][1]
 
 #### SetBotRateRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L156)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L172)
 
 ```ts
 type SetBotRateRequest = Infer<typeof setBotRateParams>
@@ -1050,7 +1278,7 @@ type SetBotRateRequest = Infer<typeof setBotRateParams>
 
 #### SetMarketPhaseRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L173)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L189)
 
 ```ts
 type SetMarketPhaseRequest = Infer<typeof setMarketPhaseParams>
@@ -1058,7 +1286,7 @@ type SetMarketPhaseRequest = Infer<typeof setMarketPhaseParams>
 
 #### SetVolatilityRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L134)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L150)
 
 ```ts
 type SetVolatilityRequest = Infer<typeof setVolatilityParams>
@@ -1066,7 +1294,7 @@ type SetVolatilityRequest = Infer<typeof setVolatilityParams>
 
 #### TradingRpcResult
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L206)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L222)
 
 ```ts
 type TradingRpcResult<N extends RpcName> = | TradingRpcSuccess<N>
@@ -1075,7 +1303,7 @@ type TradingRpcResult<N extends RpcName> = | TradingRpcSuccess<N>
 
 #### TradingRpcSuccess
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L203)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L219)
 
 ```ts
 type TradingRpcSuccess<N extends RpcName> = RpcResultSuccess & {
@@ -1313,7 +1541,7 @@ toTableSchema(def: TableDefinition | JoinDefinition): TableSchema
 
 #### accountPnlHistory
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L572)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L607)
 
 ```ts
 const accountPnlHistory: TableDefinition<readonly [{ readonly name: "id"; readonly dataType: "string"; }, { readonly name: "account"; readonly dataType: "string"; }, { readonly name: "time"; readonly dataType: "epochtimestamp"; readonly description: "Sample time, aligned to oms.pnlHistoryIntervalMs."; }, ... 5 more ..., { ...; }]>
@@ -1371,7 +1599,7 @@ const bookSamples: TableDefinition<readonly [{ readonly name: "id"; readonly dat
 
 #### childOrders
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L424)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L459)
 
 ```ts
 const childOrders: TableDefinition<readonly [{ readonly name: "childOrderId"; readonly dataType: "string"; }, { readonly name: "parentOrderId"; readonly dataType: "string"; }, { readonly name: "exchangeOrderId"; readonly dataType: "string"; readonly optional: true; }, ... 18 more ..., { ...; }]>
@@ -1397,7 +1625,7 @@ const EXCHANGE_MODULE: "EXCHANGE"
 
 #### exchangeTables
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L627)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L662)
 
 ```ts
 const exchangeTables: { readonly instruments: TableDefinition<readonly [{ readonly name: "ric"; readonly dataType: "string"; }, { readonly name: "description"; readonly dataType: "string"; }, { readonly name: "isin"; readonly dataType: "string"; readonly optional: true; }, ... 8 more ..., { ...; }]>; ... 6 more ...; readonly bookEvents: ...
@@ -1405,7 +1633,7 @@ const exchangeTables: { readonly instruments: TableDefinition<readonly [{ readon
 
 #### fills
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L444)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L479)
 
 ```ts
 const fills: TableDefinition<readonly [{ readonly name: "execId"; readonly dataType: "string"; }, { readonly name: "orderId"; readonly dataType: "string"; readonly description: "Parent order id."; }, { readonly name: "childOrderId"; readonly dataType: "string"; }, ... 10 more ..., { ...; }]>
@@ -1413,7 +1641,7 @@ const fills: TableDefinition<readonly [{ readonly name: "execId"; readonly dataT
 
 #### instrumentPrices
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L599)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L634)
 
 Instrument grid: static + live prices.
 
@@ -1441,10 +1669,21 @@ const OMS_MODULE: "OMS"
 
 #### omsTables
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L637)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L672)
 
 ```ts
 const omsTables: { readonly accounts: TableDefinition<readonly [{ readonly name: "account"; readonly dataType: "string"; }, { readonly name: "name"; readonly dataType: "string"; }, { readonly name: "desk"; readonly dataType: "string"; }, ... 5 more ..., { ...; }]>; ... 5 more ...; readonly accountPnlHistory: TableDefinition<...>; }
+```
+
+#### PARENT_ORDER_PROGRESS_COLUMNS
+
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L455)
+
+parentOrders columns that tick with algo progress (on the algo timer) rather
+than on order events: an edit-session amend is not stale because of them.
+
+```ts
+const PARENT_ORDER_PROGRESS_COLUMNS: readonly string[]
 ```
 
 #### parentOrders
@@ -1452,12 +1691,12 @@ const omsTables: { readonly accounts: TableDefinition<readonly [{ readonly name:
 *const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L384)
 
 ```ts
-const parentOrders: TableDefinition<readonly [{ readonly name: "orderId"; readonly dataType: "string"; }, { readonly name: "clOrdId"; readonly dataType: "string"; readonly optional: true; }, { readonly name: "trader"; readonly dataType: "string"; }, ... 24 more ..., { ...; }]>
+const parentOrders: TableDefinition<readonly [{ readonly name: "orderId"; readonly dataType: "string"; }, { readonly name: "clOrdId"; readonly dataType: "string"; readonly optional: true; }, { readonly name: "trader"; readonly dataType: "string"; }, ... 29 more ..., { ...; }]>
 ```
 
 #### pnlHistory
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L545)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L580)
 
 ```ts
 const pnlHistory: TableDefinition<readonly [{ readonly name: "id"; readonly dataType: "string"; }, { readonly name: "account"; readonly dataType: "string"; }, { readonly name: "ric"; readonly dataType: "string"; }, { readonly name: "time"; readonly dataType: "epochtimestamp"; readonly description: "Sample time, aligned to oms.pnlHist...
@@ -1465,7 +1704,7 @@ const pnlHistory: TableDefinition<readonly [{ readonly name: "id"; readonly data
 
 #### positionPrices
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L615)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L650)
 
 Positions with live prices. Cross-module: requires EXCHANGE and OMS modules
 in the same VuuServer, with EXCHANGE registered first. When the OMS runs
@@ -1477,7 +1716,7 @@ const positionPrices: JoinDefinition
 
 #### positions
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L479)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L514)
 
 ```ts
 const positions: TableDefinition<readonly [{ readonly name: "id"; readonly dataType: "string"; }, { readonly name: "account"; readonly dataType: "string"; }, { readonly name: "ric"; readonly dataType: "string"; }, { readonly name: "quantity"; readonly dataType: "long"; readonly description: "Net quantity (+long / -short)."; }, ... 1...
@@ -1501,7 +1740,7 @@ const trades: TableDefinition<readonly [{ readonly name: "tradeId"; readonly dat
 
 #### tradingJoins
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L647)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L682)
 
 ```ts
 const tradingJoins: { readonly instrumentPrices: JoinDefinition; readonly positionPrices: JoinDefinition; }
@@ -1509,7 +1748,7 @@ const tradingJoins: { readonly instrumentPrices: JoinDefinition; readonly positi
 
 #### tradingTables
 
-*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L646)
+*const* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L681)
 
 ```ts
 const tradingTables: { readonly accounts: TableDefinition<readonly [{ readonly name: "account"; readonly dataType: "string"; }, { readonly name: "name"; readonly dataType: "string"; }, { readonly name: "desk"; readonly dataType: "string"; }, ... 5 more ..., { ...; }]>; ... 13 more ...; readonly bookEvents: TableDefinition<...>; }
@@ -1572,7 +1811,7 @@ const tradingTables: { readonly accounts: TableDefinition<readonly [{ readonly n
 
 #### AccountPnlHistoryRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L666)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L701)
 
 ```ts
 type AccountPnlHistoryRow = RowOf<typeof accountPnlHistory>
@@ -1580,7 +1819,7 @@ type AccountPnlHistoryRow = RowOf<typeof accountPnlHistory>
 
 #### AccountRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L656)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L691)
 
 ```ts
 type AccountRow = RowOf<typeof accounts>
@@ -1588,7 +1827,7 @@ type AccountRow = RowOf<typeof accounts>
 
 #### BarRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L661)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L696)
 
 ```ts
 type BarRow = RowOf<typeof bars>
@@ -1596,7 +1835,7 @@ type BarRow = RowOf<typeof bars>
 
 #### BookEventRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L664)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L699)
 
 ```ts
 type BookEventRow = RowOf<typeof bookEvents>
@@ -1604,7 +1843,7 @@ type BookEventRow = RowOf<typeof bookEvents>
 
 #### BookOrderRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L663)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L698)
 
 ```ts
 type BookOrderRow = RowOf<typeof bookOrders>
@@ -1612,7 +1851,7 @@ type BookOrderRow = RowOf<typeof bookOrders>
 
 #### BookSampleRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L662)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L697)
 
 ```ts
 type BookSampleRow = RowOf<typeof bookSamples>
@@ -1620,7 +1859,7 @@ type BookSampleRow = RowOf<typeof bookSamples>
 
 #### ChildOrderRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L658)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L693)
 
 ```ts
 type ChildOrderRow = RowOf<typeof childOrders>
@@ -1636,7 +1875,7 @@ type ColumnName<T extends TableDefinition> = T["columns"][number]["name"]
 
 #### DepthRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L654)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L689)
 
 ```ts
 type DepthRow = RowOf<typeof depth>
@@ -1644,7 +1883,7 @@ type DepthRow = RowOf<typeof depth>
 
 #### FillRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L659)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L694)
 
 ```ts
 type FillRow = RowOf<typeof fills>
@@ -1652,7 +1891,7 @@ type FillRow = RowOf<typeof fills>
 
 #### InstrumentRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L652)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L687)
 
 ```ts
 type InstrumentRow = RowOf<typeof instruments>
@@ -1668,7 +1907,7 @@ type JoinType = "LeftOuterJoin" | "InnerJoin"
 
 #### ParentOrderRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L657)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L692)
 
 ```ts
 type ParentOrderRow = RowOf<typeof parentOrders>
@@ -1676,7 +1915,7 @@ type ParentOrderRow = RowOf<typeof parentOrders>
 
 #### PnlHistoryRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L665)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L700)
 
 ```ts
 type PnlHistoryRow = RowOf<typeof pnlHistory>
@@ -1684,7 +1923,7 @@ type PnlHistoryRow = RowOf<typeof pnlHistory>
 
 #### PositionRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L660)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L695)
 
 ```ts
 type PositionRow = RowOf<typeof positions>
@@ -1692,7 +1931,7 @@ type PositionRow = RowOf<typeof positions>
 
 #### PriceRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L653)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L688)
 
 ```ts
 type PriceRow = RowOf<typeof prices>
@@ -1722,7 +1961,7 @@ type RowOf<T extends TableDefinition> = {
 
 #### TradeRow
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L655)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L690)
 
 ```ts
 type TradeRow = RowOf<typeof trades>
@@ -1743,7 +1982,7 @@ type TradingColumnDataType = Extract<
 
 #### TradingJoinName
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L650)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L685)
 
 ```ts
 type TradingJoinName = keyof typeof tradingJoins
@@ -1768,7 +2007,7 @@ type TradingSchemaName = | keyof typeof tradingTables
 
 #### TradingTableName
 
-*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L649)
+*type* · [tables/tables.ts](../../packages/trading-schemas/src/tables/tables.ts#L684)
 
 ```ts
 type TradingTableName = keyof typeof tradingTables

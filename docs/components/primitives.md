@@ -9,7 +9,7 @@ Showcase: `#side-label-variants`, `#primitives-status`, `#primitives-cell-render
 | --- | --- | --- | --- |
 | `SideLabel` | [API](../api/trading-ui.md#sidelabel) | Buy / Sell text or pill (`variant`), `--trading-buy` / `--trading-sell` | `tradingSideLabel`, `data-side` |
 | `OrderStatusBadge` | [API](../api/trading-ui.md#orderstatusbadge) | FIX OrdStatus as icon + text; reject reason / text as tooltip | `tradingOrderStatusBadge`, `data-status`, `data-category` |
-| `FillProgressBar` | [API](../api/trading-ui.md#fillprogressbar) | `filled / total` bar, `role="progressbar"`; `muted` for cancelled / rejected | `tradingFillProgressBar`, `data-pct` |
+| `FillProgressBar` | [API](../api/trading-ui.md#fillprogressbar) | `filled / total` bar, `role="progressbar"`; `muted` for cancelled / rejected; `target` draws an algo's schedule marker | `tradingFillProgressBar`, `data-pct`, `data-target-pct` |
 | `PnlValue` | [API](../api/trading-ui.md#pnlvalue) | Signed amount with sign, arrow and colour; `currency`, `hideArrow` | `tradingPnlValue`, `data-direction` |
 | `Sparkline` | [API](../api/trading-ui.md#sparkline) | SVG polyline of `values`, trend in colour, `data-trend` and the accessible name | `tradingSparkline`, `data-trend` |
 

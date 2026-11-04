@@ -14,6 +14,11 @@ export interface FillProgressBarProps extends HTMLAttributes<HTMLDivElement> {
   total: number | undefined;
   /** Terminal but unfilled orders (cancelled / rejected) render muted. */
   muted?: boolean;
+  /**
+   * Quantity an algo schedule says should be filled by now: drawn as a
+   * marker, so ahead / behind schedule shows at a glance.
+   */
+  target?: number;
 }
 
 /**
@@ -22,7 +27,7 @@ export interface FillProgressBarProps extends HTMLAttributes<HTMLDivElement> {
  */
 export const FillProgressBar = forwardRef<HTMLDivElement, FillProgressBarProps>(
   function FillProgressBar(
-    { className, filled, muted, total, ...htmlAttributes },
+    { className, filled, muted, target, total, ...htmlAttributes },
     ref,
   ) {
     const targetWindow = useWindow();
@@ -39,6 +44,15 @@ export const FillProgressBar = forwardRef<HTMLDivElement, FillProgressBarProps>(
     const text = hasValues
       ? `${formatQuantity(filled)} / ${formatQuantity(total)}`
       : "";
+    const hasTarget = hasValues && typeof target === "number";
+    const targetPct = hasTarget
+      ? Math.min(100, Math.max(0, (target / total) * 100))
+      : 0;
+    const scheduleText = hasTarget
+      ? filled >= target
+        ? `, on schedule (target ${formatQuantity(target)})`
+        : `, behind schedule (target ${formatQuantity(target)})`
+      : "";
     return (
       <div
         {...htmlAttributes}
@@ -46,17 +60,28 @@ export const FillProgressBar = forwardRef<HTMLDivElement, FillProgressBarProps>(
         aria-valuemax={hasValues ? total : undefined}
         aria-valuemin={0}
         aria-valuenow={hasValues ? filled : undefined}
-        aria-valuetext={text ? `${text} (${Math.round(pct)}%)` : undefined}
+        aria-valuetext={
+          text ? `${text} (${Math.round(pct)}%)${scheduleText}` : undefined
+        }
         className={cx(classBase, className, {
           [`${classBase}-complete`]: pct >= 100,
           [`${classBase}-muted`]: muted,
         })}
         data-pct={Math.round(pct)}
+        data-target-pct={hasTarget ? Math.round(targetPct) : undefined}
         ref={ref}
         role="progressbar"
-        style={{ "--tradingFillProgressBar-pct": `${pct}%` } as CSSProperties}
+        style={
+          {
+            "--tradingFillProgressBar-pct": `${pct}%`,
+            "--tradingFillProgressBar-target": `${targetPct}%`,
+          } as CSSProperties
+        }
       >
         <span aria-hidden="true" className={`${classBase}-bar`} />
+        {hasTarget ? (
+          <span aria-hidden="true" className={`${classBase}-target`} />
+        ) : null}
         <span className={`${classBase}-text`}>{text}</span>
       </div>
     );
