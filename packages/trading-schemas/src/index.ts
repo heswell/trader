@@ -1,4 +1,5 @@
 export * from "./domain/enums";
+export * from "./domain/algoStrategies";
 export * from "./domain/orderStatus";
 export * from "./domain/orderValidation";
 export * from "./domain/ticks";
