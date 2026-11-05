@@ -4,14 +4,17 @@ import {
   InstrumentLookupProvider,
   InstrumentPicker,
   type LinkGroupId,
+  LinkGroupMenuButton,
   LinkGroupProvider,
   LinkGroupSelector,
   LinkGroupSwatch,
+  PanelLinkGroupSelector,
   useInstrumentLookup,
   useSelectedAccount,
   useSelectedInstrument,
 } from "@heswell/trading-ui";
 import { Text } from "@salt-ds/core";
+import { GridLayout, GridLayoutItem } from "@vuu-ui/grid-layout";
 import { useState } from "react";
 
 const column = {
@@ -112,6 +115,65 @@ export const SelectorsExample = () => {
       <InstrumentLookupProvider>
         <LookupReadout />
       </InstrumentLookupProvider>
+    </div>
+  );
+};
+
+/** Grid and item ids of PanelLinkGroupExample. */
+const PANEL_ID = {
+  grid: "panel-link-group-grid",
+  red: "panel-link-group-red",
+  green: "panel-link-group-green",
+} as const;
+
+/** A panel's content: its link group selector and the group's selection. */
+const LinkedPanel = ({ defaultGroup }: { defaultGroup: LinkGroupId }) => {
+  const [group, setGroup] = useState<LinkGroupId>(defaultGroup);
+  return (
+    <div style={column}>
+      <PanelLinkGroupSelector onChange={setGroup} value={group} />
+      <InstrumentPicker linkGroup={group} style={{ width: 220 }} />
+      <SelectionReadout linkGroup={group} />
+    </div>
+  );
+};
+
+/**
+ * PanelLinkGroupSelector in grid-layout panels: an icon-only
+ * LinkGroupMenuButton in each panel header (a GridLayoutHeaderContribution
+ * at `start`). Outside a GridLayoutItem it is an inline LinkGroupSelector.
+ */
+export const PanelLinkGroupExample = () => {
+  const [group, setGroup] = useState<LinkGroupId>("blue");
+  return (
+    <div style={{ ...column, height: 360 }}>
+      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <Text>LinkGroupMenuButton</Text>
+        <LinkGroupMenuButton onChange={setGroup} value={group} />
+        <Text>{group}</Text>
+      </div>
+      <GridLayout
+        colsAndRows={{ cols: ["1fr", "1fr"], rows: ["1fr"] }}
+        id={PANEL_ID.grid}
+        style={{ flex: 1, minHeight: 0 }}
+      >
+        <GridLayoutItem
+          header
+          id={PANEL_ID.red}
+          style={{ gridArea: "1/1/2/2" }}
+          title="Red panel"
+        >
+          <LinkedPanel defaultGroup="red" />
+        </GridLayoutItem>
+        <GridLayoutItem
+          header
+          id={PANEL_ID.green}
+          style={{ gridArea: "1/2/2/3" }}
+          title="Green panel"
+        >
+          <LinkedPanel defaultGroup="green" />
+        </GridLayoutItem>
+      </GridLayout>
     </div>
   );
 };

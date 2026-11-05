@@ -10,8 +10,8 @@
   border-radius: 50%;
   display: inline-block;
   flex: none;
-  height: var(--tradingLinkGroupSelector-swatchSize);
-  width: var(--tradingLinkGroupSelector-swatchSize);
+  height: var(--tradingLinkGroupSelector-swatchSize, 10px);
+  width: var(--tradingLinkGroupSelector-swatchSize, 10px);
 }
 
 .tradingLinkGroupSelector-swatch[data-link-group="unlinked"] {
@@ -32,4 +32,17 @@
   align-items: center;
   display: flex;
   gap: var(--salt-spacing-100);
+}
+
+/* Icon-only selector (panel title bars). */
+.tradingLinkGroupSelector-menuButton {
+  --saltButton-height: calc(var(--salt-size-base) - var(--salt-spacing-50));
+  --saltButton-minWidth: var(--saltButton-height);
+  --saltButton-padding: 0;
+  --saltButton-width: var(--saltButton-height);
+  flex: none;
+}
+
+.tradingLinkGroupSelector-menuItem[aria-current="true"] {
+  font-weight: var(--salt-text-fontWeight-strong);
 }

@@ -39,7 +39,7 @@ import {
   isInactivePhase,
   tradingPhaseText,
 } from "../../utils/marketData";
-import { LinkGroupSelector } from "../LinkGroupSelector";
+import { PanelLinkGroupSelector } from "../LinkGroupSelector";
 import {
   type LadderTradeIntent,
   PriceLadderView,
@@ -397,7 +397,7 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
     const toolbarStart = useMemo(
       () =>
         showLinkGroupSelector ? (
-          <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
+          <PanelLinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
         ) : (
           props.toolbarStart
         ),

@@ -210,3 +210,8 @@
   display: flex;
   justify-content: flex-end;
 }
+
+/* Empty when the selector is in the panel title bar. */
+.tradingOrderTicket-linkGroup:empty {
+  display: none;
+}

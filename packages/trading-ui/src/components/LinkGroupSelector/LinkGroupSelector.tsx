@@ -1,6 +1,18 @@
-import { Dropdown, Option } from "@salt-ds/core";
+import {
+  Button,
+  Dropdown,
+  Menu,
+  MenuItem,
+  MenuPanel,
+  MenuTrigger,
+  Option,
+} from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
+import {
+  GridLayoutHeaderContribution,
+  useGridLayoutItem,
+} from "@vuu-ui/grid-layout";
 import cx from "clsx";
 import { type CSSProperties, memo, type SyntheticEvent } from "react";
 import {
@@ -75,6 +87,25 @@ export const LinkGroupSwatch = ({
 };
 
 /**
+ * The groups a selector offers for `value` and the current one's definition.
+ * "Active channel" only where a workspace has one (or it is already set).
+ */
+const useLinkGroupOptions = (
+  value: LinkGroupId,
+  groups: readonly LinkGroupDefinition[],
+  allowUnlinked: boolean,
+) => {
+  const offerActive =
+    useOptionalWorkspaceChannel() !== undefined || value === ACTIVE_LINK_GROUP;
+  const options = [
+    ...(offerActive ? [ACTIVE_GROUP] : []),
+    ...groups,
+    ...(allowUnlinked ? [UNLINKED_GROUP] : []),
+  ];
+  return { current: linkGroupDefinition(value, groups), options };
+};
+
+/**
  * A compact dropdown to pick a component's instrument link group (colour
  * swatch + name, so it does not rely on colour alone). For component
  * headers / toolbars; linkable components render one when
@@ -91,15 +122,11 @@ export const LinkGroupSelector = memo(function LinkGroupSelector({
   value,
 }: LinkGroupSelectorProps) {
   useLinkGroupCss();
-  // "Active channel" only where a workspace has one (or it is already set).
-  const offerActive =
-    useOptionalWorkspaceChannel() !== undefined || value === ACTIVE_LINK_GROUP;
-  const options = [
-    ...(offerActive ? [ACTIVE_GROUP] : []),
-    ...groups,
-    ...(allowUnlinked ? [UNLINKED_GROUP] : []),
-  ];
-  const current = linkGroupDefinition(value, groups);
+  const { current, options } = useLinkGroupOptions(
+    value,
+    groups,
+    allowUnlinked,
+  );
   return (
     <Dropdown<LinkGroupId>
       aria-label={ariaLabel}
@@ -127,3 +154,83 @@ export const LinkGroupSelector = memo(function LinkGroupSelector({
     </Dropdown>
   );
 });
+
+/**
+ * An icon-only LinkGroupSelector: a small button showing the group's swatch,
+ * opening a menu of the groups. Its accessible name and tooltip carry the
+ * group name (and, for `active`, the channel it follows), as the swatch
+ * colour alone does not identify it. For panel title bars.
+ */
+export const LinkGroupMenuButton = memo(function LinkGroupMenuButton({
+  allowUnlinked = true,
+  "aria-label": ariaLabel = "Link group",
+  className,
+  disabled,
+  groups = DEFAULT_LINK_GROUPS,
+  onChange,
+  value,
+}: LinkGroupSelectorProps) {
+  useLinkGroupCss();
+  const workspace = useOptionalWorkspaceChannel();
+  const { current, options } = useLinkGroupOptions(
+    value,
+    groups,
+    allowUnlinked,
+  );
+  const name =
+    current.id === ACTIVE_LINK_GROUP && workspace
+      ? `${current.label} (${
+          linkGroupDefinition(workspace.activeChannel, workspace.channels).label
+        })`
+      : current.label;
+  return (
+    <Menu>
+      <MenuTrigger>
+        <Button
+          appearance="transparent"
+          aria-label={`${ariaLabel}: ${name}`}
+          className={cx(`${classBase}-menuButton`, className)}
+          data-link-group={current.id}
+          disabled={disabled}
+          sentiment="neutral"
+          title={`${ariaLabel}: ${name}`}
+        >
+          <LinkGroupSwatch group={current.id} groups={groups} />
+        </Button>
+      </MenuTrigger>
+      <MenuPanel>
+        {options.map((group) => (
+          <MenuItem
+            aria-current={group.id === current.id || undefined}
+            className={`${classBase}-menuItem`}
+            key={group.id}
+            onClick={() => onChange(group.id)}
+          >
+            <span className={`${classBase}-option`}>
+              <LinkGroupSwatch group={group.id} groups={groups} />
+              {group.label}
+            </span>
+          </MenuItem>
+        ))}
+      </MenuPanel>
+    </Menu>
+  );
+});
+
+/**
+ * The link group selector of a panel component. Hosted in a grid-layout
+ * item (a portal workspace panel), it is a LinkGroupMenuButton in the
+ * item's header, at the start (in a stack, the tab bar's start, while the
+ * panel's tab is selected). Elsewhere it is an inline LinkGroupSelector.
+ */
+export const PanelLinkGroupSelector = (props: LinkGroupSelectorProps) =>
+  useGridLayoutItem() ? (
+    <GridLayoutHeaderContribution
+      className={`${classBase}-headerContribution`}
+      location="start"
+    >
+      <LinkGroupMenuButton {...props} />
+    </GridLayoutHeaderContribution>
+  ) : (
+    <LinkGroupSelector {...props} />
+  );

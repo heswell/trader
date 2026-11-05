@@ -39,7 +39,7 @@ import {
   useComponentLinkGroup,
 } from "../../instrument-context/useComponentLinkGroup";
 import { InstrumentPicker } from "../InstrumentPicker";
-import { LinkGroupSelector } from "../LinkGroupSelector";
+import { PanelLinkGroupSelector } from "../LinkGroupSelector";
 import { StaleIndicator } from "../StaleIndicator";
 import {
   isAlgoStrategy,
@@ -466,7 +466,7 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
       >
         {showLinkGroupSelector ? (
           <div className={`${classBase}-linkGroup`}>
-            <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
+            <PanelLinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
           </div>
         ) : null}
         {showInstrumentPicker ? (
