@@ -90,19 +90,25 @@ trader portal shows it in the workspace header; showcase: `#channel-picker-works
 
 ## Panel headers
 
-In a portal workspace, the Ticket, Ladder, Tape, Depth and Depth chart show their link group in the panel's title
-bar, not in their body. Their selector is a `PanelLinkGroupSelector`: hosted in a `@vuu-ui/grid-layout`
+In a portal workspace, the Ticket, Chart, Ladder, Tape, Depth and Depth chart show their link group in the panel's
+title bar, not in their body. Their selector is a `PanelLinkGroupSelector`: hosted in a `@vuu-ui/grid-layout`
 `GridLayoutItem` (`useGridLayoutItem()`), it renders a `LinkGroupMenuButton` into the item header through a
-`GridLayoutHeaderContribution` at `start` (in a stack, the tab bar's start, while the panel's tab is selected);
+`GridLayoutHeaderContribution` at `start`, or, in a stack, at `tab-start` (the start of the panel's own tab);
 anywhere else it is the inline `LinkGroupSelector`.
 
-- `LinkGroupMenuButton` shows the group's swatch only and opens a Salt `Menu` of the groups. Its accessible name and
-  tooltip name the group (`Link group: Active channel (Green)`), so assistive tech does not rely on the colour.
+- `LinkGroupMenuButton` shows the group's swatch only and opens a Salt `Menu` of the groups. A pinned group is a plain
+  dot, following the active channel is a smaller dot in a soft halo of its colour (`--tradingLinkGroupSelector-haloSize`),
+  unlinked a hollow ring. Its accessible name and tooltip name the group (`Link group: Active channel (Green)`), so
+  assistive tech does not rely on the colour.
 - The contribution renders inside the feature's React tree but into the host's header, so `@vuu-ui/grid-layout` is a
   shared module-federation singleton (`scripts/features/sync-build-config.ts`).
 - A `GridLayoutItem` with `header: false` has no slot, so the selector does not show there.
 - `apps/portal-host/src/App.css` styles the item headers like a stack's tab bar through grid-layout's
   `--vuuGridLayoutItemHeader-*` variables: no fill, the tab bar's divider, text size and 27px height.
+- Only the selected panel of a stack is mounted, so the button moves with the selection. In a stack that shows one,
+  `App.css` gives every tab the button's width at both ends (labels stay centred, nothing shifts), and lifts tab
+  contributions above Salt's `TabTrigger` hit area so they take their own clicks. The first visit to a panel whose
+  remote module has not loaded yet still shifts once.
 
 ## Accounts
 
