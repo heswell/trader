@@ -9,6 +9,7 @@ import {
   OrdType,
   roundToTick,
   Side,
+  TimeInForce,
 } from "@heswell/trading-schemas";
 import {
   act,
@@ -162,6 +163,16 @@ describe("OrderTicket", () => {
     await act(async () => {
       fireEvent.keyDown(form, { key: "Enter", ctrlKey: true });
     });
+    // Outside the collar: Review first, Enter confirms.
+    const review = await waitFor(() => {
+      const dialog = form.querySelector('[role="dialog"]');
+      expect(dialog?.textContent).toContain("Check this order");
+      return dialog as HTMLElement;
+    });
+    expect(events).toHaveLength(0);
+    await act(async () => {
+      fireEvent.keyDown(review, { key: "Enter" });
+    });
     await waitFor(() => {
       const status = form.querySelector('[data-status="REJECTED"]');
       expect(status?.getAttribute("data-reason")).toBe("PRICE_OUTSIDE_COLLAR");
@@ -225,5 +236,108 @@ describe("OrderTicket", () => {
       fireEvent.keyDown(form, { key: "Escape" });
     });
     expect(closed).toHaveLength(1);
+  });
+
+  test("an order line in the instrument field fills the ticket", async () => {
+    const inst = instrumentRow();
+    const { form, events } = renderTicket({
+      ric,
+      account: ACCOUNT,
+      side: Side.Buy,
+      ordType: OrdType.Limit,
+      timeInForce: TimeInForce.ImmediateOrCancel,
+      quantity: inst.lotSize,
+      price: inst.bid,
+    });
+    await waitForInstrument();
+    const field = form.querySelector(
+      'input[data-order-ticket-field="instrument"]',
+    ) as HTMLInputElement;
+    act(() => {
+      fireEvent.change(field, { target: { value: "s 2k b twap 45m" } });
+    });
+    await waitFor(() =>
+      expect(
+        form.querySelector(".tradingOrderTicket-orderLine"),
+      ).not.toBeNull(),
+    );
+    act(() => {
+      fireEvent.keyDown(field, { key: "Enter" });
+    });
+    expect(form.getAttribute("data-side")).toBe(Side.Sell);
+    const qty = form.querySelector(
+      'input[data-order-ticket-field="quantity"]',
+    ) as HTMLInputElement;
+    expect(qty.value).toBe("2k");
+    const duration = form.querySelector(
+      'input[data-order-ticket-field="param:durationMins"]',
+    ) as HTMLInputElement;
+    expect(duration.value).toBe("45m");
+    // IOC is not valid for TWAP: the ticket moves to Day and says so.
+    expect(form.querySelector(".tradingOrderTicket-tifNotice")).not.toBeNull();
+    expect(
+      form.querySelector(".tradingOrderTicket-submitDetail")?.textContent,
+    ).toContain("Day");
+    // It keeps the instrument and does not send.
+    expect(field.value).toBe(ric);
+    expect(events).toHaveLength(0);
+  });
+
+  test("Alt shortcuts set type and side from any field", async () => {
+    const inst = instrumentRow();
+    const { form } = renderTicket({
+      ric,
+      account: ACCOUNT,
+      side: Side.Buy,
+      ordType: OrdType.Limit,
+      quantity: inst.lotSize,
+      price: inst.bid,
+    });
+    await waitForInstrument();
+    const price = form.querySelector(
+      'input[data-order-ticket-field="price"]',
+    ) as HTMLInputElement;
+    act(() => {
+      fireEvent.keyDown(price, { key: "ß", code: "KeyS", altKey: true });
+    });
+    expect(form.getAttribute("data-side")).toBe(Side.Sell);
+    act(() => {
+      fireEvent.keyDown(price, { key: "µ", code: "KeyM", altKey: true });
+    });
+    expect(
+      form.querySelector('input[data-order-ticket-field="price"]'),
+    ).toBeNull();
+    expect(form.querySelector('[data-field="marketPrice"]')).not.toBeNull();
+    act(() => {
+      fireEvent.keyDown(form, { key: "¬", code: "KeyL", altKey: true });
+    });
+    expect(
+      form.querySelector('input[data-order-ticket-field="price"]'),
+    ).not.toBeNull();
+  });
+
+  test("Review: Esc goes back without sending", async () => {
+    const inst = instrumentRow();
+    const schedule = scheduleOf(inst);
+    if (!schedule) throw Error("no tick schedule");
+    const { events, form } = renderTicket({
+      ric,
+      account: ACCOUNT,
+      side: Side.Buy,
+      ordType: OrdType.Limit,
+      quantity: inst.lotSize,
+      price: roundToTick((inst.last || inst.bid) * 0.7, schedule),
+    });
+    await waitForInstrument();
+    await waitFor(() => expect(submitButton().textContent).toMatch(/^Review/));
+    act(() => {
+      fireEvent.keyDown(form, { key: "F9" });
+    });
+    expect(form.querySelector('[role="dialog"]')).not.toBeNull();
+    act(() => {
+      fireEvent.keyDown(form, { key: "Escape" });
+    });
+    expect(form.querySelector('[role="dialog"]')).toBeNull();
+    expect(events).toHaveLength(0);
   });
 });

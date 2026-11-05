@@ -4,6 +4,8 @@ import { useWindow } from "@salt-ds/window";
 import cx from "clsx";
 import {
   type ChangeEvent,
+  type FocusEvent,
+  type KeyboardEvent,
   type SyntheticEvent,
   useEffect,
   useMemo,
@@ -56,7 +58,21 @@ export interface InstrumentPickerProps
   linked?: boolean;
   /** Max matches listed (default 20). */
   maxResults?: number;
+  /** Select the text when the field is entered, so typing replaces it. */
+  selectOnFocus?: boolean;
+  /**
+   * Text that is not an instrument search (`isText` true, e.g. it contains
+   * a space) is not searched; Enter passes it here. Return true if it was
+   * used, and the field goes back to showing `value`.
+   */
+  onTextCommit?: (text: string) => boolean;
+  /** Which text `onTextCommit` handles (default: contains whitespace). */
+  isCommitText?: (text: string) => boolean;
+  /** Called as the user types (e.g. to preview an order line). */
+  onTextChange?: (text: string | undefined) => void;
 }
+
+const hasSpace = (text: string) => /\s/.test(text.trim());
 
 const sanitize = (text: string) => text.replace(/["\\]/g, "").trim();
 
@@ -99,6 +115,12 @@ export const InstrumentPicker = ({
   onSelect: onSelectProp,
   maxResults = 20,
   placeholder = "Search instrument",
+  selectOnFocus = false,
+  onTextCommit,
+  isCommitText = hasSpace,
+  onTextChange,
+  inputProps,
+  onKeyDown,
   ...comboBoxProps
 }: InstrumentPickerProps) => {
   const targetWindow = useWindow();
@@ -130,8 +152,13 @@ export const InstrumentPicker = ({
     setText(value ?? "");
     setTyping(false);
   }, [value]);
+  const commitText = typing && !!onTextCommit && isCommitText(text);
+  useEffect(() => {
+    onTextChange?.(commitText ? text : undefined);
+  }, [commitText, text, onTextChange]);
 
-  const filter = typing ? instrumentSearchFilter(text) : undefined;
+  const filter =
+    typing && !commitText ? instrumentSearchFilter(text) : undefined;
   const { rows } = useTradingRows("instruments", {
     columns: INSTRUMENT_COLUMNS,
     filter,
@@ -161,6 +188,27 @@ export const InstrumentPicker = ({
       setTyping(false);
     }
   };
+  // Passed as ComboBox's onKeyDown, which runs before its list keys. (Salt
+  // puts its own handler in inputProps, so inputProps.onKeyDown replaces it.)
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    onKeyDown?.(event);
+    if (event.key !== "Enter" || !commitText || !onTextCommit) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (onTextCommit(text)) {
+      setText(value ?? "");
+      setTyping(false);
+    }
+  };
+  const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
+    inputProps?.onFocus?.(event);
+    if (!selectOnFocus) return;
+    const input = event.currentTarget;
+    // After the click's mouseup, which would otherwise drop the selection.
+    requestAnimationFrame(() => {
+      if (input.ownerDocument.activeElement === input) input.select();
+    });
+  };
 
   const comboBox = (
     <ComboBox<string>
@@ -168,14 +216,19 @@ export const InstrumentPicker = ({
       className={cx(classBase, className)}
       data-link-group={linked ? linkGroup : undefined}
       data-instrument-picker=""
+      inputProps={{
+        ...inputProps,
+        onFocus: handleFocus,
+      }}
       onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
       onChange={handleChange}
       onSelectionChange={handleSelectionChange}
       placeholder={placeholder}
       selected={value ? [value] : []}
       value={text}
     >
-      {rows.map((row) => (
+      {(commitText ? [] : rows).map((row) => (
         <Option key={row.$key} value={String(row.ric)}>
           <span className={`${classBase}-ric`}>{String(row.ric)}</span>
           <span className={`${classBase}-description`}>
