@@ -712,3 +712,16 @@ Found moving to @vuu-ui 4.0.0-alpha.30 (`docs/portal-integration.md`, "Panels pa
      remote config declares `"manifest": { "filename": "./config.json", "remote": {} }` and
      `scripts/features/build.ts` fills `manifest.remote` per feature, replacing the `config.json` it used to write
      after each build (same content).
+
+## Found in the ticket redesign (Trader workspace)
+
+112. **A stack restored from a `GridLayoutDocument` is never resizable.** (finos `@vuu-ui/grid-layout`
+     5.0.0-alpha.4, also alpha.3; `src/useGridLayout.js`, where stacks are hydrated.) The stack's
+     `stacked-content` item takes `resizeable` only from a `GridLayoutStackedItem` child element
+     (`stackTemplate?.props.resizeable`). A workspace loaded from a document has no such element, and
+     `GridStackSnapshot` has no `resizeable` field, so the stack gets none, even when every member item sets
+     `resizeable: "hv"`. The stack then has no splitter above it. *Repro:* in the Trader workspace
+     (`apps/portal-host/src/workspaces/traderWorkspace.ts`) there is no splitter between the Ticket and the
+     Chart/Depth/Depth chart stack, or above the Orders/Fills/Positions stack, while column 3 (no stacks) has one.
+     *Proposed:* fall back to the members' setting (`stackTemplate?.props.resizeable ?? items[0]?.resizeable`), or
+     add `resizeable` to `GridStackSnapshot`. *Workaround in this repo:* none; those panels can't be resized.
