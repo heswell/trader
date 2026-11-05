@@ -18,7 +18,9 @@ import {
 } from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
+import { useGridLayoutItem } from "@vuu-ui/grid-layout";
 import cx from "clsx";
+import { flushSync } from "react-dom";
 import {
   type ChangeEvent,
   forwardRef,
@@ -62,6 +64,7 @@ import {
 } from "./orderTicketModel";
 import {
   algoParamField,
+  focusTicketField,
   type OrderTicketState,
   type UseOrderTicketProps,
   useOrderTicket,
@@ -104,6 +107,38 @@ const priceFormat = (instrument: OrderTicketInstrument | undefined) => ({
 /** Input props with data attributes (e.g. data-order-ticket-field). */
 type FieldInputProps = InputHTMLAttributes<HTMLInputElement> & {
   [key: `data-${string}`]: string;
+};
+
+/**
+ * Select an input's text now (so typing at once replaces it) and again
+ * after a click's mouseup, which would otherwise drop the selection.
+ */
+const selectAll = (input: HTMLInputElement) => {
+  input.select();
+  requestAnimationFrame(() => {
+    if (input.ownerDocument.activeElement === input) input.select();
+  });
+};
+
+/** A parameter's text for display: "10" → "10%", "45" → "45 min". */
+const paramText = (param: AlgoParamDefinition, text: string | undefined) =>
+  text && param.unit && /^[\d.]+$/.test(text)
+    ? `${text}${param.unit === "%" ? "%" : ` ${param.unit}`}`
+    : text;
+
+/** "$27.7k", "$1.25m": a short USD value for hints. */
+const usdShort = (usd: number) => {
+  const abs = Math.abs(usd);
+  const [div, suffix] =
+    abs >= 1e9
+      ? [1e9, "bn"]
+      : abs >= 1e6
+        ? [1e6, "m"]
+        : abs >= 1e3
+          ? [1e3, "k"]
+          : [1, ""];
+  const v = usd / div;
+  return `$${v.toLocaleString("en-US", { maximumFractionDigits: v >= 100 || !suffix ? 0 : v >= 10 ? 1 : 2 })}${suffix}`;
 };
 
 const sideLabel = (side: string) => (side === Side.Buy ? "Buy" : "Sell");
@@ -194,7 +229,9 @@ const InstrumentMeta = ({ ticket }: { ticket: OrderTicketState }) => {
     <div className={`${classBase}-meta`} data-direction={direction}>
       {instrument?.description ? (
         <span className={`${classBase}-description`}>
-          {instrument.description}
+          {[instrument.description, instrument.exchange, instrument.currency]
+            .filter(Boolean)
+            .join(" · ")}
         </span>
       ) : null}
       <span className={`${classBase}-metaItem`}>
@@ -357,6 +394,8 @@ const QuantityField = ({
       <>
         <b>= {formatQuantity(risk.quantity)}</b> shares
       </>
+    ) : risk.notionalUsd !== undefined && risk.quantity ? (
+      `≈ ${usdShort(risk.notionalUsd)}`
     ) : lot && lot > 1 ? (
       `Lot ${formatQuantity(lot)} · 10k, $250k`
     ) : (
@@ -374,7 +413,7 @@ const QuantityField = ({
             autoComplete: "off",
             inputMode: "decimal",
             "data-order-ticket-field": "quantity",
-            onBlur: () => resolveShorthand("quantity"),
+            onBlur: (e) => resolveShorthand("quantity", e.currentTarget.value),
           } as FieldInputProps
         }
         inputRef={inputRef}
@@ -416,15 +455,7 @@ const priceRelation = (
 };
 
 const PriceField = ({ ticket }: { ticket: OrderTicketState }) => {
-  const {
-    draft,
-    update,
-    errors,
-    instrument,
-    risk,
-    setPriceFrom,
-    resolveShorthand,
-  } = ticket;
+  const { draft, update, errors, instrument, risk, resolveShorthand } = ticket;
   const format = priceFormat(instrument);
   const currency = instrument?.currency;
   if (!isPricedOrdType(draft.ordType)) {
@@ -449,38 +480,12 @@ const PriceField = ({ ticket }: { ticket: OrderTicketState }) => {
     value !== undefined && Number.isFinite(value)
       ? priceRelation(value, draft.side, instrument)
       : undefined;
-  const bid = instrument?.bid;
-  const ask = instrument?.ask;
   const hint = (
     <span className={`${classBase}-priceHint`}>
-      <span>
-        {shorthand && value !== undefined && Number.isFinite(value) ? (
-          <b>= {formatPrice(value, format)} </b>
-        ) : null}
-        {relation ?? "b, a, m, b+1"}
-      </span>
-      <span className={`${classBase}-touchButtons`}>
-        {(
-          [
-            ["Bid", bid],
-            ["Mid", bid && ask ? (bid + ask) / 2 : undefined],
-            ["Ask", ask],
-          ] as const
-        ).map(([name, p]) => (
-          <button
-            aria-label={`Use the ${name.toLowerCase()} as the limit price`}
-            disabled={!p}
-            key={name}
-            onClick={() =>
-              name === "Mid" ? update({ price: "m" }) : setPriceFrom(p)
-            }
-            tabIndex={-1}
-            type="button"
-          >
-            {name}
-          </button>
-        ))}
-      </span>
+      {shorthand && value !== undefined && Number.isFinite(value) ? (
+        <b>= {formatPrice(value, format)} </b>
+      ) : null}
+      {relation ?? "b, a, m, b+1"}
     </span>
   );
   return (
@@ -494,7 +499,7 @@ const PriceField = ({ ticket }: { ticket: OrderTicketState }) => {
             "aria-invalid": errors.price ? true : undefined,
             autoComplete: "off",
             "data-order-ticket-field": "price",
-            onBlur: () => resolveShorthand("price"),
+            onBlur: (e) => resolveShorthand("price", e.currentTarget.value),
           } as FieldInputProps
         }
         onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -535,10 +540,7 @@ const StrategyPicker = ({
       inputProps={
         {
           "data-order-ticket-field": "strategy",
-          onFocus: (e) => {
-            const input = e.currentTarget;
-            requestAnimationFrame(() => input.select());
-          },
+          onFocus: (e) => selectAll(e.currentTarget),
         } as FieldInputProps
       }
       onBlur={() => {
@@ -553,7 +555,9 @@ const StrategyPicker = ({
         if (!id) return;
         const strategy = id as AlgoStrategy;
         setTyping(false);
-        update({ strategy });
+        // Render the new strategy's fields now, so onPicked can focus the
+        // first one before the next key arrives.
+        flushSync(() => update({ strategy }));
         onPicked(strategy);
       }}
       placeholder={definition.name}
@@ -827,7 +831,7 @@ const submitText = (ticket: OrderTicketState) => {
     : " at market";
   const main = `${sideLabel(draft.side)}${qty}${draft.ric ? ` ${draft.ric}` : ""}${price}`;
   const params = definition.params
-    .map((p) => draft.algoParams[p.key])
+    .map((p) => paramText(p, draft.algoParams[p.key]))
     .filter(Boolean)
     .join(" ");
   const detail = [
@@ -863,7 +867,10 @@ const Review = ({ ticket }: { ticket: OrderTicketState }) => {
     ["Execution", definition.name],
     ...definition.params.map(
       (p) =>
-        [p.label, draft.algoParams[p.key] || "Default"] as [string, string],
+        [p.label, paramText(p, draft.algoParams[p.key]) || "Default"] as [
+          string,
+          string,
+        ],
     ),
     ["Time in force", TIF_LABEL[draft.timeInForce] ?? draft.timeInForce],
     ["Account", draft.account ?? "–"],
@@ -996,16 +1003,33 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
     } = ticket;
     const pending = submission.state === "pending";
     const compact = variant === "compact";
+    // A grid-layout panel is the frame; elsewhere the ticket is a card.
+    const framed = !useGridLayoutItem();
 
     const rootRef = useRef<HTMLDivElement>(null);
     useImperativeHandle(ref, () => rootRef.current as HTMLDivElement);
     const quantityRef = useRef<HTMLInputElement>(null);
+    // Focus now, so keys typed straight after Enter land in the new field.
+    // Check again next frame: the field may not be rendered yet (a new
+    // strategy's parameters), or a list may take focus back as it closes.
     const focusField = useCallback((field: string) => {
-      requestAnimationFrame(() =>
-        rootRef.current
-          ?.querySelector<HTMLElement>(`[data-order-ticket-field="${field}"]`)
-          ?.focus(),
-      );
+      const find = () =>
+        rootRef.current?.querySelector<HTMLElement>(
+          `[data-order-ticket-field="${field}"]`,
+        );
+      const from = rootRef.current?.ownerDocument.activeElement;
+      focusTicketField(find());
+      requestAnimationFrame(() => {
+        const target = find();
+        const active = target?.ownerDocument.activeElement;
+        if (
+          target &&
+          active !== target &&
+          (active === from || active === target.ownerDocument.body)
+        ) {
+          focusTicketField(target);
+        }
+      });
     }, []);
 
     // After a send, focus returns to quantity for the next order.
@@ -1018,7 +1042,7 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
         submission.state === "accepted" &&
         rootRef.current?.contains(rootRef.current.ownerDocument.activeElement)
       ) {
-        quantityRef.current?.focus();
+        focusTicketField(quantityRef.current);
       }
     }, [submission.state]);
 
@@ -1097,7 +1121,7 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
         }}
         onTextChange={setLineText}
         onTextCommit={onTextCommit}
-        placeholder="Instrument, or a whole order"
+        placeholder={compact ? "Instrument" : "Instrument, or a whole order"}
         selectOnFocus
         validationStatus={errors.ric ? "error" : undefined}
         value={draft.ric}
@@ -1163,6 +1187,7 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
         aria-label={htmlAttributes["aria-label"] ?? "Order ticket"}
         className={cx(classBase, className, `${classBase}-${variant}`)}
         data-connection-state={connectionState}
+        data-framed={framed ? "" : undefined}
         data-link-group={linkGroup}
         data-show-keys={showKeys ? "" : undefined}
         data-side={draft.side}

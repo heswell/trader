@@ -806,15 +806,25 @@ export const parseOrderLine = (text: string): OrderLine => {
       continue;
     }
     if (definition) {
-      const param = definition.params.find(
-        (p) =>
-          algoParams[p.key] === undefined &&
-          (p.type === "percent"
-            ? /%$/.test(t)
-            : p.type === "time"
-              ? /^\d{1,2}:\d\d$|^\d{4}$/.test(t)
-              : /^\d+(\.\d+)?(m|h|min)$|^\d+h\d+m?$/.test(t)),
+      // A word with a unit goes to the parameter of that type (`10%`,
+      // `45m`, `15:30`). After the strategy, a bare number is the next
+      // unfilled parameter if valid there (`pov 10` = 10%, `twap 45` = 45
+      // min); prices go before the strategy.
+      const unfilled = definition.params.filter(
+        (p) => algoParams[p.key] === undefined,
       );
+      const bare = /^\d+(\.\d+)?$/.test(t);
+      const param = bare
+        ? unfilled[0] && !parseAlgoParam(unfilled[0], token).error
+          ? unfilled[0]
+          : undefined
+        : unfilled.find((p) =>
+            p.type === "percent"
+              ? /%$/.test(t)
+              : p.type === "time"
+                ? /^\d{1,2}:\d\d$/.test(t)
+                : /^\d+(\.\d+)?(m|h|min)$|^\d+h\d+m?$/.test(t),
+          );
       if (param) {
         algoParams[param.key] = token;
         word(`${param.label} ${token}`);

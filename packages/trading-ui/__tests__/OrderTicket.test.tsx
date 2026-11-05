@@ -283,6 +283,38 @@ describe("OrderTicket", () => {
     expect(events).toHaveLength(0);
   });
 
+  test("Enter moves on and selects the next field, so typing replaces it", async () => {
+    const inst = instrumentRow();
+    const { form } = renderTicket({
+      ric,
+      account: ACCOUNT,
+      side: Side.Buy,
+      ordType: OrdType.Limit,
+      quantity: inst.lotSize,
+      price: inst.bid,
+    });
+    await waitForInstrument();
+    const qty = form.querySelector(
+      'input[data-order-ticket-field="quantity"]',
+    ) as HTMLInputElement;
+    const price = form.querySelector(
+      'input[data-order-ticket-field="price"]',
+    ) as HTMLInputElement;
+    qty.focus();
+    act(() => {
+      fireEvent.keyDown(qty, { key: "Enter" });
+    });
+    expect(document.activeElement).toBe(price);
+    expect(price.selectionStart).toBe(0);
+    expect(price.selectionEnd).toBe(price.value.length);
+    // Enter resolves shorthand from the field's own text.
+    act(() => {
+      fireEvent.change(price, { target: { value: "b" } });
+      fireEvent.keyDown(price, { key: "Enter" });
+    });
+    expect(Number(price.value)).toBe(inst.bid);
+  });
+
   test("Alt shortcuts set type and side from any field", async () => {
     const inst = instrumentRow();
     const { form } = renderTicket({

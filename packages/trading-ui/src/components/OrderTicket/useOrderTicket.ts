@@ -260,6 +260,16 @@ const nextField = (root: HTMLElement, from: HTMLElement) => {
   return fields[i + 1];
 };
 
+/**
+ * Focus a ticket field and select its text, as Tab does, so typing
+ * replaces the value rather than appending to it.
+ */
+export const focusTicketField = (el: HTMLElement | null | undefined) => {
+  if (!el) return;
+  el.focus();
+  if (el instanceof HTMLInputElement) el.select();
+};
+
 /** Step a strategy parameter's input by `steps` (5 min, 1 %, 5 min of time). */
 const stepAlgoParam = (
   param: AlgoParamDefinition,
@@ -603,17 +613,19 @@ export const useOrderTicket = ({
    * `$250k` → 45,200), e.g. when the field is left.
    */
   const resolveShorthand = useCallback(
-    (field: "price" | "quantity") => {
+    (field: "price" | "quantity", text?: string) => {
       if (field === "price") {
-        if (!isPriceShorthand(draft.price)) return;
-        const price = resolvePriceInput(draft.price, instrument);
+        const input = text ?? draft.price;
+        if (!isPriceShorthand(input)) return;
+        const price = resolvePriceInput(input, instrument);
         if (price !== undefined && Number.isFinite(price))
           update({ price: formatPriceInput(price, instrument) });
       } else {
-        if (!isValueInput(draft.quantity)) return;
+        const input = text ?? draft.quantity;
+        if (!isValueInput(input)) return;
         const priced = isPricedOrdType(draft.ordType);
         const quantity = resolveQuantityInput(
-          draft.quantity,
+          input,
           instrument,
           priced ? resolvePriceInput(draft.price, instrument) : risk.price,
           usdPerPriceUnit,
@@ -755,7 +767,9 @@ export const useOrderTicket = ({
       const field = target.dataset?.orderTicketField;
       const { key } = event;
       const resolveCurrent = () => {
-        if (field === "price" || field === "quantity") resolveShorthand(field);
+        // The live text: with fast typing the last render can be behind.
+        if (field === "price" || field === "quantity")
+          resolveShorthand(field, (target as HTMLInputElement).value);
       };
       if (
         key === "F9" ||
@@ -827,7 +841,7 @@ export const useOrderTicket = ({
       ) {
         event.preventDefault();
         resolveCurrent();
-        nextField(root, target)?.focus();
+        focusTicketField(nextField(root, target));
         return;
       }
       if (

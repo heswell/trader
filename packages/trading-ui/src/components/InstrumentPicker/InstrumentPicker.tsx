@@ -174,6 +174,8 @@ export const InstrumentPicker = ({
     setTyping(true);
   };
   const handleSelectionChange = (_: SyntheticEvent, selected: string[]) => {
+    // Enter on an order line: Salt would still pick its last active option.
+    if (commitText) return;
     const ric = selected[0];
     const row = ric ? byRic.get(ric) : undefined;
     setTyping(false);
@@ -203,8 +205,10 @@ export const InstrumentPicker = ({
   const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
     inputProps?.onFocus?.(event);
     if (!selectOnFocus) return;
+    // Now, so typing at once replaces the text, and again after a click's
+    // mouseup, which would otherwise drop the selection.
     const input = event.currentTarget;
-    // After the click's mouseup, which would otherwise drop the selection.
+    input.select();
     requestAnimationFrame(() => {
       if (input.ownerDocument.activeElement === input) input.select();
     });

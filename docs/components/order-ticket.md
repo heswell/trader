@@ -115,7 +115,8 @@ From top to bottom:
   - Shorthand resolves to a number when the field is left (Tab, Enter, or on send).
 - **Order line.** Type a whole order in the instrument field, e.g. `b 20k aal.l m vwap 15:30` or
   `s 5k mkt pov 10% 1h`: side first, then quantity, instrument (a word with a dot), price, strategy and its
-  parameters. Chips under the field show how each word was read. Enter fills the ticket and moves to the send
+  parameters. After the strategy, a bare number is its next parameter when valid there (`pov 10` = 10%,
+  `twap 45` = 45 min), so put a price before the strategy. Chips under the field show how each word was read. Enter fills the ticket and moves to the send
   button; it does not send. Without an instrument the current one is kept. Text with a space is an order line;
   text without one is a search.
 - **Validation.**

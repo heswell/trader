@@ -238,6 +238,22 @@ describe("order line", () => {
     expect(words.at(-1)).toEqual({ text: "zzz", label: undefined });
   });
 
+  test("after the strategy, a bare number is its next parameter", () => {
+    expect(parseOrderLine("b 2k pov 10").change).toMatchObject({
+      strategy: AlgoStrategy.Pov,
+      algoParams: { participationPct: "10" },
+    });
+    expect(parseOrderLine("b 2k pov 10").change.price).toBeUndefined();
+    expect(parseOrderLine("s 1k twap 45").change.algoParams).toEqual({
+      durationMins: "45",
+    });
+    // Out of range for the parameter: not taken as it (here, a price).
+    expect(parseOrderLine("b 2k pov 99").change).toMatchObject({
+      price: "99",
+      algoParams: {},
+    });
+  });
+
   test("an order line has a space; a search does not", () => {
     expect(isOrderLine("vod")).toBe(false);
     expect(isOrderLine("b 5k")).toBe(true);
