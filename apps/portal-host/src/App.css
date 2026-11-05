@@ -37,6 +37,22 @@ body {
   }
 }
 
+/*
+ * Panel title bars: styled like a stack's tab bar (no fill, the tabs' text
+ * size and weight, the same height and divider), so stacked and single
+ * panels read alike.
+ */
+#trader-portal .vuuGridLayout {
+  --vuuGridLayoutItemHeader-background: transparent;
+  --vuuGridLayoutItemHeader-background-active: transparent;
+  --vuuGridLayoutItemHeader-borderColor: var(
+    --salt-separable-secondary-borderColor
+  );
+  --vuuGridLayoutItemHeader-fontSize: var(--salt-text-fontSize);
+  --vuuGridLayoutItemHeader-height: 27px;
+  --vuuGridLayoutItemHeader-title-fontWeight: var(--salt-text-fontWeight);
+}
+
 .traderNav {
   .traderNavBrand-logo {
     align-items: center;

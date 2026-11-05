@@ -25,10 +25,11 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [InstrumentContextProvider](trading-ui.md#instrumentcontextprovider) | `instrument-context` |  |  | InstrumentLookup | `linking-providers` | [guide](../components/selection-and-linking.md#how-linking-works) |
 | [InstrumentGrid](trading-ui.md#instrumentgrid) | `components/InstrumentGrid` | `instrumentPrices` |  | InstrumentLookup, LinkGroupSelector, OrderTicket, Sparkline, StaleIndicator, TradingCellRenderers | `chart-workspace`, `depth-chart`, `hosting-feature-root`, `hosting-user-settings`, `instrument-grid`, `instrument-grid-200`, `instrument-grid-prices`, `market-depth-selected`, `price-chart`, `price-ladder-live`, `spread-chart`, `trader-workspace` | [guide](../components/instrument-grid.md#instrumentgrid) |
 | [InstrumentLookupProvider](trading-ui.md#instrumentlookupprovider) | `components/InstrumentLookup` | `instruments` |  |  | `selectors` | [guide](../components/selection-and-linking.md) |
-| [InstrumentPicker](trading-ui.md#instrumentpicker) | `components/InstrumentPicker` | `instruments` |  | LinkGroupSelector | `chart-workspace`, `depth-chart`, `linking-providers`, `market-depth-selected`, `price-chart`, `price-ladder-live`, `selectors`, `spread-chart`, `trader-workspace` | [guide](../components/selection-and-linking.md) |
+| [InstrumentPicker](trading-ui.md#instrumentpicker) | `components/InstrumentPicker` | `instruments` |  | LinkGroupSelector | `chart-workspace`, `depth-chart`, `linking-providers`, `market-depth-selected`, `panel-link-group`, `price-chart`, `price-ladder-live`, `selectors`, `spread-chart`, `trader-workspace` | [guide](../components/selection-and-linking.md) |
+| [LinkGroupMenuButton](trading-ui.md#linkgroupmenubutton) | `components/LinkGroupSelector` |  |  |  | `panel-link-group` | [guide](../components/selection-and-linking.md) |
 | [LinkGroupProvider](trading-ui.md#linkgroupprovider) | `instrument-context` |  |  | InstrumentLookup | `linking-providers` | [guide](../components/selection-and-linking.md#how-linking-works) |
 | [LinkGroupSelector](trading-ui.md#linkgroupselector) | `components/LinkGroupSelector` |  |  |  | `linking-providers`, `selectors` | [guide](../components/selection-and-linking.md) |
-| [LinkGroupSwatch](trading-ui.md#linkgroupswatch) | `components/LinkGroupSelector` |  |  |  | `linking-providers` | [guide](../components/selection-and-linking.md) |
+| [LinkGroupSwatch](trading-ui.md#linkgroupswatch) | `components/LinkGroupSelector` |  |  |  | `linking-providers`, `panel-link-group` | [guide](../components/selection-and-linking.md) |
 | [MarketDepth](trading-ui.md#marketdepth) | `components/MarketDepth` | `depth`, `instrumentPrices`, `parentOrders`, `trades` |  | LinkGroupSelector, StaleIndicator | `channel-picker-workspace`, `chart-workspace`, `market-depth-selected`, `price-ladder-live`, `trader-workspace` | [guide](../components/market-depth-and-ladder.md#marketdepth) |
 | [OrderBlotter](trading-ui.md#orderblotter) | `components/OrderBlotter` | `childOrders`, `parentOrders` | *edit session*, `amendOrder`, `cancelAll`, `cancelOrder` | InstrumentLookup, LinkGroupSelector, StaleIndicator, TradingCellRenderers | `order-blotter`, `trade-tape`, `trader-workspace` | [guide](../components/blotters.md) |
 | [OrderStatusBadge](trading-ui.md#orderstatusbadge) | `components/OrderStatusBadge` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
@@ -36,6 +37,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [OrderTicketDialog](trading-ui.md#orderticketdialog) | `components/OrderTicket` | `accounts`, `instrumentPrices`, `parentOrders` | `createOrder` | InstrumentPicker, LinkGroupSelector, StaleIndicator | `order-ticket-dialog` | [guide](../components/order-ticket.md) |
 | [OrderTicketLauncherProvider](trading-ui.md#orderticketlauncherprovider) | `components/OrderTicket` | `accounts`, `instrumentPrices`, `parentOrders` | `createOrder` | InstrumentPicker, LinkGroupSelector, StaleIndicator | *host* | [guide](../components/order-ticket.md#prefill) |
 | [OrderTicketPanel](trading-ui.md#orderticketpanel) | `components/OrderTicket` | `accounts`, `instrumentPrices`, `parentOrders` | `createOrder` | InstrumentPicker, LinkGroupSelector, StaleIndicator | `order-ticket-docked`, `trader-workspace` | [guide](../components/order-ticket.md) |
+| [PanelLinkGroupSelector](trading-ui.md#panellinkgroupselector) | `components/LinkGroupSelector` |  |  |  | `panel-link-group` | [guide](../components/selection-and-linking.md#panel-headers) |
 | [PhaseCell](trading-ui.md#phasecell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
 | [PnlHistoryChart](trading-ui.md#pnlhistorychart) | `components/PnlHistoryChart` | `accountPnlHistory` |  | AccountSelector, ChartFrame | `pnl-history-chart` | [guide](../components/charts.md#pnlhistorychart) |
 | [PnlValue](trading-ui.md#pnlvalue) | `components/PnlValue` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
@@ -120,7 +122,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | PriceChart | `price-chart` | [guide](../components/charts.md#pricechart) |
 | PriceLadder | `price-ladder-live`, `price-ladder-stress` | [guide](../components/market-depth-and-ladder.md) |
 | Primitives | `primitives-cell-renderers`, `primitives-status` | [guide](../components/primitives.md) |
-| Selectors | `selectors` | [guide](../components/selection-and-linking.md) |
+| Selectors | `panel-link-group`, `selectors` | [guide](../components/selection-and-linking.md) |
 | SideLabel | `side-label-variants` | [guide](../components/primitives.md) |
 | SlippageChart | `slippage-chart` | [guide](../components/charts.md#slippagechart) |
 | SpreadChart | `spread-chart` | [guide](../components/charts.md#spreadchart) |

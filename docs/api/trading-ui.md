@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 428 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 430 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -25,7 +25,7 @@ Imports: `@heswell/trading-ui`. 428 exports. Types are shown as written in the s
 - **components/InstrumentGrid**: [addToWatchlist](#addtowatchlist), [buildInstrumentGridFilter](#buildinstrumentgridfilter), [cellUnchanged](#cellunchanged), [ChangeCell](#changecell), [createWatchlist](#createwatchlist), [DEFAULT_INSTRUMENT_GRID_COLUMNS](#default_instrument_grid_columns), [deleteWatchlist](#deletewatchlist), [EMPTY_WATCHLISTS](#empty_watchlists), [GROUPABLE_COLUMNS](#groupable_columns), [InstrumentAction](#instrumentaction), [InstrumentGrid](#instrumentgrid), [instrumentGridColumn](#instrumentgridcolumn), [InstrumentGridColumnOptions](#instrumentgridcolumnoptions), [instrumentGridColumns](#instrumentgridcolumns), [InstrumentGridFilterParts](#instrumentgridfilterparts), [InstrumentGridProps](#instrumentgridprops), [parseWatchlists](#parsewatchlists), [PhaseCell](#phasecell), [phaseLabel](#phaselabel), [priceFormatOf](#priceformatof), [PriceMoveCell](#pricemovecell), [QuantityCell](#quantitycell), [quickFilterExpression](#quickfilterexpression), [registerInstrumentGridRenderers](#registerinstrumentgridrenderers), [removeFromWatchlist](#removefromwatchlist), [renameWatchlist](#renamewatchlist), [SPARKLINE_COLUMN](#sparkline_column), [useWatchlists](#usewatchlists), [UseWatchlistsResult](#usewatchlistsresult), [Watchlist](#watchlist), [watchlistFilterExpression](#watchlistfilterexpression), [WATCHLISTS_SETTINGS_KEY](#watchlists_settings_key), [WatchlistState](#watchliststate)
 - **components/InstrumentLookup**: [InstrumentLookup](#instrumentlookup), [InstrumentLookupProvider](#instrumentlookupprovider), [useInstrumentLookup](#useinstrumentlookup)
 - **components/InstrumentPicker**: [INSTRUMENT_PICKER_SOURCE](#instrument_picker_source), [InstrumentPicker](#instrumentpicker), [InstrumentPickerProps](#instrumentpickerprops), [instrumentSearchFilter](#instrumentsearchfilter), [toSelectedInstrument](#toselectedinstrument)
-- **components/LinkGroupSelector**: [LinkGroupSelector](#linkgroupselector), [LinkGroupSelectorProps](#linkgroupselectorprops), [LinkGroupSwatch](#linkgroupswatch)
+- **components/LinkGroupSelector**: [LinkGroupMenuButton](#linkgroupmenubutton), [LinkGroupSelector](#linkgroupselector), [LinkGroupSelectorProps](#linkgroupselectorprops), [LinkGroupSwatch](#linkgroupswatch), [PanelLinkGroupSelector](#panellinkgroupselector)
 - **components/MarketDepth**: [MarketDepth](#marketdepth), [MarketDepthLevelClick](#marketdepthlevelclick), [MarketDepthProps](#marketdepthprops)
 - **components/OrderBlotter**: [CHILD_ORDER_COLUMNS](#child_order_columns), [childOrdersTableConfig](#childorderstableconfig), [ORDER_BLOTTER_COLUMNS](#order_blotter_columns), [ORDER_BLOTTER_TABS](#order_blotter_tabs), [OrderBlotter](#orderblotter), [OrderBlotterContext](#orderblottercontext), [OrderBlotterProps](#orderblotterprops), [OrderBlotterTab](#orderblottertab), [orderBlotterTabFilter](#orderblottertabfilter), [orderBlotterTableConfig](#orderblottertableconfig), [OrderRowActions](#orderrowactions)
 - **components/OrderStatusBadge**: [OrderStatusBadge](#orderstatusbadge), [OrderStatusBadgeProps](#orderstatusbadgeprops)
@@ -3400,9 +3400,30 @@ Props of [`InstrumentPicker`](#instrumentpicker).
 
 ### Components (components/LinkGroupSelector)
 
+#### LinkGroupMenuButton
+
+*component* · [components/LinkGroupSelector/LinkGroupSelector.tsx](../../packages/trading-ui/src/components/LinkGroupSelector/LinkGroupSelector.tsx#L164)
+
+An icon-only LinkGroupSelector: a small button showing the group's swatch,
+opening a menu of the groups. Its accessible name and tooltip carry the
+group name (and, for `active`, the channel it follows), as the swatch
+colour alone does not identify it. For panel title bars.
+
+Props: `LinkGroupSelectorProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `value` | `LinkGroupId` |  | The current group. |
+| `onChange` | `(linkGroup: LinkGroupId) => void` |  |  |
+| `groups?` | `readonly LinkGroupDefinition[]` | `DEFAULT_LINK_GROUPS` | Groups to offer (default DEFAULT_LINK_GROUPS); `unlinked` is added, and `active` first inside a WorkspaceChannelProvider. |
+| `allowUnlinked?` | `boolean` | `true` | Offer `unlinked` (default true). |
+| `className?` | `string` |  |  |
+| `aria-label?` | `string` | `"Link group"` | Accessible name (default "Link group"). |
+| `disabled?` | `boolean` |  |  |
+
 #### LinkGroupSelector
 
-*component* · [components/LinkGroupSelector/LinkGroupSelector.tsx](../../packages/trading-ui/src/components/LinkGroupSelector/LinkGroupSelector.tsx#L84)
+*component* · [components/LinkGroupSelector/LinkGroupSelector.tsx](../../packages/trading-ui/src/components/LinkGroupSelector/LinkGroupSelector.tsx#L115)
 
 A compact dropdown to pick a component's instrument link group (colour
 swatch + name, so it does not rely on colour alone). For component
@@ -3424,7 +3445,7 @@ Props: `LinkGroupSelectorProps`
 
 #### LinkGroupSwatch
 
-*component* · [components/LinkGroupSelector/LinkGroupSelector.tsx](../../packages/trading-ui/src/components/LinkGroupSelector/LinkGroupSelector.tsx#L51)
+*component* · [components/LinkGroupSelector/LinkGroupSelector.tsx](../../packages/trading-ui/src/components/LinkGroupSelector/LinkGroupSelector.tsx#L63)
 
 The colour dot of a link group (striped for unlinked; for `active`, the
 colour of the workspace's active channel, ringed).
@@ -3434,13 +3455,34 @@ colour of the workspace's active channel, ringed).
 | `group` | `LinkGroupId` |  |  |
 | `groups?` | `readonly LinkGroupDefinition[]` |  |  |
 
+#### PanelLinkGroupSelector
+
+*component* · [components/LinkGroupSelector/LinkGroupSelector.tsx](../../packages/trading-ui/src/components/LinkGroupSelector/LinkGroupSelector.tsx#L226)
+
+The link group selector of a panel component. Hosted in a grid-layout
+item (a portal workspace panel), it is a LinkGroupMenuButton in the
+item's header, at the start (in a stack, the tab bar's start, while the
+panel's tab is selected). Elsewhere it is an inline LinkGroupSelector.
+
+Props: `LinkGroupSelectorProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `value` | `LinkGroupId` |  | The current group. |
+| `onChange` | `(linkGroup: LinkGroupId) => void` |  |  |
+| `groups?` | `readonly LinkGroupDefinition[]` | `DEFAULT_LINK_GROUPS` | Groups to offer (default DEFAULT_LINK_GROUPS); `unlinked` is added, and `active` first inside a WorkspaceChannelProvider. |
+| `allowUnlinked?` | `boolean` | `true` | Offer `unlinked` (default true). |
+| `className?` | `string` |  |  |
+| `aria-label?` | `string` | `"Link group"` | Accessible name (default "Link group"). |
+| `disabled?` | `boolean` |  |  |
+
 ### Interfaces (components/LinkGroupSelector)
 
 #### LinkGroupSelectorProps
 
-*interface* · [components/LinkGroupSelector/LinkGroupSelector.tsx](../../packages/trading-ui/src/components/LinkGroupSelector/LinkGroupSelector.tsx#L21)
+*interface* · [components/LinkGroupSelector/LinkGroupSelector.tsx](../../packages/trading-ui/src/components/LinkGroupSelector/LinkGroupSelector.tsx#L33)
 
-Props of [`LinkGroupSelector`](#linkgroupselector).
+Props of [`LinkGroupMenuButton`](#linkgroupmenubutton).
 
 ## components/MarketDepth
 

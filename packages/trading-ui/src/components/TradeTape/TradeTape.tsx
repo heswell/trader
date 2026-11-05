@@ -11,7 +11,7 @@ import {
   type LinkGroupProps,
   useComponentLinkGroup,
 } from "../../instrument-context/useComponentLinkGroup";
-import { LinkGroupSelector } from "../LinkGroupSelector";
+import { PanelLinkGroupSelector } from "../LinkGroupSelector";
 import { useStaleData } from "../StaleIndicator/useStaleData";
 import { sideColour } from "../../utils/colours";
 import { formatPrice, formatQuantity } from "../../utils/formatting";
@@ -135,7 +135,7 @@ const Inner = forwardRef<HTMLDivElement, TradeTapeProps>(
       >
         {showLinkGroupSelector ? (
           <div className={`${classBase}-toolbar`}>
-            <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
+            <PanelLinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
             <span className={`${classBase}-ric`}>{ric}</span>
           </div>
         ) : null}
