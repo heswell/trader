@@ -3461,8 +3461,8 @@ colour of the workspace's active channel, ringed).
 
 The link group selector of a panel component. Hosted in a grid-layout
 item (a portal workspace panel), it is a LinkGroupMenuButton in the
-item's header, at the start (in a stack, the tab bar's start, while the
-panel's tab is selected). Elsewhere it is an inline LinkGroupSelector.
+item's header, at the start; in a stack, at the start of the panel's own
+tab. Elsewhere it is an inline LinkGroupSelector.
 
 Props: `LinkGroupSelectorProps`
 

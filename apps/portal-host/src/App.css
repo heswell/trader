@@ -53,6 +53,35 @@ body {
   --vuuGridLayoutItemHeader-title-fontWeight: var(--salt-text-fontWeight);
 }
 
+/*
+ * Stacked panels show their link group button at the start of their own
+ * tab, and only the selected panel contributes one. In a stack that has one,
+ * every tab keeps room for it at the start and the same room at the end, so
+ * the labels stay centred and nothing moves when the selection (and with it
+ * the button) changes tab.
+ */
+#trader-portal
+  .vuuGridLayoutStackedItem:has(.vuuGridLayoutStackedItem-tabStart:not(:empty))
+  :is(.vuuGridLayoutStackedItem-tabStart, .vuuGridLayoutStackedItem-tabEnd) {
+  box-sizing: content-box;
+  display: flex;
+  flex: none;
+  justify-content: center;
+  min-width: calc(var(--salt-size-base) - var(--salt-spacing-50));
+}
+
+/*
+ * Salt's TabTrigger covers its whole tab with a ::before hit area, so a
+ * contribution in a tab's start / end slot sits above it to take its own
+ * clicks (the reserved space around it still selects the tab).
+ */
+#trader-portal
+  :is(.vuuGridLayoutStackedItem-tabStart, .vuuGridLayoutStackedItem-tabEnd)
+  > .vuuGridLayoutHeaderContribution {
+  position: relative;
+  z-index: 1;
+}
+
 .traderNav {
   .traderNavBrand-logo {
     align-items: center;

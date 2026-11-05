@@ -76,7 +76,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | `components/FillsBlotter` | `tradingFillsBlotter` |  | `data-link-group`, `data-testid` |
 | `components/InstrumentGrid` | `tradingInstrumentCell`, `tradingInstrumentGrid` | `--trading-down`, `--trading-neutral`, `--trading-up` | `data-direction`, `data-link-group`, `data-phase` |
 | `components/InstrumentPicker` | `tradingInstrumentPicker` |  | `data-instrument-picker`, `data-link-group` |
-| `components/LinkGroupSelector` | `tradingLinkGroupSelector` | `--tradingLinkGroupSelector-swatchSize` | `data-link-group` |
+| `components/LinkGroupSelector` | `tradingLinkGroupSelector` | `--tradingLinkGroupSelector-haloSize`, `--tradingLinkGroupSelector-swatchSize` | `data-link-group` |
 | `components/MarketDepth` | `tradingMarketDepth` | `--tradingMarketDepth-ask-bar`, `--tradingMarketDepth-bid-bar`, `--tradingMarketDepth-flash`, `--tradingMarketDepth-own`, `--tradingMarketDepth-rowHeight` | `data-flash`, `data-inactive`, `data-level`, `data-link-group`, `data-own`, `data-phase` |
 | `components/OrderBlotter` | `tradingOrderBlotter` |  | `data-connection-state`, `data-error`, `data-link-group`, `data-testid` |
 | `components/OrderStatusBadge` | `tradingOrderStatusBadge` | `--tradingOrderStatusBadge-color` | `data-category`, `data-status` |
