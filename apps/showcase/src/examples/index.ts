@@ -51,6 +51,7 @@ import {
 } from "./PrimitivesExamples";
 import { SideLabelExamples } from "./SideLabelExamples";
 import {
+  SimulatorControlExample,
   SimulatorInstrumentExample,
   SimulatorMonitorExample,
 } from "./SimulatorExamples";
@@ -154,6 +155,14 @@ export const examples: ShowcaseExample[] = [
     description:
       "simSamples for AAPL.OQ: fair value, walk and quotes over signed volume by owner group, and botFills with markouts. The showcase runs with market impact off, so fair and walk coincide.",
     Component: SimulatorInstrumentExample,
+  },
+  {
+    id: "simulator-control",
+    group: "Simulator",
+    title: "Session, scenarios and instrument controls",
+    description:
+      "Force the session phase, pause every bot or run a scenario; change AAPL.OQ's price model, jump its fair value, set bot rates or add a bot. Every change shows in the control log (simEvents).",
+    Component: SimulatorControlExample,
   },
 
   {

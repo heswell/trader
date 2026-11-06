@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 464 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 474 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -37,6 +37,7 @@ Imports: `@heswell/trading-ui`. 464 exports. Types are shown as written in the s
 - **components/PriceLadder**: [centreIndex](#centreindex), [LadderLevel](#ladderlevel), [ladderPrices](#ladderprices), [ladderReferencePrice](#ladderreferenceprice), [LadderTradeIntent](#laddertradeintent), [needsRecentre](#needsrecentre), [PRICE_LADDER_SOURCE](#price_ladder_source), [PriceLadder](#priceladder), [PriceLadderAction](#priceladderaction), [PriceLadderColumn](#priceladdercolumn), [PriceLadderOrderEvent](#priceladderorderevent), [PriceLadderProps](#priceladderprops), [PriceLadderTradeMode](#priceladdertrademode), [PriceLadderView](#priceladderview), [PriceLadderViewProps](#priceladderviewprops)
 - **components/SideLabel**: [SideLabel](#sidelabel), [SideLabelProps](#sidelabelprops)
 - **components/SimInstrumentChart**: [SIM_FLOW_GROUPS](#sim_flow_groups), [SimInstrumentChart](#siminstrumentchart), [SimInstrumentChartProps](#siminstrumentchartprops)
+- **components/SimulatorControls**: [ScenarioRuns](#scenarioruns), [ScenarioRunsProps](#scenariorunsprops), [SimEventsLog](#simeventslog), [SimEventsLogProps](#simeventslogprops), [SimInstrumentControls](#siminstrumentcontrols), [SimInstrumentControlsProps](#siminstrumentcontrolsprops), [SimRpcMessage](#simrpcmessage), [SimSessionStrip](#simsessionstrip), [SimSessionStripProps](#simsessionstripprops), [useSimRpc](#usesimrpc)
 - **components/SimulatorGrids**: [BotDetail](#botdetail), [BotDetailProps](#botdetailprops), [BotFillsTape](#botfillstape), [BotFillsTapeProps](#botfillstapeprops), [BOTS_GROUP_BY](#bots_group_by), [BotsGrid](#botsgrid), [BotsGridProps](#botsgridprops), [BotsGrouping](#botsgrouping), [SIM_BOOKS_SORT](#sim_books_sort), [SimBooksGrid](#simbooksgrid), [SimBooksGridProps](#simbooksgridprops), [SimBooksSort](#simbookssort)
 - **components/SlippageChart**: [SlippageChart](#slippagechart), [SlippageChartProps](#slippagechartprops)
 - **components/Sparkline**: [DEFAULT_SPARKLINE_LENGTH](#default_sparkline_length), [recordSample](#recordsample), [registerSparklineRenderer](#registersparklinerenderer), [Sparkline](#sparkline), [SparklineBuffer](#sparklinebuffer), [SparklineCell](#sparklinecell), [SparklineCellOptions](#sparklinecelloptions), [sparklineOptions](#sparklineoptions), [sparklinePoints](#sparklinepoints), [SparklineProps](#sparklineprops), [SparklineSampling](#sparklinesampling), [sparklineStore](#sparklinestore-1), [SparklineStore](#sparklinestore), [SparklineTrend](#sparklinetrend)
@@ -5091,17 +5092,128 @@ const SIM_FLOW_GROUPS: readonly [{ readonly column: "mmNet"; readonly name: "Mar
 
 Props of [`SimInstrumentChart`](#siminstrumentchart).
 
+## components/SimulatorControls
+
+### Components (components/SimulatorControls)
+
+#### ScenarioRuns
+
+*component* · [components/SimulatorControls/ScenarioRuns.tsx](../../packages/trading-ui/src/components/SimulatorControls/ScenarioRuns.tsx#L16)
+
+Scenario runs (`scenarioRuns`, sim-admin only), newest first: progress
+and status, with Stop (keep the changes) and Stop and revert.
+
+Props: `ScenarioRunsProps`
+
+Also accepts the standard HTML attributes and `ref`.
+
+#### SimEventsLog
+
+*component* · [components/SimulatorControls/SimEventsLog.tsx](../../packages/trading-ui/src/components/SimulatorControls/SimEventsLog.tsx#L47)
+
+Audit log of simulator control actions (`simEvents`, sim-admin only),
+newest first: who changed what, from an admin RPC or a scenario run.
+
+Props: `SimEventsLogProps`
+
+Also accepts the standard HTML attributes and `ref`.
+
+#### SimInstrumentControls
+
+*component* · [components/SimulatorControls/SimInstrumentControls.tsx](../../packages/trading-ui/src/components/SimulatorControls/SimInstrumentControls.tsx#L66)
+
+Run-time controls for one simulated instrument (sim-admin only): price
+model (volatility, drift, impact), fair-value jumps, halt / resume, bot
+rates, pausing and pulling its bots, and adding a bot. Follows the
+linked instrument; current values come from `simBooks`.
+
+Props: `SimInstrumentControlsProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `ric?` | `string` |  | Instrument; default: the followed (linked) instrument. |
+| `linkGroup?` | `LinkGroupId` |  | Link group (channel) to join: e.g. "red", "green", or "unlinked". The initial group when the user can change it (`showLinkGroupSelector`); a later change of the prop is applied too. Default: the saved group, then `defaultLinkGroup`, then the inherited group. (from `LinkGroupProps`) |
+| `defaultLinkGroup?` | `LinkGroupId` |  | Group used when there is no `linkGroup` prop and nothing saved. (from `LinkGroupProps`) |
+| `onLinkGroupChange?` | `(linkGroup: LinkGroupId) => void` |  | The user picked another group in the selector. (from `LinkGroupProps`) |
+| `showLinkGroupSelector?` | `boolean` | `false` | Show a LinkGroupSelector in the component header / toolbar. (from `LinkGroupProps`) |
+
+Also accepts the standard HTML attributes and `ref`.
+
+#### SimSessionStrip
+
+*component* · [components/SimulatorControls/SimSessionStrip.tsx](../../packages/trading-ui/src/components/SimulatorControls/SimSessionStrip.tsx#L23)
+
+The simulated session (`simSession`, sim-admin only): phase, next change
+and session clock, with controls to force a phase, pause or resume every
+bot and start a scenario (`scenarios`) on its default instruments.
+
+Props: `SimSessionStripProps`
+
+Also accepts the standard HTML attributes and `ref`.
+
+### Hooks (components/SimulatorControls)
+
+#### useSimRpc
+
+*hook* · [components/SimulatorControls/useSimRpc.ts](../../packages/trading-ui/src/components/SimulatorControls/useSimRpc.ts#L20)
+
+Send simulator control RPCs through `dataSource` (any subscribed EXCHANGE
+table), keeping the last outcome as a message for the control to show.
+
+```ts
+useSimRpc(dataSource: DataSource): { send: <N extends RpcName>(rpcName: N, params: RpcRequestParams<N>, done?: string | ((data: RpcResponseData<N>) => string) | undefined) => Promise<...>; message: SimRpcMessage | undefined; pending: boolean; }
+```
+
+### Interfaces (components/SimulatorControls)
+
+#### SimInstrumentControlsProps
+
+*interface* · [components/SimulatorControls/SimInstrumentControls.tsx](../../packages/trading-ui/src/components/SimulatorControls/SimInstrumentControls.tsx#L22)
+
+Props of [`SimInstrumentControls`](#siminstrumentcontrols).
+
+#### SimRpcMessage
+
+*interface* · [components/SimulatorControls/useSimRpc.ts](../../packages/trading-ui/src/components/SimulatorControls/useSimRpc.ts#L11)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `text` | `string` |  |  |
+| `error` | `boolean` |  |  |
+
+### Types (components/SimulatorControls)
+
+#### ScenarioRunsProps
+
+*type* · [components/SimulatorControls/ScenarioRuns.tsx](../../packages/trading-ui/src/components/SimulatorControls/ScenarioRuns.tsx#L10)
+
+Props of [`ScenarioRuns`](#scenarioruns).
+
+#### SimEventsLogProps
+
+*type* · [components/SimulatorControls/SimEventsLog.tsx](../../packages/trading-ui/src/components/SimulatorControls/SimEventsLog.tsx#L41)
+
+Props of [`SimEventsLog`](#simeventslog).
+
+#### SimSessionStripProps
+
+*type* · [components/SimulatorControls/SimSessionStrip.tsx](../../packages/trading-ui/src/components/SimulatorControls/SimSessionStrip.tsx#L10)
+
+Props of [`SimSessionStrip`](#simsessionstrip).
+
 ## components/SimulatorGrids
 
 ### Components (components/SimulatorGrids)
 
 #### BotDetail
 
-*component* · [components/SimulatorGrids/BotDetail.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotDetail.tsx#L30)
+*component* · [components/SimulatorGrids/BotDetail.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotDetail.tsx#L35)
 
 One bot's stats (from `bots`), P&L history (`botHistory`), parameters
-with their specs (`botParams`, read only until they can be changed at run
-time) and recent fills with markouts (`botFills`).
+with their specs (`botParams`) and recent fills with markouts
+(`botFills`). Sim admins can pause, resume, pull, reset or remove the bot
+and edit its parameters: changed ones are marked, with a reset to the
+baseline (the value it was created with).
 
 Props: `BotDetailProps`
 
@@ -5204,7 +5316,7 @@ const SIM_BOOKS_SORT: Readonly<{ readonly ric: { readonly column: "ric"; readonl
 
 #### BotDetailProps
 
-*interface* · [components/SimulatorGrids/BotDetail.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotDetail.tsx#L16)
+*interface* · [components/SimulatorGrids/BotDetail.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotDetail.tsx#L19)
 
 Props of [`BotDetail`](#botdetail).
 

@@ -101,6 +101,17 @@ export const TradingPhase = Object.freeze({
   Halted: "HALTED",
 } as const);
 export type TradingPhase = ValueOf<typeof TradingPhase>;
+
+/** Status of a simulator scenario run (scenarioRuns.status). */
+export const ScenarioStatus = Object.freeze({
+  Running: "RUNNING",
+  Done: "DONE",
+  Stopped: "STOPPED",
+  /** Live when the server stopped; its changes were reverted on restart. */
+  Aborted: "ABORTED",
+  Failed: "FAILED",
+} as const);
+export type ScenarioStatus = ValueOf<typeof ScenarioStatus>;
 export const TRADING_PHASES = values(TradingPhase);
 
 /** Phases in which new orders / amends may be submitted to the exchange. */

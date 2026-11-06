@@ -172,7 +172,40 @@ The design:
   signed volume by owner group underneath (its own axis, shared time); bots on the instrument; the
   attributed tape.
 
-## Phase 3: control and scenarios
+## Phase 3: control and scenarios (built)
+
+As built:
+
+- `SimControl` (`src/engine/control/SimControl.ts`) applies every admin action, from RPCs and
+  scenario steps alike, and records it as a `SimEvent`. The original RPCs (`setVolatility`, halt,
+  resume, `setBotRate`, `setMarketPhase`) go through it too, so they are logged.
+- **RPC params are flat** (Vuu allows only string, number and boolean): `setBotParams` sets one
+  parameter per call (`name`, `value`); `addBot params` and `runScenario args` are JSON strings,
+  `runScenario rics` is comma separated. Values are absolute or relative (`"x2"`, `"+3"`, `"-3"`),
+  clamped to the spec's range. `shiftFairValue` has no `informedSecs` yet (that needs the informed
+  trader of phase 4).
+- Bot pause is a flag on the `OrderPort`; a paused bot is skipped and pulls its orders. Each bot's
+  baseline is its params at creation; `botParams` gains `baseline` and `changed`, `bots` gains
+  `paused`, `simBooks` gains `driftBpsPerHour`.
+- The roster (kind, params, paused per bot) and the model settings (drift, impact) are saved with
+  each book's settings, in snapshots and the journal, so bot and drift changes survive a restart.
+- `ScenarioRunner` (`src/engine/control/ScenarioRunner.ts`) runs the JSON files in
+  `packages/exchange-sim/scenarios/` (calm, volatile-open, trending-day, liquidity-crunch). Args
+  are `$name` or `${name}` (for use inside a string such as `"+${minutes}m"`). A step that fails
+  fails the run and reverts it. Run start (with its baseline) and end are journaled; runs live at a
+  restart are reverted and listed as `ABORTED`. `registerAction` is there for the OMS, which does
+  not register any actions yet.
+- New tables `simEvents` (ring buffer of 1000), `scenarios`, `scenarioRuns` and `simSession` (phase,
+  next change, session clock, paused bots, running scenarios).
+- UI: `SimSessionStrip`, `ScenarioRuns` and `SimEventsLog` on the Overview; `SimInstrumentControls`
+  beside the chart on the Instrument screen (also Add bot, pause, resume and pull quotes for the
+  instrument); `BotDetail` gains bot actions and an editable parameter form with the changed marker
+  and Reset to baseline. Bot actions live in `BotDetail`, not as grid row actions. `simEvents` does
+  not mark the charts yet.
+- Benchmark: the same as main when run side by side (3.2x to 3.6x headroom against 3.1x to 3.5x,
+  p99 lag 11 to 12 ms against 13 to 14 ms; the machine was busy, so both are below the earlier 4x).
+
+The design:
 
 **Admin RPCs** (all need `sim-admin`, return the affected instruments or bots, and follow
 [exchangeAdminRpc.ts](../packages/exchange-sim/src/modules/exchange/exchangeAdminRpc.ts)):

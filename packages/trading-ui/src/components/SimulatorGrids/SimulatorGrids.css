@@ -63,3 +63,42 @@
 .tradingBotDetail small {
   color: var(--salt-content-secondary-foreground);
 }
+
+.tradingBotDetail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--salt-spacing-100);
+}
+
+.tradingBotDetail-message {
+  display: block;
+  color: var(--salt-content-secondary-foreground);
+}
+
+.tradingBotDetail-message[data-error="true"] {
+  color: var(
+    --salt-status-error-foreground-decorative,
+    var(--salt-status-error-foreground)
+  );
+}
+
+.tradingBotDetail-param {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--salt-spacing-50);
+}
+
+.tradingBotDetail-param form {
+  align-items: center;
+  display: flex;
+  gap: var(--salt-spacing-50);
+}
+
+.tradingBotDetail-changed {
+  color: var(
+    --salt-status-warning-foreground-decorative,
+    var(--salt-status-warning-foreground)
+  );
+  font-weight: var(--salt-text-fontWeight-strong);
+}

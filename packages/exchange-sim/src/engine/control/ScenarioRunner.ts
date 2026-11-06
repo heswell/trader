@@ -1,4 +1,11 @@
-import { BotType, RejectReason, TradingPhase } from "@heswell/trading-schemas";
+import {
+  BotType,
+  RejectReason,
+  ScenarioStatus,
+  TradingPhase,
+} from "@heswell/trading-schemas";
+
+export { ScenarioStatus };
 import { Random } from "../../util/random";
 import { ExchangeAdminError } from "../errors";
 import type { ExchangeSimulator } from "../ExchangeSimulator";
@@ -30,17 +37,6 @@ export interface ScenarioDef {
   args?: Record<string, number | string>;
   steps: ScenarioStep[];
 }
-
-export const ScenarioStatus = Object.freeze({
-  Running: "RUNNING",
-  Done: "DONE",
-  Stopped: "STOPPED",
-  /** Live when the server stopped; its changes were reverted on restart. */
-  Aborted: "ABORTED",
-  Failed: "FAILED",
-} as const);
-export type ScenarioStatus =
-  (typeof ScenarioStatus)[keyof typeof ScenarioStatus];
 
 export interface ScenarioRun {
   runId: string;

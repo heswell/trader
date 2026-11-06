@@ -18,6 +18,10 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   SimInstrumentChart: "docs/components/simulator.md",
   BotsGrid: "docs/components/simulator.md",
   SimBooksGrid: "docs/components/simulator.md",
+  SimSessionStrip: "docs/components/simulator.md#control",
+  ScenarioRuns: "docs/components/simulator.md#control",
+  SimEventsLog: "docs/components/simulator.md#control",
+  SimInstrumentControls: "docs/components/simulator.md#control",
   InstrumentContextProvider:
     "docs/components/selection-and-linking.md#how-linking-works",
   InstrumentGrid: "docs/components/instrument-grid.md#instrumentgrid",

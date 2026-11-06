@@ -442,6 +442,7 @@ export class SimAdminPublisher {
     row[idx.impactOffsetBps] = round(book.model.impactOffsetBps, 2);
     row[idx.impactTodayBps] = round(book.model.impactTodayBps, 2);
     row[idx.impactK] = round(book.model.impact.k * 1e4, 3);
+    row[idx.driftBpsPerHour] = book.model.driftBpsPerHour;
     row[idx.bandLow] = book.model.lowerBand;
     row[idx.bandHigh] = book.model.upperBand;
     row[idx.mid] = finite(mid, 6);

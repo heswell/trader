@@ -14,7 +14,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | Component | Folder | Tables | RPCs | Composes | Showcase | Guide |
 | --- | --- | --- | --- | --- | --- | --- |
 | [AccountSelector](trading-ui.md#accountselector) | `components/AccountSelector` | `accounts` |  | OrderTicket | `selectors` | [guide](../components/selection-and-linking.md#accounts) |
-| [BotDetail](trading-ui.md#botdetail) | `components/SimulatorGrids` | `botFills`, `botHistory`, `botParams`, `bots`, `depth`, `instrumentPrices`, `trades` |  | InstrumentLookup, LinkGroupSelector, PnlValue, Sparkline, StaleIndicator, TradingCellRenderers | `simulator-monitor` | [guide](../components/simulator.md) |
+| [BotDetail](trading-ui.md#botdetail) | `components/SimulatorGrids` | `botFills`, `botHistory`, `botParams`, `bots`, `depth`, `instrumentPrices`, `trades` |  | InstrumentLookup, LinkGroupSelector, PnlValue, SimulatorControls, Sparkline, StaleIndicator, TradingCellRenderers | `simulator-monitor` | [guide](../components/simulator.md) |
 | [BotFillsTape](trading-ui.md#botfillstape) | `components/SimulatorGrids` | `botFills`, `depth`, `instrumentPrices`, `trades` |  | InstrumentLookup, LinkGroupSelector, StaleIndicator, TradingCellRenderers | `simulator-instrument` | [guide](../components/simulator.md) |
 | [BotsGrid](trading-ui.md#botsgrid) | `components/SimulatorGrids` | `bots`, `depth`, `instrumentPrices`, `trades` |  | InstrumentLookup, LinkGroupSelector, StaleIndicator, TradingCellRenderers | `simulator-monitor` | [guide](../components/simulator.md) |
 | [ChangeCell](trading-ui.md#changecell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
@@ -50,9 +50,13 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [PriceLadderView](trading-ui.md#priceladderview) | `components/PriceLadder` | `depth`, `instrumentPrices`, `parentOrders`, `trades` |  |  | `price-ladder-stress` | [guide](../components/market-depth-and-ladder.md) |
 | [PriceMoveCell](trading-ui.md#pricemovecell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
 | [QuantityCell](trading-ui.md#quantitycell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
+| [ScenarioRuns](trading-ui.md#scenarioruns) | `components/SimulatorControls` | `scenarioRuns` |  |  | `simulator-control` | [guide](../components/simulator.md#control) |
 | [SideLabel](trading-ui.md#sidelabel) | `components/SideLabel` |  |  |  | `side-label-variants`, `stack-instrument-prices` | [guide](../components/primitives.md) |
 | [SimBooksGrid](trading-ui.md#simbooksgrid) | `components/SimulatorGrids` | `simBooks` |  | InstrumentLookup, LinkGroupSelector, StaleIndicator, TradingCellRenderers | `simulator-monitor` | [guide](../components/simulator.md) |
+| [SimEventsLog](trading-ui.md#simeventslog) | `components/SimulatorControls` | `simEvents` |  | SimulatorGrids, TradingCellRenderers | `simulator-control` | [guide](../components/simulator.md#control) |
 | [SimInstrumentChart](trading-ui.md#siminstrumentchart) | `components/SimInstrumentChart` | `depth`, `instrumentPrices`, `simSamples`, `trades` |  | ChartFrame, LinkGroupSelector | `simulator-instrument` | [guide](../components/simulator.md) |
+| [SimInstrumentControls](trading-ui.md#siminstrumentcontrols) | `components/SimulatorControls` | `bots`, `depth`, `instrumentPrices`, `simBooks`, `trades` |  | LinkGroupSelector | `simulator-control` | [guide](../components/simulator.md#control) |
+| [SimSessionStrip](trading-ui.md#simsessionstrip) | `components/SimulatorControls` | `scenarios`, `simSession` |  |  | `simulator-control` | [guide](../components/simulator.md#control) |
 | [SlippageChart](trading-ui.md#slippagechart) | `components/SlippageChart` | `parentOrders` |  | ChartFrame | `slippage-chart` | [guide](../components/charts.md#slippagechart) |
 | [Sparkline](trading-ui.md#sparkline) | `components/Sparkline` |  |  |  | `primitives-status` | [guide](../components/instrument-grid.md#sparkline) |
 | [SparklineCell](trading-ui.md#sparklinecell) | `components/Sparkline` |  |  |  | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#sparkline) |
@@ -93,7 +97,8 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | `components/PriceLadder` | `tradingPriceLadder` | `--tradingPriceLadder-ask-bar`, `--tradingPriceLadder-bid-bar`, `--tradingPriceLadder-columns`, `--tradingPriceLadder-ltp`, `--tradingPriceLadder-own`, `--tradingPriceLadder-rowHeight` | `data-auto-centre`, `data-best-ask`, `data-best-bid`, `data-col`, `data-columns`, `data-connection-state`, `data-cursor`, `data-cursor-row`, `data-dragging`, `data-drop-target`, `data-kind`, `data-link-group`, `data-ltp`, `data-moving`, `data-own`, `data-phase`, `data-price`, `data-side`, `data-spread`, `data-trade-mode` |
 | `components/SideLabel` | `tradingSideLabel` | `--tradingSideLabel-color` | `data-side` |
 | `components/SimInstrumentChart` | `tradingSimInstrumentChart` |  | `data-link-group` |
-| `components/SimulatorGrids` | `tradingBotDetail` |  | `data-link-group`, `data-testid` |
+| `components/SimulatorControls` |  |  | `data-error`, `data-link-group`, `data-status`, `data-testid` |
+| `components/SimulatorGrids` | `tradingBotDetail` |  | `data-error`, `data-link-group`, `data-testid` |
 | `components/SlippageChart` | `tradingSlippageChart` |  |  |
 | `components/Sparkline` | `tradingSparkline` | `--trading-neutral` | `data-trend` |
 | `components/SpreadChart` | `tradingSpreadChart` |  | `data-link-group` |
@@ -131,7 +136,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | Primitives | `primitives-cell-renderers`, `primitives-status` | [guide](../components/primitives.md) |
 | Selectors | `panel-link-group`, `selectors` | [guide](../components/selection-and-linking.md) |
 | SideLabel | `side-label-variants` | [guide](../components/primitives.md) |
-| Simulator | `simulator-instrument`, `simulator-monitor` | [guide](../components/simulator.md) |
+| Simulator | `simulator-control`, `simulator-instrument`, `simulator-monitor` | [guide](../components/simulator.md) |
 | SlippageChart | `slippage-chart` | [guide](../components/charts.md#slippagechart) |
 | SpreadChart | `spread-chart` | [guide](../components/charts.md#spreadchart) |
 | Stack | `stack-instrument-prices` | [guide](../components/README.md) |

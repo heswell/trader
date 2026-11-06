@@ -303,7 +303,7 @@ export const createTradingTestData = ({
     if (isOmsRpc(rpcName))
       return handleOmsRpc(omsService, rpcName, params, user);
     if (isExchangeRpc(rpcName))
-      return handleExchangeAdminRpc(sim, rpcName, params);
+      return handleExchangeAdminRpc(sim, rpcName, params, user.name);
     return {
       type: "ERROR_RESULT",
       errorMessage: `INVALID_REQUEST: unknown rpc ${rpcName}`,

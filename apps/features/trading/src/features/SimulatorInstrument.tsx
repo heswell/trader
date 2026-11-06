@@ -3,6 +3,7 @@ import {
   BotFillsTape,
   BotsGrid,
   SimInstrumentChart,
+  SimInstrumentControls,
 } from "@heswell/trading-ui";
 import { FlexboxLayout, LayoutProvider, View } from "@vuu-ui/vuu-layout";
 import {
@@ -23,7 +24,8 @@ const pane = (grow: number) => ({
 /**
  * Simulator instrument (module gated by sim-admin), following the linked
  * instrument: fair value, walk and quotes with signed volume by owner
- * group; the instrument's bots; and its attributed fills with markouts.
+ * group beside its controls (price model, jumps, rates, halt, add bot);
+ * the instrument's bots; and its attributed fills with markouts.
  */
 const SimulatorInstrument = ({
   defaultLinkGroup = ACTIVE_LINK_GROUP,
@@ -47,21 +49,40 @@ const SimulatorInstrument = ({
           path=""
           style={{ flex: 1, flexDirection: "column", minHeight: 0 }}
         >
-          <View
-            header
-            id="sim-instrument-chart-view"
-            resizeable
-            style={pane(3)}
-            title="Fair value and flow"
+          <FlexboxLayout
+            id="sim-instrument-top"
+            path=""
+            style={{ ...pane(3), flexDirection: "row" }}
           >
-            <SimInstrumentChart
-              id="sim-instrument-chart"
-              linkGroup={linkGroup}
-              onLinkGroupChange={setLinkGroup}
-              showLinkGroupSelector
-              style={content}
-            />
-          </View>
+            <View
+              header
+              id="sim-instrument-chart-view"
+              resizeable
+              style={pane(2)}
+              title="Fair value and flow"
+            >
+              <SimInstrumentChart
+                id="sim-instrument-chart"
+                linkGroup={linkGroup}
+                onLinkGroupChange={setLinkGroup}
+                showLinkGroupSelector
+                style={content}
+              />
+            </View>
+            <View
+              header
+              id="sim-instrument-controls-view"
+              resizeable
+              style={{ flexBasis: 360, flexGrow: 0, flexShrink: 0 }}
+              title="Controls"
+            >
+              <SimInstrumentControls
+                id="sim-instrument-controls"
+                linkGroup={linkGroup}
+                style={content}
+              />
+            </View>
+          </FlexboxLayout>
           <FlexboxLayout
             id="sim-instrument-bottom"
             path=""

@@ -371,6 +371,11 @@ export const simBooks = defineTable({
       description:
         "Impact per $100k of aggressive notional at 30% volatility, bps (0 = off).",
     },
+    {
+      name: "driftBpsPerHour",
+      dataType: "double",
+      description: "Trend of the walk, bps per hour of model time (0 = none).",
+    },
     { name: "bandLow", dataType: "double", description: "Lower price band." },
     { name: "bandHigh", dataType: "double", description: "Upper price band." },
     { name: "mid", dataType: "double", optional: true },
