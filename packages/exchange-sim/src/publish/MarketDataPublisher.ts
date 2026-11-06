@@ -31,6 +31,10 @@ export interface ExchangeTables {
   bookOrders?: PublishTable;
   /** L3 event tape; omit (or disable in options) to skip. */
   bookEvents?: PublishTable;
+  /** Sim-admin tables; all three or none (see SimAdminPublisher). */
+  simBooks?: PublishTable;
+  bots?: PublishTable;
+  botParams?: PublishTable;
 }
 
 export interface PublisherOptions {

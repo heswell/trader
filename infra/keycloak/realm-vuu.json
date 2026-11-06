@@ -126,6 +126,10 @@
           "clientRole": true
         },
         {
+          "name": "sim-admin-access",
+          "clientRole": true
+        },
+        {
           "name": "module-admin-access",
           "clientRole": true
         },
@@ -145,6 +149,10 @@
         },
         {
           "name": "trading-supervisor",
+          "clientRole": true
+        },
+        {
+          "name": "sim-admin",
           "clientRole": true
         }
       ]
@@ -317,12 +325,14 @@
         "vuu-portal": [
           "trading-access",
           "trading-supervisor-access",
+          "sim-admin-access",
           "module-admin-access",
           "vuu-table-viewer-access"
         ],
         "trader-trading-server": [
           "trading-view",
-          "trading-supervisor"
+          "trading-supervisor",
+          "sim-admin"
         ]
       }
     }

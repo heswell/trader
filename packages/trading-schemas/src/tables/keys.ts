@@ -67,3 +67,7 @@ export const parseBarInterval = (interval: string) => {
   if (!(ms > 0)) throw Error(`invalid bar interval '${interval}'`);
   return ms;
 };
+
+/** botParams row key: one row per bot parameter. */
+export const botParamKey = (botId: string, name: string) =>
+  `${botId}${SEP}${name}`;

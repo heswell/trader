@@ -242,3 +242,35 @@ modules:
     accessRole: "trading-supervisor-access"
     navOrder: 400
     notificationTopics: ["risk", "orders"]
+  - id: 130
+    version: 1
+    parentModuleId: 0
+    name: "SimulatorOverview"
+    title: "Simulator overview"
+    description: "Exchange simulator: every book's fair value, spread and flow, and its bots by kind"
+    enabled: true
+    location: "/Simulator/Overview"
+    path: "/simulator/overview"
+    mfComponent: "SimulatorOverview"
+    mfScope: "simulatorOverview"
+    mfUrl: "http://localhost:5110/simulator-overview"
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%224%22%20width%3D%2218%22%20height%3D%2213%22%20rx%3D%222%22%2F%3E%3Cpath%20d%3D%22M8%2021h8M12%2017v4%22%2F%3E%3Cpath%20d%3D%22M6.5%2013l3-3%202.5%202%205-5%22%2F%3E%3C%2Fsvg%3E"
+    accessRole: "sim-admin-access"
+    navOrder: 500
+    workspace: {"paletteGroup":"Simulator","defaultSize":{"cols":2,"rows":1}}
+  - id: 131
+    version: 1
+    parentModuleId: 0
+    name: "SimulatorBots"
+    title: "Bots"
+    description: "Every simulator bot's position, P&L and order flow, with its parameters"
+    enabled: true
+    location: "/Simulator/Bots"
+    path: "/simulator/bots"
+    mfComponent: "SimulatorBots"
+    mfScope: "simulatorBots"
+    mfUrl: "http://localhost:5110/simulator-bots"
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%225%22%20y%3D%228%22%20width%3D%2214%22%20height%3D%2211%22%20rx%3D%222%22%2F%3E%3Cpath%20d%3D%22M12%204v4%22%2F%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%223.5%22%20r%3D%220.8%22%2F%3E%3Ccircle%20cx%3D%229.5%22%20cy%3D%2213%22%20r%3D%221.2%22%2F%3E%3Ccircle%20cx%3D%2214.5%22%20cy%3D%2213%22%20r%3D%221.2%22%2F%3E%3Cpath%20d%3D%22M3%2012v3M21%2012v3%22%2F%3E%3C%2Fsvg%3E"
+    accessRole: "sim-admin-access"
+    navOrder: 510
+    workspace: {"paletteGroup":"Simulator","defaultSize":{"cols":2,"rows":1}}

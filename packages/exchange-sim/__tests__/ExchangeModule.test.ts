@@ -185,6 +185,28 @@ describe("ExchangeModule over the Vuu protocol", () => {
     expect(phase).toBe(TradingPhase.Continuous);
   });
 
+  test("sim-admin tables are served (permissive auth: no roles = allowed)", async () => {
+    for (const name of ["simBooks", "bots", "botParams"]) {
+      expect(server.tableContainer.getTable(name)).toBeDefined();
+    }
+    const botsVp = await createViewport("bots", [
+      "botId",
+      "ric",
+      "kind",
+      "position",
+      "orders",
+    ]);
+    const booksVp = await createViewport("simBooks", ["ric", "fair", "mid"]);
+    const [bots, books] = await Promise.all([
+      collectRows(botsVp, 1_500),
+      collectRows(booksVp, 1_500),
+    ]);
+    expect(bots.length).toBeGreaterThan(0);
+    expect(String(bots[0].data[0])).toContain("/");
+    expect(books.length).toBeGreaterThan(0);
+    expect(Number(books[0].data[1])).toBeGreaterThan(0);
+  });
+
   test("instrumentPrices join carries the admin RPC service", async () => {
     const vp = await createViewport("instrumentPrices", [
       "ric",

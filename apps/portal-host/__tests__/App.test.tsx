@@ -104,6 +104,7 @@ describe("portal host", () => {
       ["Market", ["Market depth", "Time & sales", "Chart", "Depth chart"]],
       ["Portfolio", ["Positions", "P&L", "Exposure", "Execution quality"]],
       ["Oversight", ["Desk overview"]],
+      ["Simulator", ["Overview", "Bots"]],
     ]);
     expect(entry(nav, "Executions")?.getAttribute("href")).toBe(
       "/trading/executions",
@@ -114,7 +115,7 @@ describe("portal host", () => {
     // navIconUrl renders as a CSS mask (url('…')), one per entry
     expect(
       nav.querySelectorAll('.vuuPortalNav-icon [data-icon="custom"]'),
-    ).toHaveLength(13);
+    ).toHaveLength(15);
 
     const brand = nav.querySelector(".vuuPortalNav-brand") as HTMLElement;
     const brandLink = brand.querySelector(".vuuPortalNav-brandLink");
@@ -222,6 +223,7 @@ describe("portal host", () => {
         label: "Portfolio",
         rows: ["Positions", "P&L", "Exposure", "Execution quality"],
       },
+      { label: "Simulator", rows: ["Simulator overview", "Bots"] },
     ]);
   });
 

@@ -8,7 +8,7 @@
  * Nav: a module's `location` is "/<Section>/<Entry>". PortalNav sorts entries
  * by `navOrder` and sections by their lowest entry's navOrder, so each
  * section owns a hundreds band (Trading 100s, Market 200s, Portfolio 300s,
- * Oversight 400s). Workspaces (incl. the Trader system workspace,
+ * Oversight 400s, Simulator 500s). Workspaces (incl. the Trader system workspace,
  * apps/portal-host/src/workspaces) are the portal's own nav section.
  *
  * Panels palette: modules with `workspace` can be added as workspace panels.
@@ -25,7 +25,9 @@ import type { TradingNavIcon } from "./navIcons";
 export type TradingRole =
   | "trading-view"
   | "trading-execute"
-  | "trading-supervisor";
+  | "trading-supervisor"
+  /** Exchange simulator monitoring (sim-admin tables) and control RPCs. */
+  | "sim-admin";
 
 /**
  * Navigation roles: `vuu-portal` client roles, the modules' `accessRole`. The
@@ -35,7 +37,8 @@ export type TradingRole =
 export type TradingAccessRole =
   | "trading-access"
   | "trading-execute-access"
-  | "trading-supervisor-access";
+  | "trading-supervisor-access"
+  | "sim-admin-access";
 
 export const TRADING_ACCESS_ROLE: Readonly<
   Record<TradingRole, TradingAccessRole>
@@ -43,6 +46,7 @@ export const TRADING_ACCESS_ROLE: Readonly<
   "trading-view": "trading-access",
   "trading-execute": "trading-execute-access",
   "trading-supervisor": "trading-supervisor-access",
+  "sim-admin": "sim-admin-access",
 };
 
 export interface TradingFeature {
@@ -94,6 +98,7 @@ export const TRADING_PALETTE_GROUP = {
   trading: "Trading",
   market: "Market",
   portfolio: "Portfolio",
+  simulator: "Simulator",
 } as const;
 
 export interface TradingModuleWorkspace {
@@ -119,6 +124,8 @@ const execute = TRADING_ACCESS_ROLE["trading-execute"];
 const TRADING = TRADING_PALETTE_GROUP.trading;
 const MARKET = TRADING_PALETTE_GROUP.market;
 const PORTFOLIO = TRADING_PALETTE_GROUP.portfolio;
+const SIMULATOR = TRADING_PALETTE_GROUP.simulator;
+const simAdmin = TRADING_ACCESS_ROLE["sim-admin"];
 
 export const TRADING_FEATURES: readonly TradingFeature[] = [
   {
@@ -359,5 +366,39 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     // Not in the Panels palette: a page-sized, desk-wide composite (two
     // blotters over every account) that follows no link group, so it gains
     // nothing beside instrument panels and is cramped as one.
+  },
+  {
+    key: "simulator-overview",
+    id: 130,
+    name: "SimulatorOverview",
+    mfScope: "simulatorOverview",
+    expose: "./SimulatorOverview",
+    source: "./src/features/SimulatorOverview",
+    title: "Simulator overview",
+    description:
+      "Exchange simulator: every book's fair value, spread and flow, and its bots by kind",
+    accessRole: simAdmin,
+    location: "/Simulator/Overview",
+    path: "/simulator/overview",
+    navOrder: 500,
+    navIcon: "simulator",
+    workspace: { paletteGroup: SIMULATOR, defaultSize: { cols: 2, rows: 1 } },
+  },
+  {
+    key: "simulator-bots",
+    id: 131,
+    name: "SimulatorBots",
+    mfScope: "simulatorBots",
+    expose: "./SimulatorBots",
+    source: "./src/features/SimulatorBots",
+    title: "Bots",
+    description:
+      "Every simulator bot's position, P&L and order flow, with its parameters",
+    accessRole: simAdmin,
+    location: "/Simulator/Bots",
+    path: "/simulator/bots",
+    navOrder: 510,
+    navIcon: "bots",
+    workspace: { paletteGroup: SIMULATOR, defaultSize: { cols: 2, rows: 1 } },
   },
 ];

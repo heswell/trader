@@ -36,11 +36,14 @@ import {
   type InstrumentDef,
   selectActiveInstruments,
 } from "../reference/instruments";
+import { SimAdminPublisher } from "../publish/SimAdminPublisher";
 import { type Clock, systemClock } from "../util/clock";
 import { Random } from "../util/random";
 import { generateBackfillBars } from "./barBackfill";
-import { MarketMaker } from "./bots/MarketMaker";
-import { NoiseTaker } from "./bots/NoiseTaker";
+import { type Bot, BotKind } from "./bots/Bot";
+import { MarketSignals } from "./bots/MarketSignals";
+import type { NoiseTaker } from "./bots/NoiseTaker";
+import { botKindDef, createBots, defaultRoster } from "./bots/roster";
 import { fromBookSide, InstrumentBook, toBookSide } from "./InstrumentBook";
 import {
   type BookSettings,
@@ -55,13 +58,19 @@ import { type SessionPhase, TradingSession } from "./TradingSession";
 
 export interface SimulatedInstrument {
   readonly book: InstrumentBook;
-  readonly marketMakers: readonly MarketMaker[];
-  readonly taker: NoiseTaker;
+  /** Quoting bots first, then takers (step order). */
+  readonly bots: readonly Bot[];
+  /** Shared recent-market view, updated once per step for the bots. */
+  readonly signals: MarketSignals;
+  /** Market maker base size (lots), from baseNotionalUsd. */
+  readonly baseQty: number;
   readonly modelRng: Random;
   /** MARKET_MAKER discretionary churn, events/s for the instrument (0 = paused). */
   mmRate: number;
   /** TAKER orders/s for the instrument (0 = paused). */
   takerRate: number;
+  /** Activity multiplier applied to takerRate at the last step (1 unscheduled). */
+  activity: number;
   /** Random variation of taker activity around the volume curve. */
   readonly noise: ActivityNoise;
 }
@@ -73,6 +82,9 @@ interface ActivityNoise {
   level: number;
   wander: number;
 }
+
+/** Salt of the generator every bot on an instrument forks from. */
+const BOT_RNG_SALT = 500;
 
 /** Mean-reversion time of the activity wander, as a fraction of the session. */
 const WANDER_SESSION_FRACTION = 0.05;
@@ -126,6 +138,7 @@ export class ExchangeSimulator {
   readonly #books: InstrumentBook[] = [];
   readonly #tapeListeners = new Set<TapeListener>();
   #publisher: MarketDataPublisher | undefined;
+  #simAdmin: SimAdminPublisher | undefined;
   #lastStep: number | undefined;
   #cursor = 0;
   #tradeSeq = 0;
@@ -180,6 +193,8 @@ export class ExchangeSimulator {
 
   #addInstrument(instrument: InstrumentDef, rng: Random) {
     const { config } = this;
+    // forked before any draw, so bot streams don't depend on the rest
+    const botRng = rng.fork(BOT_RNG_SALT);
     const volatility =
       config.defaultVolatility > 0
         ? config.defaultVolatility
@@ -191,7 +206,7 @@ export class ExchangeSimulator {
       this.clock,
       (b, trade) => this.#onTrade(b, trade),
     );
-    const { refPrice, lotSize, tickSize, usdPerPriceUnit } = instrument;
+    const { refPrice, lotSize, usdPerPriceUnit } = instrument;
     const baseQty = Math.max(
       lotSize,
       roundToLot(
@@ -199,39 +214,15 @@ export class ExchangeSimulator {
         lotSize,
       ),
     );
-    const tickBps = (tickSize / refPrice) * 1e4;
-    const ticksFor = (bps: number) => Math.max(1, Math.round(bps / tickBps));
-    const marketMakers = Array.from(
-      { length: config.mmPerInstrument },
-      (_, i) =>
-        new MarketMaker(
-          {
-            account: `MM${i + 1}`,
-            levels: config.mmLevels,
-            halfSpreadTicks: ticksFor(rng.uniform(2, 6)),
-            spacingTicks: ticksFor(rng.uniform(1, 3)),
-            baseQty,
-          },
-          book,
-          rng.fork(100 + i),
-        ),
-    );
-    const taker = new NoiseTaker(
-      {
-        accounts: ["TAKER1", "TAKER2", "TAKER3"],
-        baseQty: Math.max(lotSize, roundToLot(baseQty * 0.6, lotSize)),
-        passiveLifetimeMs: 2_000,
-      },
-      book,
-      rng.fork(200),
-    );
     this.#simulated.set(instrument.ric, {
       book,
-      marketMakers,
-      taker,
+      bots: createBots(defaultRoster(config), book, botRng, baseQty),
+      signals: new MarketSignals(),
+      baseQty,
       modelRng: rng.fork(300),
       mmRate: config.mmRate,
       takerRate: config.takerRate,
+      activity: 1,
       noise: { rng: rng.fork(400), day: undefined, level: 0, wander: 0 },
     });
     this.#books.push(book);
@@ -261,6 +252,12 @@ export class ExchangeSimulator {
     return this.#simulated.get(ric)?.book;
   }
 
+  /** Bots on one instrument, or on every simulated instrument. */
+  getBots(ric?: string): readonly Bot[] {
+    if (ric !== undefined) return this.#simulated.get(ric)?.bots ?? [];
+    return [...this.#simulated.values()].flatMap((sim) => sim.bots);
+  }
+
   isSimulated = (ric: string) => this.#simulated.has(ric);
 
   /** Total book operations + trades across all books. */
@@ -283,6 +280,7 @@ export class ExchangeSimulator {
   }
 
   #onTrade(book: InstrumentBook, trade: Trade) {
+    this.#simulated.get(book.ric)?.signals.onTrade(trade);
     if (this.#journal && this.#tradeSeq >= this.#tradeReserved) {
       this.#tradeReserved = this.#tradeSeq + TRADE_ID_BLOCK;
       this.#journal({ k: "tradeSeq", upTo: this.#tradeReserved });
@@ -337,6 +335,15 @@ export class ExchangeSimulator {
     publisher.loadInstruments(this.universe, this.isSimulated);
     publisher.l3?.attach(this.#books);
     this.#publisher = publisher;
+    const { simBooks, bots, botParams } = tables;
+    if (simBooks && bots && botParams && config.simPublishIntervalMs > 0) {
+      this.#simAdmin = new SimAdminPublisher(
+        { simBooks, bots, botParams },
+        config.simPublishIntervalMs,
+        config.timeScale,
+      );
+      this.#simAdmin.loadBotParams(this.#simulated.values());
+    }
     if (config.barBackfill && publisher.bars) this.#backfillBars(publisher);
     this.flush();
     return publisher;
@@ -361,7 +368,7 @@ export class ExchangeSimulator {
           generateBackfillBars({
             model: book.model,
             lotSize: book.instrument.lotSize,
-            tradeSize: sim.taker.params.baseQty,
+            tradeSize: takerTradeSize(sim),
             takerRate: sim.takerRate,
             timeScale: config.timeScale,
             intervalMs: ms,
@@ -436,8 +443,7 @@ export class ExchangeSimulator {
     }
     if (phase === TradingPhase.Closed) {
       for (const sim of this.#simulated.values()) {
-        for (const mm of sim.marketMakers) mm.pull();
-        sim.taker.pull();
+        for (const bot of sim.bots) bot.pull();
       }
       this.gateway.expireDayOrders();
     }
@@ -469,16 +475,43 @@ export class ExchangeSimulator {
       const sim = this.#simulated.get(book.ric) as SimulatedInstrument;
       const before = book.events;
       book.model.step(modelDt, sim.modelRng);
-      if (sim.mmRate > 0) {
-        const perMm = sim.mmRate / sim.marketMakers.length;
-        for (const mm of sim.marketMakers) mm.step(dt, perMm);
-      }
-      if (sim.takerRate > 0) {
-        sim.taker.step(dt, sim.takerRate * this.#activity(sim, now, dt), now);
-      }
+      this.#stepBots(sim, now, dt);
       ops += book.events - before;
     }
     this.#cursor = (this.#cursor + 1) % Math.max(count, 1);
+  }
+
+  /**
+   * Update the instrument's signals, then step its bots in roster order.
+   * A bot in a rate group gets an even share of the group's rate (takers
+   * scaled by the activity curve) and is skipped while that rate is 0.
+   */
+  #stepBots(sim: SimulatedInstrument, now: number, dt: number) {
+    const { book, signals, bots } = sim;
+    const top = book.topOfBook();
+    signals.update(dt, top.bid, top.ask);
+    let mmCount = 0;
+    let takerCount = 0;
+    for (const bot of bots) {
+      const group = botKindDef(bot.kind).rateGroup;
+      if (group === BotType.MarketMaker) mmCount++;
+      else if (group === BotType.Taker) takerCount++;
+    }
+    const mmRate = sim.mmRate > 0 ? sim.mmRate / mmCount : 0;
+    if (sim.takerRate > 0) sim.activity = this.#activity(sim, now, dt);
+    const takerRate =
+      sim.takerRate > 0 ? (sim.takerRate * sim.activity) / takerCount : 0;
+    for (const bot of bots) {
+      const group = botKindDef(bot.kind).rateGroup;
+      const rate =
+        group === BotType.MarketMaker
+          ? mmRate
+          : group === BotType.Taker
+            ? takerRate
+            : 0;
+      if (group !== undefined && !(rate > 0)) continue;
+      bot.step({ dt, now, rate, signals });
+    }
   }
 
   /**
@@ -511,6 +544,12 @@ export class ExchangeSimulator {
   /** Publish dirty books and pending trades. */
   flush(now = this.clock()) {
     this.#publisher?.flush(this.#books, now);
+    this.#simAdmin?.flush(this.#simulated.values(), now);
+  }
+
+  /** The sim-admin publisher, when its tables are attached. */
+  get simAdminPublisher() {
+    return this.#simAdmin;
   }
 
   start() {
@@ -649,6 +688,10 @@ export class ExchangeSimulator {
           stats: { ...book.stats },
           seq: book.seq,
           orders,
+          bots: sim.bots.map((bot) => ({
+            id: bot.localId,
+            ledger: bot.port.ledger.exportState(),
+          })),
         };
       }),
     };
@@ -772,6 +815,11 @@ export class ExchangeSimulator {
       book.phase =
         s?.phase === TradingPhase.Halted ? TradingPhase.Halted : marketPhase;
       if (saved) book.model.fairValue = saved.fair;
+      for (const { id, ledger } of saved?.bots ?? []) {
+        sim.bots
+          .find((bot) => bot.localId === id)
+          ?.port.ledger.restoreState(ledger);
+      }
       book.restore(byRic.get(book.ric) ?? [], this.gateway, {
         seq: saved?.seq ?? 0,
         stats: saved?.stats,
@@ -816,6 +864,14 @@ export class ExchangeSimulator {
     return false;
   }
 }
+
+/** Mean order size of the instrument's noise takers (for bar backfill). */
+const takerTradeSize = (sim: SimulatedInstrument) => {
+  const taker = sim.bots.find((bot) => bot.kind === BotKind.NoiseTaker) as
+    | NoiseTaker
+    | undefined;
+  return taker?.params.baseQty ?? sim.baseQty * 0.6;
+};
 
 export const createExchangeSimulator = (options?: ExchangeSimulatorOptions) =>
   new ExchangeSimulator(options);

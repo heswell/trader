@@ -8,7 +8,7 @@ GBM reference price drives them. The results are published to the `EXCHANGE` mod
 ```
 src/
   reference/      instrument universe (336 listings, 9 venues, tick bands, lot sizes, ref prices)
-  engine/         ExchangeSimulator, InstrumentBook, PriceModel, TradingSession, bots/{MarketMaker,NoiseTaker}
+  engine/         ExchangeSimulator, InstrumentBook, PriceModel, TradingSession, bots/ (Bot, OrderPort, BotLedger, MarketSignals, roster, MarketMaker, NoiseTaker)
   publish/        MarketDataPublisher (prices / depth deltas / trades ring buffer), BookL3Publisher (bookOrders / bookEvents), TradeRingBuffer
   gateway/        SimExchangeGateway: in-process order entry + execution reports
   modules/exchange ExchangeModule (Vuu module) and ExchangeAdminService (admin RPCs)
@@ -51,6 +51,15 @@ serverConfig.withModule(ExchangeModule(sim));   // starts ticking once its table
 | `bookSamples` | `ric\|time` | Every `bookSampleIntervalMs`, a snapshot of each book's published top 5 levels: bid/ask/mid, spreadBps, touch sizes, top-5 cumulative depth, imbalance. `bookSampleHistory` samples per instrument. |
 
 See [docs/charting-data.md](../../docs/charting-data.md) for the chart data semantics.
+
+**Sim-admin tables.** Only users with the `sim-admin` role see rows (see `permissionMode`). Public market data
+stays anonymous; these tables carry the bots' identity. Published every `simPublishIntervalMs`.
+
+| Table | Key | Contents |
+| --- | --- | --- |
+| `simBooks` | `ric` | One row per simulated book: phase, fair value, mid, gap to fair and spread in bp, model and realised volatility (both annualised), `mmRate` / `takerRate` / `activity`, trade imbalance, market-maker inventory, bot count, trades and volume. |
+| `bots` | `botId` (`<ric>/<localId>`) | One row per bot: kind, account, position, average price, position and realised / unrealised / total P&L in USD, order / modify / cancel / fill counts, volume, traded notional, resting orders and quantities, its share of the instrument's rate and its measured orders/s, market makers' skew. |
+| `botParams` | `botId\|name` | One row per bot parameter: value, type, min / max, unit, description, readOnly. Written at startup. |
 
 ### L3 (order-by-order) data
 
@@ -108,12 +117,20 @@ nothing visible changed.
     close); `resumeInstrument` returns it to the current market phase.
   - `sim.marketPhase` and `sim.sessionStatus()` (`{phase, nextPhase, nextChangeAt, forced}`) expose
     the state; the `setMarketPhase` admin RPC overrides it.
-- **Market makers.** There are `mmPerInstrument` MMs (accounts `MM1..`, owner `bot:mm`) per instrument.
+- **Bots.** Each instrument runs the bots of its roster (default: `mmPerInstrument` market makers and
+  three noise takers). A bot only reaches the book through its `OrderPort`, which stamps the account
+  and the owner `bot:<ric>/<local id>` (e.g. `bot:VOD.L/MM1`), receives every fill and keeps the
+  bot's `BotLedger`: order counts, fills, position, average cost and realised / unrealised P&L. The
+  ledgers are saved in snapshots. `sim.getBots(ric?)` lists them. Every bot has its own random
+  generator forked from the instrument by its local id, and reads a shared `MarketSignals` (mid EMAs,
+  realised volatility, trade imbalance) taken once per step. See
+  [docs/simulator-bots.md](../../docs/simulator-bots.md) for the design and what comes next.
+- **Market makers.** There are `mmPerInstrument` MMs (accounts and local ids `MM1..`) per instrument.
   Each quotes `mmLevels` per side on a tick grid around fair value, with a half spread of about 2–6 bps,
   level spacing of 1–3 bps, and inventory skew. They requote when fair value moves, by cancel/replace of
   only the levels that changed. `mmRate` adds random discretionary cancel/replace churn per second.
-- **Takers.** Accounts `TAKER1..3` (owner `bot:taker`) send Poisson arrivals at `takerRate`/s per
-  instrument: mostly market orders and aggressive IOC limits, plus passive limits and occasional
+- **Takers.** Three takers, one account each (`TAKER1..3`), share `takerRate`/s per instrument as
+  Poisson arrivals: mostly market orders and aggressive IOC limits, plus passive limits and occasional
   multi-level sweeps.
 - **Scheduling.** One `setInterval(botStepMs)` steps every book in a rotating order, so the work is
   batched rather than spread across one timer per bot. `maxOpsPerStep` caps one step; the rest are
@@ -157,6 +174,8 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | `preOpenMinutes` | 0 | Minutes of `PRE_OPEN` before the open (`EXCHANGE_SIM_PRE_OPEN_MINUTES`). |
 | `sessionDayMs` | 0 | Fast simulated day (`EXCHANGE_SIM_SESSION_DAY_MS`): the 24h schedule is compressed into this many ms of clock time (aligned to multiples of it since the epoch); open/close default to 08:00/16:30 when unset. 0 = real 24h day. |
 | `volumeProfile` | `u` | Intraday volume curve the takers follow while a session is configured (`EXCHANGE_SIM_VOLUME_PROFILE`): `u` (busy open, quiet middle, busiest into the close) or `flat`. Published to the OMS through `gateway.getSessionSchedule()`; its VWAP follows the same curve. |
+| `simPublishIntervalMs` | 1000 | `simBooks` / `bots` publish interval (ms); 0 disables the sim-admin tables. |
+| `permissionMode` | `auto` | Who sees the sim-admin tables and may call the admin RPCs: `strict` = only users with the `sim-admin` role; `auto` also lets in users with no roles at all (dev / permissive auth). |
 | `volumeNoise` | 0.3 | Random variation of taker activity around the curve (`EXCHANGE_SIM_VOLUME_NOISE`, 0 = none): a per-day level and a slowly wandering component, each roughly ± this fraction, so actual volume differs from the forecast. |
 
 Book events/s scale roughly linearly with `activeInstruments`, `takerRate` and `mmRate`.
@@ -177,7 +196,7 @@ orders. The OMS's `TradingPersistence` drives it; see [docs/persistence.md](../.
 ## Admin RPCs
 
 Admin RPCs are registered on every `EXCHANGE` table (including `instrumentPrices`) through
-`DefaultRpcHandler`. Call them with an `RPC_REQUEST` in a `VIEWPORT_CONTEXT`. Params are validated
+`DefaultRpcHandler`. They need the `sim-admin` role (see `permissionMode`); others get `PERMISSION_DENIED`. Call them with an `RPC_REQUEST` in a `VIEWPORT_CONTEXT`. Params are validated
 with `validateRpcParams`. Results follow the trading-schemas contract: `rpcSuccess({rics})`, or
 `rpcError("<RejectReason>: text")`.
 

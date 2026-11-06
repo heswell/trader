@@ -24,6 +24,7 @@
 | [portal-integration.md](portal-integration.md) | vuu-portal host, MF features, the two Vuu servers, Keycloak, users and roles, `start:all` |
 | [schemas.md](schemas.md) | Table and RPC schemas shared by server and UI (with [trading-schemas](../packages/trading-schemas/README.md)) |
 | [exchange-sim](../packages/exchange-sim/README.md) | Exchange simulator: market model, trading session, bots, config, admin RPCs |
+| [simulator-bots.md](simulator-bots.md) | Simulator bots: how they work, the bot framework, and the plan for monitoring, control, scenarios and new bots |
 | [oms](../packages/oms/README.md) | OMS: orders, risk, state machine, positions, permissions, RPCs, edit session |
 | [trading-test-data](../packages/trading-test-data/README.md) | The real engines in the browser (engine-local) |
 | [charting-data.md](charting-data.md) | Chart data: `bars`, `bookSamples`, `pnlHistory`, execution quality, suggested charts |

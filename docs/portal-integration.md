@@ -180,12 +180,13 @@ Switch to `evict-oldest` once that is fixed. Override the settings with `VUU_MAX
 
 There are two sets of client roles, because the portal and the trading server are separate Keycloak clients:
 
-- **Server roles** belong to the confidential client `trader-trading-server`: `trading-view`, `trading-execute`
-  and `trading-supervisor`. They reach the trading server through token exchange, and the OMS checks them on
+- **Server roles** belong to the confidential client `trader-trading-server`: `trading-view`, `trading-execute`,
+  `trading-supervisor` and `sim-admin` (exchange simulator monitoring, checked by the exchange module:
+  `exchangeSim.permissionMode`). They reach the trading server through token exchange, and the OMS checks them on
   every viewport and RPC (`oms.permissionMode="strict"`, `packages/oms/README.md`). Inside a feature,
   `useEntitlements()` reads them with `useVuuAuthorizations()`.
-- **Nav roles** belong to the public `vuu-portal` client: `trading-access`, `trading-execute-access` and
-  `trading-supervisor-access`. They are the modules' `accessRole`s, so the portal sends a user only the modules
+- **Nav roles** belong to the public `vuu-portal` client: `trading-access`, `trading-execute-access`,
+  `trading-supervisor-access` and `sim-admin-access`. They are the modules' `accessRole`s, so the portal sends a user only the modules
   they may open. The realm bootstrap derives them from each user's server roles (`TRADING_ACCESS_ROLE` in
   `catalog.ts`), so the two sets always agree.
 
@@ -197,7 +198,7 @@ standard token exchange requires.
 | alice, bob, carol, erin | trading-view, trading-execute | Every entry except Oversight (the Trader workspace with its ticket and ladder panels; Price ladder) |
 | dave | trading-view | As alice, but no Price ladder; the workspace's Ticket and Ladder panels say the module is not available, the Panels palette has no Order ticket or Price ladder, and the order blotter is read-only. |
 | sam | trading-view, trading-supervisor | As dave, plus Oversight › Desk overview (all accounts) |
-| admin | trading-view, trading-supervisor (plus `vuu-portal` module-admin-access, vuu-table-viewer-access) | As sam, plus portal module admin |
+| admin | trading-view, trading-supervisor, sim-admin (plus `vuu-portal` module-admin-access, vuu-table-viewer-access) | As sam, plus Simulator › Overview and Bots, and portal module admin |
 
 The Keycloak admin console is at `https://localhost:8180/admin` (admin / admin). These are dev credentials only.
 `bun run keycloak:realm export` rewrites `infra/keycloak/realm-vuu.json`, which docker-compose imports. Use
@@ -233,6 +234,8 @@ renders, and `notificationTopics` are the trading server's notification topics t
 | 122 | Portfolio › Exposure | `/portfolio/exposure` | TradingExposure | trading-view | 320 | risk | Portfolio, 2×1 | ExposureTreemap |
 | 123 | Portfolio › Execution quality | `/portfolio/execution-quality` | TradingExecutionQuality | trading-view | 330 | | Portfolio, 2×1 | SlippageChart |
 | 120 | Oversight › Desk overview | `/oversight/desk` | TradingSupervisor | trading-supervisor | 400 | risk, orders | — | All visible accounts' orders and positions |
+| 130 | Simulator › Overview | `/simulator/overview` | SimulatorOverview | sim-admin | 500 | | Simulator, 2×1 | SimBooksGrid above BotsGrid (by kind) |
+| 131 | Simulator › Bots | `/simulator/bots` | SimulatorBots | sim-admin | 510 | | Simulator, 2×1 | BotsGrid with BotDetail (stats and parameters) |
 
 Module ids are stable. The vuu-layout Trader workspace (100) and its child modules (101 ticket, 102 ladder) are
 retired: the Trader workspace is now a portal workspace (below) made of the modules above, and the ticket is module

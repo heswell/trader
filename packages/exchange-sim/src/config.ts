@@ -92,6 +92,14 @@ export interface ExchangeSimConfig {
   bookEvents: number;
   /** `bookEvents` rows kept, across all instruments (oldest deleted). */
   bookEventsCapacity: number;
+  /** Interval of the sim-admin `simBooks` / `bots` updates (ms); 0 disables them. */
+  simPublishIntervalMs: number;
+  /**
+   * Who may see the sim-admin tables and call the exchange admin RPCs.
+   * "auto": users with the sim-admin role, and users with no roles at all
+   * (dev / permissive auth grants none). "strict": sim-admin only.
+   */
+  permissionMode: string;
 }
 
 export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
@@ -126,6 +134,8 @@ export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
   bookOrders: 1,
   bookEvents: 0,
   bookEventsCapacity: 50_000,
+  simPublishIntervalMs: 1_000,
+  permissionMode: "auto",
 });
 
 /** Structural subset of service-utils Config. */
@@ -200,8 +210,12 @@ export const validateConfig = (config: ExchangeSimConfig) => {
     "takerRate",
     "defaultVolatility",
     "bookSampleIntervalMs",
+    "simPublishIntervalMs",
   ] as const) {
     if (!(config[key] >= 0)) throw Error(`exchangeSim.${key} must be >= 0`);
+  }
+  if (config.permissionMode !== "auto" && config.permissionMode !== "strict") {
+    throw Error("exchangeSim.permissionMode must be 'auto' or 'strict'");
   }
   if (!(config.volumeProfile in VOLUME_PROFILES)) {
     throw Error(
