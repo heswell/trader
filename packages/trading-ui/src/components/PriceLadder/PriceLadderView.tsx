@@ -38,6 +38,7 @@ import {
   useRef,
   useState,
 } from "react";
+import type { LadderQueue, LadderQueues } from "../../hooks/useBookQueue";
 import { priceKey } from "../../hooks/useMarketData";
 import {
   actionableOrders,
@@ -134,6 +135,19 @@ export interface PriceLadderViewProps
   onAmendOrders?: (orders: OwnOrder[], price: number) => void;
   /** Cancel every own order for the instrument. Hidden when omitted. */
   onCancelAll?: () => void;
+  /**
+   * Order-by-order queues, keyed by `ownOrdersKey(side, price)`. Without
+   * it the Queue toggle and the Q panel are hidden.
+   */
+  queues?: LadderQueues;
+  /** Why there are no queues (e.g. L3 off on the server), shown when Queue is on. */
+  queueUnavailableReason?: string;
+  /** Show queue bars and own queue position. Controlled, with `onShowQueueChange`. */
+  showQueue?: boolean;
+  defaultShowQueue?: boolean;
+  onShowQueueChange?: (showQueue: boolean) => void;
+  /** The Q panel opened or closed. */
+  onQueuePanelChange?: (open: boolean) => void;
 }
 
 const COLUMNS: PriceLadderColumn[] = [
@@ -179,12 +193,82 @@ interface LadderRowProps {
   cursorCol: number;
   dropTarget: boolean;
   moving: boolean;
+  /** Queues at this price, when the queue view is on. */
+  bidQueue?: LadderQueue;
+  askQueue?: LadderQueue;
 }
 
 const cellId = (gridId: string, slot: number, col: PriceLadderColumn) =>
   `${gridId}-${slot}-${col}`;
 
 const qtyText = (qty: number) => (qty > 0 ? formatQuantity(qty) : "");
+
+/** 950, 1.2k, 12k, 1.5M: fits the narrow own-order cells. */
+export const compactQuantity = (qty: number) => {
+  if (qty < 1_000) return String(qty);
+  if (qty < 1_000_000) {
+    const k = qty / 1_000;
+    return `${k < 10 ? Number(k.toFixed(1)) : Math.round(k)}k`;
+  }
+  const m = qty / 1_000_000;
+  return `${m < 10 ? Number(m.toFixed(1)) : Math.round(m)}M`;
+};
+
+const orderCount = (n: number) => `${n} order${n === 1 ? "" : "s"}`;
+
+const ordinal = (n: number) => {
+  const tens = n % 100;
+  if (tens >= 11 && tens <= 13) return `${n}th`;
+  return `${n}${["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
+};
+
+/** "3rd in queue, 900 ahead" (accessible / tooltip text). */
+export const queuePositionText = (queue: LadderQueue | undefined) =>
+  queue?.ownRank !== undefined
+    ? `${ordinal(queue.ownRank)} in queue, ${formatQuantity(queue.ownAhead ?? 0)} ahead`
+    : undefined;
+
+/** A queue bar segment: one order, or several small ones merged. */
+export interface QueueSegment {
+  size: number;
+  own: boolean;
+  /** Orders in the segment (> 1 when merged). */
+  count: number;
+}
+
+const MAX_SEGMENTS = 12;
+/** Orders narrower than this share of the largest level are merged. */
+const MIN_SEGMENT_SHARE = 0.02;
+
+/**
+ * Queue bar segments, front first. The user's orders always get their own
+ * segment; neighbouring small orders, and everything after MAX_SEGMENTS,
+ * merge so a busy level stays readable.
+ */
+export const queueSegments = (
+  queue: LadderQueue,
+  maxQty: number,
+): QueueSegment[] => {
+  const segments: QueueSegment[] = [];
+  let merging: QueueSegment | undefined;
+  for (const order of queue.orders) {
+    const small = order.size / maxQty < MIN_SEGMENT_SHARE;
+    const overflow = segments.length >= MAX_SEGMENTS - 1;
+    if (!order.own && (small || overflow)) {
+      if (merging) {
+        merging.size += order.size;
+        merging.count++;
+      } else {
+        merging = { size: order.size, own: false, count: 1 };
+        segments.push(merging);
+      }
+      continue;
+    }
+    merging = undefined;
+    segments.push({ size: order.size, own: order.own, count: 1 });
+  }
+  return segments;
+};
 const ownText = (qty: number, count: number) =>
   qty > 0 ? `${formatQuantity(qty)}${count > 1 ? ` (${count})` : ""}` : "";
 
@@ -209,6 +293,8 @@ const LadderRow = memo(function LadderRow({
   cursorCol,
   dropTarget,
   moving,
+  bidQueue,
+  askQueue,
 }: LadderRowProps) {
   const cell = (
     col: PriceLadderColumn,
@@ -226,14 +312,50 @@ const LadderRow = memo(function LadderRow({
       {content}
     </td>
   );
-  const bar = (qty: number) =>
-    qty > 0 ? (
+  const bar = (qty: number, queue: LadderQueue | undefined) => {
+    if (queue && queue.orders.length > 0) {
+      return (
+        <span
+          aria-hidden
+          className={`${classBase}-queue`}
+          style={{
+            width: `${Math.min(100, (queue.total / maxQty) * 100)}%`,
+          }}
+        >
+          {queueSegments(queue, maxQty).map((segment, i) => (
+            <span
+              // biome-ignore lint/suspicious/noArrayIndexKey: segments are positional
+              key={i}
+              className={`${classBase}-segment`}
+              data-own={segment.own || undefined}
+              data-merged={segment.count > 1 || undefined}
+              style={{ flexGrow: segment.size }}
+            />
+          ))}
+        </span>
+      );
+    }
+    return qty > 0 ? (
       <span
         aria-hidden
         className={`${classBase}-bar`}
         style={{ width: `${Math.min(100, (qty / maxQty) * 100)}%` }}
       />
     ) : null;
+  };
+  const position = (queue: LadderQueue | undefined) =>
+    queue?.ownRank !== undefined ? (
+      <span
+        className={`${classBase}-queuePos`}
+        title={queuePositionText(queue)}
+      >
+        #{queue.ownRank}·{compactQuantity(queue.ownAhead ?? 0)}
+      </span>
+    ) : null;
+  const queueLabel = (queue: LadderQueue | undefined) =>
+    queue && queue.orders.length > 0
+      ? `, ${orderCount(queue.orders.length)}${queue.ownRank !== undefined ? `, mine ${queuePositionText(queue)}` : ""}`
+      : "";
   return (
     <tr
       aria-rowindex={slot + 2}
@@ -247,19 +369,31 @@ const LadderRow = memo(function LadderRow({
       data-moving={moving || undefined}
       data-cursor-row={cursorCol >= 0 || undefined}
     >
-      {cell("ownBuy", ownText(ownBuyQty, ownBuyCount), {
-        "data-own": ownBuyQty > 0 || undefined,
-        "aria-label": ownBuyQty
-          ? `my bids ${formatQuantity(ownBuyQty)} in ${ownBuyCount} orders`
-          : undefined,
-      })}
+      {cell(
+        "ownBuy",
+        <>
+          {position(bidQueue)}
+          {ownText(ownBuyQty, ownBuyCount)}
+        </>,
+        {
+          "data-own": ownBuyQty > 0 || undefined,
+          "aria-label": ownBuyQty
+            ? `my bids ${formatQuantity(ownBuyQty)} in ${orderCount(ownBuyCount)}${bidQueue?.ownRank !== undefined ? `, ${queuePositionText(bidQueue)}` : ""}`
+            : undefined,
+        },
+      )}
       {cell(
         "bid",
         <>
-          {bar(bidQty)}
+          {bar(bidQty, bidQueue)}
           <span className={`${classBase}-qty`}>{qtyText(bidQty)}</span>
         </>,
-        { "data-side": Side.Buy },
+        {
+          "data-side": Side.Buy,
+          "aria-label": bidQueue
+            ? `bid ${qtyText(bidQty)}${queueLabel(bidQueue)}`
+            : undefined,
+        },
       )}
       {cell("price", priceText, {
         "aria-label": `${priceText}${ltp ? ", last traded" : ""}${bestBid ? ", best bid" : ""}${bestAsk ? ", best ask" : ""}`,
@@ -267,17 +401,29 @@ const LadderRow = memo(function LadderRow({
       {cell(
         "ask",
         <>
-          {bar(askQty)}
+          {bar(askQty, askQueue)}
           <span className={`${classBase}-qty`}>{qtyText(askQty)}</span>
         </>,
-        { "data-side": Side.Sell },
+        {
+          "data-side": Side.Sell,
+          "aria-label": askQueue
+            ? `ask ${qtyText(askQty)}${queueLabel(askQueue)}`
+            : undefined,
+        },
       )}
-      {cell("ownSell", ownText(ownSellQty, ownSellCount), {
-        "data-own": ownSellQty > 0 || undefined,
-        "aria-label": ownSellQty
-          ? `my offers ${formatQuantity(ownSellQty)} in ${ownSellCount} orders`
-          : undefined,
-      })}
+      {cell(
+        "ownSell",
+        <>
+          {ownText(ownSellQty, ownSellCount)}
+          {position(askQueue)}
+        </>,
+        {
+          "data-own": ownSellQty > 0 || undefined,
+          "aria-label": ownSellQty
+            ? `my offers ${formatQuantity(ownSellQty)} in ${orderCount(ownSellCount)}${askQueue?.ownRank !== undefined ? `, ${queuePositionText(askQueue)}` : ""}`
+            : undefined,
+        },
+      )}
       {showVolume ? cell("volume", qtyText(volume)) : null}
     </tr>
   );
@@ -302,6 +448,10 @@ interface LadderToolbarProps {
   recentre: () => void;
   onCancelAll?: () => void;
   cancelAllDisabled: boolean;
+  /** Show the Queue toggle. */
+  queueAvailable: boolean;
+  showQueue: boolean;
+  setShowQueue: (showQueue: boolean) => void;
 }
 
 /**
@@ -315,10 +465,13 @@ const LadderToolbar = memo(function LadderToolbar({
   onCancelAll,
   onQuantityText,
   quantityText,
+  queueAvailable,
   recentre,
   ric,
   setAutoCentre,
+  setShowQueue,
   setTradeMode,
+  showQueue,
   start,
   tradeMode,
 }: LadderToolbarProps) {
@@ -363,6 +516,18 @@ const LadderToolbar = memo(function LadderToolbar({
       <Button appearance="bordered" onClick={recentre} aria-label="Centre (C)">
         Centre
       </Button>
+      {queueAvailable ? (
+        <Tooltip content="Show the order queue at each price (Q opens the queue panel)">
+          <ToggleButton
+            aria-label="Queue"
+            selected={showQueue}
+            value="queue"
+            onChange={() => setShowQueue(!showQueue)}
+          >
+            Queue
+          </ToggleButton>
+        </Tooltip>
+      ) : null}
       {onCancelAll ? (
         <Button
           appearance="bordered"
@@ -376,6 +541,95 @@ const LadderToolbar = memo(function LadderToolbar({
     </div>
   );
 });
+
+/** 42s, 3m, 1h. */
+const ageText = (ms: number) => {
+  const seconds = Math.max(0, Math.floor(ms / 1_000));
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3_600) return `${Math.floor(seconds / 60)}m`;
+  return `${Math.floor(seconds / 3_600)}h`;
+};
+
+const MAX_PANEL_ORDERS = 100;
+
+interface QueuePanelProps {
+  side: Side;
+  priceText: string;
+  queue: LadderQueue | undefined;
+  now: number;
+}
+
+/** The orders at the cursor price, front of the queue first (Q). */
+const QueuePanel = ({ side, priceText, queue, now }: QueuePanelProps) => {
+  const sideText = side === Side.Buy ? "Bid" : "Ask";
+  const orders = queue?.orders ?? [];
+  const summary =
+    orders.length === 0
+      ? "No resting orders"
+      : `${orders.length} order${orders.length > 1 ? "s" : ""} · ${formatQuantity(queue?.total ?? 0)}${queue?.ownRank !== undefined ? ` · yours ${queuePositionText(queue)}` : ""}`;
+  let ahead = 0;
+  return (
+    <section
+      className={`${classBase}-queuePanel`}
+      aria-label={`${sideText} queue at ${priceText}`}
+      data-side={side}
+    >
+      <div className={`${classBase}-queueTitle`}>
+        <span>
+          {sideText} queue at {priceText}
+        </span>
+        <span className={`${classBase}-queueSummary`}>{summary}</span>
+      </div>
+      {orders.length > 0 ? (
+        <table className={`${classBase}-queueTable`}>
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Size</th>
+              <th scope="col">Ahead</th>
+              <th scope="col">Age</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.slice(0, MAX_PANEL_ORDERS).map((order, i) => {
+              const row = (
+                <tr key={order.orderId} data-own={order.own || undefined}>
+                  <td>
+                    {i + 1}
+                    {order.own ? " · yours" : ""}
+                  </td>
+                  <td>{formatQuantity(order.size)}</td>
+                  <td>{formatQuantity(ahead)}</td>
+                  <td>{ageText(now - order.entryTime)}</td>
+                </tr>
+              );
+              ahead += order.size;
+              return row;
+            })}
+          </tbody>
+        </table>
+      ) : null}
+      {orders.length > MAX_PANEL_ORDERS ? (
+        <div className={`${classBase}-queueSummary`}>
+          {orders.length - MAX_PANEL_ORDERS} more
+        </div>
+      ) : null}
+    </section>
+  );
+};
+
+const ladderMessage = (
+  tickSchedule: TickSchedule | undefined,
+  centre: number | undefined,
+  ric?: string,
+): string | null =>
+  !tickSchedule
+    ? ric
+      ? "Waiting for prices…"
+      : "Select an instrument"
+    : centre === undefined
+      ? "Waiting for prices…"
+      : null;
 
 const useControlled = <T,>(
   value: T | undefined,
@@ -433,6 +687,12 @@ export const PriceLadderView = forwardRef<HTMLDivElement, PriceLadderViewProps>(
       ownOrders,
       priceFormat,
       quantity: quantityProp,
+      queues,
+      queueUnavailableReason,
+      defaultShowQueue = false,
+      onShowQueueChange,
+      onQueuePanelChange,
+      showQueue: showQueueProp,
       referencePrice,
       ric,
       rowCount: rowCountProp,
@@ -476,6 +736,20 @@ export const PriceLadderView = forwardRef<HTMLDivElement, PriceLadderViewProps>(
       defaultAutoCentre,
       onAutoCentreChange,
     );
+    const [showQueue, setShowQueue] = useControlled(
+      showQueueProp,
+      defaultShowQueue,
+      onShowQueueChange,
+    );
+    const [queuePanel, setQueuePanelState] = useState(false);
+    const setQueuePanel = useCallback(
+      (open: boolean) => {
+        setQueuePanelState(open);
+        onQueuePanelChange?.(open);
+      },
+      [onQueuePanelChange],
+    );
+    const queueAvailable = queues !== undefined;
 
     // measure how many rows fit
     const bodyRef = useRef<HTMLTableSectionElement>(null);
@@ -746,6 +1020,11 @@ export const PriceLadderView = forwardRef<HTMLDivElement, PriceLadderViewProps>(
         case "L":
           setAutoCentre(!autoCentre);
           break;
+        case "q":
+        case "Q":
+          if (queueAvailable) setQueuePanel(!queuePanel);
+          else handled = false;
+          break;
         case "m":
         case "M": {
           if (price === undefined) break;
@@ -796,6 +1075,7 @@ export const PriceLadderView = forwardRef<HTMLDivElement, PriceLadderViewProps>(
             setDrag(undefined);
             setDropPrice(undefined);
           } else if (pending) setPending(undefined);
+          else if (queuePanel) setQueuePanel(false);
           else handled = false;
           break;
         default:
@@ -865,11 +1145,48 @@ export const PriceLadderView = forwardRef<HTMLDivElement, PriceLadderViewProps>(
           cursorCol={cursorCol}
           dropTarget={key === dropKey && key !== movingKey}
           moving={key === movingKey}
+          bidQueue={
+            showQueue ? queues?.get(ownOrdersKey(Side.Buy, price)) : undefined
+          }
+          askQueue={
+            showQueue ? queues?.get(ownOrdersKey(Side.Sell, price)) : undefined
+          }
         />
       );
     });
 
     const sideText = (side: Side) => (side === Side.Buy ? "Buy" : "Sell");
+
+    // the queue panel follows the cursor: its column picks the side, the
+    // price column picks the side of the book the price is on
+    const message = ladderMessage(tickSchedule, effectiveCentre, ric);
+    let panel: ReactNode = null;
+    if (queuePanel && queueAvailable && !message) {
+      const price = cursor?.price ?? prices[centreIndex(prices.length)];
+      if (price !== undefined) {
+        const col = COLUMNS[cursor?.col ?? priceCol];
+        const side =
+          col === "bid" || col === "ownBuy"
+            ? Side.Buy
+            : col === "ask" || col === "ownSell"
+              ? Side.Sell
+              : bestAsk !== undefined && price >= bestAsk
+                ? Side.Sell
+                : bestBid !== undefined && price <= bestBid
+                  ? Side.Buy
+                  : queues?.has(ownOrdersKey(Side.Sell, price))
+                    ? Side.Sell
+                    : Side.Buy;
+        panel = (
+          <QueuePanel
+            side={side}
+            priceText={fmt(price)}
+            queue={queues?.get(ownOrdersKey(side, price))}
+            now={Date.now()}
+          />
+        );
+      }
+    }
     const handleQuantity = useCallback(
       (e: ChangeEvent<HTMLInputElement>) => {
         const text = e.target.value;
@@ -883,13 +1200,6 @@ export const PriceLadderView = forwardRef<HTMLDivElement, PriceLadderViewProps>(
       !(quantity > 0) ||
       Math.abs(quantity / lotSize - Math.round(quantity / lotSize)) > 1e-9;
 
-    let message: ReactNode = null;
-    if (!tickSchedule) {
-      message = ric ? "Waiting for prices…" : "Select an instrument";
-    } else if (effectiveCentre === undefined) {
-      message = "Waiting for prices…";
-    }
-
     return (
       <div
         {...htmlAttributes}
@@ -897,6 +1207,7 @@ export const PriceLadderView = forwardRef<HTMLDivElement, PriceLadderViewProps>(
         data-trade-mode={tradeMode}
         data-auto-centre={autoCentre || undefined}
         data-dragging={drag ? drag.via : undefined}
+        data-queue={(queueAvailable && showQueue) || undefined}
         ref={ref}
       >
         <LadderToolbar
@@ -906,10 +1217,13 @@ export const PriceLadderView = forwardRef<HTMLDivElement, PriceLadderViewProps>(
           onCancelAll={onCancelAll}
           onQuantityText={handleQuantity}
           quantityText={quantityText}
+          queueAvailable={queueAvailable}
           recentre={recentre}
           ric={ric}
           setAutoCentre={setAutoCentre}
+          setShowQueue={setShowQueue}
           setTradeMode={setTradeMode}
+          showQueue={showQueue}
           start={toolbarStart}
           tradeMode={tradeMode}
         />
@@ -986,6 +1300,7 @@ export const PriceLadderView = forwardRef<HTMLDivElement, PriceLadderViewProps>(
             )}
           </tbody>
         </table>
+        {panel}
         <output
           className={`${classBase}-status`}
           role={statusKind === "error" ? "alert" : undefined}
@@ -998,14 +1313,18 @@ export const PriceLadderView = forwardRef<HTMLDivElement, PriceLadderViewProps>(
               ? "Enter to confirm, Escape to cancel"
               : !tradingEnabled && disabledReason
                 ? disabledReason
-                : status}
+                : (status ??
+                  ((showQueue || queuePanel) && queueAvailable
+                    ? queueUnavailableReason
+                    : undefined))}
         </output>
         <div id={helpId} className={`${classBase}-help`}>
           Up and down arrows move the price cursor, left and right change
           column. B buys and S sells at the cursor price, Enter on the bid or
           ask column trades. Delete cancels my orders at the cursor price. M
           picks up my orders to move them, then arrows and Enter amend. C
-          centres, L toggles auto-centre.
+          centres, L toggles auto-centre. Q shows the queue of orders at the
+          cursor price.
         </div>
       </div>
     );

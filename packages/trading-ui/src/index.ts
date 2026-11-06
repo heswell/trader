@@ -20,12 +20,15 @@ export {
   sanitizeSelectedInstrument,
 } from "./instrument-context/selectedInstrument";
 export * from "./instrument-context/useComponentLinkGroup";
+export * from "./instrument-context/useComponentSetting";
 export * from "./instrument-context/workspaceChannel";
 export * from "./instrument-context/workspaceItemState";
 
 // shared market-data / own-order hooks (P3.4, P3.5)
+export * from "./hooks/useBookQueue";
 export * from "./hooks/useLevelFlash";
 export * from "./hooks/useMarketData";
+export * from "./hooks/useOwnExchangeOrderIds";
 export * from "./hooks/useOwnWorkingOrders";
 export * from "./hooks/useStableCallback";
 // order events, notifications, connection state (P3.12)
