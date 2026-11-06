@@ -49,6 +49,8 @@ describe("trading catalog information architecture", () => {
         330,
       ],
       [120, "/Oversight/Desk overview", "/oversight/desk", 400],
+      [130, "/Simulator/Overview", "/simulator/overview", 500],
+      [131, "/Simulator/Bots", "/simulator/bots", 510],
     ]);
   });
 
@@ -74,6 +76,8 @@ describe("trading catalog information architecture", () => {
     expect(byId.get(112)?.accessRole).toBe("trading-execute-access");
     expect(byId.get(124)?.accessRole).toBe("trading-execute-access");
     expect(byId.get(120)?.accessRole).toBe("trading-supervisor-access");
+    expect(byId.get(130)?.accessRole).toBe("sim-admin-access");
+    expect(byId.get(131)?.accessRole).toBe("sim-admin-access");
   });
 
   test("ids and names are unique; the workspace modules (100-102) are retired", () => {

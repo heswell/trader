@@ -1,13 +1,13 @@
 # Simulator bots
 
 The plan for the exchange simulator's trading bots: how to monitor and visualise them, control them to
-get varied simulations, let bots run algos, and add new kinds of bots. Phase 0 is built; the other
+get varied simulations, let bots run algos, and add new kinds of bots. Phases 0 and 1 are built; the other
 phases are a design and may change as they're built.
 
 | Phase | What | Status |
 | --- | --- | --- |
 | 0 | Foundations: bot interface, order port, ledgers, market signals, rosters | Built |
-| 1 | Monitoring grids: `sim-admin` role, `simBooks` and `bots` tables, Overview and Bots screens | Planned |
+| 1 | Monitoring grids: `sim-admin` role, `simBooks` and `bots` tables, Overview and Bots screens | Built |
 | 2 | Market impact, history charts, Instrument screen, attributed fills and markouts | Planned |
 | 3 | Control: admin RPCs, `simEvents`, scenario runner | Planned |
 | 4 | New exchange bots, each with the scenario it enables | Planned |
@@ -70,7 +70,30 @@ Behaviour is statistically unchanged. Two visible differences: the single taker 
 is now three takers with one account each, and random streams per seed differ from before (bots no
 longer draw from the instrument's generator), so exact prices for a given seed changed.
 
-## Phase 1: monitoring grids
+## Phase 1: monitoring grids (built)
+
+As built:
+
+- `sim-admin` is a `trader-trading-server` role (`sim-admin-access` in the nav); the seeded `admin`
+  user has it. `exchangeSim.permissionMode` (`auto` default, `strict` in
+  `application.trading.conf`) gates the three tables with a per-table permission filter
+  ([simAdminAccess.ts](../packages/exchange-sim/src/modules/exchange/simAdminAccess.ts)), and the
+  admin RPCs return `PERMISSION_DENIED` without the role. `auto` also lets in users with no roles,
+  as the OMS does. `trading-test-data` serves the tables to everyone and its direct admin RPCs stay
+  unchecked.
+- `SimAdminPublisher` writes `simBooks` and `bots` every `simPublishIntervalMs` (1s; 0 turns the
+  tables off) and `botParams` once at startup. Realised volatility is annualised on the model's
+  clock (`timeScale`), so it compares with `volatility`. Effective rate is orders/s, smoothed.
+  `simBooks` has trades and volume totals, not trades per minute.
+- trading-ui: `SimBooksGrid` (sort by RIC, gap, spread, inventory or volume), `BotsGrid` (group by
+  kind, RIC or account, summed positions and P&L) and `BotDetail` (stats and read-only
+  parameters). Selecting a row links the instrument.
+- Features: Simulator › Overview (130, books above bots by kind) and Simulator › Bots (131, bots
+  with the detail panel), both in the Simulator palette group.
+- Not built yet: the market phase and session clock strip on the Overview, and fills in the bot
+  detail. Both fit phase 2's per-instrument work.
+
+The design:
 
 - **Access.** One `sim-admin` server role (plus `sim-admin-access` for the nav) for all simulator
   monitoring and control. The exchange module has no permission checks today; add viewport and RPC
@@ -220,4 +243,4 @@ cascade deepens a drawdown, the stressed maker widens in high volatility).
   (`HH:MM`, algo `durationMins`); price-model volatility and drift are annualised and use `timeScale`.
 - **Performance**: run `bun run --cwd packages/exchange-sim bench` before and after each phase.
   Phase 0 baseline (200 instruments): about 13,800 book events and 1,900 trades per simulated second,
-  4.1x headroom, no deferred steps.
+  4.1x headroom, no deferred steps. After phase 1: the same rates, 4.0x headroom.

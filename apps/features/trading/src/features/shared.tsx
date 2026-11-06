@@ -19,6 +19,7 @@ export const ROLE = {
   view: "trading-view",
   execute: "trading-execute",
   supervisor: "trading-supervisor",
+  simAdmin: "sim-admin",
 } as const;
 
 /**
@@ -37,6 +38,7 @@ export const useEntitlements = () => {
   return {
     canTrade: roles.includes(ROLE.execute),
     isSupervisor: roles.includes(ROLE.supervisor),
+    isSimAdmin: roles.includes(ROLE.simAdmin),
   };
 };
 

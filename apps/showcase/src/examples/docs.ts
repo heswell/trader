@@ -13,6 +13,9 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   ExposureTreemap: "docs/components/charts.md#exposuretreemap",
   FillProgressBar: "docs/components/primitives.md",
   FillsBlotter: "docs/components/blotters.md",
+  BotDetail: "docs/components/simulator.md",
+  BotsGrid: "docs/components/simulator.md",
+  SimBooksGrid: "docs/components/simulator.md",
   InstrumentContextProvider:
     "docs/components/selection-and-linking.md#how-linking-works",
   InstrumentGrid: "docs/components/instrument-grid.md#instrumentgrid",
@@ -62,6 +65,7 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   Linking: "docs/components/selection-and-linking.md",
   Primitives: "docs/components/primitives.md",
   Selectors: "docs/components/selection-and-linking.md",
+  Simulator: "docs/components/simulator.md",
   Stack: "docs/components/README.md",
   Workspace: "docs/components/README.md",
   Notifications: "docs/components/notifications-and-connection.md",

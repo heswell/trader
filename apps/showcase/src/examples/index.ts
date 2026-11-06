@@ -46,6 +46,7 @@ import {
   StatusPrimitivesExample,
 } from "./PrimitivesExamples";
 import { SideLabelExamples } from "./SideLabelExamples";
+import { SimulatorMonitorExample } from "./SimulatorExamples";
 import { TraderWorkspace } from "./TraderWorkspaceExamples";
 import type { ShowcaseExample } from "./types";
 
@@ -131,6 +132,15 @@ export const examples: ShowcaseExample[] = [
     title: "Fills with grouping, VWAP and CSV export",
     Component: FillsBlotterExample,
   },
+  {
+    id: "simulator-monitor",
+    group: "Simulator",
+    title: "Books, bots and bot detail",
+    description:
+      "sim-admin tables: simBooks sorted by gap to fair, every bot with P&L and order flow, and the selected bot's stats and parameters. Selecting a row links the instrument.",
+    Component: SimulatorMonitorExample,
+  },
+
   {
     id: "trade-tape",
     group: "TradeTape",

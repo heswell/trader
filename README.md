@@ -4,7 +4,7 @@ Reusable trading front-end (instrument grids, market depth / price ladder, order
 
 Status: Phase 6 (workspaces). The trading UI runs in vuu-portal as role-gated module-federation features under a
 `PortalNav` (Workspaces: Trader, plus the user's own; Trading: Watchlist, Orders, Executions, Price ladder;
-Market: Market depth, Time & sales, Chart, Depth chart; Portfolio: Positions, P&L, Exposure, Execution quality; Oversight: Desk overview). The
+Market: Market depth, Time & sales, Chart, Depth chart; Portfolio: Positions, P&L, Exposure, Execution quality; Oversight: Desk overview; Simulator: Overview, Bots). The
 features connect to a standalone trading Vuu server (exchange simulator + OMS), separate from the portal's own Vuu
 server, through @vuu-ui's per-module `config.json`. One command starts the whole stack. See
 [docs/portal-integration.md](docs/portal-integration.md).
@@ -31,7 +31,7 @@ portal user's token by token exchange.
 | alice, bob, carol, erin | view and trade (ticket, ladder, amend / cancel) |
 | dave | view only |
 | sam | view, plus Oversight › Desk overview |
-| admin | supervision and portal module admin |
+| admin | supervision, Simulator › Overview and Bots (`sim-admin`), and portal module admin |
 
 | What | Where |
 | --- | --- |

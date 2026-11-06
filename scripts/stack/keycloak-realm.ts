@@ -78,7 +78,7 @@ export const SEEDED_USERS: {
   {
     username: "admin",
     name: "Portal Admin",
-    roles: ["trading-view", "trading-supervisor"],
+    roles: ["trading-view", "trading-supervisor", "sim-admin"],
     portal: ["module-admin-access", "vuu-table-viewer-access"],
   },
 ];

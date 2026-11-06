@@ -52,6 +52,15 @@ serverConfig.withModule(ExchangeModule(sim));   // starts ticking once its table
 
 See [docs/charting-data.md](../../docs/charting-data.md) for the chart data semantics.
 
+**Sim-admin tables.** Only users with the `sim-admin` role see rows (see `permissionMode`). Public market data
+stays anonymous; these tables carry the bots' identity. Published every `simPublishIntervalMs`.
+
+| Table | Key | Contents |
+| --- | --- | --- |
+| `simBooks` | `ric` | One row per simulated book: phase, fair value, mid, gap to fair and spread in bp, model and realised volatility (both annualised), `mmRate` / `takerRate` / `activity`, trade imbalance, market-maker inventory, bot count, trades and volume. |
+| `bots` | `botId` (`<ric>/<localId>`) | One row per bot: kind, account, position, average price, position and realised / unrealised / total P&L in USD, order / modify / cancel / fill counts, volume, traded notional, resting orders and quantities, its share of the instrument's rate and its measured orders/s, market makers' skew. |
+| `botParams` | `botId\|name` | One row per bot parameter: value, type, min / max, unit, description, readOnly. Written at startup. |
+
 ### L3 (order-by-order) data
 
 `prices` is level 1 and `depth` is level 2. Level 3 comes from the books themselves: every operation in
@@ -165,6 +174,8 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | `preOpenMinutes` | 0 | Minutes of `PRE_OPEN` before the open (`EXCHANGE_SIM_PRE_OPEN_MINUTES`). |
 | `sessionDayMs` | 0 | Fast simulated day (`EXCHANGE_SIM_SESSION_DAY_MS`): the 24h schedule is compressed into this many ms of clock time (aligned to multiples of it since the epoch); open/close default to 08:00/16:30 when unset. 0 = real 24h day. |
 | `volumeProfile` | `u` | Intraday volume curve the takers follow while a session is configured (`EXCHANGE_SIM_VOLUME_PROFILE`): `u` (busy open, quiet middle, busiest into the close) or `flat`. Published to the OMS through `gateway.getSessionSchedule()`; its VWAP follows the same curve. |
+| `simPublishIntervalMs` | 1000 | `simBooks` / `bots` publish interval (ms); 0 disables the sim-admin tables. |
+| `permissionMode` | `auto` | Who sees the sim-admin tables and may call the admin RPCs: `strict` = only users with the `sim-admin` role; `auto` also lets in users with no roles at all (dev / permissive auth). |
 | `volumeNoise` | 0.3 | Random variation of taker activity around the curve (`EXCHANGE_SIM_VOLUME_NOISE`, 0 = none): a per-day level and a slowly wandering component, each roughly ± this fraction, so actual volume differs from the forecast. |
 
 Book events/s scale roughly linearly with `activeInstruments`, `takerRate` and `mmRate`.
@@ -185,7 +196,7 @@ orders. The OMS's `TradingPersistence` drives it; see [docs/persistence.md](../.
 ## Admin RPCs
 
 Admin RPCs are registered on every `EXCHANGE` table (including `instrumentPrices`) through
-`DefaultRpcHandler`. Call them with an `RPC_REQUEST` in a `VIEWPORT_CONTEXT`. Params are validated
+`DefaultRpcHandler`. They need the `sim-admin` role (see `permissionMode`); others get `PERMISSION_DENIED`. Call them with an `RPC_REQUEST` in a `VIEWPORT_CONTEXT`. Params are validated
 with `validateRpcParams`. Results follow the trading-schemas contract: `rpcSuccess({rics})`, or
 `rpcError("<RejectReason>: text")`.
 

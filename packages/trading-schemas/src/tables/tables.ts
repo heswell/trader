@@ -325,6 +325,171 @@ export const bookSamples = defineTable({
   ],
 });
 
+// ---------------------------------------------------------------- EXCHANGE: simulator admin
+// Visible only with the sim-admin role (see docs/simulator-bots.md).
+
+const ricLinks = [
+  { fromColumn: "ric", toTable: "prices", toColumn: "ric" },
+  { fromColumn: "ric", toTable: "instrumentPrices", toColumn: "ric" },
+] as const;
+
+export const simBooks = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "simBooks",
+  keyField: "ric",
+  description:
+    "Simulator state per simulated instrument: hidden fair value, model settings, bot rates and maker inventory (sim-admin only).",
+  columns: [
+    { name: "ric", dataType: "string" },
+    { name: "phase", dataType: "string", description: "TradingPhase" },
+    { name: "haltReason", dataType: "string" },
+    {
+      name: "fair",
+      dataType: "double",
+      description: "Hidden fair value of the price model.",
+    },
+    { name: "mid", dataType: "double", optional: true },
+    {
+      name: "gapBps",
+      dataType: "double",
+      optional: true,
+      description: "10000 * (mid - fair) / fair.",
+    },
+    { name: "spreadBps", dataType: "double", optional: true },
+    {
+      name: "volatility",
+      dataType: "double",
+      description: "Annualised volatility of the price model.",
+    },
+    {
+      name: "realisedVolatility",
+      dataType: "double",
+      description:
+        "Annualised volatility of mid over the last ~30s (comparable with volatility).",
+    },
+    {
+      name: "mmRate",
+      dataType: "double",
+      description: "Market maker churn, events/s for the instrument.",
+    },
+    {
+      name: "takerRate",
+      dataType: "double",
+      description: "Taker orders/s for the instrument, before activity.",
+    },
+    {
+      name: "activity",
+      dataType: "double",
+      description: "Intraday activity multiplier applied to takerRate.",
+    },
+    {
+      name: "imbalance",
+      dataType: "double",
+      description: "Signed aggressor volume share over ~10s, -1 .. +1.",
+    },
+    {
+      name: "mmInventory",
+      dataType: "long",
+      description: "Net position of the instrument's market makers.",
+    },
+    { name: "bots", dataType: "int", description: "Bots on the instrument." },
+    { name: "tradeCount", dataType: "long" },
+    { name: "volume", dataType: "long" },
+    { name: "updated", dataType: "epochtimestamp" },
+  ],
+  links: ricLinks,
+});
+
+export const bots = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "bots",
+  keyField: "botId",
+  description:
+    "One row per simulator bot: ledger, P&L, resting orders and rates (sim-admin only).",
+  columns: [
+    { name: "botId", dataType: "string", description: "<ric>/<localId>" },
+    { name: "ric", dataType: "string" },
+    { name: "kind", dataType: "string", description: "BotKind" },
+    { name: "localId", dataType: "string" },
+    { name: "account", dataType: "string" },
+    { name: "position", dataType: "long" },
+    { name: "avgPrice", dataType: "double", optional: true },
+    { name: "positionUsd", dataType: "double" },
+    { name: "realisedPnlUsd", dataType: "double" },
+    { name: "unrealisedPnlUsd", dataType: "double" },
+    { name: "totalPnlUsd", dataType: "double" },
+    { name: "orders", dataType: "long" },
+    { name: "modifies", dataType: "long" },
+    { name: "cancels", dataType: "long" },
+    { name: "fills", dataType: "long" },
+    { name: "makerFills", dataType: "long" },
+    { name: "volume", dataType: "long", description: "Bought + sold." },
+    { name: "notionalUsd", dataType: "double" },
+    { name: "restingOrders", dataType: "int" },
+    { name: "restingBidQty", dataType: "long" },
+    { name: "restingAskQty", dataType: "long" },
+    {
+      name: "rate",
+      dataType: "double",
+      description:
+        "The bot's current rate: its share of the instrument's rate for its group (takers include activity).",
+    },
+    {
+      name: "effectiveRate",
+      dataType: "double",
+      description: "Orders sent per second, smoothed.",
+    },
+    {
+      name: "skewTicks",
+      dataType: "int",
+      optional: true,
+      description: "Market makers: inventory skew of the quote centre.",
+    },
+    {
+      name: "quotes",
+      dataType: "int",
+      optional: true,
+      description: "Market makers: resting quotes.",
+    },
+    { name: "updated", dataType: "epochtimestamp" },
+  ],
+  links: ricLinks,
+});
+
+export const botParams = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "botParams",
+  keyField: "id",
+  description:
+    "One row per bot parameter, with its spec (sim-admin only); key 'botId|name' (see botParamKey).",
+  columns: [
+    { name: "id", dataType: "string" },
+    { name: "botId", dataType: "string" },
+    { name: "ric", dataType: "string" },
+    { name: "kind", dataType: "string" },
+    { name: "name", dataType: "string" },
+    {
+      name: "type",
+      dataType: "string",
+      description: "number | integer | string | boolean",
+    },
+    {
+      name: "value",
+      dataType: "string",
+      description: "Current value as text (numbers in plain decimal).",
+    },
+    { name: "min", dataType: "double", optional: true },
+    { name: "max", dataType: "double", optional: true },
+    { name: "unit", dataType: "string" },
+    { name: "description", dataType: "string" },
+    { name: "readOnly", dataType: "boolean" },
+  ],
+  links: [
+    { fromColumn: "botId", toTable: "bots", toColumn: "botId" },
+    ...ricLinks,
+  ],
+});
+
 // ---------------------------------------------------------------- OMS
 
 export const accounts = defineTable({
@@ -668,6 +833,9 @@ export const exchangeTables = {
   bookSamples,
   bookOrders,
   bookEvents,
+  simBooks,
+  bots,
+  botParams,
 } as const;
 export const omsTables = {
   accounts,
@@ -697,5 +865,8 @@ export type BarRow = RowOf<typeof bars>;
 export type BookSampleRow = RowOf<typeof bookSamples>;
 export type BookOrderRow = RowOf<typeof bookOrders>;
 export type BookEventRow = RowOf<typeof bookEvents>;
+export type SimBookRow = RowOf<typeof simBooks>;
+export type BotRow = RowOf<typeof bots>;
+export type BotParamRow = RowOf<typeof botParams>;
 export type PnlHistoryRow = RowOf<typeof pnlHistory>;
 export type AccountPnlHistoryRow = RowOf<typeof accountPnlHistory>;

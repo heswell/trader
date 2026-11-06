@@ -60,6 +60,9 @@ export const EXCHANGE_TABLE_NAMES: readonly ExchangeTableName[] = [
   "bookSamples",
   "bookOrders",
   "bookEvents",
+  "simBooks",
+  "bots",
+  "botParams",
   "instrumentPrices",
 ];
 export const OMS_TABLE_NAMES: readonly OmsLocalTableName[] = [
@@ -216,6 +219,9 @@ export const createTradingTestData = ({
   const bookSamples = tableFor(exchangeTables.bookSamples);
   const bookOrders = tableFor(exchangeTables.bookOrders);
   const bookEvents = tableFor(exchangeTables.bookEvents);
+  const simBooks = tableFor(exchangeTables.simBooks);
+  const bots = tableFor(exchangeTables.bots);
+  const botParams = tableFor(exchangeTables.botParams);
   const omsTableMap = forEachTable(
     Object.keys(omsTables) as OmsTableName[],
     (name) => tableFor(omsTables[name]),
@@ -240,6 +246,9 @@ export const createTradingTestData = ({
     bookSamples: bookSamples.engineTable,
     bookOrders: bookOrders.engineTable,
     bookEvents: bookEvents.engineTable,
+    simBooks: simBooks.engineTable,
+    bots: bots.engineTable,
+    botParams: botParams.engineTable,
   });
   for (const name of Object.keys(omsTableMap) as OmsTableName[]) {
     omsService.tables.attach(name, omsTableMap[name].engineTable);
@@ -305,6 +314,9 @@ export const createTradingTestData = ({
     bookSamples,
     bookOrders,
     bookEvents,
+    simBooks,
+    bots,
+    botParams,
     instrumentPrices: instrumentPricesJoin,
   };
   const exchangeSchemas = forEachTable(

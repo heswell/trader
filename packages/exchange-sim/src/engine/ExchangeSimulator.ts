@@ -36,6 +36,7 @@ import {
   type InstrumentDef,
   selectActiveInstruments,
 } from "../reference/instruments";
+import { SimAdminPublisher } from "../publish/SimAdminPublisher";
 import { type Clock, systemClock } from "../util/clock";
 import { Random } from "../util/random";
 import { generateBackfillBars } from "./barBackfill";
@@ -68,6 +69,8 @@ export interface SimulatedInstrument {
   mmRate: number;
   /** TAKER orders/s for the instrument (0 = paused). */
   takerRate: number;
+  /** Activity multiplier applied to takerRate at the last step (1 unscheduled). */
+  activity: number;
   /** Random variation of taker activity around the volume curve. */
   readonly noise: ActivityNoise;
 }
@@ -135,6 +138,7 @@ export class ExchangeSimulator {
   readonly #books: InstrumentBook[] = [];
   readonly #tapeListeners = new Set<TapeListener>();
   #publisher: MarketDataPublisher | undefined;
+  #simAdmin: SimAdminPublisher | undefined;
   #lastStep: number | undefined;
   #cursor = 0;
   #tradeSeq = 0;
@@ -218,6 +222,7 @@ export class ExchangeSimulator {
       modelRng: rng.fork(300),
       mmRate: config.mmRate,
       takerRate: config.takerRate,
+      activity: 1,
       noise: { rng: rng.fork(400), day: undefined, level: 0, wander: 0 },
     });
     this.#books.push(book);
@@ -330,6 +335,15 @@ export class ExchangeSimulator {
     publisher.loadInstruments(this.universe, this.isSimulated);
     publisher.l3?.attach(this.#books);
     this.#publisher = publisher;
+    const { simBooks, bots, botParams } = tables;
+    if (simBooks && bots && botParams && config.simPublishIntervalMs > 0) {
+      this.#simAdmin = new SimAdminPublisher(
+        { simBooks, bots, botParams },
+        config.simPublishIntervalMs,
+        config.timeScale,
+      );
+      this.#simAdmin.loadBotParams(this.#simulated.values());
+    }
     if (config.barBackfill && publisher.bars) this.#backfillBars(publisher);
     this.flush();
     return publisher;
@@ -484,10 +498,9 @@ export class ExchangeSimulator {
       else if (group === BotType.Taker) takerCount++;
     }
     const mmRate = sim.mmRate > 0 ? sim.mmRate / mmCount : 0;
+    if (sim.takerRate > 0) sim.activity = this.#activity(sim, now, dt);
     const takerRate =
-      sim.takerRate > 0
-        ? (sim.takerRate * this.#activity(sim, now, dt)) / takerCount
-        : 0;
+      sim.takerRate > 0 ? (sim.takerRate * sim.activity) / takerCount : 0;
     for (const bot of bots) {
       const group = botKindDef(bot.kind).rateGroup;
       const rate =
@@ -531,6 +544,12 @@ export class ExchangeSimulator {
   /** Publish dirty books and pending trades. */
   flush(now = this.clock()) {
     this.#publisher?.flush(this.#books, now);
+    this.#simAdmin?.flush(this.#simulated.values(), now);
+  }
+
+  /** The sim-admin publisher, when its tables are attached. */
+  get simAdminPublisher() {
+    return this.#simAdmin;
   }
 
   start() {
