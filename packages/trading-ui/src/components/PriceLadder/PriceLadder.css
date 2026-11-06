@@ -195,6 +195,110 @@
   position: relative;
 }
 
+/* queue view: the bar split into one segment per order, front of the
+   queue next to the price */
+.tradingPriceLadder-queue {
+  bottom: 2px;
+  display: flex;
+  gap: 1px;
+  pointer-events: none;
+  position: absolute;
+  top: 2px;
+}
+
+.tradingPriceLadder-bid .tradingPriceLadder-queue {
+  flex-direction: row-reverse;
+  right: 0;
+}
+
+.tradingPriceLadder-ask .tradingPriceLadder-queue {
+  left: 0;
+}
+
+.tradingPriceLadder-segment {
+  flex-basis: 0;
+  min-width: 1px;
+}
+
+.tradingPriceLadder-bid .tradingPriceLadder-segment {
+  background: var(--tradingPriceLadder-bid-bar);
+}
+
+.tradingPriceLadder-ask .tradingPriceLadder-segment {
+  background: var(--tradingPriceLadder-ask-bar);
+}
+
+.tradingPriceLadder-segment[data-merged] {
+  opacity: 0.55;
+}
+
+.tradingPriceLadder-cell .tradingPriceLadder-segment[data-own] {
+  background: var(--tradingPriceLadder-own);
+  opacity: 1;
+}
+
+.tradingPriceLadder-queuePos {
+  color: var(--salt-content-secondary-foreground);
+  font-weight: var(--salt-text-fontWeight);
+  margin-inline: var(--salt-spacing-50);
+}
+
+/* before the diamond: "#3·900 ◆ 300" */
+.tradingPriceLadder-ownBuy .tradingPriceLadder-queuePos {
+  order: -1;
+}
+
+.tradingPriceLadder-queuePanel {
+  border-top: var(--salt-size-border) var(--salt-separable-borderStyle)
+    var(--salt-separable-secondary-borderColor);
+  flex: 0 0 auto;
+  max-height: 40%;
+  overflow: auto;
+  padding: var(--salt-spacing-50) var(--salt-spacing-100);
+}
+
+.tradingPriceLadder-queueTitle {
+  display: flex;
+  flex-wrap: wrap;
+  font-weight: var(--salt-text-fontWeight-strong);
+  gap: var(--salt-spacing-100);
+  justify-content: space-between;
+}
+
+.tradingPriceLadder-queueSummary {
+  color: var(--salt-content-secondary-foreground);
+  font-weight: var(--salt-text-fontWeight);
+}
+
+.tradingPriceLadder-queueTable {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.tradingPriceLadder-queueTable th {
+  color: var(--salt-content-secondary-foreground);
+  font-weight: var(--salt-text-fontWeight);
+}
+
+.tradingPriceLadder-queueTable th,
+.tradingPriceLadder-queueTable td {
+  height: var(--tradingPriceLadder-rowHeight);
+  padding: 0 var(--salt-spacing-100);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tradingPriceLadder-queueTable th:first-child,
+.tradingPriceLadder-queueTable td:first-child {
+  text-align: left;
+}
+
+.tradingPriceLadder-queueTable tr[data-own] {
+  background: var(--salt-selectable-background-hover);
+  color: var(--tradingPriceLadder-own);
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
 .tradingPriceLadder-row[data-best-bid] .tradingPriceLadder-bid,
 .tradingPriceLadder-row[data-best-ask] .tradingPriceLadder-ask {
   font-weight: var(--salt-text-fontWeight-strong);

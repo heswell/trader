@@ -12,7 +12,7 @@ Reference: [MarketDepth](../api/trading-ui.md#marketdepth), [PriceLadder](../api
 | Component | Tables | RPCs | Roles |
 | --- | --- | --- | --- |
 | `MarketDepth` | `depth`, `instrumentPrices`, `trades`, `parentOrders` (own orders) | – | view only |
-| `PriceLadder` | `depth`, `instrumentPrices`, `trades`, `parentOrders` | `createOrder`, `amendOrder`, `cancelOrder`, `cancelAll` | Trading needs `trading-execute`; the component has no read-only mode, so mount it only for users who can trade (the portal Ladder module is gated, see [permissions](README.md#permissions)). Clicks are blocked while the connection is down. |
+| `PriceLadder` | `depth`, `instrumentPrices`, `trades`, `parentOrders`; with the queue view on, `bookOrders` and `childOrders` | `createOrder`, `amendOrder`, `cancelOrder`, `cancelAll` | Trading needs `trading-execute`; the component has no read-only mode, so mount it only for users who can trade (the portal Ladder module is gated, see [permissions](README.md#permissions)). Clicks are blocked while the connection is down. |
 
 Class bases `tradingMarketDepth` and `tradingPriceLadder`; bar colours `--trading-depth-bid` / `--trading-depth-ask`
 (see [primitives.md](primitives.md#theming)). Account selection for own orders: `account` prop, e.g. from
@@ -74,6 +74,21 @@ supported). Columns: **My bids | Bid qty | Price | Ask qty | My offers | (Volume
   - **Cancel all** calls `cancelAll` for the ric.
 - Amend and cancel apply only to NEW, PARTIALLY_FILLED and REPLACED orders (see `actionableOrders`). A drag changes the
   price, so the order goes to the back of the new level (only a same-price quantity decrease keeps queue priority).
+- **Queue view** (the **Queue** toggle, saved with the layout). Built from the order-by-order (L3) `bookOrders` table:
+  - Each bid / ask bar is split into one segment per resting order, front of the queue next to the price. Your orders
+    are drawn in the own-order colour. Small orders, and everything after 12 segments, merge into one lighter segment;
+    your orders never merge.
+  - The own-order cells show your place in the queue and the size ahead of you: `#3·900` is "3rd in queue, 900
+    ahead". With several orders at one price it's the one nearest the front.
+  - `Q` opens a panel for the cursor row: each order's size, the size ahead of it and its age, yours highlighted. It
+    follows the cursor; the cursor column picks the side, and on the price column the side the price is on.
+  - Your orders are matched through the OMS: `childOrders.exchangeOrderId` of your working LIMIT orders equals
+    `bookOrders.orderId`. The feed itself is anonymous.
+  - The quantities stay the L2 `depth` sizes. The two tables arrive separately, so for up to one publish interval
+    (100 ms) the segments may not add up exactly to the number.
+  - With `exchangeSim.bookOrders=0` the table is empty; turning Queue on then says "Order-by-order data isn't
+    enabled on this server".
+  - `bookOrders` and `childOrders` are only subscribed while the queue or the panel is showing.
 
 ```tsx
 <PriceLadder
@@ -101,6 +116,9 @@ Supports every `PriceLadderViewProps` prop except the data props (`bids`, `asks`
 | `clOrdIdPrefix` | `string` | `"LDR"` | A unique `clOrdId` is generated for each order. |
 | `onOrderEvent` | `(e: PriceLadderOrderEvent) => void` | – | Fires after each successful RPC, one of: `{ type: "create", request, response }`, `{ type: "amend", order, price, response }`, `{ type: "cancel", order, response }`, `{ type: "cancelAll", ric, account?, response }`. |
 | `onError` | `(error: TradingRpcError, action: PriceLadderAction) => void` | – | The error is parsed with `parseRpcError` (`reason`, `message`) and also shown in the status line. |
+| `enableQueue` | `boolean` | `true` | Offer the queue view (Queue toggle and `Q` panel). |
+| `showQueue` / `defaultShowQueue` / `onShowQueueChange` | `boolean` | `false` | The Queue toggle. Uncontrolled, it's saved with the layout when the ladder has an `id`. |
+| `onQueuePanelChange` | `(open: boolean) => void` | – | The `Q` panel opened or closed. |
 
 Orders go through `sendTradingRpc` on the ladder's `parentOrders` viewport (`createOrder`, `amendOrder`,
 `cancelOrder`, `cancelAll`). New orders are disabled while the phase is HALTED, CLOSED or POST_CLOSE.
@@ -126,13 +144,18 @@ behind a different data layer.
 | `onTrade` | `({ side, price, quantity }) => void` | |
 | `onAmendOrders`, `onCancelOrders` | `(orders: OwnOrder[], price) => void` | |
 | `onCancelAll` | `() => void` | The button is hidden when omitted and disabled when there are no own orders. |
+| `queues` | `ReadonlyMap<string, LadderQueue>` | Keyed by `ownOrdersKey(side, price)` (see `buildLadderQueues`). Without it the Queue toggle and `Q` panel are hidden. |
+| `showQueue` / `defaultShowQueue` / `onShowQueueChange` | `boolean` | Queue bars and own queue position. Off by default. |
+| `queueUnavailableReason` | `string` | Shown in the status line while Queue is on (e.g. L3 off on the server). |
+| `onQueuePanelChange` | `(open: boolean) => void` | |
 
 ### Keyboard and accessibility
 
 The ladder (`<table role="grid">`) is a single tab stop. The cursor cell is exposed through `aria-activedescendant`
 rather than a roving tabindex. Rows are recycled by slot, so moving DOM focus would chase ticking prices. Price cells
 are labelled with their state (e.g. "3,440, last traded, best ask"), and own-order cells with their totals
-(e.g. "my bids 500 in 2 orders").
+(e.g. "my bids 500 in 2 orders"). With Queue on, bid / ask cells add the queue ("bid 600, 3 orders, mine 2nd in
+queue, 300 ahead") and own-order cells add your position.
 
 | Key | Action |
 | --- | --- |
@@ -144,7 +167,8 @@ are labelled with their state (e.g. "3,440, last traded, best ask"), and own-ord
 | `M` | Start a keyboard move of own orders at the cursor, then use the arrows and Enter (Escape aborts). |
 | `C` | Re-centre. |
 | `L` | Toggle auto-centre (scroll lock). |
-| Escape | Cancel a pending confirm or move. |
+| `Q` | Open or close the queue panel for the cursor row. |
+| Escape | Cancel a pending confirm or move, or close the queue panel. |
 
 ### Performance
 
@@ -175,6 +199,11 @@ These are exported from `@heswell/trading-ui` for other components to reuse.
 | `useTradedVolume(ric, enabled?)` | Traded quantity per price: `trades` grouped by price. Limited to the trades ring buffer. |
 | `useFollowedInstrument(ric?, { linkGroup? })` | The explicit ric, or else the selected instrument of the link group, merged with its live prices. |
 | `useOwnWorkingOrders(ric, { account? })` | Working LIMIT `parentOrders` for a ric, plus `byPrice` keyed by `ownOrdersKey(side, price)`. |
+| `useBookQueue(ric, { enabled?, ownOrderIds? })` | The L3 queue of every level from `bookOrders`, front first, with your orders marked and your rank / size ahead per level. |
+| `buildLadderQueues(rows, ownOrderIds, previous?)` | The pure grouping behind `useBookQueue`. Unchanged levels keep their object, so memoized rows skip re-rendering. |
+| `useOwnExchangeOrderIds(ric, orders)` | Exchange order ids (`childOrders.exchangeOrderId`) of your working orders, to find them in `bookOrders`. |
+| `queueSegments`, `queuePositionText`, `compactQuantity` | Queue bar segments, "3rd in queue, 900 ahead", and 1.2k-style sizes. |
+| `useComponentSetting(key, default, { persistKey? })` | A small UI setting saved with the layout, in the same places as the link group. |
 | `actionableOrders(orders)` | Keeps only NEW / PARTIALLY_FILLED / REPLACED orders. |
 | `useLevelFlash(levels, version, resetKey)` | Flash state per `levelKey(side, price)` when quantity changes. |
 | `tradingPhaseText`, `isInactivePhase(phase)`, `instrumentTickSchedule(inst)` | Phase labels, a halted / closed check, and a `TickSchedule` built from instrument static data. |

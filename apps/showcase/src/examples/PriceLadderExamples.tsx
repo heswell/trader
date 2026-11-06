@@ -68,6 +68,7 @@ export const PriceLadderLive = () => {
         account={ACCOUNT}
         showVolume={showVolume}
         defaultQuantity={100}
+        defaultShowQueue
         onOrderEvent={(e) => add(describeEvent(e))}
         onError={(err: TradingRpcError, action) =>
           add(`${action.type} failed: ${err.reason}: ${err.text}`)

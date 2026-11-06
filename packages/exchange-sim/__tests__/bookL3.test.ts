@@ -186,6 +186,28 @@ describe("bookOrders / bookEvents tables", () => {
     expect(tables.bookEvents.rowCount).toBe(0);
   });
 
+  test("priority is queue order: kept by a REDUCE, reset by a lost-priority amend", () => {
+    const { sim, tables, book, limit } = quietSim();
+    const a = limit(BookSide.BUY, 100, 50);
+    const b = limit(BookSide.BUY, 100, 20);
+    const c = limit(BookSide.BUY, 100, 10);
+    sim.flush();
+    const priority = (id: string) =>
+      tables.bookOrders.get(id)?.priority as number;
+    const queue = () => [a, b, c].sort((x, y) => priority(x) - priority(y));
+    expect(queue()).toEqual([a, b, c]);
+    book.modify(a, { size: 40 }); // REDUCE keeps its place
+    sim.flush();
+    expect(queue()).toEqual([a, b, c]);
+    book.modify(a, { size: 60 }); // size up loses priority
+    sim.flush();
+    expect(queue()).toEqual([b, c, a]);
+    // a restore re-lists the book in queue order
+    sim.publisher?.l3?.onBookReset(book);
+    sim.flush();
+    expect(queue()).toEqual([b, c, a]);
+  });
+
   test("an order added and removed between flushes never appears", () => {
     const { sim, tables, book, limit } = quietSim();
     book.cancel(limit(BookSide.BUY, 100, 50));
@@ -347,6 +369,19 @@ describe("replaying bookEvents rebuilds the book", () => {
     expect(tables.bookOrders.rowCount).toBe(resting.length);
     for (const o of resting) {
       expect(tables.bookOrders.get(o.id)?.size).toBe(o.size);
+    }
+    // sorting by priority gives the book's queue order at every level
+    for (const book of sim.books) {
+      const { bids, asks } = book.book.snapshot();
+      for (const level of [...bids, ...asks]) {
+        const ids = level.orders.map((o) => o.id);
+        const byPriority = [...ids].sort(
+          (a, b) =>
+            (tables.bookOrders.get(a)?.priority as number) -
+            (tables.bookOrders.get(b)?.priority as number),
+        );
+        expect(byPriority).toEqual(ids);
+      }
     }
   });
 });

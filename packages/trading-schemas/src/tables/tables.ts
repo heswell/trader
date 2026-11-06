@@ -137,7 +137,7 @@ export const bookOrders = defineTable({
   name: "bookOrders",
   keyField: "orderId",
   description:
-    "Order-by-order (L3) book: one row per resting order, anonymous. Sort by price, then entryTime, for queue order.",
+    "Order-by-order (L3) book: one row per resting order, anonymous. Sort by side, price, then priority, for queue order.",
   columns: [
     {
       name: "orderId",
@@ -159,6 +159,12 @@ export const bookOrders = defineTable({
       name: "seq",
       dataType: "long",
       description: "bookEvents seq of the order's last change.",
+    },
+    {
+      name: "priority",
+      dataType: "long",
+      description:
+        "Queue order at its price: lower is nearer the front. Assigned when the order joins the back of the queue (new, or an amend that lost priority).",
     },
   ],
   links: [

@@ -1,4 +1,5 @@
 import {
+  BookEventType,
   bookEventKey,
   bookEvents as bookEventsDef,
   bookOrders as bookOrdersDef,
@@ -52,6 +53,9 @@ export class BookL3Publisher implements BookEventSink {
   readonly #published = new Map<string, string>();
   readonly #reset = new Set<InstrumentBook>();
   readonly #pendingEvents: RowValue[][] = [];
+  /** Order id -> queue priority (see bookOrders.priority). */
+  readonly #priority = new Map<string, number>();
+  #nextPriority = 0;
 
   constructor(
     tables: { bookOrders?: PublishTable; bookEvents?: PublishTable },
@@ -88,6 +92,9 @@ export class BookL3Publisher implements BookEventSink {
 
   onBookEvent(book: InstrumentBook, event: Readonly<BookEvent>) {
     if (this.#orders) {
+      if (event.type === BookEventType.Add) {
+        this.#priority.set(event.orderId, ++this.#nextPriority);
+      }
       const dirty = this.#dirty.get(event.orderId);
       if (dirty) dirty.seq = event.seq;
       else this.#dirty.set(event.orderId, { book, seq: event.seq });
@@ -133,10 +140,13 @@ export class BookL3Publisher implements BookEventSink {
       if (!rics.has(ric)) continue;
       table.delete(orderId);
       this.#published.delete(orderId);
+      this.#priority.delete(orderId);
       this.stats.bookOrderUpdates++;
     }
     for (const book of this.#reset) {
+      // snapshot order is queue order within each level
       for (const order of book.restingOrders()) {
+        this.#priority.set(order.id, ++this.#nextPriority);
         this.#dirty.set(order.id, { book, seq: book.eventSeq });
       }
     }
@@ -152,6 +162,7 @@ export class BookL3Publisher implements BookEventSink {
       const order = book.book.order(orderId);
       const published = this.#published.has(orderId);
       if (order === undefined) {
+        this.#priority.delete(orderId);
         if (published) {
           table.delete(orderId);
           this.#published.delete(orderId);
@@ -167,6 +178,7 @@ export class BookL3Publisher implements BookEventSink {
       row[idx.size] = order.size;
       row[idx.entryTime] = order.time;
       row[idx.seq] = seq;
+      row[idx.priority] = this.#priority.get(orderId) ?? 0;
       if (published) {
         table.update(table.rowIndexAtKey(orderId), row);
       } else {
