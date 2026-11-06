@@ -1,0 +1,23 @@
+{
+  "name": "calm",
+  "description": "A quiet market: half the volatility and taker flow, tighter market-maker spreads. Reverts after ${minutes} minutes.",
+  "args": { "minutes": 2 },
+  "steps": [
+    {
+      "at": "+0s",
+      "action": "setInstrumentParams",
+      "params": { "volatility": "x0.5" }
+    },
+    {
+      "at": "+0s",
+      "action": "setBotRate",
+      "params": { "bot": "TAKER", "rate": "x0.5" }
+    },
+    {
+      "at": "+0s",
+      "action": "setBotParams",
+      "params": { "kind": "marketMaker", "halfSpreadTicks": "x0.75" }
+    },
+    { "at": "+${minutes}m", "action": "revert" }
+  ]
+}

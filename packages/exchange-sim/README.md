@@ -59,10 +59,14 @@ stays anonymous; these tables carry the bots' identity. Published every `simPubl
 | --- | --- | --- |
 | `simBooks` | `ric` | One row per simulated book: phase, fair value, walk, transient impact and the day's permanent impact (bps), `k`, the price band, mid, gap to fair and spread in bp, model and realised volatility (both annualised), `mmRate` / `takerRate` / `activity`, trade imbalance, market-maker inventory, bot count, trades and volume. |
 | `bots` | `botId` (`<ric>/<localId>`) | One row per bot: kind, account, position, average price, position and realised / unrealised / total P&L in USD, order / modify / cancel / fill counts, volume, traded notional, resting orders and quantities, its share of the instrument's rate and its measured orders/s, market makers' skew. |
-| `botParams` | `botId\|name` | One row per bot parameter: value, type, min / max, unit, description, readOnly. Written at startup. |
+| `botParams` | `botId\|name` | One row per bot parameter: value, type, min / max, unit, description, readOnly, and `baseline` (the value at creation) with `changed`. Written at startup and on each change. |
 | `simSamples` | `ric\|time` | Every `simSampleIntervalMs`, per instrument: fair, walk, mid, bid, ask, transient impact, aggressive volume bought and sold by owner group (`mm`, `taker`, `oms`, `bot`) and net per group, market-maker inventory. `simSampleHistory` kept per instrument. |
 | `botHistory` | `botId\|time` | Every `botHistoryIntervalMs`, per bot: position, total and realised P&L in USD, volume, orders. `botHistorySamples` kept per bot. |
 | `botFills` | `tradeId\|M` / `tradeId\|T` | Both sides of every trade: party (bot id or `OMS:<account>`), owner group, kind, account, side, price, quantity, USD notional, liquidity, and the markout `markoutMs` later (bps, > 0 = a gain for that side). Ring buffer of `botFillsCapacity` rows. |
+| `simEvents` | `id` (the seq as text) | Audit log of control actions: time, user (`scenario` for a run's steps), action, target, details (JSON), run id. Ring buffer of 1000 rows, written as they happen. |
+| `scenarios` | `name` | Scenario definitions: description, step count, default targets and args. |
+| `scenarioRuns` | `runId` | Runs since startup: status (`RUNNING`, `DONE`, `STOPPED`, `ABORTED`, `FAILED`), user, targets, args, steps done, next step time, reverted, error. |
+| `simSession` | `session` | One row: market phase, next phase and when, forced (and until), scheduled, session clock (HH:MM), timeScale, paused bots, running scenarios. |
 
 ### L3 (order-by-order) data
 
@@ -230,7 +234,38 @@ with `validateRpcParams`. Results follow the trading-schemas contract: `rpcSucce
 | `setBotRate` | `{ric?, bot: MARKET_MAKER\|TAKER\|ALL, rate}` | Rate per instrument; 0 pauses. |
 | `setMarketPhase` | `{phase: PRE_OPEN\|CONTINUOUS\|CLOSED}` | Forces the market-wide phase now (same transition logic, so `CLOSED` expires DAY orders) until the next scheduled change, or indefinitely when no session is configured. Halted books stay halted. Returns every simulated ric. |
 
+Simulator control (all also recorded in `simEvents` with the caller's user name; bot selectors are
+`{ric?, kind?, botId?}`, none = every bot):
+
+| RPC | Params | Notes |
+| --- | --- | --- |
+| `setBotParams` | `{ric?, kind?, botId?, name, value, overSecs?}` | One parameter, checked against the kind's `paramSpec`. `value` is absolute or relative (`x2`, `+3`, `-3`), clamped to the range; `overSecs` ramps a number there linearly. |
+| `setInstrumentParams` | `{ric?, volatility?, driftBpsPerHour?, impactBps?, impactPermanentShare?, impactHalfLifeSec?}` | Price model; omitted fields are unchanged. Drift is bps per hour of model time. |
+| `shiftFairValue` | `{ric, bps}` | A news jump of the walk, clamped to the band. |
+| `pauseBots` / `resumeBots` / `pullQuotes` / `resetBotStats` | bot selector | Paused bots pull their orders and stop; pull cancels resting orders now; reset zeroes P&L and counters, keeping the position. |
+| `addBot` | `{ric, kind, params?}` | `params` is a JSON object of overrides. Returns `botId` too. |
+| `removeBot` | `{botId}` | Pulls its orders and deletes its rows. |
+| `runScenario` | `{name, rics?, args?}` | `rics` comma separated (default: the scenario's targets), `args` a JSON object. Returns `runId` too. |
+| `stopScenario` | `{runId, revert?}` | Stops a live run; `revert` puts its targets' settings back (also on a finished run). |
+
+Bot rosters, parameters, pause flags and drift are saved with the book settings (snapshot and journal).
+
 Unknown or unsimulated rics give `UNKNOWN_INSTRUMENT`.
+
+## Scenarios
+
+JSON files in [scenarios/](scenarios/), listed in `scenarios/index.ts`: `calm`, `volatile-open`, `trending-day`,
+`liquidity-crunch`. A scenario has `name`, `description`, optional `targets` (`rics`, `sector`, `random` N, or all
+simulated instruments), default `args`, and `steps` of `{at, action, params}`. `at` is `+30s` / `+2m` / `+500ms`
+after the start, or session time `HH:MM`. `$name` / `${name}` in `at`, params or `targets.random` take the run's
+args. Number params of `setInstrumentParams`, `setBotRate` and `setBotParams` take `x<f>` for a multiple of the
+current value; `setBotParams` takes `over` (`"20s"`) to ramp.
+
+Actions: `setInstrumentParams`, `setBotRate {bot, rate}`, `setBotParams {kind?, botId?, over?, <param>: value}`,
+`shiftFairValue {bps}`, `pauseBots` / `resumeBots` / `pullQuotes {kind?}`, `addBot {kind, count?, ...params}`,
+`halt {reason?}`, `resume`, `setMarketPhase {phase}`, `revert`. Each applies to every target, or to `params.ric`.
+A run saves its targets' settings first; a `revert` step, `stopScenario` with `revert`, a failed step or a restart
+during the run put them back. More actions can be added with `sim.scenarios.registerAction`.
 
 ## Gateway API (for the OMS)
 

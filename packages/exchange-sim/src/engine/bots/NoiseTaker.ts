@@ -46,7 +46,7 @@ export class NoiseTaker implements Bot {
 
   constructor(
     readonly localId: string,
-    readonly params: NoiseTakerParams,
+    public params: NoiseTakerParams,
     readonly port: OrderPort,
     private readonly rng: Random,
   ) {

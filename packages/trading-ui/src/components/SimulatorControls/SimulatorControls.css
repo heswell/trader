@@ -1,0 +1,96 @@
+.tradingSimControls {
+  color: var(--salt-content-primary-foreground);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--salt-text-fontFamily);
+  font-size: var(--salt-text-fontSize);
+  gap: var(--salt-spacing-150);
+  min-width: 0;
+  overflow: auto;
+  padding: var(--salt-spacing-100);
+}
+
+.tradingSimControls-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--salt-spacing-100);
+}
+
+.tradingSimControls-label {
+  color: var(--salt-content-secondary-foreground);
+}
+
+.tradingSimControls-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.tradingSimControls-phase {
+  border: 1px solid var(--salt-separable-primary-borderColor);
+  border-radius: var(--salt-palette-corner-weak, 4px);
+  font-weight: var(--salt-text-fontWeight-strong);
+  padding: 0 var(--salt-spacing-75);
+}
+
+.tradingSimControls-message {
+  display: block;
+  color: var(--salt-content-secondary-foreground);
+}
+
+.tradingSimControls-message[data-error="true"] {
+  color: var(
+    --salt-status-error-foreground-decorative,
+    var(--salt-status-error-foreground)
+  );
+}
+
+.tradingSimControls-fields {
+  display: grid;
+  gap: var(--salt-spacing-75) var(--salt-spacing-150);
+  grid-template-columns: max-content minmax(80px, 140px) max-content;
+  align-items: center;
+}
+
+.tradingSimControls-fields input,
+.tradingSimControls-param input {
+  width: 100%;
+}
+
+.tradingSimControls-group {
+  border-top: 1px solid var(--salt-separable-tertiary-borderColor);
+  display: flex;
+  flex-direction: column;
+  gap: var(--salt-spacing-75);
+  padding-top: var(--salt-spacing-100);
+}
+
+.tradingSimControls h4 {
+  font-size: var(--salt-text-label-fontSize, 12px);
+  margin: 0;
+  text-transform: uppercase;
+  color: var(--salt-content-secondary-foreground);
+}
+
+.tradingSimControls-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--salt-spacing-50);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tradingSimControls-list li {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--salt-spacing-100);
+}
+
+.tradingSimControls-changed {
+  color: var(
+    --salt-status-warning-foreground-decorative,
+    var(--salt-status-warning-foreground)
+  );
+  font-weight: var(--salt-text-fontWeight-strong);
+}

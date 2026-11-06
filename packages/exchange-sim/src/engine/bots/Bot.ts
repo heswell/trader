@@ -28,6 +28,17 @@ export interface BotParamSpec {
   readOnly?: boolean;
 }
 
+const BASELINES = new WeakMap<Bot, BotParams>();
+
+/** Record a bot's parameters as created (createBot calls this). */
+export const setBotBaseline = (bot: Bot) => {
+  BASELINES.set(bot, { ...bot.params });
+};
+
+/** A bot's parameters as created, to show what was changed since. */
+export const botBaseline = (bot: Bot): BotParams =>
+  BASELINES.get(bot) ?? bot.params;
+
 /** What a bot sees on each step. */
 export interface BotStepContext {
   /** Wall-clock seconds since the previous step. */
@@ -51,8 +62,11 @@ export interface Bot {
   readonly kind: BotKind;
   readonly account: string;
   readonly port: OrderPort;
-  readonly params: BotParams;
+  /** Current parameters; replaced (never mutated) by setBotParams. */
+  params: BotParams;
   step(ctx: BotStepContext): void;
+  /** Called after `params` is replaced, e.g. to requote. */
+  onParamsChanged?(): void;
   /** Cancel everything resting (market close, pause). */
   pull(): void;
   /** Kind-specific stats for monitoring, e.g. a market maker's skew. */

@@ -32,7 +32,7 @@ export class ExchangeAdminRpcHandler extends DefaultRpcHandler {
         if (!canAdminSim(user, mode)) {
           return { type: "ERROR_RESULT", errorMessage: simAdminDenied(user) };
         }
-        return handleExchangeAdminRpc(sim, rpcName, namedParams);
+        return handleExchangeAdminRpc(sim, rpcName, namedParams, user?.name);
       });
     }
   }

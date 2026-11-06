@@ -53,13 +53,18 @@ export class MarketMaker implements Bot {
 
   constructor(
     readonly localId: string,
-    readonly params: MarketMakerParams,
+    public params: MarketMakerParams,
     readonly port: OrderPort,
     private readonly rng: Random,
   ) {
     this.id = port.botId;
     this.account = port.account;
     port.setFillListener((orderId, trade) => this.#onFill(orderId, trade));
+  }
+
+  /** Requote on the next step with the new spread / levels / size. */
+  onParamsChanged() {
+    this.#stale = true;
   }
 
   get book(): InstrumentBook {

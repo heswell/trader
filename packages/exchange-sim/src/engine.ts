@@ -26,6 +26,24 @@ export {
 } from "./engine/TradingSession";
 export { InstrumentBook } from "./engine/InstrumentBook";
 export {
+  type ActionContext,
+  type BotSelector,
+  type InstrumentParams,
+  parseParamValue,
+  SimControl,
+  type SimEvent,
+} from "./engine/control/SimControl";
+export {
+  parseOffset,
+  type SavedRun,
+  type ScenarioDef,
+  type ScenarioRun,
+  ScenarioRunner,
+  ScenarioStatus,
+  type ScenarioStep,
+} from "./engine/control/ScenarioRunner";
+export { BUILT_IN_SCENARIOS } from "../scenarios";
+export {
   type Bot,
   BotKind,
   type BotKindDef,

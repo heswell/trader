@@ -1,0 +1,36 @@
+{
+  "name": "volatile-open",
+  "description": "An open-style burst: three times the volatility, twice the taker flow and doubled spreads, easing back over two minutes, then reverting.",
+  "steps": [
+    {
+      "at": "+0s",
+      "action": "setInstrumentParams",
+      "params": { "volatility": "x3" }
+    },
+    {
+      "at": "+0s",
+      "action": "setBotRate",
+      "params": { "bot": "TAKER", "rate": "x2" }
+    },
+    {
+      "at": "+0s",
+      "action": "setBotParams",
+      "params": { "kind": "marketMaker", "halfSpreadTicks": "x2" }
+    },
+    {
+      "at": "+60s",
+      "action": "setInstrumentParams",
+      "params": { "volatility": "x0.6" }
+    },
+    {
+      "at": "+60s",
+      "action": "setBotParams",
+      "params": {
+        "kind": "marketMaker",
+        "halfSpreadTicks": "x0.5",
+        "over": "60s"
+      }
+    },
+    { "at": "+120s", "action": "revert" }
+  ]
+}

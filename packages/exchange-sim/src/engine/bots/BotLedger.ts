@@ -91,6 +91,25 @@ export class BotLedger implements BotLedgerState {
     this.position = after;
   }
 
+  /**
+   * Start the stats again (resetBotStats): counters and realised P&L go to
+   * zero, and an open position is re-marked at `mark`, so P&L counts from
+   * now (cash + position × mark stays the total).
+   */
+  reset(mark: number) {
+    this.orders = 0;
+    this.modifies = 0;
+    this.cancels = 0;
+    this.fills = 0;
+    this.makerFills = 0;
+    this.boughtQty = 0;
+    this.soldQty = 0;
+    this.notional = 0;
+    this.realisedPnl = 0;
+    this.avgPrice = this.position === 0 ? 0 : mark;
+    this.cash = -this.position * mark;
+  }
+
   exportState(): BotLedgerState {
     const {
       orders,

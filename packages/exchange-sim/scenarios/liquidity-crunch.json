@@ -1,0 +1,28 @@
+{
+  "name": "liquidity-crunch",
+  "description": "$count random instruments lose liquidity: market makers widen to four times the spread with fewer, smaller levels over 20 seconds while taker flow rises by half. Reverts after 90 seconds.",
+  "targets": { "random": "$count" },
+  "args": { "count": 3 },
+  "steps": [
+    {
+      "at": "+0s",
+      "action": "setBotParams",
+      "params": {
+        "kind": "marketMaker",
+        "halfSpreadTicks": "x4",
+        "over": "20s"
+      }
+    },
+    {
+      "at": "+0s",
+      "action": "setBotParams",
+      "params": { "kind": "marketMaker", "levels": "x0.4", "baseQty": "x0.3" }
+    },
+    {
+      "at": "+0s",
+      "action": "setBotRate",
+      "params": { "bot": "TAKER", "rate": "x1.5" }
+    },
+    { "at": "+90s", "action": "revert" }
+  ]
+}

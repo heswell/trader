@@ -66,6 +66,10 @@ export const EXCHANGE_TABLE_NAMES: readonly ExchangeTableName[] = [
   "simSamples",
   "botHistory",
   "botFills",
+  "simEvents",
+  "scenarios",
+  "scenarioRuns",
+  "simSession",
   "instrumentPrices",
 ];
 export const OMS_TABLE_NAMES: readonly OmsLocalTableName[] = [
@@ -230,6 +234,10 @@ export const createTradingTestData = ({
   const simSamples = tableFor(exchangeTables.simSamples);
   const botHistory = tableFor(exchangeTables.botHistory);
   const botFills = tableFor(exchangeTables.botFills);
+  const simEvents = tableFor(exchangeTables.simEvents);
+  const scenarios = tableFor(exchangeTables.scenarios);
+  const scenarioRuns = tableFor(exchangeTables.scenarioRuns);
+  const simSession = tableFor(exchangeTables.simSession);
   const omsTableMap = forEachTable(
     Object.keys(omsTables) as OmsTableName[],
     (name) => tableFor(omsTables[name]),
@@ -260,6 +268,10 @@ export const createTradingTestData = ({
     simSamples: simSamples.engineTable,
     botHistory: botHistory.engineTable,
     botFills: botFills.engineTable,
+    simEvents: simEvents.engineTable,
+    scenarios: scenarios.engineTable,
+    scenarioRuns: scenarioRuns.engineTable,
+    simSession: simSession.engineTable,
   });
   for (const name of Object.keys(omsTableMap) as OmsTableName[]) {
     omsService.tables.attach(name, omsTableMap[name].engineTable);
@@ -291,7 +303,7 @@ export const createTradingTestData = ({
     if (isOmsRpc(rpcName))
       return handleOmsRpc(omsService, rpcName, params, user);
     if (isExchangeRpc(rpcName))
-      return handleExchangeAdminRpc(sim, rpcName, params);
+      return handleExchangeAdminRpc(sim, rpcName, params, user.name);
     return {
       type: "ERROR_RESULT",
       errorMessage: `INVALID_REQUEST: unknown rpc ${rpcName}`,
@@ -331,6 +343,10 @@ export const createTradingTestData = ({
     simSamples,
     botHistory,
     botFills,
+    simEvents,
+    scenarios,
+    scenarioRuns,
+    simSession,
     instrumentPrices: instrumentPricesJoin,
   };
   const exchangeSchemas = forEachTable(

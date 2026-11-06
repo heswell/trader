@@ -46,6 +46,17 @@ export const RpcName = Object.freeze({
   ResumeInstrument: "resumeInstrument",
   SetBotRate: "setBotRate",
   SetMarketPhase: "setMarketPhase",
+  SetBotParams: "setBotParams",
+  SetInstrumentParams: "setInstrumentParams",
+  ShiftFairValue: "shiftFairValue",
+  PauseBots: "pauseBots",
+  ResumeBots: "resumeBots",
+  PullQuotes: "pullQuotes",
+  AddBot: "addBot",
+  RemoveBot: "removeBot",
+  ResetBotStats: "resetBotStats",
+  RunScenario: "runScenario",
+  StopScenario: "stopScenario",
 } as const);
 export type RpcName = (typeof RpcName)[keyof typeof RpcName];
 
@@ -61,6 +72,17 @@ export const EXCHANGE_ADMIN_RPC_NAMES = Object.freeze([
   RpcName.ResumeInstrument,
   RpcName.SetBotRate,
   RpcName.SetMarketPhase,
+  RpcName.SetBotParams,
+  RpcName.SetInstrumentParams,
+  RpcName.ShiftFairValue,
+  RpcName.PauseBots,
+  RpcName.ResumeBots,
+  RpcName.PullQuotes,
+  RpcName.AddBot,
+  RpcName.RemoveBot,
+  RpcName.ResetBotStats,
+  RpcName.RunScenario,
+  RpcName.StopScenario,
 ] as const);
 
 const id = string({ maxLength: 64 });
@@ -188,6 +210,94 @@ export const setMarketPhaseParams = object({
 });
 export type SetMarketPhaseRequest = Infer<typeof setMarketPhaseParams>;
 
+// ---------------------------------------------------------------- simulator control
+
+/**
+ * Which bots: one (`botId`), or every bot of `kind` on `ric`; omit both to
+ * select every bot (of `kind`) on every simulated instrument.
+ */
+const botSelector = {
+  ric: optional(ric),
+  kind: optional(string({ maxLength: 32 })),
+  botId: optional(string({ maxLength: 64 })),
+};
+
+/**
+ * Set one bot parameter (checked against the kind's paramSpec). `value` is
+ * absolute ("12", "true") or, for numbers, relative: "x2" multiplies,
+ * "+3" / "-3" add. `overSecs` ramps a number there linearly.
+ */
+export const setBotParamsParams = object({
+  ...botSelector,
+  name: string({ maxLength: 64 }),
+  value: string({ maxLength: 64 }),
+  overSecs: optional(number({ min: 0, max: 86_400 })),
+});
+export type SetBotParamsRequest = Infer<typeof setBotParamsParams>;
+
+/** Price-model settings; omitted fields are unchanged, no ric = all. */
+export const setInstrumentParamsParams = object({
+  ric: optional(ric),
+  volatility: optional(number({ min: 0, max: 10 })),
+  /** Trend of the walk, bps per hour of model time. */
+  driftBpsPerHour: optional(number({ min: -10_000, max: 10_000 })),
+  /** Impact per $100k traded at 30% volatility, bps (0 = off). */
+  impactBps: optional(number({ min: 0, max: 1_000 })),
+  impactPermanentShare: optional(number({ min: 0, max: 1 })),
+  impactHalfLifeSec: optional(number({ min: 0, max: 86_400 })),
+});
+export type SetInstrumentParamsRequest = Infer<
+  typeof setInstrumentParamsParams
+>;
+
+/** Move fair value by `bps` at once (a news jump), within the price band. */
+export const shiftFairValueParams = object({
+  ric,
+  bps: number({ min: -5_000, max: 5_000 }),
+});
+export type ShiftFairValueRequest = Infer<typeof shiftFairValueParams>;
+
+/** Pause / resume / pull quotes / reset stats of the selected bots. */
+export const botSelectorParams = object(botSelector);
+export type BotSelectorRequest = Infer<typeof botSelectorParams>;
+
+export const addBotParams = object({
+  ric,
+  kind: string({ maxLength: 32 }),
+  /** Parameter overrides, as a JSON object of name to value text. */
+  params: optional(string({ maxLength: 1_024 })),
+});
+export type AddBotRequest = Infer<typeof addBotParams>;
+export interface AddBotResponse extends AdminRpcResponse {
+  botId: string;
+}
+
+export const removeBotParams = object({
+  botId: string({ maxLength: 64 }),
+});
+export type RemoveBotRequest = Infer<typeof removeBotParams>;
+
+/**
+ * Start a scenario. `rics` (comma separated) overrides its default targets;
+ * `args` is a JSON object overriding its default args.
+ */
+export const runScenarioParams = object({
+  name: string({ maxLength: 64 }),
+  rics: optional(string({ maxLength: 4_096 })),
+  args: optional(string({ maxLength: 1_024 })),
+});
+export type RunScenarioRequest = Infer<typeof runScenarioParams>;
+export interface RunScenarioResponse extends AdminRpcResponse {
+  runId: string;
+}
+
+/** Stop a live run; `revert` also puts its targets' settings back. */
+export const stopScenarioParams = object({
+  runId: string({ maxLength: 32 }),
+  revert: optional(boolean()),
+});
+export type StopScenarioRequest = Infer<typeof stopScenarioParams>;
+
 export interface AdminRpcResponse {
   /** Instruments affected. */
   rics: string[];
@@ -205,6 +315,17 @@ export interface RpcContracts {
   resumeInstrument: [ResumeInstrumentRequest, AdminRpcResponse];
   setBotRate: [SetBotRateRequest, AdminRpcResponse];
   setMarketPhase: [SetMarketPhaseRequest, AdminRpcResponse];
+  setBotParams: [SetBotParamsRequest, AdminRpcResponse];
+  setInstrumentParams: [SetInstrumentParamsRequest, AdminRpcResponse];
+  shiftFairValue: [ShiftFairValueRequest, AdminRpcResponse];
+  pauseBots: [BotSelectorRequest, AdminRpcResponse];
+  resumeBots: [BotSelectorRequest, AdminRpcResponse];
+  pullQuotes: [BotSelectorRequest, AdminRpcResponse];
+  addBot: [AddBotRequest, AddBotResponse];
+  removeBot: [RemoveBotRequest, AdminRpcResponse];
+  resetBotStats: [BotSelectorRequest, AdminRpcResponse];
+  runScenario: [RunScenarioRequest, RunScenarioResponse];
+  stopScenario: [StopScenarioRequest, AdminRpcResponse];
 }
 export type RpcRequestParams<N extends RpcName> = RpcContracts[N][0];
 export type RpcResponseData<N extends RpcName> = RpcContracts[N][1];
@@ -284,6 +405,17 @@ const validators = {
   resumeInstrument: resumeInstrumentParams,
   setBotRate: setBotRateParams,
   setMarketPhase: setMarketPhaseParams,
+  setBotParams: setBotParamsParams,
+  setInstrumentParams: setInstrumentParamsParams,
+  shiftFairValue: shiftFairValueParams,
+  pauseBots: botSelectorParams,
+  resumeBots: botSelectorParams,
+  pullQuotes: botSelectorParams,
+  addBot: addBotParams,
+  removeBot: removeBotParams,
+  resetBotStats: botSelectorParams,
+  runScenario: runScenarioParams,
+  stopScenario: stopScenarioParams,
 } as const;
 
 /**

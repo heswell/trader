@@ -150,6 +150,24 @@ export class TradingSession {
     return TradingPhase.Closed;
   }
 
+  /** Clock time of the next "HH:MM" (session time) at or after `now`. */
+  nextTimeOfDay(hhmm: string, now: number): number | undefined {
+    const minutes = parseTimeOfDay(hhmm);
+    if (minutes === undefined) return undefined;
+    const at = mod(minutes, 1440) * MINUTE_MS * (this.dayMs / DAY_MS);
+    return now + mod(at - this.#timeOfDay(now), this.dayMs);
+  }
+
+  /** Session time of day at `now`, "HH:MM" (scaled on a compressed day). */
+  timeOfDayLabel(now: number) {
+    const minutes = Math.floor(
+      (this.#timeOfDay(now) * (DAY_MS / this.dayMs)) / MINUTE_MS,
+    );
+    const hh = String(Math.floor(minutes / 60) % 24).padStart(2, "0");
+    const mm = String(minutes % 60).padStart(2, "0");
+    return `${hh}:${mm}`;
+  }
+
   /** Clock time of the next phase change strictly after `now` (undefined = never). */
   nextChangeAt(now: number): number | undefined {
     if (!this.scheduled) return undefined;

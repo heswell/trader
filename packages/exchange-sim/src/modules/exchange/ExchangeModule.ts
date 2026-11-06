@@ -41,6 +41,10 @@ const TABLE_NAMES: readonly TableName[] = [
   "simSamples",
   "botHistory",
   "botFills",
+  "simEvents",
+  "scenarios",
+  "scenarioRuns",
+  "simSession",
 ];
 
 /** Tables only sim-admin users see rows of (see simAdminAccess.ts). */
@@ -51,6 +55,10 @@ const SIM_ADMIN_TABLES = [
   "simSamples",
   "botHistory",
   "botFills",
+  "simEvents",
+  "scenarios",
+  "scenarioRuns",
+  "simSession",
 ] as const;
 
 /** Sim-admin tables: every row for sim admins, none for anyone else. */
@@ -164,6 +172,10 @@ export const ExchangeModule = (
     .addTable(defs.simSamples, provider("simSamples"), serviceFactory)
     .addTable(defs.botHistory, provider("botHistory"), serviceFactory)
     .addTable(defs.botFills, provider("botFills"), serviceFactory)
+    .addTable(defs.simEvents, provider("simEvents"), serviceFactory)
+    .addTable(defs.scenarios, provider("scenarios"), serviceFactory)
+    .addTable(defs.scenarioRuns, provider("scenarioRuns"), serviceFactory)
+    .addTable(defs.simSession, provider("simSession"), serviceFactory)
     .addJoinTable(toServerJoinFactory(instrumentPrices), serviceFactory)
     .asModule();
 };

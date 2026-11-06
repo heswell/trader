@@ -49,6 +49,8 @@ export class OrderPort implements FillSink {
   readonly owner: string;
   readonly #resting = new Set<string>();
   #listener: BotFillListener | undefined;
+  /** A paused bot is not stepped (pauseBots); its quotes are pulled. */
+  paused = false;
 
   constructor(
     readonly book: InstrumentBook,
