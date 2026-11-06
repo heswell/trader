@@ -8,7 +8,7 @@ GBM reference price drives them. The results are published to the `EXCHANGE` mod
 ```
 src/
   reference/      instrument universe (336 listings, 9 venues, tick bands, lot sizes, ref prices)
-  engine/         ExchangeSimulator, InstrumentBook, PriceModel, TradingSession, bots/{MarketMaker,NoiseTaker}
+  engine/         ExchangeSimulator, InstrumentBook, PriceModel, TradingSession, bots/ (Bot, OrderPort, BotLedger, MarketSignals, roster, MarketMaker, NoiseTaker)
   publish/        MarketDataPublisher (prices / depth deltas / trades ring buffer), BookL3Publisher (bookOrders / bookEvents), TradeRingBuffer
   gateway/        SimExchangeGateway: in-process order entry + execution reports
   modules/exchange ExchangeModule (Vuu module) and ExchangeAdminService (admin RPCs)
@@ -108,12 +108,20 @@ nothing visible changed.
     close); `resumeInstrument` returns it to the current market phase.
   - `sim.marketPhase` and `sim.sessionStatus()` (`{phase, nextPhase, nextChangeAt, forced}`) expose
     the state; the `setMarketPhase` admin RPC overrides it.
-- **Market makers.** There are `mmPerInstrument` MMs (accounts `MM1..`, owner `bot:mm`) per instrument.
+- **Bots.** Each instrument runs the bots of its roster (default: `mmPerInstrument` market makers and
+  three noise takers). A bot only reaches the book through its `OrderPort`, which stamps the account
+  and the owner `bot:<ric>/<local id>` (e.g. `bot:VOD.L/MM1`), receives every fill and keeps the
+  bot's `BotLedger`: order counts, fills, position, average cost and realised / unrealised P&L. The
+  ledgers are saved in snapshots. `sim.getBots(ric?)` lists them. Every bot has its own random
+  generator forked from the instrument by its local id, and reads a shared `MarketSignals` (mid EMAs,
+  realised volatility, trade imbalance) taken once per step. See
+  [docs/simulator-bots.md](../../docs/simulator-bots.md) for the design and what comes next.
+- **Market makers.** There are `mmPerInstrument` MMs (accounts and local ids `MM1..`) per instrument.
   Each quotes `mmLevels` per side on a tick grid around fair value, with a half spread of about 2–6 bps,
   level spacing of 1–3 bps, and inventory skew. They requote when fair value moves, by cancel/replace of
   only the levels that changed. `mmRate` adds random discretionary cancel/replace churn per second.
-- **Takers.** Accounts `TAKER1..3` (owner `bot:taker`) send Poisson arrivals at `takerRate`/s per
-  instrument: mostly market orders and aggressive IOC limits, plus passive limits and occasional
+- **Takers.** Three takers, one account each (`TAKER1..3`), share `takerRate`/s per instrument as
+  Poisson arrivals: mostly market orders and aggressive IOC limits, plus passive limits and occasional
   multi-level sweeps.
 - **Scheduling.** One `setInterval(botStepMs)` steps every book in a rotating order, so the work is
   batched rather than spread across one timer per bot. `maxOpsPerStep` caps one step; the rest are

@@ -1,9 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { Side as BookSide } from "@heswell/hft-limit-order-book";
 import { isOnTick } from "@heswell/trading-schemas";
-import { MM_OWNER } from "../src/engine/bots/MarketMaker";
-import { TAKER_OWNER } from "../src/engine/bots/NoiseTaker";
-import { createExchangeSimulator } from "../src/engine/ExchangeSimulator";
+import { MarketMaker } from "../src/engine/bots/MarketMaker";
+import { NoiseTaker } from "../src/engine/bots/NoiseTaker";
+import { isBotOwner } from "../src/engine/bots/OrderPort";
+import {
+  createExchangeSimulator,
+  type SimulatedInstrument,
+} from "../src/engine/ExchangeSimulator";
 import { ManualClock } from "../src/util/clock";
 
 const setup = (config = {}) => {
@@ -18,6 +22,15 @@ const setup = (config = {}) => {
   return { clock, sim, run };
 };
 
+const makers = (s: SimulatedInstrument | undefined) =>
+  (s?.bots ?? []).filter(
+    (bot): bot is MarketMaker => bot instanceof MarketMaker,
+  );
+const takers = (s: SimulatedInstrument | undefined) =>
+  (s?.bots ?? []).filter((bot): bot is NoiseTaker => bot instanceof NoiseTaker);
+const takerOrders = (s: SimulatedInstrument | undefined) =>
+  takers(s).reduce((n, bot) => n + bot.port.ledger.orders, 0);
+
 describe("MarketMaker", () => {
   test("quotes N levels each side, on tick, identifiable by account/owner", () => {
     const { sim, run } = setup({ takerRate: 0, mmLevels: 4 });
@@ -25,7 +38,7 @@ describe("MarketMaker", () => {
     for (const ric of ["VOD.L", "AAPL.OQ", "0005.HK"]) {
       const s = sim.getSimulated(ric);
       if (!s) throw Error(ric);
-      for (const mm of s.marketMakers) {
+      for (const mm of makers(s)) {
         const quotes = mm.quotes();
         const bids = quotes.filter(({ side }) => side === BookSide.BUY);
         const asks = quotes.filter(({ side }) => side === BookSide.SELL);
@@ -38,8 +51,8 @@ describe("MarketMaker", () => {
           expect(isOnTick(quote.price, s.book.schedule)).toBe(true);
           expect(quote.size % s.book.instrument.lotSize).toBe(0);
           const order = s.book.book.order(quote.id);
-          expect(order?.accountId).toBe(mm.params.account);
-          expect(order?.owner).toBe(MM_OWNER);
+          expect(order?.accountId).toBe(mm.account);
+          expect(order?.owner).toBe(`bot:${ric}/${mm.localId}`);
         }
       }
     }
@@ -59,7 +72,7 @@ describe("MarketMaker", () => {
     // every quote still rests in the book, nothing leaked
     const s = sim.getSimulated("AAPL.OQ");
     let resting = 0;
-    for (const mm of s?.marketMakers ?? []) {
+    for (const mm of makers(s)) {
       for (const quote of mm.quotes()) {
         expect(book.book.order(quote.id)?.price).toBe(quote.price);
         resting++;
@@ -75,13 +88,13 @@ describe("MarketMaker", () => {
     run(40);
     const s = sim.getSimulated("AAPL.OQ");
     if (!s) throw Error();
-    const [mm] = s.marketMakers;
+    const [mm] = makers(s);
     expect(mm.params.halfSpreadTicks).toBeGreaterThan(1);
     const centre = s.book.model.fairOnTick;
     const neutral = mm.targetPrices(BookSide.BUY, centre)[0];
-    mm.position = mm.params.baseQty * 100;
+    mm.port.ledger.position = mm.params.baseQty * 100;
     expect(mm.skewTicks()).toBeLessThan(0);
-    mm.position = -mm.params.baseQty * 100;
+    mm.port.ledger.position = -mm.params.baseQty * 100;
     expect(mm.skewTicks()).toBeGreaterThan(0);
     expect(Math.abs(mm.skewTicks())).toBeLessThan(mm.params.halfSpreadTicks);
     expect(neutral).toBeLessThan(centre);
@@ -98,10 +111,14 @@ describe("NoiseTaker", () => {
   test("generates trades at roughly the configured rate", () => {
     const { sim, run } = setup({ takerRate: 20 });
     run(20_000);
-    const taker = sim.getSimulated("VOD.L")?.taker;
-    // ~20/s for 20s; Poisson so allow slack
-    expect(taker?.ordersSent).toBeGreaterThan(300);
-    expect(taker?.ordersSent).toBeLessThan(500);
+    const s = sim.getSimulated("VOD.L");
+    // ~20/s for 20s across the takers; Poisson, and market orders are
+    // skipped while a side is empty, so allow slack
+    expect(takerOrders(s)).toBeGreaterThan(300);
+    expect(takerOrders(s)).toBeLessThan(500);
+    for (const taker of takers(s)) {
+      expect(taker.port.ledger.orders).toBeGreaterThan(60);
+    }
     expect(sim.getBook("VOD.L")?.stats.tradeCount).toBeGreaterThan(50);
   });
 
@@ -121,25 +138,33 @@ describe("NoiseTaker", () => {
       return market(options, sink);
     };
     run(10_000);
-    const taker = seen.filter(({ owner }) => owner === TAKER_OWNER);
+    const taker = seen.filter(
+      ({ owner }) =>
+        typeof owner === "string" && owner.startsWith("bot:AAPL.OQ/TAKER"),
+    );
     expect(taker.length).toBeGreaterThan(200);
     for (const order of taker) {
-      expect(["TAKER1", "TAKER2", "TAKER3"]).toContain(order.accountId ?? "");
+      // one account per taker, matching its owner
+      expect(order.owner).toBe(`bot:AAPL.OQ/${order.accountId}`);
     }
+    expect(new Set(taker.map(({ accountId }) => accountId))).toEqual(
+      new Set(["TAKER1", "TAKER2", "TAKER3"]),
+    );
     const kinds = new Set(taker.map(({ kind }) => kind));
     expect(kinds).toEqual(new Set(["MARKET", "IOC", "GTC"]));
-    expect(seen.some(({ owner }) => owner === MM_OWNER)).toBe(true);
+    expect(seen.every(({ owner }) => isBotOwner(owner))).toBe(true);
+    expect(seen.some(({ owner }) => owner === "bot:AAPL.OQ/MM1")).toBe(true);
   });
 
   test("setBotRate changes the rate per bot type", () => {
     const { sim, run } = setup();
     sim.setBotRate(undefined, "TAKER", 0);
-    const taker = sim.getSimulated("VOD.L")?.taker;
-    const sent = taker?.ordersSent;
+    const s = sim.getSimulated("VOD.L");
+    const sent = takerOrders(s);
     run(2_000);
-    expect(taker?.ordersSent).toBe(sent);
+    expect(takerOrders(s)).toBe(sent);
     sim.setBotRate("VOD.L", "TAKER", 100);
     run(1_000);
-    expect(taker?.ordersSent).toBeGreaterThan((sent ?? 0) + 50);
+    expect(takerOrders(s)).toBeGreaterThan(sent + 50);
   });
 });

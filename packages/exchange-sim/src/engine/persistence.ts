@@ -2,6 +2,7 @@ import type { OrderBookOptions } from "@heswell/hft-limit-order-book";
 import type { TradingPhase } from "@heswell/trading-schemas";
 import type { GatewayState } from "../gateway/SimExchangeGateway";
 import type { ExecutionReport } from "../gateway/types";
+import type { BotLedgerState } from "./bots/BotLedger";
 import type { SessionStats } from "./InstrumentBook";
 import type { SessionPhase } from "./TradingSession";
 
@@ -32,6 +33,8 @@ export interface BookState extends BookSettings {
   seq: number;
   /** Resting gateway (OMS) orders, bids then asks, each level in time priority. */
   orders: ILimitOrder[];
+  /** Bot ledgers by local id (absent in snapshots from before bot ledgers). */
+  bots?: { id: string; ledger: BotLedgerState }[];
 }
 
 /**

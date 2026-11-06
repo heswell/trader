@@ -25,8 +25,31 @@ export {
   type TradingSessionConfig,
 } from "./engine/TradingSession";
 export { InstrumentBook } from "./engine/InstrumentBook";
-export { MM_OWNER } from "./engine/bots/MarketMaker";
-export { TAKER_OWNER } from "./engine/bots/NoiseTaker";
+export {
+  type Bot,
+  BotKind,
+  type BotKindDef,
+  type BotParamSpec,
+  type BotParams,
+  type BotStepContext,
+} from "./engine/bots/Bot";
+export { BotLedger, type BotLedgerState } from "./engine/bots/BotLedger";
+export { MarketMaker, type MarketMakerParams } from "./engine/bots/MarketMaker";
+export { MarketSignals } from "./engine/bots/MarketSignals";
+export { NoiseTaker, type NoiseTakerParams } from "./engine/bots/NoiseTaker";
+export {
+  BOT_OWNER_PREFIX,
+  botOwner,
+  isBotOwner,
+  OrderPort,
+} from "./engine/bots/OrderPort";
+export {
+  BOT_KINDS,
+  botKindDef,
+  defaultRoster,
+  type Roster,
+  type RosterEntry,
+} from "./engine/bots/roster";
 export { SimExchangeGateway } from "./gateway/SimExchangeGateway";
 export type * from "./gateway/types";
 export {
