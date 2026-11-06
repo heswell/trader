@@ -476,6 +476,11 @@ export const bots = defineTable({
       optional: true,
       description: "Market makers: resting quotes.",
     },
+    {
+      name: "paused",
+      dataType: "boolean",
+      description: "Not stepped (pauseBots); its quotes are pulled.",
+    },
     { name: "updated", dataType: "epochtimestamp" },
   ],
   links: ricLinks,
@@ -508,6 +513,16 @@ export const botParams = defineTable({
     { name: "unit", dataType: "string" },
     { name: "description", dataType: "string" },
     { name: "readOnly", dataType: "boolean" },
+    {
+      name: "baseline",
+      dataType: "string",
+      description: "Value when the bot was created.",
+    },
+    {
+      name: "changed",
+      dataType: "boolean",
+      description: "value differs from baseline (setBotParams or a scenario).",
+    },
   ],
   links: [
     { fromColumn: "botId", toTable: "bots", toColumn: "botId" },
@@ -631,6 +646,122 @@ export const botFills = defineTable({
     },
   ],
   links: ricLinks,
+});
+
+export const simEvents = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "simEvents",
+  keyField: "id",
+  description:
+    "Audit log of simulator control actions (ring buffer, sim-admin only): admin RPCs and scenario steps.",
+  columns: [
+    { name: "id", dataType: "string", description: "The seq, as text." },
+    { name: "seq", dataType: "long" },
+    { name: "time", dataType: "epochtimestamp" },
+    {
+      name: "user",
+      dataType: "string",
+      description: "Who made the change ('scenario' for a run's steps).",
+    },
+    { name: "action", dataType: "string" },
+    {
+      name: "target",
+      dataType: "string",
+      description: "Instruments or bots changed; '' = every instrument.",
+    },
+    {
+      name: "details",
+      dataType: "string",
+      description: "Parameters, as JSON.",
+    },
+    { name: "runId", dataType: "string", description: "Scenario run, or ''." },
+  ],
+});
+
+export const scenarios = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "scenarios",
+  keyField: "name",
+  description: "Scenarios the simulator can run (sim-admin only).",
+  columns: [
+    { name: "name", dataType: "string" },
+    { name: "description", dataType: "string" },
+    { name: "steps", dataType: "int" },
+    {
+      name: "targets",
+      dataType: "string",
+      description:
+        "Default instruments: rics, 'sector X', 'random N' or 'all'.",
+    },
+    { name: "args", dataType: "string", description: "Default args, as JSON." },
+  ],
+});
+
+export const scenarioRuns = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "scenarioRuns",
+  keyField: "runId",
+  description: "Scenario runs since the server started (sim-admin only).",
+  columns: [
+    { name: "runId", dataType: "string" },
+    { name: "name", dataType: "string" },
+    {
+      name: "status",
+      dataType: "string",
+      description: "RUNNING | DONE | STOPPED | ABORTED | FAILED",
+    },
+    { name: "user", dataType: "string" },
+    { name: "targets", dataType: "string" },
+    { name: "args", dataType: "string", description: "As JSON." },
+    { name: "startedAt", dataType: "epochtimestamp" },
+    { name: "step", dataType: "int", description: "Steps done." },
+    { name: "steps", dataType: "int" },
+    { name: "nextAt", dataType: "epochtimestamp", optional: true },
+    {
+      name: "reverted",
+      dataType: "boolean",
+      description: "Targets were put back to their settings before the run.",
+    },
+    { name: "error", dataType: "string" },
+  ],
+});
+
+export const simSession = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "simSession",
+  keyField: "id",
+  description:
+    "The simulated market session: one row, key 'session' (sim-admin only).",
+  columns: [
+    { name: "id", dataType: "string" },
+    { name: "phase", dataType: "string" },
+    { name: "nextPhase", dataType: "string", optional: true },
+    { name: "nextChangeAt", dataType: "epochtimestamp", optional: true },
+    {
+      name: "forced",
+      dataType: "boolean",
+      description: "setMarketPhase override in force.",
+    },
+    {
+      name: "forcedUntil",
+      dataType: "epochtimestamp",
+      optional: true,
+      description: "When the override ends; empty = until changed.",
+    },
+    {
+      name: "scheduled",
+      dataType: "boolean",
+      description: "A session schedule is configured (else always open).",
+    },
+    {
+      name: "timeOfDay",
+      dataType: "string",
+      description: "Session clock, HH:MM in the session time zone.",
+    },
+    { name: "timeScale", dataType: "double" },
+    { name: "pausedBots", dataType: "int" },
+    { name: "runningScenarios", dataType: "int" },
+  ],
 });
 
 // ---------------------------------------------------------------- OMS
@@ -982,6 +1113,10 @@ export const exchangeTables = {
   simSamples,
   botHistory,
   botFills,
+  simEvents,
+  scenarios,
+  scenarioRuns,
+  simSession,
 } as const;
 export const omsTables = {
   accounts,
@@ -1017,5 +1152,9 @@ export type BotParamRow = RowOf<typeof botParams>;
 export type SimSampleRow = RowOf<typeof simSamples>;
 export type BotHistoryRow = RowOf<typeof botHistory>;
 export type BotFillRow = RowOf<typeof botFills>;
+export type SimEventRow = RowOf<typeof simEvents>;
+export type ScenarioRow = RowOf<typeof scenarios>;
+export type ScenarioRunRow = RowOf<typeof scenarioRuns>;
+export type SimSessionRow = RowOf<typeof simSession>;
 export type PnlHistoryRow = RowOf<typeof pnlHistory>;
 export type AccountPnlHistoryRow = RowOf<typeof accountPnlHistory>;

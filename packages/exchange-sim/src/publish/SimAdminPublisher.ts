@@ -14,7 +14,7 @@ import {
   simSampleKey,
   simSamples as simSamplesDef,
 } from "@heswell/trading-schemas";
-import type { Bot } from "../engine/bots/Bot";
+import { type Bot, botBaseline } from "../engine/bots/Bot";
 import { OWNER_GROUPS, type TradeParty } from "../engine/flow";
 import { botKindDef } from "../engine/bots/roster";
 import type { SimulatedInstrument } from "../engine/ExchangeSimulator";
@@ -170,6 +170,7 @@ export class SimAdminPublisher {
     { orders: number; at: number; rate: number }
   >();
   #nextAt = Number.NEGATIVE_INFINITY;
+  #lastNow = 0;
   updates = 0;
 
   constructor(
@@ -289,28 +290,51 @@ export class SimAdminPublisher {
 
   /** Static rows: every bot's parameters with their specs. */
   loadBotParams(sims: Iterable<SimulatedInstrument>) {
-    const { idx } = this.#botParams;
     for (const sim of sims) {
-      for (const bot of sim.bots) {
-        const params = bot.params as Record<string, unknown>;
-        for (const spec of botKindDef(bot.kind).paramSpec) {
-          const value = params[spec.name];
-          const row = this.#botParams.row();
-          row[idx.id] = botParamKey(bot.id, spec.name);
-          row[idx.botId] = bot.id;
-          row[idx.ric] = sim.book.ric;
-          row[idx.kind] = bot.kind;
-          row[idx.name] = spec.name;
-          row[idx.type] = spec.type;
-          row[idx.value] = value === undefined ? "" : String(value);
-          row[idx.min] = spec.min ?? null;
-          row[idx.max] = spec.max ?? null;
-          row[idx.unit] = spec.unit ?? "";
-          row[idx.description] = spec.description;
-          row[idx.readOnly] = spec.readOnly === true;
-          upsert(this.tables.botParams, row[idx.id] as string, row);
-        }
-      }
+      for (const bot of sim.bots) this.publishBotParams(sim, bot);
+    }
+  }
+
+  /** A bot was added or removed: rows for the instrument's bots now. */
+  botsChanged(sim: SimulatedInstrument, removed?: Bot) {
+    if (removed) {
+      this.tables.bots.delete(removed.id);
+      for (const spec of botKindDef(removed.kind).paramSpec)
+        this.tables.botParams.delete(botParamKey(removed.id, spec.name));
+      this.#rates.delete(removed.id);
+    }
+    const rateOf = botRates(sim);
+    const now = this.#lastNow;
+    for (const bot of sim.bots) {
+      this.publishBotParams(sim, bot);
+      this.#publishBot(sim, bot, rateOf(bot), now);
+    }
+  }
+
+  /** One bot's parameter rows (after a change). */
+  publishBotParams(sim: SimulatedInstrument, bot: Bot) {
+    const { idx } = this.#botParams;
+    const params = bot.params as Record<string, unknown>;
+    const baseline = botBaseline(bot) as Record<string, unknown>;
+    for (const spec of botKindDef(bot.kind).paramSpec) {
+      const value = params[spec.name];
+      const base = baseline[spec.name];
+      const row = this.#botParams.row();
+      row[idx.baseline] = base === undefined ? "" : String(base);
+      row[idx.changed] = base !== value;
+      row[idx.id] = botParamKey(bot.id, spec.name);
+      row[idx.botId] = bot.id;
+      row[idx.ric] = sim.book.ric;
+      row[idx.kind] = bot.kind;
+      row[idx.name] = spec.name;
+      row[idx.type] = spec.type;
+      row[idx.value] = value === undefined ? "" : String(value);
+      row[idx.min] = spec.min ?? null;
+      row[idx.max] = spec.max ?? null;
+      row[idx.unit] = spec.unit ?? "";
+      row[idx.description] = spec.description;
+      row[idx.readOnly] = spec.readOnly === true;
+      upsert(this.tables.botParams, row[idx.id] as string, row);
     }
   }
 
@@ -320,6 +344,7 @@ export class SimAdminPublisher {
    */
   flush(instruments: Iterable<SimulatedInstrument>, now: number) {
     const sims = [...instruments];
+    this.#lastNow = now;
     this.#markouts(now);
     const sampleAt = this.#samples?.history.due(now);
     const historyAt = this.#botHistory?.history.due(now);
@@ -485,6 +510,7 @@ export class SimAdminPublisher {
     row[idx.restingAskQty] = resting.ask;
     row[idx.rate] = round(rate, 3);
     row[idx.effectiveRate] = round(effectiveRate, 3);
+    row[idx.paused] = bot.port.paused;
     row[idx.skewTicks] = extra.skewTicks ?? null;
     row[idx.quotes] = extra.quotes ?? null;
     row[idx.updated] = now;

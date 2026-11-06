@@ -37,19 +37,31 @@ import {
   type InstrumentDef,
   selectActiveInstruments,
 } from "../reference/instruments";
+import { ControlPublisher } from "../publish/ControlPublisher";
 import { SimAdminPublisher } from "../publish/SimAdminPublisher";
 import { type Clock, systemClock } from "../util/clock";
 import { Random } from "../util/random";
 import { generateBackfillBars } from "./barBackfill";
+import { BUILT_IN_SCENARIOS } from "../../scenarios";
+import { type SavedRun, ScenarioRunner } from "./control/ScenarioRunner";
+import { SimControl } from "./control/SimControl";
+import { ExchangeAdminError } from "./errors";
 import { FlowTally, type TradeParty, tradeParty } from "./flow";
 import { calibrateImpact } from "./impact";
-import { type Bot, BotKind } from "./bots/Bot";
+import { type Bot, BotKind, type BotParams } from "./bots/Bot";
 import { MarketSignals } from "./bots/MarketSignals";
 import type { NoiseTaker } from "./bots/NoiseTaker";
-import { botKindDef, createBots, defaultRoster } from "./bots/roster";
+import {
+  botKindDef,
+  createBot,
+  createBots,
+  defaultRoster,
+  sortBots,
+} from "./bots/roster";
 import { fromBookSide, InstrumentBook, toBookSide } from "./InstrumentBook";
 import {
   type BookSettings,
+  type BotConfig,
   type ExchangeJournal,
   type ExchangeJournalEntry,
   type ExchangeRestoreResult,
@@ -61,8 +73,10 @@ import { type SessionPhase, TradingSession } from "./TradingSession";
 
 export interface SimulatedInstrument {
   readonly book: InstrumentBook;
-  /** Quoting bots first, then takers (step order). */
-  readonly bots: readonly Bot[];
+  /** Quoting bots first, then takers (step order). Changed by addBot / removeBot. */
+  readonly bots: Bot[];
+  /** Generator new bots fork from (by local id). */
+  readonly botRng: Random;
   /** Shared recent-market view, updated once per step for the bots. */
   readonly signals: MarketSignals;
   /** Market maker base size (lots), from baseNotionalUsd. */
@@ -77,7 +91,7 @@ export interface SimulatedInstrument {
   /** Random variation of taker activity around the volume curve. */
   readonly noise: ActivityNoise;
   /** Bots by id (`<ric>/<localId>`), for trade attribution. */
-  readonly botIndex: ReadonlyMap<string, Bot>;
+  readonly botIndex: Map<string, Bot>;
   /** Aggressive volume by owner group since the last sim sample. */
   readonly flow: FlowTally;
 }
@@ -104,14 +118,7 @@ export interface ExchangeSimulatorOptions {
 }
 
 /** Admin request failure, mapped to an RPC ERROR_RESULT by the admin service. */
-export class ExchangeAdminError extends Error {
-  constructor(
-    readonly reason: RejectReason,
-    text: string,
-  ) {
-    super(text);
-  }
-}
+export { ExchangeAdminError } from "./errors";
 
 export type TapeListener = (trade: TapeTrade) => void;
 
@@ -146,6 +153,7 @@ export class ExchangeSimulator {
   readonly #tapeListeners = new Set<TapeListener>();
   #publisher: MarketDataPublisher | undefined;
   #simAdmin: SimAdminPublisher | undefined;
+  #controlPublisher: ControlPublisher | undefined;
   #lastStep: number | undefined;
   #cursor = 0;
   #tradeSeq = 0;
@@ -157,6 +165,8 @@ export class ExchangeSimulator {
   /** Book events deferred because a step hit maxOpsPerStep. */
   deferredSteps = 0;
   #journal: ExchangeJournal | undefined;
+  #control: SimControl | undefined;
+  #scenarios: ScenarioRunner | undefined;
   /** Trade ids up to this value are journaled as reserved. */
   #tradeReserved = 0;
 
@@ -232,6 +242,7 @@ export class ExchangeSimulator {
     this.#simulated.set(instrument.ric, {
       book,
       bots,
+      botRng,
       botIndex: new Map(bots.map((bot) => [bot.id, bot])),
       flow: new FlowTally(),
       signals: new MarketSignals(),
@@ -384,6 +395,13 @@ export class ExchangeSimulator {
         },
       );
       this.#simAdmin.loadBotParams(this.#simulated.values());
+      const { simEvents, scenarios, scenarioRuns, simSession } = tables;
+      this.#controlPublisher = new ControlPublisher(this, {
+        simEvents,
+        scenarios,
+        scenarioRuns,
+        simSession,
+      });
     }
     if (config.barBackfill && publisher.bars) this.#backfillBars(publisher);
     this.flush();
@@ -491,6 +509,26 @@ export class ExchangeSimulator {
     }
   }
 
+  /** Run-time admin actions, recorded as SimEvents. */
+  get control(): SimControl {
+    this.#control ??= new SimControl(this);
+    return this.#control;
+  }
+
+  /** Scenario definitions and runs (the built-in scenarios are defined). */
+  get scenarios(): ScenarioRunner {
+    if (!this.#scenarios) {
+      this.#scenarios = new ScenarioRunner(this);
+      this.#scenarios.define(...BUILT_IN_SCENARIOS);
+    }
+    return this.#scenarios;
+  }
+
+  /** Write a journal entry (no-op while the journal is off). */
+  journal(entry: ExchangeJournalEntry) {
+    this.#journal?.(entry);
+  }
+
   // ---------------------------------------------------------------- time
 
   /** Advance the session, prices and bots to `now`. */
@@ -500,6 +538,8 @@ export class ExchangeSimulator {
     const elapsed =
       this.#lastStep === undefined ? config.botStepMs : now - this.#lastStep;
     this.#lastStep = now;
+    this.#control?.step(now);
+    this.#scenarios?.step(now);
     const dt = Math.min(Math.max(elapsed, 0), config.maxStepMs) / 1000;
     if (dt === 0) return;
     const modelDt = dt * config.timeScale;
@@ -535,6 +575,7 @@ export class ExchangeSimulator {
     let mmCount = 0;
     let takerCount = 0;
     for (const bot of bots) {
+      if (bot.port.paused) continue;
       const group = botKindDef(bot.kind).rateGroup;
       if (group === BotType.MarketMaker) mmCount++;
       else if (group === BotType.Taker) takerCount++;
@@ -544,6 +585,7 @@ export class ExchangeSimulator {
     const takerRate =
       sim.takerRate > 0 ? (sim.takerRate * sim.activity) / takerCount : 0;
     for (const bot of bots) {
+      if (bot.port.paused) continue;
       const group = botKindDef(bot.kind).rateGroup;
       const rate =
         group === BotType.MarketMaker
@@ -586,7 +628,8 @@ export class ExchangeSimulator {
   /** Publish dirty books and pending trades. */
   flush(now = this.clock()) {
     this.#publisher?.flush(this.#books, now);
-    this.#simAdmin?.flush(this.#simulated.values(), now);
+    if (this.#simAdmin?.flush(this.#simulated.values(), now))
+      this.#controlPublisher?.publishSession(now);
   }
 
   /** The sim-admin publisher, when its tables are attached. */
@@ -693,15 +736,155 @@ export class ExchangeSimulator {
     });
   }
 
-  #settings({ book, mmRate, takerRate }: SimulatedInstrument): BookSettings {
+  #settings({
+    book,
+    bots,
+    mmRate,
+    takerRate,
+  }: SimulatedInstrument): BookSettings {
+    const { model } = book;
     return {
       ric: book.ric,
       phase: book.phase,
       haltReason: book.haltReason,
-      volatility: book.model.volatility,
+      volatility: model.volatility,
       mmRate,
       takerRate,
+      modelSettings: {
+        driftBpsPerHour: model.driftBpsPerHour,
+        impactK: model.impact.k,
+        impactPermanentShare: model.impact.permanentShare,
+        impactHalfLifeSec: model.impact.halfLifeSec,
+      },
+      roster: bots.map((bot) => ({
+        id: bot.localId,
+        kind: bot.kind,
+        params: { ...bot.params },
+        paused: bot.port.paused,
+      })),
     };
+  }
+
+  #applySettings(sim: SimulatedInstrument, s: BookSettings) {
+    const { book } = sim;
+    book.model.volatility = s.volatility;
+    sim.mmRate = s.mmRate;
+    sim.takerRate = s.takerRate;
+    book.haltReason = s.haltReason;
+    const m = s.modelSettings;
+    if (m) {
+      book.model.driftBpsPerHour = m.driftBpsPerHour;
+      book.model.impact = {
+        k: m.impactK,
+        permanentShare: m.impactPermanentShare,
+        halfLifeSec: m.impactHalfLifeSec,
+      };
+    }
+    if (s.roster) this.#applyRoster(sim, s.roster);
+  }
+
+  /** An instrument's settings now (for a scenario to revert to). */
+  settingsOf(ric: string): BookSettings {
+    const [sim] = this.#target(ric);
+    return structuredClone(this.#settings(sim));
+  }
+
+  /**
+   * Put an instrument's settings back (a scenario revert): model, rates and
+   * bots, and halted or not.
+   */
+  applySettings(settings: BookSettings) {
+    const [sim] = this.#target(settings.ric);
+    const { book } = sim;
+    this.#applySettings(sim, settings);
+    const halted = settings.phase === TradingPhase.Halted;
+    if (halted !== (book.phase === TradingPhase.Halted)) {
+      book.phase = halted ? TradingPhase.Halted : this.#marketPhase;
+      if (halted) for (const bot of sim.bots) bot.pull();
+    }
+    book.dirty = true;
+    this.#journalBooks([sim]);
+    this.#simAdmin?.botsChanged(sim);
+  }
+
+  /** Simulated instruments: one (`ric`), or all (undefined / ""). */
+  instrumentsFor(ric?: string): SimulatedInstrument[] {
+    return this.#target(ric);
+  }
+
+  /** Journal an instrument's settings after a run-time change. */
+  journalSettings(ric: string) {
+    const sim = this.#simulated.get(ric);
+    if (sim) this.#journalBooks([sim]);
+  }
+
+  // ---------------------------------------------------------------- bots
+
+  /**
+   * Add a bot of `kind` to an instrument (the next local id of its kind),
+   * stepping in its stage's order. Its generator forks from the
+   * instrument's by local id.
+   */
+  addBot(ric: string, kind: BotKind, params?: BotParams, n?: number): Bot {
+    const [sim] = this.#target(ric);
+    const def = botKindDef(kind);
+    if (!def)
+      throw new ExchangeAdminError(
+        RejectReason.InvalidRequest,
+        `unknown bot kind ${kind}`,
+      );
+    let next = n ?? 1;
+    if (n === undefined)
+      while (sim.botIndex.has(`${ric}/${def.localId(next)}`)) next++;
+    const bot = createBot(def, next, sim.book, sim.botRng, sim.baseQty, params);
+    sim.bots.push(bot);
+    sortBots(sim.bots);
+    sim.botIndex.set(bot.id, bot);
+    this.#simAdmin?.botsChanged(sim);
+    return bot;
+  }
+
+  /** Remove a bot: its quotes are pulled and its rows deleted. */
+  removeBot(botId: string): Bot {
+    const sim = this.#simulated.get(botId.split("/")[0] ?? "");
+    const bot = sim?.botIndex.get(botId);
+    if (!sim || !bot)
+      throw new ExchangeAdminError(
+        RejectReason.InvalidRequest,
+        `unknown bot ${botId}`,
+      );
+    bot.pull();
+    sim.bots.splice(sim.bots.indexOf(bot), 1);
+    sim.botIndex.delete(botId);
+    this.#simAdmin?.botsChanged(sim, bot);
+    return bot;
+  }
+
+  /** A bot by id (`<ric>/<localId>`). */
+  getBot(botId: string): Bot | undefined {
+    return this.#simulated.get(botId.split("/")[0] ?? "")?.botIndex.get(botId);
+  }
+
+  /** Bring an instrument's bots in line with saved settings. */
+  #applyRoster(sim: SimulatedInstrument, roster: readonly BotConfig[]) {
+    const wanted = new Set(roster.map((c) => `${sim.book.ric}/${c.id}`));
+    for (const bot of [...sim.bots])
+      if (!wanted.has(bot.id)) this.removeBot(bot.id);
+    for (const config of roster) {
+      const id = `${sim.book.ric}/${config.id}`;
+      let bot = sim.botIndex.get(id);
+      if (!bot) {
+        const def = botKindDef(config.kind as BotKind);
+        if (!def) continue;
+        // the local id's number, e.g. MM3 -> 3
+        const n = Number(config.id.replace(/^\D+/, ""));
+        if (!Number.isInteger(n) || def.localId(n) !== config.id) continue;
+        bot = this.addBot(sim.book.ric, def.kind, config.params, n);
+      }
+      bot.params = { ...bot.params, ...config.params };
+      bot.onParamsChanged?.();
+      bot.port.paused = config.paused === true;
+    }
   }
 
   #journalBooks(targets: SimulatedInstrument[]) {
@@ -718,6 +901,7 @@ export class ExchangeSimulator {
       marketPhase: this.#marketPhase,
       forced: this.#forced ? { ...this.#forced } : undefined,
       gateway: this.gateway.exportState(),
+      runs: this.#scenarios?.exportState() ?? [],
       books: [...this.#simulated.values()].map((sim) => {
         const { book } = sim;
         const snapshot = book.book.snapshot();
@@ -760,6 +944,8 @@ export class ExchangeSimulator {
     let forced = state?.forced;
     const settings = new Map<string, BookSettings>();
     const reports: ExecutionReport[] = [];
+    const runs = new Map<string, SavedRun>();
+    for (const run of state?.runs ?? []) runs.set(run.runId, run);
     for (const book of state?.books ?? []) settings.set(book.ric, book);
     for (const entry of entries) {
       switch (entry.k) {
@@ -775,6 +961,12 @@ export class ExchangeSimulator {
         case "session":
           marketPhase = entry.marketPhase;
           forced = entry.forced;
+          break;
+        case "run":
+          runs.set(entry.run.runId, entry.run);
+          break;
+        case "runEnd":
+          runs.delete(entry.runId);
           break;
       }
     }
@@ -849,12 +1041,7 @@ export class ExchangeSimulator {
       const { book } = sim;
       const saved = state?.books.find((b) => b.ric === book.ric);
       const s = settings.get(book.ric);
-      if (s) {
-        book.model.volatility = s.volatility;
-        sim.mmRate = s.mmRate;
-        sim.takerRate = s.takerRate;
-        book.haltReason = s.haltReason;
-      }
+      if (s) this.#applySettings(sim, s);
       book.phase =
         s?.phase === TradingPhase.Halted ? TradingPhase.Halted : marketPhase;
       if (saved?.model) book.model.restoreState(saved.model);
@@ -869,6 +1056,8 @@ export class ExchangeSimulator {
         stats: saved?.stats,
       });
     }
+    // runs live when the server stopped: undo their changes
+    if (runs.size > 0) this.scenarios.abortRestored([...runs.values()]);
     const droppedOrders = [...live.values()]
       .filter(
         (r) => !this.#simulated.has(r.ric) || !placed.has(r.exchangeOrderId),

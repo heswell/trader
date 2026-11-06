@@ -1,3 +1,4 @@
+import type { SavedRun } from "./control/ScenarioRunner";
 import type { OrderBookOptions } from "@heswell/hft-limit-order-book";
 import type { TradingPhase } from "@heswell/trading-schemas";
 import type { GatewayState } from "../gateway/SimExchangeGateway";
@@ -19,6 +20,23 @@ export interface ForcedPhase {
   until: number | undefined;
 }
 
+/** A bot's configuration (not its stats), saved with the book's settings. */
+export interface BotConfig {
+  /** Local id, e.g. MM1. */
+  id: string;
+  kind: string;
+  params: Record<string, number | string | boolean>;
+  paused: boolean;
+}
+
+/** Price-model settings that admin RPCs and scenarios change. */
+export interface ModelSettings {
+  driftBpsPerHour: number;
+  impactK: number;
+  impactPermanentShare: number;
+  impactHalfLifeSec: number;
+}
+
 export interface BookSettings {
   ric: string;
   phase: TradingPhase;
@@ -26,6 +44,10 @@ export interface BookSettings {
   volatility: number;
   mmRate: number;
   takerRate: number;
+  /** Absent in settings from before run-time control (keep the defaults). */
+  modelSettings?: ModelSettings;
+  /** The instrument's bots; absent = the default roster. */
+  roster?: BotConfig[];
 }
 
 export interface BookState extends BookSettings {
@@ -51,6 +73,8 @@ export interface ExchangeState {
   forced?: ForcedPhase;
   gateway: GatewayState;
   books: BookState[];
+  /** Scenario runs live at the snapshot (reverted and aborted on restore). */
+  runs?: SavedRun[];
 }
 
 /** Exchange journal entries (stream "exchange"). */
@@ -62,7 +86,11 @@ export type ExchangeJournalEntry =
   /** Admin change to a book (halt / resume / volatility / bot rates). */
   | { k: "book"; b: BookSettings }
   /** Market-wide phase change or setMarketPhase override. */
-  | { k: "session"; marketPhase: SessionPhase; forced?: ForcedPhase };
+  | { k: "session"; marketPhase: SessionPhase; forced?: ForcedPhase }
+  /** A scenario run started, with its targets' settings from before it. */
+  | { k: "run"; run: SavedRun }
+  /** A scenario run ended (done, stopped, failed or aborted). */
+  | { k: "runEnd"; runId: string };
 
 export type ExchangeJournal = (entry: ExchangeJournalEntry) => void;
 

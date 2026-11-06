@@ -38,6 +38,10 @@ export interface ExchangeTables {
   simSamples?: PublishTable;
   botHistory?: PublishTable;
   botFills?: PublishTable;
+  simEvents?: PublishTable;
+  scenarios?: PublishTable;
+  scenarioRuns?: PublishTable;
+  simSession?: PublishTable;
 }
 
 export interface PublisherOptions {

@@ -1,0 +1,14 @@
+{
+  "name": "trending-day",
+  "description": "$count random instruments trend at $driftBpsPerHour bps per model hour for ${minutes} minutes, then revert.",
+  "targets": { "random": "$count" },
+  "args": { "count": 5, "driftBpsPerHour": 300, "minutes": 5 },
+  "steps": [
+    {
+      "at": "+0s",
+      "action": "setInstrumentParams",
+      "params": { "driftBpsPerHour": "$driftBpsPerHour" }
+    },
+    { "at": "+${minutes}m", "action": "revert" }
+  ]
+}

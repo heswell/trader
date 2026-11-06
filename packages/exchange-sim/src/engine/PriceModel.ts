@@ -54,6 +54,8 @@ export class PriceModel {
   #impactToday = 0;
   /** Share of the variance the walk supplies itself (1 without impact). */
   walkVolShare = 1;
+  /** Drift of the walk, bps per hour of model time (timeScale × clock). */
+  driftBpsPerHour = 0;
   impact: ImpactParams = { ...NO_IMPACT };
 
   constructor(
@@ -180,6 +182,13 @@ export class PriceModel {
     this.#walk = this.clampToBand(this.#walk);
   }
 
+  /** Move fair value by `bps` at once (a news jump): into the walk. */
+  shift(bps: number) {
+    const before = this.#walk;
+    this.#walk = this.clampToBand(before * (1 + bps / 1e4));
+    return Math.log(this.#walk / before) * 1e4;
+  }
+
   /**
    * Advance by `dtSeconds` of simulated time; the transient fades over
    * `wallDtSeconds` of clock time (default: the same).
@@ -190,13 +199,15 @@ export class PriceModel {
       this.#transient =
         halfLife > 0 ? this.#transient * 0.5 ** (wallDtSeconds / halfLife) : 0;
     }
-    if (dtSeconds <= 0 || this.volatility <= 0) return this.fairValue;
+    if (dtSeconds <= 0 || (this.volatility <= 0 && this.driftBpsPerHour === 0))
+      return this.fairValue;
     const dt = dtSeconds / SECONDS_PER_YEAR;
     const sigma = this.volatility * Math.sqrt(this.walkVolShare);
+    const drift = (this.driftBpsPerHour / 1e4) * (dtSeconds / 3600);
     let next =
       this.#walk *
       Math.exp(
-        -0.5 * sigma * sigma * dt + sigma * Math.sqrt(dt) * rng.normal(),
+        drift - 0.5 * sigma * sigma * dt + sigma * Math.sqrt(dt) * rng.normal(),
       );
     const lo = this.#lowerBand;
     const hi = this.#upperBand;

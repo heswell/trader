@@ -1,7 +1,13 @@
 import type { ExchangeSimConfig } from "../../config";
 import type { Random } from "../../util/random";
 import type { InstrumentBook } from "../InstrumentBook";
-import { type Bot, BotKind, type BotKindDef, type BotParams } from "./Bot";
+import {
+  type Bot,
+  BotKind,
+  type BotKindDef,
+  type BotParams,
+  setBotBaseline,
+} from "./Bot";
 import { MARKET_MAKER } from "./MarketMaker";
 import { DEFAULT_TAKERS, NOISE_TAKER } from "./NoiseTaker";
 import { OrderPort } from "./OrderPort";
@@ -44,6 +50,40 @@ export const hashString = (text: string) => {
   return hash >>> 0;
 };
 
+/** One bot: the n-th of its kind on the instrument. */
+export const createBot = (
+  def: BotKindDef,
+  n: number,
+  book: InstrumentBook,
+  rng: Random,
+  baseQty: number,
+  params?: BotParams,
+): Bot => {
+  const localId = def.localId(n);
+  const port = new OrderPort(
+    book,
+    `${book.ric}/${localId}`,
+    def.account(n),
+    def.idPrefix,
+  );
+  const bot = def.create({
+    localId,
+    book,
+    port,
+    rng: rng.fork(hashString(localId)),
+    baseQty,
+    params,
+  });
+  setBotBaseline(bot);
+  return bot;
+};
+
+/** Quoting bots first (step order); stable within a stage. */
+export const sortBots = (bots: Bot[]) => {
+  const stage = (bot: Bot) => (botKindDef(bot.kind).stage === "quote" ? 0 : 1);
+  return bots.sort((a, b) => stage(a) - stage(b));
+};
+
 /**
  * Create an instrument's bots from a roster. Each bot gets its own
  * generator forked from `rng` by its local id, so adding or removing a bot
@@ -59,26 +99,8 @@ export const createBots = (
   for (const { kind, count, params } of roster) {
     const def = botKindDef(kind);
     if (!def) throw Error(`unknown bot kind ${kind}`);
-    for (let n = 1; n <= count; n++) {
-      const localId = def.localId(n);
-      const port = new OrderPort(
-        book,
-        `${book.ric}/${localId}`,
-        def.account(n),
-        def.idPrefix,
-      );
-      bots.push(
-        def.create({
-          localId,
-          book,
-          port,
-          rng: rng.fork(hashString(localId)),
-          baseQty,
-          params,
-        }),
-      );
-    }
+    for (let n = 1; n <= count; n++)
+      bots.push(createBot(def, n, book, rng, baseQty, params));
   }
-  const stage = (bot: Bot) => (botKindDef(bot.kind).stage === "quote" ? 0 : 1);
-  return bots.sort((a, b) => stage(a) - stage(b));
+  return sortBots(bots);
 };
