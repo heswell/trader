@@ -198,7 +198,7 @@ standard token exchange requires.
 | alice, bob, carol, erin | trading-view, trading-execute | Every entry except Oversight (the Trader workspace with its ticket and ladder panels; Price ladder) |
 | dave | trading-view | As alice, but no Price ladder; the workspace's Ticket and Ladder panels say the module is not available, the Panels palette has no Order ticket or Price ladder, and the order blotter is read-only. |
 | sam | trading-view, trading-supervisor | As dave, plus Oversight › Desk overview (all accounts) |
-| admin | trading-view, trading-supervisor, sim-admin (plus `vuu-portal` module-admin-access, vuu-table-viewer-access) | As sam, plus Simulator › Overview and Bots, and portal module admin |
+| admin | trading-view, trading-supervisor, sim-admin (plus `vuu-portal` module-admin-access, vuu-table-viewer-access) | As sam, plus Simulator › Overview, Bots and Instrument, and portal module admin |
 
 The Keycloak admin console is at `https://localhost:8180/admin` (admin / admin). These are dev credentials only.
 `bun run keycloak:realm export` rewrites `infra/keycloak/realm-vuu.json`, which docker-compose imports. Use
@@ -235,7 +235,8 @@ renders, and `notificationTopics` are the trading server's notification topics t
 | 123 | Portfolio › Execution quality | `/portfolio/execution-quality` | TradingExecutionQuality | trading-view | 330 | | Portfolio, 2×1 | SlippageChart |
 | 120 | Oversight › Desk overview | `/oversight/desk` | TradingSupervisor | trading-supervisor | 400 | risk, orders | — | All visible accounts' orders and positions |
 | 130 | Simulator › Overview | `/simulator/overview` | SimulatorOverview | sim-admin | 500 | | Simulator, 2×1 | SimBooksGrid above BotsGrid (by kind) |
-| 131 | Simulator › Bots | `/simulator/bots` | SimulatorBots | sim-admin | 510 | | Simulator, 2×1 | BotsGrid with BotDetail (stats and parameters) |
+| 131 | Simulator › Bots | `/simulator/bots` | SimulatorBots | sim-admin | 510 | | Simulator, 2×1 | BotsGrid with BotDetail (stats, P&L history, parameters, fills) |
+| 132 | Simulator › Instrument | `/simulator/instrument` | SimulatorInstrument | sim-admin | 520 | | Simulator, 2×1 | SimInstrumentChart, the instrument's bots and BotFillsTape |
 
 Module ids are stable. The vuu-layout Trader workspace (100) and its child modules (101 ticket, 102 ladder) are
 retired: the Trader workspace is now a portal workspace (below) made of the modules above, and the ticket is module

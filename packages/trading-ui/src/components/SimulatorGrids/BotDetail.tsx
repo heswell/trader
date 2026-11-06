@@ -7,6 +7,8 @@ import { filterString } from "../../utils/filters";
 import { formatNotional, formatQuantity } from "../../utils/formatting";
 import { formatTime } from "../../utils/time";
 import { PnlValue } from "../PnlValue";
+import { Sparkline } from "../Sparkline";
+import { BotFillsTape } from "./BotFillsTape";
 import simulatorGridsCss from "./SimulatorGrids.css";
 
 const classBase = "tradingBotDetail";
@@ -21,8 +23,9 @@ const plain = (value: unknown) =>
   value === null || value === undefined || value === "" ? "–" : String(value);
 
 /**
- * One bot's stats (from `bots`) and parameters with their specs (from
- * `botParams`). Read only until bot parameters can be changed at run time.
+ * One bot's stats (from `bots`), P&L history (`botHistory`), parameters
+ * with their specs (`botParams`, read only until they can be changed at run
+ * time) and recent fills with markouts (`botFills`).
  */
 export const BotDetail = forwardRef<HTMLDivElement, BotDetailProps>(
   function BotDetail({ botId, className, ...htmlAttributes }, ref) {
@@ -42,7 +45,16 @@ export const BotDetail = forwardRef<HTMLDivElement, BotDetailProps>(
       filter,
       rowCount: 50,
     });
+    const { rows: history } = useTradingRows("botHistory", {
+      enabled: botId !== undefined,
+      filter,
+      rowCount: 200,
+      sort: { sortDefs: [{ column: "time", sortType: "A" }] },
+    });
     const bot = botId ? bots.find((row) => row.botId === botId) : undefined;
+    const pnl = history
+      .filter((row) => row.botId === botId)
+      .map((row) => num(row.totalPnlUsd) ?? 0);
 
     return (
       <div
@@ -72,6 +84,20 @@ export const BotDetail = forwardRef<HTMLDivElement, BotDetailProps>(
                 <PnlValue value={num(bot.totalPnlUsd)} /> (realised{" "}
                 {formatNotional(bot.realisedPnlUsd, { signed: true })})
               </dd>
+              {pnl.length > 1 ? (
+                <>
+                  <dt>P&amp;L history</dt>
+                  <dd>
+                    <Sparkline
+                      data-testid="trading-bot-pnl-sparkline"
+                      height={24}
+                      label={`${plain(bot.botId)} P&L`}
+                      values={pnl}
+                      width={160}
+                    />
+                  </dd>
+                </>
+              ) : null}
               <dt>Orders</dt>
               <dd>
                 {formatQuantity(bot.orders)} ({formatQuantity(bot.modifies)}{" "}
@@ -119,6 +145,12 @@ export const BotDetail = forwardRef<HTMLDivElement, BotDetailProps>(
                 </div>
               ))}
             </dl>
+            <h3>Recent fills</h3>
+            <BotFillsTape
+              hideToolbar
+              party={plain(bot.botId)}
+              style={{ height: 220, flex: "0 0 auto" }}
+            />
           </>
         )}
       </div>

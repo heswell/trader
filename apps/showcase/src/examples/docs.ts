@@ -14,6 +14,8 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   FillProgressBar: "docs/components/primitives.md",
   FillsBlotter: "docs/components/blotters.md",
   BotDetail: "docs/components/simulator.md",
+  BotFillsTape: "docs/components/simulator.md",
+  SimInstrumentChart: "docs/components/simulator.md",
   BotsGrid: "docs/components/simulator.md",
   SimBooksGrid: "docs/components/simulator.md",
   InstrumentContextProvider:

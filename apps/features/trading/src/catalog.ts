@@ -401,4 +401,21 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     navIcon: "bots",
     workspace: { paletteGroup: SIMULATOR, defaultSize: { cols: 2, rows: 1 } },
   },
+  {
+    key: "simulator-instrument",
+    id: 132,
+    name: "SimulatorInstrument",
+    mfScope: "simulatorInstrument",
+    expose: "./SimulatorInstrument",
+    source: "./src/features/SimulatorInstrument",
+    title: "Simulated instrument",
+    description:
+      "One instrument's fair value, walk and quotes, flow by owner, its bots and attributed fills",
+    accessRole: simAdmin,
+    location: "/Simulator/Instrument",
+    path: "/simulator/instrument",
+    navOrder: 520,
+    navIcon: "chart",
+    workspace: { paletteGroup: SIMULATOR, defaultSize: { cols: 2, rows: 1 } },
+  },
 ];

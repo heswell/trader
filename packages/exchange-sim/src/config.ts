@@ -43,6 +43,17 @@ export interface ExchangeSimConfig {
   /** Target notional (USD) of a typical order / quote level. */
   baseNotionalUsd: number;
   /**
+   * Market impact: the share of each instrument's variance that comes from
+   * aggressive flow (0 = no impact). The impact constant is worked out once
+   * at startup from the default taker flow and the walk's own volatility
+   * is scaled down to match, so total volatility is about unchanged.
+   */
+  impactVolShare: number;
+  /** Share of each impact move that is permanent (the rest fades). */
+  impactPermanentShare: number;
+  /** Half-life of transient impact, wall-clock seconds. */
+  impactHalfLifeSec: number;
+  /**
    * Session open, "HH:MM" UTC. Set together with sessionClose; both empty
    * (and sessionDayMs 0) = no schedule, the market is always CONTINUOUS.
    */
@@ -94,6 +105,18 @@ export interface ExchangeSimConfig {
   bookEventsCapacity: number;
   /** Interval of the sim-admin `simBooks` / `bots` updates (ms); 0 disables them. */
   simPublishIntervalMs: number;
+  /** Interval of `simSamples` per instrument (ms); 0 disables. */
+  simSampleIntervalMs: number;
+  /** Sim samples kept per instrument (oldest deleted). */
+  simSampleHistory: number;
+  /** Interval of `botHistory` samples per bot (ms); 0 disables. */
+  botHistoryIntervalMs: number;
+  /** Bot history samples kept per bot (oldest deleted). */
+  botHistorySamples: number;
+  /** `botFills` rows kept (two per trade, oldest deleted); 0 disables. */
+  botFillsCapacity: number;
+  /** Markout horizon of `botFills` (ms of clock time). */
+  markoutMs: number;
   /**
    * Who may see the sim-admin tables and call the exchange admin RPCs.
    * "auto": users with the sim-admin role, and users with no roles at all
@@ -120,6 +143,9 @@ export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
   mmRate: 10,
   takerRate: 8,
   baseNotionalUsd: 20_000,
+  impactVolShare: 0.25,
+  impactPermanentShare: 0.3,
+  impactHalfLifeSec: 30,
   sessionOpen: "",
   sessionClose: "",
   preOpenMinutes: 0,
@@ -135,6 +161,12 @@ export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
   bookEvents: 0,
   bookEventsCapacity: 50_000,
   simPublishIntervalMs: 1_000,
+  simSampleIntervalMs: 1_000,
+  simSampleHistory: 300,
+  botHistoryIntervalMs: 5_000,
+  botHistorySamples: 120,
+  botFillsCapacity: 20_000,
+  markoutMs: 5_000,
   permissionMode: "auto",
 });
 
@@ -211,8 +243,21 @@ export const validateConfig = (config: ExchangeSimConfig) => {
     "defaultVolatility",
     "bookSampleIntervalMs",
     "simPublishIntervalMs",
+    "simSampleIntervalMs",
+    "botHistoryIntervalMs",
+    "botFillsCapacity",
+    "markoutMs",
   ] as const) {
     if (!(config[key] >= 0)) throw Error(`exchangeSim.${key} must be >= 0`);
+  }
+  if (!(config.impactVolShare >= 0 && config.impactVolShare < 1)) {
+    throw Error("exchangeSim.impactVolShare must be in [0, 1)");
+  }
+  if (!(config.impactPermanentShare > 0 && config.impactPermanentShare <= 1)) {
+    throw Error("exchangeSim.impactPermanentShare must be in (0, 1]");
+  }
+  if (!(config.impactHalfLifeSec >= 0)) {
+    throw Error("exchangeSim.impactHalfLifeSec must be >= 0");
   }
   if (config.permissionMode !== "auto" && config.permissionMode !== "strict") {
     throw Error("exchangeSim.permissionMode must be 'auto' or 'strict'");
@@ -229,6 +274,8 @@ export const validateConfig = (config: ExchangeSimConfig) => {
     "barHistory",
     "bookSampleHistory",
     "bookEventsCapacity",
+    "simSampleHistory",
+    "botHistorySamples",
   ] as const) {
     if (!(Number.isInteger(config[key]) && config[key] > 0)) {
       throw Error(`exchangeSim.${key} must be a positive integer`);

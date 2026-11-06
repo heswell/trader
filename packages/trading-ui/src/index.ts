@@ -56,6 +56,7 @@ export * from "./utils/time";
 export * from "./components/FillProgressBar";
 export * from "./components/FillsBlotter";
 export * from "./components/SimulatorGrids";
+export * from "./components/SimInstrumentChart";
 export * from "./components/InstrumentLookup";
 export * from "./components/OrderBlotter";
 export * from "./components/OrderStatusBadge";

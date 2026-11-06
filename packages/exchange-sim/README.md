@@ -57,9 +57,12 @@ stays anonymous; these tables carry the bots' identity. Published every `simPubl
 
 | Table | Key | Contents |
 | --- | --- | --- |
-| `simBooks` | `ric` | One row per simulated book: phase, fair value, mid, gap to fair and spread in bp, model and realised volatility (both annualised), `mmRate` / `takerRate` / `activity`, trade imbalance, market-maker inventory, bot count, trades and volume. |
+| `simBooks` | `ric` | One row per simulated book: phase, fair value, walk, transient impact and the day's permanent impact (bps), `k`, the price band, mid, gap to fair and spread in bp, model and realised volatility (both annualised), `mmRate` / `takerRate` / `activity`, trade imbalance, market-maker inventory, bot count, trades and volume. |
 | `bots` | `botId` (`<ric>/<localId>`) | One row per bot: kind, account, position, average price, position and realised / unrealised / total P&L in USD, order / modify / cancel / fill counts, volume, traded notional, resting orders and quantities, its share of the instrument's rate and its measured orders/s, market makers' skew. |
 | `botParams` | `botId\|name` | One row per bot parameter: value, type, min / max, unit, description, readOnly. Written at startup. |
+| `simSamples` | `ric\|time` | Every `simSampleIntervalMs`, per instrument: fair, walk, mid, bid, ask, transient impact, aggressive volume bought and sold by owner group (`mm`, `taker`, `oms`, `bot`) and net per group, market-maker inventory. `simSampleHistory` kept per instrument. |
+| `botHistory` | `botId\|time` | Every `botHistoryIntervalMs`, per bot: position, total and realised P&L in USD, volume, orders. `botHistorySamples` kept per bot. |
+| `botFills` | `tradeId\|M` / `tradeId\|T` | Both sides of every trade: party (bot id or `OMS:<account>`), owner group, kind, account, side, price, quantity, USD notional, liquidity, and the markout `markoutMs` later (bps, > 0 = a gain for that side). Ring buffer of `botFillsCapacity` rows. |
 
 ### L3 (order-by-order) data
 
@@ -97,7 +100,17 @@ nothing visible changed.
   `instruments` list is used.
 - **Price model.** A GBM fair value with a per-instrument annualised vol (20–50%, or
   `defaultVolatility`). Time is scaled by `timeScale` to make intraday-looking moves visible. The value
-  is reflected inside the static band refPrice ±`priceBandPct`, and published prices are on the tick grid.
+  is reflected inside a band of ±`priceBandPct` around refPrice, recentred on fair value at each
+  session close, and published prices are on the tick grid.
+- **Market impact** (on by default). `fair = walk × exp(transient)`. Every aggressive trade (bot, OMS
+  order or algo child) moves fair value by `k × (notional / $100k) × (volatility / 30%)` its way:
+  `impactPermanentShare` (0.3) of the move goes into the walk, and the rest is transient and fades
+  with `impactHalfLifeSec` (30 s, wall clock, only while trading). `k` is worked out per instrument
+  once at startup so the default taker flow supplies `impactVolShare` (25%) of the variance, and the
+  walk's volatility is scaled down to match, so charted volatility stays about the same (about 1.4 bps
+  per $100k at the defaults; check with `scripts/impactCalibration.ts`). `k` stays fixed when rates
+  change, so more flow means more volatility. `impactVolShare=0` turns impact off; trading-test-data
+  does that so UI tests keep exact prices.
 - **Phases.** `CONTINUOUS`, `HALTED` (admin), and `CLOSED` for instruments without a book. A halted
   book rejects new orders and amends but accepts cancels; bots pause.
 - **Trading session.** A market-wide schedule (`TradingSession`) drives every book through
@@ -169,12 +182,21 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | `mmRate` | 10 | MM discretionary churn events/s per instrument (0 = MMs paused). |
 | `takerRate` | 8 | Taker orders/s per instrument (0 = off). |
 | `baseNotionalUsd` | 20000 | Typical order / quote notional. |
+| `impactVolShare` | 0.25 | Share of each instrument's variance from aggressive flow (market impact); 0 = no impact. |
+| `impactPermanentShare` | 0.3 | Share of each impact move that is permanent. |
+| `impactHalfLifeSec` | 30 | Half-life of transient impact (wall-clock seconds). |
 | `sessionOpen` | `""` | Session open, `HH:MM` UTC (`EXCHANGE_SIM_SESSION_OPEN`). Set with `sessionClose`; both empty = always open. |
 | `sessionClose` | `""` | Session close, `HH:MM` UTC (`EXCHANGE_SIM_SESSION_CLOSE`). Earlier than `sessionOpen` = overnight session. |
 | `preOpenMinutes` | 0 | Minutes of `PRE_OPEN` before the open (`EXCHANGE_SIM_PRE_OPEN_MINUTES`). |
 | `sessionDayMs` | 0 | Fast simulated day (`EXCHANGE_SIM_SESSION_DAY_MS`): the 24h schedule is compressed into this many ms of clock time (aligned to multiples of it since the epoch); open/close default to 08:00/16:30 when unset. 0 = real 24h day. |
 | `volumeProfile` | `u` | Intraday volume curve the takers follow while a session is configured (`EXCHANGE_SIM_VOLUME_PROFILE`): `u` (busy open, quiet middle, busiest into the close) or `flat`. Published to the OMS through `gateway.getSessionSchedule()`; its VWAP follows the same curve. |
 | `simPublishIntervalMs` | 1000 | `simBooks` / `bots` publish interval (ms); 0 disables the sim-admin tables. |
+| `simSampleIntervalMs` | 1000 | `simSamples` interval (ms); 0 disables. |
+| `simSampleHistory` | 300 | Sim samples kept per instrument. |
+| `botHistoryIntervalMs` | 5000 | `botHistory` interval (ms); 0 disables. |
+| `botHistorySamples` | 120 | Bot history samples kept per bot. |
+| `botFillsCapacity` | 20000 | `botFills` rows kept (two per trade); 0 disables. |
+| `markoutMs` | 5000 | `botFills` markout horizon (ms). |
 | `permissionMode` | `auto` | Who sees the sim-admin tables and may call the admin RPCs: `strict` = only users with the `sim-admin` role; `auto` also lets in users with no roles at all (dev / permissive auth). |
 | `volumeNoise` | 0.3 | Random variation of taker activity around the curve (`EXCHANGE_SIM_VOLUME_NOISE`, 0 = none): a per-day level and a slowly wandering component, each roughly ± this fraction, so actual volume differs from the forecast. |
 

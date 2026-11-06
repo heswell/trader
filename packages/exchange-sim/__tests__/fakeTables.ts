@@ -90,5 +90,8 @@ export const createFakeTables = (): FakeExchangeTables => {
     simBooks: make(defs.simBooks),
     bots: make(defs.bots),
     botParams: make(defs.botParams),
+    simSamples: make(defs.simSamples),
+    botHistory: make(defs.botHistory),
+    botFills: make(defs.botFills),
   };
 };
