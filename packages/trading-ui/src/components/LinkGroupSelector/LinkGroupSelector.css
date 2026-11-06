@@ -10,8 +10,8 @@
   border-radius: 50%;
   display: inline-block;
   flex: none;
-  height: var(--tradingLinkGroupSelector-swatchSize);
-  width: var(--tradingLinkGroupSelector-swatchSize);
+  height: var(--tradingLinkGroupSelector-swatchSize, 10px);
+  width: var(--tradingLinkGroupSelector-swatchSize, 10px);
 }
 
 .tradingLinkGroupSelector-swatch[data-link-group="unlinked"] {
@@ -32,4 +32,41 @@
   align-items: center;
   display: flex;
   gap: var(--salt-spacing-100);
+}
+
+/* Icon-only selector (panel title bars). */
+.tradingLinkGroupSelector-menuButton {
+  --saltButton-height: calc(var(--salt-size-base) - var(--salt-spacing-50));
+  --saltButton-minWidth: var(--saltButton-height);
+  --saltButton-padding: 0;
+  --saltButton-width: var(--saltButton-height);
+  flex: none;
+}
+
+.tradingLinkGroupSelector-menuItem[aria-current="true"] {
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+/*
+ * Swatches of the icon-only selector and its menu: a plain dot, no border.
+ * Following the active channel shows as a smaller dot in a soft halo of its
+ * colour (same outer size); unlinked is a hollow ring.
+ */
+:is(.tradingLinkGroupSelector-menuButton, .tradingLinkGroupSelector-menuItem)
+  .tradingLinkGroupSelector-swatch {
+  border: none;
+
+  &[data-link-group="active"] {
+    --tradingLinkGroupSelector-haloSize: 3px;
+    box-shadow: 0 0 0 var(--tradingLinkGroupSelector-haloSize)
+      color-mix(in srgb, var(--tradingLinkGroupSelector-color) 28%, transparent);
+    height: calc(var(--tradingLinkGroupSelector-swatchSize, 10px) - 2px);
+    margin: 1px;
+    width: calc(var(--tradingLinkGroupSelector-swatchSize, 10px) - 2px);
+  }
+
+  &[data-link-group="unlinked"] {
+    background: none;
+    border: 1.5px solid var(--salt-separable-primary-borderColor);
+  }
 }

@@ -1,4 +1,4 @@
-import { OrdType, Side } from "@heswell/trading-schemas";
+import { AlgoStrategy, OrdType, Side } from "@heswell/trading-schemas";
 import {
   OrderTicket,
   OrderTicketDialog,
@@ -56,8 +56,20 @@ export const OrderTicketDocked = () => {
         <Button onClick={prefill({ side: Side.Sell, ordType: OrdType.Limit })}>
           Sell limit
         </Button>
+        <Button
+          onClick={prefill({
+            side: Side.Buy,
+            ordType: OrdType.Limit,
+            strategy: AlgoStrategy.Vwap,
+          })}
+        >
+          Buy VWAP
+        </Button>
         <Text styleAs="label">
-          Keys: B / S side, ↑ / ↓ nudge, F9 or Ctrl+Enter submit, Esc reset
+          Hold Alt / ⌥ for shortcuts · price b / a / m · qty 10k / $250k
+        </Text>
+        <Text styleAs="label">
+          Order line in the instrument field: b 5k m twap 45m
         </Text>
         <EventLog events={events} />
       </div>

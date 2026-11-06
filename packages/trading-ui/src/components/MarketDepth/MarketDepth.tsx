@@ -34,7 +34,7 @@ import {
   type LinkGroupProps,
   useComponentLinkGroup,
 } from "../../instrument-context/useComponentLinkGroup";
-import { LinkGroupSelector } from "../LinkGroupSelector";
+import { PanelLinkGroupSelector } from "../LinkGroupSelector";
 import { useStaleData } from "../StaleIndicator/useStaleData";
 import marketDepthCss from "./MarketDepth.css";
 
@@ -327,7 +327,10 @@ export const MarketDepth = forwardRef<HTMLDivElement, MarketDepthProps>(
         {ric || showLinkGroupSelector ? (
           <div className={`${classBase}-summary`}>
             {showLinkGroupSelector ? (
-              <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
+              <PanelLinkGroupSelector
+                value={linkGroup}
+                onChange={setLinkGroup}
+              />
             ) : null}
             <span className={`${classBase}-ric`}>{ric}</span>
             {spread ? (

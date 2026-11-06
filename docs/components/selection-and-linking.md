@@ -4,13 +4,14 @@ Reference: [InstrumentPicker](../api/trading-ui.md#instrumentpicker),
 [InstrumentContextProvider](../api/trading-ui.md#instrumentcontextprovider),
 [LinkGroupProvider](../api/trading-ui.md#linkgroupprovider),
 [LinkGroupSelector](../api/trading-ui.md#linkgroupselector), [LinkGroupSwatch](../api/trading-ui.md#linkgroupswatch),
+[LinkGroupMenuButton](../api/trading-ui.md#linkgroupmenubutton), [PanelLinkGroupSelector](../api/trading-ui.md#panellinkgroupselector),
 [AccountSelector](../api/trading-ui.md#accountselector),
 [InstrumentLookupProvider](../api/trading-ui.md#instrumentlookupprovider),
 [useSelectedInstrument](../api/trading-ui.md#useselectedinstrument),
 [useComponentLinkGroup](../api/trading-ui.md#usecomponentlinkgroup). The design (bus, transports, persistence of
 the chosen group) is in [ui-guide §5](../ui-guide.md#5-instrument-linking-p311).
 
-Showcase: `#linking-providers`, `#selectors`, `#trader-workspace` (everything linked).
+Showcase: `#linking-providers`, `#selectors`, `#panel-link-group`, `#trader-workspace` (everything linked).
 
 | Component | Tables | Notes |
 | --- | --- | --- |
@@ -18,6 +19,7 @@ Showcase: `#linking-providers`, `#selectors`, `#trader-workspace` (everything li
 | `InstrumentContextProvider` | – | Gives a subtree a private bus (or `bus`), a default `linkGroup` (default `DEFAULT_LINK_GROUP`, `"red"`), an `initialInstrument` and `onSelectionChange`. Optional. |
 | `LinkGroupProvider` | – | Puts a subtree in `linkGroup`. A component's own `linkGroup` prop wins. |
 | `LinkGroupSelector` / `LinkGroupSwatch` | – | Colour picker over `DEFAULT_LINK_GROUPS` (red, green, blue, yellow) plus `unlinked`. Class base `tradingLinkGroupSelector`. |
+| `LinkGroupMenuButton` / `PanelLinkGroupSelector` | – | Icon-only selector for panel title bars (see [panel headers](#panel-headers)). |
 | `AccountSelector` | `accounts` (via `useTradingAccounts` / `useSelectedAccount`) | Dropdown of enabled accounts visible to the user. |
 | `InstrumentLookupProvider` | `instruments` (once; nested providers reuse it) | Static data by ric for renderers and `setSelectedInstrument`. |
 
@@ -85,6 +87,28 @@ trader portal shows it in the workspace header; showcase: `#channel-picker-works
 - Density: `full` (dot, ric, last, change) when all channels fit, else `compact` (dot, ric), else `dots` (only the
   active channel keeps its ric). `density="auto"` (default) measures hidden full / compact copies against the space
   available; give the picker a `minmax(0, max-content)` grid track (or a shrinkable flex item).
+
+## Panel headers
+
+In a portal workspace, the Ticket, Chart, Ladder, Tape, Depth and Depth chart show their link group in the panel's
+title bar, not in their body. Their selector is a `PanelLinkGroupSelector`: hosted in a `@vuu-ui/grid-layout`
+`GridLayoutItem` (`useGridLayoutItem()`), it renders a `LinkGroupMenuButton` into the item header through a
+`GridLayoutHeaderContribution` at `start`, or, in a stack, at `tab-start` (the start of the panel's own tab);
+anywhere else it is the inline `LinkGroupSelector`.
+
+- `LinkGroupMenuButton` shows the group's swatch only and opens a Salt `Menu` of the groups. A pinned group is a plain
+  dot, following the active channel is a smaller dot in a soft halo of its colour (`--tradingLinkGroupSelector-haloSize`),
+  unlinked a hollow ring. Its accessible name and tooltip name the group (`Link group: Active channel (Green)`), so
+  assistive tech does not rely on the colour.
+- The contribution renders inside the feature's React tree but into the host's header, so `@vuu-ui/grid-layout` is a
+  shared module-federation singleton (`scripts/features/sync-build-config.ts`).
+- A `GridLayoutItem` with `header: false` has no slot, so the selector does not show there.
+- `apps/portal-host/src/App.css` styles the item headers like a stack's tab bar through grid-layout's
+  `--vuuGridLayoutItemHeader-*` variables: no fill, the tab bar's divider, text size and 27px height.
+- Only the selected panel of a stack is mounted, so the button moves with the selection. In a stack that shows one,
+  `App.css` gives every tab the button's width at both ends (labels stay centred, nothing shifts), and lifts tab
+  contributions above Salt's `TabTrigger` hit area so they take their own clicks. The first visit to a panel whose
+  remote module has not loaded yet still shifts once.
 
 ## Accounts
 

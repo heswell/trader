@@ -13,7 +13,7 @@ import {
   chartFrameClass,
   disableSeriesAnimation,
 } from "../ChartFrame/ChartFrame";
-import { LinkGroupSelector } from "../LinkGroupSelector";
+import { PanelLinkGroupSelector } from "../LinkGroupSelector";
 
 const classBase = "tradingDepthChartView";
 
@@ -77,7 +77,7 @@ export const DepthChartView = forwardRef<HTMLDivElement, DepthChartViewProps>(
       showToolbar || showLinkGroupSelector ? (
         <>
           {showLinkGroupSelector ? (
-            <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
+            <PanelLinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
           ) : null}
           <span className={`${chartFrameClass}-title`}>{ric ?? "Depth"}</span>
         </>

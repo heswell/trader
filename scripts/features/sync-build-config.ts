@@ -34,8 +34,11 @@ const vuu = (name: string): [string, SharedConfig] => [
  * One instance per page (docs/portal-integration.md, "MF sharing"):
  * react / react-dom / router (hooks, context), @vuu-ui/core (+ /portal) for
  * the host's DataProvider, persistence and module registry, data-remote and
- * notifications (connection + toasts), Salt (theme context) and trading-ui
- * (the instrument link bus, feature-root lease and ticket launcher).
+ * notifications (connection + toasts), grid-layout (the host's workspace
+ * GridLayoutItems hold the header slot context that a feature's
+ * GridLayoutHeaderContribution renders into), Salt (theme context) and
+ * trading-ui (the instrument link bus, feature-root lease and ticket
+ * launcher).
  *
  * NOT @vuu-ui/vuu-layout: its shared chunk bundles vuu-data-react, which
  * imports @vuu-ui/vuu-layout again, and the MF runtime deadlocks loading it
@@ -59,6 +62,7 @@ export const SHARED: Record<string, SharedConfig> = Object.fromEntries([
     { singleton: true, requiredVersion: "package", strictVersion: true },
   ],
   vuu("@vuu-ui/core/portal"),
+  vuu("@vuu-ui/grid-layout"),
   vuu("@vuu-ui/vuu-data-remote"),
   vuu("@vuu-ui/vuu-notifications"),
   ["@salt-ds/core", { singleton: true, requiredVersion: "^1.67.0" }],

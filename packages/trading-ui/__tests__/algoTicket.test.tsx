@@ -52,30 +52,39 @@ describe("algo fields on the order ticket", () => {
     ).toMatchObject({ strategy: "TWAP" });
     expect(
       validateDraft(
-        draft({ strategy: AlgoStrategy.Twap, algoDuration: "45" }),
+        draft({
+          strategy: AlgoStrategy.Twap,
+          algoParams: { durationMins: "45" },
+        }),
         instrument,
       ).params,
     ).toMatchObject({ strategy: "TWAP", durationMins: 45 });
     expect(
       validateDraft(
-        draft({ strategy: AlgoStrategy.Twap, algoDuration: "-1" }),
+        draft({
+          strategy: AlgoStrategy.Twap,
+          algoParams: { durationMins: "-1" },
+        }),
         instrument,
-      ).errors.algoDuration,
+      ).errors.durationMins,
     ).toBeDefined();
   });
 
   test("VWAP: optional HH:MM end time", () => {
     expect(
       validateDraft(
-        draft({ strategy: AlgoStrategy.Vwap, algoEndTime: "15:30" }),
+        draft({
+          strategy: AlgoStrategy.Vwap,
+          algoParams: { endTime: "15:30" },
+        }),
         instrument,
       ).params,
     ).toMatchObject({ strategy: "VWAP", endTime: "15:30" });
     expect(
       validateDraft(
-        draft({ strategy: AlgoStrategy.Vwap, algoEndTime: "3pm" }),
+        draft({ strategy: AlgoStrategy.Vwap, algoParams: { endTime: "3pm" } }),
         instrument,
-      ).errors.algoEndTime,
+      ).errors.endTime,
     ).toBe("End time must be HH:MM");
   });
 
@@ -86,7 +95,10 @@ describe("algo fields on the order ticket", () => {
     ).toBeDefined();
     expect(
       validateDraft(
-        draft({ strategy: AlgoStrategy.Pov, participationPct: "10" }),
+        draft({
+          strategy: AlgoStrategy.Pov,
+          algoParams: { participationPct: "10" },
+        }),
         instrument,
       ).params,
     ).toMatchObject({ strategy: "POV", participationPct: 10 });

@@ -28,7 +28,11 @@ import {
   ChannelPickerWorkspace,
 } from "./ChannelPickerExamples";
 import { InstrumentPricesTicking } from "./InstrumentPricesTicking";
-import { LinkingProvidersExample, SelectorsExample } from "./LinkingExamples";
+import {
+  LinkingProvidersExample,
+  PanelLinkGroupExample,
+  SelectorsExample,
+} from "./LinkingExamples";
 import { MarketDepthExamples } from "./MarketDepthExamples";
 import { PriceLadderLive, PriceLadderStress } from "./PriceLadderExamples";
 import {
@@ -290,6 +294,14 @@ export const examples: ShowcaseExample[] = [
     description:
       "AccountSelector + useSelectedAccount, LinkGroupSelector, InstrumentLookupProvider + useInstrumentLookup.",
     Component: SelectorsExample,
+  },
+  {
+    id: "panel-link-group",
+    group: "Selectors",
+    title: "Link group in panel headers",
+    description:
+      "PanelLinkGroupSelector in grid-layout panels: an icon-only LinkGroupMenuButton in each header.",
+    Component: PanelLinkGroupExample,
   },
   {
     id: "primitives-status",

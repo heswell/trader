@@ -21,6 +21,7 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   InstrumentGrid: "docs/components/instrument-grid.md#instrumentgrid",
   InstrumentLookupProvider: "docs/components/selection-and-linking.md",
   InstrumentPicker: "docs/components/selection-and-linking.md",
+  LinkGroupMenuButton: "docs/components/selection-and-linking.md",
   LinkGroupProvider:
     "docs/components/selection-and-linking.md#how-linking-works",
   LinkGroupSelector: "docs/components/selection-and-linking.md",
@@ -32,6 +33,8 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   OrderTicketDialog: "docs/components/order-ticket.md",
   OrderTicketLauncherProvider: "docs/components/order-ticket.md#prefill",
   OrderTicketPanel: "docs/components/order-ticket.md",
+  PanelLinkGroupSelector:
+    "docs/components/selection-and-linking.md#panel-headers",
   PhaseCell: "docs/components/instrument-grid.md#cell-renderers",
   PnlHistoryChart: "docs/components/charts.md#pnlhistorychart",
   PnlValue: "docs/components/primitives.md",
