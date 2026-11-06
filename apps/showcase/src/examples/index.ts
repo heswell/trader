@@ -237,7 +237,7 @@ export const examples: ShowcaseExample[] = [
     group: "PriceLadder",
     title: "Live ladder",
     description:
-      "Click bid / ask to trade (ACC-US-01), drag or M+arrows+Enter to amend, Delete / double-click to cancel, C to centre.",
+      "Click bid / ask to trade (ACC-US-01), drag or M+arrows+Enter to amend, Delete / double-click to cancel, C to centre. Queue is on: Q shows the orders at the cursor price.",
     Component: PriceLadderLive,
   },
   {

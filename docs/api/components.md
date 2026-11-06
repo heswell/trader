@@ -46,8 +46,8 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [PnlValue](trading-ui.md#pnlvalue) | `components/PnlValue` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
 | [PositionsView](trading-ui.md#positionsview) | `components/PositionsView` | `positionPrices` |  | InstrumentLookup, LinkGroupSelector, PnlValue, StaleIndicator, TradingCellRenderers | `positions-view`, `trader-workspace` | [guide](../components/blotters.md) |
 | [PriceChart](trading-ui.md#pricechart) | `components/PriceChart` | `bars`, `depth`, `fills`, `instrumentPrices`, `trades` |  | ChartFrame, LinkGroupSelector | `channel-picker-workspace`, `chart-workspace`, `price-chart`, `trader-workspace` | [guide](../components/charts.md#pricechart) |
-| [PriceLadder](trading-ui.md#priceladder) | `components/PriceLadder` | `depth`, `instrumentPrices`, `parentOrders`, `trades` | `amendOrder`, `cancelAll`, `cancelOrder`, `createOrder` | LinkGroupSelector, OrderTicket, StaleIndicator | `price-ladder-live`, `trader-workspace` | [guide](../components/market-depth-and-ladder.md) |
-| [PriceLadderView](trading-ui.md#priceladderview) | `components/PriceLadder` | `depth`, `instrumentPrices`, `parentOrders`, `trades` |  |  | `price-ladder-stress` | [guide](../components/market-depth-and-ladder.md) |
+| [PriceLadder](trading-ui.md#priceladder) | `components/PriceLadder` | `bookOrders`, `childOrders`, `depth`, `instrumentPrices`, `parentOrders`, `trades` | `amendOrder`, `cancelAll`, `cancelOrder`, `createOrder` | LinkGroupSelector, OrderTicket, StaleIndicator | `price-ladder-live`, `trader-workspace` | [guide](../components/market-depth-and-ladder.md) |
+| [PriceLadderView](trading-ui.md#priceladderview) | `components/PriceLadder` | `bookOrders`, `depth`, `instrumentPrices`, `parentOrders`, `trades` |  |  | `price-ladder-stress` | [guide](../components/market-depth-and-ladder.md) |
 | [PriceMoveCell](trading-ui.md#pricemovecell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
 | [QuantityCell](trading-ui.md#quantitycell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
 | [SideLabel](trading-ui.md#sidelabel) | `components/SideLabel` |  |  |  | `side-label-variants`, `stack-instrument-prices` | [guide](../components/primitives.md) |
@@ -90,7 +90,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | `components/PnlValue` | `tradingPnlValue` | `--tradingPnlValue-color` | `data-direction` |
 | `components/PositionsView` | `tradingPositionsView` |  | `data-currency`, `data-link-group`, `data-testid` |
 | `components/PriceChart` | `tradingPriceChart` |  | `data-interval`, `data-link-group` |
-| `components/PriceLadder` | `tradingPriceLadder` | `--tradingPriceLadder-ask-bar`, `--tradingPriceLadder-bid-bar`, `--tradingPriceLadder-columns`, `--tradingPriceLadder-ltp`, `--tradingPriceLadder-own`, `--tradingPriceLadder-rowHeight` | `data-auto-centre`, `data-best-ask`, `data-best-bid`, `data-col`, `data-columns`, `data-connection-state`, `data-cursor`, `data-cursor-row`, `data-dragging`, `data-drop-target`, `data-kind`, `data-link-group`, `data-ltp`, `data-moving`, `data-own`, `data-phase`, `data-price`, `data-side`, `data-spread`, `data-trade-mode` |
+| `components/PriceLadder` | `tradingPriceLadder` | `--tradingPriceLadder-ask-bar`, `--tradingPriceLadder-bid-bar`, `--tradingPriceLadder-columns`, `--tradingPriceLadder-ltp`, `--tradingPriceLadder-own`, `--tradingPriceLadder-rowHeight` | `data-auto-centre`, `data-best-ask`, `data-best-bid`, `data-col`, `data-columns`, `data-connection-state`, `data-cursor`, `data-cursor-row`, `data-dragging`, `data-drop-target`, `data-kind`, `data-link-group`, `data-ltp`, `data-merged`, `data-moving`, `data-own`, `data-phase`, `data-price`, `data-queue`, `data-side`, `data-spread`, `data-trade-mode` |
 | `components/SideLabel` | `tradingSideLabel` | `--tradingSideLabel-color` | `data-side` |
 | `components/SimInstrumentChart` | `tradingSimInstrumentChart` |  | `data-link-group` |
 | `components/SimulatorGrids` | `tradingBotDetail` |  | `data-link-group`, `data-testid` |
@@ -105,7 +105,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 
 | Folder | Tables | RPCs |
 | --- | --- | --- |
-| `hooks` | `depth`, `instrumentPrices`, `parentOrders`, `trades` |  |
+| `hooks` | `bookOrders`, `childOrders`, `depth`, `instrumentPrices`, `parentOrders`, `trades` |  |
 | `notifications` | `fills`, `parentOrders` |  |
 
 ## Showcase groups

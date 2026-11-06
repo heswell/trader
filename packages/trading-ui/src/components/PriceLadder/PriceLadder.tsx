@@ -19,10 +19,13 @@ import {
   useMarketDepth,
   useTradedVolume,
 } from "../../hooks/useMarketData";
+import { useBookQueue } from "../../hooks/useBookQueue";
+import { useOwnExchangeOrderIds } from "../../hooks/useOwnExchangeOrderIds";
 import {
   type OwnOrder,
   useOwnWorkingOrders,
 } from "../../hooks/useOwnWorkingOrders";
+import { useComponentSetting } from "../../instrument-context/useComponentSetting";
 import {
   type LinkGroupProps,
   useComponentLinkGroup,
@@ -84,6 +87,8 @@ export interface PriceLadderProps
       | "onCancelOrders"
       | "onTrade"
       | "ownOrders"
+      | "queues"
+      | "queueUnavailableReason"
       | "priceFormat"
       | "referencePrice"
       | "ric"
@@ -114,6 +119,12 @@ export interface PriceLadderProps
   onOrderEvent?: (event: PriceLadderOrderEvent) => void;
   /** Rejected order RPCs (also shown in the ladder's status line). */
   onError?: (error: TradingRpcError, action: PriceLadderAction) => void;
+  /**
+   * Offer the order-by-order queue view (EXCHANGE `bookOrders`): the Queue
+   * toggle and the Q panel. Default true. The Queue toggle is saved with the
+   * layout when the ladder has an `id`.
+   */
+  enableQueue?: boolean;
   /**
    * Report new orders and failed requests to the TradingNotificationsProvider
    * (if there is one; deduplicated with the order stream toasts by clOrdId).
@@ -187,6 +198,11 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
       account,
       clOrdIdPrefix = "LDR",
       defaultLinkGroup,
+      defaultShowQueue = false,
+      enableQueue = true,
+      onQueuePanelChange,
+      onShowQueueChange,
+      showQueue: showQueueProp,
       levels = 10,
       linkGroup: linkGroupProp,
       notify: notifyEnabled = true,
@@ -216,6 +232,45 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
       levels: Math.max(1, Math.min(levels, 10)),
     });
     const own = useOwnWorkingOrders(ric, { account });
+    const [savedShowQueue, saveShowQueue] = useComponentSetting(
+      "ladderQueue",
+      defaultShowQueue,
+      { persistKey: props.id ? `PriceLadder:${props.id}` : undefined },
+    );
+    const showQueue = showQueueProp ?? savedShowQueue;
+    const handleShowQueueChange = useCallback(
+      (next: boolean) => {
+        saveShowQueue(next);
+        onShowQueueChange?.(next);
+      },
+      [saveShowQueue, onShowQueueChange],
+    );
+    const [queuePanel, setQueuePanel] = useState(false);
+    const handleQueuePanelChange = useCallback(
+      (open: boolean) => {
+        setQueuePanel(open);
+        onQueuePanelChange?.(open);
+      },
+      [onQueuePanelChange],
+    );
+    // only subscribe to the L3 book while the queue is on screen
+    const queueWanted = enableQueue && (showQueue || queuePanel);
+    const ownExchangeIds = useOwnExchangeOrderIds(ric, own.orders, {
+      enabled: queueWanted,
+    });
+    const queue = useBookQueue(ric, {
+      enabled: queueWanted,
+      ownOrderIds: ownExchangeIds,
+    });
+    // bookOrders is empty while depth is not: the server has L3 off
+    const queueUnavailableReason =
+      queueWanted &&
+      queue.loaded &&
+      loaded &&
+      queue.orderCount === 0 &&
+      bids.length + asks.length > 0
+        ? "Order-by-order data isn't enabled on this server"
+        : undefined;
     const tradedVolume = useTradedVolume(ric, { enabled: showVolume });
     // instrument is a new object on every price tick: key the schedule and
     // format on its static fields, or every memoized ladder row re-renders
@@ -433,7 +488,12 @@ export const PriceLadder = forwardRef<HTMLDivElement, PriceLadderProps>(
         onCancelAll={handleCancelAll}
         onCancelOrders={handleCancelOrders}
         onTrade={handleTrade}
+        onQueuePanelChange={handleQueuePanelChange}
+        onShowQueueChange={handleShowQueueChange}
         ownOrders={own.byPrice}
+        queues={enableQueue ? queue.queues : undefined}
+        queueUnavailableReason={queueUnavailableReason}
+        showQueue={showQueue}
         priceFormat={priceFormat}
         ref={ref}
         referencePrice={instrument?.close || instrument?.refPrice || undefined}
