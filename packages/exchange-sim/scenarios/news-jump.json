@@ -1,0 +1,19 @@
+{
+  "name": "news-jump",
+  "description": "count random instruments (default 1) get news: fair value jumps bps (default 150) while the makers' estimate lags (10s half-life) and informed traders take the difference for 30 seconds. Reverts after 90 seconds.",
+  "targets": { "random": "$count" },
+  "args": { "count": 1, "bps": 150 },
+  "steps": [
+    {
+      "at": "+0s",
+      "action": "setBotParams",
+      "params": { "kind": "marketMaker", "fairHalfLifeSecs": 10 }
+    },
+    {
+      "at": "+2s",
+      "action": "shiftFairValue",
+      "params": { "bps": "$bps", "informedSecs": 30 }
+    },
+    { "at": "+90s", "action": "revert" }
+  ]
+}

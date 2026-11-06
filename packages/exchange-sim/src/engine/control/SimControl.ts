@@ -3,7 +3,13 @@ import {
   RejectReason,
   type TradingPhase,
 } from "@heswell/trading-schemas";
-import type { Bot, BotKind, BotParamSpec, BotParamValue } from "../bots/Bot";
+import {
+  type Bot,
+  BotKind,
+  type BotParamSpec,
+  type BotParamValue,
+} from "../bots/Bot";
+import { Informed } from "../bots/Informed";
 import { botKindDef } from "../bots/roster";
 import { ExchangeAdminError } from "../errors";
 import type { ExchangeSimulator } from "../ExchangeSimulator";
@@ -68,7 +74,11 @@ export const parseParamValue = (
   current: BotParamValue | undefined,
 ): BotParamValue => {
   const value = text.trim();
-  if (spec.type === "string") return value;
+  if (spec.type === "string") {
+    if (spec.options && !spec.options.includes(value))
+      throw fail(`${spec.name} must be one of ${spec.options.join(", ")}`);
+    return value;
+  }
   if (spec.type === "boolean") {
     if (value !== "true" && value !== "false")
       throw fail(`${spec.name} must be true or false`);
@@ -347,14 +357,42 @@ export class SimControl {
   }
 
   /** News jump: move fair value by `bps` at once. */
-  shiftFairValue(ric: string, bps: number, ctx: ActionContext = {}) {
-    const [{ book }] = this.sim.instrumentsFor(ric);
+  /**
+   * News jump: move fair value by `bps` at once. `informedSecs` > 0 arms the
+   * instrument's informed traders (adding one if it has none) for that long.
+   */
+  shiftFairValue(
+    ric: string,
+    bps: number,
+    ctx: ActionContext = {},
+    informedSecs = 0,
+  ) {
+    const [sim] = this.sim.instrumentsFor(ric);
+    const { book } = sim;
     const moved = book.model.shift(bps);
     book.dirty = true;
+    let informed: string[] = [];
+    if (informedSecs > 0) {
+      let bots = sim.bots.filter(
+        (bot): bot is Informed => bot instanceof Informed,
+      );
+      if (bots.length === 0)
+        bots = [this.addBot(ric, BotKind.Informed, {}, ctx) as Informed];
+      const until = this.sim.clock() + informedSecs * 1000;
+      for (const bot of bots) {
+        bot.port.paused = false;
+        bot.arm(until);
+      }
+      informed = bots.map((bot) => bot.id);
+    }
     this.record(
       "shiftFairValue",
       ric,
-      { bps, moved: Math.round(moved * 100) / 100 },
+      {
+        bps,
+        moved: Math.round(moved * 100) / 100,
+        ...(informedSecs > 0 ? { informedSecs, informed } : {}),
+      },
       ctx,
     );
     return [ric];

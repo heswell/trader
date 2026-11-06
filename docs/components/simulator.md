@@ -58,7 +58,7 @@ Changes apply at once; each shows in `SimEventsLog` with the user. Each control 
 | `SimSessionStrip` | Phase (forced or scheduled), next change, session clock, paused bots and running scenarios; Pre-open / Open / Close, Pause and Resume all bots, and a scenario picker with Run (default targets and args). |
 | `ScenarioRuns` | Newest first: status, step, user, targets; Stop, and Stop and revert (Revert once finished). |
 | `SimEventsLog` | Newest first: time, user, action, target, details, run. |
-| `SimInstrumentControls` | `ric` (default: the followed instrument), `LinkGroupProps`. Volatility, drift and impact with Apply; fair-value jumps of ±25 and ±100 bp; market maker and taker rates; pause, resume and pull the instrument's bots; Add bot of a kind; Halt / Resume. |
+| `SimInstrumentControls` | `ric` (default: the followed instrument), `LinkGroupProps`. Volatility, drift and impact with Apply; fair-value jumps of ±25 and ±100 bp (with "informed trader (30s)", the jump arms an informed trader: `informedSecs`); market maker and taker rates; pause, resume and pull the instrument's bots; Add bot of any kind (`SIM_BOT_KINDS`); Halt / Resume. |
 
 ## CSS hooks
 

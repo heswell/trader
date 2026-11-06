@@ -1,13 +1,11 @@
-import type { BotType } from "@heswell/trading-schemas";
+import { type BotType, SimBotKind } from "@heswell/trading-schemas";
 import type { Random } from "../../util/random";
 import type { InstrumentBook } from "../InstrumentBook";
 import type { MarketSignals } from "./MarketSignals";
 import type { OrderPort } from "./OrderPort";
 
-export const BotKind = Object.freeze({
-  MarketMaker: "marketMaker",
-  NoiseTaker: "noiseTaker",
-} as const);
+/** The kinds of bot (defined in trading-schemas, so the UI can list them). */
+export const BotKind = SimBotKind;
 export type BotKind = (typeof BotKind)[keyof typeof BotKind];
 
 /** Quoting bots step before taking bots on each instrument. */
@@ -26,6 +24,8 @@ export interface BotParamSpec {
   unit?: string;
   /** Fixed for the bot's life (identity, not behaviour). */
   readOnly?: boolean;
+  /** Allowed values of a string parameter. */
+  options?: readonly string[];
 }
 
 const BASELINES = new WeakMap<Bot, BotParams>();
@@ -101,5 +101,9 @@ export interface BotKindDef {
   /** Account the n-th bot trades for. */
   account(n: number): string;
   paramSpec: readonly BotParamSpec[];
+  /** Apply the order port limits (maxPositionUsd, maxOrdersPerSec params). */
+  limits?: boolean;
+  /** One line for the UI's Add bot list. */
+  description?: string;
   create(options: BotCreateOptions): Bot;
 }

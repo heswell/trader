@@ -254,6 +254,8 @@ export type SetInstrumentParamsRequest = Infer<
 export const shiftFairValueParams = object({
   ric,
   bps: number({ min: -5_000, max: 5_000 }),
+  /** Arm the instrument's informed traders (adding one if none) for this long. */
+  informedSecs: optional(number({ min: 0, max: 3_600 })),
 });
 export type ShiftFairValueRequest = Infer<typeof shiftFairValueParams>;
 

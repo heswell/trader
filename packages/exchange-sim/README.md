@@ -146,9 +146,30 @@ nothing visible changed.
   Each quotes `mmLevels` per side on a tick grid around fair value, with a half spread of about 2–6 bps,
   level spacing of 1–3 bps, and inventory skew. They requote when fair value moves, by cancel/replace of
   only the levels that changed. `mmRate` adds random discretionary cancel/replace churn per second.
+  Off by default, settable per maker: `fairHalfLifeSecs` makes the maker's fair-value estimate lag
+  (and `flowSensitivityBps` leans it with trade imbalance), so news and informed flow cost the makers
+  money; `volSensitivity` widens the spread (and shrinks size) as realised volatility rises above the
+  instrument's normal level, up to `maxWiden`; `maxInventory` stops quoting the side that adds and
+  `flattenAt` market-orders back to it; `pullMoveBps` pulls every quote when mid jumps that far from its
+  1 s average, for `cooldownSecs`, then quotes twice as wide for as long.
 - **Takers.** Three takers, one account each (`TAKER1..3`), share `takerRate`/s per instrument as
   Poisson arrivals: mostly market orders and aggressive IOC limits, plus passive limits and occasional
   multi-level sweeps.
+- **Other bot kinds** (off by default; add them with `extraBots`, `addBot` or a scenario). Each trades
+  as its own account, and counts as "other bots" in the flow attribution.
+
+  | Kind (local id) | Behaviour |
+  | --- | --- |
+  | `momentum` (`MOM1..`) | Goes long or short `targetQty` when the 10 s mid average is `entryBps` over or under the 60 s one; exits when the trend fades under `exitBps`, after a `stopLossBps` adverse move, or after `holdMaxSecs`. Market orders in clips. |
+  | `meanReversion` (`MR1..`) | Leans against the gap from the 60 s mid average (`anchor: ema`) or the true fair value (`anchor: fair`), up to `maxQty` at `fullBps`; unwinds under `exitBps`. Crosses the spread; `passive` joins the touch instead (which adds depth rather than pulling the price back). |
+  | `aggressiveTrader` (`AGG1..`) | Buys or sells `notionalUsd` evenly over `durationSecs` with market orders, sweeps or IOCs; stops early after a `floorBps` move. Idle when done. |
+  | `stopLosses` (`STOPS1..`) | `perSide` stop-losses `minBps`..`maxBps` either side of the price, a share (`clustering`) on round numbers. Held by the bot (not the book): a stop whose trigger the mid or last trade reaches fires a market order, so with impact one stop can set off the next. Topped up every `refreshSecs`. |
+  | `iceberg` (`ICE1..`) | `totalQty` shown `displayQty` at a time; each slice that fills is replaced by a new order at the back of the queue. Pegged to a `fixed` price, the same-side `touch` or `fair` value, `offsetTicks` away. |
+  | `informed` (`INF1..`) | While armed (`shiftFairValue` with `informedSecs`, or `alwaysOn`), buys or sells with IOCs no worse than fair value when the touch is `thresholdBps` through it, so it only trades while the makers lag. Unwinds when disarmed. |
+
+  `momentum`, `meanReversion`, `aggressiveTrader` and `informed` take the order port limits
+  `maxPositionUsd` and `maxOrdersPerSec` (orders, modifies and cancels, smoothed over 5 s): a breach
+  pulls and pauses the bot and is logged in `simEvents` (`botLimitBreach`, user `limits`).
 - **Scheduling.** One `setInterval(botStepMs)` steps every book in a rotating order, so the work is
   batched rather than spread across one timer per bot. `maxOpsPerStep` caps one step; the rest are
   deferred. Elapsed time is clamped to `maxStepMs`, so a stall doesn't cause a burst.
@@ -182,6 +203,7 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | `timeScale` | 10 | Price-model time multiplier. |
 | `defaultVolatility` | 0 | Annualised vol for all instruments (0 = per-instrument 20–50%). |
 | `mmPerInstrument` | 2 | Market makers per book. |
+| `extraBots` | `""` | Bots added to every roster: `kind:count`, or `kind:count@Sector` for one GICS sector, comma separated (e.g. `momentum:1,stopLosses:1@Energy`). |
 | `mmLevels` | 5 | Quote levels per side per MM. |
 | `mmRate` | 10 | MM discretionary churn events/s per instrument (0 = MMs paused). |
 | `takerRate` | 8 | Taker orders/s per instrument (0 = off). |
@@ -241,7 +263,7 @@ Simulator control (all also recorded in `simEvents` with the caller's user name;
 | --- | --- | --- |
 | `setBotParams` | `{ric?, kind?, botId?, name, value, overSecs?}` | One parameter, checked against the kind's `paramSpec`. `value` is absolute or relative (`x2`, `+3`, `-3`), clamped to the range; `overSecs` ramps a number there linearly. |
 | `setInstrumentParams` | `{ric?, volatility?, driftBpsPerHour?, impactBps?, impactPermanentShare?, impactHalfLifeSec?}` | Price model; omitted fields are unchanged. Drift is bps per hour of model time. |
-| `shiftFairValue` | `{ric, bps}` | A news jump of the walk, clamped to the band. |
+| `shiftFairValue` | `{ric, bps, informedSecs?}` | A news jump of the walk, clamped to the band. `informedSecs` arms the instrument's informed traders (adding one if it has none) for that long. |
 | `pauseBots` / `resumeBots` / `pullQuotes` / `resetBotStats` | bot selector | Paused bots pull their orders and stop; pull cancels resting orders now; reset zeroes P&L and counters, keeping the position. |
 | `addBot` | `{ric, kind, params?}` | `params` is a JSON object of overrides. Returns `botId` too. |
 | `removeBot` | `{botId}` | Pulls its orders and deletes its rows. |
@@ -255,14 +277,15 @@ Unknown or unsimulated rics give `UNKNOWN_INSTRUMENT`.
 ## Scenarios
 
 JSON files in [scenarios/](scenarios/), listed in `scenarios/index.ts`: `calm`, `volatile-open`, `trending-day`,
-`liquidity-crunch`. A scenario has `name`, `description`, optional `targets` (`rics`, `sector`, `random` N, or all
+`liquidity-crunch`, `flash-crash` (stressed makers, a stop-loss population and a $5m seller, then a halt) and
+`news-jump` (lagging makers, a fair-value jump and an informed trader). A scenario has `name`, `description`, optional `targets` (`rics`, `sector`, `random` N, or all
 simulated instruments), default `args`, and `steps` of `{at, action, params}`. `at` is `+30s` / `+2m` / `+500ms`
 after the start, or session time `HH:MM`. `$name` / `${name}` in `at`, params or `targets.random` take the run's
 args. Number params of `setInstrumentParams`, `setBotRate` and `setBotParams` take `x<f>` for a multiple of the
 current value; `setBotParams` takes `over` (`"20s"`) to ramp.
 
 Actions: `setInstrumentParams`, `setBotRate {bot, rate}`, `setBotParams {kind?, botId?, over?, <param>: value}`,
-`shiftFairValue {bps}`, `pauseBots` / `resumeBots` / `pullQuotes {kind?}`, `addBot {kind, count?, ...params}`,
+`shiftFairValue {bps, informedSecs?}`, `pauseBots` / `resumeBots` / `pullQuotes {kind?}`, `addBot {kind, count?, ...params}`,
 `halt {reason?}`, `resume`, `setMarketPhase {phase}`, `revert`. Each applies to every target, or to `params.ric`.
 A run saves its targets' settings first; a `revert` step, `stopScenario` with `revert`, a failed step or a restart
 during the run put them back. More actions can be added with `sim.scenarios.registerAction`.

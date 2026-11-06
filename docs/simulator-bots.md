@@ -250,7 +250,41 @@ Instrument screen (volatility, drift, impact, jump buttons, halt, per-kind rates
 bot in the bots grid; an editable parameter form built from `paramSpec`, with a "changed from
 baseline" marker. Changes apply immediately; `simEvents` is the audit trail.
 
-## Phase 4: new exchange bots
+## Phase 4: new exchange bots (built)
+
+As built:
+
+- **Maker settings** (all off by default, so the default market is unchanged): `fairHalfLifeSecs`
+  and `flowSensitivityBps` (lag), `volSensitivity` / `maxWiden` (stress), `maxInventory` /
+  `flattenAt`, `pullMoveBps` / `cooldownSecs`. Stress is realised volatility over the instrument's
+  normal volatility (as it started), so raising volatility in a scenario counts as stress. The fast
+  market check uses the 1 s mid average (the 10 s one kept re-triggering after a jump), and does not
+  re-trigger while the maker is quoting wide after a pull (with no maker quotes, the thin book swings).
+- **Six new kinds** in `src/engine/bots/`: `momentum`, `meanReversion`, `aggressiveTrader`,
+  `stopLosses`, `iceberg`, `informed` (see the
+  [exchange-sim README](../packages/exchange-sim/README.md#market-model)). Kind names are
+  `SimBotKind` in trading-schemas, so the UI can list them.
+- **Stops are held by the bot**, not the book: the book supports native stops, but the gateway, L3
+  publishing and persistence only know limit orders, and a bot-held stop that fires a market order has
+  the same market effect.
+- **Mean reversion crosses the spread by default.** Passive orders at the touch damped the bid-ask
+  bounce and raised the return autocorrelation (+0.28 against a −0.08 baseline) instead of lowering
+  it; crossing gives −0.14. `passive: true` keeps the passive version.
+- **Limits**: `maxPositionUsd` and `maxOrdersPerSec` on the directional kinds; a breach pulls and
+  pauses the bot and logs `botLimitBreach` to `simEvents`.
+- **Rosters**: config `extraBots` (`kind:count[@Sector]`); liquidity tiers are not done.
+- `shiftFairValue` gains `informedSecs`; the Instrument controls have an "informed trader (30s)"
+  toggle for the jump buttons, and Add bot lists every kind.
+- Scenarios `flash-crash` and `news-jump`. Algo day waits for phase 5.
+- Tests (`__tests__/newBots.test.ts`, seeded): the stressed maker widens in high volatility (more
+  than 1.5x the spread of a maker without it), pulls and requotes wide; inventory limits cap a
+  seller's push; momentum raises the lag-1 autocorrelation of 5 s returns and mean reversion lowers
+  it; stops deepen a sell-off by over 30%; the iceberg shows a slice at a time; the informed trader
+  profits only while makers lag; limit breaches pause and log.
+- Benchmark: the same as main side by side (4.3x headroom against 4.3x to 4.4x, p99 lag 9 to 10 ms);
+  the new kinds are off by default.
+
+The design:
 
 The book supports limit, market, IOC / FOK / GTC, post-only and native stop orders, but not
 icebergs. Shared pieces first:

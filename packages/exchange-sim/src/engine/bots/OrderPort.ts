@@ -51,6 +51,9 @@ export class OrderPort implements FillSink {
   #listener: BotFillListener | undefined;
   /** A paused bot is not stepped (pauseBots); its quotes are pulled. */
   paused = false;
+  /** Smoothed order actions (orders, modifies, cancels) per second. */
+  actionRate = 0;
+  #lastActions = 0;
 
   constructor(
     readonly book: InstrumentBook,
@@ -131,6 +134,18 @@ export class OrderPort implements FillSink {
       else ask += order.size;
     }
     return { bid, ask };
+  }
+
+  /** Update actionRate after a step of `dt` seconds (5s smoothing). */
+  updateRate(dt: number) {
+    const { orders, modifies, cancels } = this.ledger;
+    const actions = orders + modifies + cancels;
+    if (dt > 0) {
+      const a = 1 - Math.exp(-dt / 5);
+      this.actionRate +=
+        a * ((actions - this.#lastActions) / dt - this.actionRate);
+    }
+    this.#lastActions = actions;
   }
 
   onFill(orderId: string, trade: Trade, isMaker: boolean) {

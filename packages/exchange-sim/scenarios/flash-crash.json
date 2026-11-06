@@ -1,0 +1,59 @@
+{
+  "name": "flash-crash",
+  "description": "One random instrument: makers widen and pull in fast markets, stop-losses build up, then a blunt seller sweeps sellUsd (default $5m) in 20 seconds. Halted at 25s, resumed at 55s, reverted at 60s.",
+  "targets": { "random": 1 },
+  "args": { "sellUsd": 5000000 },
+  "steps": [
+    {
+      "at": "+0s",
+      "action": "setBotParams",
+      "params": {
+        "kind": "marketMaker",
+        "volSensitivity": 1,
+        "pullMoveBps": 40
+      }
+    },
+    {
+      "at": "+0s",
+      "action": "setBotParams",
+      "params": {
+        "kind": "marketMaker",
+        "halfSpreadTicks": "x3",
+        "over": "10s"
+      }
+    },
+    {
+      "at": "+0s",
+      "action": "addBot",
+      "params": {
+        "kind": "stopLosses",
+        "perSide": 60,
+        "minBps": 15,
+        "maxBps": 250
+      }
+    },
+    {
+      "at": "+5s",
+      "action": "addBot",
+      "params": {
+        "kind": "aggressiveTrader",
+        "side": "SELL",
+        "notionalUsd": "$sellUsd",
+        "durationSecs": 20,
+        "style": "sweep"
+      }
+    },
+    {
+      "at": "+12s",
+      "action": "pullQuotes",
+      "params": { "kind": "marketMaker" }
+    },
+    {
+      "at": "+25s",
+      "action": "halt",
+      "params": { "reason": "flash-crash volatility halt" }
+    },
+    { "at": "+55s", "action": "resume" },
+    { "at": "+60s", "action": "revert" }
+  ]
+}
