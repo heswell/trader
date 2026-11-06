@@ -274,3 +274,19 @@ modules:
     accessRole: "sim-admin-access"
     navOrder: 510
     workspace: {"paletteGroup":"Simulator","defaultSize":{"cols":2,"rows":1}}
+  - id: 132
+    version: 1
+    parentModuleId: 0
+    name: "SimulatorInstrument"
+    title: "Simulated instrument"
+    description: "One instrument's fair value, walk and quotes, flow by owner, its bots and attributed fills"
+    enabled: true
+    location: "/Simulator/Instrument"
+    path: "/simulator/instrument"
+    mfComponent: "SimulatorInstrument"
+    mfScope: "simulatorInstrument"
+    mfUrl: "http://localhost:5110/simulator-instrument"
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M7%203v3M7%2016v5M17%204v4M17%2015v4%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%226%22%20width%3D%224%22%20height%3D%2210%22%20rx%3D%221%22%2F%3E%3Crect%20x%3D%2215%22%20y%3D%228%22%20width%3D%224%22%20height%3D%227%22%20rx%3D%221%22%2F%3E%3C%2Fsvg%3E"
+    accessRole: "sim-admin-access"
+    navOrder: 520
+    workspace: {"paletteGroup":"Simulator","defaultSize":{"cols":2,"rows":1}}

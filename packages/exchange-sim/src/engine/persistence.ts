@@ -3,6 +3,7 @@ import type { TradingPhase } from "@heswell/trading-schemas";
 import type { GatewayState } from "../gateway/SimExchangeGateway";
 import type { ExecutionReport } from "../gateway/types";
 import type { BotLedgerState } from "./bots/BotLedger";
+import type { PriceModelState } from "./PriceModel";
 import type { SessionStats } from "./InstrumentBook";
 import type { SessionPhase } from "./TradingSession";
 
@@ -29,6 +30,8 @@ export interface BookSettings {
 
 export interface BookState extends BookSettings {
   fair: number;
+  /** Impact state and band centre (absent in older snapshots). */
+  model?: PriceModelState;
   stats: SessionStats;
   seq: number;
   /** Resting gateway (OMS) orders, bids then asks, each level in time priority. */

@@ -63,6 +63,9 @@ export const EXCHANGE_TABLE_NAMES: readonly ExchangeTableName[] = [
   "simBooks",
   "bots",
   "botParams",
+  "simSamples",
+  "botHistory",
+  "botFills",
   "instrumentPrices",
 ];
 export const OMS_TABLE_NAMES: readonly OmsLocalTableName[] = [
@@ -84,6 +87,8 @@ export const OMS_TABLE_NAMES: readonly OmsLocalTableName[] = [
 export const LOCAL_EXCHANGE_DEFAULTS: Partial<ExchangeSimConfig> = {
   activeInstruments: 50,
   barHistory: 200,
+  // no market impact: UI tests and the showcase keep their exact prices
+  impactVolShare: 0,
 };
 
 export interface TradingTestDataOptions {
@@ -222,6 +227,9 @@ export const createTradingTestData = ({
   const simBooks = tableFor(exchangeTables.simBooks);
   const bots = tableFor(exchangeTables.bots);
   const botParams = tableFor(exchangeTables.botParams);
+  const simSamples = tableFor(exchangeTables.simSamples);
+  const botHistory = tableFor(exchangeTables.botHistory);
+  const botFills = tableFor(exchangeTables.botFills);
   const omsTableMap = forEachTable(
     Object.keys(omsTables) as OmsTableName[],
     (name) => tableFor(omsTables[name]),
@@ -249,6 +257,9 @@ export const createTradingTestData = ({
     simBooks: simBooks.engineTable,
     bots: bots.engineTable,
     botParams: botParams.engineTable,
+    simSamples: simSamples.engineTable,
+    botHistory: botHistory.engineTable,
+    botFills: botFills.engineTable,
   });
   for (const name of Object.keys(omsTableMap) as OmsTableName[]) {
     omsService.tables.attach(name, omsTableMap[name].engineTable);
@@ -317,6 +328,9 @@ export const createTradingTestData = ({
     simBooks,
     bots,
     botParams,
+    simSamples,
+    botHistory,
+    botFills,
     instrumentPrices: instrumentPricesJoin,
   };
   const exchangeSchemas = forEachTable(

@@ -1,5 +1,6 @@
 import {
   OrderType as BookOrderType,
+  Side as BookSide,
   TimeInForce as BookTif,
   type Trade,
 } from "@heswell/hft-limit-order-book";
@@ -40,6 +41,8 @@ import { SimAdminPublisher } from "../publish/SimAdminPublisher";
 import { type Clock, systemClock } from "../util/clock";
 import { Random } from "../util/random";
 import { generateBackfillBars } from "./barBackfill";
+import { FlowTally, type TradeParty, tradeParty } from "./flow";
+import { calibrateImpact } from "./impact";
 import { type Bot, BotKind } from "./bots/Bot";
 import { MarketSignals } from "./bots/MarketSignals";
 import type { NoiseTaker } from "./bots/NoiseTaker";
@@ -73,6 +76,10 @@ export interface SimulatedInstrument {
   activity: number;
   /** Random variation of taker activity around the volume curve. */
   readonly noise: ActivityNoise;
+  /** Bots by id (`<ric>/<localId>`), for trade attribution. */
+  readonly botIndex: ReadonlyMap<string, Bot>;
+  /** Aggressive volume by owner group since the last sim sample. */
+  readonly flow: FlowTally;
 }
 
 /** Log-space activity noise: a per-day level plus a mean-reverting wander. */
@@ -214,9 +221,19 @@ export class ExchangeSimulator {
         lotSize,
       ),
     );
+    const calibration = calibrateImpact(
+      config,
+      config.takerRate,
+      baseQty * refPrice * usdPerPriceUnit,
+    );
+    book.model.impact = calibration.impact;
+    book.model.walkVolShare = calibration.walkVolShare;
+    const bots = createBots(defaultRoster(config), book, botRng, baseQty);
     this.#simulated.set(instrument.ric, {
       book,
-      bots: createBots(defaultRoster(config), book, botRng, baseQty),
+      bots,
+      botIndex: new Map(bots.map((bot) => [bot.id, bot])),
+      flow: new FlowTally(),
       signals: new MarketSignals(),
       baseQty,
       modelRng: rng.fork(300),
@@ -280,7 +297,20 @@ export class ExchangeSimulator {
   }
 
   #onTrade(book: InstrumentBook, trade: Trade) {
-    this.#simulated.get(book.ric)?.signals.onTrade(trade);
+    const sim = this.#simulated.get(book.ric);
+    const isBuy = trade.side === BookSide.BUY;
+    let taker: TradeParty | undefined;
+    let maker: TradeParty | undefined;
+    if (sim) {
+      sim.signals.onTrade(trade);
+      taker = tradeParty(trade.takerOwner, trade.takerAccountId, sim.botIndex);
+      maker = tradeParty(trade.makerOwner, trade.makerAccountId, sim.botIndex);
+      sim.flow.add(taker.group, isBuy, trade.size);
+      book.model.applyImpact(
+        isBuy ? 1 : -1,
+        trade.price * trade.size * book.instrument.usdPerPriceUnit,
+      );
+    }
     if (this.#journal && this.#tradeSeq >= this.#tradeReserved) {
       this.#tradeReserved = this.#tradeSeq + TRADE_ID_BLOCK;
       this.#journal({ k: "tradeSeq", upTo: this.#tradeReserved });
@@ -299,6 +329,8 @@ export class ExchangeSimulator {
       this.#publisher?.addTrade(tape);
       for (const listener of this.#tapeListeners) listener(tape);
     }
+    if (sim && maker && taker)
+      this.#simAdmin?.addFills(sim, trade, tradeId, maker, taker);
     return tradeId;
   }
 
@@ -335,12 +367,21 @@ export class ExchangeSimulator {
     publisher.loadInstruments(this.universe, this.isSimulated);
     publisher.l3?.attach(this.#books);
     this.#publisher = publisher;
-    const { simBooks, bots, botParams } = tables;
+    const { simBooks, bots, botParams, simSamples, botHistory, botFills } =
+      tables;
     if (simBooks && bots && botParams && config.simPublishIntervalMs > 0) {
       this.#simAdmin = new SimAdminPublisher(
-        { simBooks, bots, botParams },
-        config.simPublishIntervalMs,
-        config.timeScale,
+        { simBooks, bots, botParams, simSamples, botHistory, botFills },
+        {
+          intervalMs: config.simPublishIntervalMs,
+          timeScale: config.timeScale,
+          sampleIntervalMs: config.simSampleIntervalMs,
+          sampleHistory: config.simSampleHistory,
+          botHistoryIntervalMs: config.botHistoryIntervalMs,
+          botHistorySamples: config.botHistorySamples,
+          fillsCapacity: config.botFillsCapacity,
+          markoutMs: config.markoutMs,
+        },
       );
       this.#simAdmin.loadBotParams(this.#simulated.values());
     }
@@ -444,6 +485,7 @@ export class ExchangeSimulator {
     if (phase === TradingPhase.Closed) {
       for (const sim of this.#simulated.values()) {
         for (const bot of sim.bots) bot.pull();
+        sim.book.model.recentre();
       }
       this.gateway.expireDayOrders();
     }
@@ -474,7 +516,7 @@ export class ExchangeSimulator {
       if (book.phase !== TradingPhase.Continuous) continue;
       const sim = this.#simulated.get(book.ric) as SimulatedInstrument;
       const before = book.events;
-      book.model.step(modelDt, sim.modelRng);
+      book.model.step(modelDt, sim.modelRng, dt);
       this.#stepBots(sim, now, dt);
       ops += book.events - before;
     }
@@ -685,6 +727,7 @@ export class ExchangeSimulator {
         return {
           ...this.#settings(sim),
           fair: book.model.fairValue,
+          model: book.model.exportState(),
           stats: { ...book.stats },
           seq: book.seq,
           orders,
@@ -814,6 +857,7 @@ export class ExchangeSimulator {
       }
       book.phase =
         s?.phase === TradingPhase.Halted ? TradingPhase.Halted : marketPhase;
+      if (saved?.model) book.model.restoreState(saved.model);
       if (saved) book.model.fairValue = saved.fair;
       for (const { id, ledger } of saved?.bots ?? []) {
         sim.bots

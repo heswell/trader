@@ -71,3 +71,15 @@ export const parseBarInterval = (interval: string) => {
 /** botParams row key: one row per bot parameter. */
 export const botParamKey = (botId: string, name: string) =>
   `${botId}${SEP}${name}`;
+
+/** simSamples key. */
+export const simSampleKey = (ric: string, time: number) =>
+  `${ric}${SEP}${time}`;
+
+/** botHistory key. */
+export const botHistoryKey = (botId: string, time: number) =>
+  `${botId}${SEP}${time}`;
+
+/** botFills key: one row per side of a trade (M = maker, T = taker). */
+export const botFillKey = (tradeId: string, isMaker: boolean) =>
+  `${tradeId}${SEP}${isMaker ? "M" : "T"}`;

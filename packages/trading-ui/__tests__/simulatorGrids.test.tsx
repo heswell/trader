@@ -8,6 +8,9 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import {
   BOTS_GROUP_BY,
   BotDetail,
+  BotFillsTape,
+  SIM_FLOW_GROUPS,
+  SimInstrumentChart,
   BotsGrid,
   SIM_BOOKS_SORT,
   SimBooksGrid,
@@ -67,5 +70,24 @@ describe("simulator grids", () => {
   test("BotDetail without a bot", () => {
     render(wrap(<BotDetail botId={undefined} />));
     expect(screen.getByText("Select a bot")).toBeTruthy();
+  });
+
+  test("BotFillsTape names the followed instrument or the party", () => {
+    render(wrap(<BotFillsTape ric="VOD.L" />));
+    expect(screen.getByText("VOD.L attributed fills")).toBeTruthy();
+    cleanup();
+    render(wrap(<BotFillsTape party="VOD.L/MM1" />));
+    expect(screen.getByText("Fills of VOD.L/MM1")).toBeTruthy();
+  });
+
+  test("SimInstrumentChart waits for an instrument; flow groups cover every owner", () => {
+    render(wrap(<SimInstrumentChart />));
+    expect(screen.getByText("Select an instrument")).toBeTruthy();
+    expect(SIM_FLOW_GROUPS.map((g) => g.column)).toEqual([
+      "mmNet",
+      "takerNet",
+      "omsNet",
+      "botNet",
+    ]);
   });
 });

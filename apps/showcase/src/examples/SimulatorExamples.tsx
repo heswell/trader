@@ -1,4 +1,10 @@
-import { BotDetail, BotsGrid, SimBooksGrid } from "@heswell/trading-ui";
+import {
+  BotDetail,
+  BotFillsTape,
+  BotsGrid,
+  SimBooksGrid,
+  SimInstrumentChart,
+} from "@heswell/trading-ui";
 import { useState } from "react";
 
 const fill = { height: "100%", minHeight: 0 } as const;
@@ -23,3 +29,15 @@ export const SimulatorMonitorExample = () => {
     </div>
   );
 };
+
+/** One instrument: fair value and flow above its attributed fills. */
+export const SimulatorInstrumentExample = () => (
+  <div style={{ display: "flex", flexDirection: "column", gap: 8, ...fill }}>
+    <div style={{ flex: 2, minHeight: 0 }}>
+      <SimInstrumentChart ric="AAPL.OQ" />
+    </div>
+    <div style={{ flex: 1, minHeight: 0 }}>
+      <BotFillsTape ric="AAPL.OQ" />
+    </div>
+  </div>
+);

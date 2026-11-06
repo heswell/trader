@@ -348,6 +348,31 @@ export const simBooks = defineTable({
       dataType: "double",
       description: "Hidden fair value of the price model.",
     },
+    {
+      name: "walk",
+      dataType: "double",
+      description: "Fair value without transient impact (the random walk).",
+    },
+    {
+      name: "impactOffsetBps",
+      dataType: "double",
+      description:
+        "Transient impact: fair over walk, bps. Fades with impactHalfLifeSec.",
+    },
+    {
+      name: "impactTodayBps",
+      dataType: "double",
+      description:
+        "Permanent move from aggressive flow since the session close, bps.",
+    },
+    {
+      name: "impactK",
+      dataType: "double",
+      description:
+        "Impact per $100k of aggressive notional at 30% volatility, bps (0 = off).",
+    },
+    { name: "bandLow", dataType: "double", description: "Lower price band." },
+    { name: "bandHigh", dataType: "double", description: "Upper price band." },
     { name: "mid", dataType: "double", optional: true },
     {
       name: "gapBps",
@@ -488,6 +513,124 @@ export const botParams = defineTable({
     { fromColumn: "botId", toTable: "bots", toColumn: "botId" },
     ...ricLinks,
   ],
+});
+
+const ownerVolume = (side: "Buy" | "Sell", verb: string) =>
+  (["mm", "taker", "oms", "bot"] as const).map((group) => ({
+    name: `${group}${side}`,
+    dataType: "long" as const,
+    description: `Quantity ${verb} aggressively by ${OWNER_GROUP_LABEL[group]} in the interval.`,
+  }));
+
+const OWNER_GROUP_LABEL = {
+  mm: "market makers",
+  taker: "noise takers",
+  oms: "OMS (gateway) orders",
+  bot: "other bots",
+} as const;
+
+export const simSamples = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "simSamples",
+  keyField: "id",
+  description:
+    "Simulator history per instrument (rolling window, sim-admin only); key 'ric|time' (see simSampleKey). Fair value, walk and quotes with aggressive volume by owner group.",
+  columns: [
+    { name: "id", dataType: "string" },
+    { name: "ric", dataType: "string" },
+    {
+      name: "time",
+      dataType: "epochtimestamp",
+      description: "Sample time, aligned to exchangeSim.simSampleIntervalMs.",
+    },
+    { name: "fair", dataType: "double" },
+    { name: "walk", dataType: "double" },
+    { name: "mid", dataType: "double", optional: true },
+    { name: "bid", dataType: "double", optional: true },
+    { name: "ask", dataType: "double", optional: true },
+    { name: "impactOffsetBps", dataType: "double" },
+    ...ownerVolume("Buy", "bought"),
+    ...ownerVolume("Sell", "sold"),
+    ...(["mm", "taker", "oms", "bot"] as const).map((group) => ({
+      name: `${group}Net`,
+      dataType: "long" as const,
+      description: `${group}Buy - ${group}Sell: signed aggressive volume of ${OWNER_GROUP_LABEL[group]}.`,
+    })),
+    {
+      name: "netFlow",
+      dataType: "long",
+      description: "All aggressive buys minus sells in the interval.",
+    },
+    { name: "mmInventory", dataType: "long" },
+  ],
+  links: ricLinks,
+});
+
+export const botHistory = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "botHistory",
+  keyField: "id",
+  description:
+    "Bot stats sampled every exchangeSim.botHistoryIntervalMs (rolling window, sim-admin only); key 'botId|time' (see botHistoryKey).",
+  columns: [
+    { name: "id", dataType: "string" },
+    { name: "botId", dataType: "string" },
+    { name: "ric", dataType: "string" },
+    { name: "kind", dataType: "string" },
+    { name: "time", dataType: "epochtimestamp" },
+    { name: "position", dataType: "long" },
+    { name: "totalPnlUsd", dataType: "double" },
+    { name: "realisedPnlUsd", dataType: "double" },
+    { name: "volume", dataType: "long" },
+    { name: "orders", dataType: "long" },
+  ],
+  links: [
+    { fromColumn: "botId", toTable: "bots", toColumn: "botId" },
+    ...ricLinks,
+  ],
+});
+
+export const botFills = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "botFills",
+  keyField: "id",
+  description:
+    "Attributed fills: one row per side of every trade (ring buffer, sim-admin only); key 'tradeId|M' or 'tradeId|T' (see botFillKey).",
+  columns: [
+    { name: "id", dataType: "string" },
+    { name: "tradeId", dataType: "string" },
+    { name: "ric", dataType: "string" },
+    {
+      name: "party",
+      dataType: "string",
+      description: "Bot id, or 'OMS:<account>' for gateway orders.",
+    },
+    {
+      name: "group",
+      dataType: "string",
+      description: "mm | taker | oms | bot",
+    },
+    { name: "kind", dataType: "string", description: "Bot kind ('' for OMS)." },
+    { name: "account", dataType: "string" },
+    { name: "side", dataType: "string", description: "BUY | SELL" },
+    { name: "price", dataType: "double" },
+    { name: "quantity", dataType: "long" },
+    { name: "notionalUsd", dataType: "double" },
+    {
+      name: "liquidity",
+      dataType: "string",
+      description: "ADDED (maker) | REMOVED (taker).",
+    },
+    { name: "timestamp", dataType: "epochtimestamp" },
+    {
+      name: "markoutBps",
+      dataType: "double",
+      optional: true,
+      description:
+        "Mid exchangeSim.markoutMs after the fill against the fill price, bps, signed so > 0 is a gain for this side. Empty until then.",
+    },
+  ],
+  links: ricLinks,
 });
 
 // ---------------------------------------------------------------- OMS
@@ -836,6 +979,9 @@ export const exchangeTables = {
   simBooks,
   bots,
   botParams,
+  simSamples,
+  botHistory,
+  botFills,
 } as const;
 export const omsTables = {
   accounts,
@@ -868,5 +1014,8 @@ export type BookEventRow = RowOf<typeof bookEvents>;
 export type SimBookRow = RowOf<typeof simBooks>;
 export type BotRow = RowOf<typeof bots>;
 export type BotParamRow = RowOf<typeof botParams>;
+export type SimSampleRow = RowOf<typeof simSamples>;
+export type BotHistoryRow = RowOf<typeof botHistory>;
+export type BotFillRow = RowOf<typeof botFills>;
 export type PnlHistoryRow = RowOf<typeof pnlHistory>;
 export type AccountPnlHistoryRow = RowOf<typeof accountPnlHistory>;

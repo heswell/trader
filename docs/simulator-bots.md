@@ -1,14 +1,14 @@
 # Simulator bots
 
 The plan for the exchange simulator's trading bots: how to monitor and visualise them, control them to
-get varied simulations, let bots run algos, and add new kinds of bots. Phases 0 and 1 are built; the other
+get varied simulations, let bots run algos, and add new kinds of bots. Phases 0 to 2 are built; the other
 phases are a design and may change as they're built.
 
 | Phase | What | Status |
 | --- | --- | --- |
 | 0 | Foundations: bot interface, order port, ledgers, market signals, rosters | Built |
 | 1 | Monitoring grids: `sim-admin` role, `simBooks` and `bots` tables, Overview and Bots screens | Built |
-| 2 | Market impact, history charts, Instrument screen, attributed fills and markouts | Planned |
+| 2 | Market impact, history charts, Instrument screen, attributed fills and markouts | Built |
 | 3 | Control: admin RPCs, `simEvents`, scenario runner | Planned |
 | 4 | New exchange bots, each with the scenario it enables | Planned |
 | 5 | Client algo bots in the OMS | Planned |
@@ -115,7 +115,34 @@ The design:
   - Bots: every bot, grouped by kind, instrument or account; a detail panel per bot with parameters
     (read-only until phase 3), stats and fills.
 
-## Phase 2: market impact and charts
+## Phase 2: market impact and charts (built)
+
+As built:
+
+- **Calibration differs from the design below.** The transient part fades over 30 s, so over
+  horizons shorter than that it adds about as much variance as a permanent move; calibrating on the
+  permanent part alone gave 0.66 realised volatility on 10 s returns for a 0.30 setting. `k` is now
+  calibrated on the whole move, so impact supplies `impactVolShare` of the short-horizon variance
+  and charted volatility matches the setting (0.298 measured). At the defaults that is about
+  1.4 bps per $100k, not 12: a $1m one-sided order moves fair value about 14 bps, of which about
+  4 bps stays. Raise `impactVolShare` for bigger moves. `TAKER_FLOW_FACTOR` (4.8) is measured by
+  `packages/exchange-sim/scripts/impactCalibration.ts`, which also checks the realised volatility.
+- `k` is 0 when the configured `takerRate` is 0 (there is no flow to calibrate on).
+- The band recentres on fair value at each session close, which also resets `impactTodayBps`. The
+  impact state and band centre are saved in snapshots.
+- `simBooks` gains `walk`, `impactOffsetBps`, `impactTodayBps`, `impactK`, `bandLow` and
+  `bandHigh`. New tables `simSamples`, `botHistory` and `botFills` (see the
+  [exchange-sim README](../packages/exchange-sim/README.md#tables-module-exchange)), all sim-admin
+  only. Volume is attributed to the aggressor's owner group from the trade's owner and account.
+- trading-ui: `SimInstrumentChart` (fair / walk / quotes over stacked signed volume by owner group),
+  `BotFillsTape`, `BotsGrid followInstrument`, and `BotDetail` now shows a P&L sparkline and recent
+  fills. Feature Simulator › Instrument (132).
+- Stability: under five times the default taker flow for 2 minutes, the median gap between mid and
+  fair value stays under 15 bps (`__tests__/impact.test.ts`).
+- Benchmark: unchanged within run-to-run noise: 3.9x to 4.2x headroom over two runs (4.0x
+  before), real-time p99 event-loop lag 9 to 21 ms (12 ms before).
+
+The design:
 
 **Impact model.** `fair = walk × exp(transient)`. Each aggressive trade nudges fair value by
 `s × k × (notional / $100k) × (σ / 30%)`, where `s` is +1 for a buy and −1 for a sell. A share

@@ -3,6 +3,7 @@ import type { TableConfig } from "@vuu-ui/vuu-table-types";
 import cx from "clsx";
 import { forwardRef, type HTMLAttributes, useEffect, useState } from "react";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
+import { useFollowedInstrument } from "../../hooks/useMarketData";
 import type { LinkGroupProps } from "../../instrument-context/useComponentLinkGroup";
 import { filterString } from "../../utils/filters";
 import { InstrumentLookupProvider } from "../InstrumentLookup";
@@ -134,6 +135,8 @@ export interface BotsGridProps
   defaultGrouping?: BotsGrouping;
   /** Restrict to one instrument. */
   ric?: string;
+  /** Show only the followed (linked) instrument's bots (when `ric` is unset). */
+  followInstrument?: boolean;
   /** Called with the selected bot's id (undefined when cleared). */
   onBotSelect?: (botId: string | undefined) => void;
 }
@@ -147,19 +150,24 @@ const Inner = forwardRef<HTMLDivElement, BotsGridProps>(function BotsGridInner(
     linkGroup: linkGroupProp,
     onLinkGroupChange,
     onBotSelect,
-    ric,
+    followInstrument = false,
+    ric: ricProp,
     ...htmlAttributes
   },
   ref,
 ) {
   const { staleProps } = useStaleData();
-  const { linkGroup, setLinkGroup, handleSelect } = useSimGridSetup(
+  const { linkGroup, channel, setLinkGroup, handleSelect } = useSimGridSetup(
     "BotsGrid",
     { defaultLinkGroup, linkGroup: linkGroupProp, onLinkGroupChange },
     htmlAttributes.id,
     (row) =>
       onBotSelect?.(typeof row?.botId === "string" ? row.botId : undefined),
   );
+  const { ric: followed } = useFollowedInstrument(ricProp, {
+    linkGroup: channel,
+  });
+  const ric = ricProp ?? (followInstrument ? followed : undefined);
   const [grouping, setGrouping] = useState<BotsGrouping>(defaultGrouping);
   const dataSource = useTradingDataSource("bots", {
     columns: COLUMNS,

@@ -35,6 +35,9 @@ export interface ExchangeTables {
   simBooks?: PublishTable;
   bots?: PublishTable;
   botParams?: PublishTable;
+  simSamples?: PublishTable;
+  botHistory?: PublishTable;
+  botFills?: PublishTable;
 }
 
 export interface PublisherOptions {

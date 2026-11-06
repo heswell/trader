@@ -38,10 +38,20 @@ const TABLE_NAMES: readonly TableName[] = [
   "simBooks",
   "bots",
   "botParams",
+  "simSamples",
+  "botHistory",
+  "botFills",
 ];
 
 /** Tables only sim-admin users see rows of (see simAdminAccess.ts). */
-const SIM_ADMIN_TABLES = ["simBooks", "bots", "botParams"] as const;
+const SIM_ADMIN_TABLES = [
+  "simBooks",
+  "bots",
+  "botParams",
+  "simSamples",
+  "botHistory",
+  "botFills",
+] as const;
 
 /** Sim-admin tables: every row for sim admins, none for anyone else. */
 export const simAdminPermissionFunction =
@@ -108,7 +118,7 @@ class SimTableProvider extends Provider {
 /**
  * The EXCHANGE Vuu module: instruments, prices, depth, trades, bars,
  * bookSamples, bookOrders, bookEvents, the sim-admin tables (simBooks, bots,
- * botParams; rows only for sim-admin users) and the instrumentPrices join,
+ * botParams, simSamples, botHistory, botFills; rows only for sim-admin users) and the instrumentPrices join,
  * all driven by `sim`. Every table (including the join) carries the admin
  * RPC service, which also requires sim-admin.
  */
@@ -151,6 +161,9 @@ export const ExchangeModule = (
     .addTable(defs.simBooks, provider("simBooks"), serviceFactory)
     .addTable(defs.bots, provider("bots"), serviceFactory)
     .addTable(defs.botParams, provider("botParams"), serviceFactory)
+    .addTable(defs.simSamples, provider("simSamples"), serviceFactory)
+    .addTable(defs.botHistory, provider("botHistory"), serviceFactory)
+    .addTable(defs.botFills, provider("botFills"), serviceFactory)
     .addJoinTable(toServerJoinFactory(instrumentPrices), serviceFactory)
     .asModule();
 };

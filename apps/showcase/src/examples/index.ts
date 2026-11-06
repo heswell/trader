@@ -50,7 +50,10 @@ import {
   StatusPrimitivesExample,
 } from "./PrimitivesExamples";
 import { SideLabelExamples } from "./SideLabelExamples";
-import { SimulatorMonitorExample } from "./SimulatorExamples";
+import {
+  SimulatorInstrumentExample,
+  SimulatorMonitorExample,
+} from "./SimulatorExamples";
 import { TraderWorkspace } from "./TraderWorkspaceExamples";
 import type { ShowcaseExample } from "./types";
 
@@ -143,6 +146,14 @@ export const examples: ShowcaseExample[] = [
     description:
       "sim-admin tables: simBooks sorted by gap to fair, every bot with P&L and order flow, and the selected bot's stats and parameters. Selecting a row links the instrument.",
     Component: SimulatorMonitorExample,
+  },
+  {
+    id: "simulator-instrument",
+    group: "Simulator",
+    title: "Fair value, flow and attributed fills",
+    description:
+      "simSamples for AAPL.OQ: fair value, walk and quotes over signed volume by owner group, and botFills with markouts. The showcase runs with market impact off, so fair and walk coincide.",
+    Component: SimulatorInstrumentExample,
   },
 
   {
