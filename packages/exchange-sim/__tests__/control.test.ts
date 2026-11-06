@@ -58,8 +58,10 @@ describe("parsing", () => {
     expect(parseOffset("+2m")).toBe(120_000);
     expect(parseOffset("+250ms")).toBe(250);
     expect(parseOffset("09:30")).toBeUndefined();
+    // scenario args use ${name}, not a template literal
+    const braced = ["+$", "{n}m"].join("");
     expect(
-      substituteArgs({ a: "$n", b: "+${n}m", c: ["$s"] }, { n: 5, s: "x" }),
+      substituteArgs({ a: "$n", b: braced, c: ["$s"] }, { n: 5, s: "x" }),
     ).toEqual({
       a: 5,
       b: "+5m",
