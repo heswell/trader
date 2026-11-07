@@ -1,17 +1,17 @@
 # Simulator bots
 
 The plan for the exchange simulator's trading bots: how to monitor and visualise them, control them to
-get varied simulations, let bots run algos, and add new kinds of bots. Phases 0 to 2 are built; the other
-phases are a design and may change as they're built.
+get varied simulations, let bots run algos, and add new kinds of bots. Phases 0 to 5 are built; each section lists what
+was built and keeps the design it started from.
 
 | Phase | What | Status |
 | --- | --- | --- |
 | 0 | Foundations: bot interface, order port, ledgers, market signals, rosters | Built |
 | 1 | Monitoring grids: `sim-admin` role, `simBooks` and `bots` tables, Overview and Bots screens | Built |
 | 2 | Market impact, history charts, Instrument screen, attributed fills and markouts | Built |
-| 3 | Control: admin RPCs, `simEvents`, scenario runner | Planned |
-| 4 | New exchange bots, each with the scenario it enables | Planned |
-| 5 | Client algo bots in the OMS | Planned |
+| 3 | Control: admin RPCs, `simEvents`, scenario runner | Built |
+| 4 | New exchange bots, each with the scenario it enables | Built |
+| 5 | Client algo bots in the OMS | Built |
 
 Later: depth by owner (`botOrders`), auctions, a spoofer, a sector factor in the price model, and
 BackgroundFlow folded into ClientFlow.
@@ -314,7 +314,40 @@ momentum and mean-reversion; iceberg; informed trader. Each kind gets a seeded h
 effect it should have (momentum raises return autocorrelation, mean-reversion lowers it, a stop
 cascade deepens a drawdown, the stressed maker widens in high volatility).
 
-## Phase 5: client algo bots
+## Phase 5: client algo bots (built)
+
+As built:
+
+- **`ClientFlow`** ([ClientFlow.ts](../packages/oms/src/flow/ClientFlow.ts)) with personas in
+  [clientPersonas.ts](../packages/oms/src/flow/clientPersonas.ts); orders go through
+  `engine.createOrder` as the account's owner, so they show in blotters, positions and Execution
+  quality. See the [OMS README](../packages/oms/README.md#client-bots) for the settings and personas.
+- **Arrival rate is per wall-clock minute** (`ordersPerMin`), not per session hour, to match the other
+  bot settings (wall-clock seconds); it follows the volume curve and stops while closed. Algo durations
+  stay in session minutes.
+- **Sim clients desk**: `oms.clientAccounts` (default 5) accounts `CLIENT-01…`, $2m per order, $25m
+  position; the background flow leaves them alone. `addClientBot` can take any enabled account.
+- **Momentum** uses the day's move against the reference price, which the OMS has without tracking
+  prices; **informed** uses the exchange's fair value through `connectClientFlowToSim`.
+- **Tables**: `clientBots` and `clientBotParams` (OMS, sim-admin only). Exchange-side attribution was
+  already by account (`OMS:<account>`), so with one account per bot the fills tape shows a client
+  bot's fills. The Bots screen has an Exchange bots and a Client bots section; the parameter form is
+  shared (`BotParamList`).
+- **RPCs** `addClientBot`, `removeClientBot`, `setClientBotParams`, `pauseClientBots`,
+  `resumeClientBots`, `submitClientAlgo`, `setFlowParams`; all are scenario actions, logged in
+  `simEvents`, and a run's revert removes the bots it added and restores what it changed
+  (`ScenarioRunner.onRevert`). Scenarios `client-liquidation`, `pension-programme`,
+  `informed-client-news`.
+- Client bots are not persisted (they come back from `oms.clientBots`); their orders are.
+- Tests (`packages/oms/__tests__/clientBots.test.ts`, seeded): configured bots send the right
+  strategies and sides from the Sim clients accounts and trade; deterministic for a seed; the
+  background flow leaves the desk alone; the RPCs (bad values refused, pause stops new parents,
+  remove cancels working ones, sim-admin only); the three scenarios, including revert. Plus table and
+  permission tests in trading-test-data and UI tests.
+- Benchmark: the same as main side by side (4.0x to 4.2x headroom against 4.0x to 4.1x); client bots
+  are off by default and the exchange's only change is the revert hook.
+
+The design:
 
 - `ClientFlow` in `packages/oms/src/flow`, next to BackgroundFlow: personas that send TWAP / VWAP /
   POV parent orders through `engine.createOrder`, so risk, routing, positions, slippage and

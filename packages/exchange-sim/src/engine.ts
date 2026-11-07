@@ -41,6 +41,7 @@ export {
   ScenarioRunner,
   ScenarioStatus,
   type ScenarioStep,
+  type StepAction,
 } from "./engine/control/ScenarioRunner";
 export { BUILT_IN_SCENARIOS } from "../scenarios";
 export {
@@ -48,6 +49,7 @@ export {
   BotKind,
   type BotKindDef,
   type BotParamSpec,
+  type BotParamValue,
   type BotParams,
   type BotStepContext,
 } from "./engine/bots/Bot";
@@ -74,6 +76,12 @@ export {
   type ExchangeAdminRpcName,
   handleExchangeAdminRpc,
 } from "./modules/exchange/exchangeAdminRpc";
+export {
+  canAdminSim,
+  SIM_ADMIN_ROLE,
+  type SimPermissionMode,
+  type SimUser,
+} from "./modules/exchange/simAdminAccess";
 export {
   type ExchangeTables,
   MarketDataPublisher,

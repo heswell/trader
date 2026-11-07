@@ -7,7 +7,10 @@ import {
   systemClock,
 } from "@heswell/exchange-sim/engine";
 import {
+  type ClientAdminRpcName,
+  connectClientFlowToSim,
   exchangeMetricsSource,
+  handleClientAdminRpc,
   handleOmsRpc,
   type OmsConfig,
   type OmsRpcName,
@@ -16,7 +19,9 @@ import {
   type OmsTableName,
   type TradingUser,
 } from "@heswell/oms/engine";
+import { canAdminSim } from "@heswell/exchange-sim/engine";
 import {
+  CLIENT_ADMIN_RPC_NAMES,
   EXCHANGE_ADMIN_RPC_NAMES,
   EXCHANGE_MODULE,
   exchangeTables,
@@ -93,6 +98,8 @@ export const OMS_TABLE_NAMES: readonly OmsLocalTableName[] = [
   "positions",
   "pnlHistory",
   "accountPnlHistory",
+  "clientBots",
+  "clientBotParams",
   "positionPrices",
 ];
 
@@ -204,6 +211,8 @@ const isExchangeRpc = (name: string): name is ExchangeAdminRpcName =>
   (EXCHANGE_ADMIN_RPC_NAMES as readonly string[]).includes(name);
 const isOmsRpc = (name: string): name is OmsRpcName =>
   (OMS_RPC_NAMES as readonly string[]).includes(name);
+const isClientAdminRpc = (name: string): name is ClientAdminRpcName =>
+  (CLIENT_ADMIN_RPC_NAMES as readonly string[]).includes(name);
 
 const forEachTable = <T extends string, V>(
   names: readonly T[],
@@ -245,6 +254,8 @@ export const createTradingTestData = ({
     rics: () => sim.books.map((book) => book.ric),
     clock: now,
   });
+  // before the EXCHANGE tables attach, so `scenarios` lists the client ones
+  connectClientFlowToSim(omsService, sim);
 
   // Metrics: the same sources as the server; every timed call is timed
   // (the load here is light).
@@ -339,6 +350,8 @@ export const createTradingTestData = ({
   ): RpcResult => {
     if (isOmsRpc(rpcName))
       return handleOmsRpc(omsService, rpcName, params, user);
+    if (isClientAdminRpc(rpcName))
+      return handleClientAdminRpc(omsService, rpcName, params, user);
     if (isExchangeRpc(rpcName))
       return handleExchangeAdminRpc(sim, rpcName, params, user.name);
     return {
@@ -418,6 +431,7 @@ export const createTradingTestData = ({
   );
   const omsServices: RpcService[] = [
     ...rpcServices(OMS_RPC_NAMES, () => oms),
+    ...rpcServices(CLIENT_ADMIN_RPC_NAMES, () => oms),
     {
       // As OmsRpcHandler: orders are only entered with createOrder.
       rpcName: "addRow",
@@ -434,13 +448,22 @@ export const createTradingTestData = ({
       ? AllowAllPermissionFilter
       : PermissionFilter("account", new Set(access.accounts));
   };
+  // clientBots / clientBotParams: sim admins only (as OmsModule)
+  const simAdminOnly: PermissionFunction = (viewport) =>
+    canAdminSim(viewport.user, omsService.permissionMode)
+      ? AllowAllPermissionFilter
+      : PermissionFilter(() => false);
   const oms: TradingLocalModule<OmsLocalTableName> = new TradingLocalModule({
     name: OMS_MODULE,
     schemas: omsSchemas,
     tables: omsTablesByName,
     services: forEachTable(OMS_TABLE_NAMES, () => omsServices),
     visualLinks: visualLinksFor<OmsLocalTableName>(omsTables, OMS_TABLE_NAMES),
-    permissionFunctions: forEachTable(OMS_TABLE_NAMES, () => permission),
+    permissionFunctions: forEachTable(OMS_TABLE_NAMES, (name) =>
+      name === "clientBots" || name === "clientBotParams"
+        ? simAdminOnly
+        : permission,
+    ),
     onCreateDataSource,
     editHooks: {
       parentOrders: parentOrdersEditHooks(omsService, rpc),
@@ -516,6 +539,7 @@ export const createTradingTestData = ({
         clock.advance(dt);
         sim.step();
         omsService.flow.step(dt);
+        omsService.clients.step(dt);
         algoElapsed += dt;
         if (algoElapsed >= algoEvery) {
           algoElapsed -= algoEvery;

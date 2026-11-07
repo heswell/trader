@@ -45,6 +45,8 @@ export class TableSink implements OmsSink, PnlHistorySink {
     positions: 0,
     pnlHistory: 0,
     accountPnlHistory: 0,
+    clientBots: 0,
+    clientBotParams: 0,
   };
 
   attach(name: OmsTableName, table: OmsTable) {
@@ -75,8 +77,10 @@ export class TableSink implements OmsSink, PnlHistorySink {
     if (table.rowIndexAtKey(key) === -1) {
       const ordered = toRowArray(def, values as never);
       const row: RowValue[] = new Array(table.columns.length).fill(0);
+      // an explicit null stays empty (optional columns, e.g. clientBotParams.min)
       def.columns.forEach(({ name: column }, i) => {
-        row[table.columnMap[column]] = ordered[i];
+        row[table.columnMap[column]] =
+          values[column] === null ? (null as never) : ordered[i];
       });
       table.insert(row);
     } else {
@@ -96,6 +100,9 @@ export class TableSink implements OmsSink, PnlHistorySink {
   pnlHistory = (row: PnlHistoryRow) => this.#write("pnlHistory", { ...row });
   accountPnlHistory = (row: AccountPnlHistoryRow) =>
     this.#write("accountPnlHistory", { ...row });
+
+  clientBot = (row: object) => this.#write("clientBots", { ...row });
+  clientBotParam = (row: object) => this.#write("clientBotParams", { ...row });
 
   /** Delete a row (or drop it from the pre-attach buffer). */
   deleteRow = (name: OmsTableName, key: string) => {

@@ -19,6 +19,8 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [BotsGrid](trading-ui.md#botsgrid) | `components/SimulatorGrids` | `bots`, `depth`, `instrumentPrices`, `trades` |  | InstrumentLookup, LinkGroupSelector, StaleIndicator, TradingCellRenderers | `simulator-monitor` | [guide](../components/simulator.md) |
 | [ChangeCell](trading-ui.md#changecell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
 | [ChannelPicker](trading-ui.md#channelpicker) | `components/ChannelPicker` | `instrumentPrices`, `instruments` |  | InstrumentPicker | `channel-picker-fit`, `channel-picker-workspace` | [guide](../components/selection-and-linking.md#workspace-channel-picker) |
+| [ClientBotDetail](trading-ui.md#clientbotdetail) | `components/SimulatorGrids` | `botFills`, `clientBotParams`, `clientBots`, `depth`, `instrumentPrices`, `trades` |  | InstrumentLookup, LinkGroupSelector, SimulatorControls, StaleIndicator, TradingCellRenderers | `simulator-clients` | [guide](../components/simulator.md) |
+| [ClientBotsGrid](trading-ui.md#clientbotsgrid) | `components/SimulatorGrids` | `clientBots` |  | InstrumentLookup, SimulatorControls, StaleIndicator, TradingCellRenderers | `simulator-clients` | [guide](../components/simulator.md) |
 | [ConnectionBanner](trading-ui.md#connectionbanner) | `components/ConnectionBanner` |  |  |  | `notifications-connection` | [guide](../components/notifications-and-connection.md) |
 | [ConnectionStatusIndicator](trading-ui.md#connectionstatusindicator) | `components/ConnectionStatusIndicator` |  |  |  | *host* | [guide](../components/notifications-and-connection.md) |
 | [DepthChartView](trading-ui.md#depthchartview) | `components/DepthChartView` | `depth`, `instrumentPrices`, `trades` |  | ChartFrame, LinkGroupSelector | `chart-workspace`, `depth-chart`, `trader-workspace` | [guide](../components/charts.md#depthchartview) |
@@ -141,7 +143,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | Primitives | `primitives-cell-renderers`, `primitives-status` | [guide](../components/primitives.md) |
 | Selectors | `panel-link-group`, `selectors` | [guide](../components/selection-and-linking.md) |
 | SideLabel | `side-label-variants` | [guide](../components/primitives.md) |
-| Simulator | `server-metrics`, `simulator-control`, `simulator-instrument`, `simulator-monitor` | [guide](../components/simulator.md) |
+| Simulator | `server-metrics`, `simulator-clients`, `simulator-control`, `simulator-instrument`, `simulator-monitor` | [guide](../components/simulator.md) |
 | SlippageChart | `slippage-chart` | [guide](../components/charts.md#slippagechart) |
 | SpreadChart | `spread-chart` | [guide](../components/charts.md#spreadchart) |
 | Stack | `stack-instrument-prices` | [guide](../components/README.md) |

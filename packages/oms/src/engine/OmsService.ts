@@ -6,13 +6,20 @@ import {
   validateOmsConfig,
 } from "../config";
 import { BackgroundFlow } from "../flow/BackgroundFlow";
+import { ClientFlow, parseClientBots } from "../flow/ClientFlow";
+import { publishClientBots } from "../flow/clientBotRows";
 import {
   type AccessScope,
   type PermissionMode,
   resolveAccess,
   type TradingUser,
 } from "../permissions/access";
-import { type Account, SEED_ACCOUNTS } from "../reference/accounts";
+import {
+  type Account,
+  SEED_ACCOUNTS,
+  SIM_CLIENTS_DESK,
+  simClientAccounts,
+} from "../reference/accounts";
 import { TableSink } from "../modules/oms/TableSink";
 import { DelayedGateway, type OmsGateway, type Scheduler } from "./gateway";
 import { OmsEngine } from "./OmsEngine";
@@ -52,6 +59,8 @@ export class OmsService {
   readonly config: OmsConfig;
   readonly engine: OmsEngine;
   readonly flow: BackgroundFlow;
+  /** Simulated clients sending algo orders (see flow/ClientFlow). */
+  readonly clients: ClientFlow;
   readonly tables = new TableSink();
   readonly gateway: OmsGateway;
   readonly logger: OmsLogger;
@@ -76,7 +85,10 @@ export class OmsService {
             options.scheduler,
           )
         : gateway;
-    const accounts = options.accounts ?? SEED_ACCOUNTS;
+    const accounts = options.accounts ?? [
+      ...SEED_ACCOUNTS,
+      ...simClientAccounts(config.clientAccounts),
+    ];
     this.engine = new OmsEngine({
       gateway: this.gateway,
       accounts,
@@ -103,10 +115,13 @@ export class OmsService {
       get rics() {
         return typeof rics === "function" ? rics() : rics;
       },
+      // the Sim clients desk is the client bots' unless listed
       accounts: accounts.filter(
         (a) =>
           a.enabled &&
-          (flowAccountIds.size === 0 || flowAccountIds.has(a.account)),
+          (flowAccountIds.size === 0
+            ? a.desk !== SIM_CLIENTS_DESK
+            : flowAccountIds.has(a.account)),
       ),
       random: new Random(config.seed),
       rate: config.flowRate,
@@ -114,6 +129,17 @@ export class OmsService {
       maxWorking: config.flowMaxWorking,
       cancelRate: config.flowCancelRate,
     });
+    this.clients = new ClientFlow({
+      engine: this.engine,
+      gateway: this.gateway,
+      rics: () => (typeof rics === "function" ? rics() : rics),
+      seed: config.seed,
+      clock: this.#clock,
+    });
+    publishClientBots(this.clients, this.tables, this.#clock);
+    for (const { persona, count } of parseClientBots(config.clientBots))
+      for (let i = 0; i < count; i++)
+        this.clients.add(persona, {}, { user: "config" });
   }
 
   get permissionMode() {
@@ -153,7 +179,9 @@ export class OmsService {
     this.#timers.push(
       setInterval(() => {
         const now = this.#clock();
-        this.flow.step(Math.min(now - last, flowStepMs * 10));
+        const elapsed = Math.min(now - last, flowStepMs * 10);
+        this.flow.step(elapsed);
+        this.clients.step(elapsed);
         last = now;
       }, flowStepMs),
     );

@@ -289,7 +289,17 @@ Actions: `setInstrumentParams`, `setBotRate {bot, rate}`, `setBotParams {kind?, 
 `shiftFairValue {bps, informedSecs?}`, `pauseBots` / `resumeBots` / `pullQuotes {kind?}`, `addBot {kind, count?, ...params}`,
 `halt {reason?}`, `resume`, `setMarketPhase {phase}`, `revert`. Each applies to every target, or to `params.ric`.
 A run saves its targets' settings first; a `revert` step, `stopScenario` with `revert`, a failed step or a restart
-during the run put them back. More actions can be added with `sim.scenarios.registerAction`.
+during the run put them back. More actions can be added with `sim.scenarios.registerAction`, and undone on a revert
+with `sim.scenarios.onRevert`.
+
+With the OMS in the same process (Main, trading-test-data), `connectClientFlowToSim` adds the client bot actions
+`addClientBot {persona, count?, account?, ...params}` (trading the run's instruments unless `universe` is given;
+`"all"` = every instrument), `setClientBotParams {botId? | persona?, <param>: value}`, `pauseClientBots` /
+`resumeClientBots`, `submitClientAlgo {botId? | persona?, side?, notionalUsd?, strategy?, durationMins?,
+participationPct?, limitBps?}` (one parent per target; adds a bot of the persona if there is none) and
+`setFlowParams {rate?, notionalUsd?, maxWorking?, cancelRate?}`, and the scenarios `client-liquidation` (a $1.8m POV
+25% seller), `pension-programme` (a one-sided VWAP programme across 5 names) and `informed-client-news` (lagging
+makers, then a jump the informed client trades first). See the [OMS README](../oms/README.md#client-bots).
 
 ## Gateway API (for the OMS)
 

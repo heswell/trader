@@ -52,6 +52,7 @@ import {
 import { ServerMetricsExample } from "./ServerMetricsExamples";
 import { SideLabelExamples } from "./SideLabelExamples";
 import {
+  SimulatorClientsExample,
   SimulatorControlExample,
   SimulatorInstrumentExample,
   SimulatorMonitorExample,
@@ -164,6 +165,14 @@ export const examples: ShowcaseExample[] = [
     description:
       "Force the session phase, pause every bot or run a scenario; change AAPL.OQ's price model, jump its fair value, set bot rates or add a bot. Every change shows in the control log (simEvents).",
     Component: SimulatorControlExample,
+  },
+  {
+    id: "simulator-clients",
+    group: "Simulator",
+    title: "Client bots",
+    description:
+      "Simulated clients in the OMS (clientBots): add a pension, hedge fund, quant, liquidation or informed client and watch its TWAP / VWAP / POV parents, fills and slippage. Select one to edit its parameters, pause it or send an algo now.",
+    Component: SimulatorClientsExample,
   },
   {
     id: "server-metrics",

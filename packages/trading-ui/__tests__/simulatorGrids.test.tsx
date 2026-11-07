@@ -4,6 +4,7 @@ import {
   setCurrentUser,
 } from "@heswell/trading-test-data";
 import { createTradingLocalServer } from "@heswell/trading-test-data/react";
+import { CLIENT_PERSONAS } from "@heswell/trading-schemas";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import {
   BOTS_GROUP_BY,
@@ -12,6 +13,8 @@ import {
   SIM_FLOW_GROUPS,
   SimInstrumentChart,
   BotsGrid,
+  ClientBotDetail,
+  ClientBotsGrid,
   SIM_BOOKS_SORT,
   SimBooksGrid,
   TradingDataProvider,
@@ -70,6 +73,38 @@ describe("simulator grids", () => {
   test("BotDetail without a bot", () => {
     render(wrap(<BotDetail botId={undefined} />));
     expect(screen.getByText("Select a bot")).toBeTruthy();
+  });
+
+  test("ClientBotsGrid offers every persona; ClientBotDetail shows a client bot", async () => {
+    render(wrap(<ClientBotsGrid />));
+    const select = screen.getByLabelText("Persona") as HTMLSelectElement;
+    expect(Array.from(select.options).map((o) => o.value)).toEqual([
+      ...CLIENT_PERSONAS,
+    ]);
+    cleanup();
+    const added = testData.rpc(
+      "addClientBot",
+      { persona: "hedgeFund" },
+      { name: "root", authorizations: ["sim-admin"] },
+    ) as { data: { botId: string } };
+    const { botId } = added.data;
+    testData.advance(1_000);
+    render(wrap(<ClientBotDetail botId={botId} />));
+    await waitFor(() =>
+      expect(screen.getAllByText("hedgeFund").length).toBeGreaterThan(0),
+    );
+    const params = screen.getByTestId("trading-client-bot-params");
+    await waitFor(() => expect(params.textContent).toContain("sideMode"));
+    expect((screen.getByLabelText("sideMode") as HTMLInputElement).value).toBe(
+      "momentum",
+    );
+    // a range only where the spec has one
+    expect(params.textContent).toContain("maxLive [0…100]");
+    expect(params.textContent).toContain("maxNotionalUsd USD [1000…–]");
+    expect(screen.getByTestId("trading-client-bot-submit")).toBeTruthy();
+    cleanup();
+    render(wrap(<ClientBotDetail botId={undefined} />));
+    expect(screen.getByText("Select a client bot")).toBeTruthy();
   });
 
   test("BotFillsTape names the followed instrument or the party", () => {

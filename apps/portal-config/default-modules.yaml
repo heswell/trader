@@ -263,7 +263,7 @@ modules:
     parentModuleId: 0
     name: "SimulatorBots"
     title: "Bots"
-    description: "Every simulator bot's position, P&L and order flow, with its parameters"
+    description: "Every simulator bot's position, P&L and order flow, and the OMS client bots' algo orders, with their parameters"
     enabled: true
     location: "/Simulator/Bots"
     path: "/simulator/bots"

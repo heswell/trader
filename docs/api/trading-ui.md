@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 504 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 508 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -39,7 +39,7 @@ Imports: `@heswell/trading-ui`. 504 exports. Types are shown as written in the s
 - **components/SideLabel**: [SideLabel](#sidelabel), [SideLabelProps](#sidelabelprops)
 - **components/SimInstrumentChart**: [SIM_FLOW_GROUPS](#sim_flow_groups), [SimInstrumentChart](#siminstrumentchart), [SimInstrumentChartProps](#siminstrumentchartprops)
 - **components/SimulatorControls**: [ScenarioRuns](#scenarioruns), [ScenarioRunsProps](#scenariorunsprops), [SimEventsLog](#simeventslog), [SimEventsLogProps](#simeventslogprops), [SimInstrumentControls](#siminstrumentcontrols), [SimInstrumentControlsProps](#siminstrumentcontrolsprops), [SimRpcMessage](#simrpcmessage), [SimSessionStrip](#simsessionstrip), [SimSessionStripProps](#simsessionstripprops), [useSimRpc](#usesimrpc)
-- **components/SimulatorGrids**: [BotDetail](#botdetail), [BotDetailProps](#botdetailprops), [BotFillsTape](#botfillstape), [BotFillsTapeProps](#botfillstapeprops), [BOTS_GROUP_BY](#bots_group_by), [BotsGrid](#botsgrid), [BotsGridProps](#botsgridprops), [BotsGrouping](#botsgrouping), [SIM_BOOKS_SORT](#sim_books_sort), [SimBooksGrid](#simbooksgrid), [SimBooksGridProps](#simbooksgridprops), [SimBooksSort](#simbookssort)
+- **components/SimulatorGrids**: [BotDetail](#botdetail), [BotDetailProps](#botdetailprops), [BotFillsTape](#botfillstape), [BotFillsTapeProps](#botfillstapeprops), [BOTS_GROUP_BY](#bots_group_by), [BotsGrid](#botsgrid), [BotsGridProps](#botsgridprops), [BotsGrouping](#botsgrouping), [ClientBotDetail](#clientbotdetail), [ClientBotDetailProps](#clientbotdetailprops), [ClientBotsGrid](#clientbotsgrid), [ClientBotsGridProps](#clientbotsgridprops), [SIM_BOOKS_SORT](#sim_books_sort), [SimBooksGrid](#simbooksgrid), [SimBooksGridProps](#simbooksgridprops), [SimBooksSort](#simbookssort)
 - **components/SlippageChart**: [SlippageChart](#slippagechart), [SlippageChartProps](#slippagechartprops)
 - **components/Sparkline**: [DEFAULT_SPARKLINE_LENGTH](#default_sparkline_length), [recordSample](#recordsample), [registerSparklineRenderer](#registersparklinerenderer), [Sparkline](#sparkline), [SparklineBuffer](#sparklinebuffer), [SparklineCell](#sparklinecell), [SparklineCellOptions](#sparklinecelloptions), [sparklineOptions](#sparklineoptions), [sparklinePoints](#sparklinepoints), [SparklineProps](#sparklineprops), [SparklineSampling](#sparklinesampling), [sparklineStore](#sparklinestore-1), [SparklineStore](#sparklinestore), [SparklineTrend](#sparklinetrend)
 - **components/SpreadChart**: [SpreadChart](#spreadchart), [SpreadChartProps](#spreadchartprops)
@@ -5567,7 +5567,7 @@ Props of [`SimSessionStrip`](#simsessionstrip).
 
 #### BotDetail
 
-*component* · [components/SimulatorGrids/BotDetail.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotDetail.tsx#L35)
+*component* · [components/SimulatorGrids/BotDetail.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotDetail.tsx#L36)
 
 One bot's stats (from `bots`), P&L history (`botHistory`), parameters
 with their specs (`botParams`) and recent fills with markouts
@@ -5630,6 +5630,41 @@ Props: `BotsGridProps`
 
 Also accepts the standard HTML attributes and `ref`.
 
+#### ClientBotDetail
+
+*component* · [components/SimulatorGrids/ClientBotDetail.tsx](../../packages/trading-ui/src/components/SimulatorGrids/ClientBotDetail.tsx#L40)
+
+One OMS client bot (sim-admin only): its stats from `clientBots`,
+parameters from `clientBotParams` (editable, changes marked), pause /
+resume / remove, a form to send one algo parent now, and its account's
+attributed fills on the exchange (`botFills`, party `OMS:<account>`).
+
+Props: `ClientBotDetailProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `botId` | `string \| undefined` |  | The client bot to show (`clientBots.botId`), e.g. from ClientBotsGrid. |
+
+Also accepts the standard HTML attributes and `ref`.
+
+#### ClientBotsGrid
+
+*component* · [components/SimulatorGrids/ClientBotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/ClientBotsGrid.tsx#L82)
+
+The OMS client bots from `clientBots` (sim-admin only): simulated clients
+sending TWAP / VWAP / POV parent orders, with their working parents,
+fills and average slippage against arrival. The toolbar adds a bot of a
+starter persona.
+
+Props: `ClientBotsGridProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `onBotSelect?` | `(botId: string \| undefined) => void` |  | Called with the selected client bot's id (undefined when cleared). |
+| `hideToolbar?` | `boolean` | `false` | Hide the add-a-bot toolbar. |
+
+Also accepts the standard HTML attributes and `ref`.
+
 #### SimBooksGrid
 
 *component* · [components/SimulatorGrids/SimBooksGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/SimBooksGrid.tsx#L167)
@@ -5676,7 +5711,7 @@ const SIM_BOOKS_SORT: Readonly<{ readonly ric: { readonly column: "ric"; readonl
 
 #### BotDetailProps
 
-*interface* · [components/SimulatorGrids/BotDetail.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotDetail.tsx#L19)
+*interface* · [components/SimulatorGrids/BotDetail.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotDetail.tsx#L20)
 
 Props of [`BotDetail`](#botdetail).
 
@@ -5691,6 +5726,18 @@ Props of [`BotFillsTape`](#botfillstape).
 *interface* · [components/SimulatorGrids/BotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotsGrid.tsx#L131)
 
 Props of [`BotsGrid`](#botsgrid).
+
+#### ClientBotDetailProps
+
+*interface* · [components/SimulatorGrids/ClientBotDetail.tsx](../../packages/trading-ui/src/components/SimulatorGrids/ClientBotDetail.tsx#L23)
+
+Props of [`ClientBotDetail`](#clientbotdetail).
+
+#### ClientBotsGridProps
+
+*interface* · [components/SimulatorGrids/ClientBotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/ClientBotsGrid.tsx#L68)
+
+Props of [`ClientBotsGrid`](#clientbotsgrid).
 
 #### SimBooksGridProps
 
