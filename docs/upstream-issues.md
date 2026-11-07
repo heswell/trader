@@ -521,9 +521,11 @@ See [resilience.md](resilience.md) for the behaviour these work around.
     (docs/performance.md). Keeping these callbacks stable (refs for the changing values) would fix it.
     *Workaround:* none in trader.
 91. **vuu-server exposes no metrics.** (vuu-websocket `@heswell/vuu-server` 4.2.0.) There is no API for
-    per-session queue depth, rows sent and coalesced, send-cycle duration or viewport counts, so throughput and
-    coalescing can only be estimated from the outside. A metrics hook or periodic stats event would fix it.
-    *Workaround:* `PerfStatsReporter` (`packages/oms/src/perf`, enabled by `TRADER_PERF_STATS_FILE`) counts
+    per-session queue depth, rows sent and coalesced, or send-cycle duration, so throughput and coalescing can
+    only be estimated from the outside. A metrics hook or periodic stats event would fix it. (4.4.0 has
+    `ViewportContainer.viewportCount` and `Table.rowCount`, and nothing per session.)
+    *Workaround:* the METRICS tables ([metrics.md](metrics.md)) publish the viewport count and per-table row
+    counts. `PerfStatsReporter` (`packages/oms/src/perf`, enabled by `TRADER_PERF_STATS_FILE`) counts
     trader's own table writes, CPU, memory and event-loop lag; `perf:ws` derives server→client coalescing from
     those and the client-received rows.
 92. **The session send cycle is fixed at 60 ms / 300 rows.** (vuu-websocket `@heswell/vuu-server` 4.2.0.) The

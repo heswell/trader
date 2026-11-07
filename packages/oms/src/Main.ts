@@ -6,12 +6,24 @@ import {
   getLogger,
 } from "@heswell/vuu-server";
 import {
+  canAdminSim,
   createExchangeSimulator,
   ExchangeModule,
   loadExchangeSimConfig,
+  type SimPermissionMode,
 } from "@heswell/exchange-sim";
+import { MetricsCollector } from "@heswell/trading-metrics";
+import {
+  MetricsModule,
+  vuuServerSource,
+} from "@heswell/trading-metrics/server";
 import { loadOmsConfig } from "./config";
 import { createOms } from "./engine/OmsService";
+import { loadMetricsConfig } from "./metrics/config";
+import {
+  exchangeMetricsSource,
+  omsMetricsSource,
+} from "./metrics/tradingSources";
 import { OmsNotificationModule } from "./modules/notifications/OmsNotificationModule";
 import { OmsModule } from "./modules/oms/OmsModule";
 import { startPerfStatsReporter } from "./perf/PerfStatsReporter";
@@ -65,6 +77,22 @@ export default async function main(
   process.once("SIGINT", shutdown);
   process.once("beforeExit", shutdown);
 
+  // METRICS tables (docs/metrics.md). The perf harness's stats file reads
+  // the same collector, so it runs whenever either is on.
+  const metricsConfig = loadMetricsConfig(config);
+  const statsFile = process.env.TRADER_PERF_STATS_FILE;
+  const metricsLogger = getLogger("trader.metrics");
+  const metrics = new MetricsCollector({
+    intervalMs: Number(
+      (statsFile && process.env.TRADER_PERF_STATS_INTERVAL_MS) ||
+        metricsConfig.intervalMs,
+    ),
+    log: (message) => metricsLogger.warn(message),
+  });
+  metrics.register(exchangeMetricsSource(sim));
+  metrics.register(omsMetricsSource(oms));
+  const permissionMode = sim.config.permissionMode as SimPermissionMode;
+
   const application = createVuuServerApplication({
     authProviders: createConfiguredAuthProviders(config),
     config,
@@ -72,18 +100,33 @@ export default async function main(
     defaultWebSocketPath: "/websocket-trading",
     defaultWebSocketPort: 8095,
     // EXCHANGE first: the positionPrices join needs the prices table.
-    modules: [ExchangeModule(sim), OmsModule(oms), OmsNotificationModule(oms)],
+    modules: [
+      ExchangeModule(sim),
+      OmsModule(oms),
+      OmsNotificationModule(oms),
+      ...(metricsConfig.enabled
+        ? [
+            MetricsModule(metrics, {
+              canView: (user) => canAdminSim(user, permissionMode),
+            }),
+          ]
+        : []),
+    ],
   });
+  metrics.register(vuuServerSource(() => application.server));
   await application.start();
-  // perf harness hook (scripts/perf/ws-load.ts); off unless the env var is set
-  const statsFile = process.env.TRADER_PERF_STATS_FILE;
+  // perf harness hook (packages/perf ws-load); off unless the env var is set
   const stopPerfStats = statsFile
-    ? startPerfStatsReporter(
-        statsFile,
-        sim,
-        oms,
-        Number(process.env.TRADER_PERF_STATS_INTERVAL_MS ?? 1_000),
-      )
+    ? startPerfStatsReporter(statsFile, metrics)
     : undefined;
-  return { application, sim, oms, persistence, recovery, stopPerfStats };
+  if (statsFile) metrics.start();
+  return {
+    application,
+    sim,
+    oms,
+    persistence,
+    recovery,
+    metrics,
+    stopPerfStats,
+  };
 }

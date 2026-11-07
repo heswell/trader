@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@heswell/exchange-sim": "workspace:*",
+    "@heswell/trading-metrics": "workspace:*",
     "@heswell/trading-persistence": "workspace:*",
     "@heswell/trading-schemas": "workspace:*",
     "@heswell/vuu-server": "^4.4.0",

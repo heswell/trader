@@ -17,6 +17,7 @@ import {
   type TableDefinition,
   joinTableColumns,
 } from "../tables/tableDefinition";
+import { metricsModuleTables } from "../tables/metrics";
 import { exchangeTables, omsTables } from "../tables/tables";
 
 /** Structural type of vuu-server TableDefContainer (not exported by vuu-server). */
@@ -86,3 +87,6 @@ const toServerTableDefs = <T extends Record<string, TableDefinition>>(
 export const createExchangeTableDefs = () => toServerTableDefs(exchangeTables);
 /** Fresh server TableDefs for the OMS module tables. */
 export const createOmsTableDefs = () => toServerTableDefs(omsTables);
+/** Fresh server TableDefs for the METRICS module tables. */
+export const createMetricsTableDefs = () =>
+  toServerTableDefs(metricsModuleTables);
