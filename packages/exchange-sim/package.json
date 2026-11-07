@@ -21,8 +21,8 @@
     "@heswell/trading-persistence": "workspace:*",
     "@heswell/trading-schemas": "workspace:*",
     "@heswell/vuu-server": "^4.4.0",
-    "@vuu-ui/vuu-data-types": "5.0.0-alpha.4",
-    "@vuu-ui/vuu-protocol-types": "5.0.0-alpha.4",
-    "@vuu-ui/vuu-utils": "5.0.0-alpha.4"
+    "@vuu-ui/vuu-data-types": "5.0.0-alpha.5",
+    "@vuu-ui/vuu-protocol-types": "5.0.0-alpha.5",
+    "@vuu-ui/vuu-utils": "5.0.0-alpha.5"
   }
 }
