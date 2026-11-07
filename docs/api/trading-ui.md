@@ -5296,7 +5296,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### SimInstrumentControls
 
-*component* · [components/SimulatorControls/SimInstrumentControls.tsx](../../packages/trading-ui/src/components/SimulatorControls/SimInstrumentControls.tsx#L66)
+*component* · [components/SimulatorControls/SimInstrumentControls.tsx](../../packages/trading-ui/src/components/SimulatorControls/SimInstrumentControls.tsx#L65)
 
 Run-time controls for one simulated instrument (sim-admin only): price
 model (volatility, drift, impact), fair-value jumps, halt / resume, bot
@@ -5344,7 +5344,7 @@ useSimRpc(dataSource: DataSource): { send: <N extends RpcName>(rpcName: N, param
 
 #### SimInstrumentControlsProps
 
-*interface* · [components/SimulatorControls/SimInstrumentControls.tsx](../../packages/trading-ui/src/components/SimulatorControls/SimInstrumentControls.tsx#L22)
+*interface* · [components/SimulatorControls/SimInstrumentControls.tsx](../../packages/trading-ui/src/components/SimulatorControls/SimInstrumentControls.tsx#L21)
 
 Props of [`SimInstrumentControls`](#siminstrumentcontrols).
 

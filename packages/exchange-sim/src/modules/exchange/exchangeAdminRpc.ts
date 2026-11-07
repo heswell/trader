@@ -81,7 +81,9 @@ const invoke = (
     }
     case RpcName.ShiftFairValue: {
       const p = params as RpcRequestParams<"shiftFairValue">;
-      return { rics: control.shiftFairValue(p.ric, p.bps, ctx) };
+      return {
+        rics: control.shiftFairValue(p.ric, p.bps, ctx, p.informedSecs),
+      };
     }
     case RpcName.PauseBots:
       return {

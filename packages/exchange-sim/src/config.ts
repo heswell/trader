@@ -34,6 +34,12 @@ export interface ExchangeSimConfig {
   defaultVolatility: number;
   /** Market makers per instrument. */
   mmPerInstrument: number;
+  /**
+   * Bots added to the default roster: `kind:count` or `kind:count@Sector`
+   * (GICS sector), comma separated, e.g. "momentum:1,stopLosses:1@Energy".
+   * Empty = none (the new kinds are off by default).
+   */
+  extraBots: string;
   /** Quote levels per side per market maker. */
   mmLevels: number;
   /** Market-maker discretionary cancel/replace churn, events/s per instrument. */
@@ -139,6 +145,7 @@ export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
   timeScale: 10,
   defaultVolatility: 0,
   mmPerInstrument: 2,
+  extraBots: "",
   mmLevels: 5,
   mmRate: 10,
   takerRate: 8,

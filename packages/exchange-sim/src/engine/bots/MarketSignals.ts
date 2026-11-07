@@ -26,6 +26,11 @@ export class MarketSignals {
    */
   imbalance = 0;
   lastTradePrice = Number.NaN;
+  /**
+   * What volBpsPerSqrtSec would be at the instrument's normal volatility
+   * (as it started; set by the simulator): stress = volBpsPerSqrtSec / this.
+   */
+  refVolBpsPerSqrtSec = 0;
   #signedVolume = 0;
   #totalVolume = 0;
   #pendingSigned = 0;
@@ -37,6 +42,18 @@ export class MarketSignals {
     const ema = this.midEma[i];
     if (!(ema > 0) || !(this.mid > 0)) return 0;
     return ((this.mid - ema) / ema) * 1e4;
+  }
+
+  /** Realised over normal volatility (about 1 when calm, 0 before it is known). */
+  get stress() {
+    return this.refVolBpsPerSqrtSec > 0
+      ? this.volBpsPerSqrtSec / this.refVolBpsPerSqrtSec
+      : 0;
+  }
+
+  /** Mid, or the last trade while one side of the book is empty. */
+  get price() {
+    return this.mid > 0 ? this.mid : this.lastTradePrice;
   }
 
   /** Called for every trade on the instrument (InstrumentBook trade listener). */

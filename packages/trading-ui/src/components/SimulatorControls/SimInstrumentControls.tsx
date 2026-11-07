@@ -1,13 +1,12 @@
-import { BotType, RpcName, TradingPhase } from "@heswell/trading-schemas";
+import {
+  BotType,
+  RpcName,
+  SIM_BOT_KINDS,
+  TradingPhase,
+} from "@heswell/trading-schemas";
 import { Button, Dropdown, Input, Option } from "@salt-ds/core";
 import cx from "clsx";
-import {
-  forwardRef,
-  type HTMLAttributes,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { forwardRef, type HTMLAttributes, useEffect, useState } from "react";
 import { useTradingRows } from "../../data/useTradingRows";
 import { useFollowedInstrument } from "../../hooks/useMarketData";
 import {
@@ -94,17 +93,8 @@ export const SimInstrumentControls = forwardRef<
     filter,
     rowCount: 1,
   });
-  // kinds to offer for Add bot: those on any instrument
-  const { rows: kindRows } = useTradingRows("bots", {
-    columns: ["botId", "kind"],
-    rowCount: 500,
-  });
-  const kinds = useMemo(
-    () => [
-      ...new Set(kindRows.map((row) => String(row.kind ?? "")).filter(Boolean)),
-    ],
-    [kindRows],
-  );
+  // seconds an informed trader trades a jump for (0 = a plain jump)
+  const [informedSecs, setInformedSecs] = useState(0);
   const { send, message, pending } = useSimRpc(dataSource);
   const [drafts, setDrafts] = useState<Drafts>({});
   const [kind, setKind] = useState<string>();
@@ -218,8 +208,12 @@ export const SimInstrumentControls = forwardRef<
               onClick={() =>
                 send(
                   RpcName.ShiftFairValue,
-                  { ric, bps },
-                  `${ric} fair value moved ${bps} bps`,
+                  informedSecs > 0 ? { ric, bps, informedSecs } : { ric, bps },
+                  `${ric} fair value moved ${bps} bps${
+                    informedSecs > 0
+                      ? `, informed trading for ${informedSecs}s`
+                      : ""
+                  }`,
                 )
               }
               sentiment="neutral"
@@ -227,6 +221,14 @@ export const SimInstrumentControls = forwardRef<
               {bps > 0 ? `+${bps}` : bps} bp
             </Button>
           ))}
+          <label className={`${controlsClass}-label`}>
+            <input
+              checked={informedSecs > 0}
+              onChange={(e) => setInformedSecs(e.target.checked ? 30 : 0)}
+              type="checkbox"
+            />{" "}
+            informed trader (30s)
+          </label>
         </div>
       </div>
 
@@ -296,7 +298,7 @@ export const SimInstrumentControls = forwardRef<
             style={{ width: 160 }}
             value={kind ?? ""}
           >
-            {kinds.map((k) => (
+            {SIM_BOT_KINDS.map((k) => (
               <Option key={k} value={k} />
             ))}
           </Dropdown>

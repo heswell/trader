@@ -73,8 +73,8 @@ describe("SimAdminPublisher", () => {
       unit: "ticks",
       readOnly: false,
     });
-    // 4 MM params x 2 makers + 2 taker params x 3 takers, per instrument
-    expect(tables.botParams.all()).toHaveLength(2 * (4 * 2 + 2 * 3));
+    // 12 MM params x 2 makers + 2 taker params x 3 takers, per instrument
+    expect(tables.botParams.all()).toHaveLength(2 * (12 * 2 + 2 * 3));
   });
 
   test("simBooks and bots rows reflect the simulator", () => {

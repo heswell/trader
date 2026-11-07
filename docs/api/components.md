@@ -55,7 +55,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [SimBooksGrid](trading-ui.md#simbooksgrid) | `components/SimulatorGrids` | `simBooks` |  | InstrumentLookup, LinkGroupSelector, StaleIndicator, TradingCellRenderers | `simulator-monitor` | [guide](../components/simulator.md) |
 | [SimEventsLog](trading-ui.md#simeventslog) | `components/SimulatorControls` | `simEvents` |  | SimulatorGrids, TradingCellRenderers | `simulator-control` | [guide](../components/simulator.md#control) |
 | [SimInstrumentChart](trading-ui.md#siminstrumentchart) | `components/SimInstrumentChart` | `depth`, `instrumentPrices`, `simSamples`, `trades` |  | ChartFrame, LinkGroupSelector | `simulator-instrument` | [guide](../components/simulator.md) |
-| [SimInstrumentControls](trading-ui.md#siminstrumentcontrols) | `components/SimulatorControls` | `bots`, `depth`, `instrumentPrices`, `simBooks`, `trades` |  | LinkGroupSelector | `simulator-control` | [guide](../components/simulator.md#control) |
+| [SimInstrumentControls](trading-ui.md#siminstrumentcontrols) | `components/SimulatorControls` | `depth`, `instrumentPrices`, `simBooks`, `trades` |  | LinkGroupSelector | `simulator-control` | [guide](../components/simulator.md#control) |
 | [SimSessionStrip](trading-ui.md#simsessionstrip) | `components/SimulatorControls` | `scenarios`, `simSession` |  |  | `simulator-control` | [guide](../components/simulator.md#control) |
 | [SlippageChart](trading-ui.md#slippagechart) | `components/SlippageChart` | `parentOrders` |  | ChartFrame | `slippage-chart` | [guide](../components/charts.md#slippagechart) |
 | [Sparkline](trading-ui.md#sparkline) | `components/Sparkline` |  |  |  | `primitives-status` | [guide](../components/instrument-grid.md#sparkline) |

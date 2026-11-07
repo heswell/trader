@@ -465,7 +465,12 @@ const BUILT_IN_ACTIONS: Record<string, StepAction> = {
     }
   }),
   shiftFairValue: perRic((runner, run, ric, p) => {
-    runner.sim.control.shiftFairValue(ric, Number(p.bps), { runId: run.runId });
+    runner.sim.control.shiftFairValue(
+      ric,
+      Number(p.bps),
+      { runId: run.runId },
+      Number(p.informedSecs) || 0,
+    );
   }),
   pauseBots: perRic((runner, run, ric, p) => {
     runner.sim.control.pauseBots(selector(ric, p), { runId: run.runId });

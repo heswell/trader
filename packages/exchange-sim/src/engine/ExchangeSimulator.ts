@@ -42,6 +42,7 @@ import { SimAdminPublisher } from "../publish/SimAdminPublisher";
 import { type Clock, systemClock } from "../util/clock";
 import { Random } from "../util/random";
 import { generateBackfillBars } from "./barBackfill";
+import { SECONDS_PER_YEAR } from "./PriceModel";
 import { BUILT_IN_SCENARIOS } from "../../scenarios";
 import { type SavedRun, ScenarioRunner } from "./control/ScenarioRunner";
 import { SimControl } from "./control/SimControl";
@@ -55,7 +56,9 @@ import {
   botKindDef,
   createBot,
   createBots,
-  defaultRoster,
+  type ExtraBots,
+  parseExtraBots,
+  rosterFor,
   sortBots,
 } from "./bots/roster";
 import { fromBookSide, InstrumentBook, toBookSide } from "./InstrumentBook";
@@ -166,6 +169,7 @@ export class ExchangeSimulator {
   deferredSteps = 0;
   #journal: ExchangeJournal | undefined;
   #control: SimControl | undefined;
+  readonly #extraBots: ExtraBots[];
   #scenarios: ScenarioRunner | undefined;
   /** Trade ids up to this value are journaled as reserved. */
   #tradeReserved = 0;
@@ -176,6 +180,7 @@ export class ExchangeSimulator {
     universe = ALL_INSTRUMENTS,
   }: ExchangeSimulatorOptions = {}) {
     this.config = validateConfig({ ...DEFAULT_CONFIG, ...config });
+    this.#extraBots = parseExtraBots(this.config.extraBots);
     this.clock = clock;
     this.universe = universe;
     for (const instrument of universe)
@@ -238,14 +243,23 @@ export class ExchangeSimulator {
     );
     book.model.impact = calibration.impact;
     book.model.walkVolShare = calibration.walkVolShare;
-    const bots = createBots(defaultRoster(config), book, botRng, baseQty);
+    const bots = createBots(
+      rosterFor(config, this.#extraBots, instrument.sector),
+      book,
+      botRng,
+      baseQty,
+    );
     this.#simulated.set(instrument.ric, {
       book,
       bots,
       botRng,
       botIndex: new Map(bots.map((bot) => [bot.id, bot])),
       flow: new FlowTally(),
-      signals: new MarketSignals(),
+      signals: Object.assign(new MarketSignals(), {
+        // the instrument's normal volatility, per wall-clock second
+        refVolBpsPerSqrtSec:
+          volatility * 1e4 * Math.sqrt(config.timeScale / SECONDS_PER_YEAR),
+      }),
       baseQty,
       modelRng: rng.fork(300),
       mmRate: config.mmRate,
@@ -595,7 +609,41 @@ export class ExchangeSimulator {
             : 0;
       if (group !== undefined && !(rate > 0)) continue;
       bot.step({ dt, now, rate, signals });
+      if (botKindDef(bot.kind).limits) this.#checkLimits(sim, bot, dt);
     }
+  }
+
+  /**
+   * Order port limits (maxPositionUsd, maxOrdersPerSec params): a breach
+   * pulls and pauses the bot and is recorded in simEvents.
+   */
+  #checkLimits(sim: SimulatedInstrument, bot: Bot, dt: number) {
+    const { port, params } = bot;
+    port.updateRate(dt);
+    const maxUsd = Number(params.maxPositionUsd) || 0;
+    const maxRate = Number(params.maxOrdersPerSec) || 0;
+    let reason = "";
+    if (maxUsd > 0) {
+      const usd =
+        Math.abs(port.ledger.position) *
+        sim.book.model.fairValue *
+        sim.book.instrument.usdPerPriceUnit;
+      if (usd > maxUsd)
+        reason = `position $${Math.round(usd)} over maxPositionUsd ${maxUsd}`;
+    }
+    if (!reason && maxRate > 0 && port.actionRate > maxRate)
+      reason = `${port.actionRate.toFixed(1)} orders/s over maxOrdersPerSec ${maxRate}`;
+    if (!reason) return;
+    bot.pull();
+    port.paused = true;
+    this.journalSettings(sim.book.ric);
+    this.control.record(
+      "botLimitBreach",
+      bot.id,
+      { reason },
+      { user: "limits" },
+    );
+    this.#simAdmin?.botsChanged(sim);
   }
 
   /**

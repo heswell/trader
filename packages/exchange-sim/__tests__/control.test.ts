@@ -237,6 +237,8 @@ describe("scenarios", () => {
       "volatile-open",
       "trending-day",
       "liquidity-crunch",
+      "flash-crash",
+      "news-jump",
     ]);
   });
 

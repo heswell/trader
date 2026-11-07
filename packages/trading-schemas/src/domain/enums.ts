@@ -102,6 +102,20 @@ export const TradingPhase = Object.freeze({
 } as const);
 export type TradingPhase = ValueOf<typeof TradingPhase>;
 
+/** Kinds of simulator bot (bots.kind); the simulator's registry has one entry each. */
+export const SimBotKind = Object.freeze({
+  MarketMaker: "marketMaker",
+  NoiseTaker: "noiseTaker",
+  Momentum: "momentum",
+  MeanReversion: "meanReversion",
+  AggressiveTrader: "aggressiveTrader",
+  StopLosses: "stopLosses",
+  Iceberg: "iceberg",
+  Informed: "informed",
+} as const);
+export type SimBotKind = ValueOf<typeof SimBotKind>;
+export const SIM_BOT_KINDS = values(SimBotKind);
+
 /** Status of a simulator scenario run (scenarioRuns.status). */
 export const ScenarioStatus = Object.freeze({
   Running: "RUNNING",

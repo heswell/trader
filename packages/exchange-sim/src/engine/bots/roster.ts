@@ -8,14 +8,26 @@ import {
   type BotParams,
   setBotBaseline,
 } from "./Bot";
+import { AGGRESSIVE_TRADER } from "./AggressiveTrader";
+import { ICEBERG } from "./Iceberg";
+import { INFORMED } from "./Informed";
 import { MARKET_MAKER } from "./MarketMaker";
+import { MEAN_REVERSION } from "./MeanReversion";
+import { MOMENTUM } from "./Momentum";
 import { DEFAULT_TAKERS, NOISE_TAKER } from "./NoiseTaker";
+import { STOP_LOSSES } from "./StopLosses";
 import { OrderPort } from "./OrderPort";
 
 /** Every bot kind the simulator can run. */
 export const BOT_KINDS: Readonly<Record<BotKind, BotKindDef>> = Object.freeze({
   [BotKind.MarketMaker]: MARKET_MAKER,
   [BotKind.NoiseTaker]: NOISE_TAKER,
+  [BotKind.Momentum]: MOMENTUM,
+  [BotKind.MeanReversion]: MEAN_REVERSION,
+  [BotKind.AggressiveTrader]: AGGRESSIVE_TRADER,
+  [BotKind.StopLosses]: STOP_LOSSES,
+  [BotKind.Iceberg]: ICEBERG,
+  [BotKind.Informed]: INFORMED,
 });
 
 export const botKindDef = (kind: BotKind) => BOT_KINDS[kind];
@@ -38,6 +50,43 @@ export const defaultRoster = (config: ExchangeSimConfig): Roster => [
     params: { levels: config.mmLevels },
   },
   { kind: NOISE_TAKER.kind, count: DEFAULT_TAKERS },
+];
+
+/** One `extraBots` entry: `count` bots of `kind`, on every instrument or one sector. */
+export interface ExtraBots extends RosterEntry {
+  sector?: string;
+}
+
+/** Parse config `extraBots` ("momentum:1,stopLosses:2@Energy"); throws on a bad entry. */
+export const parseExtraBots = (text: string): ExtraBots[] =>
+  text
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const match = /^(\w+):(\d+)(?:@(.+))?$/.exec(part);
+      const kind = match?.[1] as BotKind | undefined;
+      if (!match || !kind || !BOT_KINDS[kind])
+        throw Error(
+          `exchangeSim.extraBots: bad entry '${part}' (kind:count[@sector])`,
+        );
+      return {
+        kind,
+        count: Number(match[2]),
+        ...(match[3] ? { sector: match[3].trim() } : {}),
+      };
+    });
+
+/** The default roster plus the extra bots that apply to `sector`. */
+export const rosterFor = (
+  config: ExchangeSimConfig,
+  extras: readonly ExtraBots[],
+  sector: string,
+): Roster => [
+  ...defaultRoster(config),
+  ...extras
+    .filter((e) => !e.sector || e.sector === sector)
+    .map(({ kind, count, params }) => ({ kind, count, params })),
 ];
 
 /** 32-bit FNV-1a: stable salts for per-bot generators. */
