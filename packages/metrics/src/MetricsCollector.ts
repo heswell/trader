@@ -1,5 +1,6 @@
-import type { Histogram } from "./Histogram";
+import { Histogram } from "./Histogram";
 import { ProcessSampler, type ProcessMetrics } from "./ProcessSampler";
+import type { Timer, TimerRegistry } from "./Timer";
 
 export type MetricKind = "counter" | "gauge" | "timer";
 
@@ -11,9 +12,12 @@ export interface MetricValue {
   name: string;
   kind: MetricKind;
   unit: string;
-  /** Counter: running total. Gauge: current value. Timer: samples in the interval. */
+  /** Counter: running total. Gauge: current value. Timer: samples timed in the interval. */
   value: number;
-  /** Per second over the interval (counter, timer); 0 for a gauge. */
+  /**
+   * Per second over the interval: counter increments, or timer calls (timed
+   * or not); 0 for a gauge.
+   */
   rate: number;
   /** Timers only. */
   mean?: number;
@@ -56,14 +60,18 @@ export interface MetricsWriter {
   gauge(component: string, name: string, value: number, unit?: string): void;
   /**
    * Latencies recorded since the last snapshot. The collector reads the
-   * histogram and resets it, so a source keeps one histogram per timer.
+   * histogram and resets it, so a source keeps one Timer (or Histogram) per
+   * timer. A Timer's rate is its calls per second; a bare Histogram's is its
+   * samples per second.
    */
   timer(
     component: string,
     name: string,
-    histogram: Histogram,
+    timer: Timer | Histogram,
     unit?: string,
   ): void;
+  /** Every timer in a registry. */
+  timers(registry: TimerRegistry): void;
   /** Current row count of a Vuu table. */
   tableRows(module: string, table: string, rows: number): void;
   /** Monotonic count of writes (insert + update + delete) to a Vuu table. */
@@ -220,22 +228,34 @@ export class MetricsCollector {
           rate: 0,
         });
       },
-      timer: (component, name, histogram, unit = "us") => {
+      timer: (component, name, timer, unit = "us") => {
+        const id = `${component}.${name}`;
+        const histogram = timer instanceof Histogram ? timer : timer.histogram;
         const { count } = histogram;
+        const rate =
+          timer instanceof Histogram
+            ? dtMs > 0
+              ? (count * 1_000) / dtMs
+              : 0
+            : perSec(id, timer.calls);
         metrics.push({
-          id: `${component}.${name}`,
+          id,
           component,
           name,
           kind: "timer",
           unit,
           value: count,
-          rate: dtMs > 0 ? (count * 1_000) / dtMs : 0,
+          rate,
           mean: histogram.mean,
           p50: histogram.percentile(0.5),
           p99: histogram.percentile(0.99),
           max: histogram.max,
         });
         histogram.reset();
+      },
+      timers: (registry) => {
+        for (const { component, name, unit, timer } of registry.timers())
+          writer.timer(component, name, timer, unit);
       },
       tableRows: (module, table, rows) => {
         tableOf(module, table).rows = rows;

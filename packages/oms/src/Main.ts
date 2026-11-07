@@ -89,6 +89,11 @@ export default async function main(
     ),
     log: (message) => metricsLogger.warn(message),
   });
+  // Hot-path timers only sample while something reads them.
+  const timerMode =
+    metricsConfig.enabled || statsFile ? metricsConfig.timers : "off";
+  sim.timers.setMode(timerMode, metricsConfig.sampleEvery);
+  oms.engine.timers.setMode(timerMode, metricsConfig.sampleEvery);
   metrics.register(exchangeMetricsSource(sim));
   metrics.register(omsMetricsSource(oms));
   const permissionMode = sim.config.permissionMode as SimPermissionMode;

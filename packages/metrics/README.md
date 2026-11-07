@@ -6,6 +6,7 @@ Server metrics for the trading server, published as Vuu tables in a `METRICS` mo
 | Export | Entry | What |
 | --- | --- | --- |
 | `Histogram` | `.` | Fixed-size log-linear latency histogram; `record()` does not allocate |
+| `Timer`, `TimerRegistry`, `TimerMode` | `.` | Sampled hot-path timer (counts every call, times 1 in N) and a named set of them with one mode |
 | `MetricsCollector`, `MetricSource`, `MetricsWriter` | `.` | Takes a snapshot of the registered sources once per interval and works out rates |
 | `ProcessSampler` | `.` | CPU, memory and event-loop lag of the process |
 | `MetricsModule` | `./server` | The Vuu module: `metricsProcess`, `metrics`, `metricsTables` |

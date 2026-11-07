@@ -20,6 +20,7 @@ import {
   validateAmend,
 } from "@heswell/trading-schemas";
 import type { ExecutionReport } from "@heswell/exchange-sim";
+import { type Timer, TimerRegistry } from "@heswell/trading-metrics";
 import {
   AlgoContainer,
   type AlgoParent,
@@ -268,6 +269,36 @@ export class OmsEngine {
   readonly positions = new Map<string, Position>();
   readonly restricted: Set<string>;
   collarPct: number;
+  /**
+   * Hot-path timers (requests, risk, execution reports, order lifecycle),
+   * untimed until the server sets a mode (metrics.timers).
+   */
+  readonly timers = new TimerRegistry();
+  /** Plain counters, read by the metrics source. */
+  readonly stats = {
+    /** Execution reports already applied (exec seq <= the child's last). */
+    duplicateReports: 0,
+    /** Execution reports for no known child order. */
+    unknownReports: 0,
+    /** Order events the state machine refused (OrderStateError), logged and ignored. */
+    stateErrorsIgnored: 0,
+  };
+  /** Rejected createOrder / amendOrder / cancelOrder requests, by reason. */
+  readonly rejects = new Map<string, number>();
+  /** Child orders the exchange rejected, by reason. */
+  readonly exchangeRejects = new Map<string, number>();
+  readonly #timing: Record<
+    | "createOrder"
+    | "amendOrder"
+    | "cancelOrder"
+    | "risk"
+    | "executionReport"
+    | "childAck"
+    | "firstFill",
+    Timer
+  >;
+  /** Set while journaled reports are replayed (no lifecycle latencies). */
+  #replaying = false;
 
   #gateway: OmsGateway;
   #clock: () => number;
@@ -302,6 +333,16 @@ export class OmsEngine {
   }: OmsEngineOptions) {
     this.#gateway = gateway;
     this.#clock = clock;
+    const t = this.timers;
+    this.#timing = {
+      createOrder: t.timer("oms", "createOrder"),
+      amendOrder: t.timer("oms", "amendOrder"),
+      cancelOrder: t.timer("oms", "cancelOrder"),
+      risk: t.timer("oms", "risk"),
+      executionReport: t.timer("oms", "executionReport"),
+      childAck: t.timer("oms", "childAck"),
+      firstFill: t.timer("oms", "firstFill"),
+    };
     // Every row goes to the sink, then to observers (e.g. the notifier).
     const observers = this.#observers;
     this.#sink = {
@@ -444,7 +485,13 @@ export class OmsEngine {
     event: OrderEvent,
   ) {
     if (!isAlgoParent(parent)) {
-      if (event.type === "fill") parent.firstFillAt ??= this.#clock();
+      if (event.type === "fill" && parent.firstFillAt === undefined) {
+        parent.firstFillAt = this.#clock();
+        if (!this.#replaying)
+          this.#timing.firstFill.record(
+            (parent.firstFillAt - parent.created) * 1_000,
+          );
+      }
       this.#applyParent(parent, event);
       return;
     }
@@ -454,6 +501,7 @@ export class OmsEngine {
         this.#applyParent(parent, event);
       } catch (err) {
         if (!(err instanceof OrderStateError)) throw err;
+        this.stats.stateErrorsIgnored++;
         this.#log(
           `${parent.orderId} fill ${event.qty}@${event.px} on ${child.orderId} not applied to the parent: ${err.message}`,
         );
@@ -576,7 +624,12 @@ export class OmsEngine {
    * seq <= child.lastExecSeq) are ignored.
    */
   applyExecutionReport(report: ExecutionReport) {
-    this.#onExecutionReport(report);
+    this.#replaying = true;
+    try {
+      this.#onExecutionReport(report);
+    } finally {
+      this.#replaying = false;
+    }
   }
 
   /**
@@ -762,6 +815,31 @@ export class OmsEngine {
     request: CreateOrderRequest,
     ctx: RequestContext,
   ): OmsResult<{ orderId: string; clOrdId?: string; status: OrdStatus }> {
+    const timer = this.#timing.createOrder;
+    const t0 = timer.start();
+    const result = this.#createOrder(request, ctx);
+    timer.stop(t0);
+    if (!result.ok) this.#countReject(this.rejects, result.reason);
+    return result;
+  }
+
+  #countReject(counts: Map<string, number>, reason: string) {
+    counts.set(reason, (counts.get(reason) ?? 0) + 1);
+  }
+
+  /** checkPreTradeRisk, timed. */
+  #checkRisk(...args: Parameters<typeof checkPreTradeRisk>) {
+    const timer = this.#timing.risk;
+    const t0 = timer.start();
+    const reject = checkPreTradeRisk(...args);
+    timer.stop(t0);
+    return reject;
+  }
+
+  #createOrder(
+    request: CreateOrderRequest,
+    ctx: RequestContext,
+  ): OmsResult<{ orderId: string; clOrdId?: string; status: OrdStatus }> {
     const { access } = ctx;
     if (
       access &&
@@ -827,7 +905,7 @@ export class OmsEngine {
     };
     this.parents.set(parent.orderId, parent);
 
-    const riskReject = checkPreTradeRisk(
+    const riskReject = this.#checkRisk(
       { ...request, timeInForce },
       this.#riskContext(request.account, request.ric),
     );
@@ -937,6 +1015,18 @@ export class OmsEngine {
     request: AmendOrderRequest,
     ctx: RequestContext,
   ): OmsResult<{ orderId: string; status: OrdStatus }> {
+    const timer = this.#timing.amendOrder;
+    const t0 = timer.start();
+    const result = this.#amendOrder(request, ctx);
+    timer.stop(t0);
+    if (!result.ok) this.#countReject(this.rejects, result.reason);
+    return result;
+  }
+
+  #amendOrder(
+    request: AmendOrderRequest,
+    ctx: RequestContext,
+  ): OmsResult<{ orderId: string; status: OrdStatus }> {
     const found = this.#liveOrderFor(
       request.orderId,
       ctx,
@@ -968,7 +1058,7 @@ export class OmsEngine {
         ordType: parent.ordType,
         cumQty: parent.state.cumQty,
       }) ??
-      checkPreTradeRisk(
+      this.#checkRisk(
         {
           account: parent.account,
           ric: parent.ric,
@@ -1007,6 +1097,18 @@ export class OmsEngine {
   }
 
   cancelOrder(
+    request: { orderId: string },
+    ctx: RequestContext,
+  ): OmsResult<{ orderId: string; status: OrdStatus }> {
+    const timer = this.#timing.cancelOrder;
+    const t0 = timer.start();
+    const result = this.#cancelOrder(request, ctx);
+    timer.stop(t0);
+    if (!result.ok) this.#countReject(this.rejects, result.reason);
+    return result;
+  }
+
+  #cancelOrder(
     request: { orderId: string },
     ctx: RequestContext,
   ): OmsResult<{ orderId: string; status: OrdStatus }> {
@@ -1195,14 +1297,29 @@ export class OmsEngine {
   // ---------------------------------------------------------------- reports
 
   #onExecutionReport = (report: ExecutionReport) => {
+    const timer = this.#timing.executionReport;
+    const t0 = timer.start();
+    try {
+      this.#applyReport(report);
+    } finally {
+      timer.stop(t0);
+    }
+  };
+
+  #applyReport(report: ExecutionReport) {
     const child =
       this.#byExchangeId.get(report.exchangeOrderId) ??
       this.#byClOrdId.get(report.clOrdId);
-    if (!child) return;
+    if (!child) {
+      this.stats.unknownReports++;
+      return;
+    }
     const execSeq = execSeqOf(report.execId);
     if (execSeq !== undefined) {
-      if (child.lastExecSeq !== undefined && execSeq <= child.lastExecSeq)
+      if (child.lastExecSeq !== undefined && execSeq <= child.lastExecSeq) {
+        this.stats.duplicateReports++;
         return;
+      }
       child.lastExecSeq = execSeq;
     }
     if (this.#journal) {
@@ -1225,14 +1342,19 @@ export class OmsEngine {
       this.#applyChildEventToParent(parent, child, event);
     } catch (err) {
       if (!(err instanceof OrderStateError)) throw err;
+      this.stats.stateErrorsIgnored++;
       this.#log(
         `${child.orderId} ${report.execType}/${report.ordStatus} ignored: ${err.message}`,
       );
       return;
     }
+    if (event.type === "ack" && !this.#replaying)
+      this.#timing.childAck.record((this.#clock() - child.created) * 1_000);
+    else if (event.type === "reject")
+      this.#countReject(this.exchangeRejects, event.reason);
     if (event.type === "fill") this.#recordFill(report, parent, child);
     this.#algos.onChildEvent(parent);
-  };
+  }
 
   #toEvent(report: ExecutionReport, child: ChildOrder): OrderEvent | undefined {
     const reason = report.rejectReason ?? RejectReason.InternalError;
