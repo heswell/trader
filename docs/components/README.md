@@ -24,7 +24,7 @@ or on in-browser data (see [hosting.md](hosting.md) and [getting-started.md](../
 | [notifications-and-connection.md](notifications-and-connection.md) | `TradingNotificationsProvider`, `ConnectionBanner`, `ConnectionStatusIndicator`, `StaleIndicator` | `#notifications-*`, `#hosting-connection-override` |
 | [selection-and-linking.md](selection-and-linking.md) | `InstrumentPicker`, `InstrumentContextProvider`, `LinkGroupProvider`, `LinkGroupSelector`, `LinkGroupSwatch`, `AccountSelector`, `InstrumentLookupProvider` | `#linking-providers`, `#selectors` |
 | [charts.md](charts.md) | `PriceChart`, `DepthChartView`, `SpreadChart`, `PnlHistoryChart`, `ExposureTreemap`, `SlippageChart`, `useChartDataSource` | `#price-chart`, `#depth-chart`, `#spread-chart`, `#pnl-history-chart`, `#exposure-treemap`, `#slippage-chart`, `#chart-workspace` |
-| [simulator.md](simulator.md) | `SimBooksGrid`, `BotsGrid`, `BotDetail` | `#simulator-monitor` |
+| [simulator.md](simulator.md) | `SimBooksGrid`, `BotsGrid`, `BotDetail`, `MetricsGrid` | `#simulator-monitor`, `#server-metrics` |
 | [primitives.md](primitives.md) | `SideLabel`, `OrderStatusBadge`, `FillProgressBar`, `PnlValue`, `Sparkline`; theming tokens | `#side-label-variants`, `#primitives-status` |
 
 Conventions shared by every component (placement, CSS injection, utilities, testing, accessibility, MF packaging)

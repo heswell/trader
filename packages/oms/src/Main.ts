@@ -112,6 +112,7 @@ export default async function main(
       ...(metricsConfig.enabled
         ? [
             MetricsModule(metrics, {
+              historySize: metricsConfig.historySize,
               canView: (user) => canAdminSim(user, permissionMode),
             }),
           ]

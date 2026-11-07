@@ -20,7 +20,8 @@ export type TradingNavIcon =
   | "execution-quality"
   | "oversight"
   | "simulator"
-  | "bots";
+  | "bots"
+  | "metrics";
 
 const NAV_ICON_SHAPES: Readonly<Record<TradingNavIcon, string>> = {
   watchlist:
@@ -51,6 +52,8 @@ const NAV_ICON_SHAPES: Readonly<Record<TradingNavIcon, string>> = {
   simulator:
     '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M6.5 13l3-3 2.5 2 5-5"/>',
   bots: '<rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 4v4"/><circle cx="12" cy="3.5" r="0.8"/><circle cx="9.5" cy="13" r="1.2"/><circle cx="14.5" cy="13" r="1.2"/><path d="M3 12v3M21 12v3"/>',
+  metrics:
+    '<path d="M4.5 17a8.5 8.5 0 1 1 15 0"/><path d="M12 13l4-5"/><circle cx="12" cy="13" r="1.2"/><path d="M3 20h18"/>',
 };
 
 export const navIconSvg = (icon: TradingNavIcon) =>

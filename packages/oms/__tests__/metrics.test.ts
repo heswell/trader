@@ -162,6 +162,18 @@ describe("METRICS module over the Vuu protocol", () => {
       await admin.row(tablesVp, (r) => r.id === "EXCHANGE.instruments"),
     ).toMatchObject({ counted: false, writes: 0 });
 
+    const historyVp = await admin.createViewport(
+      METRICS_MODULE,
+      "metricsHistory",
+      ["id", "metric", "component", "time", "value"],
+    );
+    const cpu = await admin.row(
+      historyVp,
+      (r) => r.metric === "process.cpuPct",
+    );
+    expect(cpu.component).toBe("process");
+    expect(String(cpu.id)).toBe(`process.cpuPct|${cpu.time}`);
+
     const proc = await admin.row(processVp, (r) => r.id === "trading");
     expect(proc.pid).toBe(process.pid);
     expect(Number(proc.rssMb)).toBeGreaterThan(0);
@@ -204,6 +216,7 @@ describe("loadMetricsConfig", () => {
       intervalMs: 1_000,
       timers: "sampled" as const,
       sampleEvery: 16,
+      historySize: 300,
     };
     expect(loadMetricsConfig(undefined, {})).toEqual(defaults);
     expect(
@@ -221,6 +234,7 @@ describe("loadMetricsConfig", () => {
       intervalMs: 250,
       timers: "all" as const,
       sampleEvery: 64,
+      historySize: 300,
     });
   });
 
@@ -237,5 +251,8 @@ describe("loadMetricsConfig", () => {
     expect(() =>
       loadMetricsConfig(undefined, { METRICS_SAMPLE_EVERY: "10" }),
     ).toThrow("power of two");
+    expect(() =>
+      loadMetricsConfig(undefined, { METRICS_HISTORY_SIZE: "-1" }),
+    ).toThrow("metrics.historySize");
   });
 });

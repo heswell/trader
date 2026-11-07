@@ -141,7 +141,7 @@ describe("determinism", () => {
     expect(other.oms.getTable("parentOrders").data.length).toBe(1);
     expect(td.oms.getTable("parentOrders").data.length).toBe(0);
     other.dispose();
-    expect(td.engine.getTableList().length).toBe(27);
+    expect(td.engine.getTableList().length).toBe(31);
   });
 
   test("advance requires a manual clock", () => {
@@ -604,6 +604,49 @@ describe("chart data", () => {
         expect([...accounts]).toEqual(["ACC-US-01"]);
         ds.unsubscribe();
       }
+    } finally {
+      local.dispose();
+    }
+  });
+});
+
+describe("METRICS", () => {
+  test("advance takes a snapshot: metrics, table writes and history", () => {
+    const local = createTradingTestData({
+      seed: 2,
+      manualClock: true,
+      exchange: { activeInstruments: 3 },
+      oms: { flowRate: 0 },
+    });
+    try {
+      local.advance(1_000);
+      local.advance(1_000);
+      const rows = (name: "metrics" | "metricsTables" | "metricsHistory") => {
+        const table = local.metrics.getTable(name);
+        const { map } = table;
+        return table.data.map((row) =>
+          Object.fromEntries(
+            Object.entries(map).map(([column, i]) => [column, row[i]]),
+          ),
+        );
+      };
+      const metrics = rows("metrics");
+      expect(metrics.find((r) => r.id === "exchange.books")?.value).toBe(3);
+      // timers are on (all) in the local data: the step is timed
+      const step = metrics.find((r) => r.id === "exchange.step");
+      expect(step?.kind).toBe("timer");
+      expect(Number(step?.value)).toBeGreaterThan(0);
+      const prices = rows("metricsTables").find(
+        (r) => r.id === "EXCHANGE.prices",
+      );
+      expect(prices?.counted).toBe(true);
+      expect(Number(prices?.rows)).toBeGreaterThan(0);
+      const history = rows("metricsHistory").filter(
+        (r) => r.metric === "exchange.books",
+      );
+      expect(history.length).toBe(2);
+      // the browser has no process stats
+      expect(local.metrics.getTable("metricsProcess").data.length).toBe(0);
     } finally {
       local.dispose();
     }

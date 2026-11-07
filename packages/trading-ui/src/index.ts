@@ -60,6 +60,7 @@ export * from "./components/FillProgressBar";
 export * from "./components/FillsBlotter";
 export * from "./components/SimulatorGrids";
 export * from "./components/SimInstrumentChart";
+export * from "./components/ServerMetrics";
 export * from "./components/SimulatorControls";
 export * from "./components/InstrumentLookup";
 export * from "./components/OrderBlotter";

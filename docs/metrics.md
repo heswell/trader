@@ -15,14 +15,16 @@ with the same viewports, sorting and filtering as any other table.
 
 ## 1. Tables
 
-All three tables are written once per `metrics.intervalMs` (1 s by default). A row is written only when one of its
-values changed, so `lastUpdate` is the time the row last changed.
+All four tables are written once per `metrics.intervalMs` (1 s by default). A `metricsProcess`, `metrics` or
+`metricsTables` row is written only when one of its values changed, so `lastUpdate` is the time the row last changed.
+`metricsHistory` gets a row for every metric at every snapshot.
 
 | Table | Key | One row per | Columns |
 | --- | --- | --- | --- |
 | `metricsProcess` | process name (`trading`) | server process | `pid`, `started`, `uptimeS`, `cpuPct`, `rssMb`, `heapUsedMb`, `heapTotalMb`, `externalMb`, `loopLagP50Ms`, `loopLagP99Ms`, `loopLagMaxMs` |
 | `metrics` | `component.name` | named metric | `component`, `name`, `kind`, `unit`, `value`, `rate`, `mean`, `p50`, `p99`, `max` |
 | `metricsTables` | `MODULE.table` | Vuu table | `module`, `table`, `rows`, `counted`, `writes`, `writesPerSec` |
+| `metricsHistory` | `metric\|time` | metric per snapshot, the last `metrics.historySize` kept | `metric`, `component`, `name`, `kind`, `unit`, `time`, `value`, `rate`, `p50`, `p99`, `max` |
 
 The `metrics` table holds every kind of metric in one place, so adding a metric needs no schema change:
 
@@ -40,6 +42,11 @@ Notes on the columns:
   count timed calls: one in `metrics.sampleEvery` when `sampled`, none when `off`.
 - `metricsTables.rows` covers every table on the server, including joins. `writes` is counted only for the
   tables that trader's own publishers write (`counted = true`). For other tables it is 0.
+
+`metricsHistory` holds every `metrics` row (`metric` = its id), the process values `process.cpuPct`, `rssMb`,
+`heapUsedMb`, `loopLagP99Ms` and `loopLagMaxMs` (gauges), and each counted table's writes as `table.<MODULE.table>`
+(a counter: `value` = writes, `rate` = writes per second). With about 80 metrics and the default 300 snapshots it
+holds about 24,000 rows, and each snapshot inserts and deletes about 80.
 
 The definitions are in `@heswell/trading-schemas` (`metricsProcess`, `metrics`, `metricsTables`; see
 [schemas.md](schemas.md) and the [API reference](api/trading-schemas.md)).
@@ -101,11 +108,16 @@ next to `Main.ts`, which is where the simulator and the OMS are put together.
 | `metrics.intervalMs` | `METRICS_INTERVAL_MS` / `TRADER_METRICS_INTERVAL_MS` | `1000` | Snapshot interval |
 | `metrics.timers` | `METRICS_TIMERS` / `TRADER_METRICS_TIMERS` | `sampled` | `off`: calls are counted, nothing is timed. `sampled`: one call in `sampleEvery` is timed. `all`: every call is timed. |
 | `metrics.sampleEvery` | `METRICS_SAMPLE_EVERY` / `TRADER_METRICS_SAMPLE_EVERY` | `16` | Sampling rate for `sampled` (a power of two) |
+| `metrics.historySize` | `METRICS_HISTORY_SIZE` / `TRADER_METRICS_HISTORY_SIZE` | `300` | `metricsHistory` snapshots kept per metric (5 minutes at 1 s); `0` = no history |
 
 - **Access.** Rows are visible to users with the `sim-admin` role. This is the same check as the simulator admin
   tables, and it follows `exchangeSim.permissionMode`: in `auto` mode, users with no roles at all also see them
   (dev auth). On the `start:all` stack, `admin` has `sim-admin`.
 - **Timers off.** Timers are set to `off` when nothing reads them (`metrics.enabled=0` and no perf stats file).
+- **UI.** Simulator › Metrics (`sim-admin-access`) shows the four tables: process cards with sparklines, every
+  metric with trends of its rate and p99, table writes, and the history chart of whatever is selected
+  ([components](components/simulator.md#server-metrics)). The showcase (`#server-metrics`) and the UI tests use
+  the same tables from `@heswell/trading-test-data`, without the process row.
 - **Perf harness.** With `TRADER_PERF_STATS_FILE` set, `perf:ws` gets its server stats JSONL from the same
   collector, even when `metrics.enabled=0` ([performance.md](performance.md#metrics)).
   `TRADER_PERF_STATS_INTERVAL_MS` overrides the interval for that run.
@@ -224,7 +236,6 @@ which fits its per-call cost, so `sampled` is the default. `all` is useful for s
    `PerfStatsReporter` is ported to the collector.
 2. **Phase 2 (done).** Sampled timers on matching, step, flush, the gateway, OMS requests, risk checks and
    execution reports; order lifecycle latencies; counters for rejects, dropped reports and ignored state errors.
-3. **Phase 3: history and UI.** A `metricsHistory` ring buffer (like `simSamples`), and an admin-only Metrics
-   feature with sparklines.
+3. **Phase 3 (done).** The `metricsHistory` table and the Simulator › Metrics feature.
 4. **Phase 4: upstream.** vuu-server session, send-cycle and queue stats (trader upstream issue 91). Today only
    `viewportCount` and table row counts can be read.

@@ -16,6 +16,8 @@ export interface MetricsConfig {
   timers: TimerMode;
   /** `sampled`: time one call in this many (a power of two). */
   sampleEvery: number;
+  /** metricsHistory snapshots kept per metric (0 = no history). */
+  historySize: number;
 }
 
 export const DEFAULT_METRICS_CONFIG: Readonly<MetricsConfig> = Object.freeze({
@@ -23,6 +25,7 @@ export const DEFAULT_METRICS_CONFIG: Readonly<MetricsConfig> = Object.freeze({
   intervalMs: 1_000,
   timers: "sampled",
   sampleEvery: 16,
+  historySize: 300,
 });
 
 const envName = (key: string) =>
@@ -68,6 +71,11 @@ export const loadMetricsConfig = (
   if (!TIMER_MODES.includes(result.timers)) {
     throw Error(
       `metrics.timers must be one of ${TIMER_MODES.join(", ")}, got '${result.timers}'`,
+    );
+  }
+  if (!(Number.isInteger(result.historySize) && result.historySize >= 0)) {
+    throw Error(
+      `metrics.historySize must be a whole number >= 0, got ${result.historySize}`,
     );
   }
   if (!isPowerOfTwo(result.sampleEvery)) {

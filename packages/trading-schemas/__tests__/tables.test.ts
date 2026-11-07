@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  metricsModuleTables,
   EXCHANGE_MODULE,
   OMS_MODULE,
   Side,
@@ -150,7 +151,11 @@ describe("TableSchema adapter", () => {
 
   test("getTradingSchemas covers all tables and joins", () => {
     expect(Object.keys(getTradingSchemas()).sort()).toEqual(
-      [...Object.keys(tradingTables), ...Object.keys(tradingJoins)].sort(),
+      [
+        ...Object.keys(tradingTables),
+        ...Object.keys(tradingJoins),
+        ...Object.keys(metricsModuleTables),
+      ].sort(),
     );
   });
 });

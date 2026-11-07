@@ -7,10 +7,12 @@ import {
   systemClock,
 } from "@heswell/exchange-sim/engine";
 import {
+  exchangeMetricsSource,
   handleOmsRpc,
   type OmsConfig,
   type OmsRpcName,
   OmsService,
+  omsMetricsSource,
   type OmsTableName,
   type TradingUser,
 } from "@heswell/oms/engine";
@@ -19,6 +21,8 @@ import {
   EXCHANGE_MODULE,
   exchangeTables,
   instrumentPrices,
+  METRICS_MODULE,
+  metricsModuleTables,
   OMS_MODULE,
   OMS_RPC_NAMES,
   omsTables,
@@ -41,6 +45,11 @@ import {
 } from "@heswell/vuu-data-engine-local";
 import type { TableSchema } from "@vuu-ui/vuu-data-types";
 import type { RpcResult } from "@vuu-ui/vuu-protocol-types";
+import { MetricsCollector } from "@heswell/trading-metrics";
+import {
+  type MetricsTableName,
+  MetricsTablePublisher,
+} from "@heswell/trading-metrics/publish";
 import { parentOrdersEditHooks } from "./modules/parentOrdersEditHooks";
 import { TradingLocalModule } from "./modules/TradingLocalModule";
 import { visualLinksFor } from "./modules/visualLinks";
@@ -49,7 +58,11 @@ export type ExchangeTableName =
   | keyof typeof exchangeTables
   | "instrumentPrices";
 export type OmsLocalTableName = OmsTableName | "positionPrices";
-export type TradingLocalTableName = ExchangeTableName | OmsLocalTableName;
+export type TradingLocalTableName =
+  | ExchangeTableName
+  | OmsLocalTableName
+  | MetricsTableName;
+export type { MetricsTableName };
 
 export const EXCHANGE_TABLE_NAMES: readonly ExchangeTableName[] = [
   "instruments",
@@ -81,6 +94,13 @@ export const OMS_TABLE_NAMES: readonly OmsLocalTableName[] = [
   "pnlHistory",
   "accountPnlHistory",
   "positionPrices",
+];
+
+export const METRICS_TABLE_NAMES: readonly MetricsTableName[] = [
+  "metricsProcess",
+  "metrics",
+  "metricsTables",
+  "metricsHistory",
 ];
 
 /**
@@ -121,7 +141,14 @@ export interface TradingTestDataOptions {
 export interface TradingTestData {
   readonly exchange: TradingLocalModule<ExchangeTableName>;
   readonly oms: TradingLocalModule<OmsLocalTableName>;
-  /** The isolated engine both modules are registered with. */
+  /**
+   * The METRICS tables, from the sim and OMS sources (no process row: the
+   * browser has no process stats). Snapshots are taken once a second while
+   * running, and at the end of every `advance()`.
+   */
+  readonly metrics: TradingLocalModule<MetricsTableName>;
+  readonly metricsCollector: MetricsCollector;
+  /** The isolated engine the modules are registered with. */
   readonly engine: LocalEngine;
   readonly sim: ExchangeSimulator;
   readonly omsService: OmsService;
@@ -219,6 +246,14 @@ export const createTradingTestData = ({
     clock: now,
   });
 
+  // Metrics: the same sources as the server; every timed call is timed
+  // (the load here is light).
+  const metricsCollector = new MetricsCollector({ process: false, clock: now });
+  sim.timers.setMode("all");
+  omsService.engine.timers.setMode("all");
+  metricsCollector.register(exchangeMetricsSource(sim));
+  metricsCollector.register(omsMetricsSource(omsService));
+
   // ------------------------------------------------------------ tables
   const instruments = tableFor(exchangeTables.instruments);
   const prices = tableFor(exchangeTables.prices);
@@ -285,11 +320,13 @@ export const createTradingTestData = ({
     running = true;
     sim.start();
     omsService.start();
+    metricsCollector.start();
   };
   const stop = () => {
     running = false;
     sim.stop();
     omsService.stop();
+    metricsCollector.stop();
   };
   const onCreateDataSource =
     autoStart === "on-subscribe" && !clock ? start : undefined;
@@ -410,15 +447,52 @@ export const createTradingTestData = ({
     },
   });
 
-  const engine = createLocalEngine({ modules: [exchange, oms] });
+  // ------------------------------------------------------------ METRICS
+  const metricsTablesByName = forEachTable(METRICS_TABLE_NAMES, (name) =>
+    tableFor(metricsModuleTables[name]),
+  );
+  const metricsPublisher = new MetricsTablePublisher({ processName: "local" });
+  for (const name of METRICS_TABLE_NAMES)
+    metricsPublisher.attach(name, metricsTablesByName[name].engineTable);
+  metricsCollector.onSnapshot(metricsPublisher.publish);
+  // Row counts, as vuuServerSource reports them on the server.
+  metricsCollector.register({
+    name: "local-tables",
+    collect(w) {
+      for (const [module, tables] of [
+        [EXCHANGE_MODULE, exchangeTablesByName],
+        [OMS_MODULE, omsTablesByName],
+        [METRICS_MODULE, metricsTablesByName],
+      ] as const) {
+        for (const [name, table] of Object.entries(tables))
+          w.tableRows(module, name, table.data.length);
+      }
+    },
+  });
+  const metricsSchemas = forEachTable(
+    METRICS_TABLE_NAMES,
+    (name) => metricsTablesByName[name].schema,
+  );
+  const metrics: TradingLocalModule<MetricsTableName> = new TradingLocalModule({
+    name: METRICS_MODULE,
+    schemas: metricsSchemas,
+    tables: metricsTablesByName,
+    services: forEachTable(METRICS_TABLE_NAMES, () => undefined),
+    visualLinks: forEachTable(METRICS_TABLE_NAMES, () => undefined),
+    onCreateDataSource,
+  });
+
+  const engine = createLocalEngine({ modules: [exchange, oms, metrics] });
 
   if (autoStart === true) start();
 
-  const schemas = { ...exchangeSchemas, ...omsSchemas };
+  const schemas = { ...exchangeSchemas, ...omsSchemas, ...metricsSchemas };
 
   return {
     exchange,
     oms,
+    metrics,
+    metricsCollector,
     engine,
     sim,
     omsService,
@@ -451,6 +525,7 @@ export const createTradingTestData = ({
       }
       sim.flush();
       omsService.mark();
+      metricsCollector.sample(clock.time);
     },
     rpc,
     dispose() {

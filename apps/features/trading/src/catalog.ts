@@ -418,4 +418,21 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     navIcon: "chart",
     workspace: { paletteGroup: SIMULATOR, defaultSize: { cols: 2, rows: 1 } },
   },
+  {
+    key: "server-metrics",
+    id: 133,
+    name: "ServerMetrics",
+    mfScope: "serverMetrics",
+    expose: "./ServerMetrics",
+    source: "./src/features/ServerMetrics",
+    title: "Server metrics",
+    description:
+      "Trading server performance: process CPU, memory and loop lag, hot-path timers and counters, table writes, with history",
+    accessRole: simAdmin,
+    location: "/Simulator/Metrics",
+    path: "/simulator/metrics",
+    navOrder: 530,
+    navIcon: "metrics",
+    workspace: { paletteGroup: SIMULATOR, defaultSize: { cols: 2, rows: 1 } },
+  },
 ];

@@ -4,15 +4,16 @@
 
 The in-browser EXCHANGE + OMS (the real exchange-sim and OMS engines on `@heswell/vuu-data-engine-local`) behind the showcase, the tests and the engine-local mode of [getting started](../getting-started.md#2-engine-local-mode-no-servers). [Package README](../../packages/trading-test-data/README.md).
 
-Imports: `@heswell/trading-test-data`, `@heswell/trading-test-data/react`. 18 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-test-data`, `@heswell/trading-test-data/react`. 20 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
-- **createTradingTestData**: [createTradingTestData](#createtradingtestdata), [EXCHANGE_TABLE_NAMES](#exchange_table_names), [ExchangeTableName](#exchangetablename), [LOCAL_EXCHANGE_DEFAULTS](#local_exchange_defaults), [OMS_TABLE_NAMES](#oms_table_names), [OmsLocalTableName](#omslocaltablename), [TradingLocalTableName](#tradinglocaltablename), [TradingTestData](#tradingtestdata), [TradingTestDataOptions](#tradingtestdataoptions)
+- **createTradingTestData**: [createTradingTestData](#createtradingtestdata), [EXCHANGE_TABLE_NAMES](#exchange_table_names), [ExchangeTableName](#exchangetablename), [LOCAL_EXCHANGE_DEFAULTS](#local_exchange_defaults), [METRICS_TABLE_NAMES](#metrics_table_names), [OMS_TABLE_NAMES](#oms_table_names), [OmsLocalTableName](#omslocaltablename), [TradingLocalTableName](#tradinglocaltablename), [TradingTestData](#tradingtestdata), [TradingTestDataOptions](#tradingtestdataoptions)
 - **localServer**: [getTradingTestData](#gettradingtestdata), [resetTradingTestData](#resettradingtestdata), [TRADING_LOCAL_CONNECTION_ID](#trading_local_connection_id)
 - **modules**: [TradingLocalModule](#tradinglocalmodule), [visualLinksFor](#visuallinksfor)
 - **re-exports**: [getCurrentUser](#getcurrentuser), [setCurrentUser](#setcurrentuser)
 - **react**: [createTradingLocalServer](#createtradinglocalserver)
+- **server**: [MetricsTableName](#metricstablename)
 - **util**: [ManualClock](#manualclock)
 
 ## createTradingTestData
@@ -21,7 +22,7 @@ Imports: `@heswell/trading-test-data`, `@heswell/trading-test-data/react`. 18 ex
 
 #### createTradingTestData
 
-*function* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L193)
+*function* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L220)
 
 Create the EXCHANGE and OMS engine-local modules, backed by the real
 
@@ -33,7 +34,7 @@ createTradingTestData({ seed, exchange: exchangeConfig = {}, oms: omsConfig = {}
 
 #### EXCHANGE_TABLE_NAMES
 
-*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L54)
+*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L67)
 
 ```ts
 const EXCHANGE_TABLE_NAMES: readonly ExchangeTableName[]
@@ -41,7 +42,7 @@ const EXCHANGE_TABLE_NAMES: readonly ExchangeTableName[]
 
 #### LOCAL_EXCHANGE_DEFAULTS
 
-*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L91)
+*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L111)
 
 Browser defaults: lighter than the server (50 instruments, 200 bars per
 series) so the showcase stays responsive; everything else is the server
@@ -51,9 +52,17 @@ default.
 const LOCAL_EXCHANGE_DEFAULTS: Partial<ExchangeSimConfig>
 ```
 
+#### METRICS_TABLE_NAMES
+
+*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L99)
+
+```ts
+const METRICS_TABLE_NAMES: readonly MetricsTableName[]
+```
+
 #### OMS_TABLE_NAMES
 
-*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L75)
+*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L88)
 
 ```ts
 const OMS_TABLE_NAMES: readonly OmsLocalTableName[]
@@ -63,13 +72,15 @@ const OMS_TABLE_NAMES: readonly OmsLocalTableName[]
 
 #### TradingTestData
 
-*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L121)
+*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L141)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
 | `exchange` | `TradingLocalModule<ExchangeTableName>` |  |  |
 | `oms` | `TradingLocalModule<OmsLocalTableName>` |  |  |
-| `engine` | `LocalEngine` |  | The isolated engine both modules are registered with. |
+| `metrics` | `TradingLocalModule<MetricsTableName>` |  | The METRICS tables, from the sim and OMS sources (no process row: the browser has no process stats). Snapshots are taken once a second while running, and at the end of every `advance()`. |
+| `metricsCollector` | `MetricsCollector` |  |  |
+| `engine` | `LocalEngine` |  | The isolated engine the modules are registered with. |
 | `sim` | `ExchangeSimulator` |  |  |
 | `omsService` | `OmsService` |  |  |
 | `schemas` | `Record<TradingLocalTableName, TableSchema>` |  | TableSchemas (identical to the server's TABLE_META_RESP), by table name. |
@@ -83,7 +94,7 @@ const OMS_TABLE_NAMES: readonly OmsLocalTableName[]
 
 #### TradingTestDataOptions
 
-*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L98)
+*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L118)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -97,7 +108,7 @@ const OMS_TABLE_NAMES: readonly OmsLocalTableName[]
 
 #### ExchangeTableName
 
-*type* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L48)
+*type* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L57)
 
 ```ts
 type ExchangeTableName = | keyof typeof exchangeTables
@@ -106,7 +117,7 @@ type ExchangeTableName = | keyof typeof exchangeTables
 
 #### OmsLocalTableName
 
-*type* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L51)
+*type* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L60)
 
 ```ts
 type OmsLocalTableName = OmsTableName | "positionPrices"
@@ -114,10 +125,12 @@ type OmsLocalTableName = OmsTableName | "positionPrices"
 
 #### TradingLocalTableName
 
-*type* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L52)
+*type* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L61)
 
 ```ts
-type TradingLocalTableName = ExchangeTableName | OmsLocalTableName
+type TradingLocalTableName = | ExchangeTableName
+  | OmsLocalTableName
+  | MetricsTableName
 ```
 
 ## localServer
@@ -217,12 +230,24 @@ the default user.
 
 *function* · [react.ts](../../packages/trading-test-data/src/react.ts#L16)
 
-A LocalVuuServer publishing the EXCHANGE and OMS modules: pass it to a
+A LocalVuuServer publishing the EXCHANGE, OMS and METRICS modules: pass it to a
 local-mode AuthenticationProvider (`localServers`) or render its
 DataSourceProvider directly (as TradingDataProvider mode="local" does).
 
 ```ts
 createTradingLocalServer(testData: TradingTestData = getTradingTestData(), connectionId = TRADING_LOCAL_CONNECTION_ID): LocalVuuServer
+```
+
+## server
+
+### Types (server)
+
+#### MetricsTableName
+
+*type* · [server/MetricsTablePublisher.ts](../../packages/metrics/src/server/MetricsTablePublisher.ts#L44)
+
+```ts
+type MetricsTableName = keyof typeof metricsModuleTables
 ```
 
 ## util

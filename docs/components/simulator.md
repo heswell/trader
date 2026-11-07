@@ -6,7 +6,7 @@ Reference: [SimBooksGrid](../api/trading-ui.md#simbooksgrid), [BotsGrid](../api/
 [ScenarioRuns](../api/trading-ui.md#scenarioruns), [SimEventsLog](../api/trading-ui.md#simeventslog),
 [SimInstrumentControls](../api/trading-ui.md#siminstrumentcontrols).
 
-Showcase: `#simulator-monitor`, `#simulator-instrument`, `#simulator-control`. Features: Simulator › Overview, Bots and Instrument
+Showcase: `#simulator-monitor`, `#simulator-instrument`, `#simulator-control`. Features: Simulator › Overview, Bots, Instrument and Metrics
 ([portal integration](../portal-integration.md#features)). Design: [simulator bots](../simulator-bots.md).
 
 | Component | Tables | RPCs | Roles |
@@ -60,10 +60,44 @@ Changes apply at once; each shows in `SimEventsLog` with the user. Each control 
 | `SimEventsLog` | Newest first: time, user, action, target, details, run. |
 | `SimInstrumentControls` | `ric` (default: the followed instrument), `LinkGroupProps`. Volatility, drift and impact with Apply; fair-value jumps of ±25 and ±100 bp (with "informed trader (30s)", the jump arms an informed trader: `informedSecs`); market maker and taker rates; pause, resume and pull the instrument's bots; Add bot of any kind (`SIM_BOT_KINDS`); Halt / Resume. |
 
+## Server metrics
+
+Reference: [MetricsGrid](../api/trading-ui.md#metricsgrid), [MetricsTablesGrid](../api/trading-ui.md#metricstablesgrid),
+[MetricsProcessStrip](../api/trading-ui.md#metricsprocessstrip), [MetricHistoryChart](../api/trading-ui.md#metrichistorychart).
+Showcase: `#server-metrics`. Feature: Simulator › Metrics. Design: [server metrics](../metrics.md).
+
+| Component | Tables | Roles |
+| --- | --- | --- |
+| `MetricsProcessStrip` | `metricsProcess`, `metricsHistory` (`component = "process"`) | `sim-admin` |
+| `MetricsGrid` | `metrics` | `sim-admin` |
+| `MetricsTablesGrid` | `metricsTables` | `sim-admin` |
+| `MetricHistoryChart` | `metricsHistory` (one metric) | `sim-admin` |
+
+The METRICS tables are served only to users with `sim-admin`, like the simulator tables. They are written once per
+`metrics.intervalMs` (1 s).
+
+| Component | Props |
+| --- | --- |
+| `MetricsProcessStrip` | `onSelectMetric`. A card per process value (`PROCESS_CARDS`: CPU, RSS, heap used, loop lag p99 and max) with its latest value over a sparkline of its history, so the trend is there as soon as it opens. Clicking a card selects `process.<name>`. Without a process row (the in-browser data) it says "No process metrics". |
+| `MetricsGrid` | `defaultComponent` (`METRICS_COMPONENTS`: all, `exchange`, `publisher`, `gateway`, `oms`, `vuu`), `onSelectMetric`. Every metric: value, rate, unit and the timer percentiles, with trends of the rate and of p99 (client sparklines, built from updates while the row is visible). |
+| `MetricsTablesGrid` | `onSelectMetric`. Every Vuu table, busiest first: rows, writes per second (with a trend), writes, counted. Selecting a counted table selects `table.<MODULE.table>`. |
+| `MetricHistoryChart` | `metric` (`SelectedMetric`: `id`, `kind`, `unit`). A timer's p50 / p99 / max, a counter's rate or a gauge's value over the last `metrics.historySize` snapshots (5 minutes by default). `metricHistorySeries(kind)` and `metricHistoryAxis(metric)` give what is charted. |
+
+```tsx
+const [metric, setMetric] = useState<SelectedMetric>({ id: "process.cpuPct", kind: "gauge", unit: "%" });
+const select = (next?: SelectedMetric) => next && setMetric(next);
+<MetricsProcessStrip onSelectMetric={select} />
+<MetricsGrid onSelectMetric={select} />
+<MetricHistoryChart metric={metric} />
+<MetricsTablesGrid onSelectMetric={select} />
+```
+
 ## CSS hooks
 
 Class bases `tradingSimGrid` (the grids and the fills tape), `tradingBotDetail` and `tradingSimInstrumentChart`. Test ids
 `trading-sim-books-grid`, `trading-bots-grid`, `trading-bot-fills-tape`, `trading-bot-detail`, `trading-bot-params`,
 `trading-bot-pnl-sparkline`, `trading-bot-param-changed`; `data-link-group` on the grids, tape and chart. Controls use
 class base `tradingSimControls`, test ids `trading-sim-session-strip`, `trading-sim-phase`, `trading-scenario-runs`,
-`trading-sim-events-log`, `trading-sim-instrument-controls`.
+`trading-sim-events-log`, `trading-sim-instrument-controls`. Server metrics use class bases `tradingServerMetrics`
+(grids), `tradingMetricsProcess` (strip; `data-metric` on each card) and `tradingMetricHistoryChart` (`data-metric`),
+test ids `trading-metrics-grid`, `trading-metrics-tables-grid`, `trading-metrics-process`.

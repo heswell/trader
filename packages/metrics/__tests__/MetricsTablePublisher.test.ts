@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { metricsModuleTables } from "@heswell/trading-schemas";
-import { MetricsCollector } from "../src";
+import { Histogram, MetricsCollector } from "../src";
 import {
   type MetricsTable,
   type MetricsTableName,
@@ -24,31 +24,45 @@ class FakeTable implements MetricsTable {
     this.columnMap = Object.fromEntries(def.columns.map((c, i) => [c.name, i]));
   }
 
-  insert(row: Row) {
-    this.inserts++;
-    const values = Object.fromEntries(
+  #toValues(row: Row) {
+    return Object.fromEntries(
       Object.entries(this.columnMap).map(([name, i]) => [name, row[i]]),
     );
+  }
+
+  insert(row: Row) {
+    this.inserts++;
+    const values = this.#toValues(row);
     this.rows.set(String(values.id), values);
   }
 
-  updateByKey(key: string, values: Record<string, unknown>) {
+  update(rowIdx: number, row: Row) {
     this.updates++;
-    this.rows.set(key, { ...this.rows.get(key), ...values });
+    const values = this.#toValues(row);
+    if ([...this.rows.keys()][rowIdx] !== values.id) throw Error("bad rowIdx");
+    this.rows.set(String(values.id), values);
   }
 
   rowIndexAtKey(key: string) {
-    return this.rows.has(key) ? 0 : -1;
+    return [...this.rows.keys()].indexOf(key);
+  }
+
+  delete(key: string) {
+    this.rows.delete(key);
   }
 }
 
-const setup = () => {
+const setup = (historySize?: number) => {
   const collector = new MetricsCollector();
-  const publisher = new MetricsTablePublisher("test");
+  const publisher = new MetricsTablePublisher({
+    processName: "test",
+    historySize,
+  });
   const tables = {
     metricsProcess: new FakeTable("metricsProcess"),
     metrics: new FakeTable("metrics"),
     metricsTables: new FakeTable("metricsTables"),
+    metricsHistory: new FakeTable("metricsHistory"),
   };
   for (const [name, table] of Object.entries(tables)) {
     publisher.attach(name as MetricsTableName, table);
@@ -114,6 +128,73 @@ describe("MetricsTablePublisher", () => {
       lastUpdate: 2_000,
     });
     expect(tables.metrics.rows.get("oms.positions")?.lastUpdate).toBe(0);
+  });
+});
+
+describe("metricsHistory", () => {
+  const history = (table: FakeTable, metric: string) =>
+    [...table.rows.values()]
+      .filter((r) => r.metric === metric)
+      .map((r) => [r.time, r.value, r.rate]);
+
+  test("a row per metric per snapshot, the oldest dropped past historySize", () => {
+    const { collector, tables } = setup(3);
+    let trades = 0;
+    collector.register({
+      name: "t",
+      collect: (w) => {
+        w.counter("exchange", "trades", trades);
+        w.tableWrites("EXCHANGE", "prices", trades * 2);
+      },
+    });
+    for (let i = 0; i < 5; i++) {
+      trades = i * 10;
+      collector.sample(i * 1_000);
+    }
+    // rows are added even when the metrics row did not change
+    expect(history(tables.metricsHistory, "exchange.trades")).toEqual([
+      [2_000, 20, 10],
+      [3_000, 30, 10],
+      [4_000, 40, 10],
+    ]);
+    expect(
+      tables.metricsHistory.rows.get("exchange.trades|4000"),
+    ).toMatchObject({ component: "exchange", name: "trades", kind: "counter" });
+    expect(history(tables.metricsHistory, "table.EXCHANGE.prices")).toEqual([
+      [2_000, 40, 20],
+      [3_000, 60, 20],
+      [4_000, 80, 20],
+    ]);
+    const cpu = history(tables.metricsHistory, "process.cpuPct");
+    expect(cpu.map(([time]) => time)).toEqual([2_000, 3_000, 4_000]);
+    expect(
+      tables.metricsHistory.rows.get("process.rssMb|4000")?.value,
+    ).toBeGreaterThan(0);
+  });
+
+  test("timers keep their percentiles; historySize 0 keeps nothing", () => {
+    const h = new Histogram();
+    const { collector, tables } = setup();
+    collector.register({
+      name: "t",
+      collect: (w) => w.timer("oms", "risk", h),
+    });
+    for (const v of [10, 20, 30]) h.record(v);
+    collector.sample(1_000);
+    expect(tables.metricsHistory.rows.get("oms.risk|1000")).toMatchObject({
+      kind: "timer",
+      unit: "us",
+      value: 3,
+      max: 30,
+    });
+
+    const none = setup(0);
+    none.collector.register({
+      name: "t",
+      collect: (w) => w.counter("a", "b", 1),
+    });
+    none.collector.sample(0);
+    expect(none.tables.metricsHistory.rows.size).toBe(0);
   });
 });
 
