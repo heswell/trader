@@ -244,7 +244,8 @@ flowchart BT
   schemas["trading-schemas"]
   persistence["trading-persistence"]
   sim["exchange-sim"] --> schemas & persistence
-  oms["oms"] --> sim & schemas & persistence
+  metrics["trading-metrics"] --> schemas
+  oms["oms"] --> sim & schemas & persistence & metrics
   testdata["trading-test-data"] --> sim & oms & schemas
   ui["trading-ui"] --> schemas
   perf["trading-perf"] --> oms
@@ -259,7 +260,8 @@ flowchart BT
 | `@heswell/trading-schemas` ([README](../packages/trading-schemas/README.md), [API](api/trading-schemas.md)) | Table definitions, enums, order status transitions, RPC contracts, tick and lot utils, shared by server and UI | `@heswell/vuu-server` (types) |
 | `@heswell/trading-persistence` ([persistence.md](persistence.md)) | memory / file / sqlite journal and snapshot stores | none |
 | `@heswell/exchange-sim` ([README](../packages/exchange-sim/README.md)) | Order books, bots, trading session, EXCHANGE module, admin RPCs, in-process gateway | schemas, persistence, `@heswell/hft-limit-order-book`, `@heswell/vuu-server` |
-| `@heswell/oms` ([README](../packages/oms/README.md)) | OMS module: risk, routing, state machine, positions, background flow, permissions, `TradingPersistence` | exchange-sim, schemas, persistence, `@heswell/vuu-server` |
+| `@heswell/trading-metrics` ([README](../packages/metrics/README.md), [metrics.md](metrics.md)) | METRICS module: collector, histogram, process sampler, metrics tables | schemas, `@heswell/vuu-server` |
+| `@heswell/oms` ([README](../packages/oms/README.md)) | OMS module: risk, routing, state machine, positions, background flow, permissions, `TradingPersistence`; `Main` puts EXCHANGE, OMS and METRICS together | exchange-sim, schemas, persistence, metrics, `@heswell/vuu-server` |
 | `@heswell/trading-ui` ([guides](components/README.md), [API](api/trading-ui.md)) | **The reusable front-end**: components, data hooks, linking, notifications, resilience, hosting | schemas |
 | `@heswell/trading-test-data` ([README](../packages/trading-test-data/README.md), [API](api/trading-test-data.md)) | Server-free EXCHANGE + OMS on engine-local | exchange-sim, oms, schemas, `@heswell/vuu-data-engine-local` |
 | `@heswell/trading-perf` ([performance.md](performance.md)) | `perf:ws`, `perf:ui` and `perf:ladder` tools | oms |

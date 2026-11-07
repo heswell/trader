@@ -6,6 +6,7 @@ export * from "./domain/ticks";
 export * from "./domain/session";
 export * from "./tables/tableDefinition";
 export * from "./tables/tables";
+export * from "./tables/metrics";
 export * from "./tables/keys";
 export * from "./tables/schemaAdapter";
 export * from "./rpc/validate";

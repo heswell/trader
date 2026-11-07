@@ -46,7 +46,7 @@ On the stack target, sessions are spread over the trading users (alice, bob, car
   - orders: `lastUpdate`;
   - trades: `time`.
   The tables report p50 / p95 / p99 / max. **Wire latency** is receipt time minus the server's TABLE_ROW batch `timeStamp`.
-- **Server** (local target): `PerfStatsReporter` (`packages/oms/src/perf`) is enabled by `TRADER_PERF_STATS_FILE`. It appends cumulative counters to a JSONL file once a second:
+- **Server** (local target): `PerfStatsReporter` (`packages/oms/src/perf`) is enabled by `TRADER_PERF_STATS_FILE`. It appends one line per [metrics](metrics.md) snapshot (once a second) to a JSONL file, from the same collector as the METRICS tables:
   - CPU user and system time, RSS, heap;
   - event-loop lag, p99 and max;
   - order-book events, trades, price and depth updates;

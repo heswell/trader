@@ -122,11 +122,20 @@
         "@vuu-ui/vuu-utils": "5.0.0-alpha.4",
       },
     },
+    "packages/metrics": {
+      "name": "@heswell/trading-metrics",
+      "version": "0.1.0",
+      "dependencies": {
+        "@heswell/trading-schemas": "workspace:*",
+        "@heswell/vuu-server": "^4.4.0",
+      },
+    },
     "packages/oms": {
       "name": "@heswell/oms",
       "version": "0.1.0",
       "dependencies": {
         "@heswell/exchange-sim": "workspace:*",
+        "@heswell/trading-metrics": "workspace:*",
         "@heswell/trading-persistence": "workspace:*",
         "@heswell/trading-schemas": "workspace:*",
         "@heswell/vuu-server": "^4.4.0",
@@ -287,6 +296,8 @@
     "@heswell/service-utils": ["@heswell/service-utils@1.3.0", "", { "dependencies": { "@heswell/vuu-table": "^1.1.0" }, "peerDependencies": { "@vuu-ui/vuu-protocol-types": "^5.0.0-alpha.2" } }, "sha512-v+wOfOpUdoym1aBLVX/dPzlK45fLqWOSLS4d2WK9rJKCQ33s96K8K/USDlqR8GAsV4vfHKxByP0dnyR5ht1UTw=="],
 
     "@heswell/trading-features": ["@heswell/trading-features@workspace:apps/features/trading"],
+
+    "@heswell/trading-metrics": ["@heswell/trading-metrics@workspace:packages/metrics"],
 
     "@heswell/trading-perf": ["@heswell/trading-perf@workspace:packages/perf"],
 

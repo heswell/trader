@@ -31,6 +31,7 @@
 | [persistence.md](persistence.md) | Journal + snapshots, stores, recovery, reset |
 | [resilience.md](resilience.md) | Reconnect, resubscribe, stale data, RPC timeouts |
 | [performance.md](performance.md) | `perf:ws`, `perf:ui`, `perf:ladder`, baselines |
+| [metrics.md](metrics.md) | Server metrics as Vuu tables (`METRICS` module): process, simulator, publisher, OMS, table writes |
 | [protocol-parity.md](protocol-parity.md) | Vuu protocol coverage and the order-entry design choice |
 | [upstream-issues.md](upstream-issues.md) | Problems in dependencies ("trader upstream issue N") |
 

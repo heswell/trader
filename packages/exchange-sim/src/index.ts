@@ -5,3 +5,9 @@ export {
 } from "./modules/exchange/ExchangeModule";
 export { ExchangeAdminRpcHandler } from "./modules/exchange/ExchangeAdminService";
 export { default } from "./Main";
+export {
+  canAdminSim,
+  SIM_ADMIN_ROLE,
+  type SimPermissionMode,
+  type SimUser,
+} from "./modules/exchange/simAdminAccess";

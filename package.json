@@ -24,7 +24,7 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "test": "bun run test:server && bun run test:ui",
-    "test:server": "bun test ./packages/trading-schemas ./packages/exchange-sim ./packages/oms ./packages/persistence ./packages/trading-test-data ./apps/features/trading",
+    "test:server": "bun test ./packages/trading-schemas ./packages/exchange-sim ./packages/oms ./packages/persistence ./packages/metrics ./packages/trading-test-data ./apps/features/trading",
     "test:ui": "bun test --preload ./scripts/dom-test-setup.ts ./packages/trading-ui ./apps/portal-host",
     "start:all": "bun ./scripts/start-all.ts",
     "features:sync": "bun ./scripts/features/sync-build-config.ts",
