@@ -69,13 +69,13 @@ export const metrics = defineTable({
       name: "value",
       dataType: "double",
       description:
-        "Counter: running total. Gauge: current value. Timer: samples in the interval.",
+        "Counter: running total. Gauge: current value. Timer: calls timed in the interval.",
     },
     {
       name: "rate",
       dataType: "double",
       description:
-        "Per second over the interval (counter, timer); 0 for a gauge.",
+        "Per second over the interval: counter increments, or timer calls (timed or not); 0 for a gauge.",
     },
     { name: "mean", dataType: "double", optional: true },
     { name: "p50", dataType: "double", optional: true },
@@ -116,12 +116,53 @@ export const metricsTables = defineTable({
   ],
 });
 
+export const metricsHistory = defineTable({
+  module: METRICS_MODULE,
+  name: "metricsHistory",
+  keyField: "id",
+  description:
+    "Rolling history of every metric, one row per metric per snapshot (metrics.historySize kept per metric); key 'metric|time' (see metricsHistoryKey). Also holds the process values (component 'process') and table writes (component 'table').",
+  columns: [
+    { name: "id", dataType: "string" },
+    {
+      name: "metric",
+      dataType: "string",
+      description:
+        "A metrics id (component.name), process.<column> or table.<MODULE.table>.",
+    },
+    { name: "component", dataType: "string" },
+    { name: "name", dataType: "string" },
+    { name: "kind", dataType: "string" },
+    { name: "unit", dataType: "string" },
+    { name: "time", dataType: "epochtimestamp", description: "Snapshot time." },
+    {
+      name: "value",
+      dataType: "double",
+      description: "As metrics.value; process values; a table's writes total.",
+    },
+    {
+      name: "rate",
+      dataType: "double",
+      description: "As metrics.rate; a table's writes per second.",
+    },
+    { name: "p50", dataType: "double", optional: true },
+    { name: "p99", dataType: "double", optional: true },
+    { name: "max", dataType: "double", optional: true },
+  ],
+});
+
+/** Key of a metricsHistory row. */
+export const metricsHistoryKey = (metric: string, time: number) =>
+  `${metric}|${time}`;
+
 export const metricsModuleTables = {
   metricsProcess,
   metrics,
   metricsTables,
+  metricsHistory,
 } as const;
 
 export type MetricsProcessRow = RowOf<typeof metricsProcess>;
 export type MetricRow = RowOf<typeof metrics>;
 export type MetricsTableRow = RowOf<typeof metricsTables>;
+export type MetricsHistoryRow = RowOf<typeof metricsHistory>;

@@ -4,6 +4,7 @@ import {
   type TableDefinition,
   joinTableColumns,
 } from "./tableDefinition";
+import { metricsModuleTables } from "./metrics";
 import { tradingJoins, tradingTables } from "./tables";
 
 /**
@@ -28,12 +29,18 @@ export const toTableSchema = (
 
 export type TradingSchemaName =
   | keyof typeof tradingTables
-  | keyof typeof tradingJoins;
+  | keyof typeof tradingJoins
+  | keyof typeof metricsModuleTables;
 
-/** TableSchemas for every trading table and join, keyed by table name. */
+/**
+ * TableSchemas for every trading table and join, and the METRICS tables,
+ * keyed by table name.
+ */
 export const getTradingSchemas = (): Record<TradingSchemaName, TableSchema> =>
   Object.fromEntries(
-    [...Object.values(tradingTables), ...Object.values(tradingJoins)].map(
-      (def) => [def.name, toTableSchema(def)],
-    ),
+    [
+      ...Object.values(tradingTables),
+      ...Object.values(tradingJoins),
+      ...Object.values(metricsModuleTables),
+    ].map((def) => [def.name, toTableSchema(def)]),
   ) as Record<TradingSchemaName, TableSchema>;

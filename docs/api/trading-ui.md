@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 488 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 504 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -35,6 +35,7 @@ Imports: `@heswell/trading-ui`. 488 exports. Types are shown as written in the s
 - **components/PositionsView**: [CurrencyTotals](#currencytotals), [POSITIONS_GROUP_BY](#positions_group_by), [PositionsGrouping](#positionsgrouping), [PositionsView](#positionsview), [PositionsViewProps](#positionsviewprops), [totalsByCurrency](#totalsbycurrency)
 - **components/PriceChart**: [PRICE_CHART_INTERVALS](#price_chart_intervals), [PriceChart](#pricechart), [PriceChartInterval](#pricechartinterval), [PriceChartProps](#pricechartprops)
 - **components/PriceLadder**: [centreIndex](#centreindex), [compactQuantity](#compactquantity), [LadderLevel](#ladderlevel), [ladderPrices](#ladderprices), [ladderReferencePrice](#ladderreferenceprice), [LadderTradeIntent](#laddertradeintent), [needsRecentre](#needsrecentre), [PRICE_LADDER_SOURCE](#price_ladder_source), [PriceLadder](#priceladder), [PriceLadderAction](#priceladderaction), [PriceLadderColumn](#priceladdercolumn), [PriceLadderOrderEvent](#priceladderorderevent), [PriceLadderProps](#priceladderprops), [PriceLadderTradeMode](#priceladdertrademode), [PriceLadderView](#priceladderview), [PriceLadderViewProps](#priceladderviewprops), [queuePositionText](#queuepositiontext), [QueueSegment](#queuesegment), [queueSegments](#queuesegments)
+- **components/ServerMetrics**: [formatDuration](#formatduration), [formatMetric](#formatmetric), [metricHistoryAxis](#metrichistoryaxis), [MetricHistoryChart](#metrichistorychart), [MetricHistoryChartProps](#metrichistorychartprops), [metricHistorySeries](#metrichistoryseries), [METRICS_COMPONENTS](#metrics_components), [MetricsGrid](#metricsgrid), [MetricsGridProps](#metricsgridprops), [MetricsProcessStrip](#metricsprocessstrip), [MetricsProcessStripProps](#metricsprocessstripprops), [MetricsTablesGrid](#metricstablesgrid), [MetricsTablesGridProps](#metricstablesgridprops), [PROCESS_CARDS](#process_cards), [SelectedMetric](#selectedmetric), [trendColumn](#trendcolumn)
 - **components/SideLabel**: [SideLabel](#sidelabel), [SideLabelProps](#sidelabelprops)
 - **components/SimInstrumentChart**: [SIM_FLOW_GROUPS](#sim_flow_groups), [SimInstrumentChart](#siminstrumentchart), [SimInstrumentChartProps](#siminstrumentchartprops)
 - **components/SimulatorControls**: [ScenarioRuns](#scenarioruns), [ScenarioRunsProps](#scenariorunsprops), [SimEventsLog](#simeventslog), [SimEventsLogProps](#simeventslogprops), [SimInstrumentControls](#siminstrumentcontrols), [SimInstrumentControlsProps](#siminstrumentcontrolsprops), [SimRpcMessage](#simrpcmessage), [SimSessionStrip](#simsessionstrip), [SimSessionStripProps](#simsessionstripprops), [useSimRpc](#usesimrpc)
@@ -5194,6 +5195,189 @@ type PriceLadderOrderEvent = | {
 ```ts
 type PriceLadderTradeMode = "confirm" | "one-click"
 ```
+
+## components/ServerMetrics
+
+### Components (components/ServerMetrics)
+
+#### MetricHistoryChart
+
+*component* · [components/ServerMetrics/MetricHistoryChart.tsx](../../packages/trading-ui/src/components/ServerMetrics/MetricHistoryChart.tsx#L54)
+
+The recent history of one metric from `METRICS.metricsHistory` (sim-admin
+only, 5 minutes by default): latency p50 / p99 / max for a timer, the rate
+for a counter, the value for a gauge.
+
+Props: `MetricHistoryChartProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `metric?` | `SelectedMetric` |  | The metric to chart; a message is shown when undefined. |
+
+Also accepts the standard HTML attributes and `ref`.
+
+#### MetricsGrid
+
+*component* · [components/ServerMetrics/MetricsGrid.tsx](../../packages/trading-ui/src/components/ServerMetrics/MetricsGrid.tsx#L121)
+
+Every named metric from `METRICS.metrics` (sim-admin only): counters with
+their total and rate, gauges, and timers with their call rate and latency
+percentiles (µs), each with a trend of its recent rate and p99. Selecting a
+row reports the metric, e.g. to chart its history.
+
+Props: `MetricsGridProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `defaultComponent?` | `(typeof METRICS_COMPONENTS)[number]` | `""` | Initial component filter ("" = all). |
+| `onSelectMetric?` | `(metric: SelectedMetric \| undefined) => void` |  | Called with the selected metric (undefined when deselected). |
+
+Also accepts the standard HTML attributes and `ref`.
+
+#### MetricsProcessStrip
+
+*component* · [components/ServerMetrics/MetricsProcessStrip.tsx](../../packages/trading-ui/src/components/ServerMetrics/MetricsProcessStrip.tsx#L43)
+
+The server process at a glance (METRICS, sim-admin only): CPU, memory and
+event-loop lag, each as its latest value over a sparkline of its
+metricsHistory (5 minutes by default, so it is filled as soon as it
+opens).
+
+Props: `MetricsProcessStripProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `onSelectMetric?` | `(metric: SelectedMetric) => void` |  | Called with a card's metric when it is clicked (e.g. to chart it). |
+
+Also accepts the standard HTML attributes and `ref`.
+
+#### MetricsTablesGrid
+
+*component* · [components/ServerMetrics/MetricsTablesGrid.tsx](../../packages/trading-ui/src/components/ServerMetrics/MetricsTablesGrid.tsx#L64)
+
+Every Vuu table on the server from `METRICS.metricsTables` (sim-admin
+only): row counts, and writes per second for the tables trader's
+publishers count, busiest first.
+
+Props: `MetricsTablesGridProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `onSelectMetric?` | `(metric: SelectedMetric \| undefined) => void` |  | Called with the selected table's writes as a metric (`table.<id>`), when its writes are counted; undefined otherwise. |
+
+Also accepts the standard HTML attributes and `ref`.
+
+### Functions (components/ServerMetrics)
+
+#### formatDuration
+
+*function* · [components/ServerMetrics/formatDuration.ts](../../packages/trading-ui/src/components/ServerMetrics/formatDuration.ts#L2)
+
+Uptime as `45s`, `12m 5s`, `3h 4m` or `2d 3h`.
+
+```ts
+formatDuration(seconds: number): string
+```
+
+#### formatMetric
+
+*function* · [components/ServerMetrics/useServerMetricsCss.ts](../../packages/trading-ui/src/components/ServerMetrics/useServerMetricsCss.ts#L23)
+
+Compact number for cards and tooltips: 1,234 / 12.3 / 0.042.
+
+```ts
+formatMetric(value: number): string
+```
+
+#### metricHistoryAxis
+
+*function* · [components/ServerMetrics/MetricHistoryChart.tsx](../../packages/trading-ui/src/components/ServerMetrics/MetricHistoryChart.tsx#L40)
+
+The y-axis name: the unit, per second for a counter.
+
+```ts
+metricHistoryAxis({ kind, unit }: SelectedMetric): string
+```
+
+#### metricHistorySeries
+
+*function* · [components/ServerMetrics/MetricHistoryChart.tsx](../../packages/trading-ui/src/components/ServerMetrics/MetricHistoryChart.tsx#L19)
+
+What is charted for each kind of metric.
+
+```ts
+metricHistorySeries(kind: SelectedMetric["kind"]): CartesianSeries[]
+```
+
+#### trendColumn
+
+*function* · [components/ServerMetrics/MetricsGrid.tsx](../../packages/trading-ui/src/components/ServerMetrics/MetricsGrid.tsx#L63)
+
+A client column drawing recent values of `valueColumn` (see SparklineCell).
+
+```ts
+trendColumn(name: string, valueColumn: string, label: string): ColumnDescriptor
+```
+
+### Constants (components/ServerMetrics)
+
+#### METRICS_COMPONENTS
+
+*const* · [components/ServerMetrics/MetricsGrid.tsx](../../packages/trading-ui/src/components/ServerMetrics/MetricsGrid.tsx#L32)
+
+Component filter offered by the MetricsGrid toolbar ("" = all).
+
+```ts
+const METRICS_COMPONENTS: readonly ["", "exchange", "publisher", "gateway", "oms", "vuu"]
+```
+
+#### PROCESS_CARDS
+
+*const* · [components/ServerMetrics/MetricsProcessStrip.tsx](../../packages/trading-ui/src/components/ServerMetrics/MetricsProcessStrip.tsx#L15)
+
+The process values metricsHistory keeps (component "process").
+
+```ts
+const PROCESS_CARDS: readonly [{ readonly name: "cpuPct"; readonly label: "CPU"; readonly unit: "%"; }, { readonly name: "rssMb"; readonly label: "RSS"; readonly unit: "MB"; }, { readonly name: "heapUsedMb"; readonly label: "Heap used"; readonly unit: "MB"; }, { ...; }, { ...; }]
+```
+
+### Interfaces (components/ServerMetrics)
+
+#### MetricHistoryChartProps
+
+*interface* · [components/ServerMetrics/MetricHistoryChart.tsx](../../packages/trading-ui/src/components/ServerMetrics/MetricHistoryChart.tsx#L43)
+
+Props of [`MetricHistoryChart`](#metrichistorychart).
+
+#### MetricsGridProps
+
+*interface* · [components/ServerMetrics/MetricsGrid.tsx](../../packages/trading-ui/src/components/ServerMetrics/MetricsGrid.tsx#L107)
+
+Props of [`MetricsGrid`](#metricsgrid).
+
+#### MetricsProcessStripProps
+
+*interface* · [components/ServerMetrics/MetricsProcessStrip.tsx](../../packages/trading-ui/src/components/ServerMetrics/MetricsProcessStrip.tsx#L31)
+
+Props of [`MetricsProcessStrip`](#metricsprocessstrip).
+
+#### MetricsTablesGridProps
+
+*interface* · [components/ServerMetrics/MetricsTablesGrid.tsx](../../packages/trading-ui/src/components/ServerMetrics/MetricsTablesGrid.tsx#L50)
+
+Props of [`MetricsTablesGrid`](#metricstablesgrid).
+
+#### SelectedMetric
+
+*interface* · [components/ServerMetrics/useServerMetricsCss.ts](../../packages/trading-ui/src/components/ServerMetrics/useServerMetricsCss.ts#L15)
+
+A metric to chart: a metrics row, a process value or a table's writes.
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `id` | `string` |  | metricsHistory.metric: `component.name`, `process.<column>` or `table.<MODULE.table>`. |
+| `kind` | `"counter" \| "gauge" \| "timer"` |  |  |
+| `unit` | `string` |  |  |
 
 ## components/SideLabel
 

@@ -22,6 +22,10 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   ScenarioRuns: "docs/components/simulator.md#control",
   SimEventsLog: "docs/components/simulator.md#control",
   SimInstrumentControls: "docs/components/simulator.md#control",
+  MetricsGrid: "docs/components/simulator.md#server-metrics",
+  MetricsTablesGrid: "docs/components/simulator.md#server-metrics",
+  MetricsProcessStrip: "docs/components/simulator.md#server-metrics",
+  MetricHistoryChart: "docs/components/simulator.md#server-metrics",
   InstrumentContextProvider:
     "docs/components/selection-and-linking.md#how-linking-works",
   InstrumentGrid: "docs/components/instrument-grid.md#instrumentgrid",

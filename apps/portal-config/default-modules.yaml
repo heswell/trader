@@ -290,3 +290,19 @@ modules:
     accessRole: "sim-admin-access"
     navOrder: 520
     workspace: {"paletteGroup":"Simulator","defaultSize":{"cols":2,"rows":1}}
+  - id: 133
+    version: 1
+    parentModuleId: 0
+    name: "ServerMetrics"
+    title: "Server metrics"
+    description: "Trading server performance: process CPU, memory and loop lag, hot-path timers and counters, table writes, with history"
+    enabled: true
+    location: "/Simulator/Metrics"
+    path: "/simulator/metrics"
+    mfComponent: "ServerMetrics"
+    mfScope: "serverMetrics"
+    mfUrl: "http://localhost:5110/server-metrics"
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4.5%2017a8.5%208.5%200%201%201%2015%200%22%2F%3E%3Cpath%20d%3D%22M12%2013l4-5%22%2F%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2213%22%20r%3D%221.2%22%2F%3E%3Cpath%20d%3D%22M3%2020h18%22%2F%3E%3C%2Fsvg%3E"
+    accessRole: "sim-admin-access"
+    navOrder: 530
+    workspace: {"paletteGroup":"Simulator","defaultSize":{"cols":2,"rows":1}}

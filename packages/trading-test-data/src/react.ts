@@ -9,7 +9,7 @@ import type { TradingTestData } from "./createTradingTestData";
 import { getTradingTestData, TRADING_LOCAL_CONNECTION_ID } from "./localServer";
 
 /**
- * A LocalVuuServer publishing the EXCHANGE and OMS modules: pass it to a
+ * A LocalVuuServer publishing the EXCHANGE, OMS and METRICS modules: pass it to a
  * local-mode AuthenticationProvider (`localServers`) or render its
  * DataSourceProvider directly (as TradingDataProvider mode="local" does).
  */
@@ -19,6 +19,6 @@ export const createTradingLocalServer = (
 ): LocalVuuServer =>
   createLocalVuuServer({
     connectionId,
-    modules: [testData.exchange, testData.oms],
+    modules: [testData.exchange, testData.oms, testData.metrics],
     engine: testData.engine,
   });

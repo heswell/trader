@@ -49,6 +49,7 @@ import {
   CellRenderersExample,
   StatusPrimitivesExample,
 } from "./PrimitivesExamples";
+import { ServerMetricsExample } from "./ServerMetricsExamples";
 import { SideLabelExamples } from "./SideLabelExamples";
 import {
   SimulatorControlExample,
@@ -163,6 +164,14 @@ export const examples: ShowcaseExample[] = [
     description:
       "Force the session phase, pause every bot or run a scenario; change AAPL.OQ's price model, jump its fair value, set bot rates or add a bot. Every change shows in the control log (simEvents).",
     Component: SimulatorControlExample,
+  },
+  {
+    id: "server-metrics",
+    group: "Simulator",
+    title: "Server metrics",
+    description:
+      "METRICS tables from the in-browser sim and OMS: every timer, counter and gauge with trends of its rate and p99, table writes, and the selected metric's history (metricsHistory). Click a row to chart it.",
+    Component: ServerMetricsExample,
   },
 
   {

@@ -3,6 +3,8 @@ export {
   EXCHANGE_TABLE_NAMES,
   type ExchangeTableName,
   LOCAL_EXCHANGE_DEFAULTS,
+  METRICS_TABLE_NAMES,
+  type MetricsTableName,
   OMS_TABLE_NAMES,
   type OmsLocalTableName,
   type TradingLocalTableName,

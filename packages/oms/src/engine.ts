@@ -79,3 +79,7 @@ export {
   type OmsTableName,
   TableSink,
 } from "./modules/oms/TableSink";
+export {
+  exchangeMetricsSource,
+  omsMetricsSource,
+} from "./metrics/tradingSources";

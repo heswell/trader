@@ -52,6 +52,7 @@ describe("trading catalog information architecture", () => {
       [130, "/Simulator/Overview", "/simulator/overview", 500],
       [131, "/Simulator/Bots", "/simulator/bots", 510],
       [132, "/Simulator/Instrument", "/simulator/instrument", 520],
+      [133, "/Simulator/Metrics", "/simulator/metrics", 530],
     ]);
   });
 
@@ -80,6 +81,7 @@ describe("trading catalog information architecture", () => {
     expect(byId.get(130)?.accessRole).toBe("sim-admin-access");
     expect(byId.get(131)?.accessRole).toBe("sim-admin-access");
     expect(byId.get(132)?.accessRole).toBe("sim-admin-access");
+    expect(byId.get(133)?.accessRole).toBe("sim-admin-access");
   });
 
   test("ids and names are unique; the workspace modules (100-102) are retired", () => {

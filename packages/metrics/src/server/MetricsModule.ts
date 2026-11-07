@@ -19,6 +19,7 @@ const TABLES: readonly MetricsTableName[] = [
   "metricsProcess",
   "metrics",
   "metricsTables",
+  "metricsHistory",
 ];
 
 /** The viewport user, as vuu-server passes it to permission functions. */
@@ -34,6 +35,8 @@ export interface MetricsModuleOptions {
   canView?: (user: MetricsUser | undefined) => boolean;
   /** Key of the metricsProcess row (default "trading"). */
   processName?: string;
+  /** metricsHistory rows kept per metric (default 300; 0 = no history). */
+  historySize?: number;
 }
 
 class MetricsTableProvider extends Provider {
@@ -59,15 +62,20 @@ class MetricsTableProvider extends Provider {
 }
 
 /**
- * The METRICS Vuu module: metricsProcess, metrics and metricsTables, written
- * from `collector` snapshots once per interval. The collector starts when all
- * three tables have loaded.
+ * The METRICS Vuu module: metricsProcess, metrics, metricsTables and
+ * metricsHistory, written from `collector` snapshots once per interval. The
+ * collector starts when all four tables have loaded.
  */
 export const MetricsModule = (
   collector: MetricsCollector,
-  { autoStart = true, canView, processName }: MetricsModuleOptions = {},
+  {
+    autoStart = true,
+    canView,
+    processName,
+    historySize,
+  }: MetricsModuleOptions = {},
 ) => {
-  const publisher = new MetricsTablePublisher(processName);
+  const publisher = new MetricsTablePublisher({ processName, historySize });
   let stopped = false;
   let unsubscribe: (() => void) | undefined;
   const onLoad = (name: MetricsTableName, table: MetricsTable) => {

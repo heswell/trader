@@ -34,6 +34,10 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [LinkGroupSelector](trading-ui.md#linkgroupselector) | `components/LinkGroupSelector` |  |  |  | `linking-providers`, `selectors` | [guide](../components/selection-and-linking.md) |
 | [LinkGroupSwatch](trading-ui.md#linkgroupswatch) | `components/LinkGroupSelector` |  |  |  | `linking-providers`, `panel-link-group` | [guide](../components/selection-and-linking.md) |
 | [MarketDepth](trading-ui.md#marketdepth) | `components/MarketDepth` | `depth`, `instrumentPrices`, `parentOrders`, `trades` |  | LinkGroupSelector, StaleIndicator | `channel-picker-workspace`, `chart-workspace`, `market-depth-selected`, `price-ladder-live`, `trader-workspace` | [guide](../components/market-depth-and-ladder.md#marketdepth) |
+| [MetricHistoryChart](trading-ui.md#metrichistorychart) | `components/ServerMetrics` | `metricsHistory` |  | ChartFrame | `server-metrics` | [guide](../components/simulator.md#server-metrics) |
+| [MetricsGrid](trading-ui.md#metricsgrid) | `components/ServerMetrics` | `metrics` |  | Sparkline, TradingCellRenderers | `server-metrics` | [guide](../components/simulator.md#server-metrics) |
+| [MetricsProcessStrip](trading-ui.md#metricsprocessstrip) | `components/ServerMetrics` | `metricsHistory`, `metricsProcess` |  | Sparkline | `server-metrics` | [guide](../components/simulator.md#server-metrics) |
+| [MetricsTablesGrid](trading-ui.md#metricstablesgrid) | `components/ServerMetrics` | `metrics`, `metricsTables` |  | Sparkline, TradingCellRenderers | `server-metrics` | [guide](../components/simulator.md#server-metrics) |
 | [OrderBlotter](trading-ui.md#orderblotter) | `components/OrderBlotter` | `childOrders`, `parentOrders` | *edit session*, `amendOrder`, `cancelAll`, `cancelOrder` | InstrumentLookup, LinkGroupSelector, StaleIndicator, TradingCellRenderers | `order-blotter`, `trade-tape`, `trader-workspace` | [guide](../components/blotters.md) |
 | [OrderStatusBadge](trading-ui.md#orderstatusbadge) | `components/OrderStatusBadge` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
 | [OrderTicket](trading-ui.md#orderticket) | `components/OrderTicket` | `accounts`, `instrumentPrices`, `parentOrders`, `positions` | `createOrder` | FillProgressBar, InstrumentPicker, LinkGroupSelector, StaleIndicator | `hosting-connection-override`, `order-ticket-compact` | [guide](../components/order-ticket.md) |
@@ -95,6 +99,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | `components/PositionsView` | `tradingPositionsView` |  | `data-currency`, `data-link-group`, `data-testid` |
 | `components/PriceChart` | `tradingPriceChart` |  | `data-interval`, `data-link-group` |
 | `components/PriceLadder` | `tradingPriceLadder` | `--tradingPriceLadder-ask-bar`, `--tradingPriceLadder-bid-bar`, `--tradingPriceLadder-columns`, `--tradingPriceLadder-ltp`, `--tradingPriceLadder-own`, `--tradingPriceLadder-rowHeight` | `data-auto-centre`, `data-best-ask`, `data-best-bid`, `data-col`, `data-columns`, `data-connection-state`, `data-cursor`, `data-cursor-row`, `data-dragging`, `data-drop-target`, `data-kind`, `data-link-group`, `data-ltp`, `data-merged`, `data-moving`, `data-own`, `data-phase`, `data-price`, `data-queue`, `data-side`, `data-spread`, `data-trade-mode` |
+| `components/ServerMetrics` | `tradingMetricHistoryChart`, `tradingMetricsProcess` |  | `data-metric`, `data-testid` |
 | `components/SideLabel` | `tradingSideLabel` | `--tradingSideLabel-color` | `data-side` |
 | `components/SimInstrumentChart` | `tradingSimInstrumentChart` |  | `data-link-group` |
 | `components/SimulatorControls` |  |  | `data-error`, `data-link-group`, `data-status`, `data-testid` |
@@ -136,7 +141,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | Primitives | `primitives-cell-renderers`, `primitives-status` | [guide](../components/primitives.md) |
 | Selectors | `panel-link-group`, `selectors` | [guide](../components/selection-and-linking.md) |
 | SideLabel | `side-label-variants` | [guide](../components/primitives.md) |
-| Simulator | `simulator-control`, `simulator-instrument`, `simulator-monitor` | [guide](../components/simulator.md) |
+| Simulator | `server-metrics`, `simulator-control`, `simulator-instrument`, `simulator-monitor` | [guide](../components/simulator.md) |
 | SlippageChart | `slippage-chart` | [guide](../components/charts.md#slippagechart) |
 | SpreadChart | `spread-chart` | [guide](../components/charts.md#spreadchart) |
 | Stack | `stack-instrument-prices` | [guide](../components/README.md) |

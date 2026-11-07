@@ -18,6 +18,7 @@
   "dependencies": {
     "@heswell/exchange-sim": "workspace:*",
     "@heswell/oms": "workspace:*",
+    "@heswell/trading-metrics": "workspace:*",
     "@heswell/trading-schemas": "workspace:*",
     "@heswell/vuu-data-engine-local": "^4.3.0",
     "@vuu-ui/core": "5.0.0-alpha.4",
