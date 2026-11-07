@@ -1,9 +1,9 @@
 import { RpcName } from "@heswell/trading-schemas";
-import { Button, Input } from "@salt-ds/core";
+import { Button } from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
 import cx from "clsx";
-import { forwardRef, type HTMLAttributes, useEffect, useState } from "react";
+import { forwardRef, type HTMLAttributes } from "react";
 import { useTradingRows } from "../../data/useTradingRows";
 import { filterString } from "../../utils/filters";
 import { formatNotional, formatQuantity } from "../../utils/formatting";
@@ -12,6 +12,7 @@ import { PnlValue } from "../PnlValue";
 import { useSimRpc } from "../SimulatorControls/useSimRpc";
 import { Sparkline } from "../Sparkline";
 import { BotFillsTape } from "./BotFillsTape";
+import { BotParamList } from "./BotParamList";
 import simulatorGridsCss from "./SimulatorGrids.css";
 
 const classBase = "tradingBotDetail";
@@ -57,19 +58,14 @@ export const BotDetail = forwardRef<HTMLDivElement, BotDetailProps>(
       sort: { sortDefs: [{ column: "time", sortType: "A" }] },
     });
     const { send, message, pending } = useSimRpc(dataSource);
-    const [drafts, setDrafts] = useState<Record<string, string>>({});
-    // biome-ignore lint/correctness/useExhaustiveDependencies: reset on bot change only
-    useEffect(() => setDrafts({}), [botId]);
     const bot = botId ? bots.find((row) => row.botId === botId) : undefined;
-    const setParam = async (name: string, value: string) => {
-      if (!botId) return;
-      const done = await send(
+    const setParam = async (name: string, value: string) =>
+      botId !== undefined &&
+      (await send(
         RpcName.SetBotParams,
         { botId, name, value },
         `${name} set to ${value}`,
-      );
-      if (done) setDrafts(({ [name]: _, ...rest }) => rest);
-    };
+      )) !== undefined;
     const action = (
       rpcName:
         | typeof RpcName.PauseBots
@@ -206,87 +202,13 @@ export const BotDetail = forwardRef<HTMLDivElement, BotDetailProps>(
               <dd>{formatTime(bot.updated)}</dd>
             </dl>
             <h3>Parameters</h3>
-            <dl data-testid="trading-bot-params">
-              {params.map((param) => {
-                const name = String(param.name);
-                const value = String(param.value ?? "");
-                const draft = drafts[name];
-                const editing = draft !== undefined && draft !== value;
-                return (
-                  <div key={String(param.id)} style={{ display: "contents" }}>
-                    <dt title={plain(param.description)}>
-                      {name}
-                      {param.changed ? (
-                        <span
-                          className={`${classBase}-changed`}
-                          data-testid="trading-bot-param-changed"
-                          title={`Changed from baseline ${plain(param.baseline)}`}
-                        >
-                          {" "}
-                          *
-                        </span>
-                      ) : null}
-                    </dt>
-                    <dd className={`${classBase}-param`}>
-                      {param.readOnly ? (
-                        <span>{plain(param.value)}</span>
-                      ) : (
-                        <form
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            if (editing) setParam(name, draft);
-                          }}
-                        >
-                          <Input
-                            inputProps={{
-                              "aria-label": name,
-                              inputMode:
-                                param.type === "string" ? "text" : "decimal",
-                            }}
-                            onChange={(e) =>
-                              setDrafts((d) => ({
-                                ...d,
-                                [name]: (e.target as HTMLInputElement).value,
-                              }))
-                            }
-                            style={{ width: 90 }}
-                            value={draft ?? value}
-                          />
-                          {editing ? (
-                            <Button
-                              disabled={pending}
-                              sentiment="accented"
-                              type="submit"
-                            >
-                              Set
-                            </Button>
-                          ) : null}
-                          {param.changed && !editing ? (
-                            <Button
-                              disabled={pending}
-                              onClick={() =>
-                                setParam(name, String(param.baseline))
-                              }
-                              sentiment="neutral"
-                            >
-                              Reset
-                            </Button>
-                          ) : null}
-                        </form>
-                      )}
-                      {param.unit ? <small> {plain(param.unit)}</small> : null}
-                      {(param.min ?? null) !== null ||
-                      (param.max ?? null) !== null ? (
-                        <small>
-                          {" "}
-                          [{plain(param.min)}…{plain(param.max)}]
-                        </small>
-                      ) : null}
-                    </dd>
-                  </div>
-                );
-              })}
-            </dl>
+            <BotParamList
+              data-testid="trading-bot-params"
+              key={botId}
+              onSet={setParam}
+              params={params}
+              pending={pending}
+            />
             <h3>Recent fills</h3>
             <BotFillsTape
               hideToolbar

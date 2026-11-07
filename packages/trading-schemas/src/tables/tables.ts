@@ -1081,6 +1081,86 @@ export const accountPnlHistory = defineTable({
 // ---------------------------------------------------------------- joins
 
 /** Instrument grid: static + live prices. */
+export const clientBots = defineTable({
+  module: OMS_MODULE,
+  name: "clientBots",
+  keyField: "botId",
+  description:
+    "Simulated clients sending TWAP / VWAP / POV parent orders through the OMS (sim-admin only).",
+  columns: [
+    { name: "botId", dataType: "string", description: "CB<n>" },
+    { name: "persona", dataType: "string", description: "ClientPersona" },
+    { name: "account", dataType: "string" },
+    {
+      name: "paused",
+      dataType: "boolean",
+      description: "Sends no new orders; live parents keep working.",
+    },
+    { name: "sideMode", dataType: "string", description: "ClientSideMode" },
+    {
+      name: "ordersPerMin",
+      dataType: "double",
+      description: "Parent orders per minute (wall clock) at average activity.",
+    },
+    { name: "live", dataType: "int", description: "Working parent orders." },
+    { name: "submitted", dataType: "long" },
+    { name: "rejected", dataType: "long" },
+    {
+      name: "completed",
+      dataType: "long",
+      description: "Parents that finished (filled, cancelled or expired).",
+    },
+    { name: "filledQty", dataType: "long" },
+    { name: "filledUsd", dataType: "double" },
+    {
+      name: "slippageBps",
+      dataType: "double",
+      description:
+        "Average slippage against arrival, weighted by filled notional (> 0 = worse).",
+    },
+    { name: "lastOrderId", dataType: "string" },
+    {
+      name: "lastReject",
+      dataType: "string",
+      description: "Reason and text of the most recent reject.",
+    },
+    { name: "updated", dataType: "epochtimestamp" },
+  ],
+});
+
+export const clientBotParams = defineTable({
+  module: OMS_MODULE,
+  name: "clientBotParams",
+  keyField: "id",
+  description:
+    "One row per client bot parameter, with its spec (sim-admin only); key 'botId|name'.",
+  columns: [
+    { name: "id", dataType: "string" },
+    { name: "botId", dataType: "string" },
+    { name: "persona", dataType: "string" },
+    { name: "account", dataType: "string" },
+    { name: "name", dataType: "string" },
+    {
+      name: "type",
+      dataType: "string",
+      description: "number | integer | string | boolean",
+    },
+    { name: "value", dataType: "string" },
+    { name: "min", dataType: "double", optional: true },
+    { name: "max", dataType: "double", optional: true },
+    { name: "unit", dataType: "string" },
+    { name: "description", dataType: "string" },
+    { name: "readOnly", dataType: "boolean" },
+    {
+      name: "baseline",
+      dataType: "string",
+      description: "Value when the bot was added.",
+    },
+    { name: "changed", dataType: "boolean" },
+  ],
+  links: [{ fromColumn: "botId", toTable: "clientBots", toColumn: "botId" }],
+});
+
 export const instrumentPrices = defineJoin({
   module: EXCHANGE_MODULE,
   name: "instrumentPrices",
@@ -1137,6 +1217,8 @@ export const omsTables = {
   positions,
   pnlHistory,
   accountPnlHistory,
+  clientBots,
+  clientBotParams,
 } as const;
 export const tradingTables = { ...exchangeTables, ...omsTables } as const;
 export const tradingJoins = { instrumentPrices, positionPrices } as const;

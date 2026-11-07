@@ -19,6 +19,7 @@ import {
 } from "@heswell/trading-metrics/server";
 import { loadOmsConfig } from "./config";
 import { createOms } from "./engine/OmsService";
+import { connectClientFlowToSim } from "./flow/simScenarios";
 import { loadMetricsConfig } from "./metrics/config";
 import {
   exchangeMetricsSource,
@@ -50,6 +51,8 @@ export default async function main(
     rics: () => sim.books.map((book) => book.ric),
     logger: getLogger("trader.oms"),
   });
+  // client bots: fair value, control log and scenario actions
+  connectClientFlowToSim(oms, sim);
   // Restore persisted exchange + OMS state before the modules attach their
   // tables (TableSink buffers the rows) and start the simulator / flow.
   const persistenceLogger = getLogger("trader.persistence");

@@ -141,7 +141,7 @@ describe("determinism", () => {
     expect(other.oms.getTable("parentOrders").data.length).toBe(1);
     expect(td.oms.getTable("parentOrders").data.length).toBe(0);
     other.dispose();
-    expect(td.engine.getTableList().length).toBe(31);
+    expect(td.engine.getTableList().length).toBe(33);
   });
 
   test("advance requires a manual clock", () => {
@@ -390,6 +390,67 @@ describe("OMS rpc", () => {
     expect(c.size).toBe(1);
     expect(c.rows()[0][ds.columnMap.account]).toBe("ACC-US-01");
     ds.unsubscribe();
+  });
+
+  test("client bots: rows for sim admins only, RPCs, client scenarios listed", async () => {
+    const SIM_ADMIN = { name: "root", authorizations: ["sim-admin"] };
+    const added = td.rpc(
+      "addClientBot",
+      { persona: "quant", params: JSON.stringify({ ordersPerMin: 60 }) },
+      SIM_ADMIN,
+    );
+    expect(added).toMatchObject({
+      data: { botId: "CB1", account: "CLIENT-01" },
+    });
+    expect(td.rpc("addClientBot", { persona: "quant" }, VIEWER)).toMatchObject({
+      type: "ERROR_RESULT",
+    });
+    td.advance(5_000);
+    const bots = td.oms.getTable("clientBots");
+    const row = bots.findByKey("CB1");
+    expect(row?.[bots.map.persona]).toBe("quant");
+    expect(row?.[bots.map.submitted] as number).toBeGreaterThan(0);
+    const params = td.oms.getTable("clientBotParams");
+    expect(params.findByKey("CB1|ordersPerMin")?.[params.map.value]).toBe("60");
+    // the add's overrides are the baseline; a later change is marked
+    expect(params.findByKey("CB1|ordersPerMin")?.[params.map.changed]).toBe(
+      false,
+    );
+    td.rpc(
+      "setClientBotParams",
+      { botId: "CB1", name: "maxLive", value: "3" },
+      SIM_ADMIN,
+    );
+    td.advance(100);
+    expect(params.findByKey("CB1|maxLive")?.[params.map.changed]).toBe(true);
+    expect(params.findByKey("CB1|maxLive")?.[params.map.baseline]).toBe("10");
+    expect(
+      td.exchange
+        .getTable("scenarios")
+        .data.map((r) => r[td.exchange.getTable("scenarios").map.name]),
+    ).toEqual(
+      expect.arrayContaining(["client-liquidation", "pension-programme"]),
+    );
+
+    setCurrentUser(SIM_ADMIN);
+    const admin = createDs(td.oms, "clientBots");
+    const a = collector();
+    await admin.subscribe({ range: RANGE }, a.callback);
+    await tick();
+    expect(a.size).toBe(1);
+    admin.unsubscribe();
+    setCurrentUser(VIEWER);
+    const viewer = createDs(td.oms, "clientBots");
+    const v = collector();
+    await viewer.subscribe({ range: RANGE }, v.callback);
+    await tick();
+    expect(v.size).toBe(0);
+    viewer.unsubscribe();
+
+    td.rpc("removeClientBot", { botId: "CB1" }, SIM_ADMIN);
+    td.advance(100);
+    expect(bots.findByKey("CB1")).toBeUndefined();
+    expect(params.findByKey("CB1|ordersPerMin")).toBeUndefined();
   });
 
   test("saving a parentOrders edit session amends via the OMS", async () => {

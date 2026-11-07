@@ -116,6 +116,37 @@ export const SimBotKind = Object.freeze({
 export type SimBotKind = ValueOf<typeof SimBotKind>;
 export const SIM_BOT_KINDS = values(SimBotKind);
 
+/** Starter personas of the OMS client bots (clientBots.persona). */
+export const ClientPersona = Object.freeze({
+  /** Large VWAPs, one side across a programme of names. */
+  Pension: "pension",
+  /** POV 10–20%, buying names up on the day and selling those down. */
+  HedgeFund: "hedgeFund",
+  /** Many short TWAPs, either side. */
+  Quant: "quant",
+  /** Urgent POV 25% selling (or buying back) a position. */
+  Liquidation: "liquidation",
+  /** Trades towards the exchange's fair value when the price lags it. */
+  Informed: "informed",
+} as const);
+export type ClientPersona = ValueOf<typeof ClientPersona>;
+export const CLIENT_PERSONAS = values(ClientPersona);
+
+/** How a client bot picks the side of a new parent order. */
+export const ClientSideMode = Object.freeze({
+  Random: "random",
+  /** One side (programmeSide) for every order. */
+  Programme: "programme",
+  /** Lean against the account's position in the name. */
+  PositionReverting: "positionReverting",
+  /** Buy names up on the day, sell names down. */
+  Momentum: "momentum",
+  /** Towards the exchange's fair value; no order without a gap. */
+  Informed: "informed",
+} as const);
+export type ClientSideMode = ValueOf<typeof ClientSideMode>;
+export const CLIENT_SIDE_MODES = values(ClientSideMode);
+
 /** Status of a simulator scenario run (scenarioRuns.status). */
 export const ScenarioStatus = Object.freeze({
   Running: "RUNNING",

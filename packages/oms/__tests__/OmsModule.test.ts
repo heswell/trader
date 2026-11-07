@@ -185,6 +185,8 @@ describe("OmsModule over the Vuu protocol", () => {
         "positions",
         "pnlHistory",
         "accountPnlHistory",
+        "clientBots",
+        "clientBotParams",
       ].sort(),
     );
     const vp = await sam.createViewport(OMS_MODULE, "accounts", [
@@ -197,7 +199,8 @@ describe("OmsModule over the Vuu protocol", () => {
       vp,
       (r) => r.account === "ACC-ASIA-03" && r.enabled === false,
     );
-    expect(sam.rowsOf(vp)).toHaveLength(7);
+    // 7 seeded trader accounts + the 5 Sim clients accounts
+    expect(sam.rowsOf(vp)).toHaveLength(12);
   });
 
   test("createOrder RPC -> exchange fill -> parentOrders, fills, positions rows", async () => {

@@ -393,7 +393,7 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     source: "./src/features/SimulatorBots",
     title: "Bots",
     description:
-      "Every simulator bot's position, P&L and order flow, with its parameters",
+      "Every simulator bot's position, P&L and order flow, and the OMS client bots' algo orders, with their parameters",
     accessRole: simAdmin,
     location: "/Simulator/Bots",
     path: "/simulator/bots",

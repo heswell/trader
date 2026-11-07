@@ -12,6 +12,7 @@ import {
   type Viewport,
 } from "@heswell/vuu-server";
 import {
+  CLIENT_ADMIN_RPC_NAMES,
   OMS_RPC_NAMES,
   PARENT_ORDER_PROGRESS_COLUMNS,
   parentOrders,
@@ -22,6 +23,7 @@ import {
 import type { RpcResult } from "@vuu-ui/vuu-protocol-types";
 import type { OmsService } from "../../engine/OmsService";
 import type { TradingUser } from "../../permissions/access";
+import { handleClientAdminRpc } from "./clientAdminRpc";
 import { handleOmsRpc } from "./omsRpc";
 
 export { handleOmsRpc, type OmsRpcName } from "./omsRpc";
@@ -66,6 +68,11 @@ export class OmsRpcHandler extends CreateSessionTableRpcHandler {
     for (const rpcName of OMS_RPC_NAMES) {
       this.registerRpc(rpcName, ({ namedParams, ctx }) =>
         handleOmsRpc(oms, rpcName, namedParams, ctx.user),
+      );
+    }
+    for (const rpcName of CLIENT_ADMIN_RPC_NAMES) {
+      this.registerRpc(rpcName, ({ namedParams, ctx }) =>
+        handleClientAdminRpc(oms, rpcName, namedParams, ctx.user),
       );
     }
   }
