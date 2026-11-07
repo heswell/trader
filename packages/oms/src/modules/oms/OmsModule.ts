@@ -7,6 +7,7 @@ import {
   type ServiceFactory,
   ViewPortDef,
 } from "@heswell/vuu-server";
+import { canAdminSim } from "@heswell/exchange-sim/engine";
 import { OMS_MODULE, positionPrices } from "@heswell/trading-schemas";
 import {
   createOmsTableDefs,
@@ -36,6 +37,14 @@ const TABLES: readonly OmsTableName[] = [
   "positions",
   "pnlHistory",
   "accountPnlHistory",
+  "clientBots",
+  "clientBotParams",
+];
+
+/** Simulator tables: rows for sim-admin users only (as the EXCHANGE bots). */
+const SIM_ADMIN_TABLES: readonly OmsTableName[] = [
+  "clientBots",
+  "clientBotParams",
 ];
 
 class OmsTableProvider extends Provider {
@@ -69,9 +78,18 @@ export const omsPermissionFunction =
     return PermissionFilter("account", new Set(access.accounts));
   };
 
+/** clientBots / clientBotParams: every row for sim admins, none otherwise. */
+export const clientBotsPermissionFunction =
+  (oms: OmsService): PermissionFunction =>
+  (viewport) =>
+    canAdminSim(viewport.user, oms.permissionMode)
+      ? PermissionFilter(() => true)
+      : PermissionFilter(() => false);
+
 /**
  * The OMS Vuu module: accounts, parentOrders, childOrders, fills, positions,
- * pnlHistory, accountPnlHistory and the positionPrices join, written by `oms`. Every table (and the join)
+ * pnlHistory, accountPnlHistory, clientBots, clientBotParams (sim-admin
+ * only) and the positionPrices join, written by `oms`. Every table (and the join)
  * carries the OMS RPC service, so order RPCs work from any OMS viewport.
  */
 export const OmsModule = (
@@ -106,13 +124,16 @@ export const OmsModule = (
     ViewPortDef(table.tableDef.columns, new OmsRpcHandler(tableContainer, oms));
 
   const permissionFunction = omsPermissionFunction(oms);
+  const simAdminPermission = clientBotsPermissionFunction(oms);
   const defs = createOmsTableDefs();
   const provider = (name: OmsTableName) => (table: ProviderTable) =>
     new OmsTableProvider(table, name, onLoad, onStop);
 
   let factory = ModuleFactory.withNameSpace(OMS_MODULE);
   for (const name of TABLES) {
-    defs[name].permissionFunction = permissionFunction;
+    defs[name].permissionFunction = SIM_ADMIN_TABLES.includes(name)
+      ? simAdminPermission
+      : permissionFunction;
     factory = factory.addTable(defs[name], provider(name), serviceFactory);
   }
   if (withJoin) {

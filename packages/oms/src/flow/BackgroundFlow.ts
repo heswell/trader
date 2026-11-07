@@ -51,6 +51,20 @@ export class BackgroundFlow {
     return this.options.rate;
   }
 
+  /** Current settings (setFlowParams). */
+  get params() {
+    const { rate, notionalUsd, maxWorking, cancelRate } = this.options;
+    return { rate, notionalUsd, maxWorking, cancelRate };
+  }
+
+  /** Change settings at run time; omitted fields are unchanged. */
+  setParams(params: Partial<BackgroundFlow["params"]>) {
+    for (const [key, value] of Object.entries(params))
+      if (value !== undefined)
+        (this.options as unknown as Record<string, number>)[key] = value;
+    return this.params;
+  }
+
   /** Advance the flow by elapsed ms (called from a timer or tests). */
   step(elapsedMs: number) {
     const { rate, random, rics, accounts } = this.options;

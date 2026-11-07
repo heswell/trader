@@ -40,6 +40,13 @@ export interface OmsConfig {
   gatewayLatencyMs: number;
   /** Interval of the algo timer (ms): how often TWAP / VWAP / POV orders are re-sliced. */
   algoSliceMs: number;
+  /** Accounts of the Sim clients desk (CLIENT-01…) the client bots trade; 0 = none. */
+  clientAccounts: number;
+  /**
+   * Client bots started with the OMS, `persona:count` comma separated
+   * (pension, hedgeFund, quant, liquidation, informed); empty = none.
+   */
+  clientBots: string;
 }
 
 export const DEFAULT_OMS_CONFIG: Readonly<OmsConfig> = Object.freeze({
@@ -58,6 +65,8 @@ export const DEFAULT_OMS_CONFIG: Readonly<OmsConfig> = Object.freeze({
   permissionMode: "auto",
   gatewayLatencyMs: 0,
   algoSliceMs: 250,
+  clientAccounts: 5,
+  clientBots: "",
 });
 
 export interface ConfigSource {
@@ -104,6 +113,7 @@ export const validateOmsConfig = (config: OmsConfig) => {
     "markIntervalMs",
     "gatewayLatencyMs",
     "pnlHistoryIntervalMs",
+    "clientAccounts",
   ] as const) {
     if (!(config[key] >= 0)) throw Error(`oms.${key} must be >= 0`);
   }
@@ -120,6 +130,9 @@ export const validateOmsConfig = (config: OmsConfig) => {
   }
   if (!(config.flowCancelRate >= 0 && config.flowCancelRate <= 1)) {
     throw Error("oms.flowCancelRate must be in [0, 1]");
+  }
+  if (!Number.isInteger(config.clientAccounts) || config.clientAccounts > 99) {
+    throw Error("oms.clientAccounts must be an integer 0..99");
   }
   if (config.permissionMode !== "auto" && config.permissionMode !== "strict") {
     throw Error("oms.permissionMode must be 'auto' or 'strict'");

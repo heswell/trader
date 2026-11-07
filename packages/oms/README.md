@@ -28,6 +28,8 @@ const oms = createOms(sim.gateway, {
 | `src/engine/OmsEngine.ts` | Transport-independent core: risk, routing, execution reports, positions. |
 | `src/engine/OmsService.ts` | Engine + background flow + mark timer + table sink. `createOms(gateway, options)`. |
 | `src/flow/BackgroundFlow.ts` | Simulated "other traders". |
+| `src/flow/ClientFlow.ts`, `clientPersonas.ts` | Client bots: simulated clients sending algo orders. |
+| `src/flow/simScenarios.ts` | Connects the client bots to an in-process exchange: fair value, control log, scenario actions. |
 | `src/modules/oms/*` | Vuu module: tables, RPC handler, edit session, permission filter. |
 | `src/notifications/OmsNotifier.ts` | Turns engine events into notifications: rejects, and risk-limit warnings / breaches. |
 | `src/modules/notifications/OmsNotificationModule.ts` | vuu-server's generic `NOTIFICATIONS` module fed by `OmsNotifier`. |
@@ -35,9 +37,11 @@ const oms = createOms(sim.gateway, {
 ## Tables
 
 These are the `trading-schemas` OMS tables: `accounts`, `parentOrders`, `childOrders`, `fills`, `positions`, `pnlHistory`,
-`accountPnlHistory`, plus the `positionPrices` join (positions ⟕ EXCHANGE prices). EXCHANGE must be registered first.
+`accountPnlHistory`, `clientBots`, `clientBotParams`, plus the `positionPrices` join (positions ⟕ EXCHANGE prices).
+EXCHANGE must be registered first.
 
-- `accounts` is seeded with 3 desks, 5 traders and 7 accounts.
+- `accounts` is seeded with 3 desks, 5 traders and 7 accounts, plus the Sim clients desk (`SIM-CLIENTS`, owner
+  `simclient`): `clientAccounts` accounts `CLIENT-01…` with $2m order and $25m position limits, for the client bots.
   - Each account has `maxOrderQty`, `maxOrderNotional` and `maxPositionNotional`.
   - `ACC-ASIA-03` is disabled.
   - Owners are `alice` (ACC-US-01), `bob` (ACC-US-02), `carol` (ACC-EU-01), `dave` (ACC-EU-02) and `erin` (ACC-ASIA-01..03).
@@ -60,6 +64,9 @@ These are the `trading-schemas` OMS tables: `accounts`, `parentOrders`, `childOr
   mark timer every `pnlHistoryIntervalMs`, `pnlHistoryLength` per key (oldest deleted). A position row is written only
   when its quantity, mark or realised P&L changed; account totals are in USD. Not persisted. See
   [docs/charting-data.md](../../docs/charting-data.md).
+- `clientBots` (`botId`) and `clientBotParams` (`botId|name`) are the client bots and their parameters (see
+  [Client bots](#client-bots)). Rows are for sim-admin users only (the exchange-sim `sim-admin` role, or no roles in
+  `auto` mode), whatever accounts they can see.
 
 ## Notifications
 
@@ -213,6 +220,17 @@ Risk checks run in this order, and the first failure wins. Each returns a `Rejec
   next to each position.
 - P&L is in instrument currency.
 
+Simulator control (sim-admin only, see [Client bots](#client-bots)), on the same viewports:
+
+| RPC | params | success `data` |
+| --- | --- | --- |
+| `addClientBot` | `persona, account?, params?` (JSON object of overrides) | `{botId, account}` |
+| `removeClientBot` | `botId` | `{botIds}`; its working parents are cancelled |
+| `setClientBotParams` | `botId?` or `persona?`, `name, value` (absolute, or `x2` / `+3` for numbers) | `{botIds}` |
+| `pauseClientBots` / `resumeClientBots` | `botId?` or `persona?` (neither = all) | `{botIds}` |
+| `submitClientAlgo` | `botId, ric, side?, notionalUsd? \| quantity?, strategy?, durationMins?, participationPct?, limitBps?` | as `createOrder` |
+| `setFlowParams` | `rate?, notionalUsd?, maxWorking?, cancelRate?` | the background flow's settings |
+
 ## Background flow
 
 `BackgroundFlow` simulates other traders.
@@ -222,10 +240,51 @@ Risk checks run in this order, and the first failure wins. Each returns a `Rejec
   - mostly passive limits near the touch, some marketable;
   - some IOC;
   - amends and cancels of its own working orders (`flowCancelRate`).
-- Orders are placed for the owners of `flowAccounts` (default: all enabled accounts), so they appear in those traders'
-  blotters.
+- Orders are placed for the owners of `flowAccounts` (default: all enabled accounts but the Sim clients desk), so they
+  appear in those traders' blotters.
+- `setFlowParams` changes `rate`, `notionalUsd`, `maxWorking` and `cancelRate` at run time.
 - Working orders are capped at `flowMaxWorking`.
 - It uses a seeded RNG (`oms.seed`).
+
+## Client bots
+
+`ClientFlow` simulates institutional clients. Each client bot is a persona trading one account; it sends TWAP / VWAP
+/ POV parent orders **through `engine.createOrder`**, so risk, the algo container, positions, slippage and execution
+quality apply as for any client order (there is no second algo engine).
+
+- Arrivals are a Poisson stream at `ordersPerMin` (wall clock), scaled by the session's volume curve and stopped while
+  the market is closed. An arrival adds a parent (up to `maxLive` working), or amends (`amendChance`, quantity ±30%) or
+  cancels (`cancelChance`) a working one.
+- Each parent: an instrument from `universe` (empty = all, a list of rics, or `sector:<name>`), a side from
+  `sideMode`, a log-uniform notional in `minNotionalUsd…maxNotionalUsd` (capped by the account's limits), a strategy
+  from `twapWeight` / `vwapWeight` / `povWeight`, a duration in `minDurationMins…maxDurationMins` (session minutes)
+  and, for POV, a participation in `minPovPct…maxPovPct`. `limitBps` > 0 sets a limit that far through arrival
+  (within the price collar); 0 sends a market parent.
+- Side modes: `random`; `programme` (always `programmeSide`); `positionReverting` (leans against the account's
+  position); `momentum` (with the day's move against the reference price, surer the bigger it is); `informed`
+  (towards the exchange's fair value, only when the mid is `informedThresholdBps` away). A side that would take the
+  position past 80% of the account's limit is skipped.
+
+| persona | side mode | orders | size | strategy |
+| --- | --- | --- | --- | --- |
+| `pension` | programme (random side) | 1 / min, 6 live | $0.5m–2m | VWAP 30–120 min, limit 100 bps |
+| `hedgeFund` | momentum | 2 / min, 5 live | $0.2m–1.5m | POV 10–20%, 10–60 min |
+| `quant` | random | 8 / min, 10 live | $50k–300k | TWAP 2–10 min, limit 20 bps, 10% amend / cancel |
+| `liquidation` | programme SELL | 0.5 / min, 2 live | $1m–2m | POV 25% market, 15–30 min |
+| `informed` | informed (15 bps) | 6 / min, 3 live | $250k–1m | POV 20–30% market, 2–5 min |
+
+- Bots start from `clientBots` (`persona:count`, e.g. `pension:1,quant:2`), or are added by `addClientBot` and
+  scenarios. A new bot takes the least used `CLIENT-nn` account; `account` can name any enabled account instead (a
+  trader's, for demos). Bot ids are `CB<n>`; the RNG is seeded from `oms.seed`.
+- On the exchange its fills are attributed to `OMS:<account>` (`botFills`, Bot detail's fills tape).
+- Client bots are not persisted: after a restart they come back from `clientBots`; their orders are restored as
+  usual.
+- `connectClientFlowToSim(oms, sim)` (Main and trading-test-data call it) gives informed bots the fair value and
+  `sector:` universes the sectors, logs every client bot change in `simEvents`, and registers the scenario actions
+  `addClientBot`, `setClientBotParams`, `pauseClientBots`, `resumeClientBots`, `submitClientAlgo` and
+  `setFlowParams`. A run's revert removes the bots it added and puts back the settings it changed. It defines the
+  scenarios `client-liquidation`, `pension-programme` and `informed-client-news` (see the
+  [exchange-sim README](../exchange-sim/README.md#scenarios)).
 
 ## Permissions
 
@@ -275,6 +334,8 @@ Set in `application.conf` as `oms.<key>`, or with the env var `OMS_<UPPER_SNAKE>
 | `permissionMode` | `auto` | `auto` or `strict` (see above). |
 | `gatewayLatencyMs` | 0 | Simulated one-way OMS↔exchange latency. More than 0 makes `PENDING_*` states visible. |
 | `algoSliceMs` | 250 | Algo timer: how often TWAP / VWAP / POV orders are re-sliced. |
+| `clientAccounts` | 5 | Accounts of the Sim clients desk (`CLIENT-01…`). 0 = none. |
+| `clientBots` | `""` | Client bots started with the OMS, `persona:count` comma separated. |
 
 ### Persistence
 

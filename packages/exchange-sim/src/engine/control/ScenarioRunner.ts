@@ -121,7 +121,7 @@ const scaled = (value: unknown, current: number): number | undefined => {
 const str = (value: unknown) =>
   value === undefined ? undefined : String(value);
 
-type StepAction = (
+export type StepAction = (
   runner: ScenarioRunner,
   run: ScenarioRun,
   params: Record<string, unknown>,
@@ -139,6 +139,7 @@ export class ScenarioRunner {
   readonly #actions = new Map<string, StepAction>();
   readonly #runs: ScenarioRun[] = [];
   readonly #listeners = new Set<RunListener>();
+  readonly #revertHooks = new Set<RunListener>();
   #seq = 0;
 
   constructor(readonly sim: ExchangeSimulator) {
@@ -148,6 +149,17 @@ export class ScenarioRunner {
 
   registerAction(name: string, action: StepAction) {
     this.#actions.set(name, action);
+  }
+
+  /**
+   * Called when a run is reverted, after its targets' settings are back:
+   * actions registered from outside (the OMS) undo their own changes here.
+   */
+  onRevert(hook: RunListener) {
+    this.#revertHooks.add(hook);
+    return () => {
+      this.#revertHooks.delete(hook);
+    };
   }
 
   get actionNames() {
@@ -324,6 +336,7 @@ export class ScenarioRunner {
     if (run.reverted) return;
     for (const settings of run.baseline) this.sim.applySettings(settings);
     run.reverted = true;
+    for (const hook of this.#revertHooks) hook(run);
     this.sim.control.record(
       "revert",
       run.targets.join(","),

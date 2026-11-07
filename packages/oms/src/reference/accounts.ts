@@ -87,3 +87,25 @@ export const SEED_ACCOUNTS: readonly Account[] = Object.freeze([
     false,
   ),
 ]);
+
+/** Desk of the simulated clients (OMS client bots). */
+export const SIM_CLIENTS_DESK = "SIM-CLIENTS";
+/** Owner (user name) of the Sim clients accounts. */
+export const SIM_CLIENTS_OWNER = "simclient";
+
+/**
+ * The Sim clients desk: `count` accounts CLIENT-01… with institutional
+ * limits (about $2m per order, $25m position), traded by the client bots.
+ */
+export const simClientAccounts = (count: number): Account[] =>
+  Array.from({ length: count }, (_, i) =>
+    account(
+      `CLIENT-${String(i + 1).padStart(2, "0")}`,
+      `Sim client ${i + 1}`,
+      SIM_CLIENTS_DESK,
+      SIM_CLIENTS_OWNER,
+      1_000_000,
+      2_000_000,
+      25_000_000,
+    ),
+  );

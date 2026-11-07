@@ -2,6 +2,8 @@ import {
   BotDetail,
   BotFillsTape,
   BotsGrid,
+  ClientBotDetail,
+  ClientBotsGrid,
   ScenarioRuns,
   SimBooksGrid,
   SimEventsLog,
@@ -70,3 +72,16 @@ export const SimulatorControlExample = () => (
     </div>
   </div>
 );
+
+/** OMS client bots: add one from a persona, select it to edit or send an algo. */
+export const SimulatorClientsExample = () => {
+  const [botId, setBotId] = useState<string>();
+  return (
+    <div style={{ display: "flex", gap: 16, ...fill }}>
+      <div style={{ ...pane, flex: 3 }}>
+        <ClientBotsGrid onBotSelect={setBotId} style={fill} />
+      </div>
+      <ClientBotDetail botId={botId} style={{ flex: 1, minWidth: 280 }} />
+    </div>
+  );
+};

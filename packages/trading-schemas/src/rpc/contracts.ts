@@ -6,6 +6,7 @@ import type {
 import {
   ALGO_STRATEGIES,
   BOT_TYPES,
+  CLIENT_PERSONAS,
   type OrdStatus,
   ORD_TYPES,
   REJECT_REASONS,
@@ -57,6 +58,13 @@ export const RpcName = Object.freeze({
   ResetBotStats: "resetBotStats",
   RunScenario: "runScenario",
   StopScenario: "stopScenario",
+  SetClientBotParams: "setClientBotParams",
+  PauseClientBots: "pauseClientBots",
+  ResumeClientBots: "resumeClientBots",
+  AddClientBot: "addClientBot",
+  RemoveClientBot: "removeClientBot",
+  SubmitClientAlgo: "submitClientAlgo",
+  SetFlowParams: "setFlowParams",
 } as const);
 export type RpcName = (typeof RpcName)[keyof typeof RpcName];
 
@@ -83,6 +91,16 @@ export const EXCHANGE_ADMIN_RPC_NAMES = Object.freeze([
   RpcName.ResetBotStats,
   RpcName.RunScenario,
   RpcName.StopScenario,
+] as const);
+/** OMS simulator control (sim-admin): client bots and the background flow. */
+export const CLIENT_ADMIN_RPC_NAMES = Object.freeze([
+  RpcName.SetClientBotParams,
+  RpcName.PauseClientBots,
+  RpcName.ResumeClientBots,
+  RpcName.AddClientBot,
+  RpcName.RemoveClientBot,
+  RpcName.SubmitClientAlgo,
+  RpcName.SetFlowParams,
 ] as const);
 
 const id = string({ maxLength: 64 });
@@ -300,6 +318,86 @@ export const stopScenarioParams = object({
 });
 export type StopScenarioRequest = Infer<typeof stopScenarioParams>;
 
+// ---------------------------------------------------------------- client bots (OMS)
+
+/** Which client bots: one (`botId`), or every bot of `persona`; neither = all. */
+const clientBotSelector = {
+  botId: optional(string({ maxLength: 32 })),
+  persona: optional(oneOf(CLIENT_PERSONAS)),
+};
+
+/** Set one client bot parameter (checked against its spec); value as setBotParams. */
+export const setClientBotParamsParams = object({
+  ...clientBotSelector,
+  name: string({ maxLength: 64 }),
+  value: string({ maxLength: 1_024 }),
+});
+export type SetClientBotParamsRequest = Infer<typeof setClientBotParamsParams>;
+
+export const clientBotSelectorParams = object(clientBotSelector);
+export type ClientBotSelectorRequest = Infer<typeof clientBotSelectorParams>;
+
+/**
+ * Add a client bot of `persona`. `account` defaults to the next Sim clients
+ * account (CLIENT-nn); any enabled account works, e.g. a trader's for demos.
+ * `params` is a JSON object of parameter overrides.
+ */
+export const addClientBotParams = object({
+  persona: oneOf(CLIENT_PERSONAS),
+  account: optional(id),
+  params: optional(string({ maxLength: 2_048 })),
+});
+export type AddClientBotRequest = Infer<typeof addClientBotParams>;
+export interface AddClientBotResponse {
+  botId: string;
+  account: string;
+}
+
+/** Remove a client bot; its live parent orders are cancelled. */
+export const removeClientBotParams = object({
+  botId: string({ maxLength: 32 }),
+});
+export type RemoveClientBotRequest = Infer<typeof removeClientBotParams>;
+
+/**
+ * One parent order now, for `botId`'s account: `notionalUsd` (or
+ * `quantity`) on `ric`, worked by `strategy` (default the bot's mix).
+ * Omitted fields come from the bot's parameters.
+ */
+export const submitClientAlgoParams = object({
+  botId: string({ maxLength: 32 }),
+  ric,
+  side: optional(oneOf(SIDES)),
+  notionalUsd: optional(number({ greaterThan: 0 })),
+  quantity: optional(positiveQty),
+  strategy: optional(oneOf(ALGO_STRATEGIES)),
+  durationMins: optional(number({ greaterThan: 0, max: 1440 })),
+  participationPct: optional(number({ greaterThan: 0, max: 50 })),
+  /** Limit this far through arrival, bps; 0 = a market parent. */
+  limitBps: optional(number({ min: 0, max: 5_000 })),
+});
+export type SubmitClientAlgoRequest = Infer<typeof submitClientAlgoParams>;
+
+/** BackgroundFlow settings; omitted fields are unchanged. */
+export const setFlowParamsParams = object({
+  rate: optional(number({ min: 0, max: 1_000 })),
+  notionalUsd: optional(number({ greaterThan: 0 })),
+  maxWorking: optional(number({ min: 0, max: 10_000 })),
+  cancelRate: optional(number({ min: 0, max: 1 })),
+});
+export type SetFlowParamsRequest = Infer<typeof setFlowParamsParams>;
+
+/** Client bots affected. */
+export interface ClientAdminRpcResponse {
+  botIds: string[];
+}
+export interface SetFlowParamsResponse {
+  rate: number;
+  notionalUsd: number;
+  maxWorking: number;
+  cancelRate: number;
+}
+
 export interface AdminRpcResponse {
   /** Instruments affected. */
   rics: string[];
@@ -328,6 +426,13 @@ export interface RpcContracts {
   resetBotStats: [BotSelectorRequest, AdminRpcResponse];
   runScenario: [RunScenarioRequest, RunScenarioResponse];
   stopScenario: [StopScenarioRequest, AdminRpcResponse];
+  setClientBotParams: [SetClientBotParamsRequest, ClientAdminRpcResponse];
+  pauseClientBots: [ClientBotSelectorRequest, ClientAdminRpcResponse];
+  resumeClientBots: [ClientBotSelectorRequest, ClientAdminRpcResponse];
+  addClientBot: [AddClientBotRequest, AddClientBotResponse];
+  removeClientBot: [RemoveClientBotRequest, ClientAdminRpcResponse];
+  submitClientAlgo: [SubmitClientAlgoRequest, CreateOrderResponse];
+  setFlowParams: [SetFlowParamsRequest, SetFlowParamsResponse];
 }
 export type RpcRequestParams<N extends RpcName> = RpcContracts[N][0];
 export type RpcResponseData<N extends RpcName> = RpcContracts[N][1];
@@ -418,6 +523,13 @@ const validators = {
   resetBotStats: botSelectorParams,
   runScenario: runScenarioParams,
   stopScenario: stopScenarioParams,
+  setClientBotParams: setClientBotParamsParams,
+  pauseClientBots: clientBotSelectorParams,
+  resumeClientBots: clientBotSelectorParams,
+  addClientBot: addClientBotParams,
+  removeClientBot: removeClientBotParams,
+  submitClientAlgo: submitClientAlgoParams,
+  setFlowParams: setFlowParamsParams,
 } as const;
 
 /**
