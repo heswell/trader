@@ -114,6 +114,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@heswell/hft-limit-order-book": "2.0.0",
+        "@heswell/trading-metrics": "workspace:*",
         "@heswell/trading-persistence": "workspace:*",
         "@heswell/trading-schemas": "workspace:*",
         "@heswell/vuu-server": "^4.4.0",

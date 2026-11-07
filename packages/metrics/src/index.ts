@@ -7,3 +7,4 @@
 export * from "./Histogram";
 export * from "./MetricsCollector";
 export * from "./ProcessSampler";
+export * from "./Timer";

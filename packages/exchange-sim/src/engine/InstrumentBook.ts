@@ -14,6 +14,7 @@ import {
   type TickSchedule,
   TradingPhase,
 } from "@heswell/trading-schemas";
+import { Timer } from "@heswell/trading-metrics";
 import type { InstrumentDef } from "../reference/instruments";
 import type { Clock } from "../util/clock";
 import type { ILimitOrder } from "./persistence";
@@ -34,6 +35,26 @@ export interface FillSink {
     tradeId: string,
   ): void;
 }
+
+/**
+ * Matching timers, shared by every book of a simulator (see
+ * ExchangeSimulator.timers). Each covers the whole operation, including
+ * fill callbacks to the order's owner.
+ */
+export interface BookTimers {
+  limit: Timer;
+  market: Timer;
+  modify: Timer;
+  cancel: Timer;
+}
+
+/** For books outside a simulator: counted, never timed. */
+const untimed = (): BookTimers => ({
+  limit: new Timer(),
+  market: new Timer(),
+  modify: new Timer(),
+  cancel: new Timer(),
+});
 
 export interface SessionStats {
   last: number;
@@ -109,6 +130,8 @@ export class InstrumentBook {
    * matching path costs nothing extra without it.
    */
   bookEvents: BookEventSink | undefined;
+  /** Set by the simulator to its shared timers. */
+  timers: BookTimers = untimed();
   readonly #sinks = new Map<string, FillSink>();
   #eventSeq = 0;
   readonly #event: BookEvent = {
@@ -232,6 +255,8 @@ export class InstrumentBook {
   }
 
   limit(options: LimitOrderOptions, sink?: FillSink): IProcessOrder {
+    const timer = this.timers.limit;
+    const t0 = timer.start();
     if (sink) this.#sinks.set(options.id, sink);
     const result = this.book.limit(options);
     this.#afterOp(result);
@@ -240,14 +265,18 @@ export class InstrumentBook {
       if (sink && resting === undefined) this.#sinks.delete(options.id);
       if (resting && this.bookEvents) this.#emitAdd(resting);
     }
+    timer.stop(t0);
     return result;
   }
 
   market(options: MarketOrderOptions & { id: string }, sink?: FillSink) {
+    const timer = this.timers.market;
+    const t0 = timer.start();
     if (sink) this.#sinks.set(options.id, sink);
     const result = this.book.market(options);
     this.#afterOp(result);
     if (sink) this.#sinks.delete(options.id);
+    timer.stop(t0);
     return result;
   }
 
@@ -257,6 +286,8 @@ export class InstrumentBook {
    * re-queues it at the back of the level and may trade if it crosses.
    */
   modify(id: string, update: OrderUpdate) {
+    const timer = this.timers.modify;
+    const t0 = timer.start();
     const before = this.bookEvents ? this.book.order(id) : undefined;
     this.#pendingDelete = before;
     const result = this.book.modify(id, update);
@@ -266,10 +297,13 @@ export class InstrumentBook {
       if (after === undefined) this.#sinks.delete(id);
       if (before) this.#emitAmend(before, after, result);
     }
+    timer.stop(t0);
     return result;
   }
 
   cancel(id: string) {
+    const timer = this.timers.cancel;
+    const t0 = timer.start();
     const before = this.bookEvents ? this.book.order(id) : undefined;
     const result = this.book.cancel(id);
     this.#sinks.delete(id);
@@ -278,6 +312,7 @@ export class InstrumentBook {
       this.dirty = true;
       if (before) this.#emitRemoved(BookEventType.Delete, before, 0);
     }
+    timer.stop(t0);
     return result;
   }
 

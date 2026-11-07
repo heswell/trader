@@ -37,6 +37,7 @@ import {
   type InstrumentDef,
   selectActiveInstruments,
 } from "../reference/instruments";
+import { type Timer, TimerRegistry } from "@heswell/trading-metrics";
 import { ControlPublisher } from "../publish/ControlPublisher";
 import { SimAdminPublisher } from "../publish/SimAdminPublisher";
 import { type Clock, systemClock } from "../util/clock";
@@ -61,7 +62,12 @@ import {
   rosterFor,
   sortBots,
 } from "./bots/roster";
-import { fromBookSide, InstrumentBook, toBookSide } from "./InstrumentBook";
+import {
+  type BookTimers,
+  fromBookSide,
+  InstrumentBook,
+  toBookSide,
+} from "./InstrumentBook";
 import {
   type BookSettings,
   type BotConfig,
@@ -167,6 +173,14 @@ export class ExchangeSimulator {
   #forced: { phase: SessionPhase; until: number | undefined } | undefined;
   /** Book events deferred because a step hit maxOpsPerStep. */
   deferredSteps = 0;
+  /**
+   * Hot-path timers (matching, step, flush, gateway requests), untimed
+   * until the server sets a mode (metrics.timers).
+   */
+  readonly timers = new TimerRegistry();
+  readonly #bookTimers: BookTimers;
+  readonly #stepTiming: Timer;
+  readonly #flushTiming: Timer;
   #journal: ExchangeJournal | undefined;
   #control: SimControl | undefined;
   readonly #extraBots: ExtraBots[];
@@ -181,6 +195,15 @@ export class ExchangeSimulator {
   }: ExchangeSimulatorOptions = {}) {
     this.config = validateConfig({ ...DEFAULT_CONFIG, ...config });
     this.#extraBots = parseExtraBots(this.config.extraBots);
+    const t = this.timers;
+    this.#bookTimers = {
+      limit: t.timer("exchange", "limit"),
+      market: t.timer("exchange", "market"),
+      modify: t.timer("exchange", "modify"),
+      cancel: t.timer("exchange", "cancel"),
+    };
+    this.#stepTiming = t.timer("exchange", "step");
+    this.#flushTiming = t.timer("publisher", "flush");
     this.clock = clock;
     this.universe = universe;
     for (const instrument of universe)
@@ -205,6 +228,7 @@ export class ExchangeSimulator {
       getBook: (ric) => this.#simulated.get(ric)?.book,
       getSessionSchedule: () => this.sessionSchedule,
       onTape: (listener) => this.onTape(listener),
+      timers: this.timers,
     });
     this.session = new TradingSession(this.config);
     this.sessionSchedule = this.session.schedule(
@@ -228,6 +252,7 @@ export class ExchangeSimulator {
       this.clock,
       (b, trade) => this.#onTrade(b, trade),
     );
+    book.timers = this.#bookTimers;
     const { refPrice, lotSize, usdPerPriceUnit } = instrument;
     const baseQty = Math.max(
       lotSize,
@@ -547,6 +572,13 @@ export class ExchangeSimulator {
 
   /** Advance the session, prices and bots to `now`. */
   step(now = this.clock()) {
+    const timer = this.#stepTiming;
+    const t0 = timer.start();
+    this.#step(now);
+    timer.stop(t0);
+  }
+
+  #step(now: number) {
     const { config } = this;
     this.updateSession(now);
     const elapsed =
@@ -675,9 +707,12 @@ export class ExchangeSimulator {
 
   /** Publish dirty books and pending trades. */
   flush(now = this.clock()) {
+    const timer = this.#flushTiming;
+    const t0 = timer.start();
     this.#publisher?.flush(this.#books, now);
     if (this.#simAdmin?.flush(this.#simulated.values(), now))
       this.#controlPublisher?.publishSession(now);
+    timer.stop(t0);
   }
 
   /** The sim-admin publisher, when its tables are attached. */

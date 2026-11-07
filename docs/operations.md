@@ -80,7 +80,7 @@ Configuration is layered. A HOCON `application.conf` key can be overridden by an
 | Exchange simulator (instruments, bots, publish rate, session) | `exchangeSim.*` | `EXCHANGE_SIM_*` | [exchange-sim: configuration](../packages/exchange-sim/README.md#configuration) |
 | OMS (risk limits, background flow, marks) | `oms.*` | `OMS_*`, e.g. `OMS_FLOW_ACCOUNTS` | [OMS: config](../packages/oms/README.md#config) |
 | Persistence | `persistence.store`, `dir`, `fsync`, `snapshotIntervalMs`, `snapshotEveryEntries`, `reset`, `cancelOrphans` | `PERSISTENCE_*` / `TRADER_PERSISTENCE_*`, `TRADER_DATA_DIR` | [persistence: configuration](persistence.md#configuration) |
-| Server metrics (METRICS tables) | `metrics.enabled`, `metrics.intervalMs` | `METRICS_*` / `TRADER_METRICS_*` | [metrics: configuration](metrics.md#3-configuration-and-access) |
+| Server metrics (METRICS tables) | `metrics.enabled`, `metrics.intervalMs`, `metrics.timers`, `metrics.sampleEvery` | `METRICS_*` / `TRADER_METRICS_*` | [metrics: configuration](metrics.md#3-configuration-and-access) |
 | Client resilience (reconnect, timeouts, stale) | code options | none | [resilience: configuration](resilience.md#5-configuration) |
 | Showcase remote target | none | `TRADING_REMOTE_WS`, `TRADING_REMOTE_AUTH` (at build time); URL `?ws=`, `?auth=`, `?data=remote` | [showcase README](../apps/showcase/README.md) |
 

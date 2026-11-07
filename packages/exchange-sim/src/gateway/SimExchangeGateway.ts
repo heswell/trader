@@ -15,6 +15,7 @@ import {
   validateOrder,
   workingStatusFor,
 } from "@heswell/trading-schemas";
+import { type Timer, TimerRegistry } from "@heswell/trading-metrics";
 import {
   type FillSink,
   type InstrumentBook,
@@ -43,6 +44,8 @@ export interface GatewayVenue {
   getBook(ric: string): InstrumentBook | undefined;
   getSessionSchedule?(): SessionSchedule;
   onTape?(listener: (trade: MarketTrade) => void): () => void;
+  /** Where the submit / amend / cancel timers go (default: untimed). */
+  timers?: TimerRegistry;
 }
 
 interface OrderState {
@@ -85,8 +88,20 @@ export class SimExchangeGateway implements ExchangeGateway, FillSink {
   #orderSeq = 0;
   #execSeq = 0;
   #journal: GatewayJournal | undefined;
+  /**
+   * Request timers. They cover the request itself (validation, matching,
+   * building reports) but not the listeners the reports are delivered to.
+   */
+  readonly #timers: Record<"submit" | "amend" | "cancel", Timer>;
 
-  constructor(private readonly venue: GatewayVenue) {}
+  constructor(private readonly venue: GatewayVenue) {
+    const timers = venue.timers ?? new TimerRegistry();
+    this.#timers = {
+      submit: timers.timer("gateway", "submit"),
+      amend: timers.timer("gateway", "amend"),
+      cancel: timers.timer("gateway", "cancel"),
+    };
+  }
 
   /** Write-ahead hook: every report is journaled before listeners see it. */
   setJournal(journal: GatewayJournal | undefined) {
@@ -214,9 +229,12 @@ export class SimExchangeGateway implements ExchangeGateway, FillSink {
   submit(order: GatewayNewOrder): string {
     const exchangeOrderId = `X${++this.#orderSeq}`;
     this.#hold++;
+    const timer = this.#timers.submit;
+    const t0 = timer.start();
     try {
       this.#submit(exchangeOrderId, order);
     } finally {
+      timer.stop(t0);
       this.#release();
     }
     return exchangeOrderId;
@@ -224,18 +242,24 @@ export class SimExchangeGateway implements ExchangeGateway, FillSink {
 
   amend(exchangeOrderId: string, amend: GatewayAmend) {
     this.#hold++;
+    const timer = this.#timers.amend;
+    const t0 = timer.start();
     try {
       this.#amend(exchangeOrderId, amend);
     } finally {
+      timer.stop(t0);
       this.#release();
     }
   }
 
   cancel(exchangeOrderId: string, cancel: GatewayCancel = {}) {
     this.#hold++;
+    const timer = this.#timers.cancel;
+    const t0 = timer.start();
     try {
       this.#cancel(exchangeOrderId, cancel);
     } finally {
+      timer.stop(t0);
       this.#release();
     }
   }

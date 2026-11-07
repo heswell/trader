@@ -24,7 +24,8 @@ scripts/          start.ts (stand-alone server), bench.ts
 - `bun run --cwd packages/exchange-sim start`: stand-alone server on `ws://localhost:8094/websocket-exchange-sim`.
   It uses permissive auth over plain HTTP (`vuu.ssl=false`, no certificate): POST `{username,password}`
   to `http://localhost:8446/api/authn` to get a token.
-- `bun run --cwd packages/exchange-sim bench [--mode=max|realtime|both] [--seconds=10] [--subscribe]`.
+- `bun run --cwd packages/exchange-sim bench [--mode=max|realtime|both] [--seconds=10] [--subscribe] [--timers=off|sampled|all]`.
+  `--timers` turns on the hot-path [metrics timers](../../docs/metrics.md); max mode then prints each timer's p50 / p99.
 
 Embedding in another server:
 

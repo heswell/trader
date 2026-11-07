@@ -9,9 +9,8 @@ import {
 import type { OmsService } from "../engine/OmsService";
 
 /**
- * Exchange simulator and market data publisher metrics. Everything here
- * reads counters the simulator keeps anyway; nothing is added to its hot
- * paths.
+ * Exchange simulator, market data publisher and gateway metrics: counters
+ * the simulator keeps anyway, plus its hot-path timers (sim.timers).
  */
 export const exchangeMetricsSource = (sim: ExchangeSimulator): MetricSource => {
   // totals at the previous snapshot, for the interval's coalescing ratio
@@ -32,6 +31,7 @@ export const exchangeMetricsSource = (sim: ExchangeSimulator): MetricSource => {
       w.counter("exchange", "volume", volume, "shares");
       w.gauge("exchange", "books", sim.books.length);
       w.gauge("exchange", "continuousBooks", continuous);
+      w.timers(sim.timers);
 
       const p = sim.publisher?.stats;
       if (!p) return;
@@ -65,11 +65,32 @@ export const exchangeMetricsSource = (sim: ExchangeSimulator): MetricSource => {
   };
 };
 
-/** OMS order, position and table-write metrics. */
-export const omsMetricsSource = (oms: OmsService): MetricSource => ({
+const total = (counts: ReadonlyMap<string, number>) => {
+  let n = 0;
+  for (const count of counts.values()) n += count;
+  return n;
+};
+
+/** OMS order, position, reject, timer and table-write metrics. */
+export const omsMetricsSource = (
+  oms: Pick<OmsService, "engine"> & {
+    tables: { writes: Readonly<Record<string, number>> };
+  },
+): MetricSource => ({
   name: "oms",
   collect(w) {
     const { engine } = oms;
+    w.timers(engine.timers);
+    const { stats, rejects, exchangeRejects } = engine;
+    w.counter("oms", "duplicateReports", stats.duplicateReports);
+    w.counter("oms", "unknownReports", stats.unknownReports);
+    w.counter("oms", "stateErrorsIgnored", stats.stateErrorsIgnored);
+    w.counter("oms", "rejects", total(rejects));
+    for (const [reason, count] of rejects)
+      w.counter("oms", `rejects.${reason}`, count);
+    w.counter("oms", "exchangeRejects", total(exchangeRejects));
+    for (const [reason, count] of exchangeRejects)
+      w.counter("oms", `exchangeRejects.${reason}`, count);
     let live = 0;
     for (const parent of engine.parents.values()) {
       if (!isTerminalStatus(parent.state.status)) live++;

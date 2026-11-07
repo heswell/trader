@@ -2,7 +2,7 @@
  * Exchange simulator benchmark.
  *
  *   bun run --cwd packages/exchange-sim bench [--mode=max|realtime|both]
- *     [--seconds=10] [--subscribe]
+ *     [--seconds=10] [--subscribe] [--timers=off|sampled|all]
  *
  * Config comes from EXCHANGE_SIM_* env vars (defaults otherwise), e.g.
  *   EXCHANGE_SIM_ACTIVE_INSTRUMENTS=300 EXCHANGE_SIM_TAKER_RATE=20 bun run bench
@@ -14,10 +14,13 @@
  *             events and table updates per *wall* second (capacity) and the
  *             simulated-time / wall-time ratio (headroom; >1 means the
  *             default load fits in real time).
+ * - --timers sets the hot-path timer mode (default off; sampled times one
+ *             call in 16). max mode prints the timers' p50 / p99.
  * - realtime: Real timers for --seconds. Reports achieved rates and
  *             event-loop lag. --subscribe adds a websocket client with
  *             viewports on prices, depth and trades (rows 0..500).
  */
+import { TIMER_MODES, type TimerMode } from "@heswell/trading-metrics";
 import { EXCHANGE_MODULE } from "@heswell/trading-schemas";
 import {
   LifecycleContainer,
@@ -43,6 +46,8 @@ const args = Object.fromEntries(
 const mode = args.mode ?? "both";
 const seconds = Number(args.seconds ?? 10);
 const subscribe = args.subscribe === "true";
+const timers = (args.timers ?? "off") as TimerMode;
+if (!TIMER_MODES.includes(timers)) throw Error(`--timers=${timers}?`);
 
 // keep server startup chatter out of the report; VUU_LOG_LEVEL=info shows it
 if (!process.env.VUU_LOG_LEVEL) setLogLevel("warn");
@@ -87,8 +92,9 @@ async function benchMax() {
   const clock = new ManualClock();
   const config = loadExchangeSimConfig(undefined, process.env);
   const sim = new ExchangeSimulator({ config, clock: clock.now });
+  sim.timers.setMode(timers);
   const { lifecycle } = await startServer(sim, false);
-  console.log(`\n[max] ${describeConfig(sim)}`);
+  console.log(`\n[max] ${describeConfig(sim)}; timers ${timers}`);
 
   const flushEvery = Math.max(
     1,
@@ -102,6 +108,7 @@ async function benchMax() {
     }
   };
   run(2); // warm-up
+  for (const { timer } of sim.timers.timers()) timer.histogram.reset();
 
   const events0 = sim.bookEvents;
   const trades0 = sim.tradeCount;
@@ -124,12 +131,22 @@ async function benchMax() {
     `[max] capacity per wall second: ${fmt(events / wall)} book events/s, ${fmt(updates / wall)} table updates/s`,
   );
   console.log(`[max] deferred steps (maxOpsPerStep): ${sim.deferredSteps}`);
+  if (timers !== "off") {
+    for (const { component, name, timer } of sim.timers.timers()) {
+      const h = timer.histogram;
+      if (h.count === 0) continue;
+      console.log(
+        `[max] ${component}.${name}: ${fmt(h.count)} timed, p50 ${h.percentile(0.5).toFixed(1)}µs p99 ${h.percentile(0.99).toFixed(1)}µs max ${h.max.toFixed(0)}µs`,
+      );
+    }
+  }
   await lifecycle.destroy();
 }
 
 async function benchRealtime() {
   const config = loadExchangeSimConfig(undefined, process.env);
   const sim = new ExchangeSimulator({ config });
+  sim.timers.setMode(timers);
   const { lifecycle, server, tokens } = await startServer(sim, true);
   console.log(
     `\n[realtime] ${describeConfig(sim)}${subscribe ? ", ws subscriber" : ""}`,

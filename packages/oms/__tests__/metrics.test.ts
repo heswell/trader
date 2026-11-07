@@ -46,6 +46,7 @@ describe("METRICS module over the Vuu protocol", () => {
     rics: () => sim.books.map((b) => b.ric),
     log: () => {},
   });
+  sim.timers.setMode("all");
   const collector = new MetricsCollector({ intervalMs: 50 });
   collector.register(exchangeMetricsSource(sim));
   collector.register(omsMetricsSource(oms));
@@ -139,6 +140,12 @@ describe("METRICS module over the Vuu protocol", () => {
       (r) => r.id === "vuu.viewports" && Number(r.value) >= 3,
     );
     await admin.row(metricsVp, (r) => r.id === "oms.liveOrders");
+    // a timer row: the publisher's flush, timed on every call here
+    const flush = await admin.row(
+      metricsVp,
+      (r) => r.id === "publisher.flush" && Number(r.value) > 0,
+    );
+    expect(flush.kind).toBe("timer");
 
     const prices = await admin.row(
       tablesVp,
@@ -192,19 +199,29 @@ describe("loadMetricsConfig", () => {
   });
 
   test("defaults, conf, env (env wins)", () => {
-    expect(loadMetricsConfig(undefined, {})).toEqual({
+    const defaults = {
       enabled: 1,
       intervalMs: 1_000,
-    });
+      timers: "sampled" as const,
+      sampleEvery: 16,
+    };
+    expect(loadMetricsConfig(undefined, {})).toEqual(defaults);
     expect(
       loadMetricsConfig(source({ "metrics.intervalMs": 500 }), {}),
-    ).toEqual({ enabled: 1, intervalMs: 500 });
+    ).toEqual({ ...defaults, intervalMs: 500 });
     expect(
       loadMetricsConfig(source({ "metrics.enabled": 1 }), {
         TRADER_METRICS_ENABLED: "false",
         METRICS_INTERVAL_MS: "250",
+        TRADER_METRICS_TIMERS: "all",
+        METRICS_SAMPLE_EVERY: "64",
       }),
-    ).toEqual({ enabled: 0, intervalMs: 250 });
+    ).toEqual({
+      enabled: 0,
+      intervalMs: 250,
+      timers: "all" as const,
+      sampleEvery: 64,
+    });
   });
 
   test("validation", () => {
@@ -214,5 +231,11 @@ describe("loadMetricsConfig", () => {
     expect(() =>
       loadMetricsConfig(undefined, { METRICS_INTERVAL_MS: "0" }),
     ).toThrow("must be > 0");
+    expect(() =>
+      loadMetricsConfig(undefined, { METRICS_TIMERS: "some" }),
+    ).toThrow("metrics.timers must be one of off, sampled, all");
+    expect(() =>
+      loadMetricsConfig(undefined, { METRICS_SAMPLE_EVERY: "10" }),
+    ).toThrow("power of two");
   });
 });
