@@ -5,6 +5,9 @@ import {
   type MetricsTable,
   type MetricsTableName,
   MetricsTablePublisher,
+  type VuuSendCycle,
+  type VuuServerStats,
+  type VuuSessionStats,
   vuuServerSource,
 } from "../src/server";
 
@@ -221,6 +224,92 @@ describe("vuuServerSource", () => {
     expect(snapshot.tables.map((t) => [t.id, t.rows])).toEqual([
       ["EXCHANGE.prices", 3],
       ["OMS.fills", 9],
+    ]);
+  });
+
+  test("sessions, outbound queues and send cycles (vuu-server issue 91)", () => {
+    const collector = new MetricsCollector({ process: false });
+    const session = (
+      sessionId: string,
+      queueLength: number,
+      rowsQueued: number,
+      rowsCoalesced: number,
+      rowsSent: number,
+    ): VuuSessionStats => ({
+      sessionId,
+      queueLength,
+      rowsQueued,
+      rowsCoalesced,
+      rowsSent,
+      rowsDropped: 0,
+      messagesSent: rowsSent / 10,
+      charsSent: rowsSent * 1024,
+    });
+    let sessions = [session("a", 5, 100, 20, 80), session("b", 1, 10, 0, 10)];
+    const cycleListeners = new Set<(cycle: VuuSendCycle) => void>();
+    const server: VuuServerStats = {
+      viewPortContainer: { viewportCount: 2 },
+      tableContainer: {
+        getDefinedTables: () => [],
+        getTable: () => ({ rowCount: 0 }),
+      },
+      get sessionCount() {
+        return sessions.length;
+      },
+      getSessionStats: () => sessions,
+      onSendCycle: (listener) => {
+        cycleListeners.add(listener);
+        return () => cycleListeners.delete(listener);
+      },
+    };
+    collector.register(vuuServerSource(() => server));
+    const byId = (snapshot: ReturnType<typeof collector.sample>) =>
+      Object.fromEntries(snapshot.metrics.map((m) => [m.id, m]));
+
+    const first = byId(collector.sample(0));
+    expect(first["vuu.sessions"].value).toBe(2);
+    expect(first["vuu.queuedRows"].value).toBe(6);
+    expect(first["vuu.queuedRowsMax"].value).toBe(5);
+    expect(first["vuu.rowsQueued"]).toMatchObject({
+      kind: "counter",
+      value: 110,
+    });
+    expect(first["vuu.rowsSent"].value).toBe(90);
+    expect(first["vuu.messagesSent"].value).toBe(9);
+    expect(first["vuu.kbSent"].value).toBe(90);
+    expect(first["vuu.coalescedPct"].value).toBeCloseTo((100 * 20) / 110);
+    expect(first["vuu.sendCycle"]).toMatchObject({ kind: "timer", value: 0 });
+    expect(cycleListeners.size).toBe(1);
+
+    for (const durationMs of [1, 2, 4]) {
+      for (const listener of cycleListeners) listener({ durationMs });
+    }
+    // b closes; a sends 100 more rows (50 coalesced of 200 queued); c opens
+    sessions = [session("a", 0, 300, 70, 180), session("c", 0, 10, 0, 10)];
+    const second = byId(collector.sample(1000));
+    expect(second["vuu.sessions"].value).toBe(2);
+    // totals keep b's rows and add the changes since the last read
+    expect(second["vuu.rowsQueued"]).toMatchObject({ value: 320, rate: 210 });
+    expect(second["vuu.rowsSent"]).toMatchObject({ value: 200, rate: 110 });
+    expect(second["vuu.coalescedPct"].value).toBeCloseTo((100 * 50) / 210);
+    expect(second["vuu.sendCycle"]).toMatchObject({ value: 3, max: 4000 });
+    // still one listener
+    expect(cycleListeners.size).toBe(1);
+  });
+
+  test("no session stats in vuu-server 4.4.0: viewports and tables only", () => {
+    const collector = new MetricsCollector({ process: false });
+    collector.register(
+      vuuServerSource(() => ({
+        viewPortContainer: { viewportCount: 1 },
+        tableContainer: {
+          getDefinedTables: () => [],
+          getTable: () => ({ rowCount: 0 }),
+        },
+      })),
+    );
+    expect(collector.sample(0).metrics.map(({ id }) => id)).toEqual([
+      "vuu.viewports",
     ]);
   });
 
