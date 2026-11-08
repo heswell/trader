@@ -82,7 +82,7 @@ flowchart LR
 1. `ExchangeSimulator` (`packages/exchange-sim`) holds one hft-limit-order-book 2.0 book per active instrument.
    Market-maker and taker bots trade around a GBM fair value. A `TradingSession` schedule can drive phases.
    See [exchange-sim: market model](../packages/exchange-sim/README.md#market-model).
-2. Book changes are coalesced. Every `publishIntervalMs` (100 ms), each changed book writes one row to the
+2. Book changes are coalesced. Every `publishIntervalMs` (60 ms), each changed book writes one row to the
    `EXCHANGE` tables. The table schemas are defined once in `@heswell/trading-schemas` ([schemas.md](schemas.md)).
 3. vuu-server serves those tables as viewports, so sorting, filtering, grouping and visual links run server-side.
    Only the visible rows go over the WebSocket.

@@ -20,7 +20,11 @@ export interface ExchangeSimConfig {
   maxStepMs: number;
   /** Max book operations per step; remaining books are deferred to the next step. */
   maxOpsPerStep: number;
-  /** Interval at which dirty books are published to the Vuu tables (ms). */
+  /**
+   * Interval at which dirty books are published to the Vuu tables (ms).
+   * Keep it a multiple of vuu-server's 60 ms send cycle: other values (e.g.
+   * 100) beat against it and clients see uneven 60 / 120 ms gaps.
+   */
   publishIntervalMs: number;
   /** Levels per side published to the depth table. */
   depthLevels: number;
@@ -138,7 +142,7 @@ export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
   botStepMs: 20,
   maxStepMs: 250,
   maxOpsPerStep: 5_000,
-  publishIntervalMs: 100,
+  publishIntervalMs: 60,
   depthLevels: 10,
   tradesCapacity: 50_000,
   priceBandPct: 0.2,

@@ -189,7 +189,7 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | `botStepMs` | 20 | Bot / price-model step interval (ms). |
 | `maxStepMs` | 250 | Clamp on elapsed time per step (ms). |
 | `maxOpsPerStep` | 5000 | Book operations budget per step. |
-| `publishIntervalMs` | 100 | Table flush interval (ms). |
+| `publishIntervalMs` | 60 | Table flush interval (ms). Keep it a multiple of vuu-server's 60 ms send cycle. |
 | `depthLevels` | 10 | Depth levels per side. |
 | `tradesCapacity` | 50000 | Trades ring buffer size. |
 | `barIntervals` | `1s,1m,5m` | `bars` intervals (`<n>s\|m\|h\|d`); empty disables bars. |
