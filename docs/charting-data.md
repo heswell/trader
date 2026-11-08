@@ -39,7 +39,7 @@ demo while their timestamps line up with the trades and fills tables and with th
 phases don't change the bar clock; with no trades (closed, halted or quiet book) there are no bars.
 
 **Updates.** A trade opens a bar for each interval if none is open, or updates the open one. Updates are coalesced:
-the current bar is written once per publish cycle (`publishIntervalMs`, 100 ms), not once per trade. A bar closes
+the current bar is written once per publish cycle (`publishIntervalMs`, 60 ms), not once per trade. A bar closes
 when a later trade falls into a new interval or when a publish cycle runs after its `end`; its row is then updated
 once more with `closed = true` and never changes again.
 

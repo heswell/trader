@@ -185,7 +185,7 @@ React Profiler plus an rAF frame counter, 10 s runs, headless Chrome on an Apple
 | 200 | 197 | 60 (60) | 0.98 / 2.3 / 8.2 | 0 |
 
 Production builds are faster: there are no dev checks and no Profiler overhead. For comparison, the real exchange
-publishes depth roughly every 100 ms per instrument.
+publishes depth roughly every 60 ms per instrument.
 
 ## Shared hooks and utilities
 
