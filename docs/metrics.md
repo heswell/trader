@@ -70,6 +70,17 @@ The definitions are in `@heswell/trading-schemas` (`metricsProcess`, `metrics`, 
 | | `unknownReports` | counter | Execution reports for no known child order |
 | | `stateErrorsIgnored` | counter | Order events the state machine refused (`OrderStateError`), logged and ignored |
 | `vuu` | `viewports` | gauge | Open viewports on the server |
+| | `sessions` | gauge | Client sessions logged in ¹ |
+| | `queuedRows` / `queuedRowsMax` | gauge | Row updates waiting to be sent, over all sessions and in the most backed-up one ¹ |
+| | `rowsQueued`, `rowsCoalesced`, `rowsSent`, `rowsDropped` | counter | Row updates queued for clients, merged into one already waiting, sent, and dropped because the row had left the viewport's range by send time ¹ |
+| | `messagesSent`, `kbSent` | counter | `TABLE_ROW` messages and KB of JSON sent to clients ¹ |
+| | `coalescedPct` | gauge | Share of queued row updates merged before they were sent, over the interval ¹ |
+| | `sendCycle` | timer | Duration of vuu-server's send cycle (every 60 ms, all sessions), timed on every cycle ¹ |
+
+¹ Needs vuu-server 4.5.0 or later (trader upstream issue 91); with 4.4.0 `vuuServerSource` reports only the
+viewports and table rows. The counters are totals over all sessions, built from each session's change between
+reads, so they do not fall when a session closes. Rows a session sent after the last read before it closed are
+not counted.
 
 ### Timers
 
@@ -237,5 +248,7 @@ which fits its per-call cost, so `sampled` is the default. `all` is useful for s
 2. **Phase 2 (done).** Sampled timers on matching, step, flush, the gateway, OMS requests, risk checks and
    execution reports; order lifecycle latencies; counters for rejects, dropped reports and ignored state errors.
 3. **Phase 3 (done).** The `metricsHistory` table and the Simulator › Metrics feature.
-4. **Phase 4: upstream.** vuu-server session, send-cycle and queue stats (trader upstream issue 91). Today only
-   `viewportCount` and table row counts can be read.
+4. **Phase 4: upstream.** vuu-server reports per-session outbound counters (`getSessionStats()`), the
+   session count and send-cycle timings (`onSendCycle`) (vuu-websocket branch `feat/server-metrics`, trader
+   upstream issue 91). `vuuServerSource` uses them when the server has them, so the `vuu` metrics above appear
+   once trader moves to that release. A per-session METRICS table (queue depth and rates by user) could follow.

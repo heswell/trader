@@ -528,6 +528,10 @@ See [resilience.md](resilience.md) for the behaviour these work around.
     counts. `PerfStatsReporter` (`packages/oms/src/perf`, enabled by `TRADER_PERF_STATS_FILE`) counts
     trader's own table writes, CPU, memory and event-loop lag; `perf:ws` derives server→client coalescing from
     those and the client-received rows.
+    *Fix proposed:* vuu-websocket branch `feat/server-metrics` adds `VuuServerCore.sessionCount`,
+    `getSessionStats()` (per session: queue length, rows queued, coalesced, sent and dropped, messages and
+    characters sent, heartbeats) and `onSendCycle(listener)` (cycle duration and totals, only timed while a
+    listener is registered). `vuuServerSource` already reads them when present; see metrics.md §2.
 92. **The session send cycle is fixed at 60 ms / 300 rows.** (vuu-websocket `@heswell/vuu-server` 4.2.0.) The
     session runner is a `LifeCycleRunner` with a hard-coded 60 ms minimum cycle, and both flow controllers return
     `BatchSize(300)`. Neither can be configured, so end-to-end latency has a floor of about 30 ms on average
