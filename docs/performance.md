@@ -51,8 +51,8 @@ On the stack target, sessions are spread over the trading users (alice, bob, car
   - event-loop lag, p99 and max;
   - order-book events, trades, price and depth updates;
   - OMS table writes.
-  The harness also samples `ps` CPU% and RSS for the server PID. vuu-server 4.4.0 has no metrics API (trader upstream issue 91; the `vuu` metrics in
-  [metrics.md](metrics.md) cover it from the release that adds one).
+  The harness also samples `ps` CPU% and RSS for the server PID. Since vuu-server 4.5.0 the server's own session, queue and send-cycle metrics are in
+  the METRICS tables (the `vuu` metrics and `metricsSessions` in [metrics.md](metrics.md)).
 - **Coalescing**:
   - *publisher*: 1 − price/depth table updates ÷ order-book events. These are book changes merged by the `publishMs` throttle before they reach the tables.
   - *server→client*: 1 − client rows received ÷ (server table writes × subscribers), estimated per table kind. vuu-server keeps only the latest row per key between its 60 ms send cycles (trader upstream issue 92).

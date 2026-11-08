@@ -56,7 +56,7 @@ export type MetricsSessionsGridProps = HTMLAttributes<HTMLDivElement>;
  * Every client session on the Vuu server from `METRICS.metricsSessions`
  * (sim-admin only), most backed-up first: queued updates, rows and messages
  * sent per second, the share coalesced, and rows sent and dropped since
- * login. Empty before vuu-server 4.5.0 and on the in-browser data.
+ * login. Empty on the in-browser data.
  */
 export const MetricsSessionsGrid = forwardRef<
   HTMLDivElement,
