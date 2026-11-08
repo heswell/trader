@@ -108,6 +108,7 @@ export const METRICS_TABLE_NAMES: readonly MetricsTableName[] = [
   "metrics",
   "metricsTables",
   "metricsHistory",
+  "metricsSessions",
 ];
 
 /**

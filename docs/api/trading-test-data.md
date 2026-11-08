@@ -22,7 +22,7 @@ Imports: `@heswell/trading-test-data`, `@heswell/trading-test-data/react`. 20 ex
 
 #### createTradingTestData
 
-*function* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L229)
+*function* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L230)
 
 Create the EXCHANGE and OMS engine-local modules, backed by the real
 
@@ -42,7 +42,7 @@ const EXCHANGE_TABLE_NAMES: readonly ExchangeTableName[]
 
 #### LOCAL_EXCHANGE_DEFAULTS
 
-*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L118)
+*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L119)
 
 Browser defaults: lighter than the server (50 instruments, 200 bars per
 series) so the showcase stays responsive; everything else is the server
@@ -72,7 +72,7 @@ const OMS_TABLE_NAMES: readonly OmsLocalTableName[]
 
 #### TradingTestData
 
-*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L148)
+*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L149)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -94,7 +94,7 @@ const OMS_TABLE_NAMES: readonly OmsLocalTableName[]
 
 #### TradingTestDataOptions
 
-*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L125)
+*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L126)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -244,7 +244,7 @@ createTradingLocalServer(testData: TradingTestData = getTradingTestData(), conne
 
 #### MetricsTableName
 
-*type* · [server/MetricsTablePublisher.ts](../../packages/metrics/src/server/MetricsTablePublisher.ts#L44)
+*type* · [server/MetricsTablePublisher.ts](../../packages/metrics/src/server/MetricsTablePublisher.ts#L45)
 
 ```ts
 type MetricsTableName = keyof typeof metricsModuleTables

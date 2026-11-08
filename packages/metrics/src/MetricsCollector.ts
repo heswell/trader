@@ -39,6 +39,38 @@ export interface TableMetric {
   writesPerSec: number;
 }
 
+/** A client session's cumulative outbound counters, as a source reports them. */
+export interface SessionCounters {
+  /** Session id. */
+  id: string;
+  user: string;
+  /** When the session logged in, epoch ms. */
+  connectedAt: number;
+  queueLength: number;
+  rowsQueued: number;
+  rowsCoalesced: number;
+  rowsSent: number;
+  rowsDropped: number;
+  messagesSent: number;
+  charsSent: number;
+}
+
+/** One client session in a snapshot (a row of METRICS.metricsSessions). */
+export interface SessionMetric {
+  id: string;
+  user: string;
+  connectedAt: number;
+  queueLength: number;
+  rowsQueuedPerSec: number;
+  rowsSentPerSec: number;
+  /** Share of queued updates coalesced over the interval, %. */
+  coalescedPct: number;
+  messagesPerSec: number;
+  kbPerSec: number;
+  rowsSent: number;
+  rowsDropped: number;
+}
+
 export interface MetricsSnapshot {
   time: number;
   /** Time since the previous snapshot (ms); 0 for the first. */
@@ -46,6 +78,8 @@ export interface MetricsSnapshot {
   process?: ProcessMetrics;
   metrics: MetricValue[];
   tables: TableMetric[];
+  /** Client sessions, from a source that reports them (vuu-server 4.5.0+). */
+  sessions: SessionMetric[];
 }
 
 /**
@@ -76,6 +110,8 @@ export interface MetricsWriter {
   tableRows(module: string, table: string, rows: number): void;
   /** Monotonic count of writes (insert + update + delete) to a Vuu table. */
   tableWrites(module: string, table: string, total: number): void;
+  /** A client session's counters; the collector works out the rates. */
+  session(counters: SessionCounters): void;
 }
 
 export interface MetricSource {
@@ -187,6 +223,7 @@ export class MetricsCollector {
 
     const metrics: MetricValue[] = [];
     const tables = new Map<string, TableMetric>();
+    const sessions: SessionMetric[] = [];
     const tableOf = (module: string, table: string) => {
       const id = `${module}.${table}`;
       let row = tables.get(id);
@@ -266,6 +303,25 @@ export class MetricsCollector {
         row.writes = total;
         row.writesPerSec = perSec(`table:${row.id}`, total);
       },
+      session: (c) => {
+        const key = `session:${c.id}:`;
+        const queuedPerSec = perSec(`${key}queued`, c.rowsQueued);
+        const coalescedPerSec = perSec(`${key}coalesced`, c.rowsCoalesced);
+        sessions.push({
+          id: c.id,
+          user: c.user,
+          connectedAt: c.connectedAt,
+          queueLength: c.queueLength,
+          rowsQueuedPerSec: queuedPerSec,
+          rowsSentPerSec: perSec(`${key}sent`, c.rowsSent),
+          coalescedPct:
+            queuedPerSec > 0 ? (100 * coalescedPerSec) / queuedPerSec : 0,
+          messagesPerSec: perSec(`${key}messages`, c.messagesSent),
+          kbPerSec: perSec(`${key}chars`, c.charsSent) / 1024,
+          rowsSent: c.rowsSent,
+          rowsDropped: c.rowsDropped,
+        });
+      },
     };
 
     for (const source of this.#sources) {
@@ -286,6 +342,7 @@ export class MetricsCollector {
       process: this.process?.sample(),
       metrics,
       tables: [...tables.values()],
+      sessions,
     };
     this.#latest = snapshot;
     for (const listener of this.#listeners) {

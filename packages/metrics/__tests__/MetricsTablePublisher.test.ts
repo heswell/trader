@@ -66,6 +66,7 @@ const setup = (historySize?: number) => {
     metrics: new FakeTable("metrics"),
     metricsTables: new FakeTable("metricsTables"),
     metricsHistory: new FakeTable("metricsHistory"),
+    metricsSessions: new FakeTable("metricsSessions"),
   };
   for (const [name, table] of Object.entries(tables)) {
     publisher.attach(name as MetricsTableName, table);
@@ -237,6 +238,8 @@ describe("vuuServerSource", () => {
       rowsSent: number,
     ): VuuSessionStats => ({
       sessionId,
+      user: `user-${sessionId}`,
+      connectedAt: 1_000,
       queueLength,
       rowsQueued,
       rowsCoalesced,
@@ -295,6 +298,67 @@ describe("vuuServerSource", () => {
     expect(second["vuu.sendCycle"]).toMatchObject({ value: 3, max: 4000 });
     // still one listener
     expect(cycleListeners.size).toBe(1);
+  });
+
+  test("a metricsSessions row per session, removed when it closes", () => {
+    const { collector, tables } = setup();
+    const session = (
+      sessionId: string,
+      rowsQueued: number,
+      rowsCoalesced: number,
+      rowsSent: number,
+    ): VuuSessionStats => ({
+      sessionId,
+      user: `user-${sessionId}`,
+      connectedAt: 500,
+      queueLength: 3,
+      rowsQueued,
+      rowsCoalesced,
+      rowsSent,
+      rowsDropped: 1,
+      messagesSent: rowsSent / 10,
+      charsSent: rowsSent * 1024,
+    });
+    let sessions = [session("a", 100, 0, 100), session("b", 10, 0, 10)];
+    collector.register(
+      vuuServerSource(() => ({
+        viewPortContainer: { viewportCount: 0 },
+        tableContainer: {
+          getDefinedTables: () => [],
+          getTable: () => ({ rowCount: 0 }),
+        },
+        getSessionStats: () => sessions,
+      })),
+    );
+    collector.sample(0);
+    expect([...tables.metricsSessions.rows.keys()]).toEqual(["a", "b"]);
+    expect(tables.metricsSessions.rows.get("a")).toMatchObject({
+      user: "user-a",
+      connected: 500,
+      queueLength: 3,
+      rowsSent: 100,
+      rowsSentPerSec: 0, // first sample
+    });
+
+    // a queues 200 (50 coalesced) and sends 150 in a second; b closes
+    sessions = [session("a", 300, 50, 250)];
+    collector.sample(1000);
+    expect([...tables.metricsSessions.rows.keys()]).toEqual(["a"]);
+    expect(tables.metricsSessions.rows.get("a")).toMatchObject({
+      rowsQueuedPerSec: 200,
+      rowsSentPerSec: 150,
+      coalescedPct: 25,
+      messagesPerSec: 15,
+      kbPerSec: 150,
+      rowsSent: 250,
+      rowsDropped: 1,
+      lastUpdate: 1000,
+    });
+
+    // b logs in again with the same id: a new row
+    sessions = [session("a", 300, 50, 250), session("b", 5, 0, 5)];
+    collector.sample(2000);
+    expect([...tables.metricsSessions.rows.keys()]).toEqual(["a", "b"]);
   });
 
   test("no session stats in vuu-server 4.4.0: viewports and tables only", () => {

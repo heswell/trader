@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 508 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 510 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -35,7 +35,7 @@ Imports: `@heswell/trading-ui`. 508 exports. Types are shown as written in the s
 - **components/PositionsView**: [CurrencyTotals](#currencytotals), [POSITIONS_GROUP_BY](#positions_group_by), [PositionsGrouping](#positionsgrouping), [PositionsView](#positionsview), [PositionsViewProps](#positionsviewprops), [totalsByCurrency](#totalsbycurrency)
 - **components/PriceChart**: [PRICE_CHART_INTERVALS](#price_chart_intervals), [PriceChart](#pricechart), [PriceChartInterval](#pricechartinterval), [PriceChartProps](#pricechartprops)
 - **components/PriceLadder**: [centreIndex](#centreindex), [compactQuantity](#compactquantity), [LadderLevel](#ladderlevel), [ladderPrices](#ladderprices), [ladderReferencePrice](#ladderreferenceprice), [LadderTradeIntent](#laddertradeintent), [needsRecentre](#needsrecentre), [PRICE_LADDER_SOURCE](#price_ladder_source), [PriceLadder](#priceladder), [PriceLadderAction](#priceladderaction), [PriceLadderColumn](#priceladdercolumn), [PriceLadderOrderEvent](#priceladderorderevent), [PriceLadderProps](#priceladderprops), [PriceLadderTradeMode](#priceladdertrademode), [PriceLadderView](#priceladderview), [PriceLadderViewProps](#priceladderviewprops), [queuePositionText](#queuepositiontext), [QueueSegment](#queuesegment), [queueSegments](#queuesegments)
-- **components/ServerMetrics**: [formatDuration](#formatduration), [formatMetric](#formatmetric), [metricHistoryAxis](#metrichistoryaxis), [MetricHistoryChart](#metrichistorychart), [MetricHistoryChartProps](#metrichistorychartprops), [metricHistorySeries](#metrichistoryseries), [METRICS_COMPONENTS](#metrics_components), [MetricsGrid](#metricsgrid), [MetricsGridProps](#metricsgridprops), [MetricsProcessStrip](#metricsprocessstrip), [MetricsProcessStripProps](#metricsprocessstripprops), [MetricsTablesGrid](#metricstablesgrid), [MetricsTablesGridProps](#metricstablesgridprops), [PROCESS_CARDS](#process_cards), [SelectedMetric](#selectedmetric), [trendColumn](#trendcolumn)
+- **components/ServerMetrics**: [formatDuration](#formatduration), [formatMetric](#formatmetric), [metricHistoryAxis](#metrichistoryaxis), [MetricHistoryChart](#metrichistorychart), [MetricHistoryChartProps](#metrichistorychartprops), [metricHistorySeries](#metrichistoryseries), [METRICS_COMPONENTS](#metrics_components), [MetricsGrid](#metricsgrid), [MetricsGridProps](#metricsgridprops), [MetricsProcessStrip](#metricsprocessstrip), [MetricsProcessStripProps](#metricsprocessstripprops), [MetricsSessionsGrid](#metricssessionsgrid), [MetricsSessionsGridProps](#metricssessionsgridprops), [MetricsTablesGrid](#metricstablesgrid), [MetricsTablesGridProps](#metricstablesgridprops), [PROCESS_CARDS](#process_cards), [SelectedMetric](#selectedmetric), [trendColumn](#trendcolumn)
 - **components/SideLabel**: [SideLabel](#sidelabel), [SideLabelProps](#sidelabelprops)
 - **components/SimInstrumentChart**: [SIM_FLOW_GROUPS](#sim_flow_groups), [SimInstrumentChart](#siminstrumentchart), [SimInstrumentChartProps](#siminstrumentchartprops)
 - **components/SimulatorControls**: [ScenarioRuns](#scenarioruns), [ScenarioRunsProps](#scenariorunsprops), [SimEventsLog](#simeventslog), [SimEventsLogProps](#simeventslogprops), [SimInstrumentControls](#siminstrumentcontrols), [SimInstrumentControlsProps](#siminstrumentcontrolsprops), [SimRpcMessage](#simrpcmessage), [SimSessionStrip](#simsessionstrip), [SimSessionStripProps](#simsessionstripprops), [useSimRpc](#usesimrpc)
@@ -5251,6 +5251,19 @@ Props: `MetricsProcessStripProps`
 
 Also accepts the standard HTML attributes and `ref`.
 
+#### MetricsSessionsGrid
+
+*component* · [components/ServerMetrics/MetricsSessionsGrid.tsx](../../packages/trading-ui/src/components/ServerMetrics/MetricsSessionsGrid.tsx#L61)
+
+Every client session on the Vuu server from `METRICS.metricsSessions`
+(sim-admin only), most backed-up first: queued updates, rows and messages
+sent per second, the share coalesced, and rows sent and dropped since
+login. Empty before vuu-server 4.5.0 and on the in-browser data.
+
+Props: `MetricsSessionsGridProps`
+
+Also accepts the standard HTML attributes and `ref`.
+
 #### MetricsTablesGrid
 
 *component* · [components/ServerMetrics/MetricsTablesGrid.tsx](../../packages/trading-ui/src/components/ServerMetrics/MetricsTablesGrid.tsx#L64)
@@ -5378,6 +5391,14 @@ A metric to chart: a metrics row, a process value or a table's writes.
 | `id` | `string` |  | metricsHistory.metric: `component.name`, `process.<column>` or `table.<MODULE.table>`. |
 | `kind` | `"counter" \| "gauge" \| "timer"` |  |  |
 | `unit` | `string` |  |  |
+
+### Types (components/ServerMetrics)
+
+#### MetricsSessionsGridProps
+
+*type* · [components/ServerMetrics/MetricsSessionsGrid.tsx](../../packages/trading-ui/src/components/ServerMetrics/MetricsSessionsGrid.tsx#L53)
+
+Props of [`MetricsSessionsGrid`](#metricssessionsgrid).
 
 ## components/SideLabel
 

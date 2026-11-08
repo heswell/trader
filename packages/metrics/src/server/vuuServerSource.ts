@@ -7,6 +7,10 @@ import type { MetricSource } from "../MetricsCollector";
  */
 export interface VuuSessionStats {
   readonly sessionId: string;
+  /** The user's name. */
+  readonly user: string;
+  /** When the session logged in, epoch ms. */
+  readonly connectedAt: number;
   readonly queueLength: number;
   readonly rowsQueued: number;
   readonly rowsCoalesced: number;
@@ -36,13 +40,6 @@ export interface VuuServerStats {
   onSendCycle?(listener: (cycle: VuuSendCycle) => void): () => void;
 }
 
-type Totals = {
-  -readonly [K in Exclude<
-    keyof VuuSessionStats,
-    "sessionId" | "queueLength"
-  >]: number;
-};
-
 const COUNTERS = [
   "rowsQueued",
   "rowsCoalesced",
@@ -50,7 +47,9 @@ const COUNTERS = [
   "rowsDropped",
   "messagesSent",
   "charsSent",
-] as const satisfies readonly (keyof Totals)[];
+] as const satisfies readonly (keyof VuuSessionStats)[];
+
+type Totals = Record<(typeof COUNTERS)[number], number>;
 
 const zero = (): Totals => ({
   rowsQueued: 0,
@@ -66,7 +65,8 @@ const zero = (): Totals => ({
  * excluded). With a vuu-server that reports session stats (trader upstream
  * issue 91), also the client sessions, their outbound queues, rows queued,
  * coalesced, sent and dropped, messages and KB sent, and the send-cycle
- * duration. `getServer` may return undefined until the server exists.
+ * duration, and a METRICS.metricsSessions row per session. `getServer` may
+ * return undefined until the server exists.
  *
  * Session counters are summed into running totals from each session's change
  * since the previous read, so the totals do not fall when a session closes
@@ -113,6 +113,18 @@ export const vuuServerSource = (
           for (const key of COUNTERS) {
             totals[key] += stats[key] - (before?.[key] ?? 0);
           }
+          writer.session({
+            id: stats.sessionId,
+            user: stats.user,
+            connectedAt: stats.connectedAt,
+            queueLength: stats.queueLength,
+            rowsQueued: stats.rowsQueued,
+            rowsCoalesced: stats.rowsCoalesced,
+            rowsSent: stats.rowsSent,
+            rowsDropped: stats.rowsDropped,
+            messagesSent: stats.messagesSent,
+            charsSent: stats.charsSent,
+          });
         }
         previous = current;
         writer.gauge("vuu", "queuedRows", queued, "rows");

@@ -156,6 +156,15 @@ describe("METRICS module over the Vuu protocol", () => {
         (r) => r.id === "vuu.sendCycle" && Number(r.value) > 0,
       );
       expect(sendCycle.kind).toBe("timer");
+      const sessionsVp = await admin.createViewport(
+        METRICS_MODULE,
+        "metricsSessions",
+        ["id", "user", "rowsSent"],
+      );
+      await admin.row(
+        sessionsVp,
+        (r) => r.user === "admin" && Number(r.rowsSent) > 0,
+      );
     }
     // a timer row: the publisher's flush, timed on every call here
     const flush = await admin.row(

@@ -2,6 +2,7 @@ import {
   MetricHistoryChart,
   MetricsGrid,
   MetricsProcessStrip,
+  MetricsSessionsGrid,
   MetricsTablesGrid,
   type SelectedMetric,
 } from "@heswell/trading-ui";
@@ -27,7 +28,8 @@ const DEFAULT_METRIC: SelectedMetric = {
  * Server metrics (module gated by sim-admin), from the trading server's
  * METRICS tables: the process (CPU, memory, event-loop lag) with sparklines
  * of its recent history; every metric (hot-path timers, counters, gauges)
- * beside the history chart of the selected one; and table writes. Clicking
+ * beside the history chart of the selected one; table writes beside the
+ * client sessions (queue depth and send rates per session). Clicking
  * a process card, a metric or a counted table charts its history.
  */
 const ServerMetrics = () => {
@@ -76,15 +78,30 @@ const ServerMetrics = () => {
               <MetricHistoryChart metric={metric} style={content} />
             </View>
           </FlexboxLayout>
-          <View
-            header
-            id="server-metrics-tables"
-            resizeable
-            style={pane(2)}
-            title="Tables"
+          <FlexboxLayout
+            id="server-metrics-bottom"
+            path=""
+            style={{ ...pane(2), flexDirection: "row" }}
           >
-            <MetricsTablesGrid onSelectMetric={select} style={content} />
-          </View>
+            <View
+              header
+              id="server-metrics-tables"
+              resizeable
+              style={pane(3)}
+              title="Tables"
+            >
+              <MetricsTablesGrid onSelectMetric={select} style={content} />
+            </View>
+            <View
+              header
+              id="server-metrics-sessions"
+              resizeable
+              style={pane(2)}
+              title="Sessions"
+            >
+              <MetricsSessionsGrid style={content} />
+            </View>
+          </FlexboxLayout>
         </FlexboxLayout>
       </LayoutProvider>
     </FeatureFrame>

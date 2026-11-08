@@ -4,13 +4,13 @@
 
 The client entry of `@heswell/trading-schemas`: table definitions, enums, RPC contracts and validation, tick / lot maths. Shared by the UI, the servers and the in-browser engines. Overview: [schemas.md](../schemas.md), [package README](../../packages/trading-schemas/README.md).
 
-Imports: `@heswell/trading-schemas`. 287 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-schemas`. 289 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
 - **domain**: [acceptsOrders](#acceptsorders), [activityAt](#activityat), [ALGO_STRATEGIES](#algo_strategies), [ALGO_STRATEGY_DEFINITIONS](#algo_strategy_definitions), [ALGO_STRATEGY_GROUPS](#algo_strategy_groups), [AlgoParamDefinition](#algoparamdefinition), [AlgoParamType](#algoparamtype), [AlgoStrategy](#algostrategy), [algoStrategyDefinition](#algostrategydefinition), [AlgoStrategyDefinition](#algostrategydefinition-1), [AlgoStrategyGroup](#algostrategygroup), [assertTransition](#asserttransition), [BOOK_EVENT_TYPES](#book_event_types), [BookEventType](#bookeventtype), [BOT_TYPES](#bot_types), [BotType](#bottype), [canAmend](#canamend), [canCancel](#cancancel), [canTransition](#cantransition), [CLIENT_PERSONAS](#client_personas), [CLIENT_SIDE_MODES](#client_side_modes), [ClientPersona](#clientpersona), [ClientSideMode](#clientsidemode), [clockAtSessionMinute](#clockatsessionminute), [cumulativeVolume](#cumulativevolume), [DAY_MS](#day_ms), [decimalsOf](#decimalsof), [EXEC_TYPES](#exec_types), [ExecType](#exectype), [FLAT_PROFILE](#flat_profile), [formatTickBands](#formattickbands), [INITIAL_ORDER_STATUS](#initial_order_status), [InstrumentStatic](#instrumentstatic), [isContinuousMatching](#iscontinuousmatching), [isEnumValue](#isenumvalue), [isOnTick](#isontick), [isPendingStatus](#ispendingstatus), [isPricedOrdType](#ispricedordtype), [isSessionOpen](#issessionopen), [isTerminalStatus](#isterminalstatus), [isValidLot](#isvalidlot), [isWorkingStatus](#isworkingstatus), [Liquidity](#liquidity), [LIQUIDITY_VALUES](#liquidity_values), [nextOpenAt](#nextopenat), [oppositeSide](#oppositeside), [ORD_STATUSES](#ord_statuses), [ORD_TYPES](#ord_types), [ORDER_STATUS_TRANSITIONS](#order_status_transitions), [OrderReject](#orderreject), [OrderToValidate](#ordertovalidate), [OrdStatus](#ordstatus), [OrdType](#ordtype), [parseTickBands](#parsetickbands), [REJECT_REASONS](#reject_reasons), [RejectReason](#rejectreason), [RoundingMode](#roundingmode), [roundToLot](#roundtolot), [roundToTick](#roundtotick), [ScenarioStatus](#scenariostatus), [sessionCloseAt](#sessioncloseat), [sessionFraction](#sessionfraction), [sessionMinuteOfDay](#sessionminuteofday), [SessionSchedule](#sessionschedule), [sessionToClockMs](#sessiontoclockms), [sessionWindow](#sessionwindow), [Side](#side), [SIDES](#sides), [SIM_BOT_KINDS](#sim_bot_kinds), [SimBotKind](#simbotkind), [stepTicks](#stepticks), [SUPPORTED_ORD_TYPES](#supported_ord_types), [TickBand](#tickband), [ticksBetween](#ticksbetween), [TickSchedule](#tickschedule), [tickScheduleOf](#tickscheduleof), [tickSizeAt](#ticksizeat), [TIME_IN_FORCE_VALUES](#time_in_force_values), [TimeInForce](#timeinforce), [TRADING_PHASES](#trading_phases), [TradingPhase](#tradingphase), [U_SHAPED_PROFILE](#u_shaped_profile), [UNSCHEDULED](#unscheduled), [validateAmend](#validateamend), [validateOrder](#validateorder), [validatePrice](#validateprice), [validateQuantity](#validatequantity), [VOLUME_PROFILES](#volume_profiles), [volumeProfile](#volumeprofile), [VolumeProfileName](#volumeprofilename), [VolumeProfileParams](#volumeprofileparams), [workingStatusFor](#workingstatusfor)
 - **rpc**: [addBotParams](#addbotparams), [AddBotRequest](#addbotrequest), [AddBotResponse](#addbotresponse), [addClientBotParams](#addclientbotparams), [AddClientBotRequest](#addclientbotrequest), [AddClientBotResponse](#addclientbotresponse), [AdminRpcResponse](#adminrpcresponse), [amendOrderParams](#amendorderparams), [AmendOrderRequest](#amendorderrequest), [AmendOrderResponse](#amendorderresponse), [boolean](#boolean), [botSelectorParams](#botselectorparams), [BotSelectorRequest](#botselectorrequest), [cancelAllParams](#cancelallparams), [CancelAllRequest](#cancelallrequest), [CancelAllResponse](#cancelallresponse), [cancelOrderParams](#cancelorderparams), [CancelOrderRequest](#cancelorderrequest), [CancelOrderResponse](#cancelorderresponse), [CLIENT_ADMIN_RPC_NAMES](#client_admin_rpc_names), [ClientAdminRpcResponse](#clientadminrpcresponse), [clientBotSelectorParams](#clientbotselectorparams), [ClientBotSelectorRequest](#clientbotselectorrequest), [createOrderParams](#createorderparams), [CreateOrderRequest](#createorderrequest), [CreateOrderResponse](#createorderresponse), [EXCHANGE_ADMIN_RPC_NAMES](#exchange_admin_rpc_names), [formatRpcError](#formatrpcerror), [haltInstrumentParams](#haltinstrumentparams), [HaltInstrumentRequest](#haltinstrumentrequest), [Infer](#infer), [InferShape](#infershape), [MARKET_SESSION_PHASES](#market_session_phases), [number](#number), [NumberOptions](#numberoptions), [object](#object), [OMS_RPC_NAMES](#oms_rpc_names), [oneOf](#oneof), [optional](#optional), [OptionalValidator](#optionalvalidator), [parseRpcError](#parserpcerror), [removeBotParams](#removebotparams), [RemoveBotRequest](#removebotrequest), [removeClientBotParams](#removeclientbotparams), [RemoveClientBotRequest](#removeclientbotrequest), [resumeInstrumentParams](#resumeinstrumentparams), [ResumeInstrumentRequest](#resumeinstrumentrequest), [RpcContracts](#rpccontracts), [rpcError](#rpcerror), [RpcName](#rpcname), [RpcRequestParams](#rpcrequestparams), [RpcResponseData](#rpcresponsedata), [rpcSuccess](#rpcsuccess), [runScenarioParams](#runscenarioparams), [RunScenarioRequest](#runscenariorequest), [RunScenarioResponse](#runscenarioresponse), [setBotParamsParams](#setbotparamsparams), [SetBotParamsRequest](#setbotparamsrequest), [setBotRateParams](#setbotrateparams), [SetBotRateRequest](#setbotraterequest), [setClientBotParamsParams](#setclientbotparamsparams), [SetClientBotParamsRequest](#setclientbotparamsrequest), [setFlowParamsParams](#setflowparamsparams), [SetFlowParamsRequest](#setflowparamsrequest), [SetFlowParamsResponse](#setflowparamsresponse), [setInstrumentParamsParams](#setinstrumentparamsparams), [SetInstrumentParamsRequest](#setinstrumentparamsrequest), [setMarketPhaseParams](#setmarketphaseparams), [SetMarketPhaseRequest](#setmarketphaserequest), [setVolatilityParams](#setvolatilityparams), [SetVolatilityRequest](#setvolatilityrequest), [shiftFairValueParams](#shiftfairvalueparams), [ShiftFairValueRequest](#shiftfairvaluerequest), [stopScenarioParams](#stopscenarioparams), [StopScenarioRequest](#stopscenariorequest), [string](#string), [StringOptions](#stringoptions), [submitClientAlgoParams](#submitclientalgoparams), [SubmitClientAlgoRequest](#submitclientalgorequest), [tradingRpcRequest](#tradingrpcrequest), [TradingRpcRequest](#tradingrpcrequest-1), [TradingRpcResult](#tradingrpcresult), [TradingRpcSuccess](#tradingrpcsuccess), [validateRpcParams](#validaterpcparams), [ValidationResult](#validationresult), [Validator](#validator)
-- **tables**: [accountPnlHistory](#accountpnlhistory), [accountPnlHistoryKey](#accountpnlhistorykey), [AccountPnlHistoryRow](#accountpnlhistoryrow), [AccountRow](#accountrow), [accounts](#accounts), [barKey](#barkey), [BarRow](#barrow), [bars](#bars), [BOOK_SAMPLE_LEVELS](#book_sample_levels), [bookEventKey](#bookeventkey), [BookEventRow](#bookeventrow), [bookEvents](#bookevents), [BookOrderRow](#bookorderrow), [bookOrders](#bookorders), [bookSampleKey](#booksamplekey), [BookSampleRow](#booksamplerow), [bookSamples](#booksamples), [botFillKey](#botfillkey), [BotFillRow](#botfillrow), [botFills](#botfills), [botHistory](#bothistory), [botHistoryKey](#bothistorykey), [BotHistoryRow](#bothistoryrow), [botParamKey](#botparamkey), [BotParamRow](#botparamrow), [botParams](#botparams), [BotRow](#botrow), [bots](#bots), [ChildOrderRow](#childorderrow), [childOrders](#childorders), [clientBotParams](#clientbotparams), [clientBots](#clientbots), [ColumnDefinition](#columndefinition), [columnIndices](#columnindices), [ColumnName](#columnname), [columnNames](#columnnames), [defineJoin](#definejoin), [defineTable](#definetable), [depth](#depth), [depthKey](#depthkey), [DepthRow](#depthrow), [EXCHANGE_MODULE](#exchange_module), [exchangeTables](#exchangetables), [FillRow](#fillrow), [fills](#fills), [fromRowArray](#fromrowarray), [getTradingSchemas](#gettradingschemas), [instrumentPrices](#instrumentprices), [InstrumentRow](#instrumentrow), [instruments](#instruments), [JoinDefinition](#joindefinition), [joinTableColumns](#jointablecolumns), [JoinType](#jointype), [LinkDefinition](#linkdefinition), [MetricRow](#metricrow), [metrics](#metrics), [METRICS_MODULE](#metrics_module), [metricsHistory](#metricshistory), [metricsHistoryKey](#metricshistorykey), [MetricsHistoryRow](#metricshistoryrow), [metricsModuleTables](#metricsmoduletables), [metricsProcess](#metricsprocess), [MetricsProcessRow](#metricsprocessrow), [MetricsTableRow](#metricstablerow), [metricsTables](#metricstables), [OMS_MODULE](#oms_module), [omsTables](#omstables), [PARENT_ORDER_PROGRESS_COLUMNS](#parent_order_progress_columns), [ParentOrderRow](#parentorderrow), [parentOrders](#parentorders), [parseBarInterval](#parsebarinterval), [parseDepthKey](#parsedepthkey), [parsePositionKey](#parsepositionkey), [pnlHistory](#pnlhistory), [pnlHistoryKey](#pnlhistorykey), [PnlHistoryRow](#pnlhistoryrow), [positionKey](#positionkey), [positionPrices](#positionprices), [PositionRow](#positionrow), [positions](#positions), [PriceRow](#pricerow), [prices](#prices), [RowArray](#rowarray), [RowOf](#rowof), [ScenarioRow](#scenariorow), [ScenarioRunRow](#scenariorunrow), [scenarioRuns](#scenarioruns), [scenarios](#scenarios), [SimBookRow](#simbookrow), [simBooks](#simbooks), [SimEventRow](#simeventrow), [simEvents](#simevents), [simSampleKey](#simsamplekey), [SimSampleRow](#simsamplerow), [simSamples](#simsamples), [simSession](#simsession), [SimSessionRow](#simsessionrow), [TableDefinition](#tabledefinition), [toRowArray](#torowarray), [toTableSchema](#totableschema), [TradeRow](#traderow), [trades](#trades), [TradingColumnDataType](#tradingcolumndatatype), [TradingJoinName](#tradingjoinname), [tradingJoins](#tradingjoins), [TradingModule](#tradingmodule), [TradingSchemaName](#tradingschemaname), [TradingTableName](#tradingtablename), [tradingTables](#tradingtables)
+- **tables**: [accountPnlHistory](#accountpnlhistory), [accountPnlHistoryKey](#accountpnlhistorykey), [AccountPnlHistoryRow](#accountpnlhistoryrow), [AccountRow](#accountrow), [accounts](#accounts), [barKey](#barkey), [BarRow](#barrow), [bars](#bars), [BOOK_SAMPLE_LEVELS](#book_sample_levels), [bookEventKey](#bookeventkey), [BookEventRow](#bookeventrow), [bookEvents](#bookevents), [BookOrderRow](#bookorderrow), [bookOrders](#bookorders), [bookSampleKey](#booksamplekey), [BookSampleRow](#booksamplerow), [bookSamples](#booksamples), [botFillKey](#botfillkey), [BotFillRow](#botfillrow), [botFills](#botfills), [botHistory](#bothistory), [botHistoryKey](#bothistorykey), [BotHistoryRow](#bothistoryrow), [botParamKey](#botparamkey), [BotParamRow](#botparamrow), [botParams](#botparams), [BotRow](#botrow), [bots](#bots), [ChildOrderRow](#childorderrow), [childOrders](#childorders), [clientBotParams](#clientbotparams), [clientBots](#clientbots), [ColumnDefinition](#columndefinition), [columnIndices](#columnindices), [ColumnName](#columnname), [columnNames](#columnnames), [defineJoin](#definejoin), [defineTable](#definetable), [depth](#depth), [depthKey](#depthkey), [DepthRow](#depthrow), [EXCHANGE_MODULE](#exchange_module), [exchangeTables](#exchangetables), [FillRow](#fillrow), [fills](#fills), [fromRowArray](#fromrowarray), [getTradingSchemas](#gettradingschemas), [instrumentPrices](#instrumentprices), [InstrumentRow](#instrumentrow), [instruments](#instruments), [JoinDefinition](#joindefinition), [joinTableColumns](#jointablecolumns), [JoinType](#jointype), [LinkDefinition](#linkdefinition), [MetricRow](#metricrow), [metrics](#metrics), [METRICS_MODULE](#metrics_module), [metricsHistory](#metricshistory), [metricsHistoryKey](#metricshistorykey), [MetricsHistoryRow](#metricshistoryrow), [metricsModuleTables](#metricsmoduletables), [metricsProcess](#metricsprocess), [MetricsProcessRow](#metricsprocessrow), [MetricsSessionRow](#metricssessionrow), [metricsSessions](#metricssessions), [MetricsTableRow](#metricstablerow), [metricsTables](#metricstables), [OMS_MODULE](#oms_module), [omsTables](#omstables), [PARENT_ORDER_PROGRESS_COLUMNS](#parent_order_progress_columns), [ParentOrderRow](#parentorderrow), [parentOrders](#parentorders), [parseBarInterval](#parsebarinterval), [parseDepthKey](#parsedepthkey), [parsePositionKey](#parsepositionkey), [pnlHistory](#pnlhistory), [pnlHistoryKey](#pnlhistorykey), [PnlHistoryRow](#pnlhistoryrow), [positionKey](#positionkey), [positionPrices](#positionprices), [PositionRow](#positionrow), [positions](#positions), [PriceRow](#pricerow), [prices](#prices), [RowArray](#rowarray), [RowOf](#rowof), [ScenarioRow](#scenariorow), [ScenarioRunRow](#scenariorunrow), [scenarioRuns](#scenarioruns), [scenarios](#scenarios), [SimBookRow](#simbookrow), [simBooks](#simbooks), [SimEventRow](#simeventrow), [simEvents](#simevents), [simSampleKey](#simsamplekey), [SimSampleRow](#simsamplerow), [simSamples](#simsamples), [simSession](#simsession), [SimSessionRow](#simsessionrow), [TableDefinition](#tabledefinition), [toRowArray](#torowarray), [toTableSchema](#totableschema), [TradeRow](#traderow), [trades](#trades), [TradingColumnDataType](#tradingcolumndatatype), [TradingJoinName](#tradingjoinname), [tradingJoins](#tradingjoins), [TradingModule](#tradingmodule), [TradingSchemaName](#tradingschemaname), [TradingTableName](#tradingtablename), [tradingTables](#tradingtables)
 
 ## domain
 
@@ -1972,7 +1972,7 @@ joinTableColumns(join: JoinDefinition): readonly ColumnDefinition[]
 
 #### metricsHistoryKey
 
-*function* · [tables/metrics.ts](../../packages/trading-schemas/src/tables/metrics.ts#L155)
+*function* · [tables/metrics.ts](../../packages/trading-schemas/src/tables/metrics.ts#L207)
 
 Key of a metricsHistory row.
 
@@ -2264,7 +2264,7 @@ const metricsHistory: TableDefinition<readonly [{ readonly name: "id"; readonly 
 
 #### metricsModuleTables
 
-*const* · [tables/metrics.ts](../../packages/trading-schemas/src/tables/metrics.ts#L158)
+*const* · [tables/metrics.ts](../../packages/trading-schemas/src/tables/metrics.ts#L210)
 
 ```ts
 const metricsModuleTables: { readonly metricsProcess: TableDefinition<readonly [{ readonly name: "id"; readonly dataType: "string"; readonly description: "Process name."; }, { readonly name: "pid"; readonly dataType: "int"; }, { readonly name: "started"; readonly dataType: "epochtimestamp"; }, ... 9 more ..., { ...; }]>; readonly metrics: Tab...
@@ -2276,6 +2276,14 @@ const metricsModuleTables: { readonly metricsProcess: TableDefinition<readonly [
 
 ```ts
 const metricsProcess: TableDefinition<readonly [{ readonly name: "id"; readonly dataType: "string"; readonly description: "Process name."; }, { readonly name: "pid"; readonly dataType: "int"; }, { readonly name: "started"; readonly dataType: "epochtimestamp"; }, ... 9 more ..., { ...; }]>
+```
+
+#### metricsSessions
+
+*const* · [tables/metrics.ts](../../packages/trading-schemas/src/tables/metrics.ts#L154)
+
+```ts
+const metricsSessions: TableDefinition<readonly [{ readonly name: "id"; readonly dataType: "string"; readonly description: "Vuu session id."; }, { readonly name: "user"; readonly dataType: "string"; }, { readonly name: "connected"; readonly dataType: "epochtimestamp"; readonly description: "When the session logged in."; }, ... 8 more ...,...
 ```
 
 #### metricsTables
@@ -2616,7 +2624,7 @@ type JoinType = "LeftOuterJoin" | "InnerJoin"
 
 #### MetricRow
 
-*type* · [tables/metrics.ts](../../packages/trading-schemas/src/tables/metrics.ts#L166)
+*type* · [tables/metrics.ts](../../packages/trading-schemas/src/tables/metrics.ts#L219)
 
 ```ts
 type MetricRow = RowOf<typeof metrics>
@@ -2624,7 +2632,7 @@ type MetricRow = RowOf<typeof metrics>
 
 #### MetricsHistoryRow
 
-*type* · [tables/metrics.ts](../../packages/trading-schemas/src/tables/metrics.ts#L168)
+*type* · [tables/metrics.ts](../../packages/trading-schemas/src/tables/metrics.ts#L221)
 
 ```ts
 type MetricsHistoryRow = RowOf<typeof metricsHistory>
@@ -2632,15 +2640,23 @@ type MetricsHistoryRow = RowOf<typeof metricsHistory>
 
 #### MetricsProcessRow
 
-*type* · [tables/metrics.ts](../../packages/trading-schemas/src/tables/metrics.ts#L165)
+*type* · [tables/metrics.ts](../../packages/trading-schemas/src/tables/metrics.ts#L218)
 
 ```ts
 type MetricsProcessRow = RowOf<typeof metricsProcess>
 ```
 
+#### MetricsSessionRow
+
+*type* · [tables/metrics.ts](../../packages/trading-schemas/src/tables/metrics.ts#L222)
+
+```ts
+type MetricsSessionRow = RowOf<typeof metricsSessions>
+```
+
 #### MetricsTableRow
 
-*type* · [tables/metrics.ts](../../packages/trading-schemas/src/tables/metrics.ts#L167)
+*type* · [tables/metrics.ts](../../packages/trading-schemas/src/tables/metrics.ts#L220)
 
 ```ts
 type MetricsTableRow = RowOf<typeof metricsTables>

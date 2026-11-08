@@ -15,15 +15,16 @@ with the same viewports, sorting and filtering as any other table.
 
 ## 1. Tables
 
-All four tables are written once per `metrics.intervalMs` (1 s by default). A `metricsProcess`, `metrics` or
-`metricsTables` row is written only when one of its values changed, so `lastUpdate` is the time the row last changed.
-`metricsHistory` gets a row for every metric at every snapshot.
+All five tables are written once per `metrics.intervalMs` (1 s by default). A `metricsProcess`, `metrics`,
+`metricsTables` or `metricsSessions` row is written only when one of its values changed, so `lastUpdate` is the time
+the row last changed. `metricsHistory` gets a row for every metric at every snapshot.
 
 | Table | Key | One row per | Columns |
 | --- | --- | --- | --- |
 | `metricsProcess` | process name (`trading`) | server process | `pid`, `started`, `uptimeS`, `cpuPct`, `rssMb`, `heapUsedMb`, `heapTotalMb`, `externalMb`, `loopLagP50Ms`, `loopLagP99Ms`, `loopLagMaxMs` |
 | `metrics` | `component.name` | named metric | `component`, `name`, `kind`, `unit`, `value`, `rate`, `mean`, `p50`, `p99`, `max` |
 | `metricsTables` | `MODULE.table` | Vuu table | `module`, `table`, `rows`, `counted`, `writes`, `writesPerSec` |
+| `metricsSessions` | Vuu session id | client session (vuu-server 4.5.0+), removed when it closes | `user`, `connected`, `queueLength`, `rowsQueuedPerSec`, `rowsSentPerSec`, `coalescedPct`, `messagesPerSec`, `kbPerSec`, `rowsSent`, `rowsDropped` |
 | `metricsHistory` | `metric\|time` | metric per snapshot, the last `metrics.historySize` kept | `metric`, `component`, `name`, `kind`, `unit`, `time`, `value`, `rate`, `p50`, `p99`, `max` |
 
 The `metrics` table holds every kind of metric in one place, so adding a metric needs no schema change:
@@ -40,6 +41,10 @@ Notes on the columns:
 - Event-loop lag is the drift of a 20 ms timer. Bun 1.3 has no `eventLoopUtilization`.
 - A timer's `rate` counts every call, so it is right in every mode. `value` and the latency columns only
   count timed calls: one in `metrics.sampleEvery` when `sampled`, none when `off`.
+- `metricsSessions` rates are per second over the interval, from the session's counters (0 in its first
+  snapshot). `coalescedPct` is the share of the interval's queued updates merged into one already waiting.
+  `rowsSent` and `rowsDropped` count since login. The table is empty with vuu-server 4.4.0 and on the in-browser
+  data.
 - `metricsTables.rows` covers every table on the server, including joins. `writes` is counted only for the
   tables that trader's own publishers write (`counted = true`). For other tables it is 0.
 
@@ -48,7 +53,7 @@ Notes on the columns:
 (a counter: `value` = writes, `rate` = writes per second). With about 80 metrics and the default 300 snapshots it
 holds about 24,000 rows, and each snapshot inserts and deletes about 80.
 
-The definitions are in `@heswell/trading-schemas` (`metricsProcess`, `metrics`, `metricsTables`; see
+The definitions are in `@heswell/trading-schemas` (`metricsProcess`, `metrics`, `metricsTables`, `metricsHistory`, `metricsSessions`; see
 [schemas.md](schemas.md) and the [API reference](api/trading-schemas.md)).
 
 ## 2. Metrics
@@ -125,8 +130,8 @@ next to `Main.ts`, which is where the simulator and the OMS are put together.
   tables, and it follows `exchangeSim.permissionMode`: in `auto` mode, users with no roles at all also see them
   (dev auth). On the `start:all` stack, `admin` has `sim-admin`.
 - **Timers off.** Timers are set to `off` when nothing reads them (`metrics.enabled=0` and no perf stats file).
-- **UI.** Simulator › Metrics (`sim-admin-access`) shows the four tables: process cards with sparklines, every
-  metric with trends of its rate and p99, table writes, and the history chart of whatever is selected
+- **UI.** Simulator › Metrics (`sim-admin-access`) shows the five tables: process cards with sparklines, every
+  metric with trends of its rate and p99, table writes, client sessions, and the history chart of whatever is selected
   ([components](components/simulator.md#server-metrics)). The showcase (`#server-metrics`) and the UI tests use
   the same tables from `@heswell/trading-test-data`, without the process row.
 - **Perf harness.** With `TRADER_PERF_STATS_FILE` set, `perf:ws` gets its server stats JSONL from the same
@@ -251,4 +256,6 @@ which fits its per-call cost, so `sampled` is the default. `all` is useful for s
 4. **Phase 4: upstream.** vuu-server reports per-session outbound counters (`getSessionStats()`), the
    session count and send-cycle timings (`onSendCycle`) (vuu-websocket branch `feat/server-metrics`, trader
    upstream issue 91). `vuuServerSource` uses them when the server has them, so the `vuu` metrics above appear
-   once trader moves to that release. A per-session METRICS table (queue depth and rates by user) could follow.
+   once trader moves to that release.
+5. **Per-session table (done).** `metricsSessions`: a row per client session with its queue depth and send
+   rates, shown in the Metrics feature's Sessions grid.

@@ -151,6 +151,58 @@ export const metricsHistory = defineTable({
   ],
 });
 
+export const metricsSessions = defineTable({
+  module: METRICS_MODULE,
+  name: "metricsSessions",
+  keyField: "id",
+  description:
+    "One row per client session logged in to the Vuu server: its outbound queue and what it is sent. Needs vuu-server 4.5.0 or later (empty before); a session's row is removed when it closes.",
+  columns: [
+    { name: "id", dataType: "string", description: "Vuu session id." },
+    { name: "user", dataType: "string" },
+    {
+      name: "connected",
+      dataType: "epochtimestamp",
+      description: "When the session logged in.",
+    },
+    {
+      name: "queueLength",
+      dataType: "long",
+      description: "Row updates waiting to be sent now.",
+    },
+    {
+      name: "rowsQueuedPerSec",
+      dataType: "double",
+      description: "Row updates queued for the session, per second.",
+    },
+    {
+      name: "rowsSentPerSec",
+      dataType: "double",
+      description: "Row updates sent, per second.",
+    },
+    {
+      name: "coalescedPct",
+      dataType: "double",
+      description:
+        "Share of queued updates merged into one already waiting, over the interval.",
+    },
+    { name: "messagesPerSec", dataType: "double" },
+    {
+      name: "kbPerSec",
+      dataType: "double",
+      description: "KB of JSON sent per second.",
+    },
+    { name: "rowsSent", dataType: "long", description: "Since login." },
+    {
+      name: "rowsDropped",
+      dataType: "long",
+      description:
+        "Since login: updates not sent because the row had left the viewport's range.",
+    },
+    { name: "lastUpdate", dataType: "epochtimestamp" },
+  ],
+});
+
 /** Key of a metricsHistory row. */
 export const metricsHistoryKey = (metric: string, time: number) =>
   `${metric}|${time}`;
@@ -160,9 +212,11 @@ export const metricsModuleTables = {
   metrics,
   metricsTables,
   metricsHistory,
+  metricsSessions,
 } as const;
 
 export type MetricsProcessRow = RowOf<typeof metricsProcess>;
 export type MetricRow = RowOf<typeof metrics>;
 export type MetricsTableRow = RowOf<typeof metricsTables>;
 export type MetricsHistoryRow = RowOf<typeof metricsHistory>;
+export type MetricsSessionRow = RowOf<typeof metricsSessions>;
