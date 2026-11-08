@@ -16,6 +16,6 @@
   },
   "dependencies": {
     "@heswell/trading-schemas": "workspace:*",
-    "@heswell/vuu-server": "^4.4.0"
+    "@heswell/vuu-server": "^4.5.0"
   }
 }

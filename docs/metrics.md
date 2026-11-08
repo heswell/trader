@@ -24,7 +24,7 @@ the row last changed. `metricsHistory` gets a row for every metric at every snap
 | `metricsProcess` | process name (`trading`) | server process | `pid`, `started`, `uptimeS`, `cpuPct`, `rssMb`, `heapUsedMb`, `heapTotalMb`, `externalMb`, `loopLagP50Ms`, `loopLagP99Ms`, `loopLagMaxMs` |
 | `metrics` | `component.name` | named metric | `component`, `name`, `kind`, `unit`, `value`, `rate`, `mean`, `p50`, `p99`, `max` |
 | `metricsTables` | `MODULE.table` | Vuu table | `module`, `table`, `rows`, `counted`, `writes`, `writesPerSec` |
-| `metricsSessions` | Vuu session id | client session (vuu-server 4.5.0+), removed when it closes | `user`, `connected`, `queueLength`, `rowsQueuedPerSec`, `rowsSentPerSec`, `coalescedPct`, `messagesPerSec`, `kbPerSec`, `rowsSent`, `rowsDropped` |
+| `metricsSessions` | Vuu session id | client session, removed when it closes | `user`, `connected`, `queueLength`, `rowsQueuedPerSec`, `rowsSentPerSec`, `coalescedPct`, `messagesPerSec`, `kbPerSec`, `rowsSent`, `rowsDropped` |
 | `metricsHistory` | `metric\|time` | metric per snapshot, the last `metrics.historySize` kept | `metric`, `component`, `name`, `kind`, `unit`, `time`, `value`, `rate`, `p50`, `p99`, `max` |
 
 The `metrics` table holds every kind of metric in one place, so adding a metric needs no schema change:
@@ -43,8 +43,7 @@ Notes on the columns:
   count timed calls: one in `metrics.sampleEvery` when `sampled`, none when `off`.
 - `metricsSessions` rates are per second over the interval, from the session's counters (0 in its first
   snapshot). `coalescedPct` is the share of the interval's queued updates merged into one already waiting.
-  `rowsSent` and `rowsDropped` count since login. The table is empty with vuu-server 4.4.0 and on the in-browser
-  data.
+  `rowsSent` and `rowsDropped` count since login. The table is empty on the in-browser data.
 - `metricsTables.rows` covers every table on the server, including joins. `writes` is counted only for the
   tables that trader's own publishers write (`counted = true`). For other tables it is 0.
 
@@ -82,7 +81,7 @@ The definitions are in `@heswell/trading-schemas` (`metricsProcess`, `metrics`, 
 | | `coalescedPct` | gauge | Share of queued row updates merged before they were sent, over the interval ¹ |
 | | `sendCycle` | timer | Duration of vuu-server's send cycle (every 60 ms, all sessions), timed on every cycle ¹ |
 
-¹ Needs vuu-server 4.5.0 or later (trader upstream issue 91); with 4.4.0 `vuuServerSource` reports only the
+¹ From vuu-server 4.5.0 (trader upstream issue 91); with an older server `vuuServerSource` reports only the
 viewports and table rows. The counters are totals over all sessions, built from each session's change between
 reads, so they do not fall when a session closes. Rows a session sent after the last read before it closed are
 not counted.
@@ -253,9 +252,8 @@ which fits its per-call cost, so `sampled` is the default. `all` is useful for s
 2. **Phase 2 (done).** Sampled timers on matching, step, flush, the gateway, OMS requests, risk checks and
    execution reports; order lifecycle latencies; counters for rejects, dropped reports and ignored state errors.
 3. **Phase 3 (done).** The `metricsHistory` table and the Simulator › Metrics feature.
-4. **Phase 4: upstream.** vuu-server reports per-session outbound counters (`getSessionStats()`), the
-   session count and send-cycle timings (`onSendCycle`) (vuu-websocket branch `feat/server-metrics`, trader
-   upstream issue 91). `vuuServerSource` uses them when the server has them, so the `vuu` metrics above appear
-   once trader moves to that release.
+4. **Phase 4: upstream (done).** vuu-server 4.5.0 reports per-session outbound counters (`getSessionStats()`),
+   the session count and send-cycle timings (`onSendCycle`) (vuu-websocket#114, trader upstream issue 91).
+   `vuuServerSource` publishes them as the `vuu` metrics above.
 5. **Per-session table (done).** `metricsSessions`: a row per client session with its queue depth and send
    rates, shown in the Metrics feature's Sessions grid.

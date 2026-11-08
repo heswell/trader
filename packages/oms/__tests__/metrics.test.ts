@@ -140,32 +140,29 @@ describe("METRICS module over the Vuu protocol", () => {
       (r) => r.id === "vuu.viewports" && Number(r.value) >= 3,
     );
     await admin.row(metricsVp, (r) => r.id === "oms.liveOrders");
-    if ("getSessionStats" in server) {
-      // vuu-server 4.5.0+ (trader upstream issue 91): the admin's own
-      // session is sending rows
-      await admin.row(
-        metricsVp,
-        (r) => r.id === "vuu.sessions" && Number(r.value) >= 1,
-      );
-      await admin.row(
-        metricsVp,
-        (r) => r.id === "vuu.rowsSent" && Number(r.rate) > 0,
-      );
-      const sendCycle = await admin.row(
-        metricsVp,
-        (r) => r.id === "vuu.sendCycle" && Number(r.value) > 0,
-      );
-      expect(sendCycle.kind).toBe("timer");
-      const sessionsVp = await admin.createViewport(
-        METRICS_MODULE,
-        "metricsSessions",
-        ["id", "user", "rowsSent"],
-      );
-      await admin.row(
-        sessionsVp,
-        (r) => r.user === "admin" && Number(r.rowsSent) > 0,
-      );
-    }
+    // the admin's own session is sending rows
+    await admin.row(
+      metricsVp,
+      (r) => r.id === "vuu.sessions" && Number(r.value) >= 1,
+    );
+    await admin.row(
+      metricsVp,
+      (r) => r.id === "vuu.rowsSent" && Number(r.rate) > 0,
+    );
+    const sendCycle = await admin.row(
+      metricsVp,
+      (r) => r.id === "vuu.sendCycle" && Number(r.value) > 0,
+    );
+    expect(sendCycle.kind).toBe("timer");
+    const sessionsVp = await admin.createViewport(
+      METRICS_MODULE,
+      "metricsSessions",
+      ["id", "user", "rowsSent"],
+    );
+    await admin.row(
+      sessionsVp,
+      (r) => r.user === "admin" && Number(r.rowsSent) > 0,
+    );
     // a timer row: the publisher's flush, timed on every call here
     const flush = await admin.row(
       metricsVp,

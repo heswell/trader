@@ -156,7 +156,7 @@ export const metricsSessions = defineTable({
   name: "metricsSessions",
   keyField: "id",
   description:
-    "One row per client session logged in to the Vuu server: its outbound queue and what it is sent. Needs vuu-server 4.5.0 or later (empty before); a session's row is removed when it closes.",
+    "One row per client session logged in to the Vuu server: its outbound queue and what it is sent. A session's row is removed when it closes.",
   columns: [
     { name: "id", dataType: "string", description: "Vuu session id." },
     { name: "user", dataType: "string" },
