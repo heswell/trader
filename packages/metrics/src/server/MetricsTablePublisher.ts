@@ -3,6 +3,7 @@ import {
   metricsHistoryKey,
   type MetricsProcessRow,
   type MetricRow,
+  type MetricsSessionRow,
   type MetricsTableRow,
   metricsModuleTables,
   type TableDefinition,
@@ -49,15 +50,18 @@ const r3 = (value: number) => Math.round(value * 1_000) / 1_000;
 
 /**
  * Writes collector snapshots to the METRICS tables. A metricsProcess,
- * metrics or metricsTables row is written only when one of its values
+ * metrics, metricsTables or metricsSessions row is written only when one of its values
  * changed, so its lastUpdate is when it last changed. metricsHistory gets a
  * row per metric per snapshot, and drops a metric's oldest row once it holds
- * `historySize`.
+ * `historySize`. A session's metricsSessions row is deleted once a snapshot
+ * no longer reports it.
  */
 export class MetricsTablePublisher {
   readonly #tables: Partial<Record<MetricsTableName, MetricsTable>> = {};
   /** Last values written, per table and key, without lastUpdate. */
   readonly #written = new Map<string, string>();
+  /** metricsSessions rows written, by session id. */
+  #sessions = new Set<string>();
   /** metricsHistory keys per metric, oldest first. */
   readonly #history = new Map<string, string[]>();
   readonly processName: string;
@@ -167,7 +171,39 @@ export class MetricsTablePublisher {
         });
       }
     }
+    this.#publishSessions(snapshot);
   };
+
+  #publishSessions({ time, sessions }: MetricsSnapshot) {
+    const table = this.#tables.metricsSessions;
+    if (!table) return;
+    const current = new Set<string>();
+    for (const s of sessions) {
+      current.add(s.id);
+      const row: MetricsSessionRow = {
+        id: s.id,
+        user: s.user,
+        connected: s.connectedAt,
+        queueLength: s.queueLength,
+        rowsQueuedPerSec: r3(s.rowsQueuedPerSec),
+        rowsSentPerSec: r3(s.rowsSentPerSec),
+        coalescedPct: Math.round(s.coalescedPct * 10) / 10,
+        messagesPerSec: r3(s.messagesPerSec),
+        kbPerSec: r3(s.kbPerSec),
+        rowsSent: s.rowsSent,
+        rowsDropped: s.rowsDropped,
+        lastUpdate: time,
+      };
+      this.#write("metricsSessions", row);
+    }
+    for (const id of this.#sessions) {
+      if (!current.has(id)) {
+        table.delete(id);
+        this.#written.delete(`metricsSessions|${id}`);
+      }
+    }
+    this.#sessions = current;
+  }
 
   #addHistory(
     values: Omit<MetricsHistoryRow, "id" | "p50" | "p99" | "max"> &

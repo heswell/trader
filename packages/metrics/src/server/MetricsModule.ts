@@ -20,6 +20,7 @@ const TABLES: readonly MetricsTableName[] = [
   "metrics",
   "metricsTables",
   "metricsHistory",
+  "metricsSessions",
 ];
 
 /** The viewport user, as vuu-server passes it to permission functions. */
@@ -62,9 +63,9 @@ class MetricsTableProvider extends Provider {
 }
 
 /**
- * The METRICS Vuu module: metricsProcess, metrics, metricsTables and
- * metricsHistory, written from `collector` snapshots once per interval. The
- * collector starts when all four tables have loaded.
+ * The METRICS Vuu module: metricsProcess, metrics, metricsTables,
+ * metricsHistory and metricsSessions, written from `collector` snapshots
+ * once per interval. The collector starts when all the tables have loaded.
  */
 export const MetricsModule = (
   collector: MetricsCollector,

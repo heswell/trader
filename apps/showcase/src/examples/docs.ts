@@ -26,6 +26,7 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   SimInstrumentControls: "docs/components/simulator.md#control",
   MetricsGrid: "docs/components/simulator.md#server-metrics",
   MetricsTablesGrid: "docs/components/simulator.md#server-metrics",
+  MetricsSessionsGrid: "docs/components/simulator.md#server-metrics",
   MetricsProcessStrip: "docs/components/simulator.md#server-metrics",
   MetricHistoryChart: "docs/components/simulator.md#server-metrics",
   InstrumentContextProvider:

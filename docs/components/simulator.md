@@ -72,6 +72,7 @@ Changes apply at once; each shows in `SimEventsLog` with the user. Each control 
 ## Server metrics
 
 Reference: [MetricsGrid](../api/trading-ui.md#metricsgrid), [MetricsTablesGrid](../api/trading-ui.md#metricstablesgrid),
+[MetricsSessionsGrid](../api/trading-ui.md#metricssessionsgrid),
 [MetricsProcessStrip](../api/trading-ui.md#metricsprocessstrip), [MetricHistoryChart](../api/trading-ui.md#metrichistorychart).
 Showcase: `#server-metrics`. Feature: Simulator › Metrics. Design: [server metrics](../metrics.md).
 
@@ -80,6 +81,7 @@ Showcase: `#server-metrics`. Feature: Simulator › Metrics. Design: [server met
 | `MetricsProcessStrip` | `metricsProcess`, `metricsHistory` (`component = "process"`) | `sim-admin` |
 | `MetricsGrid` | `metrics` | `sim-admin` |
 | `MetricsTablesGrid` | `metricsTables` | `sim-admin` |
+| `MetricsSessionsGrid` | `metricsSessions` | `sim-admin` |
 | `MetricHistoryChart` | `metricsHistory` (one metric) | `sim-admin` |
 
 The METRICS tables are served only to users with `sim-admin`, like the simulator tables. They are written once per
@@ -90,6 +92,7 @@ The METRICS tables are served only to users with `sim-admin`, like the simulator
 | `MetricsProcessStrip` | `onSelectMetric`. A card per process value (`PROCESS_CARDS`: CPU, RSS, heap used, loop lag p99 and max) with its latest value over a sparkline of its history, so the trend is there as soon as it opens. Clicking a card selects `process.<name>`. Without a process row (the in-browser data) it says "No process metrics". |
 | `MetricsGrid` | `defaultComponent` (`METRICS_COMPONENTS`: all, `exchange`, `publisher`, `gateway`, `oms`, `vuu`), `onSelectMetric`. Every metric: value, rate, unit and the timer percentiles, with trends of the rate and of p99 (client sparklines, built from updates while the row is visible). |
 | `MetricsTablesGrid` | `onSelectMetric`. Every Vuu table, busiest first: rows, writes per second (with a trend), writes, counted. Selecting a counted table selects `table.<MODULE.table>`. |
+| `MetricsSessionsGrid` | None. Every client session, most backed-up first: user, queued updates (with a trend), rows sent per second (with a trend), coalesced %, messages and KB per second, rows sent and dropped since login, connected time and session id. Empty before vuu-server 4.5.0 and on the in-browser data. |
 | `MetricHistoryChart` | `metric` (`SelectedMetric`: `id`, `kind`, `unit`). A timer's p50 / p99 / max, a counter's rate or a gauge's value over the last `metrics.historySize` snapshots (5 minutes by default). `metricHistorySeries(kind)` and `metricHistoryAxis(metric)` give what is charted. |
 
 ```tsx
@@ -99,6 +102,7 @@ const select = (next?: SelectedMetric) => next && setMetric(next);
 <MetricsGrid onSelectMetric={select} />
 <MetricHistoryChart metric={metric} />
 <MetricsTablesGrid onSelectMetric={select} />
+<MetricsSessionsGrid />
 ```
 
 ## CSS hooks
@@ -110,4 +114,4 @@ Class bases `tradingSimGrid` (the grids and the fills tape), `tradingBotDetail` 
 class base `tradingSimControls`, test ids `trading-sim-session-strip`, `trading-sim-phase`, `trading-scenario-runs`,
 `trading-sim-events-log`, `trading-sim-instrument-controls`. Server metrics use class bases `tradingServerMetrics`
 (grids), `tradingMetricsProcess` (strip; `data-metric` on each card) and `tradingMetricHistoryChart` (`data-metric`),
-test ids `trading-metrics-grid`, `trading-metrics-tables-grid`, `trading-metrics-process`.
+test ids `trading-metrics-grid`, `trading-metrics-tables-grid`, `trading-metrics-sessions-grid`, `trading-metrics-process`.

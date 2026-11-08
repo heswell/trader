@@ -2,6 +2,7 @@ import {
   MetricHistoryChart,
   MetricsGrid,
   MetricsProcessStrip,
+  MetricsSessionsGrid,
   MetricsTablesGrid,
   type SelectedMetric,
 } from "@heswell/trading-ui";
@@ -37,6 +38,9 @@ export const ServerMetricsExample = () => {
       </div>
       <div style={pane}>
         <MetricsTablesGrid onSelectMetric={select} />
+      </div>
+      <div style={pane}>
+        <MetricsSessionsGrid />
       </div>
     </div>
   );

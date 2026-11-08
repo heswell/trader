@@ -141,7 +141,7 @@ describe("determinism", () => {
     expect(other.oms.getTable("parentOrders").data.length).toBe(1);
     expect(td.oms.getTable("parentOrders").data.length).toBe(0);
     other.dispose();
-    expect(td.engine.getTableList().length).toBe(33);
+    expect(td.engine.getTableList().length).toBe(34);
   });
 
   test("advance requires a manual clock", () => {

@@ -12,6 +12,7 @@ import {
   MetricHistoryChart,
   MetricsGrid,
   MetricsProcessStrip,
+  MetricsSessionsGrid,
   MetricsTablesGrid,
   metricHistoryAxis,
   metricHistorySeries,
@@ -54,6 +55,11 @@ describe("server metrics", () => {
   test("MetricsTablesGrid renders", () => {
     render(wrap(<MetricsTablesGrid />));
     expect(screen.getByTestId("trading-metrics-tables-grid")).toBeTruthy();
+  });
+
+  test("MetricsSessionsGrid renders", () => {
+    render(wrap(<MetricsSessionsGrid />));
+    expect(screen.getByTestId("trading-metrics-sessions-grid")).toBeTruthy();
   });
 
   test("MetricsProcessStrip has a card per process value", async () => {

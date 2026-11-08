@@ -237,7 +237,7 @@ renders, and `notificationTopics` are the trading server's notification topics t
 | 130 | Simulator › Overview | `/simulator/overview` | SimulatorOverview | sim-admin | 500 | | Simulator, 2×1 | SimBooksGrid above BotsGrid (by kind) |
 | 131 | Simulator › Bots | `/simulator/bots` | SimulatorBots | sim-admin | 510 | | Simulator, 2×1 | BotsGrid with BotDetail (stats, P&L history, parameters, fills) |
 | 132 | Simulator › Instrument | `/simulator/instrument` | SimulatorInstrument | sim-admin | 520 | | Simulator, 2×1 | SimInstrumentChart, the instrument's bots and BotFillsTape |
-| 133 | Simulator › Metrics | `/simulator/metrics` | ServerMetrics | sim-admin | 530 | | Simulator, 2×1 | MetricsProcessStrip; MetricsGrid beside MetricHistoryChart; MetricsTablesGrid ([metrics](metrics.md)) |
+| 133 | Simulator › Metrics | `/simulator/metrics` | ServerMetrics | sim-admin | 530 | | Simulator, 2×1 | MetricsProcessStrip; MetricsGrid beside MetricHistoryChart; MetricsTablesGrid beside MetricsSessionsGrid ([metrics](metrics.md)) |
 
 Module ids are stable. The vuu-layout Trader workspace (100) and its child modules (101 ticket, 102 ladder) are
 retired: the Trader workspace is now a portal workspace (below) made of the modules above, and the ticket is module
