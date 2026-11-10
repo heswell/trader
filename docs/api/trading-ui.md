@@ -1440,7 +1440,7 @@ useMarketDepth(ric: string | undefined, { levels = 10 }: { levels?: number } = {
 
 #### useOrderBook
 
-*hook* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L140)
+*hook* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L144)
 
 One parent order with the book it is working in: its child orders, the
 instrument's L2 depth (EXCHANGE `depth`) and L3 queues (EXCHANGE
@@ -1713,7 +1713,7 @@ A child (street) order of the parent order (OMS `childOrders`).
 
 #### OrderBookOptions
 
-*interface* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L76)
+*interface* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L80)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1746,7 +1746,7 @@ The parent order an order book view is about (OMS `parentOrders`).
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
 | `order?` | `OrderBookParentOrder` |  |  |
-| `children` | `readonly OrderBookChildOrder[]` |  | Every child order, oldest first. |
+| `children` | `readonly OrderBookChildOrder[]` |  | The live child orders (working or in flight, see OWN_ORDER_STATUSES), oldest first. Filled and cancelled ones are left out: an algo order sends thousands of children over its life. |
 | `instrument?` | `InstrumentPrice` |  | Static data and live prices of the order's instrument. |
 | `depth` | `MarketDepthState` |  | L2: aggregated levels, best first. |
 | `queues` | `ReadonlyMap<string, LadderQueue>` |  | L3: the queue at each price, keyed by `ownOrdersKey(side, price)`. |
@@ -3883,7 +3883,7 @@ type OrderBlotterTab = "working" | "filled" | "closed" | "all"
 
 #### OrderBookView
 
-*component* · [components/OrderBookView/OrderBookView.tsx](../../packages/trading-ui/src/components/OrderBookView/OrderBookView.tsx#L111)
+*component* · [components/OrderBookView/OrderBookView.tsx](../../packages/trading-ui/src/components/OrderBookView/OrderBookView.tsx#L115)
 
 The book a parent order is working in, read top down: the order and its
 resting child orders, the instrument's L2 depth with the levels holding
@@ -3898,7 +3898,7 @@ Props: `OrderBookViewProps`
 | `orderId?` | `string` |  | Parent order (OMS `parentOrders.orderId`) to show the book for. |
 | `levels?` | `number` | `10` | L2 levels per side. Default 10. |
 | `level?` | `BookLevelRef` |  | The level whose L3 queue is shown. Controlled with `onLevelChange`; when undefined the view picks the level of the order's best-placed working child order, else the best price on the order's side. |
-| `onLevelChange?` | `(level: BookLevelRef) => void` |  |  |
+| `onLevelChange?` | `(level: BookLevelRef \| undefined) => void` |  | A level was picked (a depth row or a child order chip), or `undefined` when Reset level returns to the default level. |
 
 Also accepts the standard HTML attributes and `ref`.
 

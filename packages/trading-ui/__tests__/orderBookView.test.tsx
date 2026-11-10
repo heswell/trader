@@ -1,5 +1,11 @@
 import { afterAll, afterEach, describe, expect, test } from "bun:test";
-import { OrdType, Side, TimeInForce } from "@heswell/trading-schemas";
+import {
+  AlgoStrategy,
+  isWorkingStatus,
+  OrdType,
+  Side,
+  TimeInForce,
+} from "@heswell/trading-schemas";
 import {
   createTradingTestData,
   setCurrentUser,
@@ -136,6 +142,38 @@ describe("OrderBookView (local data)", () => {
     }
   });
 
+  test("Reset level returns from a picked level to the order's level", async () => {
+    const { orderId } = restingBuy();
+    const view = render(<OrderBookView orderId={orderId} />, {
+      wrapper: Wrapper,
+    });
+    await waitFor(() => {
+      tick();
+      expect(view.container.querySelector("tr[data-own]")).toBeTruthy();
+    });
+    const reset = () =>
+      view.container.querySelector<HTMLButtonElement>(
+        ".tradingOrderBookView-reset",
+      );
+    // the default level: nothing to reset
+    expect(reset()?.hidden).toBe(true);
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: /^Ask .*Show queue$/ })[0],
+    );
+    expect(
+      screen.getByRole("region", { name: /^Level 3 · Queue at Ask / }),
+    ).toBeTruthy();
+    expect(reset()?.hidden).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset level" }));
+    expect(
+      screen.getByRole("region", { name: /^Level 3 · Queue at Bid / }),
+    ).toBeTruthy();
+    expect(view.container.querySelector("tr[data-own]")).toBeTruthy();
+    expect(reset()?.hidden).toBe(true);
+  });
+
   test("without an order it asks for one", () => {
     render(<OrderBookView />, { wrapper: Wrapper });
     expect(screen.getByText("Select an order to see its book")).toBeTruthy();
@@ -149,4 +187,75 @@ describe("OrderBookView (local data)", () => {
       "Select an order to see its book",
     );
   });
+});
+
+describe("OrderBookView with a long-running algo order", () => {
+  test("shows the live slices of an order with hundreds of finished children", async () => {
+    setCurrentUser({ name: "admin", authorizations: [] });
+    const testData = createTradingTestData({
+      seed: 21,
+      exchange: { activeInstruments: 5 },
+      oms: { flowRate: 0 },
+      manualClock: true,
+    });
+    try {
+      testData.advance(5_000);
+      const engine = testData.omsService.engine;
+      const result = engine.createOrder(
+        {
+          account: "ACC-US-01",
+          ric: testData.sim.books[0].ric,
+          side: Side.Buy,
+          ordType: OrdType.Market,
+          quantity: 4_000,
+          timeInForce: TimeInForce.Day,
+          strategy: AlgoStrategy.Vwap,
+          durationMins: 30,
+        },
+        { user: "admin" },
+      );
+      if (!result.ok) throw Error(`order rejected: ${result.text}`);
+      const { orderId } = result.value;
+      // the VWAP re-places its slices several times a second
+      testData.advance(5 * 60_000);
+      const children = () =>
+        [...engine.children.values()].filter(
+          (c) => c.parentOrderId === orderId,
+        );
+      expect(children().length).toBeGreaterThan(500);
+
+      const localServer = createTradingLocalServer(testData, "order-book-algo");
+      const view = render(<OrderBookView orderId={orderId} />, {
+        wrapper: ({ children }: { children: ReactNode }) => (
+          <TradingDataProvider mode="local" localServer={localServer}>
+            {children}
+          </TradingDataProvider>
+        ),
+      });
+      await waitFor(() => {
+        act(() => testData.advance(100));
+        expect(
+          view.container.querySelector(".tradingOrderBookView-level"),
+        ).toBeTruthy();
+      });
+      let resting = 0;
+      let shown = 0;
+      for (let i = 0; i < 40; i++) {
+        await act(async () => {
+          testData.advance(250);
+          await new Promise((resolve) => setTimeout(resolve, 20));
+        });
+        const live = children().some(
+          (c) => isWorkingStatus(c.state.status) && c.exchangeOrderId,
+        );
+        if (!live) continue;
+        resting++;
+        if (view.container.querySelector(".tradingOrderBookView-chip")) shown++;
+      }
+      expect(resting).toBeGreaterThan(0);
+      expect(shown).toBe(resting);
+    } finally {
+      testData.dispose();
+    }
+  }, 60_000);
 });

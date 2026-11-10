@@ -56,7 +56,11 @@ export interface OrderBookChildOrder {
 
 export interface OrderBookState {
   order?: OrderBookParentOrder;
-  /** Every child order, oldest first. */
+  /**
+   * The live child orders (working or in flight, see OWN_ORDER_STATUSES),
+   * oldest first. Filled and cancelled ones are left out: an algo order
+   * sends thousands of children over its life.
+   */
   children: readonly OrderBookChildOrder[];
   /** Static data and live prices of the order's instrument. */
   instrument?: InstrumentPrice;
@@ -155,10 +159,15 @@ export const useOrderBook = (
   const childSource = useTradingDataSource("childOrders", {
     columns: CHILD_COLUMNS,
   });
+  // Only live children: an algo re-places its slices several times a
+  // second, so a long-running order has thousands of filled and cancelled
+  // children, and a row limit on all of them would cut off the live ones.
   const { rows: childRows } = useDataSourceRows(childSource, {
     enabled: !!orderId,
-    filter: orderId ? `parentOrderId = ${filterString(orderId)}` : "",
-    rowCount: 500,
+    filter: orderId
+      ? `parentOrderId = ${filterString(orderId)} and status in [${OWN_ORDER_STATUSES.map(filterString).join(",")}]`
+      : "",
+    rowCount: 100,
   });
 
   const parentRow = parentRows[0];

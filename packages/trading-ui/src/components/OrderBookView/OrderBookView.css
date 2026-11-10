@@ -183,8 +183,33 @@
   flex-direction: column;
 }
 
-.tradingOrderBookView-depth > .tradingOrderBookView-heading {
+.tradingOrderBookView-depthTitle {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
   padding-bottom: var(--salt-spacing-75);
+}
+
+.tradingOrderBookView-reset {
+  background: transparent;
+  border: var(--salt-size-border) var(--salt-borderStyle-solid)
+    var(--salt-separable-tertiary-borderColor);
+  border-radius: var(--salt-palette-corner, 4px);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--salt-text-label-fontSize);
+  padding: 0 var(--salt-spacing-100);
+}
+
+.tradingOrderBookView-reset:hover {
+  background: var(--salt-actionable-subtle-background-hover);
+}
+
+/* hidden but still taking its space, so the ladder never moves */
+.tradingOrderBookView-reset[hidden] {
+  display: revert;
+  visibility: hidden;
 }
 
 .tradingOrderBookView-levelHeader,
