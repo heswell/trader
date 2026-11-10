@@ -58,6 +58,9 @@ level or a child order chip to see that queue. Data comes from `useOrderBook(ord
 `bookOrders` is empty but `depth` is not, the server has L3 off and the panel says so; when an instrument has
 more resting orders than `useBookQueue` loads (`truncated`), it says the queues may be incomplete.
 
+In a vuu context panel, the panel widens to `min(480px, 90vw)` while it shows an order book (vuu's default is
+300px). Set `--tradingOrderBookView-panelWidth` (for example on `:root`) to choose another width.
+
 The blotter renders the panel content inside its own React tree (`SlotContextPanelProvider` portals it into the
 shell's panel), so the content sees the blotter's data providers and follows its selection without being
 reopened.
