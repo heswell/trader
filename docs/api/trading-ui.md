@@ -4,13 +4,13 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 510 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 519 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
 - **data**: [applySelectionChange](#applyselectionchange), [ChartDataSourceOptions](#chartdatasourceoptions), [connectToVuuServer](#connecttovuuserver), [DataSourceRows](#datasourcerows), [DataSourceRowsConfig](#datasourcerowsconfig), [DataSourceRowsUpdate](#datasourcerowsupdate), [DEFAULT_RPC_TIMEOUT_MS](#default_rpc_timeout_ms), [disconnectedRpcError](#disconnectedrpcerror), [disconnectFromVuuServer](#disconnectfromvuuserver), [editOrdersInSession](#editordersinsession), [openOrderEditSession](#openordereditsession), [OrderEdits](#orderedits), [OrderEditSession](#ordereditsession), [rpcTimeoutError](#rpctimeouterror), [RpcTransportFailure](#rpctransportfailure), [sendTradingRpc](#sendtradingrpc), [StaleOrderEditError](#staleorderediterror), [subscribeTradingRows](#subscribetradingrows), [toTradingRow](#totradingrow), [tradingColumnNames](#tradingcolumnnames), [TradingDataMode](#tradingdatamode), [TradingDataModeContextValue](#tradingdatamodecontextvalue), [TradingDataProvider](#tradingdataprovider), [TradingDataProviderProps](#tradingdataproviderprops), [TradingDataSourceOptions](#tradingdatasourceoptions), [TradingRow](#tradingrow), [TradingRows](#tradingrows), [TradingRowsOptions](#tradingrowsoptions), [TradingRpcError](#tradingrpcerror), [TradingRpcOptions](#tradingrpcoptions), [tradingTableSchema](#tradingtableschema), [tradingVuuTable](#tradingvuutable), [useChartDataSource](#usechartdatasource), [useDataSourceRows](#usedatasourcerows), [UseDataSourceRowsOptions](#usedatasourcerowsoptions), [useHasDataProvider](#usehasdataprovider), [useTableSelectedKeys](#usetableselectedkeys), [useTradingDataMode](#usetradingdatamode), [useTradingDataSource](#usetradingdatasource), [useTradingRows](#usetradingrows), [VuuServerConnection](#vuuserverconnection), [withRpcTimeout](#withrpctimeout)
 - **instrument-context**: [ACTIVE_CHANNEL_STATE_KEY](#active_channel_state_key), [ACTIVE_GROUP](#active_group), [ACTIVE_LINK_GROUP](#active_link_group), [bindInstrumentLinkStore](#bindinstrumentlinkstore), [BroadcastChannelLike](#broadcastchannellike), [ComponentLinkGroup](#componentlinkgroup), [connectBroadcastChannel](#connectbroadcastchannel), [ConnectBroadcastChannelOptions](#connectbroadcastchanneloptions), [createInstrumentLinkBus](#createinstrumentlinkbus), [CreateInstrumentLinkBusOptions](#createinstrumentlinkbusoptions), [DEFAULT_LINK_CHANNEL_NAME](#default_link_channel_name), [DEFAULT_LINK_GROUP](#default_link_group), [DEFAULT_LINK_GROUPS](#default_link_groups), [ensureInstrumentLinkPersistence](#ensureinstrumentlinkpersistence), [getInstrumentLinkBus](#getinstrumentlinkbus), [getInstrumentLinkStore](#getinstrumentlinkstore), [INSTRUMENT_LINK_BUS_VERSION](#instrument_link_bus_version), [INSTRUMENT_LINK_STATE_KEY](#instrument_link_state_key), [INSTRUMENT_LINK_STATE_TITLE](#instrument_link_state_title), [INSTRUMENT_LINK_STATE_VERSION](#instrument_link_state_version), [InstrumentContextProvider](#instrumentcontextprovider), [InstrumentContextProviderProps](#instrumentcontextproviderprops), [InstrumentContextValue](#instrumentcontextvalue), [InstrumentLinkBus](#instrumentlinkbus), [InstrumentLinkListener](#instrumentlinklistener), [InstrumentLinkPersistence](#instrumentlinkpersistence), [InstrumentLinkSelection](#instrumentlinkselection), [InstrumentLinkStateStore](#instrumentlinkstatestore), [InstrumentLinkTransport](#instrumentlinktransport), [InstrumentSelection](#instrumentselection), [isUnlinkedGroup](#isunlinkedgroup), [LINK_GROUP_PERSIST_PREFIX](#link_group_persist_prefix), [LINK_GROUP_STATE_KEY](#link_group_state_key), [LINK_SELECTIONS_KEY](#link_selections_key), [linkGroupDefinition](#linkgroupdefinition), [LinkGroupDefinition](#linkgroupdefinition-1), [LinkGroupId](#linkgroupid), [LinkGroupProps](#linkgroupprops), [LinkGroupProvider](#linkgroupprovider), [MAX_RECENT_RICS](#max_recent_rics), [readSavedSelections](#readsavedselections), [resetInstrumentLinkPersistence](#resetinstrumentlinkpersistence), [sameInstrument](#sameinstrument), [sanitizeSelectedInstrument](#sanitizeselectedinstrument), [SelectedInstrument](#selectedinstrument), [UNLINKED](#unlinked), [UNLINKED_GROUP](#unlinked_group), [useActiveChannelPersistence](#useactivechannelpersistence), [useComponentLinkGroup](#usecomponentlinkgroup), [UseComponentLinkGroupOptions](#usecomponentlinkgroupoptions), [useComponentSetting](#usecomponentsetting), [useInheritedLinkGroup](#useinheritedlinkgroup), [useInstrumentLinkBus](#useinstrumentlinkbus), [useInstrumentLinkPersistence](#useinstrumentlinkpersistence), [useOptionalWorkspaceChannel](#useoptionalworkspacechannel), [useSelectedInstrument](#useselectedinstrument), [UseSelectedInstrumentOptions](#useselectedinstrumentoptions), [useWorkspaceChannel](#useworkspacechannel), [useWorkspaceItemState](#useworkspaceitemstate), [WORKSPACE_ITEM_STATE_TYPE](#workspace_item_state_type), [WORKSPACE_ITEM_STATE_VERSION](#workspace_item_state_version), [WorkspaceChannelContextValue](#workspacechannelcontextvalue), [WorkspaceChannelProvider](#workspacechannelprovider), [WorkspaceChannelProviderProps](#workspacechannelproviderprops), [workspaceItemState](#workspaceitemstate), [WorkspaceItemState](#workspaceitemstate-1)
-- **hooks**: [actionableOrders](#actionableorders), [BookOrderRow](#bookorderrow), [BookQueueOptions](#bookqueueoptions), [BookQueueState](#bookqueuestate), [buildLadderQueues](#buildladderqueues), [DepthLevel](#depthlevel), [FlashDirection](#flashdirection), [FollowedInstrument](#followedinstrument), [InstrumentPrice](#instrumentprice), [LadderQueue](#ladderqueue), [LadderQueues](#ladderqueues), [LevelFlash](#levelflash), [levelKey](#levelkey), [MarketDepthState](#marketdepthstate), [OWN_ORDER_STATUSES](#own_order_statuses), [OwnOrder](#ownorder), [OwnOrdersAtPrice](#ownordersatprice), [ownOrdersKey](#ownorderskey), [OwnWorkingOrders](#ownworkingorders), [OwnWorkingOrdersOptions](#ownworkingordersoptions), [priceKey](#pricekey), [QueueOrder](#queueorder), [useBookQueue](#usebookqueue), [useFollowedInstrument](#usefollowedinstrument), [useInstrumentPrice](#useinstrumentprice), [useLevelFlash](#uselevelflash), [useMarketDepth](#usemarketdepth), [useOwnExchangeOrderIds](#useownexchangeorderids), [useOwnWorkingOrders](#useownworkingorders), [useStableCallback](#usestablecallback), [useTradedVolume](#usetradedvolume)
+- **hooks**: [actionableOrders](#actionableorders), [BookOrderRow](#bookorderrow), [BookQueueOptions](#bookqueueoptions), [BookQueueState](#bookqueuestate), [buildLadderQueues](#buildladderqueues), [DepthLevel](#depthlevel), [FlashDirection](#flashdirection), [FollowedInstrument](#followedinstrument), [InstrumentPrice](#instrumentprice), [LadderQueue](#ladderqueue), [LadderQueues](#ladderqueues), [LevelFlash](#levelflash), [levelKey](#levelkey), [MarketDepthState](#marketdepthstate), [OrderBookChildOrder](#orderbookchildorder), [OrderBookOptions](#orderbookoptions), [OrderBookParentOrder](#orderbookparentorder), [OrderBookState](#orderbookstate), [OWN_ORDER_STATUSES](#own_order_statuses), [OwnOrder](#ownorder), [OwnOrdersAtPrice](#ownordersatprice), [ownOrdersKey](#ownorderskey), [OwnWorkingOrders](#ownworkingorders), [OwnWorkingOrdersOptions](#ownworkingordersoptions), [priceKey](#pricekey), [QueueOrder](#queueorder), [QueuePosition](#queueposition), [useBookQueue](#usebookqueue), [useFollowedInstrument](#usefollowedinstrument), [useInstrumentPrice](#useinstrumentprice), [useLevelFlash](#uselevelflash), [useMarketDepth](#usemarketdepth), [useOrderBook](#useorderbook), [useOwnExchangeOrderIds](#useownexchangeorderids), [useOwnWorkingOrders](#useownworkingorders), [useStableCallback](#usestablecallback), [useTradedVolume](#usetradedvolume)
 - **connection**: [combineConnectionState](#combineconnectionstate), [CONNECTION_STATE_SEVERITY](#connection_state_severity), [ConnectionAttemptClosedError](#connectionattemptclosederror), [ConnectionAttemptTimeoutError](#connectionattempttimeouterror), [connectionClientWithTimeout](#connectionclientwithtimeout), [ConnectionReconnectInfo](#connectionreconnectinfo), [connectionStateStore](#connectionstatestore), [createResilientConnectionRegistry](#createresilientconnectionregistry), [DEFAULT_LOGIN_TIMEOUT_MS](#default_login_timeout_ms), [DEFAULT_RECONNECT_POLICY](#default_reconnect_policy), [observeConnectionRegistry](#observeconnectionregistry), [observeDefaultConnectionRegistry](#observedefaultconnectionregistry), [reconnectDelay](#reconnectdelay), [ReconnectPolicy](#reconnectpolicy), [reconnectSchedule](#reconnectschedule), [ReconnectState](#reconnectstate), [ReconnectSupervisor](#reconnectsupervisor), [ReconnectSupervisorOptions](#reconnectsupervisoroptions), [ReconnectTimers](#reconnecttimers), [ResilientConnectionRegistryOptions](#resilientconnectionregistryoptions), [resolveReconnectPolicy](#resolvereconnectpolicy), [StaleIndicatorOptions](#staleindicatoroptions), [StaleIndicatorState](#staleindicatorstate), [StaleReason](#stalereason), [SupervisorSnapshot](#supervisorsnapshot), [SupervisorState](#supervisorstate), [toConnectionState](#toconnectionstate), [TradingConnectionState](#tradingconnectionstate), [TradingConnectionStateOverride](#tradingconnectionstateoverride), [TradingConnectionStatus](#tradingconnectionstatus), [useStaleIndicator](#usestaleindicator), [useTradingConnectionStatus](#usetradingconnectionstatus), [useVuuConnectionStatuses](#usevuuconnectionstatuses), [withConnectTimeout](#withconnecttimeout), [worstConnectionState](#worstconnectionstate)
 - **notifications**: [DEFAULT_DEDUPE_MS](#default_dedupe_ms), [DEFAULT_NOTIFICATION_KINDS](#default_notification_kinds), [DEFAULT_RATE_LIMIT](#default_rate_limit), [describeOrderEvent](#describeorderevent), [describeSuppressed](#describesuppressed), [FillEventTracker](#filleventtracker), [FillSound](#fillsound), [NotificationGate](#notificationgate), [NotificationGateOptions](#notificationgateoptions), [orderEventFromFill](#ordereventfromfill), [orderEventFromParentOrder](#ordereventfromparentorder), [orderEventKey](#ordereventkey), [orderEventKindForStatus](#ordereventkindforstatus), [OrderEventPriceFormat](#ordereventpriceformat), [OrderEventToast](#ordereventtoast), [ParentOrderEventTracker](#parentordereventtracker), [RateLimit](#ratelimit), [rpcRejectEvent](#rpcrejectevent), [ToastStatus](#toaststatus), [TRADING_ORDER_EVENT_KINDS](#trading_order_event_kinds), [TradingNotificationKinds](#tradingnotificationkinds), [TradingNotificationsContextValue](#tradingnotificationscontextvalue), [TradingNotificationSettings](#tradingnotificationsettings), [TradingNotificationsProvider](#tradingnotificationsprovider), [TradingNotificationsProviderProps](#tradingnotificationsproviderprops), [TradingNotificationToast](#tradingnotificationtoast), [TradingOrderEvent](#tradingorderevent), [TradingOrderEventKind](#tradingordereventkind), [useTradingNotifications](#usetradingnotifications)
 - **feature-root**: [ensureLinkBusBroadcast](#ensurelinkbusbroadcast), [notificationLease](#notificationlease), [TradingFeatureRoot](#tradingfeatureroot), [TradingFeatureRootProps](#tradingfeaturerootprops), [useInTradingFeatureRoot](#useintradingfeatureroot)
@@ -28,6 +28,7 @@ Imports: `@heswell/trading-ui`. 510 exports. Types are shown as written in the s
 - **components/LinkGroupSelector**: [LinkGroupMenuButton](#linkgroupmenubutton), [LinkGroupSelector](#linkgroupselector), [LinkGroupSelectorProps](#linkgroupselectorprops), [LinkGroupSwatch](#linkgroupswatch), [PanelLinkGroupSelector](#panellinkgroupselector)
 - **components/MarketDepth**: [MarketDepth](#marketdepth), [MarketDepthLevelClick](#marketdepthlevelclick), [MarketDepthProps](#marketdepthprops)
 - **components/OrderBlotter**: [CHILD_ORDER_COLUMNS](#child_order_columns), [childOrdersTableConfig](#childorderstableconfig), [ORDER_BLOTTER_COLUMNS](#order_blotter_columns), [ORDER_BLOTTER_TABS](#order_blotter_tabs), [OrderBlotter](#orderblotter), [OrderBlotterContext](#orderblottercontext), [OrderBlotterProps](#orderblotterprops), [OrderBlotterTab](#orderblottertab), [orderBlotterTabFilter](#orderblottertabfilter), [orderBlotterTableConfig](#orderblottertableconfig), [OrderRowActions](#orderrowactions)
+- **components/OrderBookView**: [BookLevelRef](#booklevelref), [OrderBookView](#orderbookview), [OrderBookViewProps](#orderbookviewprops)
 - **components/OrderStatusBadge**: [OrderStatusBadge](#orderstatusbadge), [OrderStatusBadgeProps](#orderstatusbadgeprops)
 - **components/OrderTicket**: [algoParamField](#algoparamfield), [AlgoParamKey](#algoparamkey), [allowedTimesInForce](#allowedtimesinforce), [connectionBlockedReason](#connectionblockedreason), [DEFAULT_COLLAR_PCT](#default_collar_pct), [defaultLimitPrice](#defaultlimitprice), [describePriceShorthand](#describepriceshorthand), [draftFromPrefill](#draftfromprefill), [DraftValidation](#draftvalidation), [EMPTY_DRAFT](#empty_draft), [fieldForRejectReason](#fieldforrejectreason), [filterStrategies](#filterstrategies), [focusTicketField](#focusticketfield), [formatPriceInput](#formatpriceinput), [INDICATIVE_USD_PER_PRICE_UNIT](#indicative_usd_per_price_unit), [isAlgoStrategy](#isalgostrategy), [isOrderLine](#isorderline), [isPriceShorthand](#ispriceshorthand), [isTimeInForceAllowed](#istimeinforceallowed), [isValueInput](#isvalueinput), [LAST_ACCOUNT_STORAGE_KEY](#last_account_storage_key), [marketValuationPrice](#marketvaluationprice), [newClOrdId](#newclordid), [nudgePrice](#nudgeprice), [nudgeQuantity](#nudgequantity), [ORDER_TICKET_ORD_TYPES](#order_ticket_ord_types), [ORDER_TICKET_SELECTION_SOURCE](#order_ticket_selection_source), [ORDER_TICKET_STRATEGIES](#order_ticket_strategies), [ORDER_TICKET_TIFS](#order_ticket_tifs), [OrderDraft](#orderdraft), [OrderDraftErrors](#orderdrafterrors), [OrderDraftField](#orderdraftfield), [OrderLine](#orderline), [OrderTicket](#orderticket), [OrderTicketAccount](#orderticketaccount), [OrderTicketDialog](#orderticketdialog), [OrderTicketDialogProps](#orderticketdialogprops), [OrderTicketInstrument](#orderticketinstrument), [OrderTicketLauncher](#orderticketlauncher), [OrderTicketLauncherProvider](#orderticketlauncherprovider), [OrderTicketLauncherProviderProps](#orderticketlauncherproviderprops), [OrderTicketPanel](#orderticketpanel), [OrderTicketPanelProps](#orderticketpanelprops), [OrderTicketPrefill](#orderticketprefill), [OrderTicketProps](#orderticketprops), [OrderTicketState](#orderticketstate), [OrderTicketSubmission](#orderticketsubmission), [OrderTicketTarget](#ordertickettarget), [OrderTicketVariant](#orderticketvariant), [parseAlgoParam](#parsealgoparam), [parseDurationInput](#parsedurationinput), [parseOrderLine](#parseorderline), [parsePercentInput](#parsepercentinput), [parsePrice](#parseprice), [parseQuantity](#parsequantity), [parseTimeInput](#parsetimeinput), [previewRisk](#previewrisk), [referencePrice](#referenceprice), [resolvePriceInput](#resolvepriceinput), [resolveQuantityInput](#resolvequantityinput), [reviewReasons](#reviewreasons), [RiskPreview](#riskpreview), [RiskPreviewOptions](#riskpreviewoptions), [RiskWarning](#riskwarning), [scheduleOf](#scheduleof), [scheduleSummary](#schedulesummary), [useOrderTicket](#useorderticket), [useOrderTicketLauncher](#useorderticketlauncher), [UseOrderTicketProps](#useorderticketprops), [useOrderTicketTarget](#useordertickettarget), [validateDraft](#validatedraft)
 - **components/PnlHistoryChart**: [PnlHistoryChart](#pnlhistorychart), [PnlHistoryChartProps](#pnlhistorychartprops)
@@ -1377,7 +1378,7 @@ type LinkGroupId = string
 
 #### useBookQueue
 
-*hook* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L135)
+*hook* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L140)
 
 The order-by-order (L3) queue of every price level of one instrument,
 from EXCHANGE `bookOrders`, with the user's orders marked. The table is
@@ -1435,6 +1436,19 @@ carries `exchangeSim.depthLevels`, 10 by default). Rows of a previous
 
 ```ts
 useMarketDepth(ric: string | undefined, { levels = 10 }: { levels?: number } = {}): MarketDepthState
+```
+
+#### useOrderBook
+
+*hook* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L140)
+
+One parent order with the book it is working in: its child orders, the
+instrument's L2 depth (EXCHANGE `depth`) and L3 queues (EXCHANGE
+`bookOrders`), the working child orders marked with their queue position.
+Subscribes only while `orderId` is set.
+
+```ts
+useOrderBook(orderId: string | undefined, { levels = 10 }: OrderBookOptions = {}): OrderBookState
 ```
 
 #### useOwnExchangeOrderIds
@@ -1588,6 +1602,7 @@ const OWN_ORDER_STATUSES: readonly OrdStatus[]
 | --- | --- | --- | --- |
 | `queues` | `LadderQueues` |  |  |
 | `orderCount` | `number` |  | Resting orders received for the instrument. |
+| `truncated` | `boolean` |  | The instrument has more resting orders than `maxOrders`: the rest were not loaded, so queues may be incomplete. |
 | `loaded` | `boolean` |  |  |
 
 #### DepthLevel
@@ -1677,6 +1692,69 @@ The queue of resting orders at one side and price.
 | `loaded` | `boolean` |  |  |
 | `version` | `number` |  |  |
 
+#### OrderBookChildOrder
+
+*interface* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L41)
+
+A child (street) order of the parent order (OMS `childOrders`).
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `childOrderId` | `string` |  |  |
+| `exchangeOrderId?` | `string` |  |  |
+| `side` | `Side` |  |  |
+| `price` | `number` |  |  |
+| `quantity` | `number` |  |  |
+| `cumQty` | `number` |  |  |
+| `leavesQty` | `number` |  | Open quantity on the exchange. |
+| `status` | `OrdStatus` |  |  |
+| `working` | `boolean` |  | Working on the exchange (new, partly filled, being amended...). |
+| `position?` | `QueuePosition` |  | Its place in the L3 book, once bookOrders has it. |
+
+#### OrderBookOptions
+
+*interface* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L76)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `levels?` | `number` |  | L2 levels per side. Default 10. |
+
+#### OrderBookParentOrder
+
+*interface* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L16)
+
+The parent order an order book view is about (OMS `parentOrders`).
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `orderId` | `string` |  |  |
+| `ric` | `string` |  |  |
+| `side` | `Side` |  |  |
+| `ordType` | `string` |  |  |
+| `strategy?` | `string` |  |  |
+| `timeInForce?` | `string` |  |  |
+| `quantity` | `number` |  |  |
+| `price?` | `number` |  | Limit price; 0 or absent for a market order. |
+| `cumQty` | `number` |  |  |
+| `avgPx?` | `number` |  |  |
+| `status` | `OrdStatus` |  |  |
+
+#### OrderBookState
+
+*interface* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L57)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `order?` | `OrderBookParentOrder` |  |  |
+| `children` | `readonly OrderBookChildOrder[]` |  | Every child order, oldest first. |
+| `instrument?` | `InstrumentPrice` |  | Static data and live prices of the order's instrument. |
+| `depth` | `MarketDepthState` |  | L2: aggregated levels, best first. |
+| `queues` | `ReadonlyMap<string, LadderQueue>` |  | L3: the queue at each price, keyed by `ownOrdersKey(side, price)`. |
+| `ownOrderIds` | `ReadonlySet<string>` |  | Exchange ids of the working child orders (marked in `queues`). |
+| `l3Available` | `boolean` |  | bookOrders loaded and the instrument has resting orders. |
+| `l3Truncated` | `boolean` |  | The instrument has more resting orders than were loaded. |
+| `loaded` | `boolean` |  |  |
+
 #### OwnOrder
 
 *interface* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L15)
@@ -1742,6 +1820,18 @@ One resting order in a price level's queue (EXCHANGE `bookOrders`).
 | `entryTime` | `number` |  | When the order took its place in the queue (epoch ms). |
 | `priority` | `number` |  | Queue order key: lower is nearer the front. |
 | `own` | `boolean` |  | One of the user's orders. |
+
+#### QueuePosition
+
+*interface* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L32)
+
+Where one child order rests in the L3 book.
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `queue` | `LadderQueue` |  |  |
+| `rank` | `number` |  | 1-based place in the queue. |
+| `ahead` | `number` |  | Size ahead of the order. |
 
 ### Types (hooks)
 
@@ -3669,12 +3759,14 @@ Props of [`MarketDepth`](#marketdepth).
 
 #### OrderBlotter
 
-*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L543)
+*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L592)
 
 Order blotter on `parentOrders`: status badge, fill progress, tick-formatted
 avg price, filter tabs, per-row amend / cancel (enabled only for NEW,
 PARTIALLY_FILLED, REPLACED), multi-select cancel, Cancel all and a child
-orders panel. Selecting a row sets the selected instrument.
+orders panel. Selecting a row sets the selected instrument. Order book
+opens the selected order's depth and queue position (OrderBookView) in the
+shell's context panel.
 
 Props: `OrderBlotterProps`
 
@@ -3687,6 +3779,7 @@ Props: `OrderBlotterProps`
 | `notify?` | `boolean` | `true` | Report failed cancel / amend requests to the TradingNotificationsProvider, if there is one. Default true. |
 | `useEditSession?` | `boolean` | `false` | Amend through the server edit session instead of the amendOrder RPC: opening the amend dialog begins the session (snapshotting the order), Amend applies editCell + endEditSession, Close discards it. If the order changed in between the save is refused as stale. Default false. |
 | `readOnly?` | `boolean` | `false` | Hide amend / cancel controls, e.g. for users without trading-execute (the OMS rejects their requests anyway). Default false. |
+| `showOrderBook?` | `boolean` | `true` | Offer the Order book button: the selected order's L2 depth and L3 queue position, in the shell's context panel (a dialog outside a portal shell). The panel follows the selection. Default true. |
 | `linkGroup?` | `LinkGroupId` |  | Link group (channel) to join: e.g. "red", "green", or "unlinked". The initial group when the user can change it (`showLinkGroupSelector`); a later change of the prop is applied too. Default: the saved group, then `defaultLinkGroup`, then the inherited group. (from `LinkGroupProps`) |
 | `defaultLinkGroup?` | `LinkGroupId` |  | Group used when there is no `linkGroup` prop and nothing saved. (from `LinkGroupProps`) |
 | `onLinkGroupChange?` | `(linkGroup: LinkGroupId) => void` |  | The user picked another group in the selector. (from `LinkGroupProps`) |
@@ -3760,7 +3853,7 @@ const orderBlotterTableConfig: TableConfig
 
 #### OrderBlotterProps
 
-*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L68)
+*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L76)
 
 Props of [`OrderBlotter`](#orderblotter).
 
@@ -3783,6 +3876,50 @@ Props of [`OrderBlotter`](#orderblotter).
 ```ts
 type OrderBlotterTab = "working" | "filled" | "closed" | "all"
 ```
+
+## components/OrderBookView
+
+### Components (components/OrderBookView)
+
+#### OrderBookView
+
+*component* · [components/OrderBookView/OrderBookView.tsx](../../packages/trading-ui/src/components/OrderBookView/OrderBookView.tsx#L111)
+
+The book a parent order is working in, read top down: the order and its
+resting child orders, the instrument's L2 depth with the levels holding
+the order marked, and the L3 queue at one level (front first) with the
+order's position in it. Click a level or a child order to see its queue.
+Made for the shell context panel beside the order blotter.
+
+Props: `OrderBookViewProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `orderId?` | `string` |  | Parent order (OMS `parentOrders.orderId`) to show the book for. |
+| `levels?` | `number` | `10` | L2 levels per side. Default 10. |
+| `level?` | `BookLevelRef` |  | The level whose L3 queue is shown. Controlled with `onLevelChange`; when undefined the view picks the level of the order's best-placed working child order, else the best price on the order's side. |
+| `onLevelChange?` | `(level: BookLevelRef) => void` |  |  |
+
+Also accepts the standard HTML attributes and `ref`.
+
+### Interfaces (components/OrderBookView)
+
+#### BookLevelRef
+
+*interface* · [components/OrderBookView/OrderBookView.tsx](../../packages/trading-ui/src/components/OrderBookView/OrderBookView.tsx#L32)
+
+One price level on one side of the book.
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `side` | `Side` |  |  |
+| `price` | `number` |  |  |
+
+#### OrderBookViewProps
+
+*interface* · [components/OrderBookView/OrderBookView.tsx](../../packages/trading-ui/src/components/OrderBookView/OrderBookView.tsx#L37)
+
+Props of [`OrderBookView`](#orderbookview).
 
 ## components/OrderStatusBadge
 

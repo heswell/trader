@@ -1,6 +1,7 @@
 import {
   FillsBlotter,
   OrderBlotter,
+  OrderBookView,
   PositionsView,
   TradeTape,
   useSelectedInstrument,
@@ -10,6 +11,29 @@ import { useState } from "react";
 const fill = { height: "100%", minHeight: 0 } as const;
 
 export const OrderBlotterExample = () => <OrderBlotter style={fill} />;
+
+/**
+ * The selected order's book beside the blotter: L2 depth with the order's
+ * levels marked, and its place in the L3 queue. (In the portal the blotter's
+ * Order book button opens the same view in the shell's context panel.)
+ */
+export const OrderBookViewExample = () => {
+  const [orderId, setOrderId] = useState<string>();
+  return (
+    <div style={{ display: "flex", gap: 16, ...fill }}>
+      <div style={{ flex: 2, minHeight: 0, minWidth: 0 }}>
+        <OrderBlotter
+          onOrderSelect={setOrderId}
+          showOrderBook={false}
+          style={fill}
+        />
+      </div>
+      <div style={{ flex: 1, minHeight: 0, minWidth: 360, overflow: "auto" }}>
+        <OrderBookView orderId={orderId} />
+      </div>
+    </div>
+  );
+};
 
 export const FillsBlotterExample = () => {
   const [orderId, setOrderId] = useState<string>();

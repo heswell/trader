@@ -1,15 +1,22 @@
 import { RpcName } from "@heswell/trading-schemas";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
+import {
+  ContextPanelProvider,
+  SlotContextPanelProvider,
+  useContextPanel,
+} from "@vuu-ui/core";
 import type { DataSource } from "@vuu-ui/vuu-data-types";
 import { Table } from "@vuu-ui/vuu-table";
 import type { TableRowSelectHandler } from "@vuu-ui/vuu-table-types";
 import cx from "clsx";
 import {
+  createContext,
   forwardRef,
   type HTMLAttributes,
   useCallback,
   useEffect,
+  useContext,
   useMemo,
   useRef,
   useState,
@@ -40,6 +47,7 @@ import {
   useInstrumentLookup,
 } from "../InstrumentLookup";
 import { LinkGroupSelector } from "../LinkGroupSelector";
+import { OrderBookView } from "../OrderBookView";
 import { useStaleData } from "../StaleIndicator/useStaleData";
 import { registerTradingCellRenderers } from "../TradingCellRenderers";
 import {
@@ -93,7 +101,22 @@ export interface OrderBlotterProps
    * (the OMS rejects their requests anyway). Default false.
    */
   readOnly?: boolean;
+  /**
+   * Offer the Order book button: the selected order's L2 depth and L3
+   * queue position, in the shell's context panel (a dialog outside a
+   * portal shell). The panel follows the selection. Default true.
+   */
+  showOrderBook?: boolean;
 }
+
+/** The order the blotter's order book panel shows. */
+const OrderBookOrderContext = createContext<string | undefined>(undefined);
+
+/** Panel content: the book of whichever order is selected in the blotter. */
+const BlotterOrderBook = () => {
+  const orderId = useContext(OrderBookOrderContext);
+  return <OrderBookView orderId={orderId} />;
+};
 
 const describe = (err: unknown) =>
   err instanceof StaleOrderEditError
@@ -161,7 +184,12 @@ const useAmendEditSession = (
   );
 };
 
-const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
+interface OrderBlotterInnerProps extends OrderBlotterProps {
+  /** The focused (last selected) order changed. */
+  onFocusedOrderChange: (orderId: string | undefined) => void;
+}
+
+const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
   function OrderBlotterInner(
     {
       className,
@@ -175,7 +203,9 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
       readOnly = false,
       showLinkGroupSelector = false,
       showChildOrders = true,
+      showOrderBook = true,
       useEditSession = false,
+      onFocusedOrderChange,
       ...htmlAttributes
     },
     ref,
@@ -313,16 +343,23 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
       (row) => {
         if (!row) {
           setFocusedOrderId(undefined);
+          onFocusedOrderChange(undefined);
           onOrderSelect?.(undefined);
           return;
         }
         const ric = String(row.ric);
         const orderId = String(row.orderId);
         setFocusedOrderId(orderId);
+        onFocusedOrderChange(orderId);
         onOrderSelect?.(orderId);
         setSelectedInstrument(lookup.get(ric) ?? { ric }, SOURCE);
       },
-      [lookup, onOrderSelect, setSelectedInstrument],
+      [lookup, onFocusedOrderChange, onOrderSelect, setSelectedInstrument],
+    );
+    const showContextPanel = useContextPanel();
+    const openOrderBook = useCallback(
+      () => showContextPanel(<BlotterOrderBook />, "Order book"),
+      [showContextPanel],
     );
     const stableHandleSelect = useStableCallback(handleSelect);
 
@@ -393,6 +430,16 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterProps>(
             </button>
           ))}
           <span className={`${classBase}-spacer`} />
+          {showOrderBook ? (
+            <button
+              aria-label="Show order book"
+              onClick={openOrderBook}
+              title="Depth and queue position of the selected order"
+              type="button"
+            >
+              Order book
+            </button>
+          ) : null}
           {readOnly ? null : (
             <>
               <button
@@ -538,13 +585,30 @@ const AmendDialog = ({
  * Order blotter on `parentOrders`: status badge, fill progress, tick-formatted
  * avg price, filter tabs, per-row amend / cancel (enabled only for NEW,
  * PARTIALLY_FILLED, REPLACED), multi-select cancel, Cancel all and a child
- * orders panel. Selecting a row sets the selected instrument.
+ * orders panel. Selecting a row sets the selected instrument. Order book
+ * opens the selected order's depth and queue position (OrderBookView) in the
+ * shell's context panel.
  */
 export const OrderBlotter = forwardRef<HTMLDivElement, OrderBlotterProps>(
   function OrderBlotter(props, ref) {
+    const [orderBookOrderId, setOrderBookOrderId] = useState<string>();
+    // The order book is portalled into the shell's context panel from
+    // SlotContextPanelProvider (or shown in ContextPanelProvider's dialog
+    // when there is no shell), both below the order context, so the panel
+    // follows the selection and sees the blotter's data providers.
     return (
       <InstrumentLookupProvider>
-        <OrderBlotterInner {...props} ref={ref} />
+        <OrderBookOrderContext.Provider value={orderBookOrderId}>
+          <ContextPanelProvider>
+            <SlotContextPanelProvider>
+              <OrderBlotterInner
+                {...props}
+                onFocusedOrderChange={setOrderBookOrderId}
+                ref={ref}
+              />
+            </SlotContextPanelProvider>
+          </ContextPanelProvider>
+        </OrderBookOrderContext.Provider>
       </InstrumentLookupProvider>
     );
   },
