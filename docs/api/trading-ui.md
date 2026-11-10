@@ -1440,7 +1440,7 @@ useMarketDepth(ric: string | undefined, { levels = 10 }: { levels?: number } = {
 
 #### useOrderBook
 
-*hook* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L140)
+*hook* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L144)
 
 One parent order with the book it is working in: its child orders, the
 instrument's L2 depth (EXCHANGE `depth`) and L3 queues (EXCHANGE
@@ -1713,7 +1713,7 @@ A child (street) order of the parent order (OMS `childOrders`).
 
 #### OrderBookOptions
 
-*interface* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L76)
+*interface* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L80)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1746,7 +1746,7 @@ The parent order an order book view is about (OMS `parentOrders`).
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
 | `order?` | `OrderBookParentOrder` |  |  |
-| `children` | `readonly OrderBookChildOrder[]` |  | Every child order, oldest first. |
+| `children` | `readonly OrderBookChildOrder[]` |  | The live child orders (working or in flight, see OWN_ORDER_STATUSES), oldest first. Filled and cancelled ones are left out: an algo order sends thousands of children over its life. |
 | `instrument?` | `InstrumentPrice` |  | Static data and live prices of the order's instrument. |
 | `depth` | `MarketDepthState` |  | L2: aggregated levels, best first. |
 | `queues` | `ReadonlyMap<string, LadderQueue>` |  | L3: the queue at each price, keyed by `ownOrdersKey(side, price)`. |
