@@ -1,3 +1,15 @@
+/*
+ * The vuu context panel is 300px by default, too narrow for the depth
+ * columns and queue strips. Widen it while it shows an order book; set
+ * --tradingOrderBookView-panelWidth (e.g. on :root) to change the width.
+ */
+.vuuContextPanel:has(.tradingOrderBookView) {
+  --vuuContextPanel-width: var(
+    --tradingOrderBookView-panelWidth,
+    min(480px, 90vw)
+  );
+}
+
 .tradingOrderBookView {
   --tradingOrderBookView-rowHeight: var(--salt-size-base);
   --tradingOrderBookView-bid-bar: var(
