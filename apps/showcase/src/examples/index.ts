@@ -1,6 +1,7 @@
 import {
   FillsBlotterExample,
   OrderBlotterExample,
+  OrderBookViewExample,
   PositionsViewExample,
   TradeTapeExample,
 } from "./BlotterExamples";
@@ -135,6 +136,14 @@ export const examples: ShowcaseExample[] = [
     group: "OrderBlotter",
     title: "Working / filled / closed with amend and cancel",
     Component: OrderBlotterExample,
+  },
+  {
+    id: "order-book-view",
+    group: "OrderBookView",
+    title: "Selected order: L2 depth and L3 queue position",
+    description:
+      "Select a working order in the blotter: its levels are marked in the depth, and the queue at the selected level shows its position, size ahead and the orders around it. Click a level or a child order to see that queue.",
+    Component: OrderBookViewExample,
   },
   {
     id: "fills-blotter",

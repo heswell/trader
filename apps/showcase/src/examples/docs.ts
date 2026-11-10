@@ -41,6 +41,7 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   LinkGroupSwatch: "docs/components/selection-and-linking.md",
   MarketDepth: "docs/components/market-depth-and-ladder.md#marketdepth",
   OrderBlotter: "docs/components/blotters.md",
+  OrderBookView: "docs/components/blotters.md#order-book-panel",
   OrderStatusBadge: "docs/components/primitives.md",
   OrderTicket: "docs/components/order-ticket.md",
   OrderTicketDialog: "docs/components/order-ticket.md",

@@ -1,0 +1,443 @@
+.tradingOrderBookView {
+  --tradingOrderBookView-rowHeight: var(--salt-size-base);
+  --tradingOrderBookView-bid-bar: var(
+    --trading-depth-bid,
+    var(--salt-status-success-background)
+  );
+  --tradingOrderBookView-ask-bar: var(
+    --trading-depth-ask,
+    var(--salt-status-error-background)
+  );
+  --tradingOrderBookView-bid: var(
+    --trading-buy,
+    var(--salt-sentiment-positive-foreground-informative)
+  );
+  --tradingOrderBookView-ask: var(
+    --trading-sell,
+    var(--salt-sentiment-negative-foreground-informative)
+  );
+  --tradingOrderBookView-own: var(
+    --trading-own-order,
+    var(--salt-status-info-foreground-informative)
+  );
+  --tradingOrderBookView-focus: var(
+    --trading-ltp,
+    var(--salt-status-warning-foreground-informative)
+  );
+  color: var(--salt-content-primary-foreground);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--salt-text-fontFamily);
+  font-size: var(--salt-text-fontSize);
+  font-variant-numeric: tabular-nums;
+  gap: var(--salt-spacing-200);
+  min-width: 0;
+}
+
+.tradingOrderBookView-message,
+.tradingOrderBookView-note {
+  color: var(--salt-content-secondary-foreground);
+  margin: 0;
+}
+
+.tradingOrderBookView-secondary {
+  color: var(--salt-content-secondary-foreground);
+}
+
+.tradingOrderBookView-mono {
+  font-family: var(--salt-typography-fontFamily-code, monospace);
+}
+
+.tradingOrderBookView-heading {
+  color: var(--salt-content-secondary-foreground);
+  font-size: var(--salt-text-label-fontSize);
+  font-weight: var(--salt-text-fontWeight-strong);
+  letter-spacing: 0.04em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+/* drill path */
+.tradingOrderBookView-path {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  font-weight: var(--salt-text-fontWeight-strong);
+  gap: var(--salt-spacing-75);
+}
+
+.tradingOrderBookView-path > [aria-hidden] {
+  color: var(--salt-content-secondary-foreground);
+}
+
+.tradingOrderBookView-pathQueue {
+  color: var(--tradingOrderBookView-own);
+}
+
+/* order */
+.tradingOrderBookView-order {
+  border-block: var(--salt-size-border) var(--salt-borderStyle-solid)
+    var(--salt-separable-tertiary-borderColor);
+  display: flex;
+  flex-direction: column;
+  gap: var(--salt-spacing-100);
+  padding-block: var(--salt-spacing-100);
+}
+
+.tradingOrderBookView-orderTitle {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--salt-spacing-100);
+}
+
+.tradingOrderBookView-orderTitle [data-side] {
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+.tradingOrderBookView-orderTitle [data-side="BUY"] {
+  color: var(--tradingOrderBookView-bid);
+}
+
+.tradingOrderBookView-orderTitle [data-side="SELL"],
+.tradingOrderBookView-orderTitle [data-side="SELL_SHORT"] {
+  color: var(--tradingOrderBookView-ask);
+}
+
+.tradingOrderBookView-progress {
+  background: var(--salt-container-secondary-background);
+  border-radius: 3px;
+  display: flex;
+  height: 6px;
+  overflow: hidden;
+}
+
+.tradingOrderBookView-progress [data-part="filled"] {
+  background: var(--tradingOrderBookView-bid);
+}
+
+.tradingOrderBookView-progress [data-part="resting"] {
+  background: var(--tradingOrderBookView-own);
+  opacity: 0.7;
+}
+
+.tradingOrderBookView-orderStats {
+  color: var(--salt-content-secondary-foreground);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--salt-text-label-fontSize);
+  gap: var(--salt-spacing-200);
+}
+
+.tradingOrderBookView-orderStats strong {
+  color: var(--salt-content-primary-foreground);
+}
+
+/* resting child orders */
+.tradingOrderBookView-children {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--salt-spacing-100);
+}
+
+.tradingOrderBookView-chip {
+  align-items: center;
+  background: var(--salt-container-secondary-background);
+  border: var(--salt-size-border) var(--salt-borderStyle-solid)
+    var(--salt-separable-tertiary-borderColor);
+  border-radius: var(--salt-palette-corner, 4px);
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  gap: var(--salt-spacing-100);
+  padding: var(--salt-spacing-50) var(--salt-spacing-100);
+}
+
+.tradingOrderBookView-chip[aria-pressed="true"] {
+  border-color: var(--tradingOrderBookView-focus);
+}
+
+/* L2 */
+.tradingOrderBookView-depth {
+  display: flex;
+  flex-direction: column;
+}
+
+.tradingOrderBookView-depth > .tradingOrderBookView-heading {
+  padding-bottom: var(--salt-spacing-75);
+}
+
+.tradingOrderBookView-levelHeader,
+.tradingOrderBookView-level {
+  display: grid;
+  grid-template-columns: 2.2em minmax(4em, 1fr) 5.5em minmax(4em, 1fr) minmax(
+      5em,
+      1.3fr
+    );
+}
+
+.tradingOrderBookView-levelHeader {
+  color: var(--salt-content-secondary-foreground);
+  font-size: var(--salt-text-label-fontSize);
+  text-transform: uppercase;
+}
+
+.tradingOrderBookView-levelHeader > :nth-child(2) {
+  padding-right: var(--salt-spacing-100);
+  text-align: right;
+}
+
+.tradingOrderBookView-levelHeader > :nth-child(3) {
+  text-align: center;
+}
+
+.tradingOrderBookView-levelHeader > :nth-child(4) {
+  padding-left: var(--salt-spacing-100);
+}
+
+.tradingOrderBookView-levelHeader > :nth-child(5) {
+  padding-left: var(--salt-spacing-100);
+}
+
+.tradingOrderBookView-level {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  height: var(--tradingOrderBookView-rowHeight);
+  padding: 0;
+  text-align: left;
+}
+
+.tradingOrderBookView-level:hover {
+  background: var(--salt-actionable-subtle-background-hover);
+}
+
+.tradingOrderBookView-level:focus-visible {
+  outline: var(--salt-focused-outline);
+  outline-offset: calc(-1 * var(--salt-focused-outlineWidth, 2px));
+}
+
+.tradingOrderBookView-level[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 1px var(--tradingOrderBookView-focus);
+}
+
+.tradingOrderBookView-count {
+  color: var(--salt-content-secondary-foreground);
+  font-size: var(--salt-text-label-fontSize);
+  text-align: center;
+}
+
+.tradingOrderBookView-qty {
+  align-items: center;
+  display: flex;
+  height: 100%;
+  position: relative;
+}
+
+.tradingOrderBookView-qty > span:last-child {
+  position: relative;
+}
+
+.tradingOrderBookView-qty[data-col="bid"] {
+  justify-content: flex-end;
+  padding-right: var(--salt-spacing-100);
+}
+
+.tradingOrderBookView-qty[data-col="ask"] {
+  padding-left: var(--salt-spacing-100);
+}
+
+.tradingOrderBookView-bar {
+  border-radius: 2px;
+  bottom: 3px;
+  position: absolute;
+  top: 3px;
+}
+
+[data-col="bid"] > .tradingOrderBookView-bar {
+  background: var(--tradingOrderBookView-bid-bar);
+  right: 0;
+}
+
+[data-col="ask"] > .tradingOrderBookView-bar {
+  background: var(--tradingOrderBookView-ask-bar);
+  left: 0;
+}
+
+.tradingOrderBookView-price {
+  align-items: center;
+  display: flex;
+  font-weight: var(--salt-text-fontWeight-strong);
+  gap: var(--salt-spacing-50);
+  justify-content: center;
+}
+
+.tradingOrderBookView-level[data-side="BUY"] .tradingOrderBookView-price {
+  color: var(--tradingOrderBookView-bid);
+}
+
+.tradingOrderBookView-level[data-side="SELL"] .tradingOrderBookView-price {
+  color: var(--tradingOrderBookView-ask);
+}
+
+.tradingOrderBookView-ownDot {
+  background: var(--tradingOrderBookView-own);
+  border-radius: 50%;
+  height: 7px;
+  width: 7px;
+}
+
+.tradingOrderBookView-segments {
+  display: flex;
+  height: 10px;
+  padding-left: var(--salt-spacing-100);
+}
+
+.tradingOrderBookView-segmentsFill {
+  display: flex;
+  gap: 1px;
+}
+
+.tradingOrderBookView-segmentsFill > span,
+.tradingOrderBookView-queueBar > span {
+  border-radius: 1px;
+  flex-basis: 0;
+  min-width: 2px;
+}
+
+[data-side="BUY"] .tradingOrderBookView-segmentsFill > span {
+  background: var(--tradingOrderBookView-bid);
+  opacity: 0.55;
+}
+
+[data-side="SELL"] .tradingOrderBookView-segmentsFill > span {
+  background: var(--tradingOrderBookView-ask);
+  opacity: 0.55;
+}
+
+.tradingOrderBookView-segmentsFill > span[data-own],
+.tradingOrderBookView-queueBar > span[data-own] {
+  background: var(--tradingOrderBookView-own);
+  opacity: 1;
+}
+
+.tradingOrderBookView-spread {
+  border-block: var(--salt-size-border) dashed
+    var(--salt-separable-tertiary-borderColor);
+  color: var(--salt-content-secondary-foreground);
+  font-size: var(--salt-text-label-fontSize);
+  margin-block: 2px;
+  padding-block: 2px;
+  text-align: center;
+}
+
+/* L3 */
+.tradingOrderBookView-queue {
+  background: var(--salt-container-secondary-background);
+  border-top: 2px solid var(--tradingOrderBookView-focus);
+  display: flex;
+  flex-direction: column;
+  gap: var(--salt-spacing-100);
+  padding: var(--salt-spacing-100);
+}
+
+.tradingOrderBookView-queueTitle {
+  align-items: center;
+  display: flex;
+  gap: var(--salt-spacing-100);
+  justify-content: space-between;
+}
+
+.tradingOrderBookView-queueTitle .tradingOrderBookView-heading {
+  color: var(--salt-content-primary-foreground);
+}
+
+.tradingOrderBookView-queueBar {
+  display: flex;
+  gap: 2px;
+  height: 20px;
+}
+
+.tradingOrderBookView-queueBar > span {
+  background: var(--salt-content-secondary-foreground);
+  opacity: 0.45;
+}
+
+.tradingOrderBookView-queueEnds {
+  color: var(--salt-content-secondary-foreground);
+  display: flex;
+  font-size: var(--salt-text-label-fontSize);
+  justify-content: space-between;
+}
+
+.tradingOrderBookView-stats {
+  display: grid;
+  gap: var(--salt-spacing-100);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+}
+
+.tradingOrderBookView-stats > div {
+  background: var(--salt-container-primary-background);
+  border-radius: var(--salt-palette-corner, 4px);
+  padding: var(--salt-spacing-75) var(--salt-spacing-100);
+}
+
+.tradingOrderBookView-stats dt {
+  color: var(--salt-content-secondary-foreground);
+  font-size: var(--salt-text-label-fontSize);
+}
+
+.tradingOrderBookView-stats dd {
+  font-weight: var(--salt-text-fontWeight-strong);
+  margin: 0;
+}
+
+.tradingOrderBookView-stats > div:first-child dd {
+  color: var(--tradingOrderBookView-own);
+}
+
+.tradingOrderBookView-queueTable {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.tradingOrderBookView-queueTable th {
+  color: var(--salt-content-secondary-foreground);
+  font-size: var(--salt-text-label-fontSize);
+  font-weight: var(--salt-text-fontWeight-strong);
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.tradingOrderBookView-queueTable th:nth-child(-n + 2),
+.tradingOrderBookView-queueTable td:nth-child(-n + 2) {
+  text-align: left;
+}
+
+.tradingOrderBookView-queueTable td {
+  border-top: var(--salt-size-border) var(--salt-borderStyle-solid)
+    var(--salt-separable-tertiary-borderColor);
+  height: var(--tradingOrderBookView-rowHeight);
+  text-align: right;
+}
+
+.tradingOrderBookView-queueTable tr[data-own] {
+  background: var(--salt-status-info-background, rgba(94, 168, 255, 0.14));
+  box-shadow: inset 3px 0 0 var(--tradingOrderBookView-own);
+}
+
+.tradingOrderBookView-mine {
+  background: var(--tradingOrderBookView-own);
+  border-radius: 3px;
+  color: var(--salt-container-primary-background);
+  font-size: 10px;
+  font-weight: var(--salt-text-fontWeight-strong);
+  margin-left: var(--salt-spacing-100);
+  padding: 0 var(--salt-spacing-50);
+}

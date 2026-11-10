@@ -26,6 +26,7 @@ export * from "./instrument-context/workspaceItemState";
 
 // shared market-data / own-order hooks (P3.4, P3.5)
 export * from "./hooks/useBookQueue";
+export * from "./hooks/useOrderBook";
 export * from "./hooks/useLevelFlash";
 export * from "./hooks/useMarketData";
 export * from "./hooks/useOwnExchangeOrderIds";
@@ -64,6 +65,7 @@ export * from "./components/ServerMetrics";
 export * from "./components/SimulatorControls";
 export * from "./components/InstrumentLookup";
 export * from "./components/OrderBlotter";
+export * from "./components/OrderBookView";
 export * from "./components/OrderStatusBadge";
 export * from "./components/PnlValue";
 export * from "./components/PositionsView";

@@ -122,6 +122,11 @@ export interface BookQueueState {
   queues: LadderQueues;
   /** Resting orders received for the instrument. */
   orderCount: number;
+  /**
+   * The instrument has more resting orders than `maxOrders`: the rest were
+   * not loaded, so queues may be incomplete.
+   */
+  truncated: boolean;
   loaded: boolean;
 }
 
@@ -148,7 +153,7 @@ export const useBookQueue = (
     ],
   });
   const active = enabled && !!ric;
-  const { rows, loaded } = useDataSourceRows(dataSource, {
+  const { rows, size, loaded } = useDataSourceRows(dataSource, {
     enabled: active,
     filter: ric ? `ric = ${filterString(ric)}` : "",
     rowCount: maxOrders,
@@ -157,7 +162,7 @@ export const useBookQueue = (
   return useMemo(() => {
     if (!active) {
       previous.current = EMPTY;
-      return { queues: EMPTY, orderCount: 0, loaded: false };
+      return { queues: EMPTY, orderCount: 0, truncated: false, loaded: false };
     }
     const mine = rows.filter((row) => row.ric === ric);
     const queues = buildLadderQueues(
@@ -166,6 +171,11 @@ export const useBookQueue = (
       previous.current,
     );
     previous.current = queues;
-    return { queues, orderCount: mine.length, loaded };
-  }, [active, rows, ric, ownOrderIds, loaded]);
+    return {
+      queues,
+      orderCount: mine.length,
+      truncated: size > maxOrders,
+      loaded,
+    };
+  }, [active, rows, size, maxOrders, ric, ownOrderIds, loaded]);
 };
