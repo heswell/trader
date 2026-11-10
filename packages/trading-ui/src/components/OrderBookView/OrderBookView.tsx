@@ -231,6 +231,7 @@ export const OrderBookView = forwardRef<HTMLDivElement, OrderBookViewProps>(
         <DepthLadder
           depth={depth}
           fmtPrice={fmtPrice}
+          levels={levels}
           onPick={pick}
           queues={queues}
           selected={level}
@@ -344,12 +345,14 @@ const ChildChip = ({
 const DepthLadder = ({
   depth,
   fmtPrice,
+  levels,
   onPick,
   queues,
   selected,
 }: {
   depth: OrderBookState["depth"];
   fmtPrice: (price: number) => string;
+  levels: number;
   onPick: (level: BookLevelRef) => void;
   queues: ReadonlyMap<string, LadderQueue>;
   selected: BookLevelRef | undefined;
@@ -397,9 +400,8 @@ const DepthLadder = ({
           ) : null}
         </span>
         <span className={`${classBase}-price`}>
-          {own ? (
-            <span aria-hidden="true" className={`${classBase}-ownDot`} />
-          ) : null}
+          {/* always rendered, so the price doesn't move when it appears */}
+          <span aria-hidden="true" className={`${classBase}-ownDot`} />
           {fmtPrice(level.price)}
         </span>
         <span className={`${classBase}-qty`} data-col="ask">
@@ -432,6 +434,15 @@ const DepthLadder = ({
       </button>
     );
   };
+  const blanks = (side: Side, count: number) =>
+    Array.from({ length: Math.max(0, count) }, (_, i) => (
+      <div
+        aria-hidden="true"
+        className={`${classBase}-level ${classBase}-level-empty`}
+        // biome-ignore lint/suspicious/noArrayIndexKey: blank slots are positional
+        key={`${side}|blank|${i}`}
+      />
+    ));
   return (
     <section aria-labelledby={headingId} className={`${classBase}-depth`}>
       <h3 className={`${classBase}-heading`} id={headingId}>
@@ -444,6 +455,10 @@ const DepthLadder = ({
         <span>Ask</span>
         <span>Queue (L3)</span>
       </div>
+      {/* Each side always takes `levels` rows, so a level appearing or
+          disappearing doesn't move the spread and everything below it.
+          Asks pad above (away from the spread), bids below. */}
+      {blanks(Side.Sell, levels - asks.length)}
       {[...asks].reverse().map((level) => row(Side.Sell, level))}
       <div className={`${classBase}-spread`}>
         {bids[0] && asks[0]
@@ -453,6 +468,7 @@ const DepthLadder = ({
             : "Waiting for prices…"}
       </div>
       {bids.map((level) => row(Side.Buy, level))}
+      {blanks(Side.Buy, levels - bids.length)}
     </section>
   );
 };

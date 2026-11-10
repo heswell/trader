@@ -115,6 +115,27 @@ describe("OrderBookView (local data)", () => {
     ).toBeTruthy();
   });
 
+  test("each side keeps its row count however many levels the book has", async () => {
+    const { orderId } = restingBuy();
+    const view = render(<OrderBookView levels={8} orderId={orderId} />, {
+      wrapper: Wrapper,
+    });
+    await waitFor(() => {
+      tick();
+      expect(view.container.querySelector("tr[data-own]")).toBeTruthy();
+    });
+    const count = (selector: string) =>
+      view.container.querySelectorAll(selector).length;
+    for (let i = 0; i < 20; i++) {
+      tick();
+      const asks = count('.tradingOrderBookView-level[data-side="SELL"]');
+      const bids = count('.tradingOrderBookView-level[data-side="BUY"]');
+      expect(asks).toBeLessThan(8); // the test book is thinner than 8 levels
+      expect(count(".tradingOrderBookView-level")).toBe(16);
+      expect(count(".tradingOrderBookView-level-empty")).toBe(16 - asks - bids);
+    }
+  });
+
   test("without an order it asks for one", () => {
     render(<OrderBookView />, { wrapper: Wrapper });
     expect(screen.getByText("Select an order to see its book")).toBeTruthy();
