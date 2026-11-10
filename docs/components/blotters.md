@@ -61,6 +61,10 @@ more resting orders than `useBookQueue` loads (`truncated`), it says the queues 
 In a vuu context panel, the panel widens to `min(480px, 90vw)` while it shows an order book (vuu's default is
 300px). Set `--tradingOrderBookView-panelWidth` (for example on `:root`) to choose another width.
 
+The layout holds still while the book ticks: each side of the depth always takes `levels` rows (blank rows pad the
+asks above and the bids below), the child order chips sit in one fixed-height row that scrolls sideways, and the
+queue table has fixed column widths.
+
 The blotter renders the panel content inside its own React tree (`SlotContextPanelProvider` portals it into the
 shell's panel), so the content sees the blotter's data providers and follows its selection without being
 reopened.
