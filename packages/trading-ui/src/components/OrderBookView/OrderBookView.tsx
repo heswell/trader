@@ -380,7 +380,10 @@ const DepthLadder = ({
         className={`${classBase}-level`}
         data-own={own || undefined}
         data-side={side}
-        key={`${side}|${level.price}`}
+        // Key by level, not price: depth rows tick one at a time, so two
+        // levels can briefly share a price, and duplicate keys leave stale
+        // rows behind.
+        key={`${side}|${level.level}`}
         onClick={() => onPick({ side, price: level.price })}
         type="button"
       >
