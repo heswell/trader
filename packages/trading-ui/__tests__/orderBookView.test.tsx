@@ -136,6 +136,38 @@ describe("OrderBookView (local data)", () => {
     }
   });
 
+  test("Reset level returns from a picked level to the order's level", async () => {
+    const { orderId } = restingBuy();
+    const view = render(<OrderBookView orderId={orderId} />, {
+      wrapper: Wrapper,
+    });
+    await waitFor(() => {
+      tick();
+      expect(view.container.querySelector("tr[data-own]")).toBeTruthy();
+    });
+    const reset = () =>
+      view.container.querySelector<HTMLButtonElement>(
+        ".tradingOrderBookView-reset",
+      );
+    // the default level: nothing to reset
+    expect(reset()?.hidden).toBe(true);
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: /^Ask .*Show queue$/ })[0],
+    );
+    expect(
+      screen.getByRole("region", { name: /^Level 3 · Queue at Ask / }),
+    ).toBeTruthy();
+    expect(reset()?.hidden).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset level" }));
+    expect(
+      screen.getByRole("region", { name: /^Level 3 · Queue at Bid / }),
+    ).toBeTruthy();
+    expect(view.container.querySelector("tr[data-own]")).toBeTruthy();
+    expect(reset()?.hidden).toBe(true);
+  });
+
   test("without an order it asks for one", () => {
     render(<OrderBookView />, { wrapper: Wrapper });
     expect(screen.getByText("Select an order to see its book")).toBeTruthy();

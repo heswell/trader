@@ -3883,7 +3883,7 @@ type OrderBlotterTab = "working" | "filled" | "closed" | "all"
 
 #### OrderBookView
 
-*component* · [components/OrderBookView/OrderBookView.tsx](../../packages/trading-ui/src/components/OrderBookView/OrderBookView.tsx#L111)
+*component* · [components/OrderBookView/OrderBookView.tsx](../../packages/trading-ui/src/components/OrderBookView/OrderBookView.tsx#L115)
 
 The book a parent order is working in, read top down: the order and its
 resting child orders, the instrument's L2 depth with the levels holding
@@ -3898,7 +3898,7 @@ Props: `OrderBookViewProps`
 | `orderId?` | `string` |  | Parent order (OMS `parentOrders.orderId`) to show the book for. |
 | `levels?` | `number` | `10` | L2 levels per side. Default 10. |
 | `level?` | `BookLevelRef` |  | The level whose L3 queue is shown. Controlled with `onLevelChange`; when undefined the view picks the level of the order's best-placed working child order, else the best price on the order's side. |
-| `onLevelChange?` | `(level: BookLevelRef) => void` |  |  |
+| `onLevelChange?` | `(level: BookLevelRef \| undefined) => void` |  | A level was picked (a depth row or a child order chip), or `undefined` when Reset level returns to the default level. |
 
 Also accepts the standard HTML attributes and `ref`.
 

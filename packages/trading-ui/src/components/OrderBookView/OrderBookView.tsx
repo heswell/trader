@@ -46,7 +46,11 @@ export interface OrderBookViewProps
    * working child order, else the best price on the order's side.
    */
   level?: BookLevelRef;
-  onLevelChange?: (level: BookLevelRef) => void;
+  /**
+   * A level was picked (a depth row or a child order chip), or
+   * `undefined` when Reset level returns to the default level.
+   */
+  onLevelChange?: (level: BookLevelRef | undefined) => void;
 }
 
 const MAX_QUEUE_ROWS = 100;
@@ -132,10 +136,12 @@ export const OrderBookView = forwardRef<HTMLDivElement, OrderBookViewProps>(
     // biome-ignore lint/correctness/useExhaustiveDependencies: reset on orderId only
     useEffect(() => setLevelState(undefined), [orderId]);
     const level = levelProp ?? levelState ?? defaultLevel(book);
-    const pick = (next: BookLevelRef) => {
+    const pick = (next: BookLevelRef | undefined) => {
       setLevelState(next);
       onLevelChange?.(next);
     };
+    // a picked level stays put until reset
+    const pinned = (levelProp ?? levelState) !== undefined;
     const now = useNow(!!orderId);
 
     const { order, instrument, depth, queues } = book;
@@ -233,6 +239,7 @@ export const OrderBookView = forwardRef<HTMLDivElement, OrderBookViewProps>(
           fmtPrice={fmtPrice}
           levels={levels}
           onPick={pick}
+          onReset={pinned ? () => pick(undefined) : undefined}
           queues={queues}
           selected={level}
         />
@@ -347,6 +354,7 @@ const DepthLadder = ({
   fmtPrice,
   levels,
   onPick,
+  onReset,
   queues,
   selected,
 }: {
@@ -354,6 +362,8 @@ const DepthLadder = ({
   fmtPrice: (price: number) => string;
   levels: number;
   onPick: (level: BookLevelRef) => void;
+  /** Return to the default level; set while a picked level is shown. */
+  onReset?: () => void;
   queues: ReadonlyMap<string, LadderQueue>;
   selected: BookLevelRef | undefined;
 }) => {
@@ -445,9 +455,22 @@ const DepthLadder = ({
     ));
   return (
     <section aria-labelledby={headingId} className={`${classBase}-depth`}>
-      <h3 className={`${classBase}-heading`} id={headingId}>
-        Level 2 · Depth
-      </h3>
+      <div className={`${classBase}-depthTitle`}>
+        <h3 className={`${classBase}-heading`} id={headingId}>
+          Level 2 · Depth
+        </h3>
+        {/* always takes its space, so showing it doesn't move the ladder */}
+        <button
+          className={`${classBase}-reset`}
+          disabled={!onReset}
+          hidden={!onReset}
+          onClick={onReset}
+          title="Go back to the order's best-placed level, else the best price"
+          type="button"
+        >
+          Reset level
+        </button>
+      </div>
       <div aria-hidden="true" className={`${classBase}-levelHeader`}>
         <span>#</span>
         <span>Bid</span>
