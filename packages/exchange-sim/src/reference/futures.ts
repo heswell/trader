@@ -37,6 +37,19 @@ const MULTIPLIER: Record<string, number> = {
   HKD: 1000,
 };
 const DEFAULT_MULTIPLIER = 100;
+/** Index futures: currency per index point (GBX: 1000p = GBP 10 a point). */
+const INDEX_MULTIPLIER: Record<string, number> = {
+  USD: 50,
+  GBX: 1000,
+  EUR: 10,
+  CHF: 10,
+  HKD: 50,
+};
+/** Index futures trade in 0.1 point ticks (1bp at the 1000 base level). */
+const INDEX_FUTURE_TICK = 0.1;
+
+const isIndexDef = (instrument: InstrumentDef) =>
+  instrument.instrumentType === InstrumentType.Index;
 
 export interface FuturesOptions {
   /** Contracts listed per underlying (front, next, ...). */
@@ -116,8 +129,9 @@ export const carriedPrice = (
 
 /**
  * One futures contract on `underlying` expiring at `expiry`. Same venue,
- * currency and sector as the underlying; a fixed tick (the underlying's tick
- * at its reference price), lot size 1 and a multiplier by currency.
+ * currency and sector as the underlying; a fixed tick (a stock's tick at its
+ * reference price, 0.1 point on an index), lot size 1 and a multiplier by
+ * currency.
  */
 export const toFutureDef = (
   underlying: InstrumentDef,
@@ -125,7 +139,10 @@ export const toFutureDef = (
   now: number,
   carryRate = DEFAULT_FUTURES_OPTIONS.carryRate,
 ): InstrumentDef => {
-  const tickSize = tickSizeAt(tickScheduleOf(underlying), underlying.refPrice);
+  const index = isIndexDef(underlying);
+  const tickSize = index
+    ? INDEX_FUTURE_TICK
+    : tickSizeAt(tickScheduleOf(underlying), underlying.refPrice);
   const date = new Date(expiry);
   return {
     ric: futureRic(underlying.ric, expiry),
@@ -136,11 +153,15 @@ export const toFutureDef = (
     instrumentType: InstrumentType.Future,
     underlying: underlying.ric,
     expiry,
-    contractMultiplier: MULTIPLIER[underlying.currency] ?? DEFAULT_MULTIPLIER,
+    contractMultiplier:
+      (index ? INDEX_MULTIPLIER : MULTIPLIER)[underlying.currency] ??
+      DEFAULT_MULTIPLIER,
     tickSize,
     tickBands: "",
     lotSize: 1,
-    priceDecimals: underlying.priceDecimals,
+    priceDecimals: index
+      ? Math.max(underlying.priceDecimals, 1)
+      : underlying.priceDecimals,
     refPrice: roundToTick(
       carriedPrice(underlying.refPrice, carryRate, expiry, now),
       tickSize,
@@ -151,7 +172,8 @@ export const toFutureDef = (
 
 /**
  * List futures for each underlying ric: the next `contracts` quarterly
- * expiries after `now`. Throws on an unknown or non-equity underlying.
+ * expiries after `now`. Throws on an unknown underlying, or one that is
+ * neither an equity nor an index.
  */
 export const listFutures = (
   universe: readonly InstrumentDef[],
@@ -170,11 +192,9 @@ export const listFutures = (
     const underlying = byRic.get(ric);
     if (!underlying)
       throw Error(`exchangeSim.futures: unknown underlying ${ric}`);
-    if (
-      (underlying.instrumentType ?? InstrumentType.Equity) !==
-      InstrumentType.Equity
-    )
-      throw Error(`exchangeSim.futures: ${ric} is not an equity`);
+    const type = underlying.instrumentType ?? InstrumentType.Equity;
+    if (type !== InstrumentType.Equity && type !== InstrumentType.Index)
+      throw Error(`exchangeSim.futures: ${ric} is not an equity or an index`);
     return expiries.map((expiry) =>
       toFutureDef(underlying, expiry, now, carryRate),
     );
@@ -197,7 +217,8 @@ export const isFuture = (instrument: InstrumentDef) =>
 /**
  * Add futures to an active set: every future, preceded by its underlying
  * when the underlying is not already active (underlyings first, so their
- * books exist before the futures that follow them).
+ * books exist before the futures that follow them). An index underlying
+ * gets no book: add its constituents first (withConstituents).
  */
 export const withFutures = (
   active: readonly InstrumentDef[],
@@ -213,7 +234,7 @@ export const withFutures = (
       const underlying = byRic.get(ric);
       if (!underlying)
         throw Error(`exchangeSim: unknown underlying ${ric} of ${future.ric}`);
-      result.push(underlying);
+      if (!isIndexDef(underlying)) result.push(underlying);
       have.add(ric);
     }
   }

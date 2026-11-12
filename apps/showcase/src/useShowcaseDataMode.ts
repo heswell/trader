@@ -30,7 +30,8 @@ const remoteConnection = () => {
 /**
  * Exchange-sim overrides from the URL, for perf runs (packages/perf):
  * ?active=200 simulates more instruments, ?mmRate= / ?takerRate= /
- * ?publishMs= raise the tick rate.
+ * ?publishMs= raise the tick rate. ?futures=AZN.L,MSFT.OQ lists futures on
+ * other names (?futures=none: no futures).
  */
 const localDataOptions = () => {
   const params = new URLSearchParams(window.location.search);
@@ -38,8 +39,10 @@ const localDataOptions = () => {
     const value = Number(params.get(name));
     return value > 0 ? value : undefined;
   };
+  const futures = params.get("futures");
   const exchange = Object.fromEntries(
     Object.entries({
+      futures: futures === "none" ? "" : (futures ?? undefined),
       activeInstruments: num("active"),
       mmRate: num("mmRate"),
       takerRate: num("takerRate"),

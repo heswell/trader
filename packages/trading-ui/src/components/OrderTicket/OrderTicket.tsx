@@ -2,6 +2,7 @@ import {
   type AlgoParamDefinition,
   AlgoStrategy,
   algoStrategyDefinition,
+  InstrumentType,
   isPricedOrdType,
   isStopOrdType,
   OrdStatus,
@@ -419,10 +420,14 @@ const QuantityField = ({
 }) => {
   const { draft, update, errors, instrument, risk, resolveShorthand } = ticket;
   const lot = instrument?.lotSize;
+  const unit =
+    instrument?.instrumentType === InstrumentType.Future
+      ? "contracts"
+      : "shares";
   const hint =
     isValueInput(draft.quantity) && risk.quantity ? (
       <>
-        <b>= {formatQuantity(risk.quantity)}</b> shares
+        <b>= {formatQuantity(risk.quantity)}</b> {unit}
       </>
     ) : risk.notionalUsd !== undefined && risk.quantity ? (
       `≈ ${usdShort(risk.notionalUsd)}`
@@ -432,7 +437,7 @@ const QuantityField = ({
       "10k, 1.5m, $250k"
     );
   return (
-    <Field error={errors.quantity} hint={hint} label="Quantity" unit="shares">
+    <Field error={errors.quantity} hint={hint} label="Quantity" unit={unit}>
       <Input
         className={`${classBase}-quantity`}
         inputProps={

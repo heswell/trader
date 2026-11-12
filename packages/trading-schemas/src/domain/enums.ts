@@ -65,6 +65,8 @@ export const STOP_TIME_IN_FORCE_VALUES: readonly TimeInForce[] = Object.freeze([
 export const InstrumentType = Object.freeze({
   Equity: "EQUITY",
   Future: "FUTURE",
+  /** A synthetic index: listed with a computed level, not tradeable. */
+  Index: "INDEX",
 } as const);
 export type InstrumentType = ValueOf<typeof InstrumentType>;
 export const INSTRUMENT_TYPES = values(InstrumentType);

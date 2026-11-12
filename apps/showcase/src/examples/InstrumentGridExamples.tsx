@@ -1,3 +1,4 @@
+import { InstrumentType } from "@heswell/trading-schemas";
 import { InstrumentGrid, type SelectedInstrument } from "@heswell/trading-ui";
 import { Text } from "@salt-ds/core";
 import { useCallback, useState } from "react";
@@ -63,6 +64,34 @@ export const InstrumentGridTicking200 = () => {
     <Layout log={log}>
       <InstrumentGrid
         sparkline={{ length: 60, valueColumn: "last" }}
+        onBuy={action("Buy")}
+        onSell={action("Sell")}
+      />
+    </Layout>
+  );
+};
+
+/** Futures only: type, underlying, expiry and multiplier columns; Buy opens contracts. */
+export const InstrumentGridFutures = () => {
+  const { action, log } = useLog();
+  return (
+    <Layout log={log}>
+      <InstrumentGrid
+        instrumentType={InstrumentType.Future}
+        columns={[
+          "ric",
+          "description",
+          "underlying",
+          "expiry",
+          "contractMultiplier",
+          "bid",
+          "ask",
+          "last",
+          "changePct",
+          "phase",
+          "settlementPrice",
+        ]}
+        initialGroupBy="underlying"
         onBuy={action("Buy")}
         onSell={action("Sell")}
       />

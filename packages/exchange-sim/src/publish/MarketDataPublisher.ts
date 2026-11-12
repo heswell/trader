@@ -141,6 +141,8 @@ export class MarketDataPublisher {
   readonly #ring: TradeRingBuffer;
   readonly #pendingTrades: TapeTrade[] = [];
   readonly #books = new Map<InstrumentBook, BookState>();
+  /** Last published level + phase per index ric. */
+  readonly #indexLevels = new Map<string, { last: number; phase: string }>();
   readonly #prices: RowLayout<typeof pricesDef>;
   readonly #depth: RowLayout<typeof depthDef>;
   readonly #trades: RowLayout<typeof tradesDef>;
@@ -397,6 +399,40 @@ export class MarketDataPublisher {
     row[idx.timestamp] = now;
     const table = this.tables.prices;
     const rowIdx = table.rowIndexAtKey(book.ric);
+    if (rowIdx === -1) table.insert(row);
+    else table.update(rowIdx, row);
+    this.stats.priceUpdates++;
+  }
+
+  /**
+   * An index's prices row: its level as `last` (no bid / ask / volume),
+   * change against the base level as `close`. Only written when the
+   * rounded level or the phase changes.
+   */
+  publishIndex(
+    instrument: InstrumentDef,
+    level: number,
+    phase: string,
+    now: number,
+  ) {
+    const decimals = instrument.priceDecimals;
+    const last = round(level, decimals);
+    const prev = this.#indexLevels.get(instrument.ric);
+    if (prev && prev.last === last && prev.phase === phase) return;
+    this.#indexLevels.set(instrument.ric, { last, phase });
+    const close = instrument.refPrice;
+    const change = round(last - close, decimals);
+    const { idx } = this.#prices;
+    const row = this.#prices.row();
+    row[idx.ric] = instrument.ric;
+    row[idx.last] = last;
+    row[idx.close] = close;
+    row[idx.change] = change;
+    row[idx.changePct] = round((100 * change) / close, 4);
+    row[idx.phase] = phase;
+    row[idx.timestamp] = now;
+    const table = this.tables.prices;
+    const rowIdx = table.rowIndexAtKey(instrument.ric);
     if (rowIdx === -1) table.insert(row);
     else table.update(rowIdx, row);
     this.stats.priceUpdates++;

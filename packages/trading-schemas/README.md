@@ -39,7 +39,7 @@ ModuleFactory.withNameSpace(EXCHANGE_MODULE)
 
 | Table | Key | Columns |
 |---|---|---|
-| `instruments` | `ric` | description, isin?, currency, exchange (MIC), sector?, instrumentType (EQUITY \| FUTURE), underlying?, expiry?, settlementPrice? (expired futures), contractMultiplier, tickSize, tickBands?, lotSize, priceDecimals, refPrice, simulated |
+| `instruments` | `ric` | description, isin?, currency, exchange (MIC), sector?, instrumentType (EQUITY \| FUTURE \| INDEX), underlying? (a future's stock or index), expiry?, settlementPrice? (expired futures), contractMultiplier, tickSize, tickBands?, lotSize, priceDecimals, refPrice, simulated |
 | `prices` | `ric` | bid, ask, bidSize, askSize, last, lastSize, open, high, low, close (prev), volume, turnover, vwap, change, changePct, phase (`TradingPhase`), seq, timestamp |
 | `depth` | `id` = `ric\|side\|level` | ric, side, level (0 = best), price, size, cumSize, orderCount, ownSize?, seq |
 | `trades` | `tradeId` | ric, price, size, aggressorSide, timestamp, seq |

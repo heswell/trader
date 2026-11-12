@@ -1,5 +1,5 @@
 import {
-  type InstrumentType,
+  InstrumentType,
   OrdType,
   RejectReason,
   SUPPORTED_ORD_TYPES,
@@ -26,7 +26,7 @@ export interface InstrumentStatic {
   lotSize: number;
   /** EQUITY when absent. */
   instrumentType?: InstrumentType;
-  /** Futures: ric of the underlying instrument. */
+  /** Futures: ric of the underlying instrument (an equity or an index). */
   underlying?: string;
   /** Futures: last trading time (epoch ms). */
   expiry?: number;
@@ -195,6 +195,12 @@ export const validateOrder = (
     return reject(
       RejectReason.UnsupportedOrdType,
       `order type ${order.ordType} is not supported`,
+    );
+  }
+  if (instrument.instrumentType === InstrumentType.Index) {
+    return reject(
+      RejectReason.RestrictedInstrument,
+      `${instrument.ric} is an index: trade its futures`,
     );
   }
   if (phase === TradingPhase.Halted) {

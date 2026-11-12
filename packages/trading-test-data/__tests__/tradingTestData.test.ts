@@ -671,12 +671,42 @@ describe("chart data", () => {
   });
 });
 
+describe("futures in the local test data", () => {
+  test("lists front and next quarter futures with books", () => {
+    const local = createTradingTestData({ seed: 1, manualClock: true });
+    try {
+      const instruments = local.exchange.getTable("instruments");
+      const { map } = instruments;
+      const futures = instruments.data.filter(
+        (row) => row[map.instrumentType] === "FUTURE",
+      );
+      expect(futures.map((row) => row[map.underlying]).sort()).toEqual([
+        "AAPL.OQ",
+        "AAPL.OQ",
+        "STECH",
+        "STECH",
+        "VOD.L",
+        "VOD.L",
+      ]);
+      const index = instruments.data.find((row) => row[map.ric] === "STECH");
+      expect(index?.[map.instrumentType]).toBe("INDEX");
+      expect(futures.every((row) => row[map.simulated] === true)).toBe(true);
+      expect(
+        futures.every((row) => Number(row[map.contractMultiplier]) > 1),
+      ).toBe(true);
+    } finally {
+      local.dispose();
+    }
+  });
+});
+
 describe("METRICS", () => {
   test("advance takes a snapshot: metrics, table writes and history", () => {
     const local = createTradingTestData({
       seed: 2,
       manualClock: true,
-      exchange: { activeInstruments: 3 },
+      // no futures: exactly three books
+      exchange: { activeInstruments: 3, futures: "" },
       oms: { flowRate: 0 },
     });
     try {

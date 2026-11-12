@@ -104,3 +104,52 @@ describe("futures expiry in the OMS", () => {
     expect(engine.getPosition("ACC-US-01", FUT)?.quantity).toBe(0);
   });
 });
+
+describe("positions group a stock with its futures", () => {
+  test("a stock's underlying is its own ric", () => {
+    const { sim, engine, rest, create, status } = futuresSetup();
+    const spot = sim.gateway.getInstrument("AAPL.OQ");
+    if (!spot) throw Error("no AAPL.OQ");
+    rest("AAPL.OQ", BookSide.SELL, spot.refPrice, 10);
+    const id = create({ ric: "AAPL.OQ", quantity: 10, price: spot.refPrice });
+    expect(status(id)?.status).toBe(OrdStatus.Filled);
+    expect(engine.getPosition("ACC-US-01", "AAPL.OQ")).toMatchObject({
+      instrumentType: "EQUITY",
+      underlying: "AAPL.OQ",
+    });
+  });
+
+  test("an index takes no orders; its future does", () => {
+    const t = setup({
+      time: NOW,
+      simConfig: { futures: "STECH", futuresContracts: 1 },
+    });
+    const order = (ric: string, price: number) =>
+      t.engine.createOrder(
+        {
+          account: "ACC-US-01",
+          ric,
+          side: Side.Buy,
+          ordType: "LIMIT",
+          quantity: 1,
+          price,
+        },
+        { user: "alice" },
+      );
+    const index = order("STECH", 1000);
+    expect(index.ok).toBe(false);
+    if (!index.ok) expect(index.reason).toBe(RejectReason.RestrictedInstrument);
+    const future = t.sim.gateway.getInstrument("STECHZ6");
+    if (!future) throw Error("no STECHZ6");
+    t.rest("STECHZ6", BookSide.SELL, future.refPrice, 1);
+    const id = t.create({
+      ric: "STECHZ6",
+      quantity: 1,
+      price: future.refPrice,
+    });
+    expect(t.status(id)?.status).toBe(OrdStatus.Filled);
+    expect(t.engine.getPosition("ACC-US-01", "STECHZ6")?.underlying).toBe(
+      "STECH",
+    );
+  });
+});

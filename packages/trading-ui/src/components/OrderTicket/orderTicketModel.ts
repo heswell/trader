@@ -1,4 +1,5 @@
 import {
+  contractMultiplierOf,
   type AlgoParamDefinition,
   ALGO_STRATEGY_DEFINITIONS,
   ALGO_STRATEGY_GROUPS,
@@ -6,6 +7,7 @@ import {
   type AlgoStrategyDefinition,
   algoStrategyDefinition,
   type CreateOrderRequest,
+  InstrumentType,
   isPricedOrdType,
   isStopOrdType,
   OrdType,
@@ -39,6 +41,10 @@ export interface OrderTicketInstrument {
   tickBands?: string;
   lotSize?: number;
   priceDecimals?: number;
+  /** EQUITY | FUTURE | INDEX (absent = equity); an index is not tradeable. */
+  instrumentType?: string;
+  /** Value per unit of quantity per unit of price (futures); 1 when absent. */
+  contractMultiplier?: number;
   refPrice?: number;
   bid?: number;
   ask?: number;
@@ -387,8 +393,9 @@ const VALUE_INPUT = /^\s*\$\s*([\d,]*\.?\d*)\s*([kKmM]?)\s*$/;
 export const isValueInput = (text: string) => VALUE_INPUT.test(text);
 
 /**
- * Quantity input as shares: `1,000`, `10k`, `1.5m`, or a USD value
- * (`$250k`) converted at `price` and rounded to whole lots (at least one).
+ * Quantity input as shares (contracts for a future): `1,000`, `10k`, `1.5m`,
+ * or a USD value (`$250k`) converted at `price` and the contract multiplier,
+ * rounded to whole lots (at least one).
  * NaN if invalid or a value can't be converted.
  */
 export const resolveQuantityInput = (
@@ -410,7 +417,8 @@ export const resolveQuantityInput = (
   if (!rate || !price || !(price > 0)) return Number.NaN;
   const lot =
     instrument?.lotSize && instrument.lotSize > 0 ? instrument.lotSize : 1;
-  return Math.max(lot, Math.round(usd / (price * rate) / lot) * lot);
+  const value = price * rate * contractMultiplierOf(instrument);
+  return Math.max(lot, Math.round(usd / value / lot) * lot);
 };
 
 /**
@@ -603,6 +611,11 @@ export const validateDraft = (
 ): DraftValidation => {
   const errors: OrderDraftErrors = {};
   if (!draft.ric) errors.ric = "Select an instrument";
+  else if (
+    instrument?.ric === draft.ric &&
+    instrument.instrumentType === InstrumentType.Index
+  )
+    errors.ric = `${draft.ric} is an index: trade its futures`;
   if (!draft.account) {
     errors.account = "Select an account";
   } else if (accounts) {
@@ -793,7 +806,7 @@ export const previewRisk = (
       });
     }
     if (price !== undefined) {
-      preview.notional = quantity * price;
+      preview.notional = quantity * price * contractMultiplierOf(instrument);
       const rate = currency ? usdPerPriceUnit[currency] : undefined;
       if (rate !== undefined) {
         preview.notionalUsd = preview.notional * rate;

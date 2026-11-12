@@ -23,6 +23,8 @@ export interface InstrumentDef extends InstrumentStatic {
    * Excludes the contract multiplier: USD notional uses usdPerUnit().
    */
   usdPerPriceUnit: number;
+  /** Index: rics of its constituents (equal weighted). */
+  constituents?: readonly string[];
 }
 
 /** Venue conventions: tick schedules (MiFID II style bands for Europe) and lots. */

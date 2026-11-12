@@ -53,7 +53,9 @@ export const TradingRenderer = Object.freeze({
   Notional: "trading.notional",
   /** HH:mm:ss.SSS from an epoch timestamp. */
   Time: "trading.time",
-  /** ADDED / REMOVED / AUCTION. */
+  /** YYYY-MM-DD (UTC) from an epoch timestamp; blank for 0. */
+  Date: "trading.date",
+  /** ADDED / REMOVED / AUCTION / SETTLEMENT. */
   Liquidity: "trading.liquidity",
   /**
    * A stop order's trigger (the column is triggeredAt): "Waiting" until it
@@ -141,6 +143,13 @@ const TimeCell = ({ column, dataRow }: TableCellRendererProps) => (
   <span>{formatTime(dataRow[column.name])}</span>
 );
 
+const DateCell = ({ column, dataRow }: TableCellRendererProps) => {
+  const value = num(dataRow[column.name]);
+  return value ? (
+    <span>{new Date(value).toISOString().slice(0, 10)}</span>
+  ) : null;
+};
+
 const StopTriggerCell = ({ column, dataRow }: TableCellRendererProps) => {
   const triggeredAt = num(dataRow[column.name]);
   const state = stopTriggerState(
@@ -189,6 +198,7 @@ export const registerTradingCellRenderers = () => {
   register(TradingRenderer.PositionQuantity, PositionQuantityCell);
   register(TradingRenderer.Notional, NotionalCell);
   register(TradingRenderer.Time, TimeCell);
+  register(TradingRenderer.Date, DateCell);
   register(TradingRenderer.Liquidity, LiquidityCell);
   register(TradingRenderer.StopTrigger, StopTriggerCell);
 };

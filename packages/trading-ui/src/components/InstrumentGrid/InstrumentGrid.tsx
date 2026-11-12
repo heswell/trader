@@ -1,4 +1,8 @@
-import { Side, type TradingSchemaName } from "@heswell/trading-schemas";
+import {
+  InstrumentType,
+  Side,
+  type TradingSchemaName,
+} from "@heswell/trading-schemas";
 import {
   Button,
   Dropdown,
@@ -69,6 +73,12 @@ const classBase = "tradingInstrumentGrid";
 const SOURCE = "InstrumentGrid";
 const ALL = "__all__";
 const NONE = "__none__";
+const TYPE_LABELS: Readonly<Record<string, string>> = {
+  [ALL]: "All types",
+  [InstrumentType.Equity]: "Equities",
+  [InstrumentType.Future]: "Futures",
+  [InstrumentType.Index]: "Indices",
+};
 
 export type InstrumentAction = (instrument: SelectedInstrument) => void;
 
@@ -86,6 +96,11 @@ export interface InstrumentGridProps
    * Unquoted rows show empty (null) price cells.
    */
   simulatedOnly?: boolean;
+  /**
+   * Show only this instrument type initially (EQUITY | FUTURE); the toolbar
+   * can change it when the data source has an instrumentType column.
+   */
+  instrumentType?: InstrumentType;
   /** Group by this column initially ("exchange" | "sector" | "currency"). */
   initialGroupBy?: string;
   /** Sparkline column options; false removes it. */
@@ -137,6 +152,7 @@ const toInstrument = (row: {
     tickBands: str("tickBands"),
     lotSize: num("lotSize"),
     priceDecimals: num("priceDecimals"),
+    contractMultiplier: num("contractMultiplier"),
   };
 };
 
@@ -159,6 +175,7 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
       followSelection = true,
       id,
       initialGroupBy,
+      instrumentType: initialInstrumentType,
       launchOrderTicket = true,
       linkGroup: linkGroupProp,
       onBuy: onBuyProp,
@@ -229,9 +246,19 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
       return () => clearTimeout(t);
     }, [text]);
     const watchlist = watchlists.lists.find((l) => l.id === watchlistId);
+    const hasTypes = available.includes("instrumentType");
+    const [typeFilter, setTypeFilter] = useState<string>(
+      initialInstrumentType ?? ALL,
+    );
+    useEffect(
+      () => setTypeFilter(initialInstrumentType ?? ALL),
+      [initialInstrumentType],
+    );
     const filter = useMemo(
       () =>
         buildInstrumentGridFilter({
+          instrumentType:
+            hasTypes && typeFilter !== ALL ? typeFilter : undefined,
           quickFilter: debounced,
           searchColumns: ["ric", "description"].filter((c) =>
             available.includes(c),
@@ -242,6 +269,8 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
       [
         debounced,
         available,
+        hasTypes,
+        typeFilter,
         simulatedOnly,
         hasStaticData,
         watchlistId,
@@ -512,6 +541,21 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
                   </OverlayPanelContent>
                 </OverlayPanel>
               </Overlay>
+              {hasTypes ? (
+                <Dropdown
+                  aria-label="Instrument type"
+                  className={`${classBase}-select`}
+                  selected={[typeFilter]}
+                  value={TYPE_LABELS[typeFilter] ?? typeFilter}
+                  onSelectionChange={(_, [t]) => t && setTypeFilter(t)}
+                >
+                  {Object.entries(TYPE_LABELS).map(([value, label]) => (
+                    <Option key={value} value={value}>
+                      {label}
+                    </Option>
+                  ))}
+                </Dropdown>
+              ) : null}
               {groupable.length ? (
                 <Dropdown
                   aria-label="Group by"

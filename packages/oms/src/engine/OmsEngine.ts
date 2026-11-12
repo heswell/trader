@@ -192,7 +192,7 @@ export interface Position extends PositionState, PositionMarks {
   sector: string;
   /** InstrumentType of the ric (EQUITY / FUTURE). */
   instrumentType: string;
-  /** Futures: ric of the underlying; "" otherwise. */
+  /** Futures: ric of the underlying; a stock's own ric. */
   underlying: string;
   /** marketValue converted to USD with the instrument's usdPerPriceUnit. */
   marketValueUsd: number;
@@ -1598,7 +1598,8 @@ export class OmsEngine {
       exchange: instrument?.exchange ?? "",
       sector: instrument?.sector ?? "",
       instrumentType: instrument?.instrumentType ?? InstrumentType.Equity,
-      underlying: instrument?.underlying ?? "",
+      // a stock is its own underlying, so it groups with its futures
+      underlying: instrument?.underlying || instrument?.ric || "",
     };
   }
 

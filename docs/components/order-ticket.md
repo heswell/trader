@@ -131,7 +131,8 @@ From top to bottom:
   - A STOP is valued (notional, `$` quantities) at its stop price.
 - **Shorthand.**
   - Price and stop price: `b`, `a`, `m` (bid, ask, mid rounded to the tick), with tick offsets (`b+2`, `a-1`).
-  - Quantity: `10k`, `1.5m`, or a USD value `$250k` converted at the price and rounded to the lot.
+  - Quantity: `10k`, `1.5m`, or a USD value `$250k` converted at the price (times the contract multiplier for a
+    future) and rounded to the lot.
   - Durations `45`, `45m`, `1h`, `1h30`; times `15:30`, `1530`; percent `10`, `10%`.
   - Shorthand resolves to a number when the field is left (Tab, Enter, or on send).
 - **Order line.** Type a whole order in the instrument field, e.g. `b 20k aal.l m vwap 15:30` or
@@ -150,8 +151,10 @@ From top to bottom:
   - Account: required, visible to the user and not disabled. Disabled accounts are excluded from the list.
   - Errors appear once a field has been touched or a submit has been attempted.
 - **Risk preview.**
-  - Notional = quantity × price (the limit price, or the far touch for market orders), in the instrument currency.
-    GBX notionals are in pence.
+  - Notional = quantity × price × contract multiplier (the limit price, or the far touch for market orders), in the
+    instrument currency. GBX notionals are in pence.
+- **Futures and indices.** A future's quantity is in contracts (the unit label reads "contracts"). An index is not
+  tradeable: the ticket shows "STECH is an index: trade its futures" on the instrument.
   - An indicative USD equivalent is shown.
   - Warnings for the account's `maxOrderQty` and `maxOrderNotional` (USD), and for the ±`collarPct` collar.
   - Warnings are advisory: the OMS is authoritative.

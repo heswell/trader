@@ -7,6 +7,7 @@ import {
 } from "./BlotterExamples";
 import {
   InstrumentGridExamples,
+  InstrumentGridFutures,
   InstrumentGridPrices,
   InstrumentGridTicking200,
 } from "./InstrumentGridExamples";
@@ -116,6 +117,14 @@ export const examples: ShowcaseExample[] = [
     description:
       "Bound to the prices table: no static data, graceful fallback.",
     Component: InstrumentGridPrices,
+  },
+  {
+    id: "instrument-grid-futures",
+    group: "InstrumentGrid",
+    title: "Futures",
+    description:
+      "Single-stock futures (front and next quarter on AAPL.OQ and VOD.L in local mode; ?futures= for others), grouped by underlying with expiry, multiplier and settlement columns.",
+    Component: InstrumentGridFutures,
   },
   {
     id: "instrument-grid-200",

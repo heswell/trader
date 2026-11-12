@@ -149,6 +149,8 @@ const INSTRUMENT_PRICE_COLUMNS = [
   "tickBands",
   "lotSize",
   "priceDecimals",
+  "instrumentType",
+  "contractMultiplier",
   "refPrice",
   "bid",
   "ask",

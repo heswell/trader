@@ -41,10 +41,13 @@ export interface InstrumentGridFilterParts {
   simulatedOnly?: boolean;
   /** Columns available for the text search. */
   searchColumns?: readonly string[];
+  /** Only instruments of this type (instrumentType, e.g. FUTURE). */
+  instrumentType?: string;
 }
 
 /** AND of the grid's filters as one vuu filter string ("" = no filter). */
 export const buildInstrumentGridFilter = ({
+  instrumentType,
   quickFilter = "",
   searchColumns,
   simulatedOnly,
@@ -52,6 +55,7 @@ export const buildInstrumentGridFilter = ({
 }: InstrumentGridFilterParts) => {
   const parts: string[] = [];
   if (simulatedOnly) parts.push("simulated = true");
+  if (instrumentType) parts.push(`instrumentType = ${quote(instrumentType)}`);
   if (watchlistRics) parts.push(watchlistFilterExpression(watchlistRics));
   const search = quickFilterExpression(quickFilter, searchColumns);
   if (search)

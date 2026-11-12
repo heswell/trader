@@ -30,13 +30,14 @@ export const instruments = defineTable({
     {
       name: "instrumentType",
       dataType: "string",
-      description: "InstrumentType: EQUITY | FUTURE.",
+      description: "InstrumentType: EQUITY | FUTURE | INDEX.",
     },
     {
       name: "underlying",
       dataType: "string",
       optional: true,
-      description: "Futures: ric of the underlying instrument.",
+      description:
+        "Futures: ric of the underlying instrument (an equity or an index).",
     },
     {
       name: "expiry",
@@ -1040,7 +1041,8 @@ export const positions = defineTable({
     {
       name: "underlying",
       dataType: "string",
-      description: "Futures: underlying ric (from instruments); '' otherwise.",
+      description:
+        "Underlying ric: a future's underlying (from instruments), a stock's own ric. Groups a stock with its futures.",
     },
     {
       name: "marketValueUsd",

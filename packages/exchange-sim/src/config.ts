@@ -13,9 +13,17 @@ export interface ExchangeSimConfig {
   /** Comma separated rics to simulate; overrides activeInstruments when set. */
   instruments: string;
   /**
-   * Comma separated equity rics to list single-stock futures on (quarterly
-   * expiries). Each future and its underlying get a live book, in addition
-   * to activeInstruments / instruments. Empty = no futures.
+   * Comma separated synthetic index rics to list (STECH, SUK): an
+   * equal-weighted level computed from the constituents, whose books are
+   * added. Indices are not tradeable. Empty = none.
+   */
+  indices: string;
+  /**
+   * Comma separated rics to list futures on (quarterly expiries): equities
+   * (single-stock futures) or synthetic indices (listed as if named in
+   * `indices`). Each future and its underlying (an index's constituents)
+   * get a live book, in addition to activeInstruments / instruments.
+   * Empty = no futures.
    */
   futures: string;
   /** Contracts listed per underlying: front month, next, ... */
@@ -152,6 +160,7 @@ export interface ExchangeSimConfig {
 export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
   activeInstruments: 200,
   instruments: "",
+  indices: "",
   futures: "",
   futuresContracts: 2,
   futuresCarryRate: 0.03,
