@@ -41,8 +41,13 @@ export interface OrderTicketInstrument {
   tickBands?: string;
   lotSize?: number;
   priceDecimals?: number;
-  /** EQUITY | FUTURE | INDEX (absent = equity); an index is not tradeable. */
+  /**
+   * EQUITY | FUTURE | INDEX | CONTINUATION (absent = equity); an index or a
+   * continuation is not tradeable.
+   */
   instrumentType?: string;
+  /** Continuation: the contract it points at (the one to trade). */
+  contract?: string;
   /** Value per unit of quantity per unit of price (futures); 1 when absent. */
   contractMultiplier?: number;
   refPrice?: number;
@@ -616,6 +621,11 @@ export const validateDraft = (
     instrument.instrumentType === InstrumentType.Index
   )
     errors.ric = `${draft.ric} is an index: trade its futures`;
+  else if (
+    instrument?.ric === draft.ric &&
+    instrument.instrumentType === InstrumentType.Continuation
+  )
+    errors.ric = `${draft.ric} is a continuation: trade ${instrument.contract || "the contract"}`;
   if (!draft.account) {
     errors.account = "Select an account";
   } else if (accounts) {

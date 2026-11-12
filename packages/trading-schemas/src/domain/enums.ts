@@ -67,6 +67,12 @@ export const InstrumentType = Object.freeze({
   Future: "FUTURE",
   /** A synthetic index: listed with a computed level, not tradeable. */
   Index: "INDEX",
+  /**
+   * A continuation (AZNc1): an alias of the nth listed contract on an
+   * underlying, repointed at each roll. Quotes mirror that contract; it
+   * takes no orders.
+   */
+  Continuation: "CONTINUATION",
 } as const);
 export type InstrumentType = ValueOf<typeof InstrumentType>;
 export const INSTRUMENT_TYPES = values(InstrumentType);

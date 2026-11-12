@@ -154,7 +154,8 @@ From top to bottom:
   - Notional = quantity × price × contract multiplier (the limit price, or the far touch for market orders), in the
     instrument currency. GBX notionals are in pence.
 - **Futures and indices.** A future's quantity is in contracts (the unit label reads "contracts"). An index is not
-  tradeable: the ticket shows "STECH is an index: trade its futures" on the instrument.
+  tradeable: the ticket shows "STECH is an index: trade its futures" on the instrument. Neither is a continuation:
+  "AZNc1 is a continuation: trade AZNZ6".
   - An indicative USD equivalent is shown.
   - Warnings for the account's `maxOrderQty` and `maxOrderNotional` (USD), and for the ±`collarPct` collar.
   - Warnings are advisory: the OMS is authoritative.

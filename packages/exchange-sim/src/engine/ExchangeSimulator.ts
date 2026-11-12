@@ -36,7 +36,9 @@ import {
 } from "../publish/MarketDataPublisher";
 import {
   carriedPrice,
+  isContinuation,
   isFuture,
+  listContinuations,
   listFutures,
   quarterlyExpiries,
   toFutureDef,
@@ -297,6 +299,8 @@ export class ExchangeSimulator {
       this.#addInstrument(instrument, rng.fork(i));
     }
     for (const index of indices) this.#indexState(index.ric);
+    for (const ric of new Set(futures.map((f) => f.underlying ?? "")))
+      this.#relistContinuations(ric);
     this.gateway = new SimExchangeGateway({
       clock,
       getInstrument: (ric) => this.#listed.get(ric),
@@ -510,7 +514,32 @@ export class ExchangeSimulator {
       timestamp: now,
     });
     this.#rollFuture(def, now);
+    this.#relistContinuations(def.underlying ?? "");
     return settlementPrice;
+  }
+
+  /**
+   * Point an underlying's continuations (c1..cN) at its live contracts,
+   * nearest expiry first: listed at startup, repointed after each roll.
+   */
+  #relistContinuations(ric: string) {
+    const underlying = this.#listed.get(ric);
+    if (!underlying) return;
+    const live = this.#liveFutures
+      .map((sim) => sim.book.instrument)
+      .filter((i) => i.underlying === ric);
+    for (const def of listContinuations(underlying, live)) {
+      const prev = this.#listed.get(def.ric);
+      this.#listed.set(def.ric, def);
+      if (prev) {
+        this.#universe[this.#universe.indexOf(prev)] = def;
+        this.#publisher?.updateInstrument(def, true);
+      } else {
+        this.#universe.push(def);
+        this.#publisher?.addInstrument(def, true);
+      }
+      this.#publisher?.setAlias(def.ric, def.contract ?? "");
+    }
   }
 
   /** List the quarterly contract after the last one listed on `expired`'s underlying. */
@@ -674,8 +703,18 @@ export class ExchangeSimulator {
     );
     publisher.loadInstruments(
       this.#universe,
-      (ric) => this.isSimulated(ric) || this.#indices.has(ric),
+      // live quotes: a book, an index level, or a continuation's contract
+      (ric) => {
+        const def = this.#listed.get(ric);
+        return (
+          this.isSimulated(ric) ||
+          this.#indices.has(ric) ||
+          (def !== undefined && isContinuation(def))
+        );
+      },
     );
+    for (const def of this.#universe)
+      if (isContinuation(def)) publisher.setAlias(def.ric, def.contract ?? "");
     publisher.l3?.attach(this.#books);
     this.#publisher = publisher;
     const { simBooks, bots, botParams, simSamples, botHistory, botFills } =

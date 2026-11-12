@@ -30,14 +30,21 @@ export const instruments = defineTable({
     {
       name: "instrumentType",
       dataType: "string",
-      description: "InstrumentType: EQUITY | FUTURE | INDEX.",
+      description: "InstrumentType: EQUITY | FUTURE | INDEX | CONTINUATION.",
     },
     {
       name: "underlying",
       dataType: "string",
       optional: true,
       description:
-        "Futures: ric of the underlying instrument (an equity or an index).",
+        "Futures and continuations: ric of the underlying instrument (an equity or an index).",
+    },
+    {
+      name: "contract",
+      dataType: "string",
+      optional: true,
+      description:
+        "Continuation (AZNc1): ric of the contract it points at, repointed at each roll.",
     },
     {
       name: "expiry",

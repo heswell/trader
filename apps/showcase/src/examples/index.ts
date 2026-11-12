@@ -6,6 +6,7 @@ import {
   TradeTapeExample,
 } from "./BlotterExamples";
 import {
+  InstrumentGridContinuations,
   InstrumentGridExamples,
   InstrumentGridFutures,
   InstrumentGridPrices,
@@ -123,8 +124,16 @@ export const examples: ShowcaseExample[] = [
     group: "InstrumentGrid",
     title: "Futures",
     description:
-      "Single-stock futures (front and next quarter on AAPL.OQ and VOD.L in local mode; ?futures= for others), grouped by underlying with expiry, multiplier and settlement columns.",
+      "Futures (front and next quarter on AAPL.OQ, VOD.L and the STECH index in local mode; ?futures= for others), grouped by underlying with expiry, multiplier and settlement columns.",
     Component: InstrumentGridFutures,
+  },
+  {
+    id: "instrument-grid-continuations",
+    group: "InstrumentGrid",
+    title: "Continuations",
+    description:
+      "Continuation rics (AAPLc1, AAPLc2, ...): each mirrors the quotes of the contract in its contract column and is repointed at each roll.",
+    Component: InstrumentGridContinuations,
   },
   {
     id: "instrument-grid-200",

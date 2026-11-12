@@ -5,7 +5,7 @@ Reference (props, types, defaults): [InstrumentGrid](../api/trading-ui.md#instru
 [PriceMoveCell](../api/trading-ui.md#pricemovecell), [ChangeCell](../api/trading-ui.md#changecell),
 [QuantityCell](../api/trading-ui.md#quantitycell), [PhaseCell](../api/trading-ui.md#phasecell).
 
-Showcase: `#instrument-grid`, `#instrument-grid-prices`, `#instrument-grid-futures`, `#instrument-grid-200` (perf), `#primitives-cell-renderers`
+Showcase: `#instrument-grid`, `#instrument-grid-prices`, `#instrument-grid-futures`, `#instrument-grid-continuations`, `#instrument-grid-200` (perf), `#primitives-cell-renderers`
 (the renderers in a plain vuu `Table`), `#hosting-user-settings` (watchlist storage).
 
 | | |
@@ -28,7 +28,7 @@ A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns 
 | `dataSource?` / `table?` | Supply a data source, or bind `"instrumentPrices"` (default) / `"prices"`. |
 | `columns?` | Visible column names in order (default: ric, description, exchange, currency, bid, ask, last, change, changePct, phase, sparkline, volume, turnover). The "Columns" button opens the vuu column picker; the header menu gives sort / group / hide. |
 | `simulatedOnly?` | Default false. True: only instruments quoted by the simulator (instrumentPrices). Unquoted instruments show empty price cells. |
-| `instrumentType?` | `EQUITY` / `FUTURE` / `INDEX`: only that type. Otherwise, when the data has an `instrumentType` column, the toolbar shows a type dropdown (All types / Equities / Futures / Indices). |
+| `instrumentType?` | `EQUITY` / `FUTURE` / `INDEX` / `CONTINUATION`: only that type. Otherwise, when the data has an `instrumentType` column, the toolbar shows a type dropdown (All types / Equities / Futures / Indices / Continuations). |
 | `initialGroupBy?` | `exchange` / `sector` / `currency` / `instrumentType` / `underlying` (a stock or index with its futures); volume and turnover are summed in group rows. |
 | `sparkline?` | `false` or `{ valueColumn, length, bucketMs }`. |
 | `showToolbar?` | Quick filter (ric / description), watchlist selector + manager, group-by, columns, Buy/Sell/Depth buttons. |

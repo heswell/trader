@@ -42,6 +42,7 @@ const COLUMNS = [
   "lotSize",
   "priceDecimals",
   "instrumentType",
+  "contract",
   "expiry",
   "contractMultiplier",
   "bid",

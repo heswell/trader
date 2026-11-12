@@ -112,6 +112,12 @@ nothing visible changed.
   `S × exp(futuresCarryRate × τ)`, times a basis that mean-reverts (sd `futuresBasisBps`, half-life
   `futuresBasisHalfLifeSec`); impact on a future goes into that basis. The roster is the equity one
   plus an always-on informed bot that trades the future back towards fair.
+- **Continuations.** Each underlying with futures gets continuation rics `c1..cN` (root + `c` + position: `AZNc1`
+  is the front month, `AZNc2` the next; `STECHc1`). A continuation copies its contract's static data (instrument type
+  `CONTINUATION`, `contract` names the contract) and has no book: its `prices` row mirrors the contract's on every
+  flush. It takes no orders (`RESTRICTED_INSTRUMENT`, naming the contract to trade). After each roll the
+  continuations are repointed, nearest expiry first, and their instruments rows rewritten. Bars, depth and trades
+  stay under the contract ric.
 - **Synthetic indices** (off by default). `indices` lists indices to publish: `STECH` (8 US tech names) and `SUK`
   (10 UK large caps), defined in `reference/indices.ts` with generic names. An index is equal weighted,
   `1000 × mean(fair_i / ref_i)` over its constituents' fair values, so it starts at 1000. It has no book and takes no

@@ -15,7 +15,7 @@ import type { InstrumentDef } from "../reference/instruments";
 import { BarAggregator, type BarOptions } from "./BarAggregator";
 import { BookL3Publisher, type BookL3Options } from "./BookL3Publisher";
 import { BookSampler, type BookSampleOptions } from "./BookSampler";
-import { type PublishTable, RowLayout, round } from "./rows";
+import { type PublishTable, RowLayout, type RowValue, round } from "./rows";
 import { TradeRingBuffer } from "./TradeRingBuffer";
 
 export type { PublishTable, RowValue } from "./rows";
@@ -141,6 +141,12 @@ export class MarketDataPublisher {
   readonly #ring: TradeRingBuffer;
   readonly #pendingTrades: TapeTrade[] = [];
   readonly #books = new Map<InstrumentBook, BookState>();
+  /** Continuation ric -> the contract it mirrors. */
+  readonly #aliasOf = new Map<string, string>();
+  /** Contract ric -> continuations mirroring it. */
+  readonly #aliases = new Map<string, Set<string>>();
+  /** Last prices row written per book, for mirroring onto continuations. */
+  readonly #lastPriceRows = new Map<string, RowValue[]>();
   /** Last published level + phase per index ric. */
   readonly #indexLevels = new Map<string, { last: number; phase: string }>();
   readonly #prices: RowLayout<typeof pricesDef>;
@@ -204,6 +210,7 @@ export class MarketDataPublisher {
     row[idx.underlying] = instrument.underlying ?? "";
     row[idx.expiry] = instrument.expiry ?? 0;
     row[idx.settlementPrice] = instrument.settlementPrice ?? 0;
+    row[idx.contract] = instrument.contract ?? "";
     row[idx.contractMultiplier] = contractMultiplierOf(instrument);
     row[idx.tickSize] = instrument.tickSize;
     row[idx.tickBands] = instrument.tickBands;
@@ -397,11 +404,41 @@ export class MarketDataPublisher {
     row[idx.phase] = book.phase;
     row[idx.seq] = book.seq;
     row[idx.timestamp] = now;
+    this.#writePrices(row);
+    this.#lastPriceRows.set(book.ric, row);
+    for (const alias of this.#aliases.get(book.ric) ?? [])
+      this.#writePrices(row, alias);
+  }
+
+  /** Upsert a prices row, under another ric when mirroring a continuation. */
+  #writePrices(row: RowValue[], ric?: string) {
+    const { idx } = this.#prices;
+    const written = ric === undefined ? row : row.slice();
+    if (ric !== undefined) written[idx.ric] = ric;
     const table = this.tables.prices;
-    const rowIdx = table.rowIndexAtKey(book.ric);
-    if (rowIdx === -1) table.insert(row);
-    else table.update(rowIdx, row);
+    const rowIdx = table.rowIndexAtKey(written[idx.ric] as string);
+    if (rowIdx === -1) table.insert(written);
+    else table.update(rowIdx, written);
     this.stats.priceUpdates++;
+  }
+
+  /**
+   * Point continuation `alias` (AZNc1) at `contract`: its prices row
+   * mirrors the contract's from now on, starting with the last one written.
+   */
+  setAlias(alias: string, contract: string) {
+    const prev = this.#aliasOf.get(alias);
+    if (prev === contract) return;
+    if (prev !== undefined) this.#aliases.get(prev)?.delete(alias);
+    this.#aliasOf.set(alias, contract);
+    let set = this.#aliases.get(contract);
+    if (!set) {
+      set = new Set();
+      this.#aliases.set(contract, set);
+    }
+    set.add(alias);
+    const last = this.#lastPriceRows.get(contract);
+    if (last) this.#writePrices(last, alias);
   }
 
   /**

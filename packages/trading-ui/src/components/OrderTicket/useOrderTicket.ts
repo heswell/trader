@@ -150,6 +150,7 @@ const INSTRUMENT_PRICE_COLUMNS = [
   "lotSize",
   "priceDecimals",
   "instrumentType",
+  "contract",
   "contractMultiplier",
   "refPrice",
   "bid",

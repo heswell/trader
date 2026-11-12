@@ -78,6 +78,7 @@ const TYPE_LABELS: Readonly<Record<string, string>> = {
   [InstrumentType.Equity]: "Equities",
   [InstrumentType.Future]: "Futures",
   [InstrumentType.Index]: "Indices",
+  [InstrumentType.Continuation]: "Continuations",
 };
 
 export type InstrumentAction = (instrument: SelectedInstrument) => void;

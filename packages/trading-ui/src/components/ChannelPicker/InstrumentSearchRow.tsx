@@ -102,12 +102,17 @@ export const InstrumentSearchRow = memo(function InstrumentSearchRow({
 
   const ric = String(dataRow.ric ?? "");
   const description = String(dataRow.description ?? "");
-  const isFuture = dataRow.instrumentType === InstrumentType.Future;
-  const typeBadge = isFuture
-    ? { label: "FUT", title: "Future" }
-    : dataRow.instrumentType === InstrumentType.Index
-      ? { label: "IDX", title: "Index (not tradeable)" }
-      : undefined;
+  const isContinuation = dataRow.instrumentType === InstrumentType.Continuation;
+  const isFuture =
+    isContinuation || dataRow.instrumentType === InstrumentType.Future;
+  const contract = String(dataRow.contract ?? "");
+  const typeBadge = isContinuation
+    ? { label: "CONT", title: `Continuation of ${contract}` }
+    : isFuture
+      ? { label: "FUT", title: "Future" }
+      : dataRow.instrumentType === InstrumentType.Index
+        ? { label: "IDX", title: "Index (not tradeable)" }
+        : undefined;
   const expiry = Number(dataRow.expiry) || 0;
   const multiplier = Number(dataRow.contractMultiplier) || 1;
   const format = {

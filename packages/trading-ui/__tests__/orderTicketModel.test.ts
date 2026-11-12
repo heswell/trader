@@ -361,4 +361,17 @@ describe("futures and indices", () => {
     );
     expect(errors.ric).toMatch(/STECH is an index/);
   });
+
+  test("a continuation names the contract to trade", () => {
+    const { errors } = validateDraft(
+      draft({ ric: "AAPLc1", quantity: "1", price: "200" }),
+      {
+        ...future,
+        ric: "AAPLc1",
+        instrumentType: "CONTINUATION",
+        contract: "AAPLZ6",
+      },
+    );
+    expect(errors.ric).toBe("AAPLc1 is a continuation: trade AAPLZ6");
+  });
 });

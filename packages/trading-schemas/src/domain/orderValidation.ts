@@ -26,8 +26,13 @@ export interface InstrumentStatic {
   lotSize: number;
   /** EQUITY when absent. */
   instrumentType?: InstrumentType;
-  /** Futures: ric of the underlying instrument (an equity or an index). */
+  /**
+   * Futures and continuations: ric of the underlying instrument (an equity
+   * or an index).
+   */
   underlying?: string;
+  /** Continuation: ric of the contract it currently points at. */
+  contract?: string;
   /** Futures: last trading time (epoch ms). */
   expiry?: number;
   /** Futures: final settlement price, set once the contract has expired. */
@@ -201,6 +206,12 @@ export const validateOrder = (
     return reject(
       RejectReason.RestrictedInstrument,
       `${instrument.ric} is an index: trade its futures`,
+    );
+  }
+  if (instrument.instrumentType === InstrumentType.Continuation) {
+    return reject(
+      RejectReason.RestrictedInstrument,
+      `${instrument.ric} is a continuation: trade ${instrument.contract || "the contract"}`,
     );
   }
   if (phase === TradingPhase.Halted) {

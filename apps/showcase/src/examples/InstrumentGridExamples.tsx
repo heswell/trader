@@ -71,6 +71,34 @@ export const InstrumentGridTicking200 = () => {
   );
 };
 
+/** Continuations (AZNc1, AZNc2): each mirrors the contract in its `contract` column. */
+export const InstrumentGridContinuations = () => {
+  const { action, log } = useLog();
+  return (
+    <Layout log={log}>
+      <InstrumentGrid
+        instrumentType={InstrumentType.Continuation}
+        columns={[
+          "ric",
+          "contract",
+          "underlying",
+          "description",
+          "expiry",
+          "contractMultiplier",
+          "bid",
+          "ask",
+          "last",
+          "changePct",
+          "phase",
+        ]}
+        initialGroupBy="underlying"
+        onBuy={action("Buy")}
+        onSell={action("Sell")}
+      />
+    </Layout>
+  );
+};
+
 /** Futures only: type, underlying, expiry and multiplier columns; Buy opens contracts. */
 export const InstrumentGridFutures = () => {
   const { action, log } = useLog();

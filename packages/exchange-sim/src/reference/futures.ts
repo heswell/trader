@@ -210,6 +210,43 @@ export const listFutures = (
   return futures;
 };
 
+/** Continuation ric: root + "c" + position, e.g. AZNc1 (front), AZNc2. */
+export const continuationRic = (underlying: string, n: number) =>
+  `${rootOf(underlying)}c${n}`;
+
+/**
+ * Continuation `n` on `underlying`: the static data of `contract` (the nth
+ * nearest listed contract) under its own ric, with `contract` naming it.
+ */
+export const toContinuationDef = (
+  underlying: InstrumentDef,
+  contract: InstrumentDef,
+  n: number,
+): InstrumentDef => {
+  const { settlementPrice: _, ...live } = contract;
+  return {
+    ...live,
+    ric: continuationRic(underlying.ric, n),
+    description: `${underlying.description} future c${n} (${contract.ric})`,
+    instrumentType: InstrumentType.Continuation,
+    underlying: underlying.ric,
+    contract: contract.ric,
+  };
+};
+
+/** Continuations c1..cN on an underlying's live contracts, nearest expiry first. */
+export const listContinuations = (
+  underlying: InstrumentDef,
+  contracts: readonly InstrumentDef[],
+): InstrumentDef[] =>
+  [...contracts]
+    .sort((a, b) => (a.expiry ?? 0) - (b.expiry ?? 0))
+    .map((contract, i) => toContinuationDef(underlying, contract, i + 1));
+
+/** Whether an instrument is a continuation (an alias of a contract). */
+export const isContinuation = (instrument: InstrumentDef) =>
+  instrument.instrumentType === InstrumentType.Continuation;
+
 /** Whether an instrument is a future. */
 export const isFuture = (instrument: InstrumentDef) =>
   instrument.instrumentType === InstrumentType.Future;

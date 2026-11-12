@@ -3167,7 +3167,7 @@ Also accepts the props of `TableCellProps (@vuu-ui/vuu-table-types)`, `TableCell
 
 #### InstrumentGrid
 
-*component* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L168)
+*component* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L169)
 
 Instrument grid: a preset over the vuu Table bound to instrumentPrices
 (or prices). Price-move and change renderers, formatting per instrument,
@@ -3306,7 +3306,7 @@ deleteWatchlist(state: WatchlistState, id: string): WatchlistState
 
 #### instrumentGridColumn
 
-*function* · [components/InstrumentGrid/instrumentGridColumns.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridColumns.ts#L178)
+*function* · [components/InstrumentGrid/instrumentGridColumns.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridColumns.ts#L179)
 
 Descriptor for a column of the grid; unknown columns get plain vuu defaults.
 
@@ -3316,7 +3316,7 @@ instrumentGridColumn(name: string, sparkline?: Partial<SparklineCellOptions>): C
 
 #### instrumentGridColumns
 
-*function* · [components/InstrumentGrid/instrumentGridColumns.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridColumns.ts#L218)
+*function* · [components/InstrumentGrid/instrumentGridColumns.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridColumns.ts#L219)
 
 Column descriptors for the grid (`visible`) and every column the column
 picker can offer (`all`). Works for any subset of the instrumentPrices
@@ -3411,7 +3411,7 @@ watchlistFilterExpression(rics: readonly string[]): string
 
 #### DEFAULT_INSTRUMENT_GRID_COLUMNS
 
-*const* · [components/InstrumentGrid/instrumentGridColumns.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridColumns.ts#L161)
+*const* · [components/InstrumentGrid/instrumentGridColumns.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridColumns.ts#L162)
 
 Visible by default, in this order (those present in the data source).
 
@@ -3429,7 +3429,7 @@ const EMPTY_WATCHLISTS: WatchlistState
 
 #### GROUPABLE_COLUMNS
 
-*const* · [components/InstrumentGrid/instrumentGridColumns.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridColumns.ts#L242)
+*const* · [components/InstrumentGrid/instrumentGridColumns.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridColumns.ts#L243)
 
 Columns a user can group by (when present).
 
@@ -3457,7 +3457,7 @@ const WATCHLISTS_SETTINGS_KEY: "trading.watchlists"
 
 #### InstrumentGridColumnOptions
 
-*interface* · [components/InstrumentGrid/instrumentGridColumns.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridColumns.ts#L204)
+*interface* · [components/InstrumentGrid/instrumentGridColumns.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridColumns.ts#L205)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -3479,7 +3479,7 @@ const WATCHLISTS_SETTINGS_KEY: "trading.watchlists"
 
 #### InstrumentGridProps
 
-*interface* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L85)
+*interface* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L86)
 
 Props of [`InstrumentGrid`](#instrumentgrid).
 
@@ -3519,7 +3519,7 @@ Props of [`InstrumentGrid`](#instrumentgrid).
 
 #### InstrumentAction
 
-*type* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L83)
+*type* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L84)
 
 ```ts
 type InstrumentAction = (instrument: SelectedInstrument) => void
@@ -4121,7 +4121,7 @@ Also accepts the standard HTML attributes.
 
 #### useOrderTicket
 
-*hook* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L344)
+*hook* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L345)
 
 State and behaviour of the order ticket (one core used by every layout
 variant). Exposed for custom ticket layouts.
@@ -4155,7 +4155,7 @@ useOrderTicketTarget(enabled = true): OrderTicketPrefill | undefined
 
 #### algoParamField
 
-*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L285)
+*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L286)
 
 `data-order-ticket-field` of a strategy parameter input.
 
@@ -4165,7 +4165,7 @@ algoParamField(key: AlgoParamKey): string
 
 #### allowedTimesInForce
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L183)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L188)
 
 The TIFs to offer, in display order.
 
@@ -4175,7 +4175,7 @@ allowedTimesInForce(ordType: OrdType, strategy?: AlgoStrategy, phase?: string): 
 
 #### connectionBlockedReason
 
-*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L265)
+*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L266)
 
 Why orders cannot be sent in this connection state, else undefined.
 
@@ -4185,7 +4185,7 @@ connectionBlockedReason(state: TradingConnectionState): string | undefined
 
 #### defaultLimitPrice
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L466)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L471)
 
 Passive price to start from: bid for a buy, ask for a sell.
 
@@ -4195,7 +4195,7 @@ defaultLimitPrice(side: Side, instrument: OrderTicketInstrument | undefined): nu
 
 #### defaultStopPrice
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L507)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L512)
 
 Where an empty stop price starts: one tick beyond the market price (above
 it for a buy, below for a sell), since a stop already reached is refused.
@@ -4206,7 +4206,7 @@ defaultStopPrice(side: Side, instrument: OrderTicketInstrument | undefined): num
 
 #### describePriceShorthand
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L383)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L388)
 
 What price shorthand refers to, for a hint ("Bid +2"), else undefined.
 
@@ -4216,7 +4216,7 @@ describePriceShorthand(text: string): string | undefined
 
 #### draftFromPrefill
 
-*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L221)
+*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L222)
 
 A draft from a prefill (anything unset takes the empty draft's value).
 
@@ -4226,7 +4226,7 @@ draftFromPrefill(prefill: OrderTicketPrefill | undefined, fallback: { ric?: stri
 
 #### fieldForRejectReason
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L575)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L580)
 
 Draft field a server / validation reject reason relates to, if any.
 
@@ -4236,7 +4236,7 @@ fieldForRejectReason(reason: string): OrderDraftField | "form"
 
 #### filterStrategies
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L196)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L201)
 
 Strategies whose name, id or description matches `query`, in picker
 order (grouped).
@@ -4247,7 +4247,7 @@ filterStrategies(query = ""): readonly AlgoStrategyDefinition[]
 
 #### focusTicketField
 
-*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L304)
+*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L305)
 
 Focus a ticket field and select its text, as Tab does, so typing
 replaces the value rather than appending to it.
@@ -4258,7 +4258,7 @@ focusTicketField(el: HTMLElement | null | undefined): void
 
 #### formatPriceInput
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L439)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L444)
 
 Price as input text, with the instrument's decimals (no grouping).
 
@@ -4268,7 +4268,7 @@ formatPriceInput(price: number, instrument: OrderTicketInstrument | undefined): 
 
 #### isAlgoStrategy
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L139)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L144)
 
 Whether the strategy slices the order over time (anything but DMA).
 
@@ -4278,7 +4278,7 @@ isAlgoStrategy(strategy: AlgoStrategy | undefined): boolean
 
 #### isOrderLine
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L1048)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L1058)
 
 Whether text in the instrument field is an order line, not a search.
 
@@ -4288,7 +4288,7 @@ isOrderLine(text: string): boolean
 
 #### isPriceShorthand
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L351)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L356)
 
 Whether price input is shorthand (`b`, `a`, `m`, `b+2`, `a-1`).
 
@@ -4298,7 +4298,7 @@ isPriceShorthand(text: string): boolean
 
 #### isStrategyAllowed
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L146)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L151)
 
 Stop orders are worked by the OMS as DMA only: a strategy other than DMA
 can't be combined with STOP / STOP_LIMIT.
@@ -4309,7 +4309,7 @@ isStrategyAllowed(ordType: OrdType, strategy: AlgoStrategy | undefined): boolean
 
 #### isTimeInForceAllowed
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L167)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L172)
 
 TIFs the OMS accepts for an order type, strategy and trading phase: the
 strategy definition's list, less GTC for MARKET, only DAY / GTC for stops,
@@ -4321,7 +4321,7 @@ isTimeInForceAllowed(ordType: OrdType, tif: TimeInForce, strategy?: AlgoStrategy
 
 #### isValueInput
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L393)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L398)
 
 Whether quantity input is a USD value (`$250k`).
 
@@ -4331,7 +4331,7 @@ isValueInput(text: string): boolean
 
 #### marketValuationPrice
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L474)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L479)
 
 Price a market order is valued at: the far touch, else the reference.
 
@@ -4341,7 +4341,7 @@ marketValuationPrice(side: Side, instrument: OrderTicketInstrument | undefined):
 
 #### newClOrdId
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L844)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L854)
 
 A client order id, unique per session (well under the 64 char limit).
 
@@ -4351,7 +4351,7 @@ newClOrdId(prefix = "TKT"): string
 
 #### nonStopOrdType
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L155)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L160)
 
 The order type an algo strategy turns a stop into: STOP → MARKET,
 STOP_LIMIT → LIMIT (other types unchanged).
@@ -4362,7 +4362,7 @@ nonStopOrdType(ordType: OrdType): OrdType
 
 #### nudgePrice
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L485)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L490)
 
 Move the draft price by `ticks` (band aware). An empty price starts from
 the passive touch. Returns undefined if there is nothing to step from.
@@ -4373,7 +4373,7 @@ nudgePrice(draft: Pick<OrderDraft, "price" | "side">, instrument: OrderTicketIns
 
 #### nudgeQuantity
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L545)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L550)
 
 Step quantity by whole lots (never below one lot).
 
@@ -4383,7 +4383,7 @@ nudgeQuantity(quantityText: string, instrument: OrderTicketInstrument | undefine
 
 #### nudgeStopPrice
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L526)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L531)
 
 Move the draft stop price by `ticks` (band aware). An empty stop starts
 one tick beyond the market price (see defaultStopPrice).
@@ -4394,7 +4394,7 @@ nudgeStopPrice(draft: Pick<OrderDraft, "stopPrice" | "side">, instrument: OrderT
 
 #### ORDER_TICKET_ORD_TYPES
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L113)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L118)
 
 Order types the ticket offers, in display order.
 
@@ -4404,7 +4404,7 @@ ORDER_TICKET_ORD_TYPES(t): unknown
 
 #### ORDER_TICKET_STRATEGIES
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L135)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L140)
 
 Strategies offered on the ticket, in display order.
 
@@ -4414,7 +4414,7 @@ ORDER_TICKET_STRATEGIES(d): unknown
 
 #### parseAlgoParam
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L243)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L248)
 
 A parameter's createOrder value, or an error.
 
@@ -4424,7 +4424,7 @@ parseAlgoParam(param: AlgoParamDefinition, text: string | undefined): { value?: 
 
 #### parseDurationInput
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L213)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L218)
 
 Minutes from `45`, `45m`, `1h`, `1.5h`, `1h30`. NaN if invalid, undefined if empty.
 
@@ -4434,7 +4434,7 @@ parseDurationInput(text: string | undefined): number | undefined
 
 #### parseOrderLine
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L931)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L941)
 
 Parse an order typed as one line, e.g. `b 20k aal.l m vwap 15:30`:
 side (first word, `b` / `s`), quantity (first number), instrument (a word
@@ -4454,7 +4454,7 @@ parseOrderLine(text: string): OrderLine
 
 #### parsePercentInput
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L235)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L240)
 
 Percent from `10` or `10%`. NaN if invalid, undefined if empty.
 
@@ -4464,7 +4464,7 @@ parsePercentInput(text: string | undefined): number | undefined
 
 #### parsePrice
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L342)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L347)
 
 Parse price input (`1,234.5`). NaN if not a number, undefined if empty.
 
@@ -4474,7 +4474,7 @@ parsePrice(text: string): number | undefined
 
 #### parseQuantity
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L334)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L339)
 
 Parse quantity input: `1,000`, `10k`, `1.5m`. NaN if not a number.
 
@@ -4484,7 +4484,7 @@ parseQuantity(text: string): number
 
 #### parseTimeInput
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L226)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L231)
 
 "HH:MM" from `15:30`, `1530`, `930`. Null if invalid, undefined if empty.
 
@@ -4494,7 +4494,7 @@ parseTimeInput(text: string | undefined): string | null | undefined
 
 #### previewRisk
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L759)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L769)
 
 Notional and pre-trade risk preview, mirroring the OMS checks client side
 (account limits are USD; the limit collar is ±collarPct of the reference).
@@ -4506,7 +4506,7 @@ previewRisk(draft: OrderDraft, instrument: OrderTicketInstrument | undefined, ac
 
 #### referencePrice
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L452)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L457)
 
 Reference for risk checks, as the OMS: last, else mid, else refPrice.
 
@@ -4516,7 +4516,7 @@ referencePrice(instrument: OrderTicketInstrument | undefined): number | undefine
 
 #### resolvePriceInput
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L359)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L364)
 
 Price input as a number: a plain price, or shorthand relative to the
 touch: `b` bid, `a` ask, `m` mid (rounded to the tick), with `+n` / `-n`
@@ -4529,7 +4529,7 @@ resolvePriceInput(text: string, instrument: OrderTicketInstrument | undefined): 
 
 #### resolveQuantityInput
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L401)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L406)
 
 Quantity input as shares (contracts for a future): `1,000`, `10k`, `1.5m`,
 or a USD value (`$250k`) converted at `price` and the contract multiplier,
@@ -4542,7 +4542,7 @@ resolveQuantityInput(text: string, instrument: OrderTicketInstrument | undefined
 
 #### reviewReasons
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L868)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L878)
 
 The warnings that need the order reviewed before it is sent.
 
@@ -4552,7 +4552,7 @@ reviewReasons(risk: RiskPreview): RiskWarning[]
 
 #### scheduleOf
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L428)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L433)
 
 Tick schedule of an order ticket instrument (tickBands over tickSize);
 undefined without a tickSize.
@@ -4563,7 +4563,7 @@ scheduleOf(instrument: OrderTicketInstrument | undefined): TickSchedule | undefi
 
 #### scheduleSummary
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L878)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L888)
 
 One line on how the strategy will work the order, for the ticket. Built
 from the definition's parameters; null for DMA.
@@ -4574,7 +4574,7 @@ scheduleSummary(draft: OrderDraft, quantity: number | undefined): string | null
 
 #### validateDraft
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L607)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L612)
 
 Client-side validation with the shared trading-schemas rules
 (validateOrder + validateRpcParams). The OMS re-validates and also applies
@@ -4588,7 +4588,7 @@ validateDraft(draft: OrderDraft, instrument: OrderTicketInstrument | undefined, 
 
 #### DEFAULT_COLLAR_PCT
 
-*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L326)
+*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L331)
 
 Default OMS limit price collar (oms.collarPct).
 
@@ -4598,7 +4598,7 @@ const DEFAULT_COLLAR_PCT: 0.1
 
 #### EMPTY_DRAFT
 
-*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L849)
+*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L859)
 
 ```ts
 const EMPTY_DRAFT: OrderDraft
@@ -4606,7 +4606,7 @@ const EMPTY_DRAFT: OrderDraft
 
 #### INDICATIVE_USD_PER_PRICE_UNIT
 
-*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L315)
+*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L320)
 
 USD per unit of instrument price, by instrument currency. Mirrors the
 exchange simulator's reference rates (GBX prices are pence). Indicative:
@@ -4626,7 +4626,7 @@ const LAST_ACCOUNT_STORAGE_KEY: "trading.orderTicket.lastAccount"
 
 #### ORD_TYPE_LABEL
 
-*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L121)
+*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L126)
 
 Display name of an order type ("Stop limit").
 
@@ -4644,7 +4644,7 @@ const ORDER_TICKET_SELECTION_SOURCE: "orderTicket"
 
 #### ORDER_TICKET_TIFS
 
-*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L127)
+*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L132)
 
 ```ts
 const ORDER_TICKET_TIFS: readonly TimeInForce[]
@@ -4654,7 +4654,7 @@ const ORDER_TICKET_TIFS: readonly TimeInForce[]
 
 #### DraftValidation
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L596)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L601)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -4663,7 +4663,7 @@ const ORDER_TICKET_TIFS: readonly TimeInForce[]
 
 #### OrderDraft
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L74)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L79)
 
 The editable state of the ticket. Quantity and prices are input text.
 
@@ -4682,7 +4682,7 @@ The editable state of the ticket. Quantity and prices are input text.
 
 #### OrderLine
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L909)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L919)
 
 What an order line set, and how each word was read (for chips).
 
@@ -4693,7 +4693,7 @@ What an order line set, and how each word was read (for chips).
 
 #### OrderTicketAccount
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L61)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L66)
 
 An `accounts` row (limits are in USD).
 
@@ -4733,7 +4733,8 @@ it loads.
 | `tickBands?` | `string` |  |  |
 | `lotSize?` | `number` |  |  |
 | `priceDecimals?` | `number` |  |  |
-| `instrumentType?` | `string` |  | EQUITY \| FUTURE \| INDEX (absent = equity); an index is not tradeable. |
+| `instrumentType?` | `string` |  | EQUITY \| FUTURE \| INDEX \| CONTINUATION (absent = equity); an index or a continuation is not tradeable. |
+| `contract?` | `string` |  | Continuation: the contract it points at (the one to trade). |
 | `contractMultiplier?` | `number` |  | Value per unit of quantity per unit of price (futures); 1 when absent. |
 | `refPrice?` | `number` |  |  |
 | `bid?` | `number` |  |  |
@@ -4809,7 +4810,7 @@ that was changed).
 
 #### RiskPreview
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L729)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L739)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -4824,7 +4825,7 @@ that was changed).
 
 #### RiskPreviewOptions
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L746)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L756)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -4833,7 +4834,7 @@ that was changed).
 
 #### RiskWarning
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L724)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L734)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -4864,7 +4865,7 @@ Extends `RiskPreviewOptions`.
 
 #### AlgoParamKey
 
-*type* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L94)
+*type* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L99)
 
 ```ts
 type AlgoParamKey = AlgoParamDefinition["key"]
@@ -4872,7 +4873,7 @@ type AlgoParamKey = AlgoParamDefinition["key"]
 
 #### OrderDraftErrors
 
-*type* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L108)
+*type* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L113)
 
 ```ts
 type OrderDraftErrors = Partial<
@@ -4882,7 +4883,7 @@ type OrderDraftErrors = Partial<
 
 #### OrderDraftField
 
-*type* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L96)
+*type* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L101)
 
 ```ts
 type OrderDraftField = | "ric"
@@ -4899,7 +4900,7 @@ type OrderDraftField = | "ric"
 
 #### OrderTicketState
 
-*type* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L1029)
+*type* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L1030)
 
 ```ts
 type OrderTicketState = ReturnType<typeof useOrderTicket>

@@ -27,6 +27,7 @@ const presets: Record<string, ColumnDescriptor> = {
   sector: { name: "sector", width: 120 },
   instrumentType: { name: "instrumentType", label: "type", width: 75 },
   underlying: { name: "underlying", width: 90 },
+  contract: { name: "contract", width: 90 },
   expiry: {
     name: "expiry",
     width: 95,
