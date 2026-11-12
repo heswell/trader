@@ -21,6 +21,7 @@ import {
   TimeInForce,
   tickScheduleOf,
   UNSCHEDULED,
+  usdPerUnit,
 } from "@heswell/trading-schemas";
 import {
   executionQuality,
@@ -471,8 +472,8 @@ export class ClientFlow {
   #addFills(tally: Tally, order: ParentOrder) {
     const { cumQty, avgPx } = order.state;
     if (!(cumQty > 0)) return;
-    const usdPer =
-      this.options.gateway.getInstrument(order.ric)?.usdPerPriceUnit ?? 1;
+    const instrument = this.options.gateway.getInstrument(order.ric);
+    const usdPer = instrument ? usdPerUnit(instrument) : 1;
     const usd = cumQty * avgPx * usdPer;
     tally.filledQty += cumQty;
     tally.filledUsd += usd;
@@ -576,7 +577,7 @@ export class ClientFlow {
     const coin = () => (random.chance(0.5) ? Side.Buy : Side.Sell);
     const position = engine.getPosition(bot.account.account, ric);
     const positionUsd =
-      (position?.quantity ?? 0) * mid * instrument.usdPerPriceUnit;
+      (position?.quantity ?? 0) * mid * usdPerUnit(instrument);
     const limit = bot.account.maxPositionNotional;
     let side: Side | undefined;
     switch (params.sideMode) {
@@ -655,7 +656,7 @@ export class ClientFlow {
     const side = request.side ?? this.#side(bot, ric, mid);
     if (!side) return undefined;
 
-    const usdPer = instrument.usdPerPriceUnit;
+    const usdPer = usdPerUnit(instrument);
     let quantity = request.quantity;
     if (quantity === undefined) {
       const lo = Math.max(1_000, params.minNotionalUsd);

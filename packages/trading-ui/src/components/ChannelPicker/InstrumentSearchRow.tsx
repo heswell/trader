@@ -1,4 +1,4 @@
-import { TradingPhase } from "@heswell/trading-schemas";
+import { InstrumentType, TradingPhase } from "@heswell/trading-schemas";
 import type { LinkGroupDefinition } from "../../instrument-context/linkGroups";
 import { directionColour } from "../../utils/colours";
 import { formatPercent, formatPrice } from "../../utils/formatting";
@@ -102,6 +102,19 @@ export const InstrumentSearchRow = memo(function InstrumentSearchRow({
 
   const ric = String(dataRow.ric ?? "");
   const description = String(dataRow.description ?? "");
+  const isContinuation = dataRow.instrumentType === InstrumentType.Continuation;
+  const isFuture =
+    isContinuation || dataRow.instrumentType === InstrumentType.Future;
+  const contract = String(dataRow.contract ?? "");
+  const typeBadge = isContinuation
+    ? { label: "CONT", title: `Continuation of ${contract}` }
+    : isFuture
+      ? { label: "FUT", title: "Future" }
+      : dataRow.instrumentType === InstrumentType.Index
+        ? { label: "IDX", title: "Index (not tradeable)" }
+        : undefined;
+  const expiry = Number(dataRow.expiry) || 0;
+  const multiplier = Number(dataRow.contractMultiplier) || 1;
   const format = {
     priceDecimals: num(dataRow.priceDecimals),
     tickSize: num(dataRow.tickSize),
@@ -174,6 +187,11 @@ export const InstrumentSearchRow = memo(function InstrumentSearchRow({
             <span className={`${classBase}-ric`}>
               {ricMatches ? <Marked text={ric} query={query} /> : ric}
             </span>
+            {typeBadge ? (
+              <span className={`${classBase}-type`} title={typeBadge.title}>
+                {typeBadge.label}
+              </span>
+            ) : null}
             {phaseLabel ? (
               <span
                 className={cx(`${classBase}-phase`, {
@@ -192,6 +210,10 @@ export const InstrumentSearchRow = memo(function InstrumentSearchRow({
             )}
             {dataRow.exchange ? ` · ${dataRow.exchange}` : ""}
             {dataRow.currency ? ` · ${dataRow.currency}` : ""}
+            {isFuture && expiry
+              ? ` · exp ${new Date(expiry).toISOString().slice(0, 10)}`
+              : ""}
+            {isFuture && multiplier > 1 ? ` · ×${multiplier}` : ""}
           </span>
         </span>
 

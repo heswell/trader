@@ -27,6 +27,44 @@ export const instruments = defineTable({
       optional: true,
       description: "GICS sector, e.g. Financials.",
     },
+    {
+      name: "instrumentType",
+      dataType: "string",
+      description: "InstrumentType: EQUITY | FUTURE | INDEX | CONTINUATION.",
+    },
+    {
+      name: "underlying",
+      dataType: "string",
+      optional: true,
+      description:
+        "Futures and continuations: ric of the underlying instrument (an equity or an index).",
+    },
+    {
+      name: "contract",
+      dataType: "string",
+      optional: true,
+      description:
+        "Continuation (AZNc1): ric of the contract it points at, repointed at each roll.",
+    },
+    {
+      name: "expiry",
+      dataType: "epochtimestamp",
+      optional: true,
+      description: "Futures: last trading time.",
+    },
+    {
+      name: "settlementPrice",
+      dataType: "double",
+      optional: true,
+      description:
+        "Futures: final settlement price once expired (0 while trading).",
+    },
+    {
+      name: "contractMultiplier",
+      dataType: "double",
+      description:
+        "Value of one unit of quantity per unit of price (1 for equities). Notional = quantity x price x contractMultiplier.",
+    },
     { name: "tickSize", dataType: "double" },
     {
       name: "tickBands",
@@ -1003,9 +1041,21 @@ export const positions = defineTable({
       description: "Instrument GICS sector (from instruments).",
     },
     {
+      name: "instrumentType",
+      dataType: "string",
+      description: "InstrumentType (from instruments).",
+    },
+    {
+      name: "underlying",
+      dataType: "string",
+      description:
+        "Underlying ric: a future's underlying (from instruments), a stock's own ric. Groups a stock with its futures.",
+    },
+    {
       name: "marketValueUsd",
       dataType: "double",
-      description: "marketValue in USD (instrument usdPerPriceUnit).",
+      description:
+        "marketValue in USD (instrument usdPerPriceUnit; marketValue already includes the contract multiplier).",
     },
     {
       name: "totalPnlUsd",

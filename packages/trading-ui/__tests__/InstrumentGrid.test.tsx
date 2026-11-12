@@ -81,6 +81,18 @@ describe("filters", () => {
       f.startsWith('simulated = true and ric in ["A.L","B.L"] and ('),
     ).toBe(true);
   });
+
+  test("instrument type filter", () => {
+    expect(buildInstrumentGridFilter({ instrumentType: "FUTURE" })).toBe(
+      'instrumentType = "FUTURE"',
+    );
+    expect(
+      buildInstrumentGridFilter({
+        simulatedOnly: true,
+        instrumentType: "INDEX",
+      }),
+    ).toBe('simulated = true and instrumentType = "INDEX"');
+  });
 });
 
 describe("columns preset", () => {

@@ -1,4 +1,5 @@
 import {
+  InstrumentType,
   OrdType,
   RejectReason,
   SUPPORTED_ORD_TYPES,
@@ -23,7 +24,44 @@ export interface InstrumentStatic {
   tickSize: number;
   tickBands?: string;
   lotSize: number;
+  /** EQUITY when absent. */
+  instrumentType?: InstrumentType;
+  /**
+   * Futures and continuations: ric of the underlying instrument (an equity
+   * or an index).
+   */
+  underlying?: string;
+  /** Continuation: ric of the contract it currently points at. */
+  contract?: string;
+  /** Futures: last trading time (epoch ms). */
+  expiry?: number;
+  /** Futures: final settlement price, set once the contract has expired. */
+  settlementPrice?: number;
+  /**
+   * Price-unit value of one unit of quantity per unit of price: 1 for an
+   * equity, e.g. 10 for a future quoted per share on 10 shares. 1 when absent.
+   */
+  contractMultiplier?: number;
 }
+
+/** The instrument's contract multiplier (1 when absent or invalid). */
+export const contractMultiplierOf = (
+  instrument: Pick<InstrumentStatic, "contractMultiplier"> | undefined,
+): number => {
+  const multiplier = instrument?.contractMultiplier;
+  return multiplier !== undefined && multiplier > 0 ? multiplier : 1;
+};
+
+/**
+ * USD value of one unit of quantity at a price of 1: the currency conversion
+ * (usdPerPriceUnit) times the contract multiplier. Notional in USD is
+ * `quantity * price * usdPerUnit(instrument)`.
+ */
+export const usdPerUnit = (
+  instrument: Pick<InstrumentStatic, "contractMultiplier"> & {
+    usdPerPriceUnit: number;
+  },
+): number => instrument.usdPerPriceUnit * contractMultiplierOf(instrument);
 
 export interface OrderReject {
   reason: RejectReason;
@@ -162,6 +200,18 @@ export const validateOrder = (
     return reject(
       RejectReason.UnsupportedOrdType,
       `order type ${order.ordType} is not supported`,
+    );
+  }
+  if (instrument.instrumentType === InstrumentType.Index) {
+    return reject(
+      RejectReason.RestrictedInstrument,
+      `${instrument.ric} is an index: trade its futures`,
+    );
+  }
+  if (instrument.instrumentType === InstrumentType.Continuation) {
+    return reject(
+      RejectReason.RestrictedInstrument,
+      `${instrument.ric} is a continuation: trade ${instrument.contract || "the contract"}`,
     );
   }
   if (phase === TradingPhase.Halted) {

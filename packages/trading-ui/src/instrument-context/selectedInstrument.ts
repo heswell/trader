@@ -13,6 +13,8 @@ export interface SelectedInstrument {
   tickBands?: string;
   lotSize?: number;
   priceDecimals?: number;
+  /** Futures: value per unit of quantity per unit of price (1 for equities). */
+  contractMultiplier?: number;
 }
 
 const STRING_FIELDS = [
@@ -21,7 +23,12 @@ const STRING_FIELDS = [
   "exchange",
   "tickBands",
 ] as const;
-const NUMBER_FIELDS = ["tickSize", "lotSize", "priceDecimals"] as const;
+const NUMBER_FIELDS = [
+  "tickSize",
+  "lotSize",
+  "priceDecimals",
+  "contractMultiplier",
+] as const;
 
 /**
  * A plain, JSON-safe copy of `value` with only the SelectedInstrument

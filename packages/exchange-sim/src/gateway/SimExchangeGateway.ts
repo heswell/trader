@@ -31,6 +31,7 @@ import type {
   GatewayCancel,
   GatewayNewOrder,
   GatewayRequestType,
+  InstrumentEvent,
   MarketTrade,
   TopOfBook,
 } from "./types";
@@ -205,6 +206,20 @@ export class SimExchangeGateway implements ExchangeGateway, FillSink {
   }
 
   /** Every trade on the exchange (the public tape), in execution order. */
+  readonly #instrumentListeners = new Set<(event: InstrumentEvent) => void>();
+
+  onInstrumentEvent(listener: (event: InstrumentEvent) => void) {
+    this.#instrumentListeners.add(listener);
+    return () => {
+      this.#instrumentListeners.delete(listener);
+    };
+  }
+
+  /** Tell subscribers (the OMS) that a future was listed or expired. */
+  emitInstrumentEvent(event: InstrumentEvent) {
+    for (const listener of this.#instrumentListeners) listener(event);
+  }
+
   onTrade(listener: (trade: MarketTrade) => void) {
     return this.venue.onTape?.(listener) ?? (() => undefined);
   }
@@ -279,6 +294,26 @@ export class SimExchangeGateway implements ExchangeGateway, FillSink {
         if (report.timeInForce !== TimeInForce.Day) continue;
         if (ric !== undefined && report.ric !== ric) continue;
         book.cancel(exchangeOrderId);
+        this.#expire(state, undefined, text);
+        expired.push(exchangeOrderId);
+      }
+    } finally {
+      this.#release();
+    }
+    return expired;
+  }
+
+  /**
+   * Expire every live order on `ric` whatever its time in force (a future
+   * expiring), removing it from the book. Returns the exchange order ids.
+   */
+  expireAllOrders(ric: string, text: string) {
+    const expired: string[] = [];
+    this.#hold++;
+    try {
+      for (const [exchangeOrderId, state] of this.#orders) {
+        if (!state.live || !state.book || state.report.ric !== ric) continue;
+        state.book.cancel(exchangeOrderId);
         this.#expire(state, undefined, text);
         expired.push(exchangeOrderId);
       }

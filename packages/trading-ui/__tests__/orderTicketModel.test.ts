@@ -22,6 +22,7 @@ import {
   parsePrice,
   parseQuantity,
   previewRisk,
+  resolveQuantityInput,
   validateDraft,
 } from "../src";
 
@@ -309,5 +310,68 @@ describe("stop orders", () => {
       draftFromPrefill({ ordType: OrdType.Limit, stopPrice: 101, price: 100 })
         .stopPrice,
     ).toBe("");
+  });
+});
+
+describe("futures and indices", () => {
+  const future: OrderTicketInstrument = {
+    ric: "AAPLZ6",
+    currency: "USD",
+    exchange: "XNAS",
+    instrumentType: "FUTURE",
+    contractMultiplier: 100,
+    tickSize: 0.01,
+    lotSize: 1,
+    priceDecimals: 2,
+    bid: 200,
+    ask: 200.02,
+    last: 200,
+  };
+
+  test("notional and $ quantity include the contract multiplier", () => {
+    const preview = previewRisk(
+      draft({ ric: "AAPLZ6", quantity: "3", price: "200" }),
+      future,
+      accounts[0],
+      { usdPerPriceUnit: { USD: 1 } },
+    );
+    expect(preview.notional).toBe(60_000);
+    expect(preview.notionalUsd).toBe(60_000);
+    // $100k at 200 x 100 a contract: 5 contracts
+    expect(resolveQuantityInput("$100k", future, 200, { USD: 1 })).toBe(5);
+    expect(
+      resolveQuantityInput(
+        "$100k",
+        { ...future, contractMultiplier: undefined },
+        200,
+        { USD: 1 },
+      ),
+    ).toBe(500);
+  });
+
+  test("an index cannot be traded", () => {
+    const { errors } = validateDraft(
+      draft({ ric: "STECH", quantity: "1", price: "1000" }),
+      {
+        ...future,
+        ric: "STECH",
+        instrumentType: "INDEX",
+        contractMultiplier: 1,
+      },
+    );
+    expect(errors.ric).toMatch(/STECH is an index/);
+  });
+
+  test("a continuation names the contract to trade", () => {
+    const { errors } = validateDraft(
+      draft({ ric: "AAPLc1", quantity: "1", price: "200" }),
+      {
+        ...future,
+        ric: "AAPLc1",
+        instrumentType: "CONTINUATION",
+        contract: "AAPLZ6",
+      },
+    );
+    expect(errors.ric).toBe("AAPLc1 is a continuation: trade AAPLZ6");
   });
 });

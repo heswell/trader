@@ -1,3 +1,4 @@
+import { contractMultiplierOf } from "@heswell/trading-schemas";
 import type { TableCellRendererProps } from "@vuu-ui/vuu-table-types";
 import { registerComponent } from "@vuu-ui/vuu-utils";
 import { createContext, useContext } from "react";
@@ -40,22 +41,26 @@ const OrderLinkCell = ({ column, dataRow }: TableCellRendererProps) => {
   );
 };
 
-/** Price for a fill; for a group row, VWAP = sum(notional) / sum(quantity). */
+/**
+ * Price for a fill; for a group row, VWAP = sum(notional) / sum(quantity),
+ * divided by the contract multiplier (notional includes it).
+ */
 const VwapPriceCell = ({ column, dataRow }: TableCellRendererProps) => {
   const lookup = useInstrumentLookup();
   const notional = Number(dataRow.notional);
   const quantity = Number(dataRow.quantity);
   const ric = typeof dataRow.ric === "string" ? dataRow.ric : undefined;
+  const instrument = ric ? lookup.get(ric) : undefined;
   const isGroup = !dataRow.isLeaf;
   const value =
     isGroup && quantity > 0
-      ? notional / quantity
+      ? notional / quantity / contractMultiplierOf(instrument)
       : Number(dataRow[column.name]);
   if (!Number.isFinite(value) || value === 0) return null;
   return (
     <span>
       {isGroup ? "VWAP " : ""}
-      {formatPrice(value, ric ? lookup.get(ric) : undefined)}
+      {formatPrice(value, instrument)}
     </span>
   );
 };

@@ -39,7 +39,7 @@ ModuleFactory.withNameSpace(EXCHANGE_MODULE)
 
 | Table | Key | Columns |
 |---|---|---|
-| `instruments` | `ric` | description, isin?, currency, exchange (MIC), sector?, tickSize, tickBands?, lotSize, priceDecimals, refPrice, simulated |
+| `instruments` | `ric` | description, isin?, currency, exchange (MIC), sector?, instrumentType (EQUITY \| FUTURE \| INDEX \| CONTINUATION), underlying? (a future's stock or index), contract? (the contract a continuation such as AZNc1 points at), expiry?, settlementPrice? (expired futures), contractMultiplier, tickSize, tickBands?, lotSize, priceDecimals, refPrice, simulated |
 | `prices` | `ric` | bid, ask, bidSize, askSize, last, lastSize, open, high, low, close (prev), volume, turnover, vwap, change, changePct, phase (`TradingPhase`), seq, timestamp |
 | `depth` | `id` = `ric\|side\|level` | ric, side, level (0 = best), price, size, cumSize, orderCount, ownSize?, seq |
 | `trades` | `tradeId` | ric, price, size, aggressorSide, timestamp, seq |
@@ -53,8 +53,8 @@ ModuleFactory.withNameSpace(EXCHANGE_MODULE)
 | `accounts` | `account` | name, desk, owner, currency, maxOrderQty, maxOrderNotional, maxPositionNotional, enabled |
 | `parentOrders` | `orderId` | clOrdId?, trader, *order columns*, version, notional, arrivalPrice, slippageBps, timeToFirstFill, timeToComplete, strategy, algoStart, algoEnd, participationPct, targetQty |
 | `childOrders` | `childOrderId` | parentOrderId, exchangeOrderId?, *order columns* |
-| `fills` | `execId` | orderId (parent), childOrderId, tradeId, account, trader, ric, side, quantity, price, notional, currency, liquidity, timestamp |
-| `positions` | `id` = `account\|ric` | account, ric, quantity (net), boughtQty, soldQty, avgCost, markPx, marketValue, realizedPnl, unrealizedPnl, totalPnl, currency, lastUpdate |
+| `fills` | `execId` | orderId (parent), childOrderId, tradeId, account, trader, ric, side, quantity, price, notional (includes contractMultiplier), currency, liquidity (ADDED \| REMOVED \| AUCTION \| SETTLEMENT), timestamp |
+| `positions` | `id` = `account\|ric` | account, ric, quantity (net), boughtQty, soldQty, avgCost, markPx, marketValue, realizedPnl, unrealizedPnl, totalPnl (value and P&L include contractMultiplier), currency, exchange, sector, instrumentType, underlying, marketValueUsd, totalPnlUsd, lastUpdate |
 | `pnlHistory` | `id` = `account\|ric\|time` (`pnlHistoryKey`) | account, ric, time, quantity, avgCost, markPx, marketValue, realizedPnl, unrealizedPnl, totalPnl, grossExposure, netExposure, totalPnlUsd, marketValueUsd, currency |
 | `accountPnlHistory` | `id` = `account\|time` (`accountPnlHistoryKey`) | account, time, positions, realizedPnl, unrealizedPnl, totalPnl, grossExposure, netExposure (USD) |
 

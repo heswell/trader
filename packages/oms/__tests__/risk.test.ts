@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  InstrumentType,
   OrdType,
   RejectReason,
   Side,
@@ -108,6 +109,24 @@ describe("pre-trade risk", () => {
         { market: { bid: 9.9, ask: 10.1, last: 10 } },
       ),
     ).toBe(RejectReason.ExceedsMaxQuantity);
+  });
+
+  test("notional includes the contract multiplier", () => {
+    const future: RiskInstrument = {
+      ...AAPL,
+      ric: "AAPLZ6",
+      instrumentType: InstrumentType.Future,
+      underlying: "AAPL.OQ",
+      contractMultiplier: 100,
+    };
+    // 200 contracts x 100 x 100 USD = 2,000,000: at the 2m limit
+    expect(
+      reason({ ric: "AAPLZ6", quantity: 200 }, { instrument: future }),
+    ).toBeUndefined();
+    // 201 contracts = 2,010,000 USD > 2m (as 201 shares it would be 20,100)
+    expect(
+      reason({ ric: "AAPLZ6", quantity: 201 }, { instrument: future }),
+    ).toBe(RejectReason.ExceedsMaxNotional);
   });
 
   test("maxOrderNotional in USD (GBX converted)", () => {

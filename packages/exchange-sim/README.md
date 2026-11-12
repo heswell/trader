@@ -103,6 +103,34 @@ nothing visible changed.
   basket-trading reference data plus some European large caps, then generated into `src/reference/universe.ts`; nothing is imported at
   runtime. `activeInstruments` (default 200) are simulated, interleaved by venue, or the explicit
   `instruments` list is used.
+- **Futures** (off by default). `futures` lists equity rics (or synthetic indices, below) to list futures on: the next
+  `futuresContracts` (2) quarterly expiries (third Friday of Mar/Jun/Sep/Dec at `sessionClose`, else
+  16:30 UTC). Rics are the root, month code and year digit (`AZN.L` -> `AZNZ6`, `AZNH7`). A future has
+  the underlying's venue, currency and sector, a fixed tick, lot size 1 and a contract multiplier by
+  currency (100; 1000 for GBX and HKD). Each future and its underlying get a live book on top of the
+  active set, so N underlyings add 2N-3N books. Fair value is spot carried to expiry,
+  `S × exp(futuresCarryRate × τ)`, times a basis that mean-reverts (sd `futuresBasisBps`, half-life
+  `futuresBasisHalfLifeSec`); impact on a future goes into that basis. The roster is the equity one
+  plus an always-on informed bot that trades the future back towards fair.
+- **Continuations.** Each underlying with futures gets continuation rics `c1..cN` (root + `c` + position: `AZNc1`
+  is the front month, `AZNc2` the next; `STECHc1`). A continuation copies its contract's static data (instrument type
+  `CONTINUATION`, `contract` names the contract) and has no book: its `prices` row mirrors the contract's on every
+  flush. It takes no orders (`RESTRICTED_INSTRUMENT`, naming the contract to trade). After each roll the
+  continuations are repointed, nearest expiry first, and their instruments rows rewritten. Bars, depth and trades
+  stay under the contract ric.
+- **Synthetic indices** (off by default). `indices` lists indices to publish: `STECH` (8 US tech names) and `SUK`
+  (10 UK large caps), defined in `reference/indices.ts` with generic names. An index is equal weighted,
+  `1000 × mean(fair_i / ref_i)` over its constituents' fair values, so it starts at 1000. It has no book and takes no
+  orders (`validateOrder` rejects it as `RESTRICTED_INSTRUMENT`); its constituents get books, and its level is
+  published on its `prices` row as `last` (`close` is the 1000 base). Naming an index in `futures` lists it too, with
+  index futures (`STECHZ6`): a 0.1 point tick, a multiplier per point (50 USD, 1000 GBX = GBP 10) and a volatility
+  of `√Σσᵢ² / n` (the constituents walk independently). They anchor on, and settle at, the index level.
+- **Futures expiry and roll.** At its expiry time a future settles at the underlying's fair value (on the future's
+  tick): its book closes for good (`settlementPrice` is set on the instruments row; resume is refused), its resting
+  orders are expired, and the gateway emits an `EXPIRED` instrument event (`onInstrumentEvent`) so the OMS can
+  settle positions. The next quarterly contract after the last one listed is then listed, with a book and bots,
+  and a `LISTED` event. `expireFuture(ric)` expires one now. Expired contracts are not restored after a restart:
+  futures are listed afresh from the clock.
 - **Price model.** A GBM fair value with a per-instrument annualised vol (20–50%, or
   `defaultVolatility`). Time is scaled by `timeScale` to make intraday-looking moves visible. The value
   is reflected inside a band of ±`priceBandPct` around refPrice, recentred on fair value at each
@@ -185,6 +213,12 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | --- | --- | --- |
 | `activeInstruments` | 200 | Instruments with a live book. |
 | `instruments` | `""` | Comma-separated rics to simulate; overrides `activeInstruments`. |
+| `indices` | `""` | Comma-separated synthetic indices to publish (`STECH`, `SUK`); their constituents get books. |
+| `futures` | `""` | Comma-separated equity rics or synthetic indices to list futures on (each future and its underlying, or the index's constituents, get a book). |
+| `futuresContracts` | 2 | Quarterly contracts listed per underlying. |
+| `futuresCarryRate` | 0.03 | Annual carry of futures fair value over spot. |
+| `futuresBasisBps` | 3 | Standard deviation of the futures basis noise (bps). |
+| `futuresBasisHalfLifeSec` | 60 | Half-life of the basis noise and of impact on a future (wall-clock s). |
 | `seed` | 42 | RNG seed. |
 | `botStepMs` | 20 | Bot / price-model step interval (ms). |
 | `maxStepMs` | 250 | Clamp on elapsed time per step (ms). |

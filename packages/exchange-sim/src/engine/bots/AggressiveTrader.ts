@@ -2,7 +2,7 @@ import {
   Side as BookSide,
   TimeInForce as BookTif,
 } from "@heswell/hft-limit-order-book";
-import { Side, stepTicks } from "@heswell/trading-schemas";
+import { Side, stepTicks, usdPerUnit } from "@heswell/trading-schemas";
 import type { Random } from "../../util/random";
 import type { InstrumentBook } from "../InstrumentBook";
 import {
@@ -53,7 +53,7 @@ export class AggressiveTrader implements Bot {
     this.account = port.account;
     port.setFillListener((_, trade) => {
       this.#doneUsd +=
-        trade.price * trade.size * this.book.instrument.usdPerPriceUnit;
+        trade.price * trade.size * usdPerUnit(this.book.instrument);
     });
   }
 

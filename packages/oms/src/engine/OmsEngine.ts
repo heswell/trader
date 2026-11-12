@@ -1,4 +1,7 @@
 import {
+  contractMultiplierOf,
+  type InstrumentStatic,
+  InstrumentType,
   AlgoStrategy,
   type AmendOrderRequest,
   type CancelAllRequest,
@@ -10,6 +13,7 @@ import {
   isStopTriggered,
   isTerminalStatus,
   isWorkingStatus,
+  Liquidity,
   OrdStatus,
   OrdType,
   type OrderReject,
@@ -186,6 +190,10 @@ export interface Position extends PositionState, PositionMarks {
   /** Instrument static, denormalised so positions can group by it. */
   exchange: string;
   sector: string;
+  /** InstrumentType of the ric (EQUITY / FUTURE). */
+  instrumentType: string;
+  /** Futures: ric of the underlying; a stock's own ric. */
+  underlying: string;
   /** marketValue converted to USD with the instrument's usdPerPriceUnit. */
   marketValueUsd: number;
   /** totalPnl converted to USD with the instrument's usdPerPriceUnit. */
@@ -344,6 +352,7 @@ export class OmsEngine {
   #childrenByParent = new Map<string, ChildOrder[]>();
   #algos: AlgoContainer;
   #unsubscribeTrades: () => void;
+  #unsubscribeInstruments: () => void;
   /** Waiting stops (see isWaitingStop) by orderId. */
   #stops = new Map<string, ParentOrder>();
   /** Tape trades not yet checked against the waiting stops. */
@@ -423,11 +432,90 @@ export class OmsEngine {
         this.#algos.onTrade(trade);
         this.#onStopTrade(trade);
       }) ?? (() => undefined);
+    this.#unsubscribeInstruments =
+      gateway.onInstrumentEvent?.((event) => {
+        if (event.type === "EXPIRED")
+          this.expireInstrument(
+            event.ric,
+            event.settlementPrice,
+            event.timestamp,
+          );
+      }) ?? (() => undefined);
   }
 
   dispose() {
     this.#unsubscribe();
     this.#unsubscribeTrades();
+    this.#unsubscribeInstruments();
+  }
+
+  // ---------------------------------------------------------------- expiry
+
+  /**
+   * A future expired at the exchange (which has already expired its resting
+   * orders): end every working order in it (algos, waiting stops, and any
+   * order whose EXPIRED report is still to come) and settle every open
+   * position at `settlementPrice` with a SETTLEMENT fill. Returns the order
+   * ids ended and the position ids settled.
+   */
+  expireInstrument(ric: string, settlementPrice: number, timestamp: number) {
+    const text = `${ric} expired`;
+    const orderIds: string[] = [];
+    for (const parent of this.liveOrders(
+      (o) => o.ric === ric && isWorkingStatus(o.state.status),
+    )) {
+      if (isAlgoParent(parent)) {
+        if (parent.algo.phase !== "WORKING") continue;
+        this.#algos.expire(parent, text);
+      } else if (isWaitingStop(parent)) {
+        this.#expireStop(parent, text);
+      } else {
+        const child = parent.childOrderId
+          ? this.children.get(parent.childOrderId)
+          : undefined;
+        if (child?.exchangeOrderId && !child.expiring)
+          this.#sendCancel(parent, child, true);
+      }
+      orderIds.push(parent.orderId);
+    }
+    const positionIds: string[] = [];
+    for (const position of [...this.positions.values()]) {
+      if (position.ric !== ric || position.quantity === 0) continue;
+      this.#settle(position, settlementPrice, timestamp);
+      positionIds.push(position.id);
+    }
+    return { orderIds, positionIds };
+  }
+
+  /** Close `position` at the settlement price: a fill with no order. */
+  #settle(position: Position, price: number, timestamp: number) {
+    const quantity = Math.abs(position.quantity);
+    const fill: Fill = {
+      execId: `SETTLE.${position.id}.${timestamp}`,
+      orderId: "",
+      childOrderId: "",
+      tradeId: "",
+      account: position.account,
+      trader: "",
+      ric: position.ric,
+      side: position.quantity > 0 ? Side.Sell : Side.Buy,
+      quantity,
+      price,
+      notional:
+        quantity *
+        price *
+        contractMultiplierOf(this.#gateway.getInstrument(position.ric)),
+      currency: position.currency,
+      liquidity: Liquidity.Settlement,
+      timestamp,
+    };
+    this.fills.push(fill);
+    if (this.#journal) {
+      this.#newFills.push(fill);
+      this.#markDirty();
+    }
+    this.#sink.fill?.(fill);
+    this.#applyFillToPosition(fill);
   }
 
   // ---------------------------------------------------------------- algos
@@ -732,7 +820,12 @@ export class OmsEngine {
       this.#sink.fill?.(fill);
     }
     for (const position of state.positions) {
-      Object.assign(position, this.#usdMarks(position));
+      const instrument = this.#gateway.getInstrument(position.ric);
+      Object.assign(
+        position,
+        instrument ? this.#instrumentFields(instrument) : undefined,
+        this.#usdMarks(position),
+      );
       this.positions.set(position.id, position);
       this.#sink.position?.({ ...position });
     }
@@ -1464,7 +1557,11 @@ export class OmsEngine {
         this.#gateway.getTopOfBook(position.ric),
       );
       if (px === position.markPx) continue;
-      const marks = markPosition(position, px);
+      const marks = markPosition(
+        position,
+        px,
+        contractMultiplierOf(instrument),
+      );
       Object.assign(
         position,
         marks,
@@ -1479,7 +1576,10 @@ export class OmsEngine {
     return changed;
   }
 
-  /** USD market value / P&L (2 dp) via the instrument's usdPerPriceUnit. */
+  /**
+   * USD market value / P&L (2 dp) via the instrument's usdPerPriceUnit (the
+   * multiplier is already in marketValue / totalPnl).
+   */
   #usdMarks({
     ric,
     marketValue,
@@ -1492,25 +1592,37 @@ export class OmsEngine {
     };
   }
 
+  /** Instrument static denormalised onto a position. */
+  #instrumentFields(instrument: InstrumentStatic | undefined) {
+    return {
+      exchange: instrument?.exchange ?? "",
+      sector: instrument?.sector ?? "",
+      instrumentType: instrument?.instrumentType ?? InstrumentType.Equity,
+      // a stock is its own underlying, so it groups with its futures
+      underlying: instrument?.underlying || instrument?.ric || "",
+    };
+  }
+
   #applyFillToPosition(fill: Fill) {
     const id = positionKey(fill.account, fill.ric);
     const existing = this.positions.get(id);
+    const instrument = this.#gateway.getInstrument(fill.ric);
+    const multiplier = contractMultiplierOf(instrument);
     const state = applyFill(
       existing ?? FLAT_POSITION,
       fill.side,
       fill.quantity,
       fill.price,
+      multiplier,
     );
     const markPx = existing?.markPx || fill.price;
-    const instrument = this.#gateway.getInstrument(fill.ric);
-    const marks = markPosition(state, markPx);
+    const marks = markPosition(state, markPx, multiplier);
     const position: Position = {
       id,
       account: fill.account,
       ric: fill.ric,
       currency: fill.currency,
-      exchange: instrument?.exchange ?? "",
-      sector: instrument?.sector ?? "",
+      ...this.#instrumentFields(instrument),
       ...state,
       ...marks,
       ...this.#usdMarks({ ric: fill.ric, ...marks }),
@@ -1634,7 +1746,10 @@ export class OmsEngine {
       side: parent.side,
       quantity: report.lastQty,
       price: report.lastPx,
-      notional: report.lastQty * report.lastPx,
+      notional:
+        report.lastQty *
+        report.lastPx *
+        contractMultiplierOf(this.#gateway.getInstrument(parent.ric)),
       currency: parent.currency,
       liquidity: report.liquidity ?? "",
       timestamp: report.timestamp,
@@ -1702,7 +1817,10 @@ export class OmsEngine {
       trader: parent.trader,
       ...this.#orderRow(parent),
       version: parent.state.version,
-      notional: parent.state.cumQty * parent.state.avgPx,
+      notional:
+        parent.state.cumQty *
+        parent.state.avgPx *
+        contractMultiplierOf(this.#gateway.getInstrument(parent.ric)),
       ...executionQuality(parent),
       strategy: parent.strategy ?? AlgoStrategy.Dma,
       algoStart: parent.algo?.startAt ?? 0,

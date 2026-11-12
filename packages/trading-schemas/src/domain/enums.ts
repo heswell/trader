@@ -61,6 +61,22 @@ export const STOP_TIME_IN_FORCE_VALUES: readonly TimeInForce[] = Object.freeze([
   TimeInForce.GoodTillCancel,
 ]);
 
+/** Kind of instrument (instruments.instrumentType). */
+export const InstrumentType = Object.freeze({
+  Equity: "EQUITY",
+  Future: "FUTURE",
+  /** A synthetic index: listed with a computed level, not tradeable. */
+  Index: "INDEX",
+  /**
+   * A continuation (AZNc1): an alias of the nth listed contract on an
+   * underlying, repointed at each roll. Quotes mirror that contract; it
+   * takes no orders.
+   */
+  Continuation: "CONTINUATION",
+} as const);
+export type InstrumentType = ValueOf<typeof InstrumentType>;
+export const INSTRUMENT_TYPES = values(InstrumentType);
+
 /** FIX OrdStatus (tag 39) subset. */
 export const OrdStatus = Object.freeze({
   PendingNew: "PENDING_NEW",
@@ -100,6 +116,8 @@ export const Liquidity = Object.freeze({
   Added: "ADDED",
   Removed: "REMOVED",
   Auction: "AUCTION",
+  /** Futures expiry: an open position closed at the settlement price. */
+  Settlement: "SETTLEMENT",
 } as const);
 export type Liquidity = ValueOf<typeof Liquidity>;
 export const LIQUIDITY_VALUES = values(Liquidity);

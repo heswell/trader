@@ -121,6 +121,9 @@ export const LOCAL_EXCHANGE_DEFAULTS: Partial<ExchangeSimConfig> = {
   barHistory: 200,
   // no market impact: UI tests and the showcase keep their exact prices
   impactVolShare: 0,
+  // futures (front and next quarter) on two stocks and the synthetic US
+  // tech index (which brings its constituents' books)
+  futures: "AAPL.OQ,VOD.L,STECH",
 };
 
 export interface TradingTestDataOptions {

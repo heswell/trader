@@ -28,7 +28,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [FillProgressBar](trading-ui.md#fillprogressbar) | `components/FillProgressBar` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
 | [FillsBlotter](trading-ui.md#fillsblotter) | `components/FillsBlotter` | `fills` |  | InstrumentLookup, LinkGroupSelector, StaleIndicator, TradingCellRenderers | `fills-blotter`, `trader-workspace` | [guide](../components/blotters.md) |
 | [InstrumentContextProvider](trading-ui.md#instrumentcontextprovider) | `instrument-context` |  |  | InstrumentLookup | `linking-providers` | [guide](../components/selection-and-linking.md#how-linking-works) |
-| [InstrumentGrid](trading-ui.md#instrumentgrid) | `components/InstrumentGrid` | `instrumentPrices` |  | InstrumentLookup, LinkGroupSelector, OrderTicket, Sparkline, StaleIndicator, TradingCellRenderers | `chart-workspace`, `depth-chart`, `hosting-feature-root`, `hosting-user-settings`, `instrument-grid`, `instrument-grid-200`, `instrument-grid-prices`, `market-depth-selected`, `price-chart`, `price-ladder-live`, `spread-chart`, `trader-workspace` | [guide](../components/instrument-grid.md#instrumentgrid) |
+| [InstrumentGrid](trading-ui.md#instrumentgrid) | `components/InstrumentGrid` | `instrumentPrices` |  | InstrumentLookup, LinkGroupSelector, OrderTicket, Sparkline, StaleIndicator, TradingCellRenderers | `chart-workspace`, `depth-chart`, `hosting-feature-root`, `hosting-user-settings`, `instrument-grid`, `instrument-grid-200`, `instrument-grid-continuations`, `instrument-grid-futures`, `instrument-grid-prices`, `market-depth-selected`, `price-chart`, `price-ladder-live`, `spread-chart`, `trader-workspace` | [guide](../components/instrument-grid.md#instrumentgrid) |
 | [InstrumentLookupProvider](trading-ui.md#instrumentlookupprovider) | `components/InstrumentLookup` | `instruments` |  |  | `selectors` | [guide](../components/selection-and-linking.md) |
 | [InstrumentPicker](trading-ui.md#instrumentpicker) | `components/InstrumentPicker` | `instruments` |  | LinkGroupSelector | `chart-workspace`, `depth-chart`, `linking-providers`, `market-depth-selected`, `panel-link-group`, `price-chart`, `price-ladder-live`, `selectors`, `spread-chart`, `trader-workspace` | [guide](../components/selection-and-linking.md) |
 | [LinkGroupMenuButton](trading-ui.md#linkgroupmenubutton) | `components/LinkGroupSelector` |  |  |  | `panel-link-group` | [guide](../components/selection-and-linking.md) |
@@ -133,7 +133,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | ExposureTreemap | `exposure-treemap` | [guide](../components/charts.md#exposuretreemap) |
 | FillsBlotter | `fills-blotter` | [guide](../components/blotters.md) |
 | Hosting | `hosting-connection-override`, `hosting-feature-root`, `hosting-user-settings` | [guide](../components/hosting.md) |
-| InstrumentGrid | `instrument-grid`, `instrument-grid-200`, `instrument-grid-prices` | [guide](../components/instrument-grid.md#instrumentgrid) |
+| InstrumentGrid | `instrument-grid`, `instrument-grid-200`, `instrument-grid-continuations`, `instrument-grid-futures`, `instrument-grid-prices` | [guide](../components/instrument-grid.md#instrumentgrid) |
 | Linking | `linking-providers` | [guide](../components/selection-and-linking.md) |
 | MarketDepth | `market-depth-selected` | [guide](../components/market-depth-and-ladder.md#marketdepth) |
 | Notifications | `notifications-connection`, `notifications-settings` | [guide](../components/notifications-and-connection.md) |

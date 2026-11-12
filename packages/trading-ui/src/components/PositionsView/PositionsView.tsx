@@ -46,7 +46,12 @@ const classBase = "tradingPositionsView";
  * `none`: one row per account|ric. Grouped modes always group by currency
  * first so aggregated amounts are never summed across currencies.
  */
-export type PositionsGrouping = "none" | "sector" | "account" | "ric";
+export type PositionsGrouping =
+  | "none"
+  | "sector"
+  | "account"
+  | "ric"
+  | "underlying";
 
 /** The positionPrices `groupBy` for each PositionsView grouping. */
 export const POSITIONS_GROUP_BY: Record<PositionsGrouping, string[]> = {
@@ -54,6 +59,8 @@ export const POSITIONS_GROUP_BY: Record<PositionsGrouping, string[]> = {
   sector: ["currency", "sector"],
   account: ["currency", "account"],
   ric: ["currency", "ric"],
+  /** A stock and its futures together (underlying is the ric for a stock). */
+  underlying: ["currency", "underlying"],
 };
 
 const aggregationsFor = (grouping: PositionsGrouping) =>
@@ -84,6 +91,8 @@ const COLUMNS = [
   "currency",
   "sector",
   "exchange",
+  "instrumentType",
+  "underlying",
   "quantity",
   "avgCost",
   "markPx",
@@ -153,6 +162,8 @@ const tableConfig: TableConfig = {
       type: pnl,
     },
     { name: "exchange", hidden: true },
+    { name: "instrumentType", label: "Type", hidden: true },
+    { name: "underlying", label: "Underlying", hidden: true },
     { name: "id", hidden: true },
     { name: "bid", hidden: true },
     { name: "ask", hidden: true },
@@ -307,6 +318,7 @@ const Inner = forwardRef<HTMLDivElement, PositionsViewProps>(
               <option value="sector">Currency / sector</option>
               <option value="account">Currency / account</option>
               <option value="ric">Currency / RIC</option>
+              <option value="underlying">Currency / underlying</option>
             </select>
           </label>
         </div>

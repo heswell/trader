@@ -34,6 +34,7 @@ const INSTRUMENT_COLUMNS = [
   "tickBands",
   "lotSize",
   "priceDecimals",
+  "contractMultiplier",
 ];
 
 export interface InstrumentPickerProps
@@ -93,6 +94,8 @@ export const toSelectedInstrument = (row: TradingRow): SelectedInstrument => ({
   tickBands: (row.tickBands as string | undefined) || undefined,
   lotSize: row.lotSize as number | undefined,
   priceDecimals: row.priceDecimals as number | undefined,
+  contractMultiplier:
+    (row.contractMultiplier as number | undefined) || undefined,
 });
 
 /** Notification / selection source id of InstrumentPicker. */

@@ -1,7 +1,9 @@
 import type { DepthLevel } from "@heswell/hft-limit-order-book";
 import {
+  contractMultiplierOf,
   depth as depthDef,
   depthKey,
+  InstrumentType,
   instruments as instrumentsDef,
   prices as pricesDef,
   Side,
@@ -13,7 +15,7 @@ import type { InstrumentDef } from "../reference/instruments";
 import { BarAggregator, type BarOptions } from "./BarAggregator";
 import { BookL3Publisher, type BookL3Options } from "./BookL3Publisher";
 import { BookSampler, type BookSampleOptions } from "./BookSampler";
-import { type PublishTable, RowLayout, round } from "./rows";
+import { type PublishTable, RowLayout, type RowValue, round } from "./rows";
 import { TradeRingBuffer } from "./TradeRingBuffer";
 
 export type { PublishTable, RowValue } from "./rows";
@@ -139,6 +141,14 @@ export class MarketDataPublisher {
   readonly #ring: TradeRingBuffer;
   readonly #pendingTrades: TapeTrade[] = [];
   readonly #books = new Map<InstrumentBook, BookState>();
+  /** Continuation ric -> the contract it mirrors. */
+  readonly #aliasOf = new Map<string, string>();
+  /** Contract ric -> continuations mirroring it. */
+  readonly #aliases = new Map<string, Set<string>>();
+  /** Last prices row written per book, for mirroring onto continuations. */
+  readonly #lastPriceRows = new Map<string, RowValue[]>();
+  /** Last published level + phase per index ric. */
+  readonly #indexLevels = new Map<string, { last: number; phase: string }>();
   readonly #prices: RowLayout<typeof pricesDef>;
   readonly #depth: RowLayout<typeof depthDef>;
   readonly #trades: RowLayout<typeof tradesDef>;
@@ -182,31 +192,54 @@ export class MarketDataPublisher {
     all: readonly InstrumentDef[],
     isSimulated: (ric: string) => boolean,
   ) {
+    for (const instrument of all)
+      this.addInstrument(instrument, isSimulated(instrument.ric));
+  }
+
+  #instrumentRow(instrument: InstrumentDef, simulated: boolean) {
     const layout = new RowLayout(this.tables.instruments, instrumentsDef);
     const { idx } = layout;
-    for (const instrument of all) {
-      const row = layout.row();
-      row[idx.ric] = instrument.ric;
-      row[idx.description] = instrument.description;
-      row[idx.currency] = instrument.currency;
-      row[idx.exchange] = instrument.exchange;
-      row[idx.sector] = instrument.sector;
-      row[idx.tickSize] = instrument.tickSize;
-      row[idx.tickBands] = instrument.tickBands;
-      row[idx.lotSize] = instrument.lotSize;
-      row[idx.priceDecimals] = instrument.priceDecimals;
-      row[idx.refPrice] = instrument.refPrice;
-      row[idx.simulated] = isSimulated(instrument.ric);
-      this.tables.instruments.insert(row);
-      // Every instrument gets a prices row up front so both tables share the
-      // universe order; simulated rows are overwritten by the first flush.
-      const price = this.#prices.row();
-      price[this.#prices.idx.ric] = instrument.ric;
-      price[this.#prices.idx.close] = instrument.refPrice;
-      price[this.#prices.idx.phase] = TradingPhase.Closed;
-      this.tables.prices.insert(price);
-      this.stats.staticRows += 2;
-    }
+    const row = layout.row();
+    row[idx.ric] = instrument.ric;
+    row[idx.description] = instrument.description;
+    row[idx.currency] = instrument.currency;
+    row[idx.exchange] = instrument.exchange;
+    row[idx.sector] = instrument.sector;
+    row[idx.instrumentType] =
+      instrument.instrumentType ?? InstrumentType.Equity;
+    row[idx.underlying] = instrument.underlying ?? "";
+    row[idx.expiry] = instrument.expiry ?? 0;
+    row[idx.settlementPrice] = instrument.settlementPrice ?? 0;
+    row[idx.contract] = instrument.contract ?? "";
+    row[idx.contractMultiplier] = contractMultiplierOf(instrument);
+    row[idx.tickSize] = instrument.tickSize;
+    row[idx.tickBands] = instrument.tickBands;
+    row[idx.lotSize] = instrument.lotSize;
+    row[idx.priceDecimals] = instrument.priceDecimals;
+    row[idx.refPrice] = instrument.refPrice;
+    row[idx.simulated] = simulated;
+    return row;
+  }
+
+  /** One instrument's static row plus an initial CLOSED prices row. */
+  addInstrument(instrument: InstrumentDef, simulated: boolean) {
+    this.tables.instruments.insert(this.#instrumentRow(instrument, simulated));
+    // Every instrument gets a prices row up front so both tables share the
+    // universe order; simulated rows are overwritten by the first flush.
+    const price = this.#prices.row();
+    price[this.#prices.idx.ric] = instrument.ric;
+    price[this.#prices.idx.close] = instrument.refPrice;
+    price[this.#prices.idx.phase] = TradingPhase.Closed;
+    this.tables.prices.insert(price);
+    this.stats.staticRows += 2;
+  }
+
+  /** Rewrite an instrument's static row (e.g. a future's settlement price). */
+  updateInstrument(instrument: InstrumentDef, simulated: boolean) {
+    const rowIdx = this.tables.instruments.rowIndexAtKey(instrument.ric);
+    const row = this.#instrumentRow(instrument, simulated);
+    if (rowIdx < 0) this.tables.instruments.insert(row);
+    else this.tables.instruments.update(rowIdx, row);
   }
 
   addTrade(trade: TapeTrade) {
@@ -371,8 +404,72 @@ export class MarketDataPublisher {
     row[idx.phase] = book.phase;
     row[idx.seq] = book.seq;
     row[idx.timestamp] = now;
+    this.#writePrices(row);
+    this.#lastPriceRows.set(book.ric, row);
+    for (const alias of this.#aliases.get(book.ric) ?? [])
+      this.#writePrices(row, alias);
+  }
+
+  /** Upsert a prices row, under another ric when mirroring a continuation. */
+  #writePrices(row: RowValue[], ric?: string) {
+    const { idx } = this.#prices;
+    const written = ric === undefined ? row : row.slice();
+    if (ric !== undefined) written[idx.ric] = ric;
     const table = this.tables.prices;
-    const rowIdx = table.rowIndexAtKey(book.ric);
+    const rowIdx = table.rowIndexAtKey(written[idx.ric] as string);
+    if (rowIdx === -1) table.insert(written);
+    else table.update(rowIdx, written);
+    this.stats.priceUpdates++;
+  }
+
+  /**
+   * Point continuation `alias` (AZNc1) at `contract`: its prices row
+   * mirrors the contract's from now on, starting with the last one written.
+   */
+  setAlias(alias: string, contract: string) {
+    const prev = this.#aliasOf.get(alias);
+    if (prev === contract) return;
+    if (prev !== undefined) this.#aliases.get(prev)?.delete(alias);
+    this.#aliasOf.set(alias, contract);
+    let set = this.#aliases.get(contract);
+    if (!set) {
+      set = new Set();
+      this.#aliases.set(contract, set);
+    }
+    set.add(alias);
+    const last = this.#lastPriceRows.get(contract);
+    if (last) this.#writePrices(last, alias);
+  }
+
+  /**
+   * An index's prices row: its level as `last` (no bid / ask / volume),
+   * change against the base level as `close`. Only written when the
+   * rounded level or the phase changes.
+   */
+  publishIndex(
+    instrument: InstrumentDef,
+    level: number,
+    phase: string,
+    now: number,
+  ) {
+    const decimals = instrument.priceDecimals;
+    const last = round(level, decimals);
+    const prev = this.#indexLevels.get(instrument.ric);
+    if (prev && prev.last === last && prev.phase === phase) return;
+    this.#indexLevels.set(instrument.ric, { last, phase });
+    const close = instrument.refPrice;
+    const change = round(last - close, decimals);
+    const { idx } = this.#prices;
+    const row = this.#prices.row();
+    row[idx.ric] = instrument.ric;
+    row[idx.last] = last;
+    row[idx.close] = close;
+    row[idx.change] = change;
+    row[idx.changePct] = round((100 * change) / close, 4);
+    row[idx.phase] = phase;
+    row[idx.timestamp] = now;
+    const table = this.tables.prices;
+    const rowIdx = table.rowIndexAtKey(instrument.ric);
     if (rowIdx === -1) table.insert(row);
     else table.update(rowIdx, row);
     this.stats.priceUpdates++;

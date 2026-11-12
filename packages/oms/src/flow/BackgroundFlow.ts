@@ -8,6 +8,7 @@ import {
   stepTicks,
   TimeInForce,
   tickScheduleOf,
+  usdPerUnit,
 } from "@heswell/trading-schemas";
 import type { OmsEngine } from "../engine/OmsEngine";
 import type { OmsGateway } from "../engine/gateway";
@@ -134,7 +135,7 @@ export class BackgroundFlow {
 
     const position = engine.getPosition(account.account, ric);
     const positionUsd =
-      (position?.quantity ?? 0) * ref * instrument.usdPerPriceUnit;
+      (position?.quantity ?? 0) * ref * usdPerUnit(instrument);
     const skew = positionUsd / (account.maxPositionNotional * 0.5);
     const side: Side =
       Math.abs(skew) > 1 && random.chance(0.8)
@@ -150,7 +151,7 @@ export class BackgroundFlow {
       notionalUsd * random.uniform(0.3, 1.5),
       account.maxOrderNotional * 0.8,
     );
-    const rawQty = targetUsd / (ref * instrument.usdPerPriceUnit);
+    const rawQty = targetUsd / (ref * usdPerUnit(instrument));
     const quantity = Math.min(
       Math.max(instrument.lotSize, roundToLot(rawQty, instrument.lotSize)),
       roundToLot(account.maxOrderQty, instrument.lotSize, "down"),

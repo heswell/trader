@@ -25,6 +25,27 @@ const presets: Record<string, ColumnDescriptor> = {
   exchange: { name: "exchange", width: 70 },
   currency: { name: "currency", width: 60 },
   sector: { name: "sector", width: 120 },
+  instrumentType: { name: "instrumentType", label: "type", width: 75 },
+  underlying: { name: "underlying", width: 90 },
+  contract: { name: "contract", width: 90 },
+  expiry: {
+    name: "expiry",
+    width: 95,
+    type: renderer(TradingRenderer.Date),
+  },
+  contractMultiplier: {
+    name: "contractMultiplier",
+    label: "multiplier",
+    width: 80,
+    ...right,
+  },
+  settlementPrice: {
+    name: "settlementPrice",
+    label: "settlement",
+    width: 90,
+    ...right,
+    type: renderer(TradingRenderer.Price),
+  },
   bid: {
     name: "bid",
     width: 95,
@@ -219,4 +240,10 @@ export const instrumentGridColumns = ({
 };
 
 /** Columns a user can group by (when present). */
-export const GROUPABLE_COLUMNS = ["exchange", "sector", "currency"] as const;
+export const GROUPABLE_COLUMNS = [
+  "exchange",
+  "sector",
+  "currency",
+  "instrumentType",
+  "underlying",
+] as const;

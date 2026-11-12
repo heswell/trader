@@ -243,11 +243,15 @@ Risk checks run in this order, and the first failure wins. Each returns a `Rejec
 ## Positions and mark-to-market
 
 - **Fills.** Each fill updates `qty`, `boughtQty`, `soldQty`, `avgCost` and `realizedPnl`, using average cost:
-  - A reducing fill realises `(px - avgCost) × closedQty × sign`.
+  - A reducing fill realises `(px - avgCost) × closedQty × sign × contractMultiplier`.
   - A flip resets `avgCost` to the fill price.
 - **Mark.** Every `oms.markIntervalMs` (default 500 ms), each position gets `markPx` from last, else mid, else
-  refPrice. The OMS then recomputes `marketValue = qty × markPx`, `unrealizedPnl = (markPx - avgCost) × qty` and
-  `totalPnl`. This keeps the `positions` table self-contained (risk and P&L use it).
+  refPrice. The OMS then recomputes `marketValue = qty × markPx × contractMultiplier`,
+  `unrealizedPnl = (markPx - avgCost) × qty × contractMultiplier` and `totalPnl`. This keeps the `positions` table
+  self-contained (risk and P&L use it). The multiplier is 1 for equities.
+- **Futures expiry.** When the exchange expires a future (an `EXPIRED` instrument event, after its resting orders'
+  EXPIRED reports), the OMS ends every working order in it (algos, waiting stops, DMA) and closes each open position
+  with a `SETTLEMENT` fill at the settlement price. The fill has no order (`orderId` is empty).
 - **Live prices.** The `positionPrices` join (positions ⟕ EXCHANGE prices) gives the UI tick-by-tick bid/ask/last
   next to each position.
 - P&L is in instrument currency.

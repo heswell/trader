@@ -7,6 +7,7 @@ import {
   RejectReason,
   Side,
   type TradingPhase,
+  usdPerUnit,
   validateOrder,
   validateStopTrigger,
 } from "@heswell/trading-schemas";
@@ -15,7 +16,7 @@ import type { Account } from "../reference/accounts";
 /** Instrument data the risk check needs (exchange-sim InstrumentDef satisfies it). */
 export interface RiskInstrument extends InstrumentStatic {
   refPrice: number;
-  /** USD value of one unit of price (GBX prices are in pence). */
+  /** USD value of one unit of the price currency (GBX prices are in pence). */
   usdPerPriceUnit: number;
 }
 
@@ -93,7 +94,8 @@ const fmtUsd = (n: number) => `${Math.round(n).toLocaleString("en-US")} USD`;
  * reached, maxOrderQty, maxOrderNotional, limit price collar (LIMIT only:
  * stops may legitimately sit far from the market), maxPositionNotional.
  *
- * Notionals are converted to USD with the instrument's usdPerPriceUnit; account
+ * Notionals are converted to USD with usdPerUnit (currency x contract
+ * multiplier); account
  * limits are in USD. The position check is worst case: current net position
  * plus all same-side working leaves plus this order.
  */
@@ -144,7 +146,7 @@ export const checkPreTradeRisk = (
     );
   }
   const px = expectedPrice(order, instrument, ctx.market);
-  const notionalUsd = order.quantity * px * instrument.usdPerPriceUnit;
+  const notionalUsd = order.quantity * px * usdPerUnit(instrument);
   if (notionalUsd > account.maxOrderNotional) {
     return reject(
       RejectReason.ExceedsMaxNotional,
@@ -166,9 +168,7 @@ export const checkPreTradeRisk = (
     ctx.positionQty + sign * (working + order.quantity),
   );
   const positionUsd =
-    projected *
-    referencePrice(instrument, ctx.market) *
-    instrument.usdPerPriceUnit;
+    projected * referencePrice(instrument, ctx.market) * usdPerUnit(instrument);
   if (
     projected > Math.abs(ctx.positionQty) &&
     positionUsd > account.maxPositionNotional
