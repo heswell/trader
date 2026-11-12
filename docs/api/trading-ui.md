@@ -3989,7 +3989,7 @@ Props of [`OrderStatusBadge`](#orderstatusbadge).
 
 #### OrderTicket
 
-*component* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L1110)
+*component* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L1109)
 
 Order entry. The side buttons carry the quote (Sell on the bid, Buy on
 the ask). Instrument, side, quantity and price stay in place; the
