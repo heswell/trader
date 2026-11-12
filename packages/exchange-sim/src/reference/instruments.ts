@@ -1,6 +1,7 @@
 import {
   decimalsOf,
   type InstrumentStatic,
+  InstrumentType,
   parseTickBands,
   roundToTick,
   type TickSchedule,
@@ -17,7 +18,10 @@ export interface InstrumentDef extends InstrumentStatic {
   tickBands: string;
   priceDecimals: number;
   refPrice: number;
-  /** USD value of one unit of price (GBX prices are in pence). */
+  /**
+   * USD value of one unit of the price currency (GBX prices are in pence).
+   * Excludes the contract multiplier: USD notional uses usdPerUnit().
+   */
   usdPerPriceUnit: number;
 }
 
@@ -66,6 +70,8 @@ export const toInstrumentDef = ([
     currency,
     exchange,
     sector: SECTOR_BY_RIC.get(ric) ?? "",
+    instrumentType: InstrumentType.Equity,
+    contractMultiplier: 1,
     tickSize,
     tickBands,
     lotSize: exchange === "XHKG" ? hkBoardLot(refPrice) : 1,

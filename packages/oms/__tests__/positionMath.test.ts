@@ -92,4 +92,22 @@ describe("position math (average cost)", () => {
       totalPnl: 140,
     });
   });
+
+  test("a contract multiplier scales P&L and market value, not avgCost", () => {
+    // 2 contracts x 10 per point
+    const long = applyFill(FLAT_POSITION, Side.Buy, 2, 100, 10);
+    expect(long).toMatchObject({ quantity: 2, avgCost: 100, realizedPnl: 0 });
+    const reduced = applyFill(long, Side.Sell, 1, 103, 10);
+    expect(reduced).toMatchObject({
+      quantity: 1,
+      avgCost: 100,
+      realizedPnl: 30,
+    });
+    expect(markPosition(reduced, 104, 10)).toMatchObject({
+      markPx: 104,
+      marketValue: 1040,
+      unrealizedPnl: 40,
+      totalPnl: 70,
+    });
+  });
 });

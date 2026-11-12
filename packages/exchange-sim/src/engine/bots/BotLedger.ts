@@ -18,8 +18,8 @@ export interface BotLedgerState {
 
 /**
  * One bot's trading record: order counts, fills, position and P&L in the
- * instrument's price currency (callers convert to USD with
- * usdPerPriceUnit). Updated by the bot's OrderPort, never by the bot.
+ * instrument's price currency, excluding the contract multiplier (callers
+ * convert to USD with usdPerUnit). Updated by the bot's OrderPort, never by the bot.
  */
 export class BotLedger implements BotLedgerState {
   orders = 0;

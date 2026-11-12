@@ -13,6 +13,7 @@ import {
   simBooks as simBooksDef,
   simSampleKey,
   simSamples as simSamplesDef,
+  usdPerUnit,
 } from "@heswell/trading-schemas";
 import { type Bot, botBaseline } from "../engine/bots/Bot";
 import { OWNER_GROUPS, type TradeParty } from "../engine/flow";
@@ -231,7 +232,7 @@ export class SimAdminPublisher {
     const fills = this.#fills;
     if (!fills) return;
     const takerBuys = trade.side === BookSide.BUY;
-    const usd = sim.book.instrument.usdPerPriceUnit;
+    const usd = usdPerUnit(sim.book.instrument);
     for (const [party, isMaker] of [
       [maker, true],
       [taker, false],
@@ -400,7 +401,7 @@ export class SimAdminPublisher {
     const history = this.#botHistory;
     if (!history) return;
     const { book } = sim;
-    const usd = book.instrument.usdPerPriceUnit;
+    const usd = usdPerUnit(book.instrument);
     const mark = markOf(sim);
     const { idx } = history.layout;
     for (const bot of sim.bots) {
@@ -467,7 +468,7 @@ export class SimAdminPublisher {
     const { idx } = this.#bots;
     const { ledger } = bot.port;
     const { book } = sim;
-    const usd = book.instrument.usdPerPriceUnit;
+    const usd = usdPerUnit(book.instrument);
     const mark = markOf(sim);
     const unrealised = ledger.unrealisedPnl(mark);
     const resting = bot.port.restingQty();

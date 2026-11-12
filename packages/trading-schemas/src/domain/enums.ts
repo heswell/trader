@@ -61,6 +61,14 @@ export const STOP_TIME_IN_FORCE_VALUES: readonly TimeInForce[] = Object.freeze([
   TimeInForce.GoodTillCancel,
 ]);
 
+/** Kind of instrument (instruments.instrumentType). */
+export const InstrumentType = Object.freeze({
+  Equity: "EQUITY",
+  Future: "FUTURE",
+} as const);
+export type InstrumentType = ValueOf<typeof InstrumentType>;
+export const INSTRUMENT_TYPES = values(InstrumentType);
+
 /** FIX OrdStatus (tag 39) subset. */
 export const OrdStatus = Object.freeze({
   PendingNew: "PENDING_NEW",

@@ -15,6 +15,7 @@ import {
   TradingPhase,
   VOLUME_PROFILES,
   type VolumeProfileName,
+  usdPerUnit,
 } from "@heswell/trading-schemas";
 import {
   barIntervalList,
@@ -253,18 +254,16 @@ export class ExchangeSimulator {
       (b, trade) => this.#onTrade(b, trade),
     );
     book.timers = this.#bookTimers;
-    const { refPrice, lotSize, usdPerPriceUnit } = instrument;
+    const { refPrice, lotSize } = instrument;
+    const usdPer = usdPerUnit(instrument);
     const baseQty = Math.max(
       lotSize,
-      roundToLot(
-        config.baseNotionalUsd / (refPrice * usdPerPriceUnit),
-        lotSize,
-      ),
+      roundToLot(config.baseNotionalUsd / (refPrice * usdPer), lotSize),
     );
     const calibration = calibrateImpact(
       config,
       config.takerRate,
-      baseQty * refPrice * usdPerPriceUnit,
+      baseQty * refPrice * usdPer,
     );
     book.model.impact = calibration.impact;
     book.model.walkVolShare = calibration.walkVolShare;
@@ -358,7 +357,7 @@ export class ExchangeSimulator {
       sim.flow.add(taker.group, isBuy, trade.size);
       book.model.applyImpact(
         isBuy ? 1 : -1,
-        trade.price * trade.size * book.instrument.usdPerPriceUnit,
+        trade.price * trade.size * usdPerUnit(book.instrument),
       );
     }
     if (this.#journal && this.#tradeSeq >= this.#tradeReserved) {
@@ -659,7 +658,7 @@ export class ExchangeSimulator {
       const usd =
         Math.abs(port.ledger.position) *
         sim.book.model.fairValue *
-        sim.book.instrument.usdPerPriceUnit;
+        usdPerUnit(sim.book.instrument);
       if (usd > maxUsd)
         reason = `position $${Math.round(usd)} over maxPositionUsd ${maxUsd}`;
     }

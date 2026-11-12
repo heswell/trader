@@ -1,5 +1,5 @@
 import { Side as BookSide } from "@heswell/hft-limit-order-book";
-import { roundToLot, Side } from "@heswell/trading-schemas";
+import { roundToLot, Side, usdPerUnit } from "@heswell/trading-schemas";
 import type { InstrumentBook } from "../InstrumentBook";
 import type { BotParamSpec } from "./Bot";
 
@@ -28,11 +28,11 @@ export const sideSign = (side: BookSide) => (side === BookSide.BUY ? 1 : -1);
 
 /** Shares worth `usd` at `price` (whole lots, at least one). */
 export const qtyForUsd = (book: InstrumentBook, usd: number, price: number) => {
-  const { lotSize, usdPerPriceUnit } = book.instrument;
+  const { lotSize } = book.instrument;
   if (!(price > 0) || !(usd > 0)) return 0;
   return Math.max(
     lotSize,
-    roundToLot(usd / (price * usdPerPriceUnit), lotSize),
+    roundToLot(usd / (price * usdPerUnit(book.instrument)), lotSize),
   );
 };
 

@@ -1,4 +1,7 @@
 import {
+  contractMultiplierOf,
+  type InstrumentStatic,
+  InstrumentType,
   AlgoStrategy,
   type AmendOrderRequest,
   type CancelAllRequest,
@@ -186,6 +189,10 @@ export interface Position extends PositionState, PositionMarks {
   /** Instrument static, denormalised so positions can group by it. */
   exchange: string;
   sector: string;
+  /** InstrumentType of the ric (EQUITY / FUTURE). */
+  instrumentType: string;
+  /** Futures: ric of the underlying; "" otherwise. */
+  underlying: string;
   /** marketValue converted to USD with the instrument's usdPerPriceUnit. */
   marketValueUsd: number;
   /** totalPnl converted to USD with the instrument's usdPerPriceUnit. */
@@ -732,7 +739,12 @@ export class OmsEngine {
       this.#sink.fill?.(fill);
     }
     for (const position of state.positions) {
-      Object.assign(position, this.#usdMarks(position));
+      const instrument = this.#gateway.getInstrument(position.ric);
+      Object.assign(
+        position,
+        instrument ? this.#instrumentFields(instrument) : undefined,
+        this.#usdMarks(position),
+      );
       this.positions.set(position.id, position);
       this.#sink.position?.({ ...position });
     }
@@ -1464,7 +1476,11 @@ export class OmsEngine {
         this.#gateway.getTopOfBook(position.ric),
       );
       if (px === position.markPx) continue;
-      const marks = markPosition(position, px);
+      const marks = markPosition(
+        position,
+        px,
+        contractMultiplierOf(instrument),
+      );
       Object.assign(
         position,
         marks,
@@ -1479,7 +1495,10 @@ export class OmsEngine {
     return changed;
   }
 
-  /** USD market value / P&L (2 dp) via the instrument's usdPerPriceUnit. */
+  /**
+   * USD market value / P&L (2 dp) via the instrument's usdPerPriceUnit (the
+   * multiplier is already in marketValue / totalPnl).
+   */
   #usdMarks({
     ric,
     marketValue,
@@ -1492,25 +1511,36 @@ export class OmsEngine {
     };
   }
 
+  /** Instrument static denormalised onto a position. */
+  #instrumentFields(instrument: InstrumentStatic | undefined) {
+    return {
+      exchange: instrument?.exchange ?? "",
+      sector: instrument?.sector ?? "",
+      instrumentType: instrument?.instrumentType ?? InstrumentType.Equity,
+      underlying: instrument?.underlying ?? "",
+    };
+  }
+
   #applyFillToPosition(fill: Fill) {
     const id = positionKey(fill.account, fill.ric);
     const existing = this.positions.get(id);
+    const instrument = this.#gateway.getInstrument(fill.ric);
+    const multiplier = contractMultiplierOf(instrument);
     const state = applyFill(
       existing ?? FLAT_POSITION,
       fill.side,
       fill.quantity,
       fill.price,
+      multiplier,
     );
     const markPx = existing?.markPx || fill.price;
-    const instrument = this.#gateway.getInstrument(fill.ric);
-    const marks = markPosition(state, markPx);
+    const marks = markPosition(state, markPx, multiplier);
     const position: Position = {
       id,
       account: fill.account,
       ric: fill.ric,
       currency: fill.currency,
-      exchange: instrument?.exchange ?? "",
-      sector: instrument?.sector ?? "",
+      ...this.#instrumentFields(instrument),
       ...state,
       ...marks,
       ...this.#usdMarks({ ric: fill.ric, ...marks }),
@@ -1634,7 +1664,10 @@ export class OmsEngine {
       side: parent.side,
       quantity: report.lastQty,
       price: report.lastPx,
-      notional: report.lastQty * report.lastPx,
+      notional:
+        report.lastQty *
+        report.lastPx *
+        contractMultiplierOf(this.#gateway.getInstrument(parent.ric)),
       currency: parent.currency,
       liquidity: report.liquidity ?? "",
       timestamp: report.timestamp,
@@ -1702,7 +1735,10 @@ export class OmsEngine {
       trader: parent.trader,
       ...this.#orderRow(parent),
       version: parent.state.version,
-      notional: parent.state.cumQty * parent.state.avgPx,
+      notional:
+        parent.state.cumQty *
+        parent.state.avgPx *
+        contractMultiplierOf(this.#gateway.getInstrument(parent.ric)),
       ...executionQuality(parent),
       strategy: parent.strategy ?? AlgoStrategy.Dma,
       algoStart: parent.algo?.startAt ?? 0,

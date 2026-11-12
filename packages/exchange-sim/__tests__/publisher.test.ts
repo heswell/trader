@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { Side as BookSide } from "@heswell/hft-limit-order-book";
 import {
   depthKey,
+  InstrumentType,
   RejectReason,
   Side,
   TradingPhase,
@@ -61,6 +62,8 @@ describe("MarketDataPublisher", () => {
     expect(vod?.simulated).toBe(false);
     expect(vod?.currency).toBe("GBX");
     expect(vod?.sector).toBe("Communication Services");
+    expect(vod?.instrumentType).toBe(InstrumentType.Equity);
+    expect(vod?.contractMultiplier).toBe(1);
     expect(tables.prices.rowCount).toBe(ALL_INSTRUMENTS.length);
     expect(tables.prices.get("VOD.L")?.phase).toBe(TradingPhase.Closed);
     expect(tables.prices.get("AAPL.OQ")?.phase).toBe(TradingPhase.Continuous);

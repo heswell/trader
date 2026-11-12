@@ -26,6 +26,7 @@ const Subscribed = ({ children }: { children: ReactNode }) => {
       "tickBands",
       "lotSize",
       "priceDecimals",
+      "contractMultiplier",
     ],
   });
   const { rows: records } = useDataSourceRows(dataSource, { rowCount: 2_000 });
@@ -43,6 +44,7 @@ const Subscribed = ({ children }: { children: ReactNode }) => {
             tickBands: optionalString(r.tickBands),
             lotSize: optionalNumber(r.lotSize),
             priceDecimals: optionalNumber(r.priceDecimals),
+            contractMultiplier: optionalNumber(r.contractMultiplier),
           },
         ]),
       ),

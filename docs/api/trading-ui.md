@@ -917,7 +917,7 @@ resetInstrumentLinkPersistence(): void
 
 #### sameInstrument
 
-*function* · [instrument-context/selectedInstrument.ts](../../packages/trading-ui/src/instrument-context/selectedInstrument.ts#L54)
+*function* · [instrument-context/selectedInstrument.ts](../../packages/trading-ui/src/instrument-context/selectedInstrument.ts#L61)
 
 Whether two selections are the same instrument with the same static fields
 (shallow compare; both undefined counts as equal).
@@ -928,7 +928,7 @@ sameInstrument(a: SelectedInstrument | undefined, b: SelectedInstrument | undefi
 
 #### sanitizeSelectedInstrument
 
-*function* · [instrument-context/selectedInstrument.ts](../../packages/trading-ui/src/instrument-context/selectedInstrument.ts#L31)
+*function* · [instrument-context/selectedInstrument.ts](../../packages/trading-ui/src/instrument-context/selectedInstrument.ts#L38)
 
 A plain, JSON-safe copy of `value` with only the SelectedInstrument
 fields (so grid rows, proxies or class instances never cross the bus).
@@ -1274,6 +1274,7 @@ can format prices / validate quantities without another lookup.
 | `tickBands?` | `string` |  | Tick bands, as in the instruments table (`from:tick;...`). |
 | `lotSize?` | `number` |  |  |
 | `priceDecimals?` | `number` |  |  |
+| `contractMultiplier?` | `number` |  | Futures: value per unit of quantity per unit of price (1 for equities). |
 
 #### UseComponentLinkGroupOptions
 
@@ -1669,6 +1670,7 @@ Extends `SelectedInstrument`.
 | `tickBands?` | `string` |  | Tick bands, as in the instruments table (`from:tick;...`). (from `SelectedInstrument`) |
 | `lotSize?` | `number` |  | (from `SelectedInstrument`) |
 | `priceDecimals?` | `number` |  | (from `SelectedInstrument`) |
+| `contractMultiplier?` | `number` |  | Futures: value per unit of quantity per unit of price (1 for equities). (from `SelectedInstrument`) |
 
 #### LadderQueue
 
@@ -3130,7 +3132,7 @@ Props of [`FillsBlotter`](#fillsblotter).
 
 #### FillsLinkContext
 
-*interface* · [components/FillsBlotter/FillsBlotterRenderers.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotterRenderers.tsx#L7)
+*interface* · [components/FillsBlotter/FillsBlotterRenderers.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotterRenderers.tsx#L8)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -3527,7 +3529,7 @@ type InstrumentAction = (instrument: SelectedInstrument) => void
 
 #### InstrumentLookupProvider
 
-*component* · [components/InstrumentLookup/InstrumentLookup.tsx](../../packages/trading-ui/src/components/InstrumentLookup/InstrumentLookup.tsx#L64)
+*component* · [components/InstrumentLookup/InstrumentLookup.tsx](../../packages/trading-ui/src/components/InstrumentLookup/InstrumentLookup.tsx#L66)
 
 Makes instrument static data (tick size / bands, decimals, currency, lot
 size, description) available by ric to cell renderers and selection
@@ -3542,7 +3544,7 @@ the outer one, so blotters can each wrap themselves safely.
 
 #### useInstrumentLookup
 
-*hook* · [components/InstrumentLookup/InstrumentLookup.tsx](../../packages/trading-ui/src/components/InstrumentLookup/InstrumentLookup.tsx#L76)
+*hook* · [components/InstrumentLookup/InstrumentLookup.tsx](../../packages/trading-ui/src/components/InstrumentLookup/InstrumentLookup.tsx#L78)
 
 ric -> static instrument data; empty until loaded / without a provider.
 

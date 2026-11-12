@@ -30,13 +30,15 @@ export const FLAT_POSITION: PositionState = Object.freeze({
  * Apply a fill using average cost. Increasing the position re-averages the
  * cost; reducing it realises (fillPx - avgCost) per unit closed (sign-adjusted
  * for shorts) and leaves avgCost unchanged; crossing through flat opens the
- * remainder at the fill price.
+ * remainder at the fill price. `multiplier` is the instrument's contract
+ * multiplier: realised P&L is per unit of price times it.
  */
 export const applyFill = (
   position: PositionState,
   side: Side,
   qty: number,
   px: number,
+  multiplier = 1,
 ): PositionState => {
   const signed = side === "BUY" ? qty : -qty;
   const { quantity: q0, avgCost: a0 } = position;
@@ -49,7 +51,8 @@ export const applyFill = (
     return { ...position, quantity, boughtQty, soldQty, avgCost };
   }
   const closed = Math.min(qty, Math.abs(q0));
-  const realizedPnl = position.realizedPnl + closed * (px - a0) * Math.sign(q0);
+  const realizedPnl =
+    position.realizedPnl + closed * (px - a0) * Math.sign(q0) * multiplier;
   const avgCost =
     quantity === 0 ? 0 : Math.sign(quantity) === Math.sign(q0) ? a0 : px;
   return { quantity, boughtQty, soldQty, avgCost, realizedPnl };
@@ -58,14 +61,15 @@ export const applyFill = (
 export const markPosition = (
   position: PositionState,
   markPx: number,
+  multiplier = 1,
 ): PositionMarks => {
   const unrealizedPnl =
     position.quantity === 0
       ? 0
-      : position.quantity * (markPx - position.avgCost);
+      : position.quantity * (markPx - position.avgCost) * multiplier;
   return {
     markPx,
-    marketValue: position.quantity * markPx,
+    marketValue: position.quantity * markPx * multiplier,
     unrealizedPnl,
     totalPnl: position.realizedPnl + unrealizedPnl,
   };

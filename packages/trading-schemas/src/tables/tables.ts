@@ -27,6 +27,29 @@ export const instruments = defineTable({
       optional: true,
       description: "GICS sector, e.g. Financials.",
     },
+    {
+      name: "instrumentType",
+      dataType: "string",
+      description: "InstrumentType: EQUITY | FUTURE.",
+    },
+    {
+      name: "underlying",
+      dataType: "string",
+      optional: true,
+      description: "Futures: ric of the underlying instrument.",
+    },
+    {
+      name: "expiry",
+      dataType: "epochtimestamp",
+      optional: true,
+      description: "Futures: last trading time.",
+    },
+    {
+      name: "contractMultiplier",
+      dataType: "double",
+      description:
+        "Value of one unit of quantity per unit of price (1 for equities). Notional = quantity x price x contractMultiplier.",
+    },
     { name: "tickSize", dataType: "double" },
     {
       name: "tickBands",
@@ -1003,9 +1026,20 @@ export const positions = defineTable({
       description: "Instrument GICS sector (from instruments).",
     },
     {
+      name: "instrumentType",
+      dataType: "string",
+      description: "InstrumentType (from instruments).",
+    },
+    {
+      name: "underlying",
+      dataType: "string",
+      description: "Futures: underlying ric (from instruments); '' otherwise.",
+    },
+    {
       name: "marketValueUsd",
       dataType: "double",
-      description: "marketValue in USD (instrument usdPerPriceUnit).",
+      description:
+        "marketValue in USD (instrument usdPerPriceUnit; marketValue already includes the contract multiplier).",
     },
     {
       name: "totalPnlUsd",

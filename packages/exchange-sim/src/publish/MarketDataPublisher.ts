@@ -1,7 +1,9 @@
 import type { DepthLevel } from "@heswell/hft-limit-order-book";
 import {
+  contractMultiplierOf,
   depth as depthDef,
   depthKey,
+  InstrumentType,
   instruments as instrumentsDef,
   prices as pricesDef,
   Side,
@@ -191,6 +193,11 @@ export class MarketDataPublisher {
       row[idx.currency] = instrument.currency;
       row[idx.exchange] = instrument.exchange;
       row[idx.sector] = instrument.sector;
+      row[idx.instrumentType] =
+        instrument.instrumentType ?? InstrumentType.Equity;
+      row[idx.underlying] = instrument.underlying ?? "";
+      row[idx.expiry] = instrument.expiry ?? 0;
+      row[idx.contractMultiplier] = contractMultiplierOf(instrument);
       row[idx.tickSize] = instrument.tickSize;
       row[idx.tickBands] = instrument.tickBands;
       row[idx.lotSize] = instrument.lotSize;
