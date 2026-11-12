@@ -7,6 +7,7 @@ import {
   TimeInForce,
   TradingPhase,
   formatRpcError,
+  isStopTriggered,
   parseRpcError,
   rpcError,
   rpcSuccess,
@@ -14,6 +15,7 @@ import {
   validateAmend,
   validateOrder,
   validateRpcParams,
+  validateStopTrigger,
   type InstrumentStatic,
 } from "../src";
 
@@ -69,12 +71,15 @@ describe("validateRpcParams", () => {
     }
   });
 
-  test("amendOrder requires quantity or price", () => {
+  test("amendOrder requires quantity, price or stopPrice", () => {
     expect(validateRpcParams(RpcName.AmendOrder, { orderId: "o1" }).ok).toBe(
       false,
     );
     expect(
       validateRpcParams(RpcName.AmendOrder, { orderId: "o1", price: 1 }).ok,
+    ).toBe(true);
+    expect(
+      validateRpcParams(RpcName.AmendOrder, { orderId: "o1", stopPrice: 1 }).ok,
     ).toBe(true);
   });
 
@@ -206,7 +211,7 @@ describe("validateOrder", () => {
     ).toBe(RejectReason.InvalidPrice);
     expect(
       reason(validateOrder({ ...limit, ordType: OrdType.Stop }, vod)),
-    ).toBe(RejectReason.UnsupportedOrdType);
+    ).toBe(RejectReason.InvalidPrice);
     expect(
       reason(
         validateOrder(
@@ -266,5 +271,91 @@ describe("validateOrder", () => {
       validateAmend({ price: 101 }, vod, { ordType: OrdType.Market, cumQty: 0 })
         ?.reason,
     ).toBe(RejectReason.InvalidPrice);
+  });
+
+  test("validateAmend: stop prices", () => {
+    const stopLimit = {
+      ordType: OrdType.StopLimit,
+      cumQty: 0,
+      side: Side.Buy,
+      price: 102,
+      stopPrice: 101.5,
+    };
+    expect(validateAmend({ stopPrice: 101.8 }, vod, stopLimit)).toBeUndefined();
+    expect(validateAmend({ stopPrice: 101.801 }, vod, stopLimit)?.reason).toBe(
+      RejectReason.InvalidStopPrice,
+    );
+    // buy stop limit: the limit must not go below the stop
+    expect(validateAmend({ stopPrice: 102.5 }, vod, stopLimit)?.reason).toBe(
+      RejectReason.InvalidPrice,
+    );
+    expect(validateAmend({ price: 101 }, vod, stopLimit)?.reason).toBe(
+      RejectReason.InvalidPrice,
+    );
+    expect(
+      validateAmend({ price: 101 }, vod, { ordType: OrdType.Stop, cumQty: 0 })
+        ?.reason,
+    ).toBe(RejectReason.InvalidPrice);
+    expect(
+      validateAmend({ stopPrice: 101 }, vod, {
+        ordType: OrdType.Limit,
+        cumQty: 0,
+      })?.reason,
+    ).toBe(RejectReason.InvalidStopPrice);
+  });
+
+  test("stop orders", () => {
+    const stop = {
+      side: Side.Sell,
+      ordType: OrdType.Stop,
+      quantity: 200,
+      stopPrice: 99.5,
+    } as const;
+    const stopLimit = { ...stop, ordType: OrdType.StopLimit, price: 99.4 };
+    expect(validateOrder(stop, vod)).toBeUndefined();
+    expect(validateOrder(stopLimit, vod)).toBeUndefined();
+    expect(
+      validateOrder({ ...stop, timeInForce: TimeInForce.GoodTillCancel }, vod),
+    ).toBeUndefined();
+    expect(reason(validateOrder({ ...stop, stopPrice: undefined }, vod))).toBe(
+      RejectReason.MissingStopPrice,
+    );
+    expect(reason(validateOrder({ ...stop, stopPrice: 99.501 }, vod))).toBe(
+      RejectReason.InvalidStopPrice,
+    );
+    expect(reason(validateOrder({ ...stop, price: 99 }, vod))).toBe(
+      RejectReason.InvalidPrice,
+    );
+    expect(reason(validateOrder({ ...stopLimit, price: undefined }, vod))).toBe(
+      RejectReason.MissingPrice,
+    );
+    // sell stop limit: limit above the stop could never fill on the trigger
+    expect(reason(validateOrder({ ...stopLimit, price: 99.6 }, vod))).toBe(
+      RejectReason.InvalidPrice,
+    );
+    for (const tif of [TimeInForce.ImmediateOrCancel, TimeInForce.FillOrKill]) {
+      expect(reason(validateOrder({ ...stop, timeInForce: tif }, vod))).toBe(
+        RejectReason.UnsupportedTimeInForce,
+      );
+    }
+    expect(reason(validateOrder({ ...limit, stopPrice: 100 }, vod))).toBe(
+      RejectReason.InvalidStopPrice,
+    );
+  });
+
+  test("stop trigger helpers", () => {
+    expect(validateStopTrigger(Side.Buy, 101, 100)).toBeUndefined();
+    expect(validateStopTrigger(Side.Buy, 100, 100)?.reason).toBe(
+      RejectReason.InvalidStopPrice,
+    );
+    expect(validateStopTrigger(Side.Sell, 99, 100)).toBeUndefined();
+    expect(validateStopTrigger(Side.Sell, 101, 100)?.reason).toBe(
+      RejectReason.InvalidStopPrice,
+    );
+    expect(validateStopTrigger(Side.Sell, 101, undefined)).toBeUndefined();
+    expect(isStopTriggered(Side.Buy, 101, 101)).toBe(true);
+    expect(isStopTriggered(Side.Buy, 101, 100.99)).toBe(false);
+    expect(isStopTriggered(Side.Sell, 99, 99)).toBe(true);
+    expect(isStopTriggered(Side.Sell, 99, 99.01)).toBe(false);
   });
 });

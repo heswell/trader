@@ -87,14 +87,14 @@ Values are the strings stored in table columns and sent in RPC params.
 | Enum | Values |
 |---|---|
 | `Side` | BUY, SELL |
-| `OrdType` | MARKET, LIMIT, STOP*, STOP_LIMIT* (*reserved, rejected) |
+| `OrdType` | MARKET, LIMIT, STOP, STOP_LIMIT (stops are held by the OMS; the exchange takes MARKET / LIMIT only) |
 | `TimeInForce` | DAY, GTC, IOC, FOK |
 | `OrdStatus` | PENDING_NEW, NEW, PARTIALLY_FILLED, FILLED, PENDING_CANCEL, CANCELLED, PENDING_REPLACE, REPLACED, REJECTED, EXPIRED |
 | `ExecType` | PENDING_NEW, NEW, TRADE, PENDING_CANCEL, CANCELLED, PENDING_REPLACE, REPLACED, REJECTED, EXPIRED |
 | `TradingPhase` | CLOSED, PRE_OPEN, OPENING_AUCTION, CONTINUOUS, CLOSING_AUCTION, POST_CLOSE, HALTED |
 | `Liquidity` | ADDED, REMOVED, AUCTION |
 | `BotType` | MARKET_MAKER, TAKER, ALL |
-| `RejectReason` | INVALID_REQUEST, UNKNOWN_INSTRUMENT, UNKNOWN_ACCOUNT, ACCOUNT_DISABLED, UNKNOWN_ORDER, DUPLICATE_CLORDID, UNSUPPORTED_ORD_TYPE, UNSUPPORTED_TIF, MISSING_PRICE, INVALID_PRICE, INVALID_TICK_SIZE, INVALID_QUANTITY, INVALID_LOT_SIZE, EXCEEDS_MAX_QUANTITY, EXCEEDS_MAX_NOTIONAL, PRICE_OUTSIDE_COLLAR, RESTRICTED_INSTRUMENT, INSTRUMENT_HALTED, MARKET_CLOSED, NO_LIQUIDITY, FOK_NOT_FILLABLE, TOO_LATE_TO_AMEND, TOO_LATE_TO_CANCEL, ORDER_PENDING, PERMISSION_DENIED, INTERNAL_ERROR |
+| `RejectReason` | INVALID_REQUEST, UNKNOWN_INSTRUMENT, UNKNOWN_ACCOUNT, ACCOUNT_DISABLED, UNKNOWN_ORDER, DUPLICATE_CLORDID, UNSUPPORTED_ORD_TYPE, UNSUPPORTED_TIF, MISSING_PRICE, MISSING_STOP_PRICE, INVALID_STOP_PRICE, INVALID_PRICE, INVALID_TICK_SIZE, INVALID_QUANTITY, INVALID_LOT_SIZE, EXCEEDS_MAX_QUANTITY, EXCEEDS_MAX_NOTIONAL, PRICE_OUTSIDE_COLLAR, RESTRICTED_INSTRUMENT, INSTRUMENT_HALTED, MARKET_CLOSED, NO_LIQUIDITY, FOK_NOT_FILLABLE, TOO_LATE_TO_AMEND, TOO_LATE_TO_CANCEL, ORDER_PENDING, PERMISSION_DENIED, INTERNAL_ERROR |
 
 ## Order status transitions
 
@@ -126,7 +126,7 @@ with `errorMessage = "<RejectReason>: <text>"` (`rpcError` / `parseRpcError`).
 | RPC | Module | Params | `data` |
 |---|---|---|---|
 | `createOrder` | OMS | `account, ric, side, ordType, quantity, price?, timeInForce? (=DAY), clOrdId?, stopPrice?` | `{ orderId, clOrdId?, status }` |
-| `amendOrder` | OMS | `orderId, quantity?, price?` (≥1 required; quantity is new total) | `{ orderId, status }` |
+| `amendOrder` | OMS | `orderId, quantity?, price?, stopPrice?` (≥1 required; quantity is new total) | `{ orderId, status }` |
 | `cancelOrder` | OMS | `orderId` | `{ orderId, status }` |
 | `cancelAll` | OMS | `account?, ric?, side?` (ANDed) | `{ orderIds }` |
 | `setVolatility` | EXCHANGE | `ric?, volatility` (annualised, 0–10) | `{ rics }` |

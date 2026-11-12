@@ -810,7 +810,7 @@ const orderColumns = [
     name: "stopPrice",
     dataType: "double",
     optional: true,
-    description: "Reserved.",
+    description: "STOP / STOP_LIMIT trigger price (0 otherwise).",
   },
   { name: "status", dataType: "string", description: "OrdStatus" },
   { name: "cumQty", dataType: "long" },
@@ -893,6 +893,12 @@ export const parentOrders = defineTable({
       dataType: "long",
       description:
         "Quantity the algo schedule says should be filled by now (compare cumQty); equals quantity for DMA.",
+    },
+    {
+      name: "triggeredAt",
+      dataType: "epochtimestamp",
+      description:
+        "STOP / STOP_LIMIT: clock time the stop triggered and the order went to the exchange; 0 while waiting (and for other types).",
     },
   ],
   links: [{ fromColumn: "account", toTable: "accounts", toColumn: "account" }],

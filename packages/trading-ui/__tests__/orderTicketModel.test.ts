@@ -1,8 +1,20 @@
 import { describe, expect, test } from "bun:test";
-import { OrdType, Side, TimeInForce } from "@heswell/trading-schemas";
 import {
+  AlgoStrategy,
+  OrdType,
+  RejectReason,
+  Side,
+  TimeInForce,
+} from "@heswell/trading-schemas";
+import {
+  allowedTimesInForce,
+  draftFromPrefill,
   EMPTY_DRAFT,
+  fieldForRejectReason,
+  isStrategyAllowed,
   isTimeInForceAllowed,
+  nonStopOrdType,
+  nudgeStopPrice,
   nudgePrice,
   nudgeQuantity,
   type OrderDraft,
@@ -153,5 +165,149 @@ describe("orderTicketModel", () => {
       accounts[0],
     );
     expect(market.price).toBe(100.5);
+  });
+});
+
+describe("stop orders", () => {
+  const stop = (overrides: Partial<OrderDraft> = {}) =>
+    draft({ ordType: OrdType.Stop, price: "", stopPrice: "101", ...overrides });
+
+  test("a STOP sends stopPrice and no price; a STOP_LIMIT sends both", () => {
+    const { errors, params } = validateDraft(stop(), instrument, accounts);
+    expect(errors).toEqual({});
+    expect(params).toMatchObject({ ordType: OrdType.Stop, stopPrice: 101 });
+    expect(params?.price).toBeUndefined();
+
+    const stopLimit = validateDraft(
+      stop({ ordType: OrdType.StopLimit, price: "101.5" }),
+      instrument,
+      accounts,
+    );
+    expect(stopLimit.errors).toEqual({});
+    expect(stopLimit.params).toMatchObject({
+      ordType: OrdType.StopLimit,
+      stopPrice: 101,
+      price: 101.5,
+    });
+  });
+
+  test("other types never send a stop price", () => {
+    const { params } = validateDraft(
+      draft({ stopPrice: "101" }),
+      instrument,
+      accounts,
+    );
+    expect(params).toBeDefined();
+    expect(params?.stopPrice).toBeUndefined();
+  });
+
+  test("stop price errors go to the stop field", () => {
+    const errors = (d: OrderDraft) =>
+      validateDraft(d, instrument, accounts).errors;
+    expect(errors(stop({ stopPrice: "" })).stopPrice).toBe(
+      "Enter a stop price",
+    );
+    expect(errors(stop({ stopPrice: "x" })).stopPrice).toBeString();
+    expect(errors(stop({ stopPrice: "101.3" })).stopPrice).toContain("tick");
+    // Already reached: a buy stop must be above the market (last 100) ...
+    expect(errors(stop({ stopPrice: "100" })).stopPrice).toContain(
+      "must be above the market price",
+    );
+    // ... and a sell stop below it.
+    expect(
+      errors(stop({ side: Side.Sell, stopPrice: "100.5" })).stopPrice,
+    ).toContain("must be below the market price");
+    expect(errors(stop({ side: Side.Sell, stopPrice: "99.5" }))).toEqual({});
+    expect(fieldForRejectReason(RejectReason.MissingStopPrice)).toBe(
+      "stopPrice",
+    );
+    expect(fieldForRejectReason(RejectReason.InvalidStopPrice)).toBe(
+      "stopPrice",
+    );
+  });
+
+  test("a stop limit's limit must be on the right side of the stop", () => {
+    const { errors } = validateDraft(
+      stop({ ordType: OrdType.StopLimit, price: "100.5" }),
+      instrument,
+      accounts,
+    );
+    expect(errors.price).toContain("below the stop price");
+  });
+
+  test("stops are DAY / GTC and DMA only", () => {
+    expect(allowedTimesInForce(OrdType.Stop)).toEqual([
+      TimeInForce.Day,
+      TimeInForce.GoodTillCancel,
+    ]);
+    expect(allowedTimesInForce(OrdType.StopLimit)).toEqual([
+      TimeInForce.Day,
+      TimeInForce.GoodTillCancel,
+    ]);
+    expect(
+      validateDraft(
+        stop({ timeInForce: TimeInForce.ImmediateOrCancel }),
+        instrument,
+        accounts,
+      ).errors.timeInForce,
+    ).toBeString();
+    expect(
+      validateDraft(stop({ strategy: AlgoStrategy.Twap }), instrument, accounts)
+        .errors.strategy,
+    ).toBe("Stop orders are DMA only");
+    expect(isStrategyAllowed(OrdType.Stop, AlgoStrategy.Dma)).toBe(true);
+    expect(isStrategyAllowed(OrdType.StopLimit, AlgoStrategy.Vwap)).toBe(false);
+    expect(isStrategyAllowed(OrdType.Limit, AlgoStrategy.Vwap)).toBe(true);
+    expect(nonStopOrdType(OrdType.Stop)).toBe(OrdType.Market);
+    expect(nonStopOrdType(OrdType.StopLimit)).toBe(OrdType.Limit);
+  });
+
+  test("an empty stop nudges from one tick beyond the market", () => {
+    expect(nudgeStopPrice(stop({ stopPrice: "" }), instrument, 1)).toBe(
+      "100.5",
+    );
+    expect(
+      nudgeStopPrice(stop({ side: Side.Sell, stopPrice: "" }), instrument, -1),
+    ).toBe("99.5");
+    expect(nudgeStopPrice(stop({ stopPrice: "101" }), instrument, 2)).toBe(
+      "102.0",
+    );
+  });
+
+  test("a STOP is valued at its stop price", () => {
+    const preview = previewRisk(
+      stop({ quantity: "1000", stopPrice: "102" }),
+      instrument,
+      accounts[0],
+    );
+    expect(preview.price).toBe(102);
+    expect(preview.notional).toBe(102_000);
+  });
+
+  test("prefill: stopPrice implies STOP (STOP_LIMIT with a price), DMA", () => {
+    expect(draftFromPrefill({ instrument, stopPrice: 101 })).toMatchObject({
+      ordType: OrdType.Stop,
+      stopPrice: "101.0",
+      price: "",
+    });
+    expect(
+      draftFromPrefill({
+        instrument,
+        stopPrice: 101,
+        price: 101.5,
+        strategy: AlgoStrategy.Twap,
+        timeInForce: TimeInForce.ImmediateOrCancel,
+      }),
+    ).toMatchObject({
+      ordType: OrdType.StopLimit,
+      stopPrice: "101.0",
+      price: "101.5",
+      strategy: AlgoStrategy.Dma,
+      timeInForce: TimeInForce.Day,
+    });
+    expect(
+      draftFromPrefill({ ordType: OrdType.Limit, stopPrice: 101, price: 100 })
+        .stopPrice,
+    ).toBe("");
   });
 });

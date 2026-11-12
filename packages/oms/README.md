@@ -56,6 +56,8 @@ EXCHANGE must be registered first.
   - Algo columns: `strategy` (`DMA` / `TWAP` / `VWAP` / `POV`), `algoStart` / `algoEnd` (clock times; 0 for DMA,
     `algoEnd` 0 = open-ended POV), `participationPct` (POV) and `targetQty` (what the schedule says should be
     filled by now; equals `quantity` for DMA). See [Algo orders](#algo-orders).
+  - Stop columns: `stopPrice` (0 unless `STOP` / `STOP_LIMIT`) and `triggeredAt` (clock time the stop triggered;
+    0 while waiting). See [Stop orders](#stop-orders).
 - `childOrders` holds the exchange-facing orders (`<orderId>-<n>`) with the exchange `exchangeOrderId`: one for a
   DMA order, many for an algo order.
 - `fills` has one row per execution (`execId`), keyed by parent `orderId` and `childOrderId`.
@@ -77,6 +79,7 @@ each row's audience is the account owner. `OmsEngine.observe()` feeds `OmsNotifi
 | Event | topic | level | type | expires |
 | --- | --- | --- | --- | --- |
 | Parent order rejected | `orders` | ERROR | silent | 15 min |
+| Stop triggered (order sent to the exchange) | `orders` | INFO | toast | 15 min |
 | Position notional ≥ 80% of `maxPositionNotional` | `risk` | WARNING | toast | 30 min |
 | Position notional ≥ `maxPositionNotional` | `risk` | ERROR | toast | 30 min |
 
@@ -98,8 +101,8 @@ viewport it has open.
 
 | RPC | params | success `data` | notes |
 | --- | --- | --- | --- |
-| `createOrder` | `account, ric, side, ordType, quantity, price?, timeInForce?, clOrdId?` | `{orderId, clOrdId, status}` | Status is the state after the synchronous exchange response: `NEW`, `PARTIALLY_FILLED`, `FILLED`, `EXPIRED` (unfilled IOC/FOK/market) or `PENDING_NEW` with gateway latency. A risk / exchange reject returns `ERROR_RESULT` **and** leaves a `REJECTED` row. A duplicate `clOrdId` or permission failure creates no row. |
-| `amendOrder` | `orderId, quantity?, price?` | `{orderId, status}` | Status is `REPLACED`, or `PARTIALLY_FILLED` if the order already has fills, or `PENDING_REPLACE` with latency. Quantity must be at least `cumQty`. Risk is re-checked on the remaining quantity. |
+| `createOrder` | `account, ric, side, ordType, quantity, price?, timeInForce?, clOrdId?, stopPrice?, strategy?, …` | `{orderId, clOrdId, status}` | A `STOP` / `STOP_LIMIT` returns `NEW` and waits in the OMS (see [Stop orders](#stop-orders)). Otherwise status is the state after the synchronous exchange response: `NEW`, `PARTIALLY_FILLED`, `FILLED`, `EXPIRED` (unfilled IOC/FOK/market) or `PENDING_NEW` with gateway latency. A risk / exchange reject returns `ERROR_RESULT` **and** leaves a `REJECTED` row. A duplicate `clOrdId` or permission failure creates no row. |
+| `amendOrder` | `orderId, quantity?, price?, stopPrice?` | `{orderId, status}` | `stopPrice` only for a stop that has not triggered (`INVALID_STOP_PRICE` after). A waiting stop is amended at once (`REPLACED`). Otherwise status is `REPLACED`, or `PARTIALLY_FILLED` if the order already has fills, or `PENDING_REPLACE` with latency. Quantity must be at least `cumQty`. Risk is re-checked on the remaining quantity. |
 | `cancelOrder` | `orderId` | `{orderId, status}` | Status is `CANCELLED`, or `PENDING_CANCEL` with latency. |
 | `cancelAll` | `account?, ric?, side?` | `{orderIds}` | With no `account`, cancels the caller's own working orders. With `account`, cancels all working orders of that visible account (supervisor use). Orders with a request in flight are skipped. |
 
@@ -113,6 +116,7 @@ Errors to handle in the UI:
 | `TOO_LATE_TO_AMEND` / `TOO_LATE_TO_CANCEL` | The order is terminal. |
 | `ORDER_PENDING` | A `PENDING_NEW` / `PENDING_CANCEL` / `PENDING_REPLACE` request is in flight. Retry when the row changes. |
 | `DUPLICATE_CLORDID` | The `clOrdId` was already used. |
+| `MISSING_STOP_PRICE` / `INVALID_STOP_PRICE` | A stop without `stopPrice`, off tick, already reached by the market, or amended after it triggered. |
 | Exchange rejects | Price band, halted instrument and so on are passed through with the exchange's reason. |
 
 ### Blotter inline edit (edit session)
@@ -122,7 +126,7 @@ vuu-server 4.0.0 supplies the secure defaults: direct `editCell` on the live vie
 columns, rows hidden by the permission filter, other users' session viewports and sessions of sessions are all
 refused, and values are type-checked. `OmsRpcHandler` only adds the trading rules through the protected hooks:
 
-- `isEditableColumn`: only `quantity` and `price`, only on a `parentOrders` session table. `deleteRow` /
+- `isEditableColumn`: only `quantity`, `price` and `stopPrice`, only on a `parentOrders` session table. `deleteRow` /
   `deleteSelectedRows` mean cancel. `addRow` is refused (use `createOrder`), and sessions can only be begun on
   `parentOrders`.
 - `validateCellEdit`: `validateAmend` against the order and instrument, so `editCell` rejects a bad price or
@@ -165,6 +169,32 @@ algo order on the algo timer (`algoSliceMs`).
 - **Restart.** All algo state is on the parent row (`ParentOrder.algo`), so it is journaled and restored with it;
   `restoreState` re-registers running algos, and reconcile fixes up their children as for DMA.
 
+## Stop orders
+
+`STOP` and `STOP_LIMIT` are held by the OMS, as a broker does: the exchange (like most equity venues) only takes
+`MARKET` and `LIMIT`, and rejects stop types with `UNSUPPORTED_ORD_TYPE`.
+
+- **Entry.** `stopPrice` is required and must be on tick. A buy stop must be above the market price and a sell stop
+  below it (last, else mid, else refPrice): `INVALID_STOP_PRICE`. A `STOP_LIMIT` also needs `price`, at or above the
+  stop for a buy, at or below for a sell. Stops are DMA only (`UNSUPPORTED_ORD_TYPE` with a strategy) and DAY or GTC
+  (`UNSUPPORTED_TIF` for IOC / FOK). Risk prices a `STOP` at its stop price. The limit collar does not apply:
+  stops legitimately sit far from the market.
+- **Waiting.** The parent is `NEW` with no child and `triggeredAt` 0. Amend (quantity, `price`, `stopPrice`) and
+  cancel apply at once, with no exchange round trip.
+- **Trigger.** Every tape trade is checked against the waiting stops: a buy triggers on a trade at or above its
+  stop, a sell at or below. The check runs in a microtask, because the exchange reports a trade before it has
+  finished the order that made it. The OMS then sets `triggeredAt`, publishes an INFO toast and sends the only child:
+  `MARKET` DAY for a `STOP`, `LIMIT` at `price` with the parent's TIF for a `STOP_LIMIT`. From here it is a DMA order
+  (`stopPrice` can no longer be amended). A child the exchange rejects (for example halted) expires the parent,
+  since it cannot go back to waiting. A stop's fill can trigger the next stop (cascades).
+- **Expiry.** A waiting DAY stop expires when a session close falls after it was entered (`sessionClosedSince`) or
+  its market is `CLOSED`, checked on the algo timer, which also catches up after a restart. `endOfDay()` expires
+  them too. GTC stops wait across days.
+- **Restart.** `stopPrice` / `triggeredAt` are on the parent row, so they are journaled. `restoreState` re-registers
+  the waiting stops.
+- **Latency.** With gateway latency the trade reaches the OMS late, and the child reaches the exchange later
+  still. A stop fills after the move that triggered it, as stops held by a broker do.
+
 ## Order state machine
 
 `reduceOrder(state, event)` is pure and checks every transition against `ORDER_STATUS_TRANSITIONS`.
@@ -195,15 +225,17 @@ Risk checks run in this order, and the first failure wins. Each returns a `Rejec
 | Account disabled | `ACCOUNT_DISABLED` |
 | Unknown instrument | `UNKNOWN_INSTRUMENT` |
 | Restricted list (`oms.restrictedRics`) | `RESTRICTED_INSTRUMENT` |
-| `validateOrder`: phase `HALTED` / `CLOSED`, tick, lot, price/TIF rules | `INSTRUMENT_HALTED` / `MARKET_CLOSED` / `INVALID_*` / ... |
+| `validateOrder`: phase `HALTED` / `CLOSED`, tick, lot, price/stop/TIF rules | `INSTRUMENT_HALTED` / `MARKET_CLOSED` / `INVALID_*` / `MISSING_*` / ... |
+| Stop already reached by the market (STOP / STOP_LIMIT) | `INVALID_STOP_PRICE` |
 | `quantity > maxOrderQty` | `EXCEEDS_MAX_QUANTITY` |
 | Order notional (USD) > `maxOrderNotional` | `EXCEEDS_MAX_NOTIONAL` |
-| Limit price outside ±`collarPct` of reference (last, else mid, else refPrice) | `PRICE_OUTSIDE_COLLAR` |
+| LIMIT price outside ±`collarPct` of reference (last, else mid, else refPrice) | `PRICE_OUTSIDE_COLLAR` |
 | Projected position notional > `maxPositionNotional` (only when the order increases exposure) | `EXCEEDS_MAX_NOTIONAL`. The text says "projected position". There is no dedicated code. |
 
 - Account limits are in **USD**. Notional is converted with the instrument's `usdPerPriceUnit` (for example GBX
   prices are in pence). Table `notional` columns stay in instrument currency.
-- Market orders are valued at the far touch, falling back to the reference price.
+- Market orders are valued at the far touch, falling back to the reference price. A `STOP` is valued at its stop
+  price.
 - The projected position counts the current position plus the remaining quantity of working orders on the same side
   plus this order.
 - The OMS collar (default 10%) is tighter than the exchange band (20%).
@@ -365,7 +397,7 @@ periodically and on shutdown. `createTradingPersistence` (`@heswell/oms/persiste
 - **Blotter actions.**
   - Enable amend/cancel only for `NEW` / `PARTIALLY_FILLED` / `REPLACED` rows.
   - Disable them while `PENDING_*` (the server returns `ORDER_PENDING`).
-  - Inline edit is possible through the edit session (quantity/price only), or simply call `amendOrder`.
+  - Inline edit is possible through the edit session (quantity / price / stopPrice only), or simply call `amendOrder`.
 - **Statuses.** With latency 0 a request completes inside the RPC, so `PENDING_*` is rarely seen. Test with
   `OMS_GATEWAY_LATENCY_MS=200`.
 - **Rows.**
@@ -386,7 +418,8 @@ periodically and on shutdown. `createTradingPersistence` (`@heswell/oms/persiste
 | config | 3 | Config |
 | engine | 22 | Lifecycle, partial fills, amend/cancel races, IOC/FOK/market, end of day, positions. Uses a real exchange-sim with a manual clock and scheduler. |
 | flow | 3 | Deterministic background flow |
-| notifications | 4 | `OmsNotifier`: one reject row, risk warn / breach / hysteresis, unknown accounts, `engine.observe`. |
+| notifications | 5 | `OmsNotifier`: one reject row, one stop-triggered toast, risk warn / breach / hysteresis, unknown accounts, `engine.observe`. |
+| stops | 9 | Stop orders against a real exchange-sim: wait and trigger (STOP → MARKET, STOP_LIMIT → LIMIT), entry rejects, amend / cancel while waiting, a rejected child, DAY expiry at end of day / close, restart, cascades. |
 | OmsModule | 16 | Over WebSocket against a real `VuuServer` with EXCHANGE + OMS: RPC → fill → rows, the join, amend/cancel, rejects, permission filtering, the edit session (amend / cancel, stale rows, edit validation, hidden rows and other sessions, strict mode), a reject reaching the owner's `notifications` with `topic=orders`. |
 | session | 3 | Exchange trading session: DAY expiry at the close, `MARKET_CLOSED`, `endOfDay`. |
 | persistence | 16 | Restart from memory / file stores (graceful and crash), fill replay from exec reports, idempotence, reconcile (lost requests, orphans), DAY expiry while down, session / admin state, compaction, `kill -9` of a child process, config, reset. See [docs/persistence.md](../../docs/persistence.md#tests). |

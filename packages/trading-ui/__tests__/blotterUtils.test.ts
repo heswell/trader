@@ -8,6 +8,7 @@ import {
   orderBlotterTabFilter,
   rowsToCsv,
   sizePercentile,
+  stopTriggerState,
   totalsByCurrency,
   WORKING_STATUSES,
 } from "../src";
@@ -31,6 +32,18 @@ describe("order status helpers", () => {
       expect(isOrderAmendable(s)).toBe(false);
       expect(isOrderCancellable(s)).toBe(false);
     }
+  });
+
+  test("a stop waits until triggeredAt is set", () => {
+    expect(stopTriggerState("STOP", "NEW", 0)).toBe("waiting");
+    expect(stopTriggerState("STOP_LIMIT", "REPLACED", undefined)).toBe(
+      "waiting",
+    );
+    expect(stopTriggerState("STOP", "FILLED", 1_700_000_000_000)).toBe(
+      "triggered",
+    );
+    expect(stopTriggerState("STOP", "CANCELLED", 0)).toBeUndefined();
+    expect(stopTriggerState("LIMIT", "NEW", 0)).toBeUndefined();
   });
 
   test("tab filters cover working and closed statuses", () => {

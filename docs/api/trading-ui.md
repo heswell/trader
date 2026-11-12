@@ -4,13 +4,13 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 519 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 528 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
 - **data**: [applySelectionChange](#applyselectionchange), [ChartDataSourceOptions](#chartdatasourceoptions), [connectToVuuServer](#connecttovuuserver), [DataSourceRows](#datasourcerows), [DataSourceRowsConfig](#datasourcerowsconfig), [DataSourceRowsUpdate](#datasourcerowsupdate), [DEFAULT_RPC_TIMEOUT_MS](#default_rpc_timeout_ms), [disconnectedRpcError](#disconnectedrpcerror), [disconnectFromVuuServer](#disconnectfromvuuserver), [editOrdersInSession](#editordersinsession), [openOrderEditSession](#openordereditsession), [OrderEdits](#orderedits), [OrderEditSession](#ordereditsession), [rpcTimeoutError](#rpctimeouterror), [RpcTransportFailure](#rpctransportfailure), [sendTradingRpc](#sendtradingrpc), [StaleOrderEditError](#staleorderediterror), [subscribeTradingRows](#subscribetradingrows), [toTradingRow](#totradingrow), [tradingColumnNames](#tradingcolumnnames), [TradingDataMode](#tradingdatamode), [TradingDataModeContextValue](#tradingdatamodecontextvalue), [TradingDataProvider](#tradingdataprovider), [TradingDataProviderProps](#tradingdataproviderprops), [TradingDataSourceOptions](#tradingdatasourceoptions), [TradingRow](#tradingrow), [TradingRows](#tradingrows), [TradingRowsOptions](#tradingrowsoptions), [TradingRpcError](#tradingrpcerror), [TradingRpcOptions](#tradingrpcoptions), [tradingTableSchema](#tradingtableschema), [tradingVuuTable](#tradingvuutable), [useChartDataSource](#usechartdatasource), [useDataSourceRows](#usedatasourcerows), [UseDataSourceRowsOptions](#usedatasourcerowsoptions), [useHasDataProvider](#usehasdataprovider), [useTableSelectedKeys](#usetableselectedkeys), [useTradingDataMode](#usetradingdatamode), [useTradingDataSource](#usetradingdatasource), [useTradingRows](#usetradingrows), [VuuServerConnection](#vuuserverconnection), [withRpcTimeout](#withrpctimeout)
 - **instrument-context**: [ACTIVE_CHANNEL_STATE_KEY](#active_channel_state_key), [ACTIVE_GROUP](#active_group), [ACTIVE_LINK_GROUP](#active_link_group), [bindInstrumentLinkStore](#bindinstrumentlinkstore), [BroadcastChannelLike](#broadcastchannellike), [ComponentLinkGroup](#componentlinkgroup), [connectBroadcastChannel](#connectbroadcastchannel), [ConnectBroadcastChannelOptions](#connectbroadcastchanneloptions), [createInstrumentLinkBus](#createinstrumentlinkbus), [CreateInstrumentLinkBusOptions](#createinstrumentlinkbusoptions), [DEFAULT_LINK_CHANNEL_NAME](#default_link_channel_name), [DEFAULT_LINK_GROUP](#default_link_group), [DEFAULT_LINK_GROUPS](#default_link_groups), [ensureInstrumentLinkPersistence](#ensureinstrumentlinkpersistence), [getInstrumentLinkBus](#getinstrumentlinkbus), [getInstrumentLinkStore](#getinstrumentlinkstore), [INSTRUMENT_LINK_BUS_VERSION](#instrument_link_bus_version), [INSTRUMENT_LINK_STATE_KEY](#instrument_link_state_key), [INSTRUMENT_LINK_STATE_TITLE](#instrument_link_state_title), [INSTRUMENT_LINK_STATE_VERSION](#instrument_link_state_version), [InstrumentContextProvider](#instrumentcontextprovider), [InstrumentContextProviderProps](#instrumentcontextproviderprops), [InstrumentContextValue](#instrumentcontextvalue), [InstrumentLinkBus](#instrumentlinkbus), [InstrumentLinkListener](#instrumentlinklistener), [InstrumentLinkPersistence](#instrumentlinkpersistence), [InstrumentLinkSelection](#instrumentlinkselection), [InstrumentLinkStateStore](#instrumentlinkstatestore), [InstrumentLinkTransport](#instrumentlinktransport), [InstrumentSelection](#instrumentselection), [isUnlinkedGroup](#isunlinkedgroup), [LINK_GROUP_PERSIST_PREFIX](#link_group_persist_prefix), [LINK_GROUP_STATE_KEY](#link_group_state_key), [LINK_SELECTIONS_KEY](#link_selections_key), [linkGroupDefinition](#linkgroupdefinition), [LinkGroupDefinition](#linkgroupdefinition-1), [LinkGroupId](#linkgroupid), [LinkGroupProps](#linkgroupprops), [LinkGroupProvider](#linkgroupprovider), [MAX_RECENT_RICS](#max_recent_rics), [readSavedSelections](#readsavedselections), [resetInstrumentLinkPersistence](#resetinstrumentlinkpersistence), [sameInstrument](#sameinstrument), [sanitizeSelectedInstrument](#sanitizeselectedinstrument), [SelectedInstrument](#selectedinstrument), [UNLINKED](#unlinked), [UNLINKED_GROUP](#unlinked_group), [useActiveChannelPersistence](#useactivechannelpersistence), [useComponentLinkGroup](#usecomponentlinkgroup), [UseComponentLinkGroupOptions](#usecomponentlinkgroupoptions), [useComponentSetting](#usecomponentsetting), [useInheritedLinkGroup](#useinheritedlinkgroup), [useInstrumentLinkBus](#useinstrumentlinkbus), [useInstrumentLinkPersistence](#useinstrumentlinkpersistence), [useOptionalWorkspaceChannel](#useoptionalworkspacechannel), [useSelectedInstrument](#useselectedinstrument), [UseSelectedInstrumentOptions](#useselectedinstrumentoptions), [useWorkspaceChannel](#useworkspacechannel), [useWorkspaceItemState](#useworkspaceitemstate), [WORKSPACE_ITEM_STATE_TYPE](#workspace_item_state_type), [WORKSPACE_ITEM_STATE_VERSION](#workspace_item_state_version), [WorkspaceChannelContextValue](#workspacechannelcontextvalue), [WorkspaceChannelProvider](#workspacechannelprovider), [WorkspaceChannelProviderProps](#workspacechannelproviderprops), [workspaceItemState](#workspaceitemstate), [WorkspaceItemState](#workspaceitemstate-1)
-- **hooks**: [actionableOrders](#actionableorders), [BookOrderRow](#bookorderrow), [BookQueueOptions](#bookqueueoptions), [BookQueueState](#bookqueuestate), [buildLadderQueues](#buildladderqueues), [DepthLevel](#depthlevel), [FlashDirection](#flashdirection), [FollowedInstrument](#followedinstrument), [InstrumentPrice](#instrumentprice), [LadderQueue](#ladderqueue), [LadderQueues](#ladderqueues), [LevelFlash](#levelflash), [levelKey](#levelkey), [MarketDepthState](#marketdepthstate), [OrderBookChildOrder](#orderbookchildorder), [OrderBookOptions](#orderbookoptions), [OrderBookParentOrder](#orderbookparentorder), [OrderBookState](#orderbookstate), [OWN_ORDER_STATUSES](#own_order_statuses), [OwnOrder](#ownorder), [OwnOrdersAtPrice](#ownordersatprice), [ownOrdersKey](#ownorderskey), [OwnWorkingOrders](#ownworkingorders), [OwnWorkingOrdersOptions](#ownworkingordersoptions), [priceKey](#pricekey), [QueueOrder](#queueorder), [QueuePosition](#queueposition), [useBookQueue](#usebookqueue), [useFollowedInstrument](#usefollowedinstrument), [useInstrumentPrice](#useinstrumentprice), [useLevelFlash](#uselevelflash), [useMarketDepth](#usemarketdepth), [useOrderBook](#useorderbook), [useOwnExchangeOrderIds](#useownexchangeorderids), [useOwnWorkingOrders](#useownworkingorders), [useStableCallback](#usestablecallback), [useTradedVolume](#usetradedvolume)
+- **hooks**: [actionableOrders](#actionableorders), [BookOrderRow](#bookorderrow), [BookQueueOptions](#bookqueueoptions), [BookQueueState](#bookqueuestate), [buildLadderQueues](#buildladderqueues), [DepthLevel](#depthlevel), [FlashDirection](#flashdirection), [FollowedInstrument](#followedinstrument), [InstrumentPrice](#instrumentprice), [LadderQueue](#ladderqueue), [LadderQueues](#ladderqueues), [LevelFlash](#levelflash), [levelKey](#levelkey), [MarketDepthState](#marketdepthstate), [OrderBookChildOrder](#orderbookchildorder), [OrderBookOptions](#orderbookoptions), [OrderBookParentOrder](#orderbookparentorder), [OrderBookState](#orderbookstate), [OWN_ORDER_STATUSES](#own_order_statuses), [OwnOrder](#ownorder), [OwnOrdersAtPrice](#ownordersatprice), [ownOrdersKey](#ownorderskey), [OwnWorkingOrders](#ownworkingorders), [OwnWorkingOrdersOptions](#ownworkingordersoptions), [priceKey](#pricekey), [QueueOrder](#queueorder), [QueuePosition](#queueposition), [restsAtLimit](#restsatlimit), [useBookQueue](#usebookqueue), [useFollowedInstrument](#usefollowedinstrument), [useInstrumentPrice](#useinstrumentprice), [useLevelFlash](#uselevelflash), [useMarketDepth](#usemarketdepth), [useOrderBook](#useorderbook), [useOwnExchangeOrderIds](#useownexchangeorderids), [useOwnWorkingOrders](#useownworkingorders), [useStableCallback](#usestablecallback), [useTradedVolume](#usetradedvolume)
 - **connection**: [combineConnectionState](#combineconnectionstate), [CONNECTION_STATE_SEVERITY](#connection_state_severity), [ConnectionAttemptClosedError](#connectionattemptclosederror), [ConnectionAttemptTimeoutError](#connectionattempttimeouterror), [connectionClientWithTimeout](#connectionclientwithtimeout), [ConnectionReconnectInfo](#connectionreconnectinfo), [connectionStateStore](#connectionstatestore), [createResilientConnectionRegistry](#createresilientconnectionregistry), [DEFAULT_LOGIN_TIMEOUT_MS](#default_login_timeout_ms), [DEFAULT_RECONNECT_POLICY](#default_reconnect_policy), [observeConnectionRegistry](#observeconnectionregistry), [observeDefaultConnectionRegistry](#observedefaultconnectionregistry), [reconnectDelay](#reconnectdelay), [ReconnectPolicy](#reconnectpolicy), [reconnectSchedule](#reconnectschedule), [ReconnectState](#reconnectstate), [ReconnectSupervisor](#reconnectsupervisor), [ReconnectSupervisorOptions](#reconnectsupervisoroptions), [ReconnectTimers](#reconnecttimers), [ResilientConnectionRegistryOptions](#resilientconnectionregistryoptions), [resolveReconnectPolicy](#resolvereconnectpolicy), [StaleIndicatorOptions](#staleindicatoroptions), [StaleIndicatorState](#staleindicatorstate), [StaleReason](#stalereason), [SupervisorSnapshot](#supervisorsnapshot), [SupervisorState](#supervisorstate), [toConnectionState](#toconnectionstate), [TradingConnectionState](#tradingconnectionstate), [TradingConnectionStateOverride](#tradingconnectionstateoverride), [TradingConnectionStatus](#tradingconnectionstatus), [useStaleIndicator](#usestaleindicator), [useTradingConnectionStatus](#usetradingconnectionstatus), [useVuuConnectionStatuses](#usevuuconnectionstatuses), [withConnectTimeout](#withconnecttimeout), [worstConnectionState](#worstconnectionstate)
 - **notifications**: [DEFAULT_DEDUPE_MS](#default_dedupe_ms), [DEFAULT_NOTIFICATION_KINDS](#default_notification_kinds), [DEFAULT_RATE_LIMIT](#default_rate_limit), [describeOrderEvent](#describeorderevent), [describeSuppressed](#describesuppressed), [FillEventTracker](#filleventtracker), [FillSound](#fillsound), [NotificationGate](#notificationgate), [NotificationGateOptions](#notificationgateoptions), [orderEventFromFill](#ordereventfromfill), [orderEventFromParentOrder](#ordereventfromparentorder), [orderEventKey](#ordereventkey), [orderEventKindForStatus](#ordereventkindforstatus), [OrderEventPriceFormat](#ordereventpriceformat), [OrderEventToast](#ordereventtoast), [ParentOrderEventTracker](#parentordereventtracker), [RateLimit](#ratelimit), [rpcRejectEvent](#rpcrejectevent), [ToastStatus](#toaststatus), [TRADING_ORDER_EVENT_KINDS](#trading_order_event_kinds), [TradingNotificationKinds](#tradingnotificationkinds), [TradingNotificationsContextValue](#tradingnotificationscontextvalue), [TradingNotificationSettings](#tradingnotificationsettings), [TradingNotificationsProvider](#tradingnotificationsprovider), [TradingNotificationsProviderProps](#tradingnotificationsproviderprops), [TradingNotificationToast](#tradingnotificationtoast), [TradingOrderEvent](#tradingorderevent), [TradingOrderEventKind](#tradingordereventkind), [useTradingNotifications](#usetradingnotifications)
 - **feature-root**: [ensureLinkBusBroadcast](#ensurelinkbusbroadcast), [notificationLease](#notificationlease), [TradingFeatureRoot](#tradingfeatureroot), [TradingFeatureRootProps](#tradingfeaturerootprops), [useInTradingFeatureRoot](#useintradingfeatureroot)
@@ -28,9 +28,9 @@ Imports: `@heswell/trading-ui`. 519 exports. Types are shown as written in the s
 - **components/LinkGroupSelector**: [LinkGroupMenuButton](#linkgroupmenubutton), [LinkGroupSelector](#linkgroupselector), [LinkGroupSelectorProps](#linkgroupselectorprops), [LinkGroupSwatch](#linkgroupswatch), [PanelLinkGroupSelector](#panellinkgroupselector)
 - **components/MarketDepth**: [MarketDepth](#marketdepth), [MarketDepthLevelClick](#marketdepthlevelclick), [MarketDepthProps](#marketdepthprops)
 - **components/OrderBlotter**: [CHILD_ORDER_COLUMNS](#child_order_columns), [childOrdersTableConfig](#childorderstableconfig), [ORDER_BLOTTER_COLUMNS](#order_blotter_columns), [ORDER_BLOTTER_TABS](#order_blotter_tabs), [OrderBlotter](#orderblotter), [OrderBlotterContext](#orderblottercontext), [OrderBlotterProps](#orderblotterprops), [OrderBlotterTab](#orderblottertab), [orderBlotterTabFilter](#orderblottertabfilter), [orderBlotterTableConfig](#orderblottertableconfig), [OrderRowActions](#orderrowactions)
-- **components/OrderBookView**: [BookLevelRef](#booklevelref), [OrderBookView](#orderbookview), [OrderBookViewProps](#orderbookviewprops)
+- **components/OrderBookView**: [BookLevelRef](#booklevelref), [OrderBookView](#orderbookview), [OrderBookViewProps](#orderbookviewprops), [orderTypeLabel](#ordertypelabel)
 - **components/OrderStatusBadge**: [OrderStatusBadge](#orderstatusbadge), [OrderStatusBadgeProps](#orderstatusbadgeprops)
-- **components/OrderTicket**: [algoParamField](#algoparamfield), [AlgoParamKey](#algoparamkey), [allowedTimesInForce](#allowedtimesinforce), [connectionBlockedReason](#connectionblockedreason), [DEFAULT_COLLAR_PCT](#default_collar_pct), [defaultLimitPrice](#defaultlimitprice), [describePriceShorthand](#describepriceshorthand), [draftFromPrefill](#draftfromprefill), [DraftValidation](#draftvalidation), [EMPTY_DRAFT](#empty_draft), [fieldForRejectReason](#fieldforrejectreason), [filterStrategies](#filterstrategies), [focusTicketField](#focusticketfield), [formatPriceInput](#formatpriceinput), [INDICATIVE_USD_PER_PRICE_UNIT](#indicative_usd_per_price_unit), [isAlgoStrategy](#isalgostrategy), [isOrderLine](#isorderline), [isPriceShorthand](#ispriceshorthand), [isTimeInForceAllowed](#istimeinforceallowed), [isValueInput](#isvalueinput), [LAST_ACCOUNT_STORAGE_KEY](#last_account_storage_key), [marketValuationPrice](#marketvaluationprice), [newClOrdId](#newclordid), [nudgePrice](#nudgeprice), [nudgeQuantity](#nudgequantity), [ORDER_TICKET_ORD_TYPES](#order_ticket_ord_types), [ORDER_TICKET_SELECTION_SOURCE](#order_ticket_selection_source), [ORDER_TICKET_STRATEGIES](#order_ticket_strategies), [ORDER_TICKET_TIFS](#order_ticket_tifs), [OrderDraft](#orderdraft), [OrderDraftErrors](#orderdrafterrors), [OrderDraftField](#orderdraftfield), [OrderLine](#orderline), [OrderTicket](#orderticket), [OrderTicketAccount](#orderticketaccount), [OrderTicketDialog](#orderticketdialog), [OrderTicketDialogProps](#orderticketdialogprops), [OrderTicketInstrument](#orderticketinstrument), [OrderTicketLauncher](#orderticketlauncher), [OrderTicketLauncherProvider](#orderticketlauncherprovider), [OrderTicketLauncherProviderProps](#orderticketlauncherproviderprops), [OrderTicketPanel](#orderticketpanel), [OrderTicketPanelProps](#orderticketpanelprops), [OrderTicketPrefill](#orderticketprefill), [OrderTicketProps](#orderticketprops), [OrderTicketState](#orderticketstate), [OrderTicketSubmission](#orderticketsubmission), [OrderTicketTarget](#ordertickettarget), [OrderTicketVariant](#orderticketvariant), [parseAlgoParam](#parsealgoparam), [parseDurationInput](#parsedurationinput), [parseOrderLine](#parseorderline), [parsePercentInput](#parsepercentinput), [parsePrice](#parseprice), [parseQuantity](#parsequantity), [parseTimeInput](#parsetimeinput), [previewRisk](#previewrisk), [referencePrice](#referenceprice), [resolvePriceInput](#resolvepriceinput), [resolveQuantityInput](#resolvequantityinput), [reviewReasons](#reviewreasons), [RiskPreview](#riskpreview), [RiskPreviewOptions](#riskpreviewoptions), [RiskWarning](#riskwarning), [scheduleOf](#scheduleof), [scheduleSummary](#schedulesummary), [useOrderTicket](#useorderticket), [useOrderTicketLauncher](#useorderticketlauncher), [UseOrderTicketProps](#useorderticketprops), [useOrderTicketTarget](#useordertickettarget), [validateDraft](#validatedraft)
+- **components/OrderTicket**: [algoParamField](#algoparamfield), [AlgoParamKey](#algoparamkey), [allowedTimesInForce](#allowedtimesinforce), [connectionBlockedReason](#connectionblockedreason), [DEFAULT_COLLAR_PCT](#default_collar_pct), [defaultLimitPrice](#defaultlimitprice), [defaultStopPrice](#defaultstopprice), [describePriceShorthand](#describepriceshorthand), [draftFromPrefill](#draftfromprefill), [DraftValidation](#draftvalidation), [EMPTY_DRAFT](#empty_draft), [fieldForRejectReason](#fieldforrejectreason), [filterStrategies](#filterstrategies), [focusTicketField](#focusticketfield), [formatPriceInput](#formatpriceinput), [INDICATIVE_USD_PER_PRICE_UNIT](#indicative_usd_per_price_unit), [isAlgoStrategy](#isalgostrategy), [isOrderLine](#isorderline), [isPriceShorthand](#ispriceshorthand), [isStrategyAllowed](#isstrategyallowed), [isTimeInForceAllowed](#istimeinforceallowed), [isValueInput](#isvalueinput), [LAST_ACCOUNT_STORAGE_KEY](#last_account_storage_key), [marketValuationPrice](#marketvaluationprice), [newClOrdId](#newclordid), [nonStopOrdType](#nonstopordtype), [nudgePrice](#nudgeprice), [nudgeQuantity](#nudgequantity), [nudgeStopPrice](#nudgestopprice), [ORD_TYPE_LABEL](#ord_type_label), [ORDER_TICKET_ORD_TYPES](#order_ticket_ord_types), [ORDER_TICKET_SELECTION_SOURCE](#order_ticket_selection_source), [ORDER_TICKET_STRATEGIES](#order_ticket_strategies), [ORDER_TICKET_TIFS](#order_ticket_tifs), [OrderDraft](#orderdraft), [OrderDraftErrors](#orderdrafterrors), [OrderDraftField](#orderdraftfield), [OrderLine](#orderline), [OrderTicket](#orderticket), [OrderTicketAccount](#orderticketaccount), [OrderTicketDialog](#orderticketdialog), [OrderTicketDialogProps](#orderticketdialogprops), [OrderTicketInstrument](#orderticketinstrument), [OrderTicketLauncher](#orderticketlauncher), [OrderTicketLauncherProvider](#orderticketlauncherprovider), [OrderTicketLauncherProviderProps](#orderticketlauncherproviderprops), [OrderTicketPanel](#orderticketpanel), [OrderTicketPanelProps](#orderticketpanelprops), [OrderTicketPrefill](#orderticketprefill), [OrderTicketProps](#orderticketprops), [OrderTicketState](#orderticketstate), [OrderTicketSubmission](#orderticketsubmission), [OrderTicketTarget](#ordertickettarget), [OrderTicketTypeNotice](#ordertickettypenotice), [OrderTicketVariant](#orderticketvariant), [parseAlgoParam](#parsealgoparam), [parseDurationInput](#parsedurationinput), [parseOrderLine](#parseorderline), [parsePercentInput](#parsepercentinput), [parsePrice](#parseprice), [parseQuantity](#parsequantity), [parseTimeInput](#parsetimeinput), [previewRisk](#previewrisk), [referencePrice](#referenceprice), [resolvePriceInput](#resolvepriceinput), [resolveQuantityInput](#resolvequantityinput), [reviewReasons](#reviewreasons), [RiskPreview](#riskpreview), [RiskPreviewOptions](#riskpreviewoptions), [RiskWarning](#riskwarning), [scheduleOf](#scheduleof), [scheduleSummary](#schedulesummary), [useOrderTicket](#useorderticket), [useOrderTicketLauncher](#useorderticketlauncher), [UseOrderTicketProps](#useorderticketprops), [useOrderTicketTarget](#useordertickettarget), [validateDraft](#validatedraft)
 - **components/PnlHistoryChart**: [PnlHistoryChart](#pnlhistorychart), [PnlHistoryChartProps](#pnlhistorychartprops)
 - **components/PnlValue**: [PnlValue](#pnlvalue), [PnlValueProps](#pnlvalueprops)
 - **components/PositionsView**: [CurrencyTotals](#currencytotals), [POSITIONS_GROUP_BY](#positions_group_by), [PositionsGrouping](#positionsgrouping), [PositionsView](#positionsview), [PositionsViewProps](#positionsviewprops), [totalsByCurrency](#totalsbycurrency)
@@ -47,7 +47,7 @@ Imports: `@heswell/trading-ui`. 519 exports. Types are shown as written in the s
 - **components/StaleIndicator**: [STALE_DATA_CLASS](#stale_data_class), [StaleDataProps](#staledataprops), [StaleDataState](#staledatastate), [StaleIndicator](#staleindicator), [StaleIndicatorProps](#staleindicatorprops), [useStaleData](#usestaledata)
 - **components/TradeTape**: [sizePercentile](#sizepercentile), [TradeTape](#tradetape), [TradeTapeProps](#tradetapeprops)
 - **components/TradingCellRenderers**: [registerTradingCellRenderers](#registertradingcellrenderers), [TradingRenderer](#tradingrenderer)
-- **utils**: [createLocalSettingsStorage](#createlocalsettingsstorage), [createMemorySettingsStorage](#creatememorysettingsstorage), [CsvColumn](#csvcolumn), [directionColour](#directioncolour), [DONE_STATUSES](#done_statuses), [downloadCsv](#downloadcsv), [filterString](#filterstring), [formatNotional](#formatnotional), [formatPercent](#formatpercent), [formatPrice](#formatprice), [formatQuantity](#formatquantity), [formatTime](#formattime), [instrumentTickSchedule](#instrumenttickschedule), [isInactivePhase](#isinactivephase), [isOrderAmendable](#isorderamendable), [isOrderCancellable](#isordercancellable), [orderStatusCategory](#orderstatuscategory), [OrderStatusCategory](#orderstatuscategory-1), [orderStatusColour](#orderstatuscolour), [orderStatusIcon](#orderstatusicon), [orderStatusLabel](#orderstatuslabel), [priceDecimals](#pricedecimals), [PriceFormat](#priceformat), [rowsToCsv](#rowstocsv), [sideColour](#sidecolour), [TimeFormat](#timeformat), [TradingColour](#tradingcolour), [tradingPhaseColour](#tradingphasecolour), [tradingPhaseText](#tradingphasetext), [UserSettingsProvider](#usersettingsprovider), [UserSettingsProviderProps](#usersettingsproviderprops), [UserSettingsStorage](#usersettingsstorage), [useUserSettingsStorage](#useusersettingsstorage), [WORKING_STATUSES](#working_statuses)
+- **utils**: [createLocalSettingsStorage](#createlocalsettingsstorage), [createMemorySettingsStorage](#creatememorysettingsstorage), [CsvColumn](#csvcolumn), [directionColour](#directioncolour), [DONE_STATUSES](#done_statuses), [downloadCsv](#downloadcsv), [filterString](#filterstring), [formatNotional](#formatnotional), [formatPercent](#formatpercent), [formatPrice](#formatprice), [formatQuantity](#formatquantity), [formatTime](#formattime), [instrumentTickSchedule](#instrumenttickschedule), [isInactivePhase](#isinactivephase), [isOrderAmendable](#isorderamendable), [isOrderCancellable](#isordercancellable), [orderStatusCategory](#orderstatuscategory), [OrderStatusCategory](#orderstatuscategory-1), [orderStatusColour](#orderstatuscolour), [orderStatusIcon](#orderstatusicon), [orderStatusLabel](#orderstatuslabel), [priceDecimals](#pricedecimals), [PriceFormat](#priceformat), [rowsToCsv](#rowstocsv), [sideColour](#sidecolour), [stopTriggerState](#stoptriggerstate), [TimeFormat](#timeformat), [TradingColour](#tradingcolour), [tradingPhaseColour](#tradingphasecolour), [tradingPhaseText](#tradingphasetext), [UserSettingsProvider](#usersettingsprovider), [UserSettingsProviderProps](#usersettingsproviderprops), [UserSettingsStorage](#usersettingsstorage), [useUserSettingsStorage](#useusersettingsstorage), [WORKING_STATUSES](#working_statuses)
 
 ## data
 
@@ -237,7 +237,7 @@ disconnectFromVuuServer(connectionId: string): Promise<void>
 
 #### editOrdersInSession
 
-*function* · [data/editSessionAmend.ts](../../packages/trading-ui/src/data/editSessionAmend.ts#L206)
+*function* · [data/editSessionAmend.ts](../../packages/trading-ui/src/data/editSessionAmend.ts#L212)
 
 Amend / cancel orders in one edit session: begin, editCell / deleteRow,
 save. The OMS turns changed rows into amendOrder and deleted rows into
@@ -250,10 +250,11 @@ editOrdersInSession(dataSource: DataSource, edits: { amend?: Record<string, Orde
 
 #### openOrderEditSession
 
-*function* · [data/editSessionAmend.ts](../../packages/trading-ui/src/data/editSessionAmend.ts#L99)
+*function* · [data/editSessionAmend.ts](../../packages/trading-ui/src/data/editSessionAmend.ts#L102)
 
 Begin a server edit session on the live `parentOrders` data source. Only
-`quantity` and `price` are editable; addRow is refused (use createOrder).
+`quantity`, `price` and (untriggered stops) `stopPrice` are editable;
+addRow is refused (use createOrder).
 
 ```ts
 openOrderEditSession(dataSource: DataSource, { timeoutMs = DEFAULT_RPC_TIMEOUT_MS, connectionState, }: TradingRpcOptions = {}): Promise<OrderEditSession>
@@ -353,7 +354,7 @@ withRpcTimeout<T>(promise: Promise<T>, rpcName: RpcName, timeoutMs = DEFAULT_RPC
 
 #### StaleOrderEditError
 
-*class* · [data/editSessionAmend.ts](../../packages/trading-ui/src/data/editSessionAmend.ts#L27)
+*class* · [data/editSessionAmend.ts](../../packages/trading-ui/src/data/editSessionAmend.ts#L29)
 
 The save was refused because orders changed after the session began
 (vuu-server and engine-local snapshot each row at session start and
@@ -452,10 +453,11 @@ const DEFAULT_RPC_TIMEOUT_MS: 10000
 | --- | --- | --- | --- |
 | `quantity?` | `number` |  |  |
 | `price?` | `number` |  |  |
+| `stopPrice?` | `number` |  | STOP / STOP_LIMIT orders that have not triggered yet. |
 
 #### OrderEditSession
 
-*interface* · [data/editSessionAmend.ts](../../packages/trading-ui/src/data/editSessionAmend.ts#L53)
+*interface* · [data/editSessionAmend.ts](../../packages/trading-ui/src/data/editSessionAmend.ts#L55)
 
 An open server edit session on `parentOrders` (beginEditSession). The
 server copies the user's visible orders when it begins, so a save fails
@@ -465,7 +467,7 @@ discard() it.
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
-| `amend` | `(orderId: string, edits: OrderEdits) => Promise<void>` |  | editCell quantity / price; rejects with TradingRpcError if refused. |
+| `amend` | `(orderId: string, edits: OrderEdits) => Promise<void>` |  | editCell quantity / price / stopPrice; rejects with TradingRpcError if refused. |
 | `cancel` | `(orderId: string) => Promise<void>` |  | deleteRow: the OMS cancels the order when the session is saved. |
 | `save` | `() => Promise<void>` |  | endEditSession(save): the OMS sends amendOrder / cancelOrder. |
 | `discard` | `() => Promise<void>` |  | endEditSession without saving; safe to call more than once. |
@@ -1440,7 +1442,7 @@ useMarketDepth(ric: string | undefined, { levels = 10 }: { levels?: number } = {
 
 #### useOrderBook
 
-*hook* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L144)
+*hook* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L150)
 
 One parent order with the book it is working in: its child orders, the
 instrument's L2 depth (EXCHANGE `depth`) and L3 queues (EXCHANGE
@@ -1465,10 +1467,11 @@ useOwnExchangeOrderIds(ric: string | undefined, orders: readonly OwnOrder[], { e
 
 #### useOwnWorkingOrders
 
-*hook* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L78)
+*hook* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L97)
 
-Working LIMIT orders (OMS `parentOrders`, visible to the current user) for
-one instrument, also aggregated by side and price. Used for own-order
+Working LIMIT orders, and STOP_LIMIT orders once triggered (OMS
+`parentOrders`, visible to the current user) for one instrument, also
+aggregated by side and price. Used for own-order
 markers in depth views and the price ladder. The OMS only returns orders
 the user is entitled to see (see oms README, permissions).
 
@@ -1506,7 +1509,7 @@ useTradedVolume(ric: string | undefined, { enabled = true, maxPrices = 500 } = {
 
 #### actionableOrders
 
-*function* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L139)
+*function* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L162)
 
 Orders that can be cancelled / amended now (NEW, PARTIALLY_FILLED, REPLACED).
 
@@ -1538,7 +1541,7 @@ levelKey(side: string, price: number): string
 
 #### ownOrdersKey
 
-*function* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L63)
+*function* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L70)
 
 Key of a price level (`side|price`) in the map returned by
 useOwnWorkingOrders.
@@ -1557,11 +1560,22 @@ Normalised numeric key for a price (avoids float noise in Map lookups).
 priceKey(price: number): number
 ```
 
+#### restsAtLimit
+
+*function* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L86)
+
+Whether a parentOrders row rests on the book at its limit: a LIMIT, or a
+STOP_LIMIT whose stop has triggered (an untriggered stop waits in the OMS).
+
+```ts
+restsAtLimit(row: Readonly<Record<string, unknown>>): boolean
+```
+
 ### Constants (hooks)
 
 #### OWN_ORDER_STATUSES
 
-*const* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L38)
+*const* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L45)
 
 Statuses shown as "own working": working plus in-flight.
 
@@ -1694,7 +1708,7 @@ The queue of resting orders at one side and price.
 
 #### OrderBookChildOrder
 
-*interface* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L41)
+*interface* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L45)
 
 A child (street) order of the parent order (OMS `childOrders`).
 
@@ -1713,7 +1727,7 @@ A child (street) order of the parent order (OMS `childOrders`).
 
 #### OrderBookOptions
 
-*interface* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L80)
+*interface* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L84)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1735,13 +1749,15 @@ The parent order an order book view is about (OMS `parentOrders`).
 | `timeInForce?` | `string` |  |  |
 | `quantity` | `number` |  |  |
 | `price?` | `number` |  | Limit price; 0 or absent for a market order. |
+| `stopPrice?` | `number` |  | STOP / STOP_LIMIT trigger price; absent for other types. |
+| `triggeredAt?` | `number` |  | When the stop triggered (epoch ms); absent while waiting / not a stop. |
 | `cumQty` | `number` |  |  |
 | `avgPx?` | `number` |  |  |
 | `status` | `OrdStatus` |  |  |
 
 #### OrderBookState
 
-*interface* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L57)
+*interface* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L61)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1757,9 +1773,10 @@ The parent order an order book view is about (OMS `parentOrders`).
 
 #### OwnOrder
 
-*interface* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L15)
+*interface* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L18)
 
-A working (or pending) LIMIT parent order of the current user.
+A working (or pending) parent order of the current user resting on the
+book at its limit: a LIMIT, or a STOP_LIMIT once its stop has triggered.
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1768,7 +1785,9 @@ A working (or pending) LIMIT parent order of the current user.
 | `account` | `string` |  |  |
 | `ric` | `string` |  |  |
 | `side` | `Side` |  |  |
+| `ordType?` | `OrdType` |  | LIMIT or (triggered) STOP_LIMIT. |
 | `price` | `number` |  |  |
+| `stopPrice?` | `number` |  | STOP_LIMIT: the stop it triggered at (0 for a LIMIT). |
 | `quantity` | `number` |  |  |
 | `leavesQty` | `number` |  |  |
 | `cumQty` | `number` |  |  |
@@ -1776,7 +1795,7 @@ A working (or pending) LIMIT parent order of the current user.
 
 #### OwnOrdersAtPrice
 
-*interface* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L29)
+*interface* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L36)
 
 Own orders on one side at one price.
 
@@ -1789,7 +1808,7 @@ Own orders on one side at one price.
 
 #### OwnWorkingOrders
 
-*interface* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L47)
+*interface* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L54)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1800,7 +1819,7 @@ Own orders on one side at one price.
 
 #### OwnWorkingOrdersOptions
 
-*interface* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L66)
+*interface* · [hooks/useOwnWorkingOrders.ts](../../packages/trading-ui/src/hooks/useOwnWorkingOrders.ts#L73)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1823,7 +1842,7 @@ One resting order in a price level's queue (EXCHANGE `bookOrders`).
 
 #### QueuePosition
 
-*interface* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L32)
+*interface* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L36)
 
 Where one child order rests in the L3 book.
 
@@ -3759,7 +3778,7 @@ Props of [`MarketDepth`](#marketdepth).
 
 #### OrderBlotter
 
-*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L592)
+*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L626)
 
 Order blotter on `parentOrders`: status badge, fill progress, tick-formatted
 avg price, filter tabs, per-row amend / cancel (enabled only for NEW,
@@ -3803,7 +3822,7 @@ orderBlotterTabFilter(tab: OrderBlotterTab): string
 
 #### CHILD_ORDER_COLUMNS
 
-*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L162)
+*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L177)
 
 ```ts
 const CHILD_ORDER_COLUMNS: readonly ["childOrderId", "parentOrderId", "exchangeOrderId", "ric", "side", "price", "quantity", "status", "cumQty", "avgPx", "lastUpdate", "rejectReason", "text"]
@@ -3811,7 +3830,7 @@ const CHILD_ORDER_COLUMNS: readonly ["childOrderId", "parentOrderId", "exchangeO
 
 #### childOrdersTableConfig
 
-*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L124)
+*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L139)
 
 ```ts
 const childOrdersTableConfig: TableConfig
@@ -3822,7 +3841,7 @@ const childOrdersTableConfig: TableConfig
 *const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L40)
 
 ```ts
-const ORDER_BLOTTER_COLUMNS: readonly ["orderId", "status", "side", "ric", "ordType", "strategy", "timeInForce", "quantity", "price", "cumQty", "targetQty", "avgPx", "account", "trader", "created", "lastUpdate", "currency", "rejectReason", "text"]
+const ORDER_BLOTTER_COLUMNS: readonly ["orderId", "status", "side", "ric", "ordType", "strategy", "timeInForce", "quantity", "price", "stopPrice", "triggeredAt", "cumQty", "targetQty", "avgPx", "account", ... 5 more ..., "text"]
 ```
 
 #### ORDER_BLOTTER_TABS
@@ -3843,7 +3862,7 @@ const OrderBlotterContext: Context<OrderRowActions | undefined>
 
 #### orderBlotterTableConfig
 
-*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L62)
+*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L64)
 
 ```ts
 const orderBlotterTableConfig: TableConfig
@@ -3883,7 +3902,7 @@ type OrderBlotterTab = "working" | "filled" | "closed" | "all"
 
 #### OrderBookView
 
-*component* · [components/OrderBookView/OrderBookView.tsx](../../packages/trading-ui/src/components/OrderBookView/OrderBookView.tsx#L115)
+*component* · [components/OrderBookView/OrderBookView.tsx](../../packages/trading-ui/src/components/OrderBookView/OrderBookView.tsx#L116)
 
 The book a parent order is working in, read top down: the order and its
 resting child orders, the instrument's L2 depth with the levels holding
@@ -3902,11 +3921,24 @@ Props: `OrderBookViewProps`
 
 Also accepts the standard HTML attributes and `ref`.
 
+### Functions (components/OrderBookView)
+
+#### orderTypeLabel
+
+*function* · [components/OrderBookView/OrderBookView.tsx](../../packages/trading-ui/src/components/OrderBookView/OrderBookView.tsx#L271)
+
+"Lmt 99.40", "Stp 99.50", "Stp 99.50 Lmt 99.40", else the order type
+("MARKET").
+
+```ts
+orderTypeLabel(order: Pick<OrderBookParentOrder, "ordType" | "price" | "stopPrice">, fmtPrice: (price: number) => string): string
+```
+
 ### Interfaces (components/OrderBookView)
 
 #### BookLevelRef
 
-*interface* · [components/OrderBookView/OrderBookView.tsx](../../packages/trading-ui/src/components/OrderBookView/OrderBookView.tsx#L32)
+*interface* · [components/OrderBookView/OrderBookView.tsx](../../packages/trading-ui/src/components/OrderBookView/OrderBookView.tsx#L33)
 
 One price level on one side of the book.
 
@@ -3917,7 +3949,7 @@ One price level on one side of the book.
 
 #### OrderBookViewProps
 
-*interface* · [components/OrderBookView/OrderBookView.tsx](../../packages/trading-ui/src/components/OrderBookView/OrderBookView.tsx#L37)
+*interface* · [components/OrderBookView/OrderBookView.tsx](../../packages/trading-ui/src/components/OrderBookView/OrderBookView.tsx#L38)
 
 Props of [`OrderBookView`](#orderbookview).
 
@@ -3957,17 +3989,20 @@ Props of [`OrderStatusBadge`](#orderstatusbadge).
 
 #### OrderTicket
 
-*component* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L936)
+*component* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L1109)
 
 Order entry. The side buttons carry the quote (Sell on the bid, Buy on
 the ask). Instrument, side, quantity and price stay in place; the
 execution strategy and its parameters (from the strategy definitions)
 sit below them. Keyboard first:
-- Tab: instrument → quantity → price → strategy → its fields → send.
-- Alt / Option + B / S side, L / M type, T next TIF, E strategy.
+- Tab: instrument → quantity → (stop) → price → strategy → its fields →
+  send.
+- Alt / Option + B / S side; L limit, M market, P stop, Shift+P stop
+  limit; T next TIF; E strategy.
 - Enter accepts a field and moves on; Ctrl+Enter or F9 sends.
 - Price `b` / `a` / `m` / `b+2`; quantity `10k` / `$250k`.
-- The instrument field takes a whole order line (`b 5k vod.l b twap 45m`).
+- The instrument field takes a whole order line (`b 5k vod.l b twap 45m`,
+  `s 200 vod.l stop 99.5 lmt 99.4`).
 Orders over a limit or outside the collar go through Review first.
 
 Props: `OrderTicketProps`
@@ -4082,13 +4117,13 @@ Also accepts the standard HTML attributes.
 
 #### useOrderTicket
 
-*hook* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L307)
+*hook* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L342)
 
 State and behaviour of the order ticket (one core used by every layout
 variant). Exposed for custom ticket layouts.
 
 ```ts
-useOrderTicket({ prefill, followSelection = true, linkGroup, publishSelection = true, onOrderEvent, onClose, notify: notifyEnabled = true, rememberAccount = true, clOrdIdPrefix, usdPerPriceUnit, collarPct, }: UseOrderTicketProps = {}): { draft: OrderDraft; update: (change: Partial<OrderDraft>) => void; selectInstrument: (selected: SelectedInstrument) => void; ... 23 more ...; handleKeyDown: (event: KeyboardEvent<...>) => void; }
+useOrderTicket({ prefill, followSelection = true, linkGroup, publishSelection = true, onOrderEvent, onClose, notify: notifyEnabled = true, rememberAccount = true, clOrdIdPrefix, usdPerPriceUnit, collarPct, }: UseOrderTicketProps = {}): { draft: OrderDraft; update: (change: Partial<OrderDraft>) => void; selectInstrument: (selected: SelectedInstrument) => void; ... 24 more ...; handleKeyDown: (event: KeyboardEvent<...>) => void; }
 ```
 
 #### useOrderTicketLauncher
@@ -4116,7 +4151,7 @@ useOrderTicketTarget(enabled = true): OrderTicketPrefill | undefined
 
 #### algoParamField
 
-*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L248)
+*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L283)
 
 `data-order-ticket-field` of a strategy parameter input.
 
@@ -4126,7 +4161,7 @@ algoParamField(key: AlgoParamKey): string
 
 #### allowedTimesInForce
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L136)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L177)
 
 The TIFs to offer, in display order.
 
@@ -4136,7 +4171,7 @@ allowedTimesInForce(ordType: OrdType, strategy?: AlgoStrategy, phase?: string): 
 
 #### connectionBlockedReason
 
-*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L228)
+*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L263)
 
 Why orders cannot be sent in this connection state, else undefined.
 
@@ -4146,7 +4181,7 @@ connectionBlockedReason(state: TradingConnectionState): string | undefined
 
 #### defaultLimitPrice
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L417)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L458)
 
 Passive price to start from: bid for a buy, ask for a sell.
 
@@ -4154,9 +4189,20 @@ Passive price to start from: bid for a buy, ask for a sell.
 defaultLimitPrice(side: Side, instrument: OrderTicketInstrument | undefined): number | undefined
 ```
 
+#### defaultStopPrice
+
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L499)
+
+Where an empty stop price starts: one tick beyond the market price (above
+it for a buy, below for a sell), since a stop already reached is refused.
+
+```ts
+defaultStopPrice(side: Side, instrument: OrderTicketInstrument | undefined): number | undefined
+```
+
 #### describePriceShorthand
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L336)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L377)
 
 What price shorthand refers to, for a hint ("Bid +2"), else undefined.
 
@@ -4166,7 +4212,7 @@ describePriceShorthand(text: string): string | undefined
 
 #### draftFromPrefill
 
-*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L197)
+*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L219)
 
 A draft from a prefill (anything unset takes the empty draft's value).
 
@@ -4176,7 +4222,7 @@ draftFromPrefill(prefill: OrderTicketPrefill | undefined, fallback: { ric?: stri
 
 #### fieldForRejectReason
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L483)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L567)
 
 Draft field a server / validation reject reason relates to, if any.
 
@@ -4186,7 +4232,7 @@ fieldForRejectReason(reason: string): OrderDraftField | "form"
 
 #### filterStrategies
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L149)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L190)
 
 Strategies whose name, id or description matches `query`, in picker
 order (grouped).
@@ -4197,7 +4243,7 @@ filterStrategies(query = ""): readonly AlgoStrategyDefinition[]
 
 #### focusTicketField
 
-*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L267)
+*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L302)
 
 Focus a ticket field and select its text, as Tab does, so typing
 replaces the value rather than appending to it.
@@ -4208,7 +4254,7 @@ focusTicketField(el: HTMLElement | null | undefined): void
 
 #### formatPriceInput
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L390)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L431)
 
 Price as input text, with the instrument's decimals (no grouping).
 
@@ -4218,7 +4264,7 @@ formatPriceInput(price: number, instrument: OrderTicketInstrument | undefined): 
 
 #### isAlgoStrategy
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L113)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L133)
 
 Whether the strategy slices the order over time (anything but DMA).
 
@@ -4228,7 +4274,7 @@ isAlgoStrategy(strategy: AlgoStrategy | undefined): boolean
 
 #### isOrderLine
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L861)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L1035)
 
 Whether text in the instrument field is an order line, not a search.
 
@@ -4238,7 +4284,7 @@ isOrderLine(text: string): boolean
 
 #### isPriceShorthand
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L304)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L345)
 
 Whether price input is shorthand (`b`, `a`, `m`, `b+2`, `a-1`).
 
@@ -4246,13 +4292,24 @@ Whether price input is shorthand (`b`, `a`, `m`, `b+2`, `a-1`).
 isPriceShorthand(text: string): boolean
 ```
 
+#### isStrategyAllowed
+
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L140)
+
+Stop orders are worked by the OMS as DMA only: a strategy other than DMA
+can't be combined with STOP / STOP_LIMIT.
+
+```ts
+isStrategyAllowed(ordType: OrdType, strategy: AlgoStrategy | undefined): boolean
+```
+
 #### isTimeInForceAllowed
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L121)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L161)
 
 TIFs the OMS accepts for an order type, strategy and trading phase: the
-strategy definition's list, less GTC for MARKET and IOC / FOK outside
-continuous trading.
+strategy definition's list, less GTC for MARKET, only DAY / GTC for stops,
+and no IOC / FOK outside continuous trading.
 
 ```ts
 isTimeInForceAllowed(ordType: OrdType, tif: TimeInForce, strategy?: AlgoStrategy, phase?: string): boolean
@@ -4260,7 +4317,7 @@ isTimeInForceAllowed(ordType: OrdType, tif: TimeInForce, strategy?: AlgoStrategy
 
 #### isValueInput
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L346)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L387)
 
 Whether quantity input is a USD value (`$250k`).
 
@@ -4270,7 +4327,7 @@ isValueInput(text: string): boolean
 
 #### marketValuationPrice
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L425)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L466)
 
 Price a market order is valued at: the far touch, else the reference.
 
@@ -4280,7 +4337,7 @@ marketValuationPrice(side: Side, instrument: OrderTicketInstrument | undefined):
 
 #### newClOrdId
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L699)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L831)
 
 A client order id, unique per session (well under the 64 char limit).
 
@@ -4288,9 +4345,20 @@ A client order id, unique per session (well under the 64 char limit).
 newClOrdId(prefix = "TKT"): string
 ```
 
+#### nonStopOrdType
+
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L149)
+
+The order type an algo strategy turns a stop into: STOP → MARKET,
+STOP_LIMIT → LIMIT (other types unchanged).
+
+```ts
+nonStopOrdType(ordType: OrdType): OrdType
+```
+
 #### nudgePrice
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L436)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L477)
 
 Move the draft price by `ticks` (band aware). An empty price starts from
 the passive touch. Returns undefined if there is nothing to step from.
@@ -4301,7 +4369,7 @@ nudgePrice(draft: Pick<OrderDraft, "price" | "side">, instrument: OrderTicketIns
 
 #### nudgeQuantity
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L455)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L537)
 
 Step quantity by whole lots (never below one lot).
 
@@ -4309,9 +4377,30 @@ Step quantity by whole lots (never below one lot).
 nudgeQuantity(quantityText: string, instrument: OrderTicketInstrument | undefined, lots: number): string
 ```
 
+#### nudgeStopPrice
+
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L518)
+
+Move the draft stop price by `ticks` (band aware). An empty stop starts
+one tick beyond the market price (see defaultStopPrice).
+
+```ts
+nudgeStopPrice(draft: Pick<OrderDraft, "stopPrice" | "side">, instrument: OrderTicketInstrument | undefined, ticks: number): string | undefined
+```
+
+#### ORDER_TICKET_ORD_TYPES
+
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L107)
+
+Order types the ticket offers, in display order.
+
+```ts
+ORDER_TICKET_ORD_TYPES(t): unknown
+```
+
 #### ORDER_TICKET_STRATEGIES
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L109)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L129)
 
 Strategies offered on the ticket, in display order.
 
@@ -4321,7 +4410,7 @@ ORDER_TICKET_STRATEGIES(d): unknown
 
 #### parseAlgoParam
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L196)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L237)
 
 A parameter's createOrder value, or an error.
 
@@ -4331,7 +4420,7 @@ parseAlgoParam(param: AlgoParamDefinition, text: string | undefined): { value?: 
 
 #### parseDurationInput
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L166)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L207)
 
 Minutes from `45`, `45m`, `1h`, `1.5h`, `1h30`. NaN if invalid, undefined if empty.
 
@@ -4341,7 +4430,7 @@ parseDurationInput(text: string | undefined): number | undefined
 
 #### parseOrderLine
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L780)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L918)
 
 Parse an order typed as one line, e.g. `b 20k aal.l m vwap 15:30`:
 side (first word, `b` / `s`), quantity (first number), instrument (a word
@@ -4350,13 +4439,18 @@ strategy (by id or name) and its parameters (by their form: `45m`,
 `15:30`, `10%`). Words may come in any order after the side, except that
 quantity comes before price. Missing parts are left as they are.
 
+Stops: `stop` (or `stp`) takes the next price as the stop price; with a
+limit price as well the order is a STOP_LIMIT, e.g. `s 200 vod.l stop
+99.5` (STOP) and `s 200 vod.l stop 99.5 lmt 99.4` (STOP_LIMIT). `lmt`
+(`limit`) before a price is optional: any other price is the limit.
+
 ```ts
 parseOrderLine(text: string): OrderLine
 ```
 
 #### parsePercentInput
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L188)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L229)
 
 Percent from `10` or `10%`. NaN if invalid, undefined if empty.
 
@@ -4366,7 +4460,7 @@ parsePercentInput(text: string | undefined): number | undefined
 
 #### parsePrice
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L295)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L336)
 
 Parse price input (`1,234.5`). NaN if not a number, undefined if empty.
 
@@ -4376,7 +4470,7 @@ parsePrice(text: string): number | undefined
 
 #### parseQuantity
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L287)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L328)
 
 Parse quantity input: `1,000`, `10k`, `1.5m`. NaN if not a number.
 
@@ -4386,7 +4480,7 @@ parseQuantity(text: string): number
 
 #### parseTimeInput
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L179)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L220)
 
 "HH:MM" from `15:30`, `1530`, `930`. Null if invalid, undefined if empty.
 
@@ -4396,7 +4490,7 @@ parseTimeInput(text: string | undefined): string | null | undefined
 
 #### previewRisk
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L621)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L746)
 
 Notional and pre-trade risk preview, mirroring the OMS checks client side
 (account limits are USD; the limit collar is ±collarPct of the reference).
@@ -4408,7 +4502,7 @@ previewRisk(draft: OrderDraft, instrument: OrderTicketInstrument | undefined, ac
 
 #### referencePrice
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L403)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L444)
 
 Reference for risk checks, as the OMS: last, else mid, else refPrice.
 
@@ -4418,7 +4512,7 @@ referencePrice(instrument: OrderTicketInstrument | undefined): number | undefine
 
 #### resolvePriceInput
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L312)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L353)
 
 Price input as a number: a plain price, or shorthand relative to the
 touch: `b` bid, `a` ask, `m` mid (rounded to the tick), with `+n` / `-n`
@@ -4431,7 +4525,7 @@ resolvePriceInput(text: string, instrument: OrderTicketInstrument | undefined): 
 
 #### resolveQuantityInput
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L353)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L394)
 
 Quantity input as shares: `1,000`, `10k`, `1.5m`, or a USD value
 (`$250k`) converted at `price` and rounded to whole lots (at least one).
@@ -4443,7 +4537,7 @@ resolveQuantityInput(text: string, instrument: OrderTicketInstrument | undefined
 
 #### reviewReasons
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L722)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L855)
 
 The warnings that need the order reviewed before it is sent.
 
@@ -4453,7 +4547,7 @@ reviewReasons(risk: RiskPreview): RiskWarning[]
 
 #### scheduleOf
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L379)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L420)
 
 Tick schedule of an order ticket instrument (tickBands over tickSize);
 undefined without a tickSize.
@@ -4464,7 +4558,7 @@ scheduleOf(instrument: OrderTicketInstrument | undefined): TickSchedule | undefi
 
 #### scheduleSummary
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L732)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L865)
 
 One line on how the strategy will work the order, for the ticket. Built
 from the definition's parameters; null for DMA.
@@ -4475,7 +4569,7 @@ scheduleSummary(draft: OrderDraft, quantity: number | undefined): string | null
 
 #### validateDraft
 
-*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L498)
+*function* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L599)
 
 Client-side validation with the shared trading-schemas rules
 (validateOrder + validateRpcParams). The OMS re-validates and also applies
@@ -4489,7 +4583,7 @@ validateDraft(draft: OrderDraft, instrument: OrderTicketInstrument | undefined, 
 
 #### DEFAULT_COLLAR_PCT
 
-*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L279)
+*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L320)
 
 Default OMS limit price collar (oms.collarPct).
 
@@ -4499,7 +4593,7 @@ const DEFAULT_COLLAR_PCT: 0.1
 
 #### EMPTY_DRAFT
 
-*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L704)
+*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L836)
 
 ```ts
 const EMPTY_DRAFT: OrderDraft
@@ -4507,7 +4601,7 @@ const EMPTY_DRAFT: OrderDraft
 
 #### INDICATIVE_USD_PER_PRICE_UNIT
 
-*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L268)
+*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L309)
 
 USD per unit of instrument price, by instrument currency. Mirrors the
 exchange simulator's reference rates (GBX prices are pence). Indicative:
@@ -4519,25 +4613,25 @@ const INDICATIVE_USD_PER_PRICE_UNIT: Readonly<Record<string, number>>
 
 #### LAST_ACCOUNT_STORAGE_KEY
 
-*const* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L121)
+*const* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L141)
 
 ```ts
 const LAST_ACCOUNT_STORAGE_KEY: "trading.orderTicket.lastAccount"
 ```
 
-#### ORDER_TICKET_ORD_TYPES
+#### ORD_TYPE_LABEL
 
-*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L100)
+*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L115)
 
-Order types the OMS accepts (STOP / STOP_LIMIT are reserved).
+Display name of an order type ("Stop limit").
 
 ```ts
-const ORDER_TICKET_ORD_TYPES: readonly OrdType[]
+const ORD_TYPE_LABEL: Readonly<Record<string, string>>
 ```
 
 #### ORDER_TICKET_SELECTION_SOURCE
 
-*const* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L120)
+*const* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L140)
 
 ```ts
 const ORDER_TICKET_SELECTION_SOURCE: "orderTicket"
@@ -4545,7 +4639,7 @@ const ORDER_TICKET_SELECTION_SOURCE: "orderTicket"
 
 #### ORDER_TICKET_TIFS
 
-*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L101)
+*const* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L121)
 
 ```ts
 const ORDER_TICKET_TIFS: readonly TimeInForce[]
@@ -4555,7 +4649,7 @@ const ORDER_TICKET_TIFS: readonly TimeInForce[]
 
 #### DraftValidation
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L487)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L588)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -4564,9 +4658,9 @@ const ORDER_TICKET_TIFS: readonly TimeInForce[]
 
 #### OrderDraft
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L65)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L68)
 
-The editable state of the ticket. Quantity and price are input text.
+The editable state of the ticket. Quantity and prices are input text.
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -4575,14 +4669,15 @@ The editable state of the ticket. Quantity and price are input text.
 | `ordType` | `OrdType` |  |  |
 | `timeInForce` | `TimeInForce` |  |  |
 | `quantity` | `string` |  |  |
-| `price` | `string` |  |  |
+| `price` | `string` |  | Limit price (LIMIT, STOP_LIMIT). |
+| `stopPrice` | `string` |  | Stop (trigger) price (STOP, STOP_LIMIT). |
 | `account?` | `string` |  |  |
 | `strategy?` | `AlgoStrategy` |  | How the OMS works the order; undefined = DMA. |
 | `algoParams` | `Readonly<Partial<Record<AlgoParamKey, string>>>` |  | The strategy's parameters as input text, by createOrder field (see the strategy definitions). Empty = the OMS default. |
 
 #### OrderLine
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L763)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L896)
 
 What an order line set, and how each word was read (for chips).
 
@@ -4593,7 +4688,7 @@ What an order line set, and how each word was read (for chips).
 
 #### OrderTicketAccount
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L52)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L55)
 
 An `accounts` row (limits are in USD).
 
@@ -4617,7 +4712,7 @@ Props of [`OrderTicketDialog`](#orderticketdialog).
 
 #### OrderTicketInstrument
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L30)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L33)
 
 Instrument data the ticket works with: static (instruments) plus the live
 prices of the instrumentPrices join. Everything but `ric` is optional while
@@ -4668,7 +4763,7 @@ Props of [`OrderTicketPanel`](#orderticketpanel).
 
 #### OrderTicketPrefill
 
-*interface* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L70)
+*interface* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L75)
 
 Values to open a ticket with (from a grid Buy/Sell action, a ladder click,
 a position row ...). Anything omitted keeps its default.
@@ -4679,25 +4774,39 @@ a position row ...). Anything omitted keeps its default.
 | `instrument?` | `SelectedInstrument` |  | Static data for the ric, if the caller has it (saves a lookup). |
 | `side?` | `Side` |  |  |
 | `price?` | `number` |  | Limit price; implies a LIMIT order unless ordType is given. |
+| `stopPrice?` | `number` |  | Stop (trigger) price; implies a STOP order (STOP_LIMIT with a price) unless ordType is given. |
 | `quantity?` | `number` |  |  |
 | `ordType?` | `OrdType` |  |  |
 | `timeInForce?` | `TimeInForce` |  |  |
 | `account?` | `string` |  |  |
-| `strategy?` | `AlgoStrategy` |  | How the OMS works the order (default DMA). |
+| `strategy?` | `AlgoStrategy` |  | How the OMS works the order (default DMA; stops are DMA only). |
 
 #### OrderTicketProps
 
-*interface* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L79)
+*interface* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L83)
 
 Props of [`OrderTicket`](#orderticket).
 
-#### RiskPreview
+#### OrderTicketTypeNotice
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L591)
+*interface* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L100)
+
+Why the ticket just changed the order type or strategy for you: stops are
+DMA only, so picking one of them resets the other (`field` is the one
+that was changed).
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
-| `price?` | `number` |  | Valuation price (limit, or far touch for market). |
+| `field` | `"ordType" \| "strategy"` |  |  |
+| `text` | `string` |  |  |
+
+#### RiskPreview
+
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L716)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `price?` | `number` |  | Valuation price (limit, stop for STOP, or far touch for market). |
 | `quantity?` | `number` |  | Quantity in shares (shorthand and $ values resolved). |
 | `notional?` | `number` |  | quantity × price, in instrument currency (GBX: pence). |
 | `currency?` | `string` |  |  |
@@ -4708,7 +4817,7 @@ Props of [`OrderTicket`](#orderticket).
 
 #### RiskPreviewOptions
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L608)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L733)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -4717,7 +4826,7 @@ Props of [`OrderTicket`](#orderticket).
 
 #### RiskWarning
 
-*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L586)
+*interface* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L711)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -4726,7 +4835,7 @@ Props of [`OrderTicket`](#orderticket).
 
 #### UseOrderTicketProps
 
-*interface* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L97)
+*interface* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L117)
 
 Extends `RiskPreviewOptions`.
 
@@ -4748,7 +4857,7 @@ Extends `RiskPreviewOptions`.
 
 #### AlgoParamKey
 
-*type* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L82)
+*type* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L88)
 
 ```ts
 type AlgoParamKey = AlgoParamDefinition["key"]
@@ -4756,7 +4865,7 @@ type AlgoParamKey = AlgoParamDefinition["key"]
 
 #### OrderDraftErrors
 
-*type* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L95)
+*type* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L102)
 
 ```ts
 type OrderDraftErrors = Partial<
@@ -4766,7 +4875,7 @@ type OrderDraftErrors = Partial<
 
 #### OrderDraftField
 
-*type* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L84)
+*type* · [components/OrderTicket/orderTicketModel.ts](../../packages/trading-ui/src/components/OrderTicket/orderTicketModel.ts#L90)
 
 ```ts
 type OrderDraftField = | "ric"
@@ -4775,6 +4884,7 @@ type OrderDraftField = | "ric"
   | "timeInForce"
   | "quantity"
   | "price"
+  | "stopPrice"
   | "account"
   | "strategy"
   | AlgoParamKey
@@ -4782,7 +4892,7 @@ type OrderDraftField = | "ric"
 
 #### OrderTicketState
 
-*type* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L928)
+*type* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L1027)
 
 ```ts
 type OrderTicketState = ReturnType<typeof useOrderTicket>
@@ -4790,7 +4900,7 @@ type OrderTicketState = ReturnType<typeof useOrderTicket>
 
 #### OrderTicketSubmission
 
-*type* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L85)
+*type* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L105)
 
 ```ts
 type OrderTicketSubmission = | { state: "idle" }
@@ -4815,7 +4925,7 @@ type OrderTicketTarget = (prefill: OrderTicketPrefill) => void
 
 #### OrderTicketVariant
 
-*type* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L77)
+*type* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L81)
 
 ```ts
 type OrderTicketVariant = "panel" | "compact"
@@ -6306,7 +6416,7 @@ Props of [`TradeTape`](#tradetape).
 
 #### registerTradingCellRenderers
 
-*function* · [components/TradingCellRenderers/TradingCellRenderers.tsx](../../packages/trading-ui/src/components/TradingCellRenderers/TradingCellRenderers.tsx#L149)
+*function* · [components/TradingCellRenderers/TradingCellRenderers.tsx](../../packages/trading-ui/src/components/TradingCellRenderers/TradingCellRenderers.tsx#L177)
 
 Register the generic trading cell renderers with the vuu component registry (idempotent).
 
@@ -6318,7 +6428,7 @@ registerTradingCellRenderers(): void
 
 #### TradingRenderer
 
-*const* · [components/TradingCellRenderers/TradingCellRenderers.tsx](../../packages/trading-ui/src/components/TradingCellRenderers/TradingCellRenderers.tsx#L38)
+*const* · [components/TradingCellRenderers/TradingCellRenderers.tsx](../../packages/trading-ui/src/components/TradingCellRenderers/TradingCellRenderers.tsx#L39)
 
 Names of the generic trading cell renderers. Use them as a column
 `type`:
@@ -6332,7 +6442,7 @@ the data source (noted per renderer). `registerTradingCellRenderers()` must
 have run; the components that use them call it.
 
 ```ts
-const TradingRenderer: Readonly<{ readonly OrderStatus: "trading.order-status"; readonly Side: "trading.side"; readonly FillProgress: "trading.fill-progress"; readonly Price: "trading.price"; readonly Pnl: "trading.pnl"; readonly PositionQuantity: "trading.position-quantity"; readonly Notional: "trading.notional"; readonly Time: "trading....
+const TradingRenderer: Readonly<{ readonly OrderStatus: "trading.order-status"; readonly Side: "trading.side"; readonly FillProgress: "trading.fill-progress"; readonly Price: "trading.price"; readonly Pnl: "trading.pnl"; ... 4 more ...; readonly StopTrigger: "trading.stop-trigger"; }>
 ```
 
 ## utils
@@ -6490,7 +6600,7 @@ isInactivePhase(phase: unknown): boolean
 
 #### isOrderAmendable
 
-*function* · [utils/orderStatus.ts](../../packages/trading-ui/src/utils/orderStatus.ts#L33)
+*function* · [utils/orderStatus.ts](../../packages/trading-ui/src/utils/orderStatus.ts#L38)
 
 Amend is offered only for NEW, PARTIALLY_FILLED and REPLACED (not PENDING_*:
 the server answers ORDER_PENDING while a request is in flight).
@@ -6521,7 +6631,7 @@ orderStatusColour(status: unknown): "var(--trading-status-working, var(--salt-st
 
 #### orderStatusIcon
 
-*function* · [utils/orderStatus.ts](../../packages/trading-ui/src/utils/orderStatus.ts#L72)
+*function* · [utils/orderStatus.ts](../../packages/trading-ui/src/utils/orderStatus.ts#L77)
 
 A single glyph for the status (decorative; the label carries the meaning).
 
@@ -6531,7 +6641,7 @@ orderStatusIcon(status: unknown): string
 
 #### orderStatusLabel
 
-*function* · [utils/orderStatus.ts](../../packages/trading-ui/src/utils/orderStatus.ts#L55)
+*function* · [utils/orderStatus.ts](../../packages/trading-ui/src/utils/orderStatus.ts#L60)
 
 Display label of an order status, e.g. "Part filled"; unknown values are
 returned as is.
@@ -6570,6 +6680,19 @@ Colour for an order side: buy / sell, neutral for anything else.
 sideColour(side: unknown): "var(--trading-buy, var(--salt-sentiment-positive-foreground-informative))" | "var(--trading-sell, var(--salt-sentiment-negative-foreground-informative))" | "var(--trading-neutral, var(--salt-content-secondary-foreground))"
 ```
 
+#### stopTriggerState
+
+*function* · [utils/orderStatus.ts](../../packages/trading-ui/src/utils/orderStatus.ts#L86)
+
+Where a STOP / STOP_LIMIT order is with its trigger: "waiting" in the OMS
+for a trade at the stop, or "triggered" (sent to the exchange).
+Undefined for other order types, and for a stop that ended (cancelled,
+rejected, expired) before it triggered.
+
+```ts
+stopTriggerState(ordType: string | undefined, status: string | undefined, triggeredAt: number | undefined): "waiting" | "triggered" | undefined
+```
+
 #### tradingPhaseColour
 
 *function* · [utils/colours.ts](../../packages/trading-ui/src/utils/colours.ts#L77)
@@ -6585,7 +6708,7 @@ tradingPhaseColour(phase: unknown): "var(--trading-status-filled, var(--salt-sta
 
 #### DONE_STATUSES
 
-*const* · [utils/orderStatus.ts](../../packages/trading-ui/src/utils/orderStatus.ts#L13)
+*const* · [utils/orderStatus.ts](../../packages/trading-ui/src/utils/orderStatus.ts#L18)
 
 ```ts
 const DONE_STATUSES: readonly string[]
@@ -6593,7 +6716,7 @@ const DONE_STATUSES: readonly string[]
 
 #### isOrderCancellable
 
-*const* · [utils/orderStatus.ts](../../packages/trading-ui/src/utils/orderStatus.ts#L36)
+*const* · [utils/orderStatus.ts](../../packages/trading-ui/src/utils/orderStatus.ts#L41)
 
 ```ts
 const isOrderCancellable: (status: unknown) => boolean
@@ -6624,7 +6747,7 @@ const tradingPhaseText: Record<string, string>
 
 #### WORKING_STATUSES
 
-*const* · [utils/orderStatus.ts](../../packages/trading-ui/src/utils/orderStatus.ts#L4)
+*const* · [utils/orderStatus.ts](../../packages/trading-ui/src/utils/orderStatus.ts#L9)
 
 Statuses of orders that are live (cancellable / amendable once acknowledged).
 

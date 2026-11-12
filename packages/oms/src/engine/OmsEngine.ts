@@ -6,6 +6,8 @@ import {
   canAmend,
   canCancel,
   ExecType,
+  isStopOrdType,
+  isStopTriggered,
   isTerminalStatus,
   isWorkingStatus,
   OrdStatus,
@@ -14,12 +16,13 @@ import {
   positionKey,
   RejectReason,
   Side,
+  sessionClosedSince,
   TimeInForce,
   TradingPhase,
   UNSCHEDULED,
   validateAmend,
 } from "@heswell/trading-schemas";
-import type { ExecutionReport } from "@heswell/exchange-sim";
+import type { ExecutionReport, MarketTrade } from "@heswell/exchange-sim";
 import { type Timer, TimerRegistry } from "@heswell/trading-metrics";
 import {
   AlgoContainer,
@@ -77,7 +80,28 @@ export interface ParentOrder extends OrderInfo {
   firstFillAt?: number;
   /** OMS clock time the order became fully FILLED. */
   completedAt?: number;
+  /** STOP / STOP_LIMIT trigger price. */
+  stopPrice?: number;
+  /** STOP / STOP_LIMIT: OMS clock time the stop triggered (child sent). */
+  triggeredAt?: number;
 }
+
+/**
+ * A STOP / STOP_LIMIT the OMS is still holding: not triggered, no child at
+ * the exchange yet.
+ */
+export const isWaitingStop = (parent: ParentOrder) =>
+  isStopOrdType(parent.ordType) &&
+  parent.triggeredAt === undefined &&
+  !isTerminalStatus(parent.state.status);
+
+/** The exchange order type a triggered stop is sent as. */
+const triggeredOrdType = (ordType: OrdType) =>
+  ordType === OrdType.Stop
+    ? OrdType.Market
+    : ordType === OrdType.StopLimit
+      ? OrdType.Limit
+      : ordType;
 
 /**
  * Execution quality of a parent order versus its arrival price. Slippage is
@@ -320,6 +344,10 @@ export class OmsEngine {
   #childrenByParent = new Map<string, ChildOrder[]>();
   #algos: AlgoContainer;
   #unsubscribeTrades: () => void;
+  /** Waiting stops (see isWaitingStop) by orderId. */
+  #stops = new Map<string, ParentOrder>();
+  /** Tape trades not yet checked against the waiting stops. */
+  #stopTrades: MarketTrade[] = [];
 
   constructor({
     gateway,
@@ -391,8 +419,10 @@ export class OmsEngine {
       algoSliceMs,
     );
     this.#unsubscribeTrades =
-      gateway.onTrade?.((trade) => this.#algos.onTrade(trade)) ??
-      (() => undefined);
+      gateway.onTrade?.((trade) => {
+        this.#algos.onTrade(trade);
+        this.#onStopTrade(trade);
+      }) ?? (() => undefined);
   }
 
   dispose() {
@@ -402,9 +432,91 @@ export class OmsEngine {
 
   // ---------------------------------------------------------------- algos
 
-  /** Algo timer: re-slice running algo orders (OmsService calls this). */
+  /**
+   * Algo timer: re-slice running algo orders and expire waiting DAY stops
+   * whose session has closed (OmsService calls this).
+   */
   stepAlgos(now = this.#clock()) {
     this.#algos.step(now);
+    this.#expireClosedStops(now);
+  }
+
+  // ---------------------------------------------------------------- stops
+
+  /** STOP / STOP_LIMIT orders the OMS is holding until their stop is reached. */
+  get waitingStops(): readonly ParentOrder[] {
+    return [...this.#stops.values()];
+  }
+
+  /**
+   * A tape trade. Stops are checked in a microtask, not here: the exchange
+   * reports the trade before it has finished the order that made it, so a
+   * child sent now would reach the book mid-operation.
+   */
+  #onStopTrade(trade: MarketTrade) {
+    if (this.#stops.size === 0) return;
+    this.#stopTrades.push(trade);
+    if (this.#stopTrades.length === 1) {
+      queueMicrotask(() => this.#checkStops());
+    }
+  }
+
+  #checkStops() {
+    const trades = this.#stopTrades;
+    this.#stopTrades = [];
+    for (const trade of trades) {
+      for (const parent of this.#stops.values()) {
+        if (
+          parent.ric === trade.ric &&
+          isWorkingStatus(parent.state.status) &&
+          isStopTriggered(parent.side, parent.stopPrice ?? 0, trade.price)
+        ) {
+          this.#triggerStop(parent, trade.price);
+        }
+      }
+    }
+  }
+
+  /**
+   * Send a triggered stop to the exchange: a MARKET child (STOP) or a LIMIT
+   * child at the order's limit (STOP_LIMIT). A STOP's child is DAY (an
+   * unfilled market remainder expires anyway; GTC is not valid for MARKET).
+   */
+  #triggerStop(parent: ParentOrder, tradePrice: number) {
+    this.#stops.delete(parent.orderId);
+    parent.triggeredAt = this.#clock();
+    parent.lastUpdate = parent.triggeredAt;
+    this.#log(
+      `${parent.orderId} ${parent.side} stop ${parent.stopPrice} triggered by a trade at ${tradePrice}`,
+    );
+    const ordType = triggeredOrdType(parent.ordType);
+    this.#publishParent(parent);
+    this.#sendDmaChild(
+      parent,
+      ordType,
+      ordType === OrdType.Market ? TimeInForce.Day : parent.timeInForce,
+    );
+  }
+
+  /** Waiting DAY stops whose session closed since they were entered, or whose market is CLOSED. */
+  #expireClosedStops(now: number) {
+    if (this.#stops.size === 0) return;
+    const schedule = this.#schedule();
+    for (const parent of [...this.#stops.values()]) {
+      if (
+        parent.timeInForce === TimeInForce.Day &&
+        isWorkingStatus(parent.state.status) &&
+        (sessionClosedSince(schedule, parent.created, now) ||
+          this.#gateway.getPhase(parent.ric) === TradingPhase.Closed)
+      ) {
+        this.#expireStop(parent, "DAY stop expired at market close");
+      }
+    }
+  }
+
+  #expireStop(parent: ParentOrder, text: string) {
+    this.#stops.delete(parent.orderId);
+    this.#applyParent(parent, { type: "expired", text });
   }
 
   /** Algo orders still being worked. */
@@ -485,6 +597,19 @@ export class OmsEngine {
     event: OrderEvent,
   ) {
     if (!isAlgoParent(parent)) {
+      if (parent.triggeredAt !== undefined) {
+        // A triggered stop is already working: the child's ack is not news,
+        // and a rejected child ends the order (it cannot go back to waiting).
+        if (event.type === "ack") return;
+        if (event.type === "reject") {
+          this.#applyParent(parent, {
+            type: "expired",
+            reason: event.reason,
+            text: `stop triggered but the order was rejected: ${event.text ?? event.reason}`,
+          });
+          return;
+        }
+      }
       if (event.type === "fill" && parent.firstFillAt === undefined) {
         parent.firstFillAt = this.#clock();
         if (!this.#replaying)
@@ -616,6 +741,11 @@ export class OmsEngine {
     this.#dirtyPositions.clear();
     this.#newFills = [];
     this.#algos.restore(this.parents.values());
+    this.#stops.clear();
+    this.#stopTrades = [];
+    for (const parent of this.parents.values()) {
+      if (isWaitingStop(parent)) this.#stops.set(parent.orderId, parent);
+    }
   }
 
   /**
@@ -861,6 +991,13 @@ export class OmsEngine {
     }
     const now = this.#clock();
     const strategy = request.strategy ?? AlgoStrategy.Dma;
+    const stop = isStopOrdType(request.ordType);
+    if (stop && strategy !== AlgoStrategy.Dma) {
+      return fail(
+        RejectReason.UnsupportedOrdType,
+        `${request.ordType} orders are DMA only, not ${strategy}`,
+      );
+    }
     let algo: AlgoState | undefined;
     if (strategy !== AlgoStrategy.Dma) {
       const resolved = resolveAlgoParams(request, this.#schedule(), now);
@@ -874,7 +1011,10 @@ export class OmsEngine {
     }
 
     const timeInForce = request.timeInForce ?? TimeInForce.Day;
-    const price = request.ordType === OrdType.Market ? 0 : (request.price ?? 0);
+    const price =
+      request.ordType === OrdType.Market || request.ordType === OrdType.Stop
+        ? 0
+        : (request.price ?? 0);
     const instrument = this.#gateway.getInstrument(request.ric);
     const top = this.#gateway.getTopOfBook(request.ric);
     // 1e-8 strips float noise from the mid of two tick prices
@@ -902,6 +1042,7 @@ export class OmsEngine {
       arrivalPrice,
       strategy,
       ...(algo ? { algo, childSeq: 0 } : {}),
+      ...(stop ? { stopPrice: request.stopPrice } : {}),
     };
     this.parents.set(parent.orderId, parent);
 
@@ -928,29 +1069,21 @@ export class OmsEngine {
       };
     }
 
-    const childOrderId = `${parent.orderId}-1`;
-    const child: ChildOrder = {
-      ...orderInfo(parent),
-      orderId: childOrderId,
-      parentOrderId: parent.orderId,
-      clOrdId: childOrderId,
-      exchangeClOrdId: childOrderId,
-      requestSeq: 0,
-    };
-    parent.childOrderId = childOrderId;
-    this.#addChild(child);
-    this.#publishChild(child);
+    if (isStopOrdType(parent.ordType)) {
+      // Held here until a trade reaches the stop price.
+      this.#applyParent(parent, { type: "ack" });
+      this.#stops.set(parent.orderId, parent);
+      return {
+        ok: true,
+        value: {
+          orderId: parent.orderId,
+          clOrdId: parent.clOrdId,
+          status: parent.state.status,
+        },
+      };
+    }
 
-    this.#gateway.submit({
-      account: child.account,
-      clOrdId: childOrderId,
-      ric: child.ric,
-      side: child.side,
-      ordType: child.ordType,
-      quantity: child.state.quantity,
-      price: child.ordType === OrdType.Market ? undefined : child.state.price,
-      timeInForce,
-    });
+    this.#sendDmaChild(parent, parent.ordType, timeInForce);
 
     const { status, rejectReason, text } = parent.state;
     if (status === OrdStatus.Rejected) {
@@ -964,6 +1097,46 @@ export class OmsEngine {
       ok: true,
       value: { orderId: parent.orderId, clOrdId: parent.clOrdId, status },
     };
+  }
+
+  /** Create and submit the only child of a DMA order (or of a triggered stop). */
+  #sendDmaChild(
+    parent: ParentOrder,
+    ordType: OrdType,
+    timeInForce: TimeInForce,
+  ) {
+    const childOrderId = `${parent.orderId}-1`;
+    const now = this.#clock();
+    const child: ChildOrder = {
+      ...orderInfo(parent),
+      orderId: childOrderId,
+      parentOrderId: parent.orderId,
+      clOrdId: childOrderId,
+      exchangeClOrdId: childOrderId,
+      ordType,
+      timeInForce,
+      created: now,
+      lastUpdate: now,
+      state: newOrderState(
+        parent.state.leavesQty,
+        ordType === OrdType.Market ? 0 : parent.state.price,
+      ),
+      requestSeq: 0,
+    };
+    parent.childOrderId = childOrderId;
+    this.#addChild(child);
+    this.#publishChild(child);
+
+    this.#gateway.submit({
+      account: child.account,
+      clOrdId: childOrderId,
+      ric: child.ric,
+      side: child.side,
+      ordType,
+      quantity: child.state.quantity,
+      price: ordType === OrdType.Market ? undefined : child.state.price,
+      timeInForce,
+    });
   }
 
   /** Resolve a parent + its child for an amend / cancel request. */
@@ -996,6 +1169,9 @@ export class OmsEngine {
           orderId,
         );
       }
+      return { ok: true, value: { parent } };
+    }
+    if (isWaitingStop(parent) && isWorkingStatus(status)) {
       return { ok: true, value: { parent } };
     }
     const child = parent.childOrderId
@@ -1038,9 +1214,26 @@ export class OmsEngine {
       return fail(RejectReason.OrderPending, "order cannot be amended now");
     }
     const algoParent = isAlgoParent(parent) ? parent : undefined;
+    const waitingStop = isWaitingStop(parent);
     const quantity = request.quantity ?? parent.state.quantity;
     const price = request.price ?? parent.state.price;
-    if (quantity === parent.state.quantity && price === parent.state.price) {
+    const stopPrice = request.stopPrice ?? parent.stopPrice;
+    if (
+      request.stopPrice !== undefined &&
+      isStopOrdType(parent.ordType) &&
+      !waitingStop
+    ) {
+      return fail(
+        RejectReason.InvalidStopPrice,
+        "the stop has already triggered",
+        parent.orderId,
+      );
+    }
+    if (
+      quantity === parent.state.quantity &&
+      price === parent.state.price &&
+      stopPrice === parent.stopPrice
+    ) {
       return fail(
         RejectReason.InvalidRequest,
         "amend does not change the order",
@@ -1053,25 +1246,48 @@ export class OmsEngine {
         `unknown instrument ${parent.ric}`,
       );
     }
+    // A triggered stop is checked as the order it became at the exchange.
+    const riskOrdType =
+      isStopOrdType(parent.ordType) && !waitingStop
+        ? triggeredOrdType(parent.ordType)
+        : parent.ordType;
     const invalid =
       validateAmend(request, instrument, {
         ordType: parent.ordType,
         cumQty: parent.state.cumQty,
+        side: parent.side,
+        price: parent.state.price,
+        stopPrice: parent.stopPrice,
       }) ??
       this.#checkRisk(
         {
           account: parent.account,
           ric: parent.ric,
           side: parent.side,
-          ordType: parent.ordType,
-          timeInForce: parent.timeInForce,
+          ordType: riskOrdType,
+          timeInForce: child?.timeInForce ?? parent.timeInForce,
           // Risk applies to what is still to trade; the filled part is already in the position.
           quantity: quantity - parent.state.cumQty || instrument.lotSize,
-          price: parent.ordType === OrdType.Market ? undefined : price,
+          price:
+            riskOrdType === OrdType.Market || riskOrdType === OrdType.Stop
+              ? undefined
+              : price,
+          stopPrice: waitingStop ? stopPrice : undefined,
         },
         this.#riskContext(parent.account, parent.ric, parent.orderId),
       );
     if (invalid) return fail(invalid.reason, invalid.text, parent.orderId);
+
+    if (waitingStop) {
+      // Nothing at the exchange: the amend applies at once.
+      this.#applyParent(parent, { type: "pendingReplace", quantity, price });
+      parent.stopPrice = stopPrice;
+      this.#applyParent(parent, { type: "replaced", quantity, price });
+      return {
+        ok: true,
+        value: { orderId: parent.orderId, status: parent.state.status },
+      };
+    }
 
     if (algoParent || !child) {
       this.#algos.amend(parent as AlgoParent, quantity, price);
@@ -1121,6 +1337,15 @@ export class OmsEngine {
     const { parent, child } = found.value;
     if (!canCancel(parent.state.status)) {
       return fail(RejectReason.OrderPending, "order cannot be cancelled now");
+    }
+    if (isWaitingStop(parent)) {
+      this.#stops.delete(parent.orderId);
+      this.#applyParent(parent, { type: "pendingCancel" });
+      this.#applyParent(parent, { type: "cancelled" });
+      return {
+        ok: true,
+        value: { orderId: parent.orderId, status: parent.state.status },
+      };
     }
     if (isAlgoParent(parent) || !child) {
       this.#algos.cancel(parent as AlgoParent);
@@ -1208,6 +1433,11 @@ export class OmsEngine {
       if (isAlgoParent(parent)) {
         if (parent.algo.phase !== "WORKING") continue;
         this.#algos.expire(parent, "DAY order expired at end of day");
+        expired.push(parent.orderId);
+        continue;
+      }
+      if (isWaitingStop(parent)) {
+        this.#expireStop(parent, "DAY stop expired at end of day");
         expired.push(parent.orderId);
         continue;
       }
@@ -1479,6 +1709,8 @@ export class OmsEngine {
       algoEnd: parent.algo?.endAt ?? 0,
       participationPct: (parent.algo?.participation ?? 0) * 100,
       targetQty: parent.algo ? parent.algo.targetQty : parent.state.quantity,
+      stopPrice: parent.stopPrice ?? 0,
+      triggeredAt: parent.triggeredAt ?? 0,
     });
   }
 

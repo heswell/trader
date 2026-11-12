@@ -198,6 +198,12 @@ describe("SimExchangeGateway", () => {
       [{ quantity: 0 }, RejectReason.InvalidQuantity],
       [{ price: undefined }, RejectReason.MissingPrice],
       [{ price: 1 }, RejectReason.PriceOutsideCollar],
+      // stops are held by the OMS
+      [
+        { ordType: OrdType.Stop, price: undefined },
+        RejectReason.UnsupportedOrdType,
+      ],
+      [{ ordType: OrdType.StopLimit }, RejectReason.UnsupportedOrdType],
     ];
     for (const [patch, reason] of cases) {
       gw.submit(order(patch));

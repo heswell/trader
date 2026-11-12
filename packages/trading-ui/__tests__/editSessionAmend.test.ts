@@ -61,6 +61,15 @@ describe("parentOrders edit session", () => {
     ]);
   });
 
+  test("a stop order's stop price is an editCell too", async () => {
+    const { calls, dataSource } = fakeDataSource();
+    await editOrdersInSession(dataSource, {
+      amend: { "ORD-3": { stopPrice: 99.5 } },
+    });
+    expect(calls).toContainEqual(["editCell", "ORD-3", "stopPrice", 99.5]);
+    expect(calls.filter((c) => c[0] === "editCell")).toHaveLength(1);
+  });
+
   test("a refused editCell is a TradingRpcError and the session is discarded", async () => {
     const { calls, dataSource } = fakeDataSource({
       editCell: (column) =>

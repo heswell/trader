@@ -56,6 +56,37 @@ describe("OmsNotifier", () => {
     expect(published[0].message).toContain(RejectReason.ExceedsMaxNotional);
   });
 
+  test("a stop triggering publishes one orders/INFO toast", () => {
+    const { n, published } = notifier();
+    const row = {
+      orderId: "O2",
+      account: ACC,
+      ric: AAPL,
+      side: "SELL",
+      quantity: 100,
+      ordType: "STOP_LIMIT",
+      price: 168.4,
+      stopPrice: 168.5,
+      status: OrdStatus.New,
+      triggeredAt: 0,
+    };
+    n.parentOrder(row);
+    n.parentOrder({ ...row, triggeredAt: 900 });
+    n.parentOrder({ ...row, triggeredAt: 900, status: OrdStatus.Filled });
+    expect(published).toHaveLength(1);
+    expect(published[0]).toMatchObject({
+      type: "toast",
+      level: "INFO",
+      topic: "orders",
+      audience: "alice",
+      orderId: "O2",
+      title: `Stop triggered: SELL 100 ${AAPL}`,
+    });
+    expect(published[0].message).toBe(
+      "O2 for ACC-US-01: stop 168.5 reached, limit 168.4, order sent to the exchange",
+    );
+  });
+
   test("position warns at 80%, errors at the limit, re-arms with hysteresis", () => {
     const { n, published } = notifier();
     n.position(position(LIMIT * 0.5));

@@ -47,6 +47,8 @@ export const ORDER_BLOTTER_COLUMNS = [
   "timeInForce",
   "quantity",
   "price",
+  "stopPrice",
+  "triggeredAt",
   "cumQty",
   "targetQty",
   "avgPx",
@@ -86,6 +88,19 @@ export const orderBlotterTableConfig: TableConfig = {
       width: 90,
       align: "right",
       type: renderer(TradingRenderer.Price),
+    },
+    {
+      name: "stopPrice",
+      label: "Stop",
+      width: 90,
+      align: "right",
+      type: renderer(TradingRenderer.Price),
+    },
+    {
+      name: "triggeredAt",
+      label: "Triggered",
+      width: 80,
+      type: renderer(TradingRenderer.StopTrigger),
     },
     {
       name: "cumQty",

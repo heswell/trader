@@ -14,6 +14,7 @@ import type { LadderQueue } from "../../hooks/useBookQueue";
 import type { DepthLevel } from "../../hooks/useMarketData";
 import {
   type OrderBookChildOrder,
+  type OrderBookParentOrder,
   type OrderBookState,
   useOrderBook,
 } from "../../hooks/useOrderBook";
@@ -263,6 +264,21 @@ export const OrderBookView = forwardRef<HTMLDivElement, OrderBookViewProps>(
   },
 );
 
+/**
+ * "Lmt 99.40", "Stp 99.50", "Stp 99.50 Lmt 99.40", else the order type
+ * ("MARKET").
+ */
+export const orderTypeLabel = (
+  order: Pick<OrderBookParentOrder, "ordType" | "price" | "stopPrice">,
+  fmtPrice: (price: number) => string,
+) =>
+  [
+    order.stopPrice !== undefined ? `Stp ${fmtPrice(order.stopPrice)}` : "",
+    order.price !== undefined ? `Lmt ${fmtPrice(order.price)}` : "",
+  ]
+    .filter(Boolean)
+    .join(" ") || order.ordType;
+
 const OrderSummary = ({
   fmtPrice,
   order,
@@ -279,7 +295,12 @@ const OrderSummary = ({
       ? `${Math.min(100, (qty / order.quantity) * 100)}%`
       : "0%";
   const detail = [
-    order.price !== undefined ? `Lmt ${fmtPrice(order.price)}` : order.ordType,
+    orderTypeLabel(order, fmtPrice),
+    order.stopPrice !== undefined
+      ? order.triggeredAt !== undefined
+        ? "triggered"
+        : "waiting"
+      : undefined,
     order.strategy,
     order.timeInForce,
   ]

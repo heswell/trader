@@ -12,6 +12,7 @@ import {
   formatPrice,
   formatQuantity,
 } from "../../utils/formatting";
+import { stopTriggerState } from "../../utils/orderStatus";
 import { formatTime } from "../../utils/time";
 import { FillProgressBar } from "../FillProgressBar";
 import { useInstrumentLookup } from "../InstrumentLookup";
@@ -54,6 +55,12 @@ export const TradingRenderer = Object.freeze({
   Time: "trading.time",
   /** ADDED / REMOVED / AUCTION. */
   Liquidity: "trading.liquidity",
+  /**
+   * A stop order's trigger (the column is triggeredAt): "Waiting" until it
+   * triggers, then the trigger time; blank for other types. Needs ordType
+   * and status.
+   */
+  StopTrigger: "trading.stop-trigger",
 } as const);
 
 const OrderStatusCell = ({ dataRow }: TableCellRendererProps) => (
@@ -134,6 +141,27 @@ const TimeCell = ({ column, dataRow }: TableCellRendererProps) => (
   <span>{formatTime(dataRow[column.name])}</span>
 );
 
+const StopTriggerCell = ({ column, dataRow }: TableCellRendererProps) => {
+  const triggeredAt = num(dataRow[column.name]);
+  const state = stopTriggerState(
+    text(dataRow.ordType),
+    text(dataRow.status),
+    triggeredAt,
+  );
+  if (state === "triggered") {
+    return (
+      <span data-stop-trigger={state} title="Stop triggered">
+        {formatTime(triggeredAt, { milliseconds: false })}
+      </span>
+    );
+  }
+  return state === "waiting" ? (
+    <span data-stop-trigger={state} title="Waiting for a trade at the stop">
+      Waiting
+    </span>
+  ) : null;
+};
+
 const LiquidityCell = ({ column, dataRow }: TableCellRendererProps) => {
   const value = text(dataRow[column.name]);
   return value ? (
@@ -162,4 +190,5 @@ export const registerTradingCellRenderers = () => {
   register(TradingRenderer.Notional, NotionalCell);
   register(TradingRenderer.Time, TimeCell);
   register(TradingRenderer.Liquidity, LiquidityCell);
+  register(TradingRenderer.StopTrigger, StopTriggerCell);
 };

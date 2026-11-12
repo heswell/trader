@@ -1,8 +1,9 @@
 import {
   type AlgoParamDefinition,
-  type AlgoStrategy,
+  AlgoStrategy,
   algoStrategyDefinition,
   isPricedOrdType,
+  isStopOrdType,
   OrdStatus,
   OrdType,
   type Side,
@@ -42,7 +43,11 @@ import {
   fieldForRejectReason,
   formatPriceInput,
   isPriceShorthand,
+  isStrategyAllowed,
   isTimeInForceAllowed,
+  nonStopOrdType,
+  nudgeStopPrice,
+  ORD_TYPE_LABEL,
   isValueInput,
   parseAlgoParam,
   parseOrderLine,
@@ -74,12 +79,27 @@ export interface OrderTicketPrefill {
   side?: Side;
   /** Limit price; implies a LIMIT order unless ordType is given. */
   price?: number;
+  /**
+   * Stop (trigger) price; implies a STOP order (STOP_LIMIT with a price)
+   * unless ordType is given.
+   */
+  stopPrice?: number;
   quantity?: number;
   ordType?: OrdType;
   timeInForce?: TimeInForce;
   account?: string;
-  /** How the OMS works the order (default DMA). */
+  /** How the OMS works the order (default DMA; stops are DMA only). */
   strategy?: AlgoStrategy;
+}
+
+/**
+ * Why the ticket just changed the order type or strategy for you: stops are
+ * DMA only, so picking one of them resets the other (`field` is the one
+ * that was changed).
+ */
+export interface OrderTicketTypeNotice {
+  field: "ordType" | "strategy";
+  text: string;
 }
 
 export type OrderTicketSubmission =
@@ -171,6 +191,8 @@ const ORDER_COLUMNS = [
   "version",
   "strategy",
   "targetQty",
+  "stopPrice",
+  "triggeredAt",
 ];
 
 const NO_ORDER_FILTER = 'clOrdId = "-"';
@@ -200,9 +222,18 @@ export const draftFromPrefill = (
 ): OrderDraft => {
   const ordType =
     prefill?.ordType ??
-    (prefill?.price !== undefined ? OrdType.Limit : EMPTY_DRAFT.ordType);
+    (prefill?.stopPrice !== undefined
+      ? prefill.price !== undefined
+        ? OrdType.StopLimit
+        : OrdType.Stop
+      : prefill?.price !== undefined
+        ? OrdType.Limit
+        : EMPTY_DRAFT.ordType);
   const timeInForce = prefill?.timeInForce ?? EMPTY_DRAFT.timeInForce;
-  const strategy = prefill?.strategy ?? EMPTY_DRAFT.strategy;
+  // Stops are DMA only.
+  const strategy = isStrategyAllowed(ordType, prefill?.strategy)
+    ? (prefill?.strategy ?? EMPTY_DRAFT.strategy)
+    : AlgoStrategy.Dma;
   return {
     ric: prefill?.ric ?? prefill?.instrument?.ric ?? fallback.ric,
     side: prefill?.side ?? EMPTY_DRAFT.side,
@@ -214,6 +245,10 @@ export const draftFromPrefill = (
     price:
       prefill?.price !== undefined && isPricedOrdType(ordType)
         ? formatPriceInput(prefill.price, prefill.instrument)
+        : "",
+    stopPrice:
+      prefill?.stopPrice !== undefined && isStopOrdType(ordType)
+        ? formatPriceInput(prefill.stopPrice, prefill.instrument)
         : "",
     account: prefill?.account ?? fallback.account,
     strategy,
@@ -342,6 +377,10 @@ export const useOrderTicket = ({
   });
   /** Set when a change made the TIF invalid and it was switched to Day. */
   const [tifNotice, setTifNotice] = useState<string | undefined>();
+  /** Set when a stop / algo conflict changed the order type or strategy. */
+  const [typeNotice, setTypeNotice] = useState<
+    OrderTicketTypeNotice | undefined
+  >();
   /** The Review step is open (warnings that need a second look). */
   const [reviewing, setReviewing] = useState(false);
 
@@ -375,7 +414,12 @@ export const useOrderTicket = ({
     setDraft((current) =>
       current.ric === selectedInstrument.ric
         ? current
-        : { ...current, ric: selectedInstrument.ric, price: "" },
+        : {
+            ...current,
+            ric: selectedInstrument.ric,
+            price: "",
+            stopPrice: "",
+          },
     );
   }, [followSelection, selectedInstrument, selectionSource]);
 
@@ -517,6 +561,37 @@ export const useOrderTicket = ({
         ) {
           next.algoParams = {};
         }
+        // Stops are DMA only: the choice just made wins. An algo picked for
+        // a stop turns it into the plain type (STOP → MARKET, STOP_LIMIT →
+        // LIMIT); a stop type picked for an algo order switches it to DMA.
+        if (change.ordType || change.strategy) {
+          let notice: OrderTicketTypeNotice | undefined;
+          if (!isStrategyAllowed(next.ordType, next.strategy)) {
+            if (change.ordType === undefined) {
+              const ordType = nonStopOrdType(next.ordType);
+              notice = {
+                field: "ordType",
+                text: `Stops are DMA only: switched to ${ORD_TYPE_LABEL[ordType]}`,
+              };
+              next.ordType = ordType;
+            } else {
+              notice = {
+                field: "strategy",
+                text: "Stops are DMA only: switched to DMA",
+              };
+              next.strategy = AlgoStrategy.Dma;
+              next.algoParams = {};
+            }
+          }
+          setTypeNotice(notice);
+        }
+        // Prices the new type doesn't have are cleared.
+        if (next.ordType !== current.ordType) {
+          if (!isPricedOrdType(next.ordType) && change.price === undefined)
+            next.price = "";
+          if (!isStopOrdType(next.ordType) && change.stopPrice === undefined)
+            next.stopPrice = "";
+        }
         if (change.timeInForce) setTifNotice(undefined);
         else if (
           (change.ordType || change.strategy) &&
@@ -541,12 +616,13 @@ export const useOrderTicket = ({
                 ? algoStrategyDefinition(next.strategy).name
                 : next.ordType === OrdType.Market
                   ? "market orders"
-                  : "this order"
+                  : isStopOrdType(next.ordType)
+                    ? "stop orders"
+                    : "this order"
             }`,
           );
           next.timeInForce = tif;
         }
-        if (change.ordType === OrdType.Market) next.price = "";
         if (change.account && rememberAccount) writeLastAccount(change.account);
         return next;
       });
@@ -570,9 +646,13 @@ export const useOrderTicket = ({
 
   const selectInstrument = useCallback(
     (selected: SelectedInstrument) => {
-      update({ ric: selected.ric, price: "" });
-      // Clearing the old price is not the user touching it: no error yet.
-      setTouched((current) => ({ ...current, price: false }));
+      update({ ric: selected.ric, price: "", stopPrice: "" });
+      // Clearing the old prices is not the user touching them: no error yet.
+      setTouched((current) => ({
+        ...current,
+        price: false,
+        stopPrice: false,
+      }));
       if (publishSelection) {
         setSelectedInstrument(selected, ORDER_TICKET_SELECTION_SOURCE);
       }
@@ -581,11 +661,15 @@ export const useOrderTicket = ({
   );
 
   const nudge = useCallback(
-    (field: "price" | "quantity", steps: number) => {
+    (field: "price" | "stopPrice" | "quantity", steps: number) => {
       if (field === "price") {
         if (!isPricedOrdType(draft.ordType)) return;
         const price = nudgePrice(draft, instrument, steps);
         if (price !== undefined) update({ price });
+      } else if (field === "stopPrice") {
+        if (!isStopOrdType(draft.ordType)) return;
+        const stopPrice = nudgeStopPrice(draft, instrument, steps);
+        if (stopPrice !== undefined) update({ stopPrice });
       } else {
         update({ quantity: nudgeQuantity(draft.quantity, instrument, steps) });
       }
@@ -613,13 +697,13 @@ export const useOrderTicket = ({
    * `$250k` → 45,200), e.g. when the field is left.
    */
   const resolveShorthand = useCallback(
-    (field: "price" | "quantity", text?: string) => {
-      if (field === "price") {
-        const input = text ?? draft.price;
+    (field: "price" | "stopPrice" | "quantity", text?: string) => {
+      if (field === "price" || field === "stopPrice") {
+        const input = text ?? draft[field];
         if (!isPriceShorthand(input)) return;
         const price = resolvePriceInput(input, instrument);
         if (price !== undefined && Number.isFinite(price))
-          update({ price: formatPriceInput(price, instrument) });
+          update({ [field]: formatPriceInput(price, instrument) });
       } else {
         const input = text ?? draft.quantity;
         if (!isValueInput(input)) return;
@@ -647,6 +731,7 @@ export const useOrderTicket = ({
       if (Object.keys(change).length === 0) return false;
       if (change.ric && change.ric !== draft.ric) {
         if (change.price === undefined) change.price = "";
+        if (change.stopPrice === undefined) change.stopPrice = "";
         if (publishSelection) {
           setSelectedInstrument(
             { ric: change.ric },
@@ -666,6 +751,7 @@ export const useOrderTicket = ({
     setSubmitAttempted(false);
     setSubmission({ state: "idle" });
     setTifNotice(undefined);
+    setTypeNotice(undefined);
     setReviewing(false);
   }, [baseline]);
 
@@ -768,7 +854,7 @@ export const useOrderTicket = ({
       const { key } = event;
       const resolveCurrent = () => {
         // The live text: with fast typing the last render can be behind.
-        if (field === "price" || field === "quantity")
+        if (field === "price" || field === "stopPrice" || field === "quantity")
           resolveShorthand(field, (target as HTMLInputElement).value);
       };
       if (
@@ -809,6 +895,13 @@ export const useOrderTicket = ({
           return act(() => update({ ordType: OrdType.Limit }));
         if (code === "KeyM")
           return act(() => update({ ordType: OrdType.Market }));
+        // P for stoP (S is Sell); Shift for a stop limit.
+        if (code === "KeyP")
+          return act(() =>
+            update({
+              ordType: event.shiftKey ? OrdType.StopLimit : OrdType.Stop,
+            }),
+          );
         if (code === "KeyT")
           return act(() => {
             const valid = allowedTimesInForce(
@@ -857,7 +950,11 @@ export const useOrderTicket = ({
       }
       if (key === "ArrowUp" || key === "ArrowDown") {
         const steps = (key === "ArrowUp" ? 1 : -1) * (event.shiftKey ? 10 : 1);
-        if (field === "price" || field === "quantity") {
+        if (
+          field === "price" ||
+          field === "stopPrice" ||
+          field === "quantity"
+        ) {
           event.preventDefault();
           nudge(field, steps);
         } else if (field?.startsWith("param:")) {
@@ -898,6 +995,8 @@ export const useOrderTicket = ({
     applyOrderLine,
     /** Why the TIF was just changed, if it was. */
     tifNotice,
+    /** Why the order type or strategy was just changed (stops are DMA only). */
+    typeNotice,
     /** Warnings that send the order through Review first. */
     review,
     /** The Review step is open. */

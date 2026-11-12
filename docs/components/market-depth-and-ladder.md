@@ -198,7 +198,7 @@ These are exported from `@heswell/trading-ui` for other components to reuse.
 | `useInstrumentPrice(ric)` | The live `instrumentPrices` row (static data, prices and phase). |
 | `useTradedVolume(ric, enabled?)` | Traded quantity per price: `trades` grouped by price. Limited to the trades ring buffer. |
 | `useFollowedInstrument(ric?, { linkGroup? })` | The explicit ric, or else the selected instrument of the link group, merged with its live prices. |
-| `useOwnWorkingOrders(ric, { account? })` | Working LIMIT `parentOrders` for a ric, plus `byPrice` keyed by `ownOrdersKey(side, price)`. |
+| `useOwnWorkingOrders(ric, { account? })` | Working LIMIT `parentOrders` (and STOP_LIMIT once triggered: `restsAtLimit`) for a ric, plus `byPrice` keyed by `ownOrdersKey(side, price)`. |
 | `useBookQueue(ric, { enabled?, ownOrderIds? })` | The L3 queue of every level from `bookOrders`, front first, with your orders marked and your rank / size ahead per level. |
 | `buildLadderQueues(rows, ownOrderIds, previous?)` | The pure grouping behind `useBookQueue`. Unchanged levels keep their object, so memoized rows skip re-rendering. |
 | `useOwnExchangeOrderIds(ric, orders)` | Exchange order ids (`childOrders.exchangeOrderId`) of your working orders, to find them in `bookOrders`. |

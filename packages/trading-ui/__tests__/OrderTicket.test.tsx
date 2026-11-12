@@ -5,10 +5,12 @@ import {
 } from "@heswell/trading-test-data";
 import { createTradingLocalServer } from "@heswell/trading-test-data/react";
 import {
+  AlgoStrategy,
   OrdStatus,
   OrdType,
   roundToTick,
   Side,
+  stepTicks,
   TimeInForce,
 } from "@heswell/trading-schemas";
 import {
@@ -51,6 +53,7 @@ const instrumentRow = () => {
     tickBands: get("tickBands") as string,
     lotSize: get("lotSize") as number,
     bid: get("bid") as number,
+    ask: get("ask") as number,
     last: get("last") as number,
   };
 };
@@ -371,5 +374,187 @@ describe("OrderTicket", () => {
     });
     expect(form.querySelector('[role="dialog"]')).toBeNull();
     expect(events).toHaveLength(0);
+  });
+
+  test("stops by keyboard: Alt+P / Alt+Shift+P, stop field after quantity", async () => {
+    const inst = instrumentRow();
+    const schedule = scheduleOf(inst);
+    if (!schedule) throw Error("no tick schedule");
+    const { form, events } = renderTicket({
+      ric,
+      account: ACCOUNT,
+      side: Side.Buy,
+      ordType: OrdType.Limit,
+      quantity: inst.lotSize,
+      price: inst.bid,
+    });
+    await waitForInstrument();
+    const field = (name: string) =>
+      form.querySelector(
+        `input[data-order-ticket-field="${name}"]`,
+      ) as HTMLInputElement | null;
+    const qty = field("quantity") as HTMLInputElement;
+    act(() => {
+      fireEvent.keyDown(qty, { key: "π", code: "KeyP", altKey: true });
+    });
+    expect(
+      form
+        .querySelector('[data-ord-type="STOP"]')
+        ?.getAttribute("aria-checked"),
+    ).toBe("true");
+    // STOP: a stop price, no limit (market on trigger).
+    expect(field("price")).toBeNull();
+    expect(form.querySelector('[data-field="marketPrice"]')).not.toBeNull();
+    const stop = field("stopPrice") as HTMLInputElement;
+    expect(stop).not.toBeNull();
+    // Tab / Enter order: quantity → stop price.
+    qty.focus();
+    act(() => {
+      fireEvent.keyDown(qty, { key: "Enter" });
+    });
+    expect(document.activeElement).toBe(stop);
+    // Arrows start an empty stop one tick beyond the market (above, a buy).
+    act(() => {
+      fireEvent.keyDown(stop, { key: "ArrowUp" });
+    });
+    const market = inst.last;
+    expect(Number(stop.value)).toBe(
+      stepTicks(roundToTick(market, schedule), schedule, 1),
+    );
+    act(() => {
+      fireEvent.keyDown(stop, { key: "ArrowUp" });
+    });
+    expect(Number(stop.value)).toBe(
+      stepTicks(roundToTick(market, schedule), schedule, 2),
+    );
+    expect(submitButton().textContent).toContain(" Stop ");
+
+    // Shift: STOP_LIMIT keeps the stop and adds the limit after it.
+    act(() => {
+      fireEvent.keyDown(stop, {
+        key: "∏",
+        code: "KeyP",
+        altKey: true,
+        shiftKey: true,
+      });
+    });
+    const limit = field("price") as HTMLInputElement;
+    expect(limit).not.toBeNull();
+    expect(field("stopPrice")?.value).toBe(stop.value);
+    act(() => {
+      fireEvent.keyDown(stop, { key: "Enter" });
+    });
+    expect(document.activeElement).toBe(limit);
+    act(() => {
+      fireEvent.change(limit, { target: { value: stop.value } });
+    });
+    expect(submitButton().textContent).toMatch(/Stop [\d.,]+ Limit [\d.,]+/);
+
+    // Back to Limit: the stop price goes.
+    act(() => {
+      fireEvent.keyDown(form, { key: "¬", code: "KeyL", altKey: true });
+    });
+    expect(field("stopPrice")).toBeNull();
+    act(() => {
+      fireEvent.keyDown(form, { key: "π", code: "KeyP", altKey: true });
+    });
+    expect(field("stopPrice")?.value).toBe("");
+    expect(events).toHaveLength(0);
+  });
+
+  test("a stop already reached is an error before sending", async () => {
+    const inst = instrumentRow();
+    const schedule = scheduleOf(inst);
+    if (!schedule) throw Error("no tick schedule");
+    const { form, events } = renderTicket({
+      ric,
+      account: ACCOUNT,
+      side: Side.Buy,
+      ordType: OrdType.Stop,
+      quantity: inst.lotSize,
+      stopPrice: stepTicks(roundToTick(inst.last, schedule), schedule, -2),
+    });
+    await waitForInstrument();
+    act(() => {
+      fireEvent.keyDown(form, { key: "F9" });
+    });
+    await waitFor(() =>
+      expect(form.textContent).toContain("must be above the market price"),
+    );
+    expect(
+      form
+        .querySelector('input[data-order-ticket-field="stopPrice"]')
+        ?.getAttribute("aria-invalid"),
+    ).toBe("true");
+    expect(events).toHaveLength(0);
+  });
+
+  test("stops are DMA only: picking one switches an algo order to DMA", async () => {
+    const inst = instrumentRow();
+    const { form } = renderTicket({
+      ric,
+      account: ACCOUNT,
+      side: Side.Sell,
+      ordType: OrdType.Limit,
+      strategy: AlgoStrategy.Twap,
+      quantity: inst.lotSize,
+      price: inst.bid,
+    });
+    await waitForInstrument();
+    act(() => {
+      fireEvent.keyDown(form, { key: "π", code: "KeyP", altKey: true });
+    });
+    expect(
+      form
+        .querySelector(".tradingOrderTicket-execution")
+        ?.getAttribute("data-strategy"),
+    ).toBe(AlgoStrategy.Dma);
+    expect(form.textContent).toContain("Stops are DMA only");
+    // TIF choices for a stop: Day and GTC only.
+    act(() => {
+      fireEvent.keyDown(form, { key: "†", code: "KeyT", altKey: true });
+    });
+    expect(
+      form.querySelector(".tradingOrderTicket-submitDetail")?.textContent,
+    ).toContain("GTC");
+    act(() => {
+      fireEvent.keyDown(form, { key: "†", code: "KeyT", altKey: true });
+    });
+    expect(
+      form.querySelector(".tradingOrderTicket-submitDetail")?.textContent,
+    ).toContain("Day");
+  });
+
+  test("submits a stop with stopPrice; it waits until triggered", async () => {
+    const inst = instrumentRow();
+    const schedule = scheduleOf(inst);
+    if (!schedule) throw Error("no tick schedule");
+    const stopPrice = roundToTick(inst.last * 1.05, schedule);
+    const { form, events } = renderTicket({
+      ric,
+      account: ACCOUNT,
+      side: Side.Buy,
+      ordType: OrdType.Stop,
+      quantity: inst.lotSize,
+      stopPrice,
+    });
+    await waitForInstrument();
+    await waitFor(() => expect(submitButton().textContent).toContain("Stop"));
+    await act(async () => {
+      fireEvent.keyDown(form, { key: "F9" });
+    });
+    await waitFor(() => expect(events.length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(
+        form.querySelector(".tradingOrderTicket-status")?.textContent,
+      ).toContain("Waiting for stop"),
+    );
+    const orders = td.oms.getTable("parentOrders");
+    const row = orders.data.find(
+      (r) => r[orders.map.clOrdId] === events[0].clOrdId,
+    );
+    expect(row?.[orders.map.ordType]).toBe(OrdType.Stop);
+    expect(row?.[orders.map.stopPrice]).toBe(stopPrice);
+    expect(row?.[orders.map.price] || 0).toBe(0);
   });
 });

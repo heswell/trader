@@ -3,6 +3,7 @@ import {
   AlgoStrategy,
   algoStrategyDefinition,
   isPricedOrdType,
+  isStopOrdType,
   OrdStatus,
   OrdType,
   Side,
@@ -57,8 +58,11 @@ import {
   isOrderLine,
   isPriceShorthand,
   isValueInput,
+  ORD_TYPE_LABEL,
+  ORDER_TICKET_ORD_TYPES,
   type OrderTicketInstrument,
   parseOrderLine,
+  referencePrice,
   resolvePriceInput,
   scheduleSummary,
 } from "./orderTicketModel";
@@ -142,6 +146,25 @@ const usdShort = (usd: number) => {
 };
 
 const sideLabel = (side: string) => (side === Side.Buy ? "Buy" : "Sell");
+
+/** Alt / Option shortcut of each order type (P for stoP: S is Sell). */
+const ORD_TYPE_KEYS: Record<string, { badge: string; aria: string }> = {
+  [OrdType.Limit]: { badge: "⌥L", aria: "Alt+L" },
+  [OrdType.Market]: { badge: "⌥M", aria: "Alt+M" },
+  [OrdType.Stop]: { badge: "⌥P", aria: "Alt+P" },
+  [OrdType.StopLimit]: { badge: "⌥⇧P", aria: "Alt+Shift+P" },
+};
+
+/** A price input as a number, if it is a valid one. */
+const priceValue = (
+  text: string,
+  instrument: OrderTicketInstrument | undefined,
+) => {
+  const value = resolvePriceInput(text, instrument);
+  return value !== undefined && Number.isFinite(value) && value > 0
+    ? value
+    : undefined;
+};
 
 /** A shortcut badge, shown while Alt / Option is held. */
 const Key = ({ children }: { children: ReactNode }) => (
@@ -322,7 +345,7 @@ const Field = ({
 );
 
 const OrderTypeRow = ({ ticket }: { ticket: OrderTicketState }) => {
-  const { draft, update, instrument, tifNotice, errors } = ticket;
+  const { draft, update, instrument, tifNotice, typeNotice, errors } = ticket;
   const tifs = allowedTimesInForce(
     draft.ordType,
     draft.strategy,
@@ -335,22 +358,29 @@ const OrderTypeRow = ({ ticket }: { ticket: OrderTicketState }) => {
         className={`${classBase}-segments`}
         role="radiogroup"
       >
-        {[OrdType.Limit, OrdType.Market].map((ordType) => (
+        {ORDER_TICKET_ORD_TYPES.map((ordType) => (
           // biome-ignore lint/a11y/useSemanticElements: a button radio keeps the quote layout and stays out of the tab order (Alt shortcuts pick it)
           <button
             aria-checked={draft.ordType === ordType}
+            aria-keyshortcuts={ORD_TYPE_KEYS[ordType]?.aria}
             className={`${classBase}-segment`}
+            data-ord-type={ordType}
             key={ordType}
             onClick={() => update({ ordType })}
             role="radio"
             tabIndex={-1}
             type="button"
           >
-            <Key>{ordType === OrdType.Limit ? "⌥L" : "⌥M"}</Key>
-            {ordType === OrdType.Limit ? "Limit" : "Market"}
+            <Key>{ORD_TYPE_KEYS[ordType]?.badge}</Key>
+            {ORD_TYPE_LABEL[ordType] ?? ordType}
           </button>
         ))}
       </div>
+      {typeNotice?.field === "ordType" ? (
+        <output className={`${classBase}-tifNotice`} data-notice="ordType">
+          {typeNotice.text}
+        </output>
+      ) : null}
       <div className={`${classBase}-tif`}>
         {tifNotice || errors.timeInForce ? (
           <output className={`${classBase}-tifNotice`}>
@@ -458,6 +488,15 @@ const PriceField = ({ ticket }: { ticket: OrderTicketState }) => {
   const { draft, update, errors, instrument, risk, resolveShorthand } = ticket;
   const format = priceFormat(instrument);
   const currency = instrument?.currency;
+  if (draft.ordType === OrdType.Stop) {
+    return (
+      <Field hint="Sent at market when triggered" label="Price" unit={currency}>
+        <div className={`${classBase}-marketPrice`} data-field="marketPrice">
+          <b>Market</b>
+        </div>
+      </Field>
+    );
+  }
   if (!isPricedOrdType(draft.ordType)) {
     return (
       <Field
@@ -476,9 +515,17 @@ const PriceField = ({ ticket }: { ticket: OrderTicketState }) => {
   const shorthand = isPriceShorthand(draft.price)
     ? describePriceShorthand(draft.price)
     : undefined;
+  const stop =
+    draft.ordType === OrdType.StopLimit
+      ? priceValue(draft.stopPrice, instrument)
+      : undefined;
   const relation =
     value !== undefined && Number.isFinite(value)
-      ? priceRelation(value, draft.side, instrument)
+      ? draft.ordType === OrdType.StopLimit
+        ? stop !== undefined
+          ? tickRelation(value, stop, "stop", instrument)
+          : undefined
+        : priceRelation(value, draft.side, instrument)
       : undefined;
   const hint = (
     <span className={`${classBase}-priceHint`}>
@@ -509,6 +556,87 @@ const PriceField = ({ ticket }: { ticket: OrderTicketState }) => {
         textAlign="right"
         validationStatus={errors.price ? "error" : undefined}
         value={draft.price}
+      />
+    </Field>
+  );
+};
+
+/** "3 ticks above the last", "At the stop": `price` against `base`. */
+const tickRelation = (
+  price: number,
+  base: number,
+  name: string,
+  instrument: OrderTicketInstrument | undefined,
+) => {
+  const tick = instrument?.tickSize;
+  if (!tick) return undefined;
+  const ticks = Math.round((price - base) / tick);
+  if (ticks === 0) return `At the ${name}`;
+  return `${Math.abs(ticks)} tick${Math.abs(ticks) === 1 ? "" : "s"} ${
+    ticks > 0 ? "above" : "below"
+  } the ${name}`;
+};
+
+/** What the stop is measured against: the last trade, else mid / ref. */
+const marketName = (instrument: OrderTicketInstrument | undefined) =>
+  instrument?.last && instrument.last > 0
+    ? "last"
+    : instrument?.bid && instrument?.ask
+      ? "mid"
+      : "ref price";
+
+/**
+ * Stop (trigger) price of a STOP / STOP_LIMIT: the OMS holds the order until
+ * a trade reaches it. Arrows step it by tick (from one tick beyond the
+ * market when empty); `b` / `a` / `m` shorthand works as for the limit.
+ */
+const StopPriceField = ({ ticket }: { ticket: OrderTicketState }) => {
+  const { draft, update, errors, instrument, resolveShorthand } = ticket;
+  const format = priceFormat(instrument);
+  const buy = draft.side === Side.Buy;
+  const value = resolvePriceInput(draft.stopPrice, instrument);
+  const market = referencePrice(instrument);
+  const shorthand = isPriceShorthand(draft.stopPrice)
+    ? describePriceShorthand(draft.stopPrice)
+    : undefined;
+  const valid = value !== undefined && Number.isFinite(value);
+  const hint = (
+    <span className={`${classBase}-priceHint`}>
+      {shorthand && valid ? <b>= {formatPrice(value, format)} </b> : null}
+      {valid && market !== undefined
+        ? tickRelation(value, market, marketName(instrument), instrument)
+        : market !== undefined
+          ? `${buy ? "Above" : "Below"} ${formatPrice(market, format)}`
+          : `Trade ${buy ? "≥" : "≤"} stop triggers`}
+    </span>
+  );
+  return (
+    <Field
+      className={`${classBase}-stopField`}
+      error={errors.stopPrice}
+      hint={hint}
+      label="Stop price"
+      unit={instrument?.currency}
+    >
+      <Input
+        className={cx(`${classBase}-price`, `${classBase}-stopPrice`)}
+        inputProps={
+          {
+            "aria-keyshortcuts": "ArrowUp ArrowDown",
+            "aria-label": "Stop price",
+            "aria-invalid": errors.stopPrice ? true : undefined,
+            autoComplete: "off",
+            "data-order-ticket-field": "stopPrice",
+            onBlur: (e) => resolveShorthand("stopPrice", e.currentTarget.value),
+          } as FieldInputProps
+        }
+        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          update({ stopPrice: e.target.value })
+        }
+        placeholder={buy ? "above market" : "below market"}
+        textAlign="right"
+        validationStatus={errors.stopPrice ? "error" : undefined}
+        value={draft.stopPrice}
       />
     </Field>
   );
@@ -645,22 +773,27 @@ const Execution = ({
   onPicked: (strategy: AlgoStrategy) => void;
   compact?: boolean;
 }) => {
-  const { draft, risk, instrument } = ticket;
+  const { draft, risk, instrument, errors, typeNotice } = ticket;
   const definition = algoStrategyDefinition(draft.strategy);
   const summary = scheduleSummary(draft, risk.quantity);
   const priced = isPricedOrdType(draft.ordType);
   const note =
-    definition.id === AlgoStrategy.Dma
-      ? definition.description
-      : priced
-        ? `${definition.description} · limit ${
-            formatPrice(risk.price, priceFormat(instrument)) || "–"
-          } caps every slice`
-        : `${definition.description} · no price limit`;
+    typeNotice?.field === "strategy"
+      ? typeNotice.text
+      : definition.id === AlgoStrategy.Dma
+        ? isStopOrdType(draft.ordType)
+          ? "Held until the stop triggers, then sent to the market"
+          : definition.description
+        : priced
+          ? `${definition.description} · limit ${
+              formatPrice(risk.price, priceFormat(instrument)) || "–"
+            } caps every slice`
+          : `${definition.description} · no price limit`;
   return (
     <div className={`${classBase}-execution`} data-strategy={definition.id}>
       <Field
         className={`${classBase}-strategyField`}
+        error={errors.strategy}
         hint={compact ? undefined : note}
         label="Execution"
         unit="⌥E"
@@ -727,8 +860,17 @@ const SubmissionStatus = ({ ticket }: { ticket: OrderTicketState }) => {
   const target = order?.targetQty as number | undefined;
   const algo = strategy && strategy !== AlgoStrategy.Dma;
   const px = formatPrice(avgPx, priceFormat(instrument));
+  const stopPrice = order?.stopPrice as number | undefined;
+  // A stop waits in the OMS (NEW / REPLACED, no child) until it triggers.
+  const waiting =
+    isStopOrdType(order?.ordType as OrdType) &&
+    !((order?.triggeredAt as number | undefined) ?? 0) &&
+    (status === OrdStatus.New || status === OrdStatus.Replaced);
   let text: string;
-  switch (status) {
+  switch (waiting ? "STOP_WAITING" : status) {
+    case "STOP_WAITING":
+      text = `Waiting for stop ${formatPrice(stopPrice, priceFormat(instrument))}`;
+      break;
     case OrdStatus.Filled:
       text = `Filled ${formatQuantity(cumQty)} @ ${px}`;
       break;
@@ -824,11 +966,22 @@ const submitText = (ticket: OrderTicketState) => {
   const priced = isPricedOrdType(draft.ordType);
   const definition = algoStrategyDefinition(draft.strategy);
   const qty = risk.quantity ? ` ${formatQuantity(risk.quantity)}` : "";
-  const price = priced
-    ? risk.price
-      ? ` @ ${formatPrice(risk.price, priceFormat(instrument))}`
-      : ""
-    : " at market";
+  const fmt = (p: number) => formatPrice(p, priceFormat(instrument));
+  const limit = priced ? priceValue(draft.price, instrument) : undefined;
+  let price: string;
+  if (isStopOrdType(draft.ordType)) {
+    // "Stop 99.50", "Stop 99.50 Limit 99.40"
+    const stop = priceValue(draft.stopPrice, instrument);
+    price = ` Stop${stop !== undefined ? ` ${fmt(stop)}` : ""}${
+      priced ? ` Limit${limit !== undefined ? ` ${fmt(limit)}` : ""}` : ""
+    }`;
+  } else {
+    price = priced
+      ? limit !== undefined
+        ? ` @ ${fmt(limit)}`
+        : ""
+      : " at market";
+  }
   const main = `${sideLabel(draft.side)}${qty}${draft.ric ? ` ${draft.ric}` : ""}${price}`;
   const params = definition.params
     .map((p) => paramText(p, draft.algoParams[p.key]))
@@ -848,15 +1001,32 @@ const Review = ({ ticket }: { ticket: OrderTicketState }) => {
   const { main } = submitText(ticket);
   const confirmRef = useRef<HTMLButtonElement>(null);
   useEffect(() => confirmRef.current?.focus(), []);
+  const stop = isStopOrdType(draft.ordType)
+    ? priceValue(draft.stopPrice, instrument)
+    : undefined;
   const rows: [string, string][] = [
     ["Side", sideLabel(draft.side)],
     ["Instrument", draft.ric ?? "–"],
     ["Quantity", formatQuantity(risk.quantity)],
+    ["Type", ORD_TYPE_LABEL[draft.ordType] ?? draft.ordType],
+    ...(isStopOrdType(draft.ordType)
+      ? [
+          ["Stop", formatPrice(stop, priceFormat(instrument)) || "–"] as [
+            string,
+            string,
+          ],
+        ]
+      : []),
     [
-      "Price",
+      isPricedOrdType(draft.ordType) ? "Limit" : "Price",
       isPricedOrdType(draft.ordType)
-        ? formatPrice(risk.price, priceFormat(instrument))
-        : "Market",
+        ? formatPrice(
+            priceValue(draft.price, instrument),
+            priceFormat(instrument),
+          )
+        : draft.ordType === OrdType.Stop
+          ? "Market on trigger"
+          : "Market",
     ],
     [
       "Value",
@@ -926,11 +1096,14 @@ const Review = ({ ticket }: { ticket: OrderTicketState }) => {
  * the ask). Instrument, side, quantity and price stay in place; the
  * execution strategy and its parameters (from the strategy definitions)
  * sit below them. Keyboard first:
- * - Tab: instrument → quantity → price → strategy → its fields → send.
- * - Alt / Option + B / S side, L / M type, T next TIF, E strategy.
+ * - Tab: instrument → quantity → (stop) → price → strategy → its fields →
+ *   send.
+ * - Alt / Option + B / S side; L limit, M market, P stop, Shift+P stop
+ *   limit; T next TIF; E strategy.
  * - Enter accepts a field and moves on; Ctrl+Enter or F9 sends.
  * - Price `b` / `a` / `m` / `b+2`; quantity `10k` / `$250k`.
- * - The instrument field takes a whole order line (`b 5k vod.l b twap 45m`).
+ * - The instrument field takes a whole order line (`b 5k vod.l b twap 45m`,
+ *   `s 200 vod.l stop 99.5 lmt 99.4`).
  * Orders over a limit or outside the collar go through Review first.
  */
 export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
@@ -1236,6 +1409,9 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
               ))}
             </div>
             <QuantityField inputRef={quantityRef} ticket={ticket} />
+            {isStopOrdType(draft.ordType) ? (
+              <StopPriceField ticket={ticket} />
+            ) : null}
             <PriceField ticket={ticket} />
             <Execution compact onPicked={onStrategyPicked} ticket={ticket} />
             <div className={`${classBase}-actions`}>
@@ -1259,8 +1435,14 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
             </div>
             <div className={`${classBase}-body`}>
               <OrderTypeRow ticket={ticket} />
-              <div className={`${classBase}-core`}>
+              <div
+                className={`${classBase}-core`}
+                data-stop={isStopOrdType(draft.ordType) ? "" : undefined}
+              >
                 <QuantityField inputRef={quantityRef} ticket={ticket} />
+                {isStopOrdType(draft.ordType) ? (
+                  <StopPriceField ticket={ticket} />
+                ) : null}
                 <PriceField ticket={ticket} />
               </div>
               <Execution onPicked={onStrategyPicked} ticket={ticket} />
