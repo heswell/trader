@@ -27,6 +27,18 @@ export const NO_IMPACT: Readonly<ImpactParams> = Object.freeze({
   halfLifeSec: 30,
 });
 
+/**
+ * What an anchored model (a future) follows: `price()` is its theoretical
+ * value (the underlying's fair value carried to expiry). The model adds a
+ * basis that mean-reverts to 0 with `halfLifeSec` and has a standard
+ * deviation of `basisBps`.
+ */
+export interface PriceAnchor {
+  price(): number;
+  basisBps: number;
+  halfLifeSec: number;
+}
+
 /** Saved impact state (alongside the fair value). */
 export interface PriceModelState {
   /** Transient log offset of fair over the walk. */
@@ -35,6 +47,8 @@ export interface PriceModelState {
   impactToday: number;
   /** The price the band is centred on. */
   bandCentre: number;
+  /** Anchored models: log basis over the anchor. */
+  basis?: number;
 }
 
 /**
@@ -52,6 +66,13 @@ export class PriceModel {
   #walk: number;
   #transient = 0;
   #impactToday = 0;
+  /** Anchored models: log offset of the walk over the anchor price. */
+  #basis = 0;
+  /**
+   * Set for a future: the walk follows the anchor times exp(basis) instead
+   * of its own random walk, so it moves with the underlying.
+   */
+  anchor: PriceAnchor | undefined;
   /** Share of the variance the walk supplies itself (1 without impact). */
   walkVolShare = 1;
   /** Drift of the walk, bps per hour of model time (timeScale × clock). */
@@ -99,8 +120,12 @@ export class PriceModel {
     return this.clampToBand(this.#walk * Math.exp(this.#transient));
   }
 
-  /** Restore a persisted fair value (clamped to the band); keeps the transient. */
+  /**
+   * Restore a persisted fair value (clamped to the band); keeps the
+   * transient. Ignored when anchored: the fair value follows the anchor.
+   */
   set fairValue(value: number) {
+    if (this.anchor) return;
     if (Number.isFinite(value) && value > 0)
       this.#walk = this.clampToBand(value / Math.exp(this.#transient));
   }
@@ -108,6 +133,11 @@ export class PriceModel {
   /** The walk: fair value without the transient impact. */
   get walk() {
     return this.#walk;
+  }
+
+  /** Anchored models: basis over the anchor price, bps. */
+  get basisBps() {
+    return (Math.exp(this.#basis) - 1) * 1e4;
   }
 
   /** Transient impact, bps of the walk. */
@@ -158,6 +188,15 @@ export class PriceModel {
       (notionalUsd / IMPACT_NOTIONAL_USD) *
       (this.volatility / IMPACT_REFERENCE_VOL);
     const permanent = move * permanentShare;
+    if (this.anchor) {
+      // arbitrage pulls a future back to its anchor: the permanent part
+      // goes into the basis, which mean-reverts
+      this.#basis += permanent;
+      this.#impactToday += permanent;
+      this.#transient += move - permanent;
+      this.#followAnchor();
+      return;
+    }
     const before = this.#walk;
     this.#walk = this.clampToBand(before * Math.exp(permanent));
     this.#impactToday += Math.log(this.#walk / before);
@@ -169,6 +208,7 @@ export class PriceModel {
       transient: this.#transient,
       impactToday: this.#impactToday,
       bandCentre: this.#bandCentre,
+      ...(this.anchor ? { basis: this.#basis } : {}),
     };
   }
 
@@ -179,12 +219,18 @@ export class PriceModel {
       this.#transient = state.transient as number;
     if (Number.isFinite(state.impactToday))
       this.#impactToday = state.impactToday as number;
+    if (Number.isFinite(state.basis)) this.#basis = state.basis as number;
     this.#walk = this.clampToBand(this.#walk);
   }
 
   /** Move fair value by `bps` at once (a news jump): into the walk. */
   shift(bps: number) {
     const before = this.#walk;
+    if (this.anchor) {
+      this.#basis += Math.log(1 + bps / 1e4);
+      this.#followAnchor();
+      return Math.log(this.#walk / before) * 1e4;
+    }
     this.#walk = this.clampToBand(before * (1 + bps / 1e4));
     return Math.log(this.#walk / before) * 1e4;
   }
@@ -199,6 +245,7 @@ export class PriceModel {
       this.#transient =
         halfLife > 0 ? this.#transient * 0.5 ** (wallDtSeconds / halfLife) : 0;
     }
+    if (this.anchor) return this.#stepAnchored(rng, wallDtSeconds);
     if (dtSeconds <= 0 || (this.volatility <= 0 && this.driftBpsPerHour === 0))
       return this.fairValue;
     const dt = dtSeconds / SECONDS_PER_YEAR;
@@ -215,5 +262,29 @@ export class PriceModel {
     else if (next < lo) next = Math.min(hi, lo + (lo - next));
     this.#walk = next;
     return this.fairValue;
+  }
+
+  /** Basis: an Ornstein-Uhlenbeck step over wall-clock time; walk = anchor x exp(basis). */
+  #stepAnchored(rng: Random, wallDtSeconds: number) {
+    const { basisBps, halfLifeSec } = this.anchor as PriceAnchor;
+    if (wallDtSeconds > 0) {
+      if (halfLifeSec > 0) {
+        const decay = 0.5 ** (wallDtSeconds / halfLifeSec);
+        const sd = basisBps / 1e4;
+        this.#basis =
+          this.#basis * decay +
+          sd * Math.sqrt(1 - decay * decay) * rng.normal();
+      } else {
+        this.#basis = 0;
+      }
+    }
+    this.#followAnchor();
+    return this.fairValue;
+  }
+
+  #followAnchor() {
+    const price = this.anchor?.price() ?? 0;
+    if (Number.isFinite(price) && price > 0)
+      this.#walk = this.clampToBand(price * Math.exp(this.#basis));
   }
 }

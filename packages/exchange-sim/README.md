@@ -103,6 +103,15 @@ nothing visible changed.
   basket-trading reference data plus some European large caps, then generated into `src/reference/universe.ts`; nothing is imported at
   runtime. `activeInstruments` (default 200) are simulated, interleaved by venue, or the explicit
   `instruments` list is used.
+- **Single-stock futures** (off by default). `futures` lists equity rics to list futures on: the next
+  `futuresContracts` (2) quarterly expiries (third Friday of Mar/Jun/Sep/Dec at `sessionClose`, else
+  16:30 UTC). Rics are the root, month code and year digit (`AZN.L` -> `AZNZ6`, `AZNH7`). A future has
+  the underlying's venue, currency and sector, a fixed tick, lot size 1 and a contract multiplier by
+  currency (100; 1000 for GBX and HKD). Each future and its underlying get a live book on top of the
+  active set, so N underlyings add 2N-3N books. Fair value is spot carried to expiry,
+  `S × exp(futuresCarryRate × τ)`, times a basis that mean-reverts (sd `futuresBasisBps`, half-life
+  `futuresBasisHalfLifeSec`); impact on a future goes into that basis. The roster is the equity one
+  plus an always-on informed bot that trades the future back towards fair.
 - **Price model.** A GBM fair value with a per-instrument annualised vol (20–50%, or
   `defaultVolatility`). Time is scaled by `timeScale` to make intraday-looking moves visible. The value
   is reflected inside a band of ±`priceBandPct` around refPrice, recentred on fair value at each
@@ -185,6 +194,11 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | --- | --- | --- |
 | `activeInstruments` | 200 | Instruments with a live book. |
 | `instruments` | `""` | Comma-separated rics to simulate; overrides `activeInstruments`. |
+| `futures` | `""` | Comma-separated equity rics to list single-stock futures on (each future and its underlying get a book). |
+| `futuresContracts` | 2 | Quarterly contracts listed per underlying. |
+| `futuresCarryRate` | 0.03 | Annual carry of futures fair value over spot. |
+| `futuresBasisBps` | 3 | Standard deviation of the futures basis noise (bps). |
+| `futuresBasisHalfLifeSec` | 60 | Half-life of the basis noise and of impact on a future (wall-clock s). |
 | `seed` | 42 | RNG seed. |
 | `botStepMs` | 20 | Bot / price-model step interval (ms). |
 | `maxStepMs` | 250 | Clamp on elapsed time per step (ms). |

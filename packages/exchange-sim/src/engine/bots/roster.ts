@@ -89,6 +89,20 @@ export const rosterFor = (
     .map(({ kind, count, params }) => ({ kind, count, params })),
 ];
 
+/**
+ * A future's roster: the equity roster plus an always-on informed bot. Its
+ * fair value follows the underlying, so the informed bot trades the basis
+ * back in when the future's market drifts from spot carried to expiry.
+ */
+export const futuresRosterFor = (
+  config: ExchangeSimConfig,
+  extras: readonly ExtraBots[],
+  sector: string,
+): Roster => [
+  ...rosterFor(config, extras, sector),
+  { kind: INFORMED.kind, count: 1, params: { alwaysOn: true } },
+];
+
 /** 32-bit FNV-1a: stable salts for per-bot generators. */
 export const hashString = (text: string) => {
   let hash = 0x811c9dc5;

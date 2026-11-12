@@ -12,6 +12,20 @@ export interface ExchangeSimConfig {
   activeInstruments: number;
   /** Comma separated rics to simulate; overrides activeInstruments when set. */
   instruments: string;
+  /**
+   * Comma separated equity rics to list single-stock futures on (quarterly
+   * expiries). Each future and its underlying get a live book, in addition
+   * to activeInstruments / instruments. Empty = no futures.
+   */
+  futures: string;
+  /** Contracts listed per underlying: front month, next, ... */
+  futuresContracts: number;
+  /** Annual carry rate of the futures fair value over spot (e.g. 0.03 = 3%). */
+  futuresCarryRate: number;
+  /** Standard deviation of the futures basis noise around carry, bps. */
+  futuresBasisBps: number;
+  /** Half-life of the basis noise (and of impact on a future), wall-clock seconds. */
+  futuresBasisHalfLifeSec: number;
   /** RNG seed; the same seed + clock reproduces the same market. */
   seed: number;
   /** Interval of the bot/price-model step timer (ms). */
@@ -138,6 +152,11 @@ export interface ExchangeSimConfig {
 export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
   activeInstruments: 200,
   instruments: "",
+  futures: "",
+  futuresContracts: 2,
+  futuresCarryRate: 0.03,
+  futuresBasisBps: 3,
+  futuresBasisHalfLifeSec: 60,
   seed: 42,
   botStepMs: 20,
   maxStepMs: 250,
@@ -266,6 +285,17 @@ export const validateConfig = (config: ExchangeSimConfig) => {
   }
   if (!(config.impactPermanentShare > 0 && config.impactPermanentShare <= 1)) {
     throw Error("exchangeSim.impactPermanentShare must be in (0, 1]");
+  }
+  if (
+    !(Number.isInteger(config.futuresContracts) && config.futuresContracts > 0)
+  ) {
+    throw Error("exchangeSim.futuresContracts must be a positive integer");
+  }
+  if (!Number.isFinite(config.futuresCarryRate)) {
+    throw Error("exchangeSim.futuresCarryRate must be a number");
+  }
+  for (const key of ["futuresBasisBps", "futuresBasisHalfLifeSec"] as const) {
+    if (!(config[key] >= 0)) throw Error(`exchangeSim.${key} must be >= 0`);
   }
   if (!(config.impactHalfLifeSec >= 0)) {
     throw Error("exchangeSim.impactHalfLifeSec must be >= 0");

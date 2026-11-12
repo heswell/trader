@@ -34,6 +34,12 @@ import {
   type TapeTrade,
 } from "../publish/MarketDataPublisher";
 import {
+  carriedPrice,
+  isFuture,
+  listFutures,
+  withFutures,
+} from "../reference/futures";
+import {
   ALL_INSTRUMENTS,
   type InstrumentDef,
   selectActiveInstruments,
@@ -60,6 +66,7 @@ import {
   createBots,
   type ExtraBots,
   parseExtraBots,
+  futuresRosterFor,
   rosterFor,
   sortBots,
 } from "./bots/roster";
@@ -116,6 +123,13 @@ interface ActivityNoise {
 
 /** Salt of the generator every bot on an instrument forks from. */
 const BOT_RNG_SALT = 500;
+
+/** Comma separated config list: trimmed, empty entries dropped. */
+const splitList = (text: string) =>
+  text
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 
 /** Mean-reversion time of the activity wander, as a fraction of the session. */
 const WANDER_SESSION_FRACTION = 0.05;
@@ -206,18 +220,35 @@ export class ExchangeSimulator {
     this.#stepTiming = t.timer("exchange", "step");
     this.#flushTiming = t.timer("publisher", "flush");
     this.clock = clock;
-    this.universe = universe;
-    for (const instrument of universe)
+    const futures = listFutures(
+      universe,
+      splitList(this.config.futures),
+      clock(),
+      {
+        contracts: this.config.futuresContracts,
+        carryRate: this.config.futuresCarryRate,
+        expiryTime: this.config.sessionClose || "16:30",
+      },
+    );
+    this.universe = [...universe, ...futures];
+    for (const instrument of this.universe)
       this.#listed.set(instrument.ric, instrument);
 
-    const rics = this.config.instruments
-      .split(",")
-      .map((ric) => ric.trim())
-      .filter(Boolean);
-    const active = selectActiveInstruments(
-      universe,
-      this.config.activeInstruments,
-      rics,
+    // listed futures always get a book (with their underlyings); the rest
+    // of the selection is equities only
+    const futureRics = new Set(futures.map((f) => f.ric));
+    const rics = splitList(this.config.instruments);
+    const equityRics = rics.filter((ric) => !futureRics.has(ric));
+    const active = withFutures(
+      rics.length > 0 && equityRics.length === 0
+        ? []
+        : selectActiveInstruments(
+            universe.filter((i) => !isFuture(i)),
+            this.config.activeInstruments,
+            equityRics,
+          ),
+      futures,
+      this.universe,
     );
     const rng = new Random(this.config.seed);
     for (const [i, instrument] of active.entries()) {
@@ -242,10 +273,15 @@ export class ExchangeSimulator {
     const { config } = this;
     // forked before any draw, so bot streams don't depend on the rest
     const botRng = rng.fork(BOT_RNG_SALT);
-    const volatility =
+    const underlying = isFuture(instrument)
+      ? this.#simulated.get(instrument.underlying ?? "")?.book
+      : undefined;
+    const drawn =
       config.defaultVolatility > 0
         ? config.defaultVolatility
         : rng.uniform(0.2, 0.5);
+    // a future is as volatile as its underlying
+    const volatility = underlying?.model.volatility ?? drawn;
     const book = new InstrumentBook(
       instrument,
       volatility,
@@ -267,8 +303,26 @@ export class ExchangeSimulator {
     );
     book.model.impact = calibration.impact;
     book.model.walkVolShare = calibration.walkVolShare;
+    if (underlying) {
+      const { expiry = 0 } = instrument;
+      const { futuresCarryRate, futuresBasisBps, futuresBasisHalfLifeSec } =
+        config;
+      book.model.anchor = {
+        price: () =>
+          carriedPrice(
+            underlying.model.fairValue,
+            futuresCarryRate,
+            expiry,
+            this.clock(),
+          ),
+        basisBps: futuresBasisBps,
+        halfLifeSec: futuresBasisHalfLifeSec,
+      };
+    }
     const bots = createBots(
-      rosterFor(config, this.#extraBots, instrument.sector),
+      underlying
+        ? futuresRosterFor(config, this.#extraBots, instrument.sector)
+        : rosterFor(config, this.#extraBots, instrument.sector),
       book,
       botRng,
       baseQty,
