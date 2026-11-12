@@ -124,6 +124,22 @@ export const sessionFraction = (
   return elapsed < length ? elapsed / length : undefined;
 };
 
+/**
+ * Whether a continuous session close fell in (since, now]: a DAY order
+ * entered at `since` has seen the end of its day. Always false when
+ * unscheduled.
+ */
+export const sessionClosedSince = (
+  s: SessionSchedule,
+  since: number,
+  now: number,
+) => {
+  if (!s.scheduled || now <= since) return false;
+  if (now - since >= s.dayMs) return true;
+  const lastCloseAt = now - mod(mod(now, s.dayMs) - s.closeAt, s.dayMs);
+  return lastCloseAt > since;
+};
+
 /** Clock time of the next session open strictly after `now` (undefined = unscheduled). */
 export const nextOpenAt = (s: SessionSchedule, now: number) =>
   s.scheduled ? lastOpenAt(s, now) + s.dayMs : undefined;

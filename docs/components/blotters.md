@@ -21,7 +21,7 @@ publish the selected instrument to their link group (`LinkGroupProps`: `linkGrou
 
 | Component | Props |
 | --- | --- |
-| `OrderBlotter` | `defaultTab` (`working` \| `filled` \| `closed` \| `all`), `showChildOrders` (default true), `onOrderSelect(orderId?)`, `onError(TradingRpcError)`, `notify` (default true: failed amend / cancel requests also go to `useTradingNotifications()` when a provider is mounted), `readOnly` (default false: hide the amend / cancel controls), `useEditSession` (amend through the server edit session instead of `amendOrder`: the dialog begins the session when it opens, Amend saves it, Close discards it, and an order that changed meanwhile is refused as stale). Tabs filter client side on `status`. Amend / cancel icons are enabled only for NEW, PARTIALLY_FILLED, REPLACED. Multi-select (ctrl / shift click) + **Cancel selected** sends `cancelOrder` per order; **Cancel all** sends `cancelAll`. Amend opens a dialog (quantity, price). Child orders of the selected order show in a panel below (a vuu LinkedTableView / tree does not span tables, still the case in alpha.21). Rejected rows show `rejectReason: text` as a tooltip on the status. **Order book** (`showOrderBook`, default true) opens the selected order's book in the shell's context panel, or in a dialog outside a portal shell; the panel follows the selection (see [Order book panel](#order-book-panel)). |
+| `OrderBlotter` | `defaultTab` (`working` \| `filled` \| `closed` \| `all`), `showChildOrders` (default true), `onOrderSelect(orderId?)`, `onError(TradingRpcError)`, `notify` (default true: failed amend / cancel requests also go to `useTradingNotifications()` when a provider is mounted), `readOnly` (default false: hide the amend / cancel controls), `useEditSession` (amend through the server edit session instead of `amendOrder`: the dialog begins the session when it opens, Amend saves it, Close discards it, and an order that changed meanwhile is refused as stale). Tabs filter client side on `status`. Amend / cancel icons are enabled only for NEW, PARTIALLY_FILLED, REPLACED. Multi-select (ctrl / shift click) + **Cancel selected** sends `cancelOrder` per order; **Cancel all** sends `cancelAll`. Amend opens a dialog (quantity, price for priced orders, and stop price for a STOP / STOP_LIMIT that hasn't triggered; only a changed stop price is sent, as `stopPrice` in `amendOrder` or a `stopPrice` editCell in the edit session). Stop orders show their **Stop** price (blank for other types) and **Triggered**: "Waiting" until the stop triggers, then the trigger time (`triggeredAt`). Child orders of the selected order show in a panel below (a vuu LinkedTableView / tree does not span tables, still the case in alpha.21). Rejected rows show `rejectReason: text` as a tooltip on the status. **Order book** (`showOrderBook`, default true) opens the selected order's book in the shell's context panel, or in a dialog outside a portal shell; the panel follows the selection (see [Order book panel](#order-book-panel)). |
 | `FillsBlotter` | `defaultGrouping` (`none` \| `ric` \| `ric-side`), `ric`, `onOrderSelect(orderId)` (order link), `highlightOrderId`, `csvFileName`. Group rows show summed quantity / notional and VWAP (`sum(notional) / sum(quantity)`, computed in the renderer – vuu has no VWAP aggregation). **Export CSV** writes the current filter and sort, ungrouped, up to 5,000 rows. |
 | `TradeTape` | `ric` (default: selected instrument), `maxRows` (100), `largeSizeThreshold` (absolute) or `largeSizePercentile` (90), `utc`. Newest first (`seq` descending), one render per animation frame, aggressor shown as ▲ Buy / ▼ Sell plus colour. |
 | `PositionsView` | `defaultGrouping` (`sector` (default) \| `none` \| `account` \| `ric`; groups are always by currency first), `account`, `showTotals`. Realised / unrealised / total P&L tick via `positionPrices`. `sector` and `exchange` come from instrument static (the OMS copies them onto `positions`). The totals table is **per currency** (never mixed; GBX is pence). |
@@ -42,7 +42,8 @@ The RPC contracts and error reasons (`TOO_LATE_TO_CANCEL`, `ORDER_PENDING`, ...)
 `OrderBookView` (`orderId`, `levels` (default 10), `level` / `onLevelChange`) shows the book a parent order is
 working in, read top down:
 
-1. **Order**: side, quantity, instrument, limit / strategy / TIF, and a bar of filled, resting and not yet sent.
+1. **Order**: side, quantity, instrument, type (`Lmt 99.40`, `Stp 99.50`, `Stp 99.50 Lmt 99.40`, with "waiting" /
+   "triggered" for stops) / strategy / TIF, and a bar of filled, resting and not yet sent.
    Below it, one chip per working child order that is in the book, with its queue position (`#4 of 9 · 6,300
    ahead`).
 2. **Level 2**: the instrument's `depth` levels, asks above bids. A dot marks the levels holding the order, and
@@ -84,8 +85,9 @@ All exported:
 - `OrderStatusBadge`, `FillProgressBar`, `PnlValue` (see [primitives.md](primitives.md)).
 - Cell renderers registered by `registerTradingCellRenderers()` and named in `TradingRenderer` (`trading.order-status`,
   `trading.side`, `trading.fill-progress`, `trading.price`, `trading.pnl`, `trading.position-quantity`,
-  `trading.notional`, `trading.time`, `trading.liquidity`). Use them as a column
+  `trading.notional`, `trading.time`, `trading.liquidity`, `trading.stop-trigger`). Use them as a column
   `type: { name: "string", renderer: { name } }`.
 - `useInstrumentLookup`, `useDataSourceRows` (rAF-coalesced rows from a data source you own), `useTableSelectedKeys`,
   `editOrdersInSession` / `openOrderEditSession` (`StaleOrderEditError` on a stale save).
-- `formatTime`, `rowsToCsv` / `downloadCsv` and the order status helpers (`isOrderAmendable`, `WORKING_STATUSES`, ...).
+- `formatTime`, `rowsToCsv` / `downloadCsv` and the order status helpers (`isOrderAmendable`, `WORKING_STATUSES`,
+  `stopTriggerState`, ...).

@@ -22,7 +22,10 @@ export const SIDES = values(Side);
 export const oppositeSide = (side: Side): Side =>
   side === Side.Buy ? Side.Sell : Side.Buy;
 
-/** STOP and STOP_LIMIT are reserved: they are valid values but not yet accepted by the OMS. */
+/**
+ * STOP and STOP_LIMIT are held by the OMS until a trade on the tape reaches
+ * the stop price, then sent to the exchange as a MARKET / LIMIT order.
+ */
 export const OrdType = Object.freeze({
   Market: "MARKET",
   Limit: "LIMIT",
@@ -34,10 +37,15 @@ export const ORD_TYPES = values(OrdType);
 export const SUPPORTED_ORD_TYPES: readonly OrdType[] = Object.freeze([
   OrdType.Market,
   OrdType.Limit,
+  OrdType.Stop,
+  OrdType.StopLimit,
 ]);
 /** Whether an order type needs a limit price (LIMIT, STOP_LIMIT). */
 export const isPricedOrdType = (ordType: OrdType) =>
   ordType === OrdType.Limit || ordType === OrdType.StopLimit;
+/** Whether an order type has a stop (trigger) price (STOP, STOP_LIMIT). */
+export const isStopOrdType = (ordType: OrdType) =>
+  ordType === OrdType.Stop || ordType === OrdType.StopLimit;
 
 export const TimeInForce = Object.freeze({
   Day: "DAY",
@@ -47,6 +55,11 @@ export const TimeInForce = Object.freeze({
 } as const);
 export type TimeInForce = ValueOf<typeof TimeInForce>;
 export const TIME_IN_FORCE_VALUES = values(TimeInForce);
+/** Time in force a stop order may have: it waits in the OMS, so not IOC / FOK. */
+export const STOP_TIME_IN_FORCE_VALUES: readonly TimeInForce[] = Object.freeze([
+  TimeInForce.Day,
+  TimeInForce.GoodTillCancel,
+]);
 
 /** FIX OrdStatus (tag 39) subset. */
 export const OrdStatus = Object.freeze({
@@ -185,6 +198,9 @@ export const RejectReason = Object.freeze({
   UnsupportedOrdType: "UNSUPPORTED_ORD_TYPE",
   UnsupportedTimeInForce: "UNSUPPORTED_TIF",
   MissingPrice: "MISSING_PRICE",
+  MissingStopPrice: "MISSING_STOP_PRICE",
+  /** Stop price off tick, or already reached by the market. */
+  InvalidStopPrice: "INVALID_STOP_PRICE",
   InvalidPrice: "INVALID_PRICE",
   InvalidTickSize: "INVALID_TICK_SIZE",
   InvalidQuantity: "INVALID_QUANTITY",

@@ -23,6 +23,10 @@ export interface OrderBookParentOrder {
   quantity: number;
   /** Limit price; 0 or absent for a market order. */
   price?: number;
+  /** STOP / STOP_LIMIT trigger price; absent for other types. */
+  stopPrice?: number;
+  /** When the stop triggered (epoch ms); absent while waiting / not a stop. */
+  triggeredAt?: number;
   cumQty: number;
   avgPx?: number;
   status: OrdStatus;
@@ -91,6 +95,8 @@ const PARENT_COLUMNS = [
   "timeInForce",
   "quantity",
   "price",
+  "stopPrice",
+  "triggeredAt",
   "cumQty",
   "avgPx",
   "status",
@@ -184,6 +190,14 @@ export const useOrderBook = (
       price:
         typeof parentRow.price === "number" && parentRow.price > 0
           ? parentRow.price
+          : undefined,
+      stopPrice:
+        typeof parentRow.stopPrice === "number" && parentRow.stopPrice > 0
+          ? parentRow.stopPrice
+          : undefined,
+      triggeredAt:
+        typeof parentRow.triggeredAt === "number" && parentRow.triggeredAt > 0
+          ? parentRow.triggeredAt
           : undefined,
       cumQty: toNumber(parentRow.cumQty),
       avgPx:

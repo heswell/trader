@@ -65,11 +65,24 @@ export const OrderTicketDocked = () => {
         >
           Buy VWAP
         </Button>
+        <Button onClick={prefill({ side: Side.Sell, ordType: OrdType.Stop })}>
+          Sell stop
+        </Button>
+        <Button
+          onClick={prefill({ side: Side.Buy, ordType: OrdType.StopLimit })}
+        >
+          Buy stop limit
+        </Button>
         <Text styleAs="label">
           Hold Alt / ⌥ for shortcuts · price b / a / m · qty 10k / $250k
         </Text>
         <Text styleAs="label">
-          Order line in the instrument field: b 5k m twap 45m
+          Stops: ⌥P stop, ⌥⇧P stop limit · ↑ / ↓ in an empty stop starts one
+          tick beyond the market
+        </Text>
+        <Text styleAs="label">
+          Order line in the instrument field: b 5k m twap 45m · s 200 stop b-2
+          lmt b-3
         </Text>
         <EventLog events={events} />
       </div>

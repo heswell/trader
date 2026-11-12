@@ -1,12 +1,14 @@
 import {
   type CreateOrderRequest,
   type InstrumentStatic,
+  isStopOrdType,
   OrdType,
   type OrderReject,
   RejectReason,
   Side,
   type TradingPhase,
   validateOrder,
+  validateStopTrigger,
 } from "@heswell/trading-schemas";
 import type { Account } from "../reference/accounts";
 
@@ -40,7 +42,14 @@ export interface RiskContext {
 /** Order fields the risk check reads (a validated createOrder / amend projection). */
 export type RiskOrder = Pick<
   CreateOrderRequest,
-  "account" | "ric" | "side" | "ordType" | "quantity" | "price" | "timeInForce"
+  | "account"
+  | "ric"
+  | "side"
+  | "ordType"
+  | "quantity"
+  | "price"
+  | "stopPrice"
+  | "timeInForce"
 >;
 
 const reject = (reason: RejectReason, text: string): OrderReject => ({
@@ -60,13 +69,17 @@ export const referencePrice = (
   return instrument.refPrice;
 };
 
-/** Price a market order is expected to execute at (far touch, else reference). */
+/**
+ * Price an order is expected to execute at: its limit, a STOP's stop price,
+ * else (market) the far touch, else the reference price.
+ */
 export const expectedPrice = (
-  order: Pick<RiskOrder, "side" | "ordType" | "price">,
+  order: Pick<RiskOrder, "side" | "ordType" | "price" | "stopPrice">,
   instrument: Pick<RiskInstrument, "refPrice">,
   market?: RiskMarket,
 ) => {
   if (order.ordType !== OrdType.Market && order.price) return order.price;
+  if (order.ordType === OrdType.Stop && order.stopPrice) return order.stopPrice;
   const touch = order.side === Side.Buy ? market?.ask : market?.bid;
   return touch && touch > 0 ? touch : referencePrice(instrument, market);
 };
@@ -76,8 +89,9 @@ const fmtUsd = (n: number) => `${Math.round(n).toLocaleString("en-US")} USD`;
 /**
  * Pre-trade risk, evaluated in order (first failure wins):
  * account known / enabled, instrument known, restricted list, static order
- * validation incl. trading phase (HALTED / CLOSED), maxOrderQty,
- * maxOrderNotional, limit price collar, maxPositionNotional.
+ * validation incl. trading phase (HALTED / CLOSED), stop not already
+ * reached, maxOrderQty, maxOrderNotional, limit price collar (LIMIT only:
+ * stops may legitimately sit far from the market), maxPositionNotional.
  *
  * Notionals are converted to USD with the instrument's usdPerPriceUnit; account
  * limits are in USD. The position check is worst case: current net position
@@ -114,6 +128,14 @@ export const checkPreTradeRisk = (
   }
   const invalid = validateOrder(order, instrument, ctx.phase);
   if (invalid) return invalid;
+  if (isStopOrdType(order.ordType) && order.stopPrice) {
+    const reached = validateStopTrigger(
+      order.side,
+      order.stopPrice,
+      referencePrice(instrument, ctx.market),
+    );
+    if (reached) return reached;
+  }
 
   if (order.quantity > account.maxOrderQty) {
     return reject(

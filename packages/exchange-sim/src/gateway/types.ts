@@ -19,6 +19,7 @@ export interface GatewayNewOrder {
   clOrdId: string;
   ric: string;
   side: Side;
+  /** MARKET or LIMIT: stop orders are held by the OMS and sent once triggered. */
   ordType: OrdType;
   quantity: number;
   /** Required for LIMIT, must be omitted for MARKET. */

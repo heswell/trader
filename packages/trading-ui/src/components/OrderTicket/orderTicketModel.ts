@@ -7,8 +7,10 @@ import {
   algoStrategyDefinition,
   type CreateOrderRequest,
   isPricedOrdType,
+  isStopOrdType,
   OrdType,
   RejectReason,
+  STOP_TIME_IN_FORCE_VALUES,
   SUPPORTED_ORD_TYPES,
   Side,
   roundToTick,
@@ -19,6 +21,7 @@ import {
   tickScheduleOf,
   validateOrder,
   validateRpcParams,
+  validateStopTrigger,
 } from "@heswell/trading-schemas";
 import { priceDecimals } from "../../utils/formatting";
 
@@ -61,14 +64,17 @@ export interface OrderTicketAccount {
   enabled?: boolean;
 }
 
-/** The editable state of the ticket. Quantity and price are input text. */
+/** The editable state of the ticket. Quantity and prices are input text. */
 export interface OrderDraft {
   ric?: string;
   side: Side;
   ordType: OrdType;
   timeInForce: TimeInForce;
   quantity: string;
+  /** Limit price (LIMIT, STOP_LIMIT). */
   price: string;
+  /** Stop (trigger) price (STOP, STOP_LIMIT). */
+  stopPrice: string;
   account?: string;
   /** How the OMS works the order; undefined = DMA. */
   strategy?: AlgoStrategy;
@@ -88,6 +94,7 @@ export type OrderDraftField =
   | "timeInForce"
   | "quantity"
   | "price"
+  | "stopPrice"
   | "account"
   | "strategy"
   | AlgoParamKey;
@@ -96,8 +103,21 @@ export type OrderDraftErrors = Partial<
   Record<OrderDraftField | "form", string>
 >;
 
-/** Order types the OMS accepts (STOP / STOP_LIMIT are reserved). */
-export const ORDER_TICKET_ORD_TYPES = SUPPORTED_ORD_TYPES;
+/** Order types the ticket offers, in display order. */
+export const ORDER_TICKET_ORD_TYPES: readonly OrdType[] = [
+  OrdType.Limit,
+  OrdType.Market,
+  OrdType.Stop,
+  OrdType.StopLimit,
+].filter((t) => SUPPORTED_ORD_TYPES.includes(t));
+
+/** Display name of an order type ("Stop limit"). */
+export const ORD_TYPE_LABEL: Readonly<Record<string, string>> = Object.freeze({
+  [OrdType.Limit]: "Limit",
+  [OrdType.Market]: "Market",
+  [OrdType.Stop]: "Stop",
+  [OrdType.StopLimit]: "Stop limit",
+});
 export const ORDER_TICKET_TIFS: readonly TimeInForce[] = [
   TimeInForce.Day,
   TimeInForce.ImmediateOrCancel,
@@ -114,9 +134,29 @@ export const isAlgoStrategy = (strategy: AlgoStrategy | undefined) =>
   strategy !== undefined && strategy !== AlgoStrategy.Dma;
 
 /**
+ * Stop orders are worked by the OMS as DMA only: a strategy other than DMA
+ * can't be combined with STOP / STOP_LIMIT.
+ */
+export const isStrategyAllowed = (
+  ordType: OrdType,
+  strategy: AlgoStrategy | undefined,
+) => !(isStopOrdType(ordType) && isAlgoStrategy(strategy));
+
+/**
+ * The order type an algo strategy turns a stop into: STOP → MARKET,
+ * STOP_LIMIT → LIMIT (other types unchanged).
+ */
+export const nonStopOrdType = (ordType: OrdType): OrdType =>
+  ordType === OrdType.Stop
+    ? OrdType.Market
+    : ordType === OrdType.StopLimit
+      ? OrdType.Limit
+      : ordType;
+
+/**
  * TIFs the OMS accepts for an order type, strategy and trading phase: the
- * strategy definition's list, less GTC for MARKET and IOC / FOK outside
- * continuous trading.
+ * strategy definition's list, less GTC for MARKET, only DAY / GTC for stops,
+ * and no IOC / FOK outside continuous trading.
  */
 export const isTimeInForceAllowed = (
   ordType: OrdType,
@@ -126,6 +166,7 @@ export const isTimeInForceAllowed = (
 ) =>
   algoStrategyDefinition(strategy).timeInForce.includes(tif) &&
   !(ordType === OrdType.Market && tif === TimeInForce.GoodTillCancel) &&
+  !(isStopOrdType(ordType) && !STOP_TIME_IN_FORCE_VALUES.includes(tif)) &&
   !(
     phase &&
     phase !== TradingPhase.Continuous &&
@@ -451,6 +492,47 @@ export const nudgePrice = (
   return next > 0 ? formatPriceInput(next, instrument) : undefined;
 };
 
+/**
+ * Where an empty stop price starts: one tick beyond the market price (above
+ * it for a buy, below for a sell), since a stop already reached is refused.
+ */
+export const defaultStopPrice = (
+  side: Side,
+  instrument: OrderTicketInstrument | undefined,
+) => {
+  const market = referencePrice(instrument);
+  const schedule = scheduleOf(instrument);
+  if (market === undefined || schedule === undefined) return undefined;
+  const start = stepTicks(
+    roundToTick(market, schedule),
+    schedule,
+    side === Side.Buy ? 1 : -1,
+  );
+  return start > 0 ? start : undefined;
+};
+
+/**
+ * Move the draft stop price by `ticks` (band aware). An empty stop starts
+ * one tick beyond the market price (see defaultStopPrice).
+ */
+export const nudgeStopPrice = (
+  draft: Pick<OrderDraft, "stopPrice" | "side">,
+  instrument: OrderTicketInstrument | undefined,
+  ticks: number,
+): string | undefined => {
+  const schedule = scheduleOf(instrument);
+  if (schedule === undefined) return undefined;
+  const current = parsePrice(draft.stopPrice);
+  if (current === undefined || Number.isNaN(current) || current <= 0) {
+    const start = defaultStopPrice(draft.side, instrument);
+    return start === undefined
+      ? undefined
+      : formatPriceInput(start, instrument);
+  }
+  const next = stepTicks(current, schedule, ticks);
+  return next > 0 ? formatPriceInput(next, instrument) : undefined;
+};
+
 /** Step quantity by whole lots (never below one lot). */
 export const nudgeQuantity = (
   quantityText: string,
@@ -472,6 +554,8 @@ const FIELD_FOR_REASON: Partial<Record<string, OrderDraftField>> = {
   [RejectReason.InvalidPrice]: "price",
   [RejectReason.InvalidTickSize]: "price",
   [RejectReason.PriceOutsideCollar]: "price",
+  [RejectReason.MissingStopPrice]: "stopPrice",
+  [RejectReason.InvalidStopPrice]: "stopPrice",
   [RejectReason.UnsupportedTimeInForce]: "timeInForce",
   [RejectReason.UnsupportedOrdType]: "ordType",
   [RejectReason.UnknownInstrument]: "ric",
@@ -483,6 +567,23 @@ const FIELD_FOR_REASON: Partial<Record<string, OrderDraftField>> = {
 export const fieldForRejectReason = (
   reason: string,
 ): OrderDraftField | "form" => FIELD_FOR_REASON[reason] ?? "form";
+
+/**
+ * Price the order is valued at (and `$` quantities converted at): the limit
+ * for LIMIT / STOP_LIMIT, the stop for STOP (it trades near there once
+ * triggered), else the far touch for MARKET.
+ */
+const valuationPrice = (
+  draft: OrderDraft,
+  instrument: OrderTicketInstrument | undefined,
+  limit: number | undefined,
+  stopPrice: number | undefined,
+) => {
+  if (isPricedOrdType(draft.ordType)) return limit;
+  if (draft.ordType === OrdType.Stop)
+    return stopPrice !== undefined && stopPrice > 0 ? stopPrice : undefined;
+  return marketValuationPrice(draft.side, instrument);
+};
 
 export interface DraftValidation {
   errors: OrderDraftErrors;
@@ -512,11 +613,15 @@ export const validateDraft = (
   }
 
   const priced = isPricedOrdType(draft.ordType);
+  const stop = isStopOrdType(draft.ordType);
   const price = priced ? resolvePriceInput(draft.price, instrument) : undefined;
+  const stopPrice = stop
+    ? resolvePriceInput(draft.stopPrice, instrument)
+    : undefined;
   const quantity = resolveQuantityInput(
     draft.quantity,
     instrument,
-    priced ? price : marketValuationPrice(draft.side, instrument),
+    valuationPrice(draft, instrument, price, stopPrice),
   );
   if (draft.quantity.trim() === "") errors.quantity = "Enter a quantity";
   else if (Number.isNaN(quantity))
@@ -528,33 +633,52 @@ export const validateDraft = (
     errors.price = isPriceShorthand(draft.price)
       ? "No bid / ask to price from"
       : "Price must be a number, or b / a / m";
+  if (stop && stopPrice === undefined) errors.stopPrice = "Enter a stop price";
+  else if (stop && Number.isNaN(stopPrice))
+    errors.stopPrice = isPriceShorthand(draft.stopPrice)
+      ? "No bid / ask to price from"
+      : "Stop price must be a number, or b / a / m";
+  if (!isStrategyAllowed(draft.ordType, draft.strategy)) {
+    errors.strategy = "Stop orders are DMA only";
+  }
 
   if (draft.ric && instrument?.ric === draft.ric) {
     if (
       instrument.tickSize !== undefined &&
       instrument.lotSize !== undefined &&
       !errors.quantity &&
-      !errors.price
+      !errors.price &&
+      !errors.stopPrice
     ) {
-      const reject = validateOrder(
-        {
-          side: draft.side,
-          ordType: draft.ordType,
-          quantity,
-          price,
-          timeInForce: draft.timeInForce,
-        },
-        {
-          ric: instrument.ric,
-          currency: instrument.currency ?? "",
-          exchange: instrument.exchange ?? "",
-          tickSize: instrument.tickSize,
-          tickBands: instrument.tickBands || undefined,
-          lotSize: instrument.lotSize,
-        },
-        (instrument.phase as TradingPhase | undefined) ||
-          TradingPhase.Continuous,
-      );
+      const reject =
+        validateOrder(
+          {
+            side: draft.side,
+            ordType: draft.ordType,
+            quantity,
+            price,
+            stopPrice,
+            timeInForce: draft.timeInForce,
+          },
+          {
+            ric: instrument.ric,
+            currency: instrument.currency ?? "",
+            exchange: instrument.exchange ?? "",
+            tickSize: instrument.tickSize,
+            tickBands: instrument.tickBands || undefined,
+            lotSize: instrument.lotSize,
+          },
+          (instrument.phase as TradingPhase | undefined) ||
+            TradingPhase.Continuous,
+        ) ??
+        // A stop already reached would trigger at once: say so before Send.
+        (stopPrice !== undefined
+          ? validateStopTrigger(
+              draft.side,
+              stopPrice,
+              referencePrice(instrument),
+            )
+          : undefined);
       if (reject) {
         const field = fieldForRejectReason(reject.reason);
         errors[field] ??= reject.text;
@@ -577,6 +701,7 @@ export const validateDraft = (
     ordType: draft.ordType,
     quantity,
     ...(price !== undefined ? { price } : {}),
+    ...(stopPrice !== undefined ? { stopPrice } : {}),
     timeInForce: draft.timeInForce,
   });
   if (!parsed.ok) return { errors: { form: parsed.errors.join("; ") } };
@@ -589,7 +714,7 @@ export interface RiskWarning {
 }
 
 export interface RiskPreview {
-  /** Valuation price (limit, or far touch for market). */
+  /** Valuation price (limit, stop for STOP, or far touch for market). */
   price?: number;
   /** Quantity in shares (shorthand and $ values resolved). */
   quantity?: number;
@@ -630,19 +755,26 @@ export const previewRisk = (
   const warnings: RiskWarning[] = [];
   const priced = isPricedOrdType(draft.ordType);
   const limit = priced ? resolvePriceInput(draft.price, instrument) : undefined;
-  const quantity = resolveQuantityInput(
-    draft.quantity,
-    instrument,
-    priced ? limit : marketValuationPrice(draft.side, instrument),
-    usdPerPriceUnit,
-  );
+  const stop =
+    draft.ordType === OrdType.Stop
+      ? resolvePriceInput(draft.stopPrice, instrument)
+      : undefined;
   const validLimit =
     limit !== undefined && !Number.isNaN(limit) && limit > 0
       ? limit
       : undefined;
-  const price = priced
-    ? validLimit
-    : marketValuationPrice(draft.side, instrument);
+  const price = valuationPrice(
+    draft,
+    instrument,
+    validLimit,
+    stop !== undefined && !Number.isNaN(stop) ? stop : undefined,
+  );
+  const quantity = resolveQuantityInput(
+    draft.quantity,
+    instrument,
+    price,
+    usdPerPriceUnit,
+  );
   const currency = instrument?.currency;
   const reference = referencePrice(instrument);
   const preview: RiskPreview = {
@@ -675,7 +807,7 @@ export const previewRisk = (
           });
         }
       }
-    } else if (!priced && instrument) {
+    } else if (draft.ordType === OrdType.Market && instrument) {
       warnings.push({
         code: "noPrice",
         text: "No market price to value the order",
@@ -707,6 +839,7 @@ export const EMPTY_DRAFT: OrderDraft = Object.freeze({
   timeInForce: TimeInForce.Day,
   quantity: "",
   price: "",
+  stopPrice: "",
   strategy: AlgoStrategy.Dma,
   algoParams: Object.freeze({}),
 });
@@ -776,6 +909,11 @@ const PRICE_WORD = /^((b|bid|a|ask|m|mid)([+-]\d+)?|[\d,]*\.?\d+)$/i;
  * strategy (by id or name) and its parameters (by their form: `45m`,
  * `15:30`, `10%`). Words may come in any order after the side, except that
  * quantity comes before price. Missing parts are left as they are.
+ *
+ * Stops: `stop` (or `stp`) takes the next price as the stop price; with a
+ * limit price as well the order is a STOP_LIMIT, e.g. `s 200 vod.l stop
+ * 99.5` (STOP) and `s 200 vod.l stop 99.5 lmt 99.4` (STOP_LIMIT). `lmt`
+ * (`limit`) before a price is optional: any other price is the limit.
  */
 export const parseOrderLine = (text: string): OrderLine => {
   const tokens = text.trim().split(/\s+/).filter(Boolean);
@@ -783,12 +921,42 @@ export const parseOrderLine = (text: string): OrderLine => {
   const algoParams: Partial<Record<AlgoParamKey, string>> = {};
   const words: OrderLine["words"] = [];
   let definition: AlgoStrategyDefinition | undefined;
+  let stop = false;
+  /** The previous word was `stop` / `lmt`: the next price is for it. */
+  let expect: "stop" | "limit" | undefined;
   for (const [i, token] of tokens.entries()) {
     const t = token.toLowerCase();
     const word = (label?: string) => words.push({ text: token, label });
+    const pending = expect;
+    expect = undefined;
     if (i === 0 && /^(b|buy|s|sell)$/.test(t)) {
       change.side = t[0] === "b" ? Side.Buy : Side.Sell;
       word(change.side === Side.Buy ? "Buy" : "Sell");
+      continue;
+    }
+    if (pending === "stop" && PRICE_WORD.test(t)) {
+      change.stopPrice = token;
+      word(`Stop ${token}`);
+      continue;
+    }
+    if (
+      pending === "limit" &&
+      change.ordType !== OrdType.Market &&
+      PRICE_WORD.test(t)
+    ) {
+      change.price = token;
+      word(`Limit ${token}`);
+      continue;
+    }
+    if (/^(stop|stp)$/.test(t)) {
+      stop = true;
+      expect = "stop";
+      word("Stop");
+      continue;
+    }
+    if (/^(lmt|limit|lim)$/.test(t)) {
+      expect = "limit";
+      word("Limit");
       continue;
     }
     const strategy = ALGO_STRATEGY_DEFINITIONS.find(
@@ -843,7 +1011,7 @@ export const parseOrderLine = (text: string): OrderLine => {
     ) {
       change.price = token;
       change.ordType = OrdType.Limit;
-      word(`@ ${token}`);
+      word(stop ? `Limit ${token}` : `@ ${token}`);
       continue;
     }
     if (change.ric === undefined && /^[a-z0-9]+\.[a-z0-9]+$/i.test(t)) {
@@ -852,6 +1020,12 @@ export const parseOrderLine = (text: string): OrderLine => {
       continue;
     }
     word(undefined);
+  }
+  if (stop) {
+    change.ordType =
+      change.price !== undefined ? OrdType.StopLimit : OrdType.Stop;
+  } else if (change.price !== undefined && change.ordType !== OrdType.Market) {
+    change.ordType = OrdType.Limit;
   }
   if (change.strategy) change.algoParams = algoParams;
   return { change, words };

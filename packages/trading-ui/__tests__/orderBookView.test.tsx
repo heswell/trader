@@ -20,9 +20,48 @@ import {
   waitFor,
 } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { OrderBlotter, OrderBookView, TradingDataProvider } from "../src";
+import {
+  OrderBlotter,
+  OrderBookView,
+  orderTypeLabel,
+  restsAtLimit,
+  TradingDataProvider,
+} from "../src";
 
 afterEach(cleanup);
+
+describe("stop orders in the order book", () => {
+  const fmt = (p: number) => p.toFixed(2);
+  test("labels: Lmt, Stp, Stp + Lmt, else the type", () => {
+    expect(orderTypeLabel({ ordType: OrdType.Limit, price: 99.4 }, fmt)).toBe(
+      "Lmt 99.40",
+    );
+    expect(
+      orderTypeLabel({ ordType: OrdType.Stop, stopPrice: 99.5 }, fmt),
+    ).toBe("Stp 99.50");
+    expect(
+      orderTypeLabel(
+        { ordType: OrdType.StopLimit, stopPrice: 99.5, price: 99.4 },
+        fmt,
+      ),
+    ).toBe("Stp 99.50 Lmt 99.40");
+    expect(orderTypeLabel({ ordType: OrdType.Market }, fmt)).toBe("MARKET");
+  });
+
+  test("a STOP_LIMIT rests at its limit only once triggered", () => {
+    expect(restsAtLimit({ ordType: OrdType.Limit, triggeredAt: 0 })).toBe(true);
+    expect(restsAtLimit({ ordType: OrdType.StopLimit, triggeredAt: 0 })).toBe(
+      false,
+    );
+    expect(
+      restsAtLimit({ ordType: OrdType.StopLimit, triggeredAt: 1_700_000 }),
+    ).toBe(true);
+    expect(
+      restsAtLimit({ ordType: OrdType.Stop, triggeredAt: 1_700_000 }),
+    ).toBe(false);
+    expect(restsAtLimit({ ordType: OrdType.Market })).toBe(false);
+  });
+});
 
 describe("OrderBookView (local data)", () => {
   setCurrentUser({ name: "admin", authorizations: [] });

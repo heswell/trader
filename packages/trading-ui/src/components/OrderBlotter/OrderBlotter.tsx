@@ -1,4 +1,4 @@
-import { RpcName } from "@heswell/trading-schemas";
+import { isStopOrdType, type OrdType, RpcName } from "@heswell/trading-schemas";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
 import {
@@ -240,7 +240,17 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
     });
     // mirror of the table's rows: resolves ranges and row lookups
     const mirror = useTradingDataSource("parentOrders", {
-      columns: ["orderId", "status", "quantity", "price", "cumQty", "ric"],
+      columns: [
+        "orderId",
+        "status",
+        "quantity",
+        "price",
+        "cumQty",
+        "ric",
+        "ordType",
+        "stopPrice",
+        "triggeredAt",
+      ],
       filterSpec: { filter: orderBlotterTabFilter(defaultTab) },
     });
     const { rows: records } = useDataSourceRows(mirror, { rowCount: 500 });
@@ -375,16 +385,16 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
     );
 
     const submitAmend = useCallback(
-      async (quantity: number | undefined, price: number | undefined) => {
+      async (edits: OrderEdits) => {
         if (!amending) return;
         try {
           if (useEditSession) {
-            await amendInSession({ quantity, price });
+            await amendInSession(edits);
           } else {
             await sendTradingRpc(
               dataSource,
               RpcName.AmendOrder,
-              { orderId: amending, quantity, price },
+              { orderId: amending, ...edits },
               { connectionState },
             );
           }
@@ -528,13 +538,19 @@ const AmendDialog = ({
   orderId,
 }: {
   onCancel: () => void;
-  onSubmit: (quantity?: number, price?: number) => void;
+  onSubmit: (edits: OrderEdits) => void;
   order?: Record<string, unknown>;
   orderId: string;
 }) => {
   const [quantity, setQuantity] = useState(String(order?.quantity ?? ""));
   const [price, setPrice] = useState(String(order?.price ?? ""));
+  const [stopPrice, setStopPrice] = useState(String(order?.stopPrice ?? ""));
   const priced = Number(order?.price) > 0;
+  // The stop can be moved until it triggers; after that it is a plain order.
+  const stopAmendable =
+    isStopOrdType(String(order?.ordType) as OrdType) &&
+    !(Number(order?.triggeredAt) > 0) &&
+    Number(order?.stopPrice) > 0;
   const canAmend = order ? isOrderAmendable(String(order.status)) : false;
   return (
     <form
@@ -542,10 +558,17 @@ const AmendDialog = ({
       className={`${classBase}-dialog`}
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit(
-          quantity === "" ? undefined : Number(quantity),
-          priced && price !== "" ? Number(price) : undefined,
-        );
+        onSubmit({
+          quantity: quantity === "" ? undefined : Number(quantity),
+          price: priced && price !== "" ? Number(price) : undefined,
+          // Only a changed stop: it can't be amended once triggered.
+          stopPrice:
+            stopAmendable &&
+            stopPrice !== "" &&
+            Number(stopPrice) !== Number(order?.stopPrice)
+              ? Number(stopPrice)
+              : undefined,
+        });
       }}
     >
       <strong>Amend {orderId}</strong>
@@ -558,9 +581,20 @@ const AmendDialog = ({
           value={quantity}
         />
       </label>
+      {stopAmendable ? (
+        <label>
+          Stop price
+          <input
+            onChange={(e) => setStopPrice(e.target.value)}
+            step="any"
+            type="number"
+            value={stopPrice}
+          />
+        </label>
+      ) : null}
       {priced ? (
         <label>
-          Price
+          {stopAmendable ? "Limit price" : "Price"}
           <input
             onChange={(e) => setPrice(e.target.value)}
             step="any"

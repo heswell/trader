@@ -28,7 +28,7 @@ import { handleOmsRpc } from "./omsRpc";
 
 export { handleOmsRpc, type OmsRpcName } from "./omsRpc";
 
-const EDITABLE_COLUMNS = ["quantity", "price"] as const;
+const EDITABLE_COLUMNS = ["quantity", "price", "stopPrice"] as const;
 const SESSION_RPCS = new Set(["beginEditSession", "createSessionTable"]);
 
 const error = (errorMessage: string): RpcResult => ({
@@ -42,7 +42,7 @@ const isParentOrders = (table: DataTable) =>
 /**
  * Vuu RPC handler for every OMS table (and positionPrices): the order RPCs
  * plus an edit session on parentOrders, where saving the session turns
- * edited quantity / price into amendOrder and deleted rows into cancelOrder
+ * edited quantity / price / stopPrice into amendOrder and deleted rows into cancelOrder
  * (see README "Blotter inline edit").
  *
  * vuu-server's edit RPCs are secure by default: edits only reach a session
@@ -117,6 +117,9 @@ export class OmsRpcHandler extends CreateSessionTableRpcHandler {
     const invalid = validateAmend({ [column]: value }, instrument, {
       ordType: order.ordType,
       cumQty: order.state.cumQty,
+      side: order.side,
+      price: order.state.price,
+      stopPrice: order.stopPrice,
     });
     return invalid ? `${invalid.reason}: ${invalid.text}` : undefined;
   }

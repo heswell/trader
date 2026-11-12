@@ -491,6 +491,11 @@
   grid-template-columns: 1fr 1fr;
 }
 
+/* Stops: quantity, stop price, then the limit (or "market on trigger") */
+.tradingOrderTicket-core[data-stop] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 /* Fields: label + unit, control, hint or error */
 .tradingOrderTicket-field {
   display: grid;
@@ -596,7 +601,9 @@
   font-size: 12px;
   height: 28px;
   justify-content: space-between;
+  overflow: hidden;
   padding: 0 7px;
+  white-space: nowrap;
 }
 
 .tradingOrderTicket-marketPrice b {

@@ -254,6 +254,49 @@ describe("order line", () => {
     });
   });
 
+  test("stop and stop limit", () => {
+    const stop = parseOrderLine("s 200 vod.l stop 99.5");
+    expect(stop.change).toEqual({
+      side: Side.Sell,
+      quantity: "200",
+      ric: "VOD.L",
+      stopPrice: "99.5",
+      ordType: OrdType.Stop,
+    });
+    expect(stop.words.map((w) => w.label)).toEqual([
+      "Sell",
+      "Qty 200",
+      "VOD.L",
+      "Stop",
+      "Stop 99.5",
+    ]);
+    expect(parseOrderLine("s 200 vod.l stop 99.5 lmt 99.4").change).toEqual({
+      side: Side.Sell,
+      quantity: "200",
+      ric: "VOD.L",
+      stopPrice: "99.5",
+      price: "99.4",
+      ordType: OrdType.StopLimit,
+    });
+    // lmt is optional; the limit can come first; stp works too.
+    expect(parseOrderLine("b 1k vod.l 101 stp 100.5").change).toMatchObject({
+      price: "101",
+      stopPrice: "100.5",
+      ordType: OrdType.StopLimit,
+    });
+    // The stop takes the next price even before a quantity.
+    expect(parseOrderLine("b stop a+2 500").change).toMatchObject({
+      stopPrice: "a+2",
+      quantity: "500",
+      ordType: OrdType.Stop,
+    });
+    // `stop` alone picks the type; the stop price is left to fill in.
+    expect(parseOrderLine("s 200 stop").change).toMatchObject({
+      ordType: OrdType.Stop,
+    });
+    expect(parseOrderLine("s 200 stop").change.stopPrice).toBeUndefined();
+  });
+
   test("an order line has a space; a search does not", () => {
     expect(isOrderLine("vod")).toBe(false);
     expect(isOrderLine("b 5k")).toBe(true);

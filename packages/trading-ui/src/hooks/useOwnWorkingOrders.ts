@@ -11,14 +11,21 @@ import { priceKey } from "./useMarketData";
 import { useDataSourceRows } from "../data/useDataSourceRows";
 import { filterString } from "../utils/filters";
 
-/** A working (or pending) LIMIT parent order of the current user. */
+/**
+ * A working (or pending) parent order of the current user resting on the
+ * book at its limit: a LIMIT, or a STOP_LIMIT once its stop has triggered.
+ */
 export interface OwnOrder {
   orderId: string;
   clOrdId?: string;
   account: string;
   ric: string;
   side: Side;
+  /** LIMIT or (triggered) STOP_LIMIT. */
+  ordType?: OrdType;
   price: number;
+  /** STOP_LIMIT: the stop it triggered at (0 for a LIMIT). */
+  stopPrice?: number;
   quantity: number;
   leavesQty: number;
   cumQty: number;
@@ -69,9 +76,21 @@ export interface OwnWorkingOrdersOptions {
   maxOrders?: number;
 }
 
+/** Order types that can rest on the book at their limit price. */
+const BOOK_ORD_TYPES: readonly OrdType[] = [OrdType.Limit, OrdType.StopLimit];
+
 /**
- * Working LIMIT orders (OMS `parentOrders`, visible to the current user) for
- * one instrument, also aggregated by side and price. Used for own-order
+ * Whether a parentOrders row rests on the book at its limit: a LIMIT, or a
+ * STOP_LIMIT whose stop has triggered (an untriggered stop waits in the OMS).
+ */
+export const restsAtLimit = (row: Readonly<Record<string, unknown>>) =>
+  row.ordType === OrdType.Limit ||
+  (row.ordType === OrdType.StopLimit && Number(row.triggeredAt) > 0);
+
+/**
+ * Working LIMIT orders, and STOP_LIMIT orders once triggered (OMS
+ * `parentOrders`, visible to the current user) for one instrument, also
+ * aggregated by side and price. Used for own-order
  * markers in depth views and the price ladder. The OMS only returns orders
  * the user is entitled to see (see oms README, permissions).
  */
@@ -88,6 +107,8 @@ export const useOwnWorkingOrders = (
       "side",
       "ordType",
       "price",
+      "stopPrice",
+      "triggeredAt",
       "quantity",
       "leavesQty",
       "cumQty",
@@ -97,7 +118,8 @@ export const useOwnWorkingOrders = (
   const filter = ric
     ? [
         `ric = ${filterString(ric)}`,
-        `ordType = ${filterString(OrdType.Limit)}`,
+        // Untriggered stop limits are dropped below (triggeredAt = 0).
+        `ordType in [${BOOK_ORD_TYPES.map(filterString).join(",")}]`,
         `status in [${OWN_ORDER_STATUSES.map(filterString).join(",")}]`,
         account ? `account = ${filterString(account)}` : "",
       ]
@@ -115,6 +137,7 @@ export const useOwnWorkingOrders = (
     for (const row of rows) {
       if (row.ric !== ric || (account && row.account !== account)) continue;
       if (!OWN_ORDER_STATUSES.includes(row.status as OrdStatus)) continue;
+      if (!restsAtLimit(row)) continue;
       const order = row as unknown as OwnOrder;
       orders.push(order);
       const key = ownOrdersKey(order.side, order.price);

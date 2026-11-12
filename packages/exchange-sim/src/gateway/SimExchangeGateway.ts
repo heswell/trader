@@ -367,6 +367,13 @@ export class SimExchangeGateway implements ExchangeGateway, FillSink {
         `unknown instrument ${order.ric}`,
       );
     }
+    // Stops are held (and triggered) by the OMS, not the exchange.
+    if (order.ordType !== OrdType.Market && order.ordType !== OrdType.Limit) {
+      return rejectNew(
+        RejectReason.UnsupportedOrdType,
+        `the exchange accepts MARKET and LIMIT orders, not ${order.ordType}`,
+      );
+    }
     const book = this.venue.getBook(order.ric);
     const invalid = validateOrder(
       { ...order, timeInForce },

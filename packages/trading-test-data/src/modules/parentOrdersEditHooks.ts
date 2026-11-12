@@ -8,7 +8,7 @@ import {
 import type { EditHooks } from "@heswell/vuu-data-engine-local";
 import type { RpcResult } from "@vuu-ui/vuu-protocol-types";
 
-const EDITABLE_COLUMNS: readonly string[] = ["quantity", "price"];
+const EDITABLE_COLUMNS: readonly string[] = ["quantity", "price", "stopPrice"];
 
 type Rpc = (
   rpcName: typeof RpcName.AmendOrder | typeof RpcName.CancelOrder,
@@ -23,7 +23,7 @@ const error = (errorMessage: string): RpcResult => ({
 
 /**
  * Edit-session parity with the server's OmsRpcHandler (packages/oms): only
- * quantity and price can be edited, and only in a session; edits get the
+ * quantity, price and stopPrice can be edited, and only in a session; edits get the
  * amendOrder validation; saving needs trading-execute and sends amendOrder
  * (edited rows) and cancelOrder (deleted rows) to the OMS instead of writing
  * the session rows to the source table. The source rows then change only
@@ -48,6 +48,9 @@ export const parentOrdersEditHooks = (
     const invalid = validateAmend({ [column]: Number(value) }, instrument, {
       ordType: order.ordType,
       cumQty: order.state.cumQty,
+      side: order.side,
+      price: order.state.price,
+      stopPrice: order.stopPrice,
     });
     return invalid ? `${invalid.reason}: ${invalid.text}` : undefined;
   },

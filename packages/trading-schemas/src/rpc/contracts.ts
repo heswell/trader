@@ -118,10 +118,15 @@ export const createOrderParams = object({
   side: oneOf(SIDES),
   ordType: oneOf(ORD_TYPES),
   quantity: positiveQty,
-  /** Required for LIMIT, must be omitted / 0 for MARKET. */
+  /** Required for LIMIT / STOP_LIMIT, must be omitted / 0 for MARKET / STOP. */
   price: optional(number({ min: 0 })),
   timeInForce: optional(oneOf(TIME_IN_FORCE_VALUES)),
-  /** Reserved for STOP / STOP_LIMIT. */
+  /**
+   * Required for STOP / STOP_LIMIT: the OMS holds the order until a trade
+   * reaches it (buy at or above, sell at or below), then sends a MARKET
+   * (STOP) or LIMIT at `price` (STOP_LIMIT). Must be beyond the market price
+   * when entered. Stops are DMA only, DAY or GTC.
+   */
   stopPrice: optional(positivePrice),
   /** How the OMS works the order; default DMA (one child sent at once). */
   strategy: optional(oneOf(ALGO_STRATEGIES)),
@@ -146,11 +151,13 @@ export interface CreateOrderResponse {
   status: OrdStatus;
 }
 
-/** At least one of quantity / price must be supplied. Quantity is the new total. */
+/** At least one of quantity / price / stopPrice must be supplied. Quantity is the new total. */
 export const amendOrderParams = object({
   orderId: id,
   quantity: optional(positiveQty),
   price: optional(positivePrice),
+  /** STOP / STOP_LIMIT only, until the stop has triggered. */
+  stopPrice: optional(positivePrice),
 });
 export type AmendOrderRequest = Infer<typeof amendOrderParams>;
 export interface AmendOrderResponse {
@@ -555,10 +562,14 @@ export function validateRpcParams<N extends RpcName>(
   }
   if (rpcName === RpcName.AmendOrder) {
     const v = result.value as AmendOrderRequest;
-    if (v.quantity === undefined && v.price === undefined) {
+    if (
+      v.quantity === undefined &&
+      v.price === undefined &&
+      v.stopPrice === undefined
+    ) {
       return {
         ok: false,
-        errors: ["params: one of quantity or price is required"],
+        errors: ["params: one of quantity, price or stopPrice is required"],
       };
     }
   }

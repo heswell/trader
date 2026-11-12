@@ -6,7 +6,9 @@ import {
   TradingPhase,
   acceptsOrders,
   isPricedOrdType,
-  type Side,
+  isStopOrdType,
+  STOP_TIME_IN_FORCE_VALUES,
+  Side,
   type TimeInForce as TIF,
 } from "./enums";
 import { isOnTick, isValidLot, tickScheduleOf } from "./ticks";
@@ -33,6 +35,8 @@ export interface OrderToValidate {
   ordType: OrdType;
   quantity: number;
   price?: number;
+  /** STOP / STOP_LIMIT trigger price. */
+  stopPrice?: number;
   timeInForce?: TIF;
 }
 
@@ -80,6 +84,72 @@ export const validatePrice = (
 };
 
 /**
+ * An INVALID_STOP_PRICE reject unless `stopPrice` is > 0 and on the
+ * instrument's tick schedule.
+ */
+export const validateStopPrice = (
+  stopPrice: number,
+  instrument: Pick<InstrumentStatic, "tickSize" | "tickBands">,
+): OrderReject | undefined => {
+  if (!(Number.isFinite(stopPrice) && stopPrice > 0)) {
+    return reject(RejectReason.InvalidStopPrice, "stop price must be > 0");
+  }
+  if (!isOnTick(stopPrice, tickScheduleOf(instrument))) {
+    return reject(
+      RejectReason.InvalidStopPrice,
+      `stop price ${stopPrice} is not on a valid tick`,
+    );
+  }
+};
+
+/**
+ * A STOP_LIMIT must be able to fill when it triggers: a buy's limit at or
+ * above its stop, a sell's at or below.
+ */
+export const validateStopLimitPrices = (
+  side: Side,
+  price: number,
+  stopPrice: number,
+): OrderReject | undefined => {
+  if (side === Side.Buy ? price < stopPrice : price > stopPrice) {
+    return reject(
+      RejectReason.InvalidPrice,
+      side === Side.Buy
+        ? `limit price ${price} is below the stop price ${stopPrice}`
+        : `limit price ${price} is above the stop price ${stopPrice}`,
+    );
+  }
+};
+
+/**
+ * A stop must not already be reached: a buy stop above the market price, a
+ * sell stop below it. `marketPrice` is the last trade (else mid / reference);
+ * no check without one.
+ */
+export const validateStopTrigger = (
+  side: Side,
+  stopPrice: number,
+  marketPrice: number | undefined,
+): OrderReject | undefined => {
+  if (!marketPrice || !(marketPrice > 0)) return;
+  if (side === Side.Buy ? stopPrice <= marketPrice : stopPrice >= marketPrice) {
+    return reject(
+      RejectReason.InvalidStopPrice,
+      side === Side.Buy
+        ? `buy stop ${stopPrice} must be above the market price ${marketPrice}`
+        : `sell stop ${stopPrice} must be below the market price ${marketPrice}`,
+    );
+  }
+};
+
+/** Whether a trade at `price` reaches the stop: buys at or above, sells at or below. */
+export const isStopTriggered = (
+  side: Side,
+  stopPrice: number,
+  price: number,
+) => (side === Side.Buy ? price >= stopPrice : price <= stopPrice);
+
+/**
  * Static order checks shared by the order ticket (pre-submit) and the OMS
  * (authoritative). Account / risk checks are OMS-only (Phase 2).
  */
@@ -116,27 +186,62 @@ export const validateOrder = (
       "GTC is not valid for market orders",
     );
   }
+  const stop = isStopOrdType(order.ordType);
+  if (stop && !STOP_TIME_IN_FORCE_VALUES.includes(tif)) {
+    return reject(
+      RejectReason.UnsupportedTimeInForce,
+      `${tif} is not valid for stop orders`,
+    );
+  }
   const qtyReject = validateQuantity(order.quantity, instrument);
   if (qtyReject) return qtyReject;
   if (isPricedOrdType(order.ordType)) {
     if (order.price === undefined || order.price === 0) {
       return reject(RejectReason.MissingPrice, "limit price is required");
     }
-    return validatePrice(order.price, instrument);
-  }
-  if (order.price !== undefined && order.price !== 0) {
+    const priceReject = validatePrice(order.price, instrument);
+    if (priceReject) return priceReject;
+  } else if (order.price !== undefined && order.price !== 0) {
     return reject(
       RejectReason.InvalidPrice,
-      "price must not be set for market orders",
+      order.ordType === OrdType.Stop
+        ? "price must not be set for stop orders (use STOP_LIMIT)"
+        : "price must not be set for market orders",
     );
+  }
+  if (!stop) {
+    if (order.stopPrice !== undefined && order.stopPrice !== 0) {
+      return reject(
+        RejectReason.InvalidStopPrice,
+        "stop price is only valid for STOP / STOP_LIMIT orders",
+      );
+    }
+    return;
+  }
+  if (order.stopPrice === undefined || order.stopPrice === 0) {
+    return reject(RejectReason.MissingStopPrice, "stop price is required");
+  }
+  const stopReject = validateStopPrice(order.stopPrice, instrument);
+  if (stopReject) return stopReject;
+  if (order.ordType === OrdType.StopLimit && order.price) {
+    return validateStopLimitPrices(order.side, order.price, order.stopPrice);
   }
 };
 
-/** Checks for amendOrder params against the instrument. */
+/**
+ * Checks for amendOrder params against the instrument. With the original's
+ * side, price and stopPrice, a STOP_LIMIT's limit / stop pair is checked too.
+ */
 export const validateAmend = (
-  amend: { quantity?: number; price?: number },
+  amend: { quantity?: number; price?: number; stopPrice?: number },
   instrument: InstrumentStatic,
-  original: { ordType: OrdType; cumQty: number },
+  original: {
+    ordType: OrdType;
+    cumQty: number;
+    side?: Side;
+    price?: number;
+    stopPrice?: number;
+  },
 ): OrderReject | undefined => {
   if (amend.quantity !== undefined) {
     const r = validateQuantity(amend.quantity, instrument);
@@ -152,9 +257,32 @@ export const validateAmend = (
     if (!isPricedOrdType(original.ordType)) {
       return reject(
         RejectReason.InvalidPrice,
-        "cannot amend price of a market order",
+        original.ordType === OrdType.Stop
+          ? "cannot amend price of a stop order"
+          : "cannot amend price of a market order",
       );
     }
-    return validatePrice(amend.price, instrument);
+    const r = validatePrice(amend.price, instrument);
+    if (r) return r;
+  }
+  if (amend.stopPrice !== undefined) {
+    if (!isStopOrdType(original.ordType)) {
+      return reject(
+        RejectReason.InvalidStopPrice,
+        `cannot amend stop price of a ${original.ordType} order`,
+      );
+    }
+    const r = validateStopPrice(amend.stopPrice, instrument);
+    if (r) return r;
+  }
+  const price = amend.price ?? original.price;
+  const stopPrice = amend.stopPrice ?? original.stopPrice;
+  if (
+    original.ordType === OrdType.StopLimit &&
+    original.side &&
+    price &&
+    stopPrice
+  ) {
+    return validateStopLimitPrices(original.side, price, stopPrice);
   }
 };

@@ -1,4 +1,4 @@
-import { OrdStatus } from "@heswell/trading-schemas";
+import { OrdStatus, OrdType } from "@heswell/trading-schemas";
 import type { OmsSink, Position } from "../engine/OmsEngine";
 import type { Account } from "../reference/accounts";
 
@@ -51,8 +51,10 @@ export interface OmsNotifierOptions {
    * threshold does not repeat it.
    */
   hysteresis?: number;
-  /** Rejected orders remembered to avoid repeats (default 5000). */
+  /** Rejected orders (and triggered stops) remembered to avoid repeats (default 5000). */
   maxTrackedRejects?: number;
+  /** Stop triggered lifetime (default 15 minutes). */
+  stopTtlMs?: number;
 }
 
 const MINUTE = 60_000;
@@ -67,6 +69,8 @@ const fmtUsd = (value: number) =>
  * Turns OMS rows into topic-tagged notifications:
  * - a parent order becoming REJECTED → `orders`, ERROR, silent (the trading
  *   features already toast the reject to the user who sent it);
+ * - a STOP / STOP_LIMIT triggering (sent to the exchange) → `orders`, INFO
+ *   toast: it happens without the trader doing anything;
  * - a position's |market value| reaching `warnAt` of the account's
  *   maxPositionNotional → `risk`, WARNING toast, and reaching the limit →
  *   `risk`, ERROR toast.
@@ -79,6 +83,7 @@ export class OmsNotifier implements OmsSink {
   readonly #accounts: OmsNotifierOptions["accounts"];
   readonly #publish: OmsNotifierOptions["publish"];
   readonly #rejected = new Set<string>();
+  readonly #triggered = new Set<string>();
   readonly #risk = new Map<string, RiskState>();
   #seq = 0;
 
@@ -88,6 +93,7 @@ export class OmsNotifier implements OmsSink {
     this.#options = {
       clock: Date.now,
       rejectTtlMs: 15 * MINUTE,
+      stopTtlMs: 15 * MINUTE,
       riskTtlMs: 30 * MINUTE,
       warnAt: 0.8,
       hysteresis: 0.05,
@@ -96,15 +102,22 @@ export class OmsNotifier implements OmsSink {
     };
   }
 
+  /** Add orderId to a bounded set; false if it was already there. */
+  #track(set: Set<string>, orderId: string) {
+    if (set.has(orderId)) return false;
+    set.add(orderId);
+    if (set.size > this.#options.maxTrackedRejects) {
+      const oldest = set.values().next().value;
+      if (oldest !== undefined) set.delete(oldest);
+    }
+    return true;
+  }
+
   parentOrder(row: Record<string, unknown>) {
+    if (Number(row.triggeredAt) > 0) this.#stopTriggered(row);
     if (row.status !== OrdStatus.Rejected) return;
     const orderId = String(row.orderId);
-    if (this.#rejected.has(orderId)) return;
-    this.#rejected.add(orderId);
-    if (this.#rejected.size > this.#options.maxTrackedRejects) {
-      const oldest = this.#rejected.values().next().value;
-      if (oldest !== undefined) this.#rejected.delete(oldest);
-    }
+    if (!this.#track(this.#rejected, orderId)) return;
     const account = String(row.account ?? "");
     const ric = String(row.ric ?? "");
     const reason = String(row.rejectReason || "REJECTED");
@@ -119,6 +132,26 @@ export class OmsNotifier implements OmsSink {
       ric,
       orderId,
       ttlMs: this.#options.rejectTtlMs,
+    });
+  }
+
+  #stopTriggered(row: Record<string, unknown>) {
+    const orderId = String(row.orderId);
+    if (!this.#track(this.#triggered, orderId)) return;
+    const account = String(row.account ?? "");
+    const ric = String(row.ric ?? "");
+    const limit =
+      row.ordType === OrdType.StopLimit ? `, limit ${row.price}` : "";
+    this.#emit({
+      type: "toast",
+      level: "INFO",
+      topic: OmsNotificationTopic.Orders,
+      title: `Stop triggered: ${row.side} ${row.quantity} ${ric}`,
+      message: `${orderId} for ${account}: stop ${row.stopPrice} reached${limit}, order sent to the exchange`,
+      account,
+      ric,
+      orderId,
+      ttlMs: this.#options.stopTtlMs,
     });
   }
 

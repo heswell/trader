@@ -1,4 +1,9 @@
-import { OrdStatus } from "@heswell/trading-schemas";
+import {
+  isStopOrdType,
+  isTerminalStatus,
+  OrdStatus,
+  type OrdType,
+} from "@heswell/trading-schemas";
 
 /** Statuses of orders that are live (cancellable / amendable once acknowledged). */
 export const WORKING_STATUSES: readonly string[] = [
@@ -71,3 +76,19 @@ const ICONS: Record<string, string> = {
 /** A single glyph for the status (decorative; the label carries the meaning). */
 export const orderStatusIcon = (status: unknown) =>
   typeof status === "string" ? (ICONS[status] ?? "") : "";
+
+/**
+ * Where a STOP / STOP_LIMIT order is with its trigger: "waiting" in the OMS
+ * for a trade at the stop, or "triggered" (sent to the exchange).
+ * Undefined for other order types, and for a stop that ended (cancelled,
+ * rejected, expired) before it triggered.
+ */
+export const stopTriggerState = (
+  ordType: string | undefined,
+  status: string | undefined,
+  triggeredAt: number | undefined,
+): "waiting" | "triggered" | undefined => {
+  if (!ordType || !isStopOrdType(ordType as OrdType)) return undefined;
+  if (triggeredAt !== undefined && triggeredAt > 0) return "triggered";
+  return isTerminalStatus(status as OrdStatus) ? undefined : "waiting";
+};

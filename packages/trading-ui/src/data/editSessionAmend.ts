@@ -14,6 +14,8 @@ import {
 export interface OrderEdits {
   quantity?: number;
   price?: number;
+  /** STOP / STOP_LIMIT orders that have not triggered yet. */
+  stopPrice?: number;
 }
 
 const STALE_UPDATE = "stale update";
@@ -51,7 +53,7 @@ const errorMessage = (err: unknown) =>
  * discard() it.
  */
 export interface OrderEditSession {
-  /** editCell quantity / price; rejects with TradingRpcError if refused. */
+  /** editCell quantity / price / stopPrice; rejects with TradingRpcError if refused. */
   amend(orderId: string, edits: OrderEdits): Promise<void>;
   /** deleteRow: the OMS cancels the order when the session is saved. */
   cancel(orderId: string): Promise<void>;
@@ -94,7 +96,8 @@ const endRemoteSession = async (session: DataSource, save: boolean) => {
 
 /**
  * Begin a server edit session on the live `parentOrders` data source. Only
- * `quantity` and `price` are editable; addRow is refused (use createOrder).
+ * `quantity`, `price` and (untriggered stops) `stopPrice` are editable;
+ * addRow is refused (use createOrder).
  */
 export const openOrderEditSession = async (
   dataSource: DataSource,
@@ -157,13 +160,16 @@ export const openOrderEditSession = async (
   };
 
   return {
-    async amend(orderId, { quantity, price }) {
+    async amend(orderId, { quantity, price, stopPrice }) {
       touched.add(orderId);
       if (quantity !== undefined) {
         await rpc(session.editCell?.(orderId, "quantity", quantity));
       }
       if (price !== undefined) {
         await rpc(session.editCell?.(orderId, "price", price));
+      }
+      if (stopPrice !== undefined) {
+        await rpc(session.editCell?.(orderId, "stopPrice", stopPrice));
       }
     },
     async cancel(orderId) {
