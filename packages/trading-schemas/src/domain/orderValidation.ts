@@ -30,6 +30,8 @@ export interface InstrumentStatic {
   underlying?: string;
   /** Futures: last trading time (epoch ms). */
   expiry?: number;
+  /** Futures: final settlement price, set once the contract has expired. */
+  settlementPrice?: number;
   /**
    * Price-unit value of one unit of quantity per unit of price: 1 for an
    * equity, e.g. 10 for a future quoted per share on 10 shares. 1 when absent.

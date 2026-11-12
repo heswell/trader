@@ -112,6 +112,12 @@ nothing visible changed.
   `S × exp(futuresCarryRate × τ)`, times a basis that mean-reverts (sd `futuresBasisBps`, half-life
   `futuresBasisHalfLifeSec`); impact on a future goes into that basis. The roster is the equity one
   plus an always-on informed bot that trades the future back towards fair.
+- **Futures expiry and roll.** At its expiry time a future settles at the underlying's fair value (on the future's
+  tick): its book closes for good (`settlementPrice` is set on the instruments row; resume is refused), its resting
+  orders are expired, and the gateway emits an `EXPIRED` instrument event (`onInstrumentEvent`) so the OMS can
+  settle positions. The next quarterly contract after the last one listed is then listed, with a book and bots,
+  and a `LISTED` event. `expireFuture(ric)` expires one now. Expired contracts are not restored after a restart:
+  futures are listed afresh from the clock.
 - **Price model.** A GBM fair value with a per-instrument annualised vol (20–50%, or
   `defaultVolatility`). Time is scaled by `timeScale` to make intraday-looking moves visible. The value
   is reflected inside a band of ±`priceBandPct` around refPrice, recentred on fair value at each

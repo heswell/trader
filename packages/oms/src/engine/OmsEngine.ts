@@ -13,6 +13,7 @@ import {
   isStopTriggered,
   isTerminalStatus,
   isWorkingStatus,
+  Liquidity,
   OrdStatus,
   OrdType,
   type OrderReject,
@@ -351,6 +352,7 @@ export class OmsEngine {
   #childrenByParent = new Map<string, ChildOrder[]>();
   #algos: AlgoContainer;
   #unsubscribeTrades: () => void;
+  #unsubscribeInstruments: () => void;
   /** Waiting stops (see isWaitingStop) by orderId. */
   #stops = new Map<string, ParentOrder>();
   /** Tape trades not yet checked against the waiting stops. */
@@ -430,11 +432,90 @@ export class OmsEngine {
         this.#algos.onTrade(trade);
         this.#onStopTrade(trade);
       }) ?? (() => undefined);
+    this.#unsubscribeInstruments =
+      gateway.onInstrumentEvent?.((event) => {
+        if (event.type === "EXPIRED")
+          this.expireInstrument(
+            event.ric,
+            event.settlementPrice,
+            event.timestamp,
+          );
+      }) ?? (() => undefined);
   }
 
   dispose() {
     this.#unsubscribe();
     this.#unsubscribeTrades();
+    this.#unsubscribeInstruments();
+  }
+
+  // ---------------------------------------------------------------- expiry
+
+  /**
+   * A future expired at the exchange (which has already expired its resting
+   * orders): end every working order in it (algos, waiting stops, and any
+   * order whose EXPIRED report is still to come) and settle every open
+   * position at `settlementPrice` with a SETTLEMENT fill. Returns the order
+   * ids ended and the position ids settled.
+   */
+  expireInstrument(ric: string, settlementPrice: number, timestamp: number) {
+    const text = `${ric} expired`;
+    const orderIds: string[] = [];
+    for (const parent of this.liveOrders(
+      (o) => o.ric === ric && isWorkingStatus(o.state.status),
+    )) {
+      if (isAlgoParent(parent)) {
+        if (parent.algo.phase !== "WORKING") continue;
+        this.#algos.expire(parent, text);
+      } else if (isWaitingStop(parent)) {
+        this.#expireStop(parent, text);
+      } else {
+        const child = parent.childOrderId
+          ? this.children.get(parent.childOrderId)
+          : undefined;
+        if (child?.exchangeOrderId && !child.expiring)
+          this.#sendCancel(parent, child, true);
+      }
+      orderIds.push(parent.orderId);
+    }
+    const positionIds: string[] = [];
+    for (const position of [...this.positions.values()]) {
+      if (position.ric !== ric || position.quantity === 0) continue;
+      this.#settle(position, settlementPrice, timestamp);
+      positionIds.push(position.id);
+    }
+    return { orderIds, positionIds };
+  }
+
+  /** Close `position` at the settlement price: a fill with no order. */
+  #settle(position: Position, price: number, timestamp: number) {
+    const quantity = Math.abs(position.quantity);
+    const fill: Fill = {
+      execId: `SETTLE.${position.id}.${timestamp}`,
+      orderId: "",
+      childOrderId: "",
+      tradeId: "",
+      account: position.account,
+      trader: "",
+      ric: position.ric,
+      side: position.quantity > 0 ? Side.Sell : Side.Buy,
+      quantity,
+      price,
+      notional:
+        quantity *
+        price *
+        contractMultiplierOf(this.#gateway.getInstrument(position.ric)),
+      currency: position.currency,
+      liquidity: Liquidity.Settlement,
+      timestamp,
+    };
+    this.fills.push(fill);
+    if (this.#journal) {
+      this.#newFills.push(fill);
+      this.#markDirty();
+    }
+    this.#sink.fill?.(fill);
+    this.#applyFillToPosition(fill);
   }
 
   // ---------------------------------------------------------------- algos

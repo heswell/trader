@@ -11,6 +11,7 @@ import {
   OrdType,
   RejectReason,
   roundToLot,
+  roundToTick,
   type SessionSchedule,
   TradingPhase,
   VOLUME_PROFILES,
@@ -37,6 +38,8 @@ import {
   carriedPrice,
   isFuture,
   listFutures,
+  quarterlyExpiries,
+  toFutureDef,
   withFutures,
 } from "../reference/futures";
 import {
@@ -67,6 +70,7 @@ import {
   type ExtraBots,
   parseExtraBots,
   futuresRosterFor,
+  hashString,
   rosterFor,
   sortBots,
 } from "./bots/roster";
@@ -166,7 +170,11 @@ export interface SessionStatus {
 export class ExchangeSimulator {
   readonly config: ExchangeSimConfig;
   readonly clock: Clock;
-  readonly universe: readonly InstrumentDef[];
+  #universe: InstrumentDef[];
+  /** Futures with a live book that have not expired yet. */
+  readonly #liveFutures: SimulatedInstrument[] = [];
+  /** Futures last-trading time of day, "HH:MM" UTC. */
+  readonly #expiryTime: string;
   readonly gateway: SimExchangeGateway;
   readonly session: TradingSession;
   /** Session times and volume curve, as the OMS sees them. */
@@ -220,6 +228,7 @@ export class ExchangeSimulator {
     this.#stepTiming = t.timer("exchange", "step");
     this.#flushTiming = t.timer("publisher", "flush");
     this.clock = clock;
+    this.#expiryTime = this.config.sessionClose || "16:30";
     const futures = listFutures(
       universe,
       splitList(this.config.futures),
@@ -227,11 +236,11 @@ export class ExchangeSimulator {
       {
         contracts: this.config.futuresContracts,
         carryRate: this.config.futuresCarryRate,
-        expiryTime: this.config.sessionClose || "16:30",
+        expiryTime: this.#expiryTime,
       },
     );
-    this.universe = [...universe, ...futures];
-    for (const instrument of this.universe)
+    this.#universe = [...universe, ...futures];
+    for (const instrument of this.#universe)
       this.#listed.set(instrument.ric, instrument);
 
     // listed futures always get a book (with their underlyings); the rest
@@ -248,7 +257,7 @@ export class ExchangeSimulator {
             equityRics,
           ),
       futures,
-      this.universe,
+      this.#universe,
     );
     const rng = new Random(this.config.seed);
     for (const [i, instrument] of active.entries()) {
@@ -346,6 +355,108 @@ export class ExchangeSimulator {
       noise: { rng: rng.fork(400), day: undefined, level: 0, wander: 0 },
     });
     this.#books.push(book);
+    if (underlying)
+      this.#liveFutures.push(
+        this.#simulated.get(instrument.ric) as SimulatedInstrument,
+      );
+  }
+
+  /** Every listed instrument: the universe, its futures and any listed since. */
+  get universe(): readonly InstrumentDef[] {
+    return this.#universe;
+  }
+
+  /** Expire every live future whose last trading time has passed. */
+  #expireDueFutures(now: number) {
+    for (const sim of [...this.#liveFutures]) {
+      const { expiry } = sim.book.instrument;
+      if (expiry !== undefined && expiry <= now)
+        this.expireFuture(sim.book.ric, now);
+    }
+  }
+
+  /**
+   * Expire a future now: settle at its underlying's fair value (on tick),
+   * close its book for good, expire its resting orders, tell gateway
+   * subscribers (the OMS settles positions), then list the next quarterly
+   * contract. Called by step() at the expiry time. Returns the settlement
+   * price.
+   */
+  expireFuture(ric: string, now = this.clock()): number {
+    const sim = this.#simulated.get(ric);
+    const def = this.#listed.get(ric);
+    if (!sim || !def || !isFuture(def)) {
+      throw new ExchangeAdminError(
+        RejectReason.UnknownInstrument,
+        `${ric} is not a simulated future`,
+      );
+    }
+    const { book } = sim;
+    if (book.settlementPrice !== undefined) return book.settlementPrice;
+    const underlying = this.#simulated.get(def.underlying ?? "")?.book;
+    const settlementPrice = roundToTick(
+      underlying?.model.fairValue ?? book.model.fairValue,
+      book.schedule,
+    );
+    book.settlementPrice = settlementPrice;
+    book.phase = TradingPhase.Closed;
+    book.haltReason = "expired";
+    book.dirty = true;
+    for (const bot of sim.bots) bot.pull();
+    this.gateway.expireAllOrders(ric, `${ric} expired`);
+    const expired: InstrumentDef = { ...def, settlementPrice };
+    this.#listed.set(ric, expired);
+    this.#universe[this.#universe.indexOf(def)] = expired;
+    this.#publisher?.updateInstrument(expired, true);
+    this.#liveFutures.splice(this.#liveFutures.indexOf(sim), 1);
+    this.gateway.emitInstrumentEvent({
+      type: "EXPIRED",
+      ric,
+      settlementPrice,
+      timestamp: now,
+    });
+    this.#rollFuture(def, now);
+    return settlementPrice;
+  }
+
+  /** List the quarterly contract after the last one listed on `expired`'s underlying. */
+  #rollFuture(expired: InstrumentDef, now: number) {
+    const ric = expired.underlying ?? "";
+    const underlying = this.#listed.get(ric);
+    const spot = this.#simulated.get(ric)?.book;
+    if (!underlying || !spot) return;
+    const latest = Math.max(
+      now,
+      ...this.#universe
+        .filter((i) => i.underlying === ric)
+        .map((i) => i.expiry ?? 0),
+    );
+    const [expiry] = quarterlyExpiries(latest, 1, this.#expiryTime);
+    const next = toFutureDef(
+      { ...underlying, refPrice: spot.model.fairOnTick },
+      expiry,
+      now,
+      this.config.futuresCarryRate,
+    );
+    // ten years on the ric comes round again: keep the old listing
+    if (this.#listed.has(next.ric)) return;
+    this.#universe.push(next);
+    this.#listed.set(next.ric, next);
+    this.#addInstrument(
+      next,
+      new Random(this.config.seed).fork(hashString(next.ric)),
+    );
+    const sim = this.#simulated.get(next.ric) as SimulatedInstrument;
+    sim.book.phase = this.#marketPhase;
+    this.#publisher?.addInstrument(next, true);
+    this.#publisher?.l3?.attach([sim.book]);
+    this.#simAdmin?.loadBotParams([sim]);
+    this.#simAdmin?.botsChanged(sim);
+    this.gateway.emitInstrumentEvent({
+      type: "LISTED",
+      ric: next.ric,
+      timestamp: now,
+    });
   }
 
   get books(): readonly InstrumentBook[] {
@@ -467,7 +578,7 @@ export class ExchangeSimulator {
         },
       },
     );
-    publisher.loadInstruments(this.universe, this.isSimulated);
+    publisher.loadInstruments(this.#universe, this.isSimulated);
     publisher.l3?.attach(this.#books);
     this.#publisher = publisher;
     const { simBooks, bots, botParams, simSamples, botHistory, botFills } =
@@ -588,7 +699,8 @@ export class ExchangeSimulator {
   #applyMarketPhase(phase: SessionPhase) {
     this.#marketPhase = phase;
     for (const book of this.#books) {
-      if (book.phase === TradingPhase.Halted) continue;
+      // halted books stay halted; expired futures stay closed
+      if (book.phase === TradingPhase.Halted || book.isExpired) continue;
       book.phase = phase;
       book.dirty = true;
     }
@@ -639,6 +751,7 @@ export class ExchangeSimulator {
     this.#lastStep = now;
     this.#control?.step(now);
     this.#scenarios?.step(now);
+    if (this.#liveFutures.length > 0) this.#expireDueFutures(now);
     const dt = Math.min(Math.max(elapsed, 0), config.maxStepMs) / 1000;
     if (dt === 0) return;
     const modelDt = dt * config.timeScale;
@@ -822,6 +935,12 @@ export class ExchangeSimulator {
 
   resumeInstrument(ric: string, auction = false): string[] {
     const [{ book }] = this.#target(ric);
+    if (book.isExpired) {
+      throw new ExchangeAdminError(
+        RejectReason.InvalidRequest,
+        `${ric} has expired`,
+      );
+    }
     if (auction) {
       throw new ExchangeAdminError(
         RejectReason.InvalidRequest,
@@ -934,7 +1053,7 @@ export class ExchangeSimulator {
     const { book } = sim;
     this.#applySettings(sim, settings);
     const halted = settings.phase === TradingPhase.Halted;
-    if (halted !== (book.phase === TradingPhase.Halted)) {
+    if (!book.isExpired && halted !== (book.phase === TradingPhase.Halted)) {
       book.phase = halted ? TradingPhase.Halted : this.#marketPhase;
       if (halted) for (const bot of sim.bots) bot.pull();
     }

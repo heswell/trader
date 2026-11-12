@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { InstrumentType, roundToTick } from "@heswell/trading-schemas";
+import {
+  InstrumentType,
+  roundToTick,
+  TradingPhase,
+} from "@heswell/trading-schemas";
 import { createExchangeSimulator } from "../src/engine/ExchangeSimulator";
+import type { InstrumentEvent } from "../src/gateway/types";
 import { PriceModel } from "../src/engine/PriceModel";
 import { BotKind } from "../src/engine/bots/Bot";
 import {
@@ -239,5 +244,86 @@ describe("ExchangeSimulator with futures", () => {
     expect(sim.isSimulated("AZNZ6")).toBe(true);
     expect(sim.isSimulated("AZN.L")).toBe(true);
     expect(sim.isSimulated("AAPL.OQ")).toBe(false);
+  });
+});
+
+describe("futures expiry and roll", () => {
+  const expirySim = () => {
+    const clock = new ManualClock(NOW);
+    const sim = createExchangeSimulator({
+      clock: clock.now,
+      config: {
+        instruments: "AAPL.OQ",
+        futures: "AZN.L",
+        defaultVolatility: 0.3,
+      },
+    });
+    const tables = createFakeTables();
+    sim.attachTables(tables);
+    const events: InstrumentEvent[] = [];
+    sim.gateway.onInstrumentEvent((e) => events.push(e));
+    const front = sim.getBook("AZNZ6");
+    if (!front) throw Error("no AZNZ6");
+    return { clock, sim, tables, events, front };
+  };
+
+  test("expires at the last trading time, settles on spot and rolls", () => {
+    const { clock, sim, tables, events, front } = expirySim();
+    const expiry = front.instrument.expiry ?? 0;
+    clock.time = expiry - 20;
+    sim.step(clock.time);
+    expect(front.isExpired).toBe(false);
+    expect(events).toEqual([]);
+
+    clock.time = expiry;
+    sim.step(clock.time);
+    const spot = sim.getBook("AZN.L");
+    const settlement = front.settlementPrice ?? 0;
+    expect(front.isExpired).toBe(true);
+    expect(front.phase).toBe(TradingPhase.Closed);
+    expect(settlement).toBe(
+      roundToTick(spot?.model.fairValue ?? 0, front.schedule),
+    );
+    expect(sim.gateway.getInstrument("AZNZ6")?.settlementPrice).toBe(
+      settlement,
+    );
+    expect(sim.gateway.getPhase("AZNZ6")).toBe(TradingPhase.Closed);
+    expect(front.topOfBook()).toMatchObject({ bid: 0, ask: 0 });
+
+    // the next quarterly contract after the last listed (Mar 27) is Jun 27
+    expect(sim.isSimulated("AZNM7")).toBe(true);
+    expect(sim.gateway.getInstrument("AZNM7")?.expiry).toBe(
+      Date.UTC(2027, 5, 18) + AT_1630,
+    );
+    expect(events.map((e) => e.type)).toEqual(["EXPIRED", "LISTED"]);
+    expect(events[0]).toMatchObject({
+      ric: "AZNZ6",
+      settlementPrice: settlement,
+    });
+    expect(events[1]).toMatchObject({ ric: "AZNM7" });
+
+    sim.flush(clock.time);
+    expect(tables.instruments.get("AZNZ6")?.settlementPrice).toBe(settlement);
+    expect(tables.instruments.get("AZNM7")).toMatchObject({
+      instrumentType: InstrumentType.Future,
+      simulated: true,
+    });
+    expect(tables.prices.get("AZNZ6")?.phase).toBe(TradingPhase.Closed);
+
+    // the new contract trades; the expired one stays closed through a session change
+    for (let i = 0; i < 200; i++) sim.step(clock.advance(20));
+    const next = sim.getBook("AZNM7");
+    expect(next?.phase).toBe(TradingPhase.Continuous);
+    expect(next?.topOfBook().bid).toBeGreaterThan(0);
+    sim.setMarketPhase(TradingPhase.Closed);
+    sim.setMarketPhase(TradingPhase.Continuous);
+    expect(front.phase).toBe(TradingPhase.Closed);
+    expect(() => sim.resumeInstrument("AZNZ6")).toThrow(/expired/);
+    expect(sim.expireFuture("AZNZ6")).toBe(settlement);
+  });
+
+  test("expireFuture rejects anything but a simulated future", () => {
+    const { sim } = expirySim();
+    expect(() => sim.expireFuture("AZN.L")).toThrow(/not a simulated future/);
   });
 });

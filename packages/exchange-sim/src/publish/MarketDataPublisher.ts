@@ -184,36 +184,53 @@ export class MarketDataPublisher {
     all: readonly InstrumentDef[],
     isSimulated: (ric: string) => boolean,
   ) {
+    for (const instrument of all)
+      this.addInstrument(instrument, isSimulated(instrument.ric));
+  }
+
+  #instrumentRow(instrument: InstrumentDef, simulated: boolean) {
     const layout = new RowLayout(this.tables.instruments, instrumentsDef);
     const { idx } = layout;
-    for (const instrument of all) {
-      const row = layout.row();
-      row[idx.ric] = instrument.ric;
-      row[idx.description] = instrument.description;
-      row[idx.currency] = instrument.currency;
-      row[idx.exchange] = instrument.exchange;
-      row[idx.sector] = instrument.sector;
-      row[idx.instrumentType] =
-        instrument.instrumentType ?? InstrumentType.Equity;
-      row[idx.underlying] = instrument.underlying ?? "";
-      row[idx.expiry] = instrument.expiry ?? 0;
-      row[idx.contractMultiplier] = contractMultiplierOf(instrument);
-      row[idx.tickSize] = instrument.tickSize;
-      row[idx.tickBands] = instrument.tickBands;
-      row[idx.lotSize] = instrument.lotSize;
-      row[idx.priceDecimals] = instrument.priceDecimals;
-      row[idx.refPrice] = instrument.refPrice;
-      row[idx.simulated] = isSimulated(instrument.ric);
-      this.tables.instruments.insert(row);
-      // Every instrument gets a prices row up front so both tables share the
-      // universe order; simulated rows are overwritten by the first flush.
-      const price = this.#prices.row();
-      price[this.#prices.idx.ric] = instrument.ric;
-      price[this.#prices.idx.close] = instrument.refPrice;
-      price[this.#prices.idx.phase] = TradingPhase.Closed;
-      this.tables.prices.insert(price);
-      this.stats.staticRows += 2;
-    }
+    const row = layout.row();
+    row[idx.ric] = instrument.ric;
+    row[idx.description] = instrument.description;
+    row[idx.currency] = instrument.currency;
+    row[idx.exchange] = instrument.exchange;
+    row[idx.sector] = instrument.sector;
+    row[idx.instrumentType] =
+      instrument.instrumentType ?? InstrumentType.Equity;
+    row[idx.underlying] = instrument.underlying ?? "";
+    row[idx.expiry] = instrument.expiry ?? 0;
+    row[idx.settlementPrice] = instrument.settlementPrice ?? 0;
+    row[idx.contractMultiplier] = contractMultiplierOf(instrument);
+    row[idx.tickSize] = instrument.tickSize;
+    row[idx.tickBands] = instrument.tickBands;
+    row[idx.lotSize] = instrument.lotSize;
+    row[idx.priceDecimals] = instrument.priceDecimals;
+    row[idx.refPrice] = instrument.refPrice;
+    row[idx.simulated] = simulated;
+    return row;
+  }
+
+  /** One instrument's static row plus an initial CLOSED prices row. */
+  addInstrument(instrument: InstrumentDef, simulated: boolean) {
+    this.tables.instruments.insert(this.#instrumentRow(instrument, simulated));
+    // Every instrument gets a prices row up front so both tables share the
+    // universe order; simulated rows are overwritten by the first flush.
+    const price = this.#prices.row();
+    price[this.#prices.idx.ric] = instrument.ric;
+    price[this.#prices.idx.close] = instrument.refPrice;
+    price[this.#prices.idx.phase] = TradingPhase.Closed;
+    this.tables.prices.insert(price);
+    this.stats.staticRows += 2;
+  }
+
+  /** Rewrite an instrument's static row (e.g. a future's settlement price). */
+  updateInstrument(instrument: InstrumentDef, simulated: boolean) {
+    const rowIdx = this.tables.instruments.rowIndexAtKey(instrument.ric);
+    const row = this.#instrumentRow(instrument, simulated);
+    if (rowIdx < 0) this.tables.instruments.insert(row);
+    else this.tables.instruments.update(rowIdx, row);
   }
 
   addTrade(trade: TapeTrade) {

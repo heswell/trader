@@ -108,6 +108,8 @@ export const Liquidity = Object.freeze({
   Added: "ADDED",
   Removed: "REMOVED",
   Auction: "AUCTION",
+  /** Futures expiry: an open position closed at the settlement price. */
+  Settlement: "SETTLEMENT",
 } as const);
 export type Liquidity = ValueOf<typeof Liquidity>;
 export const LIQUIDITY_VALUES = values(Liquidity);

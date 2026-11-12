@@ -45,6 +45,13 @@ export const instruments = defineTable({
       description: "Futures: last trading time.",
     },
     {
+      name: "settlementPrice",
+      dataType: "double",
+      optional: true,
+      description:
+        "Futures: final settlement price once expired (0 while trading).",
+    },
+    {
       name: "contractMultiplier",
       dataType: "double",
       description:

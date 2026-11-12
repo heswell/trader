@@ -102,6 +102,20 @@ export interface TopOfBook {
 }
 
 /**
+ * A change to the instrument list: a future listed at run time (the next
+ * quarterly contract), or a future that expired. On EXPIRED the exchange has
+ * already closed the book and expired its resting orders.
+ */
+export type InstrumentEvent =
+  | { type: "LISTED"; ric: string; timestamp: number }
+  | {
+      type: "EXPIRED";
+      ric: string;
+      settlementPrice: number;
+      timestamp: number;
+    };
+
+/**
  * In-process order entry API used by the OMS running in the same VuuServer.
  *
  * All calls are synchronous: execution reports for the request (ack/reject,
@@ -129,4 +143,6 @@ export interface ExchangeGateway {
   onTrade(listener: (trade: MarketTrade) => void): () => void;
   /** Last execution report state of an order, if known. */
   getOrder(exchangeOrderId: string): ExecutionReport | undefined;
+  /** Subscribe to instrument listings / expiries; returns an unsubscribe function. */
+  onInstrumentEvent?(listener: (event: InstrumentEvent) => void): () => void;
 }

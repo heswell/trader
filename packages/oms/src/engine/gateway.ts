@@ -4,6 +4,7 @@ import type {
   GatewayAmend,
   GatewayCancel,
   GatewayNewOrder,
+  InstrumentEvent,
   MarketTrade,
   TopOfBook,
 } from "@heswell/exchange-sim";
@@ -31,6 +32,8 @@ export interface OmsGateway {
   getSessionSchedule?(): SessionSchedule;
   /** Every trade on the public tape (POV); absent = no market volume. */
   onTrade?(listener: (trade: MarketTrade) => void): () => void;
+  /** Futures listed / expired; absent = a fixed instrument list. */
+  onInstrumentEvent?(listener: (event: InstrumentEvent) => void): () => void;
 }
 
 export type Scheduler = (fn: () => void, delayMs: number) => void;
@@ -43,8 +46,10 @@ export type Scheduler = (fn: () => void, delayMs: number) => void;
 export class DelayedGateway implements OmsGateway {
   #listeners = new Set<ExecutionReportListener>();
   #tradeListeners = new Set<(trade: MarketTrade) => void>();
+  #instrumentListeners = new Set<(event: InstrumentEvent) => void>();
   #unsubscribe: () => void;
   #unsubscribeTrades: () => void;
+  #unsubscribeInstruments: () => void;
 
   constructor(
     private inner: OmsGateway,
@@ -62,6 +67,13 @@ export class DelayedGateway implements OmsGateway {
       inner.onTrade?.((trade) =>
         this.schedule(() => {
           for (const listener of this.#tradeListeners) listener(trade);
+        }, this.latencyMs),
+      ) ?? (() => undefined);
+    // same latency as reports, so an expiry arrives after its orders' EXPIRED
+    this.#unsubscribeInstruments =
+      inner.onInstrumentEvent?.((event) =>
+        this.schedule(() => {
+          for (const listener of this.#instrumentListeners) listener(event);
         }, this.latencyMs),
       ) ?? (() => undefined);
   }
@@ -106,11 +118,19 @@ export class DelayedGateway implements OmsGateway {
       this.#tradeListeners.delete(listener);
     };
   }
+  onInstrumentEvent(listener: (event: InstrumentEvent) => void) {
+    this.#instrumentListeners.add(listener);
+    return () => {
+      this.#instrumentListeners.delete(listener);
+    };
+  }
   dispose() {
     this.#unsubscribe();
     this.#unsubscribeTrades();
+    this.#unsubscribeInstruments();
     this.#listeners.clear();
     this.#tradeListeners.clear();
+    this.#instrumentListeners.clear();
   }
 }
 

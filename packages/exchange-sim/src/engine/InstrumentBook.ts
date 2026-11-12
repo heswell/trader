@@ -110,6 +110,8 @@ export class InstrumentBook {
   readonly schedule: TickSchedule;
   readonly model: PriceModel;
   phase: TradingPhase = TradingPhase.Continuous;
+  /** Futures: final settlement price once expired (the book stays CLOSED). */
+  settlementPrice: number | undefined;
   haltReason = "";
   readonly stats: SessionStats = {
     last: 0,
@@ -237,6 +239,11 @@ export class InstrumentBook {
 
   get seq() {
     return this.book.seq;
+  }
+
+  /** An expired future: closed for good. */
+  get isExpired() {
+    return this.settlementPrice !== undefined;
   }
 
   get isHalted() {
