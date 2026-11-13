@@ -1011,6 +1011,15 @@ export class OmsEngine {
     return { buy, sell };
   }
 
+  /**
+   * What the pre-trade risk check sees for an account and instrument
+   * (market, phase, position, working orders). Used by the order ticket's
+   * preview (OrderEntryService).
+   */
+  riskContext(account: string, ric: string) {
+    return this.#riskContext(account, ric);
+  }
+
   #riskContext(account: string, ric: string, excludeOrderId?: string) {
     const top = this.#gateway.getTopOfBook(ric);
     const working = this.#workingQty(account, ric, excludeOrderId);

@@ -1067,6 +1067,90 @@ export const positions = defineTable({
   links: [{ fromColumn: "account", toTable: "accounts", toColumn: "account" }],
 });
 
+/**
+ * Order ticket drafts: one row per user and ticket. The ticket is a form
+ * over its row, edited through the orderEntryPrices join (editCell writes
+ * the draft columns of this table). The OMS copies the instrument static
+ * when ric is set, and keeps the draft's errors and warnings in vuuMsg
+ * (encodeEntryMessages). Numeric draft fields are 0 when empty.
+ */
+export const orderEntry = defineTable({
+  module: OMS_MODULE,
+  name: "orderEntry",
+  keyField: "entryId",
+  description: "Order ticket drafts (one row per user and ticket).",
+  columns: [
+    { name: "entryId", dataType: "string", description: "<user>:<ticketId>" },
+    { name: "user", dataType: "string" },
+    { name: "ticketId", dataType: "string" },
+    // draft fields (editable)
+    { name: "ric", dataType: "string" },
+    { name: "side", dataType: "string", description: "Side" },
+    { name: "ordType", dataType: "string", description: "OrdType" },
+    { name: "timeInForce", dataType: "string", description: "TimeInForce" },
+    { name: "quantity", dataType: "long", description: "0 when empty." },
+    {
+      name: "price",
+      dataType: "double",
+      description: "Limit price, 0 when empty.",
+    },
+    { name: "stopPrice", dataType: "double", description: "0 when empty." },
+    { name: "account", dataType: "string" },
+    { name: "strategy", dataType: "string", description: "AlgoStrategy" },
+    {
+      name: "durationMins",
+      dataType: "double",
+      description: "Algo param, 0 when empty.",
+    },
+    { name: "endTime", dataType: "string", description: "Algo param HH:MM." },
+    {
+      name: "participationPct",
+      dataType: "double",
+      description: "Algo param, 0 when empty.",
+    },
+    // instrument static, copied by the OMS when ric is set
+    { name: "description", dataType: "string" },
+    { name: "exchange", dataType: "string" },
+    { name: "currency", dataType: "string" },
+    { name: "instrumentType", dataType: "string" },
+    { name: "contract", dataType: "string" },
+    { name: "tickSize", dataType: "double" },
+    { name: "tickBands", dataType: "string" },
+    { name: "lotSize", dataType: "int" },
+    { name: "priceDecimals", dataType: "int" },
+    { name: "contractMultiplier", dataType: "double" },
+    { name: "refPrice", dataType: "double" },
+    // the last order sent from this row
+    { name: "clOrdId", dataType: "string" },
+    { name: "orderId", dataType: "string" },
+    { name: "lastUpdate", dataType: "epochtimestamp" },
+    {
+      name: "vuuMsg",
+      dataType: "string",
+      description: "Errors and warnings (encodeEntryMessages), '' when none.",
+    },
+  ],
+  links: [{ fromColumn: "account", toTable: "accounts", toColumn: "account" }],
+});
+
+/** Draft columns of orderEntry that editCell / updateOrderEntry may set. */
+export const ORDER_ENTRY_EDITABLE_COLUMNS = Object.freeze([
+  "ric",
+  "side",
+  "ordType",
+  "timeInForce",
+  "quantity",
+  "price",
+  "stopPrice",
+  "account",
+  "strategy",
+  "durationMins",
+  "endTime",
+  "participationPct",
+] as const);
+export type OrderEntryEditableColumn =
+  (typeof ORDER_ENTRY_EDITABLE_COLUMNS)[number];
+
 const pnlColumns = [
   { name: "realizedPnl", dataType: "double" },
   { name: "unrealizedPnl", dataType: "double" },
@@ -1245,6 +1329,33 @@ export const positionPrices = defineJoin({
   description: "positions x prices on ric (live P&L view).",
 });
 
+/**
+ * Order ticket drafts with live prices: the ticket's one subscription.
+ * Edits on this join write the orderEntry columns (OrderEntryService).
+ */
+export const orderEntryPrices = defineJoin({
+  module: OMS_MODULE,
+  name: "orderEntryPrices",
+  baseTable: orderEntry,
+  joinTable: prices,
+  left: "ric",
+  right: "ric",
+  type: "LeftOuterJoin",
+  joinColumns: [
+    "bid",
+    "ask",
+    "bidSize",
+    "askSize",
+    "last",
+    "close",
+    "change",
+    "changePct",
+    "phase",
+    "timestamp",
+  ],
+  description: "orderEntry x prices on ric (the order ticket).",
+});
+
 export const exchangeTables = {
   instruments,
   prices,
@@ -1275,9 +1386,14 @@ export const omsTables = {
   accountPnlHistory,
   clientBots,
   clientBotParams,
+  orderEntry,
 } as const;
 export const tradingTables = { ...exchangeTables, ...omsTables } as const;
-export const tradingJoins = { instrumentPrices, positionPrices } as const;
+export const tradingJoins = {
+  instrumentPrices,
+  positionPrices,
+  orderEntryPrices,
+} as const;
 
 export type TradingTableName = keyof typeof tradingTables;
 export type TradingJoinName = keyof typeof tradingJoins;
@@ -1291,6 +1407,7 @@ export type ParentOrderRow = RowOf<typeof parentOrders>;
 export type ChildOrderRow = RowOf<typeof childOrders>;
 export type FillRow = RowOf<typeof fills>;
 export type PositionRow = RowOf<typeof positions>;
+export type OrderEntryRow = RowOf<typeof orderEntry>;
 export type BarRow = RowOf<typeof bars>;
 export type BookSampleRow = RowOf<typeof bookSamples>;
 export type BookOrderRow = RowOf<typeof bookOrders>;

@@ -2,13 +2,19 @@ import {
   type AlgoParamDefinition,
   AlgoStrategy,
   algoStrategyDefinition,
+  decodeEntryMessages,
+  EntryMessageLevel,
+  entryReviewMessages,
+  hasEntryErrors,
   isPricedOrdType,
   isStopOrdType,
   OrdStatus,
   OrdType,
+  type RpcRequestParams,
   type Side,
   TimeInForce,
 } from "@heswell/trading-schemas";
+import type { VuuRowDataItemType } from "@vuu-ui/vuu-protocol-types";
 import {
   type KeyboardEvent,
   useCallback,
@@ -21,7 +27,11 @@ import {
   type TradingConnectionState,
   useTradingConnectionStatus,
 } from "../../connection/useTradingConnectionStatus";
-import { sendTradingRpc, TradingRpcError } from "../../data/tradingRpc";
+import {
+  sendTradingRpc,
+  TradingRpcError,
+  withRpcTimeout,
+} from "../../data/tradingRpc";
 import { filterString } from "../../utils/filters";
 import type { LinkGroupId } from "../../instrument-context/linkGroups";
 import type { TradingRow } from "../../data/useDataSourceRows";
@@ -45,18 +55,17 @@ import {
   isPriceShorthand,
   isStrategyAllowed,
   isTimeInForceAllowed,
-  nonStopOrdType,
-  nudgeStopPrice,
-  ORD_TYPE_LABEL,
   isValueInput,
+  nonStopOrdType,
+  ORD_TYPE_LABEL,
   parseAlgoParam,
   parseOrderLine,
   parseTimeInput,
   resolvePriceInput,
   resolveQuantityInput,
-  reviewReasons,
   newClOrdId,
   nudgePrice,
+  nudgeStopPrice,
   nudgeQuantity,
   type OrderDraft,
   type OrderDraftErrors,
@@ -65,7 +74,6 @@ import {
   type OrderTicketInstrument,
   previewRisk,
   type RiskPreviewOptions,
-  validateDraft,
 } from "./orderTicketModel";
 
 /**
@@ -102,6 +110,12 @@ export interface OrderTicketTypeNotice {
   text: string;
 }
 
+/** A reason the order goes through Review before it is sent. */
+export interface OrderTicketReviewReason {
+  code: string;
+  text: string;
+}
+
 export type OrderTicketSubmission =
   | { state: "idle" }
   | { state: "pending"; clOrdId: string }
@@ -109,7 +123,7 @@ export type OrderTicketSubmission =
       state: "accepted";
       clOrdId: string;
       orderId: string;
-      /** Status from the createOrder result (live status: `order`). */
+      /** Status from the sendOrder result (live status: `order`). */
       status: OrdStatus;
     }
   | { state: "rejected"; clOrdId: string; reason: string; text: string };
@@ -198,8 +212,60 @@ const ORDER_COLUMNS = [
   "triggeredAt",
 ];
 
+/**
+ * The draft fields of an orderEntry row. Choices (side, type ...) are
+ * committed as they are made; typed text (quantity, prices, strategy
+ * parameters) when the field is left or Enter is pressed.
+ */
+const CHOICE_FIELDS = [
+  "ric",
+  "side",
+  "ordType",
+  "timeInForce",
+  "account",
+  "strategy",
+] as const;
+const TEXT_FIELDS = ["quantity", "price", "stopPrice"] as const;
+const ALGO_FIELDS: readonly AlgoParamKey[] = [
+  "durationMins",
+  "endTime",
+  "participationPct",
+];
+type EntryField =
+  | (typeof CHOICE_FIELDS)[number]
+  | (typeof TEXT_FIELDS)[number]
+  | AlgoParamKey;
+const ENTRY_FIELDS: readonly EntryField[] = [
+  ...CHOICE_FIELDS,
+  ...TEXT_FIELDS,
+  ...ALGO_FIELDS,
+];
+const isEntryField = (field: string): field is EntryField =>
+  (ENTRY_FIELDS as readonly string[]).includes(field);
+const isChoiceField = (field: EntryField) =>
+  (CHOICE_FIELDS as readonly string[]).includes(field);
+
+type EntryValue = string | number;
+type EntryValues = Partial<Record<EntryField, EntryValue>>;
+
+/** The orderEntryPrices columns the ticket reads. */
+const ENTRY_COLUMNS = [
+  ...new Set([
+    "entryId",
+    ...ENTRY_FIELDS,
+    ...INSTRUMENT_PRICE_COLUMNS,
+    "clOrdId",
+    "orderId",
+    "lastUpdate",
+    "vuuMsg",
+  ]),
+];
+
+const NO_ENTRY_FILTER = 'entryId = "-"';
 const NO_ORDER_FILTER = 'clOrdId = "-"';
 const NO_POSITION_FILTER = 'ric = "-"';
+/** How long sending waits for the row to show the last edits (ms). */
+const ROW_WAIT_MS = 500;
 
 const readLastAccount = () => {
   try {
@@ -261,6 +327,221 @@ export const draftFromPrefill = (
 
 const toInstrument = (row: TradingRow | undefined) =>
   row as unknown as OrderTicketInstrument | undefined;
+
+type EntryValueResult =
+  | { value: EntryValue; error?: undefined }
+  | { value?: undefined; error: string };
+
+/**
+ * The orderEntry column value of a draft field (empty text is 0 / ""), or
+ * why the text can't be sent (not a number, shorthand without a price).
+ */
+const entryValueOf = (
+  draft: OrderDraft,
+  field: EntryField,
+  instrument: OrderTicketInstrument | undefined,
+  options: RiskPreviewOptions,
+): EntryValueResult => {
+  switch (field) {
+    case "ric":
+      return { value: draft.ric ?? "" };
+    case "account":
+      return { value: draft.account ?? "" };
+    case "strategy":
+      return { value: draft.strategy ?? AlgoStrategy.Dma };
+    case "side":
+    case "ordType":
+    case "timeInForce":
+      return { value: draft[field] };
+    case "quantity": {
+      const text = draft.quantity.trim();
+      if (text === "") return { value: 0 };
+      const quantity = resolveQuantityInput(
+        text,
+        instrument,
+        previewRisk(draft, instrument, undefined, options).price,
+        options.usdPerPriceUnit,
+      );
+      return Number.isFinite(quantity)
+        ? { value: quantity }
+        : {
+            error: isValueInput(text)
+              ? "Can't convert a value without a price"
+              : "Quantity must be a number, 10k or $250k",
+          };
+    }
+    case "price":
+    case "stopPrice": {
+      const text = draft[field].trim();
+      if (text === "") return { value: 0 };
+      const price = resolvePriceInput(text, instrument);
+      return price !== undefined && Number.isFinite(price)
+        ? { value: price }
+        : {
+            error: isPriceShorthand(text)
+              ? "No bid / ask to price from"
+              : `${field === "price" ? "Price" : "Stop price"} must be a number, or b / a / m`,
+          };
+    }
+    default: {
+      const empty = field === "endTime" ? "" : 0;
+      const text = draft.algoParams[field]?.trim() ?? "";
+      const param = algoStrategyDefinition(draft.strategy).params.find(
+        (p) => p.key === field,
+      );
+      if (text === "" || !param) return { value: empty };
+      const { value, error } = parseAlgoParam(param, text);
+      return value !== undefined && !error
+        ? { value }
+        : { error: error ?? `Check ${param.label.toLowerCase()}` };
+    }
+  }
+};
+
+/** The draft with a field set from its orderEntry column value. */
+const withEntryValue = (
+  draft: OrderDraft,
+  field: EntryField,
+  value: EntryValue,
+  instrument: OrderTicketInstrument | undefined,
+): OrderDraft => {
+  const empty = value === 0 || value === "";
+  switch (field) {
+    case "ric":
+    case "account":
+      return { ...draft, [field]: empty ? undefined : String(value) };
+    case "strategy":
+      return {
+        ...draft,
+        strategy: (value || AlgoStrategy.Dma) as AlgoStrategy,
+      };
+    case "side":
+    case "ordType":
+    case "timeInForce":
+      return { ...draft, [field]: value };
+    case "quantity":
+      return { ...draft, quantity: empty ? "" : String(value) };
+    case "price":
+    case "stopPrice":
+      return {
+        ...draft,
+        [field]: empty ? "" : formatPriceInput(Number(value), instrument),
+      };
+    default: {
+      const { [field]: _, ...algoParams } = draft.algoParams;
+      return {
+        ...draft,
+        algoParams: empty
+          ? algoParams
+          : { ...algoParams, [field]: String(value) },
+      };
+    }
+  }
+};
+
+/** The draft fields a change sets (strategy parameters that differ). */
+const fieldsOf = (
+  change: Partial<OrderDraft>,
+  current: OrderDraft,
+): EntryField[] => {
+  const fields: EntryField[] = [];
+  for (const key of Object.keys(change)) {
+    if (key === "algoParams") {
+      const params = change.algoParams ?? {};
+      for (const k of ALGO_FIELDS) {
+        if ((params[k] ?? "") !== (current.algoParams[k] ?? "")) fields.push(k);
+      }
+    } else if (isEntryField(key)) fields.push(key);
+  }
+  return fields;
+};
+
+/** A draft field's value as text (for spotting what changed). */
+const draftText = (draft: OrderDraft, field: EntryField): string =>
+  (ALGO_FIELDS as readonly string[]).includes(field)
+    ? (draft.algoParams[field as AlgoParamKey] ?? "")
+    : String(draft[field as keyof OrderDraft] ?? "");
+
+/**
+ * A change with the knock-on rules the OMS applies to the row (shared from
+ * trading-schemas), applied here too so the next key works on the result:
+ * a new strategy clears its parameters, stops are DMA only (the choice
+ * just made wins), an order type without a price clears it, and a TIF the
+ * new type or strategy can't take falls back to DAY. The notices are
+ * `false` when the change leaves them as they were.
+ */
+export const withKnockOns = (
+  current: OrderDraft,
+  change: Partial<OrderDraft>,
+  phase?: string,
+): {
+  draft: OrderDraft;
+  typeNotice: OrderTicketTypeNotice | undefined | false;
+  tifNotice: string | undefined | false;
+} => {
+  const next = { ...current, ...change };
+  if (
+    change.strategy &&
+    change.strategy !== current.strategy &&
+    change.algoParams === undefined
+  ) {
+    next.algoParams = {};
+  }
+  let typeNotice: OrderTicketTypeNotice | undefined | false = false;
+  if (change.ordType || change.strategy) {
+    typeNotice = undefined;
+    if (!isStrategyAllowed(next.ordType, next.strategy)) {
+      if (change.ordType === undefined) {
+        next.ordType = nonStopOrdType(next.ordType);
+        typeNotice = {
+          field: "ordType",
+          text: `Stops are DMA only: switched to ${ORD_TYPE_LABEL[next.ordType]}`,
+        };
+      } else {
+        next.strategy = AlgoStrategy.Dma;
+        next.algoParams = {};
+        typeNotice = {
+          field: "strategy",
+          text: "Stops are DMA only: switched to DMA",
+        };
+      }
+    }
+  }
+  if (next.ordType !== current.ordType) {
+    if (!isPricedOrdType(next.ordType) && change.price === undefined)
+      next.price = "";
+    if (!isStopOrdType(next.ordType) && change.stopPrice === undefined)
+      next.stopPrice = "";
+  }
+  let tifNotice: string | undefined | false = false;
+  if (change.timeInForce) tifNotice = undefined;
+  else if (
+    (change.ordType || change.strategy) &&
+    !isTimeInForceAllowed(next.ordType, next.timeInForce, next.strategy, phase)
+  ) {
+    const valid = allowedTimesInForce(next.ordType, next.strategy, phase);
+    tifNotice = `${current.timeInForce} isn't valid for ${
+      change.strategy
+        ? algoStrategyDefinition(next.strategy).name
+        : next.ordType === OrdType.Market
+          ? "market orders"
+          : isStopOrdType(next.ordType)
+            ? "stop orders"
+            : "this order"
+    }`;
+    next.timeInForce = valid.includes(TimeInForce.Day)
+      ? TimeInForce.Day
+      : (valid[0] ?? TimeInForce.Day);
+  }
+  return { draft: next, typeNotice, tifNotice };
+};
+
+const isRpcErrorResult = (
+  result: unknown,
+): result is { type: "ERROR_RESULT"; errorMessage: string } =>
+  typeof result === "object" &&
+  result !== null &&
+  (result as { type?: unknown }).type === "ERROR_RESULT";
 
 /** Why orders cannot be sent in this connection state, else undefined. */
 export const connectionBlockedReason = (
@@ -341,6 +622,13 @@ const stepAlgoParam = (
 /**
  * State and behaviour of the order ticket (one core used by every layout
  * variant). Exposed for custom ticket layouts.
+ *
+ * The ticket is a form over one row of the OMS `orderEntry` table, read
+ * through the `orderEntryPrices` join (so the row carries the instrument's
+ * static data and live prices). The row is opened with openOrderEntry;
+ * fields are written with editCell when committed; the OMS validates the
+ * row and reports errors, warnings and notices in its vuuMsg column
+ * (decodeEntryMessages); sendOrder turns it into an order.
  */
 export const useOrderTicket = ({
   prefill,
@@ -359,7 +647,15 @@ export const useOrderTicket = ({
     useSelectedInstrument({ linkGroup });
   const notifications = useTradingNotifications();
   const { state: connectionState } = useTradingConnectionStatus();
+  const connectionStateRef = useRef(connectionState);
+  connectionStateRef.current = connectionState;
   const blockedReason = connectionBlockedReason(connectionState);
+  const riskOptions = useMemo(
+    () => ({ usdPerPriceUnit, collarPct }),
+    [usdPerPriceUnit, collarPct],
+  );
+  const riskOptionsRef = useRef<RiskPreviewOptions>(riskOptions);
+  riskOptionsRef.current = riskOptions;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: recomputed per prefill only
   const initialDraft = useMemo(
@@ -369,7 +665,13 @@ export const useOrderTicket = ({
       }),
     [prefill],
   );
-  const [draft, setDraft] = useState<OrderDraft>(initialDraft);
+  /** The form's text, ahead of the row while a field is being typed in. */
+  const [draft, setDraftState] = useState<OrderDraft>(initialDraft);
+  const draftRef = useRef(draft);
+  const setDraft = useCallback((next: OrderDraft) => {
+    draftRef.current = next;
+    setDraftState(next);
+  }, []);
   const [baseline, setBaseline] = useState<OrderDraft>(initialDraft);
   const [touched, setTouched] = useState<
     Partial<Record<OrderDraftField, boolean>>
@@ -378,32 +680,315 @@ export const useOrderTicket = ({
   const [submission, setSubmission] = useState<OrderTicketSubmission>({
     state: "idle",
   });
-  /** Set when a change made the TIF invalid and it was switched to Day. */
-  const [tifNotice, setTifNotice] = useState<string | undefined>();
-  /** Set when a stop / algo conflict changed the order type or strategy. */
-  const [typeNotice, setTypeNotice] = useState<
-    OrderTicketTypeNotice | undefined
-  >();
   /** The Review step is open (warnings that need a second look). */
   const [reviewing, setReviewing] = useState(false);
+  /** Text that can't be sent (not a number ...) or an edit the OMS refused. */
+  const [localErrors, setLocalErrorsState] = useState<OrderDraftErrors>({});
+  const localErrorsRef = useRef(localErrors);
+  const setLocalErrors = useCallback(
+    (fn: (current: OrderDraftErrors) => OrderDraftErrors) => {
+      localErrorsRef.current = fn(localErrorsRef.current);
+      setLocalErrorsState(localErrorsRef.current);
+    },
+    [],
+  );
+  /** Fields typed in and not yet committed. */
+  const editingRef = useRef(new Set<EntryField>());
+  /**
+   * Fields committed and not yet shown by the row: the row's messages about
+   * them are about the old value, so they are not shown until it catches
+   * up (the edit answered and a row update since, or the value arrived).
+   */
+  const awaitingRef = useRef(
+    new Map<EntryField, { seq: number; value: EntryValue; acked: boolean }>(),
+  );
+  const editSeqRef = useRef(0);
+  const [, setAwaitVersion] = useState(0);
+
+  // ------------------------------------------------------- the orderEntry row
+  const [ticketId] = useState(() => newClOrdId("TKT").slice(0, 48));
+  const [entryId, setEntryId] = useState<string>();
+  const entryIdRef = useRef<string | undefined>(undefined);
+  const {
+    dataSource: entryDataSource,
+    rows: entryRows,
+    loaded: entryLoaded,
+  } = useTradingRows("orderEntryPrices", {
+    columns: ENTRY_COLUMNS,
+    filter: entryId ? `entryId = ${filterString(entryId)}` : NO_ENTRY_FILTER,
+    rowCount: 1,
+  });
+  const row =
+    entryId && entryRows[0]?.entryId === entryId ? entryRows[0] : undefined;
+  const rowRef = useRef(row);
+  rowRef.current = row;
+
+  // Static data and live prices of the draft's instrument (from the row).
+  const instrument = useMemo(
+    () => (row?.ric && row.ric === draft.ric ? toInstrument(row) : undefined),
+    [row, draft.ric],
+  );
+  const instrumentRef = useRef(instrument);
+  instrumentRef.current = instrument;
+
+  const vuuMsg = row?.vuuMsg as string | undefined;
+  const messages = useMemo(() => decodeEntryMessages(vuuMsg), [vuuMsg]);
+
+  /** Values committed before the row was opened. */
+  const pendingRef = useRef<EntryValues>({});
+  /** Edits sent and not yet answered. */
+  const inflightRef = useRef(new Set<Promise<unknown>>());
+  const track = useCallback(<T>(request: Promise<T>) => {
+    inflightRef.current.add(request);
+    const done = () => inflightRef.current.delete(request);
+    request.then(done, done);
+    return request;
+  }, []);
+
+  /** Write values to the row: editCell for one, updateOrderEntry for more. */
+  const sendValues = useCallback(
+    (values: EntryValues) => {
+      const fields = Object.keys(values) as EntryField[];
+      if (fields.length === 0) return;
+      const seq = ++editSeqRef.current;
+      const awaiting = awaitingRef.current;
+      for (const field of fields) {
+        awaiting.set(field, {
+          seq,
+          value: values[field] as EntryValue,
+          acked: false,
+        });
+      }
+      const settle = (acked: boolean) => {
+        for (const field of fields) {
+          const entry = awaiting.get(field);
+          if (entry?.seq !== seq) continue;
+          if (acked) entry.acked = true;
+          else awaiting.delete(field);
+        }
+      };
+      const id = entryIdRef.current;
+      if (!id) {
+        Object.assign(pendingRef.current, values);
+        return;
+      }
+      const [only] = fields;
+      const editCell = entryDataSource.editCell?.bind(entryDataSource);
+      const request: Promise<unknown> =
+        fields.length === 1 &&
+        editCell &&
+        connectionStateRef.current === "connected"
+          ? withRpcTimeout(
+              Promise.resolve(
+                editCell(id, only, values[only] as VuuRowDataItemType),
+              ).then((result: unknown) => {
+                if (isRpcErrorResult(result))
+                  throw new TradingRpcError(
+                    "updateOrderEntry",
+                    result.errorMessage,
+                  );
+              }),
+              "updateOrderEntry",
+            )
+          : sendTradingRpc(
+              entryDataSource,
+              "updateOrderEntry",
+              {
+                entryId: id,
+                ...values,
+              } as RpcRequestParams<"updateOrderEntry">,
+              { connectionState: connectionStateRef.current },
+            );
+      track(request).then(
+        () => settle(true),
+        () => settle(false),
+      );
+      request.catch((error: unknown) => {
+        const text =
+          error instanceof TradingRpcError ? error.text : String(error);
+        setLocalErrors((current) => {
+          const next = { ...current };
+          for (const field of fields) next[field] = text;
+          return next;
+        });
+      });
+    },
+    [entryDataSource, setLocalErrors, track],
+  );
+
+  /** Commit fields: send the draft's values of them to the row. */
+  const commitFields = useCallback(
+    (fields: readonly EntryField[]) => {
+      if (fields.length === 0) return;
+      const current = draftRef.current;
+      const values: EntryValues = {};
+      const errors: OrderDraftErrors = {};
+      for (const field of fields) {
+        editingRef.current.delete(field);
+        const { value, error } = entryValueOf(
+          current,
+          field,
+          instrumentRef.current,
+          riskOptionsRef.current,
+        );
+        if (error !== undefined) errors[field] = error;
+        else values[field] = value;
+      }
+      setLocalErrors((current) => {
+        const next = { ...current };
+        for (const field of fields) delete next[field];
+        return { ...next, ...errors };
+      });
+      sendValues(values);
+    },
+    [sendValues, setLocalErrors],
+  );
+
+  // Open the row once subscribed (again after a reconnect: the server may
+  // have restarted), with the whole draft.
+  const openedRef = useRef(false);
+  useEffect(() => {
+    if (connectionState !== "connected") {
+      openedRef.current = false;
+      return;
+    }
+    if (!entryLoaded || openedRef.current) return;
+    openedRef.current = true;
+    const current = draftRef.current;
+    const values: EntryValues = {};
+    for (const field of ENTRY_FIELDS) {
+      const { value } = entryValueOf(
+        current,
+        field,
+        instrumentRef.current,
+        riskOptionsRef.current,
+      );
+      if (value !== undefined) values[field] = value;
+    }
+    if (!current.account && rememberAccount) {
+      const remembered = readLastAccount();
+      if (remembered) values.account = remembered;
+    }
+    editingRef.current.clear();
+    pendingRef.current = {};
+    track(
+      sendTradingRpc(
+        entryDataSource,
+        "openOrderEntry",
+        { ticketId, ...values } as RpcRequestParams<"openOrderEntry">,
+        { connectionState },
+      ),
+    ).then(
+      ({ entryId: id }) => {
+        entryIdRef.current = id;
+        setEntryId(id);
+        const pending = pendingRef.current;
+        pendingRef.current = {};
+        sendValues(pending);
+      },
+      () => {
+        openedRef.current = false;
+      },
+    );
+  }, [
+    connectionState,
+    entryDataSource,
+    entryLoaded,
+    rememberAccount,
+    sendValues,
+    ticketId,
+    track,
+  ]);
+
+  // The row goes with the ticket.
+  useEffect(
+    () => () => {
+      const id = entryIdRef.current;
+      openedRef.current = false;
+      if (id) {
+        sendTradingRpc(entryDataSource, "closeOrderEntry", {
+          entryId: id,
+        }).catch(() => {
+          // the OMS drops idle rows anyway
+        });
+      }
+    },
+    [entryDataSource],
+  );
+
+  // Changes the OMS made to the row (the knock-on rules, a sent order's
+  // quantity) are copied into the draft, except in fields being typed in.
+  const seenRef = useRef<EntryValues>({});
+  const rowWaitersRef = useRef<(() => void)[]>([]);
+  useEffect(() => {
+    if (!row) return;
+    const awaiting = awaitingRef.current;
+    if (awaiting.size > 0) {
+      let caughtUp = false;
+      for (const [field, { value, acked }] of awaiting) {
+        if (acked || row[field] === value) {
+          awaiting.delete(field);
+          caughtUp = true;
+        }
+      }
+      // Render again: this render hid their messages.
+      if (caughtUp) setAwaitVersion((v) => v + 1);
+    }
+    const waiters = rowWaitersRef.current;
+    rowWaitersRef.current = [];
+    for (const resolve of waiters) resolve();
+    const seen = seenRef.current;
+    const rowInstrument = toInstrument(row);
+    const current = draftRef.current;
+    let next = current;
+    for (const field of ENTRY_FIELDS) {
+      const value = row[field] as EntryValue | null | undefined;
+      if (value === undefined || value === null || seen[field] === value)
+        continue;
+      seen[field] = value;
+      if (editingRef.current.has(field)) continue;
+      const local = entryValueOf(
+        next,
+        field,
+        rowInstrument,
+        riskOptionsRef.current,
+      );
+      if (local.value === value) continue;
+      next = withEntryValue(next, field, value, rowInstrument);
+    }
+    if (next !== current) setDraft(next);
+  }, [row, setDraft]);
+  /** Resolves on the next row update (or after `ms`). */
+  const nextRow = useCallback(
+    (ms: number) =>
+      new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, ms);
+        rowWaitersRef.current.push(() => {
+          clearTimeout(timer);
+          resolve();
+        });
+      }),
+    [],
+  );
 
   // A new prefill replaces the draft.
   const prefillRef = useRef(prefill);
   useEffect(() => {
     if (prefillRef.current === prefill) return;
     prefillRef.current = prefill;
-    setDraft((current) => {
-      const next = draftFromPrefill(prefill, {
-        ric: current.ric,
-        account: current.account,
-      });
-      setBaseline(next);
-      return next;
+    const current = draftRef.current;
+    const next = draftFromPrefill(prefill, {
+      ric: current.ric,
+      account: current.account,
     });
+    setDraft(next);
+    setBaseline(next);
     setTouched({});
     setSubmitAttempted(false);
     setSubmission({ state: "idle" });
-  }, [prefill]);
+    setLocalErrors(() => ({}));
+    commitFields(ENTRY_FIELDS);
+  }, [prefill, commitFields, setDraft, setLocalErrors]);
 
   // Follow selections made elsewhere.
   useEffect(() => {
@@ -414,30 +999,22 @@ export const useOrderTicket = ({
     ) {
       return;
     }
-    setDraft((current) =>
-      current.ric === selectedInstrument.ric
-        ? current
-        : {
-            ...current,
-            ric: selectedInstrument.ric,
-            price: "",
-            stopPrice: "",
-          },
-    );
-  }, [followSelection, selectedInstrument, selectionSource]);
-
-  // Live instrument (static + prices).
-  const { rows: instrumentRows } = useTradingRows("instrumentPrices", {
-    columns: INSTRUMENT_PRICE_COLUMNS,
-    filter: `ric = ${filterString(draft.ric ?? "-")}`,
-    rowCount: 1,
-  });
-  const instrument = useMemo(() => {
-    const row = toInstrument(instrumentRows[0]);
-    return row?.ric === draft.ric ? row : undefined;
-  }, [instrumentRows, draft.ric]);
-  const phaseRef = useRef<string | undefined>(undefined);
-  phaseRef.current = instrument?.phase;
+    const current = draftRef.current;
+    if (current.ric === selectedInstrument.ric) return;
+    setDraft({
+      ...current,
+      ric: selectedInstrument.ric,
+      price: "",
+      stopPrice: "",
+    });
+    commitFields(["ric", "price", "stopPrice"]);
+  }, [
+    followSelection,
+    selectedInstrument,
+    selectionSource,
+    commitFields,
+    setDraft,
+  ]);
 
   // Accounts visible to the user (disabled accounts excluded).
   const { rows: accountRows } = useTradingRows("accounts", {
@@ -453,21 +1030,17 @@ export const useOrderTicket = ({
   );
   useEffect(() => {
     if (accounts.length === 0) return;
-    setDraft((current) => {
-      if (
-        current.account &&
-        accounts.some((a) => a.account === current.account)
-      )
-        return current;
-      const remembered = rememberAccount ? readLastAccount() : undefined;
-      const account =
-        (remembered &&
-          accounts.find((a) => a.account === remembered)?.account) ??
-        accounts[0].account;
-      setBaseline((b) => (b.account ? b : { ...b, account }));
-      return { ...current, account };
-    });
-  }, [accounts, rememberAccount]);
+    const current = draftRef.current;
+    if (current.account && accounts.some((a) => a.account === current.account))
+      return;
+    const remembered = rememberAccount ? readLastAccount() : undefined;
+    const account =
+      (remembered && accounts.find((a) => a.account === remembered)?.account) ??
+      accounts[0].account;
+    setBaseline((b) => (b.account ? b : { ...b, account }));
+    setDraft({ ...current, account });
+    commitFields(["account"]);
+  }, [accounts, rememberAccount, commitFields, setDraft]);
   const account = accounts.find((a) => a.account === draft.account);
 
   // The account's position in the instrument (shown beside quantity).
@@ -485,7 +1058,7 @@ export const useOrderTicket = ({
       ? (positionRows[0]?.quantity as number | undefined)
       : undefined;
 
-  // The submitted order (also the OMS data source used for the RPC).
+  // The submitted order.
   const clOrdId = submission.state === "idle" ? undefined : submission.clOrdId;
   const { dataSource: ordersDataSource, rows: orderRows } = useTradingRows(
     "parentOrders",
@@ -527,129 +1100,122 @@ export const useOrderTicket = ({
     if (event) emit({ ...event, source: ORDER_TICKET_SELECTION_SOURCE });
   }, [order, submission, emit]);
 
-  const validation = useMemo(
-    () =>
-      validateDraft(draft, instrument, accounts.length ? accounts : undefined),
-    [draft, instrument, accounts],
-  );
+  /** Indicative notional, limit usage and price checks, for display. */
   const risk = useMemo(
-    () =>
-      previewRisk(draft, instrument, account, { usdPerPriceUnit, collarPct }),
-    [draft, instrument, account, usdPerPriceUnit, collarPct],
+    () => previewRisk(draft, instrument, account, riskOptions),
+    [draft, instrument, account, riskOptions],
   );
 
-  const serverErrors: OrderDraftErrors =
+  // Errors: the OMS's (vuuMsg) once a field is touched or a send was tried,
+  // not while it is being typed in; text that couldn't be sent, always.
+  const visibleErrors: OrderDraftErrors =
     submission.state === "rejected"
       ? { [fieldForRejectReason(submission.reason)]: submission.text }
       : {};
-  const visibleErrors: OrderDraftErrors = { ...serverErrors };
-  for (const [field, message] of Object.entries(validation.errors)) {
+  for (const { level, field, text } of messages) {
+    if (level !== EntryMessageLevel.Error) continue;
+    const key = field as OrderDraftField | "form";
     if (
-      submitAttempted ||
-      field === "form" ||
-      touched[field as OrderDraftField]
+      isEntryField(key) &&
+      (editingRef.current.has(key) || awaitingRef.current.has(key))
+    )
+      continue;
+    if (
+      (submitAttempted || key === "form" || touched[key as OrderDraftField]) &&
+      visibleErrors[key] === undefined
     ) {
-      visibleErrors[field as OrderDraftField] = message;
+      visibleErrors[key] = text;
     }
   }
+  Object.assign(visibleErrors, localErrors);
 
-  const update = useCallback(
-    (change: Partial<OrderDraft>) => {
-      setDraft((current) => {
-        const next = { ...current, ...change };
-        if (
-          change.strategy &&
-          change.strategy !== current.strategy &&
-          change.algoParams === undefined
+  // Why the ticket just changed the TIF, order type or strategy: set as
+  // the rules are applied here, else what the OMS said it did.
+  const [localTifNotice, setTifNotice] = useState<string | undefined>();
+  const [localTypeNotice, setTypeNotice] = useState<
+    OrderTicketTypeNotice | undefined
+  >();
+  const tifNotice =
+    localTifNotice ??
+    messages.find(
+      (m) => m.level === EntryMessageLevel.Info && m.code === "TIF_CHANGED",
+    )?.text;
+  const serverTypeNotice = useMemo((): OrderTicketTypeNotice | undefined => {
+    const notice = messages.find(
+      (m) =>
+        m.level === EntryMessageLevel.Info &&
+        (m.code === "TYPE_CHANGED" || m.code === "STRATEGY_CHANGED"),
+    );
+    return notice
+      ? { field: notice.field as "ordType" | "strategy", text: notice.text }
+      : undefined;
+  }, [messages]);
+  const typeNotice = localTypeNotice ?? serverTypeNotice;
+  const review = useMemo(
+    (): OrderTicketReviewReason[] =>
+      entryReviewMessages(messages).map(({ code, text }) => ({ code, text })),
+    [messages],
+  );
+
+  /**
+   * Change the draft. Choices are committed now; typed text when `commit`
+   * (a nudge, a click) or when the field is left (resolveShorthand /
+   * commit).
+   */
+  const apply = useCallback(
+    (change: Partial<OrderDraft>, commit: boolean) => {
+      const current = draftRef.current;
+      const typed = fieldsOf(change, current);
+      const next = withKnockOns(current, change, instrumentRef.current?.phase);
+      setDraft(next.draft);
+      if (next.typeNotice !== false) setTypeNotice(next.typeNotice);
+      if (next.tifNotice !== false) setTifNotice(next.tifNotice);
+      // Typed text waits for the field to be left; choices, and whatever
+      // the rules changed, go now (together, as one updateOrderEntry).
+      const now: EntryField[] = [];
+      for (const field of ENTRY_FIELDS) {
+        if (typed.includes(field) && !commit && !isChoiceField(field)) {
+          editingRef.current.add(field);
+        } else if (
+          typed.includes(field) ||
+          draftText(next.draft, field) !== draftText(current, field)
         ) {
-          next.algoParams = {};
+          now.push(field);
         }
-        // Stops are DMA only: the choice just made wins. An algo picked for
-        // a stop turns it into the plain type (STOP → MARKET, STOP_LIMIT →
-        // LIMIT); a stop type picked for an algo order switches it to DMA.
-        if (change.ordType || change.strategy) {
-          let notice: OrderTicketTypeNotice | undefined;
-          if (!isStrategyAllowed(next.ordType, next.strategy)) {
-            if (change.ordType === undefined) {
-              const ordType = nonStopOrdType(next.ordType);
-              notice = {
-                field: "ordType",
-                text: `Stops are DMA only: switched to ${ORD_TYPE_LABEL[ordType]}`,
-              };
-              next.ordType = ordType;
-            } else {
-              notice = {
-                field: "strategy",
-                text: "Stops are DMA only: switched to DMA",
-              };
-              next.strategy = AlgoStrategy.Dma;
-              next.algoParams = {};
-            }
-          }
-          setTypeNotice(notice);
-        }
-        // Prices the new type doesn't have are cleared.
-        if (next.ordType !== current.ordType) {
-          if (!isPricedOrdType(next.ordType) && change.price === undefined)
-            next.price = "";
-          if (!isStopOrdType(next.ordType) && change.stopPrice === undefined)
-            next.stopPrice = "";
-        }
-        if (change.timeInForce) setTifNotice(undefined);
-        else if (
-          (change.ordType || change.strategy) &&
-          !isTimeInForceAllowed(
-            next.ordType,
-            next.timeInForce,
-            next.strategy,
-            phaseRef.current,
-          )
-        ) {
-          const valid = allowedTimesInForce(
-            next.ordType,
-            next.strategy,
-            phaseRef.current,
-          );
-          const tif = valid.includes(TimeInForce.Day)
-            ? TimeInForce.Day
-            : (valid[0] ?? TimeInForce.Day);
-          setTifNotice(
-            `${current.timeInForce} isn't valid for ${
-              change.strategy
-                ? algoStrategyDefinition(next.strategy).name
-                : next.ordType === OrdType.Market
-                  ? "market orders"
-                  : isStopOrdType(next.ordType)
-                    ? "stop orders"
-                    : "this order"
-            }`,
-          );
-          next.timeInForce = tif;
-        }
-        if (change.account && rememberAccount) writeLastAccount(change.account);
-        return next;
-      });
+      }
+      commitFields(now);
+      if (change.account && rememberAccount) writeLastAccount(change.account);
       setTouched((current) => {
-        const next = { ...current };
-        for (const key of Object.keys(change)) {
-          if (key === "algoParams") {
-            for (const k of Object.keys(change.algoParams ?? {}))
-              next[k as OrderDraftField] = true;
-          } else next[key as OrderDraftField] = true;
-        }
-        return next;
+        const touchedNow = { ...current };
+        for (const field of typed) touchedNow[field] = true;
+        return touchedNow;
       });
       setReviewing(false);
       setSubmission((current) =>
         current.state === "rejected" ? { state: "idle" } : current,
       );
     },
-    [rememberAccount],
+    [commitFields, rememberAccount, setDraft],
+  );
+
+  /** Change the draft as typed: text fields are committed when left. */
+  const update = useCallback(
+    (change: Partial<OrderDraft>) => apply(change, false),
+    [apply],
+  );
+
+  /** Commit a field typed in (when it is left). */
+  const commit = useCallback(
+    (field: OrderDraftField) => {
+      if (isEntryField(field) && editingRef.current.has(field))
+        commitFields([field]);
+    },
+    [commitFields],
   );
 
   const selectInstrument = useCallback(
     (selected: SelectedInstrument) => {
-      update({ ric: selected.ric, price: "", stopPrice: "" });
+      apply({ ric: selected.ric, price: "", stopPrice: "" }, true);
       // Clearing the old prices is not the user touching them: no error yet.
       setTouched((current) => ({
         ...current,
@@ -660,67 +1226,89 @@ export const useOrderTicket = ({
         setSelectedInstrument(selected, ORDER_TICKET_SELECTION_SOURCE);
       }
     },
-    [publishSelection, setSelectedInstrument, update],
+    [apply, publishSelection, setSelectedInstrument],
   );
 
   const nudge = useCallback(
     (field: "price" | "stopPrice" | "quantity", steps: number) => {
+      const current = draftRef.current;
       if (field === "price") {
-        if (!isPricedOrdType(draft.ordType)) return;
-        const price = nudgePrice(draft, instrument, steps);
-        if (price !== undefined) update({ price });
+        if (!isPricedOrdType(current.ordType)) return;
+        const price = nudgePrice(current, instrument, steps);
+        if (price !== undefined) apply({ price }, true);
       } else if (field === "stopPrice") {
-        if (!isStopOrdType(draft.ordType)) return;
-        const stopPrice = nudgeStopPrice(draft, instrument, steps);
-        if (stopPrice !== undefined) update({ stopPrice });
+        if (!isStopOrdType(current.ordType)) return;
+        const stopPrice = nudgeStopPrice(current, instrument, steps);
+        if (stopPrice !== undefined) apply({ stopPrice }, true);
       } else {
-        update({ quantity: nudgeQuantity(draft.quantity, instrument, steps) });
+        apply(
+          { quantity: nudgeQuantity(current.quantity, instrument, steps) },
+          true,
+        );
       }
     },
-    [draft, instrument, update],
+    [apply, instrument],
   );
 
   const setPriceFrom = useCallback(
     (price: number | undefined) => {
-      if (price === undefined || !isPricedOrdType(draft.ordType)) return;
-      update({ price: formatPriceInput(price, instrument) });
+      if (price === undefined || !isPricedOrdType(draftRef.current.ordType))
+        return;
+      apply({ price: formatPriceInput(price, instrument) }, true);
     },
-    [draft.ordType, instrument, update],
+    [apply, instrument],
   );
 
-  /** Set one strategy parameter (input text). */
+  /**
+   * Set one strategy parameter (input text); `commit` for a value picked
+   * rather than typed.
+   */
   const setAlgoParam = useCallback(
-    (key: AlgoParamKey, text: string) =>
-      update({ algoParams: { ...draft.algoParams, [key]: text } }),
-    [draft.algoParams, update],
+    (key: AlgoParamKey, text: string, commit = false) =>
+      apply(
+        { algoParams: { ...draftRef.current.algoParams, [key]: text } },
+        commit,
+      ),
+    [apply],
   );
 
   /**
    * Replace shorthand in a field with what it means (`b+1` → 435.8,
-   * `$250k` → 45,200), e.g. when the field is left.
+   * `$250k` → 45,200) and commit it, e.g. when the field is left. `text`
+   * is the input's live value (fast typing can be ahead of the draft).
    */
   const resolveShorthand = useCallback(
     (field: "price" | "stopPrice" | "quantity", text?: string) => {
+      const current = draftRef.current;
+      const input = text ?? current[field];
+      let resolved = input;
       if (field === "price" || field === "stopPrice") {
-        const input = text ?? draft[field];
-        if (!isPriceShorthand(input)) return;
-        const price = resolvePriceInput(input, instrument);
-        if (price !== undefined && Number.isFinite(price))
-          update({ [field]: formatPriceInput(price, instrument) });
-      } else {
-        const input = text ?? draft.quantity;
-        if (!isValueInput(input)) return;
-        const priced = isPricedOrdType(draft.ordType);
+        if (isPriceShorthand(input)) {
+          const price = resolvePriceInput(input, instrument);
+          if (price !== undefined && Number.isFinite(price))
+            resolved = formatPriceInput(price, instrument);
+        }
+      } else if (isValueInput(input)) {
         const quantity = resolveQuantityInput(
           input,
           instrument,
-          priced ? resolvePriceInput(draft.price, instrument) : risk.price,
+          previewRisk(
+            { ...current, quantity: input },
+            instrument,
+            undefined,
+            riskOptions,
+          ).price,
           usdPerPriceUnit,
         );
-        if (Number.isFinite(quantity)) update({ quantity: String(quantity) });
+        if (Number.isFinite(quantity)) resolved = String(quantity);
       }
+      if (resolved !== current[field]) {
+        setDraft({ ...current, [field]: resolved });
+        editingRef.current.add(field);
+      }
+      if (editingRef.current.has(field)) commitFields([field]);
     },
-    [draft, instrument, risk.price, update, usdPerPriceUnit],
+    [commitFields, instrument, riskOptions, setDraft, usdPerPriceUnit],
   );
 
   /**
@@ -732,7 +1320,7 @@ export const useOrderTicket = ({
     (text: string) => {
       const { change } = parseOrderLine(text);
       if (Object.keys(change).length === 0) return false;
-      if (change.ric && change.ric !== draft.ric) {
+      if (change.ric && change.ric !== draftRef.current.ric) {
         if (change.price === undefined) change.price = "";
         if (change.stopPrice === undefined) change.stopPrice = "";
         if (publishSelection) {
@@ -742,21 +1330,23 @@ export const useOrderTicket = ({
           );
         }
       }
-      update(change);
+      apply(change, true);
       return true;
     },
-    [draft.ric, publishSelection, setSelectedInstrument, update],
+    [apply, publishSelection, setSelectedInstrument],
   );
 
   const reset = useCallback(() => {
-    setDraft((current) => ({ ...baseline, account: current.account }));
+    setDraft({ ...baseline, account: draftRef.current.account });
+    setLocalErrors(() => ({}));
+    commitFields(ENTRY_FIELDS);
     setTouched({});
     setSubmitAttempted(false);
     setSubmission({ state: "idle" });
     setTifNotice(undefined);
     setTypeNotice(undefined);
     setReviewing(false);
-  }, [baseline]);
+  }, [baseline, commitFields, setDraft, setLocalErrors]);
 
   const dirty =
     submission.state !== "idle" ||
@@ -764,55 +1354,71 @@ export const useOrderTicket = ({
       (key) => key !== "account" && baseline[key] !== draft[key],
     );
 
-  const review = useMemo(() => reviewReasons(risk), [risk]);
-
   const submit = useCallback(
     async ({ confirmed = false } = {}) => {
       if (submission.state === "pending") return;
       setSubmitAttempted(true);
       // Blocked while the connection is down (also F9 / Ctrl+Enter).
       if (blockedReason) return;
-      const { params } = validation;
-      if (!params) return;
-      if (review.length > 0 && !confirmed) {
+      // Send what is being typed, and check the row once it shows it.
+      commitFields([...editingRef.current]);
+      const inflight = [...inflightRef.current];
+      if (inflight.length > 0) {
+        await Promise.allSettled(inflight);
+        await nextRow(ROW_WAIT_MS);
+      }
+      const id = entryIdRef.current;
+      const current = rowRef.current;
+      if (!id || !current) return;
+      if (Object.keys(localErrorsRef.current).length > 0) return;
+      const rowMessages = decodeEntryMessages(
+        current.vuuMsg as string | undefined,
+      );
+      if (hasEntryErrors(rowMessages)) return;
+      if (entryReviewMessages(rowMessages).length > 0 && !confirmed) {
         setReviewing(true);
         return;
       }
       setReviewing(false);
-      const id = newClOrdId(clOrdIdPrefix);
-      const request = { ...params, clOrdId: id };
+      const sentClOrdId = newClOrdId(clOrdIdPrefix);
+      const accountId = String(current.account);
       const base: TradingOrderEvent = {
         kind: "submitted",
-        clOrdId: id,
-        ric: request.ric,
-        side: request.side,
-        quantity: request.quantity,
-        price: request.price,
-        account: request.account,
-        currency: instrument?.currency,
+        clOrdId: sentClOrdId,
+        ric: String(current.ric),
+        side: current.side as Side,
+        quantity: Number(current.quantity),
+        price: isPricedOrdType(current.ordType as OrdType)
+          ? Number(current.price)
+          : undefined,
+        account: accountId,
+        currency: instrumentRef.current?.currency,
       };
       lastStatus.current = {};
-      setSubmission({ state: "pending", clOrdId: id });
-      if (rememberAccount) writeLastAccount(request.account);
+      setSubmission({ state: "pending", clOrdId: sentClOrdId });
+      if (rememberAccount) writeLastAccount(accountId);
       try {
         // The ticket's parentOrders data source is filtered on this clOrdId
-        // so the live order shows; the RPC only needs it to be subscribed.
-        ordersDataSource.filter = { filter: `clOrdId = ${filterString(id)}` };
+        // so the live order shows.
+        ordersDataSource.filter = {
+          filter: `clOrdId = ${filterString(sentClOrdId)}`,
+        };
         const result = await sendTradingRpc(
-          ordersDataSource,
-          "createOrder",
-          request,
+          entryDataSource,
+          "sendOrder",
+          { entryId: id, confirmed, clOrdId: sentClOrdId },
           { connectionState },
         );
         setSubmission({
           state: "accepted",
-          clOrdId: id,
+          clOrdId: sentClOrdId,
           orderId: result.orderId,
           status: result.status,
         });
-        // Ready for the next order: keep instrument, side, price and
-        // strategy; clear the size.
-        setDraft((current) => ({ ...current, quantity: "" }));
+        // Ready for the next order: the OMS keeps instrument, side, price
+        // and strategy, and clears the size.
+        editingRef.current.delete("quantity");
+        setDraft({ ...draftRef.current, quantity: "" });
         setTouched({});
         setSubmitAttempted(false);
         const kind = orderEventKindForStatus(result.status) ?? "ack";
@@ -822,7 +1428,12 @@ export const useOrderTicket = ({
           error instanceof TradingRpcError
             ? error
             : { reason: "INTERNAL_ERROR", text: String(error) };
-        setSubmission({ state: "rejected", clOrdId: id, reason, text });
+        setSubmission({
+          state: "rejected",
+          clOrdId: sentClOrdId,
+          reason,
+          text,
+        });
         emit({
           ...base,
           kind: "reject",
@@ -835,14 +1446,15 @@ export const useOrderTicket = ({
     [
       blockedReason,
       clOrdIdPrefix,
+      commitFields,
       connectionState,
       emit,
-      instrument?.currency,
+      entryDataSource,
+      nextRow,
       ordersDataSource,
       rememberAccount,
-      review.length,
+      setDraft,
       submission.state,
-      validation,
     ],
   );
 
@@ -859,6 +1471,8 @@ export const useOrderTicket = ({
         // The live text: with fast typing the last render can be behind.
         if (field === "price" || field === "stopPrice" || field === "quantity")
           resolveShorthand(field, (target as HTMLInputElement).value);
+        else if (field?.startsWith("param:"))
+          commit(field.slice(6) as AlgoParamKey);
       };
       if (
         key === "F9" ||
@@ -968,11 +1582,12 @@ export const useOrderTicket = ({
           if (!param) return;
           event.preventDefault();
           const next = stepAlgoParam(param, draft.algoParams[k], steps);
-          if (next !== undefined) setAlgoParam(k, next);
+          if (next !== undefined) setAlgoParam(k, next, true);
         }
       }
     },
     [
+      commit,
       dirty,
       draft,
       instrument?.phase,
@@ -990,6 +1605,8 @@ export const useOrderTicket = ({
   return {
     draft,
     update,
+    /** Commit a field typed in (call when it is left). */
+    commit,
     selectInstrument,
     nudge,
     setPriceFrom,
@@ -1013,7 +1630,10 @@ export const useOrderTicket = ({
     account,
     /** The account's position in the instrument (signed), if known. */
     position,
-    validation,
+    /** The orderEntry row's key, once opened. */
+    entryId,
+    /** Everything the OMS says about the row (vuuMsg). */
+    messages,
     errors: visibleErrors,
     risk,
     submission,

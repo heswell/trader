@@ -8,7 +8,11 @@ import {
   ViewPortDef,
 } from "@heswell/vuu-server";
 import { canAdminSim } from "@heswell/exchange-sim/engine";
-import { OMS_MODULE, positionPrices } from "@heswell/trading-schemas";
+import {
+  OMS_MODULE,
+  orderEntryPrices,
+  positionPrices,
+} from "@heswell/trading-schemas";
 import {
   createOmsTableDefs,
   toServerJoinFactory,
@@ -23,7 +27,8 @@ export interface OmsModuleOptions {
   /** Start the background flow / mark timers once all tables are loaded (default true). */
   autoStart?: boolean;
   /**
-   * Register the positionPrices join (positions x EXCHANGE prices). Requires
+   * Register the joins on EXCHANGE prices (positionPrices, and the order
+   * ticket's orderEntryPrices). Requires
    * the EXCHANGE module in the same server, registered first. Default true.
    */
   positionPrices?: boolean;
@@ -39,6 +44,7 @@ const TABLES: readonly OmsTableName[] = [
   "accountPnlHistory",
   "clientBots",
   "clientBotParams",
+  "orderEntry",
 ];
 
 /** Simulator tables: rows for sim-admin users only (as the EXCHANGE bots). */
@@ -77,6 +83,10 @@ export const omsPermissionFunction =
     if (access.all) return PermissionFilter(() => true);
     return PermissionFilter("account", new Set(access.accounts));
   };
+
+/** orderEntry (and its join): each user sees only their own ticket rows. */
+export const orderEntryPermissionFunction: PermissionFunction = (viewport) =>
+  PermissionFilter("user", new Set([viewport.user.name]));
 
 /** clientBots / clientBotParams: every row for sim admins, none otherwise. */
 export const clientBotsPermissionFunction =
@@ -133,14 +143,23 @@ export const OmsModule = (
   for (const name of TABLES) {
     defs[name].permissionFunction = SIM_ADMIN_TABLES.includes(name)
       ? simAdminPermission
-      : permissionFunction;
+      : name === "orderEntry"
+        ? orderEntryPermissionFunction
+        : permissionFunction;
     factory = factory.addTable(defs[name], provider(name), serviceFactory);
   }
   if (withJoin) {
-    factory = factory.addJoinTable(
-      toServerJoinFactory(positionPrices, { permissionFunction }),
-      serviceFactory,
-    );
+    factory = factory
+      .addJoinTable(
+        toServerJoinFactory(positionPrices, { permissionFunction }),
+        serviceFactory,
+      )
+      .addJoinTable(
+        toServerJoinFactory(orderEntryPrices, {
+          permissionFunction: orderEntryPermissionFunction,
+        }),
+        serviceFactory,
+      );
   }
   return factory.asModule();
 };

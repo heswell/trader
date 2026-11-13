@@ -722,14 +722,14 @@ const AlgoParamField = ({
   ticket: OrderTicketState;
   param: AlgoParamDefinition;
 }) => {
-  const { draft, errors, setAlgoParam } = ticket;
+  const { draft, errors, setAlgoParam, commit } = ticket;
   const error = errors[param.key];
   const quick = param.quick?.length ? (
     <span className={`${classBase}-quick`}>
       {param.quick.map((q) => (
         <button
           key={q}
-          onClick={() => setAlgoParam(param.key, q === "close" ? "" : q)}
+          onClick={() => setAlgoParam(param.key, q === "close" ? "" : q, true)}
           tabIndex={-1}
           type="button"
         >
@@ -755,6 +755,7 @@ const AlgoParamField = ({
             "aria-invalid": error ? true : undefined,
             autoComplete: "off",
             "data-order-ticket-field": algoParamField(param.key),
+            onBlur: () => commit(param.key),
           } as FieldInputProps
         }
         onChange={(e: ChangeEvent<HTMLInputElement>) =>

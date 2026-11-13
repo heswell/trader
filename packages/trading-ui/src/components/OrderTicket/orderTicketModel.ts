@@ -10,9 +10,9 @@ import {
   InstrumentType,
   isPricedOrdType,
   isStopOrdType,
+  isStrategyAllowed,
   OrdType,
   RejectReason,
-  STOP_TIME_IN_FORCE_VALUES,
   SUPPORTED_ORD_TYPES,
   Side,
   roundToTick,
@@ -122,77 +122,20 @@ export const ORDER_TICKET_ORD_TYPES: readonly OrdType[] = [
   OrdType.StopLimit,
 ].filter((t) => SUPPORTED_ORD_TYPES.includes(t));
 
-/** Display name of an order type ("Stop limit"). */
-export const ORD_TYPE_LABEL: Readonly<Record<string, string>> = Object.freeze({
-  [OrdType.Limit]: "Limit",
-  [OrdType.Market]: "Market",
-  [OrdType.Stop]: "Stop",
-  [OrdType.StopLimit]: "Stop limit",
-});
-export const ORDER_TICKET_TIFS: readonly TimeInForce[] = [
-  TimeInForce.Day,
-  TimeInForce.ImmediateOrCancel,
-  TimeInForce.FillOrKill,
-  TimeInForce.GoodTillCancel,
-];
+// Shared with the OMS (orderEntry rows).
+export {
+  allowedTimesInForce,
+  isAlgoStrategy,
+  isStrategyAllowed,
+  isTimeInForceAllowed,
+  nonStopOrdType,
+  ORD_TYPE_LABEL,
+  ORDER_TICKET_TIFS,
+} from "@heswell/trading-schemas";
 
 /** Strategies offered on the ticket, in display order. */
 export const ORDER_TICKET_STRATEGIES: readonly AlgoStrategy[] =
   ALGO_STRATEGY_DEFINITIONS.map((d) => d.id);
-
-/** Whether the strategy slices the order over time (anything but DMA). */
-export const isAlgoStrategy = (strategy: AlgoStrategy | undefined) =>
-  strategy !== undefined && strategy !== AlgoStrategy.Dma;
-
-/**
- * Stop orders are worked by the OMS as DMA only: a strategy other than DMA
- * can't be combined with STOP / STOP_LIMIT.
- */
-export const isStrategyAllowed = (
-  ordType: OrdType,
-  strategy: AlgoStrategy | undefined,
-) => !(isStopOrdType(ordType) && isAlgoStrategy(strategy));
-
-/**
- * The order type an algo strategy turns a stop into: STOP → MARKET,
- * STOP_LIMIT → LIMIT (other types unchanged).
- */
-export const nonStopOrdType = (ordType: OrdType): OrdType =>
-  ordType === OrdType.Stop
-    ? OrdType.Market
-    : ordType === OrdType.StopLimit
-      ? OrdType.Limit
-      : ordType;
-
-/**
- * TIFs the OMS accepts for an order type, strategy and trading phase: the
- * strategy definition's list, less GTC for MARKET, only DAY / GTC for stops,
- * and no IOC / FOK outside continuous trading.
- */
-export const isTimeInForceAllowed = (
-  ordType: OrdType,
-  tif: TimeInForce,
-  strategy?: AlgoStrategy,
-  phase?: string,
-) =>
-  algoStrategyDefinition(strategy).timeInForce.includes(tif) &&
-  !(ordType === OrdType.Market && tif === TimeInForce.GoodTillCancel) &&
-  !(isStopOrdType(ordType) && !STOP_TIME_IN_FORCE_VALUES.includes(tif)) &&
-  !(
-    phase &&
-    phase !== TradingPhase.Continuous &&
-    (tif === TimeInForce.ImmediateOrCancel || tif === TimeInForce.FillOrKill)
-  );
-
-/** The TIFs to offer, in display order. */
-export const allowedTimesInForce = (
-  ordType: OrdType,
-  strategy?: AlgoStrategy,
-  phase?: string,
-) =>
-  ORDER_TICKET_TIFS.filter((tif) =>
-    isTimeInForceAllowed(ordType, tif, strategy, phase),
-  );
 
 /**
  * Strategies whose name, id or description matches `query`, in picker

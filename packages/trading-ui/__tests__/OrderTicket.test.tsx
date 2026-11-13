@@ -146,7 +146,7 @@ describe("OrderTicket", () => {
     expect(row?.[orders.map.status]).toBe(OrdStatus.Filled);
   });
 
-  test("shows a risk reject (price outside collar)", async () => {
+  test("a price outside the collar is an error on the price before sending", async () => {
     const inst = instrumentRow();
     const schedule = scheduleOf(inst);
     if (!schedule) throw Error("no tick schedule");
@@ -166,25 +166,51 @@ describe("OrderTicket", () => {
     await act(async () => {
       fireEvent.keyDown(form, { key: "Enter", ctrlKey: true });
     });
-    // Outside the collar: Review first, Enter confirms.
-    const review = await waitFor(() => {
-      const dialog = form.querySelector('[role="dialog"]');
-      expect(dialog?.textContent).toContain("Check this order");
-      return dialog as HTMLElement;
-    });
+    // The OMS reports the breach in the row's vuuMsg: shown on the price,
+    // and the order is not sent.
+    await waitFor(() =>
+      expect(
+        form
+          .querySelector('input[data-order-ticket-field="price"]')
+          ?.getAttribute("aria-invalid"),
+      ).toBe("true"),
+    );
+    expect(form.querySelector('[role="dialog"]')).toBeNull();
     expect(events).toHaveLength(0);
-    await act(async () => {
-      fireEvent.keyDown(review, { key: "Enter" });
+  });
+
+  test("a typed field is committed on Enter and checked by the OMS", async () => {
+    const inst = instrumentRow();
+    const schedule = scheduleOf(inst);
+    if (!schedule) throw Error("no tick schedule");
+    const onTick = roundToTick(inst.bid, schedule);
+    const tick = stepTicks(onTick, schedule, 1) - onTick;
+    const { events, form } = renderTicket({
+      ric,
+      account: ACCOUNT,
+      side: Side.Buy,
+      ordType: OrdType.Limit,
+      quantity: inst.lotSize,
     });
-    await waitFor(() => {
-      const status = form.querySelector('[data-status="REJECTED"]');
-      expect(status?.getAttribute("data-reason")).toBe("PRICE_OUTSIDE_COLLAR");
+    await waitForInstrument();
+    const price = form.querySelector(
+      'input[data-order-ticket-field="price"]',
+    ) as HTMLInputElement;
+    act(() => {
+      fireEvent.change(price, {
+        target: { value: String(onTick + tick / 2) },
+      });
     });
-    expect(
-      events.some(
-        (e) => e.kind === "reject" && e.reason === "PRICE_OUTSIDE_COLLAR",
-      ),
-    ).toBe(true);
+    // Not checked while it is being typed ...
+    expect(price.getAttribute("aria-invalid")).not.toBe("true");
+    act(() => {
+      fireEvent.keyDown(price, { key: "Enter" });
+    });
+    // ... the OMS checks it once committed (editCell), reported in vuuMsg.
+    await waitFor(() =>
+      expect(form.textContent).toContain("is not on a valid tick"),
+    );
+    expect(events).toHaveLength(0);
   });
 
   test("keyboard: B/S switch side, arrows nudge, Esc resets then closes", async () => {
@@ -351,28 +377,27 @@ describe("OrderTicket", () => {
     ).not.toBeNull();
   });
 
-  test("Review: Esc goes back without sending", async () => {
+  test("a quantity over the account limit is an error on the quantity", async () => {
     const inst = instrumentRow();
-    const schedule = scheduleOf(inst);
-    if (!schedule) throw Error("no tick schedule");
     const { events, form } = renderTicket({
       ric,
       account: ACCOUNT,
       side: Side.Buy,
       ordType: OrdType.Limit,
-      quantity: inst.lotSize,
-      price: roundToTick((inst.last || inst.bid) * 0.7, schedule),
+      quantity: inst.lotSize * 1_000_000,
+      price: inst.bid,
     });
     await waitForInstrument();
-    await waitFor(() => expect(submitButton().textContent).toMatch(/^Review/));
-    act(() => {
+    await act(async () => {
       fireEvent.keyDown(form, { key: "F9" });
     });
-    expect(form.querySelector('[role="dialog"]')).not.toBeNull();
-    act(() => {
-      fireEvent.keyDown(form, { key: "Escape" });
-    });
-    expect(form.querySelector('[role="dialog"]')).toBeNull();
+    await waitFor(() =>
+      expect(
+        form
+          .querySelector('input[data-order-ticket-field="quantity"]')
+          ?.getAttribute("aria-invalid"),
+      ).toBe("true"),
+    );
     expect(events).toHaveLength(0);
   });
 

@@ -98,10 +98,23 @@ export {
 export {
   checkPreTradeRisk,
   expectedPrice,
+  riskLimitBreaches,
   referencePrice,
   type RiskContext,
 } from "./risk/preTradeRisk";
 export { handleOmsRpc, type OmsRpcName } from "./modules/oms/omsRpc";
+export {
+  EMPTY_ORDER_ENTRY,
+  ORDER_ENTRY_IDLE_MS,
+  type OrderEntryFields,
+  OrderEntryService,
+  type OrderEntryServiceOptions,
+} from "./entry/OrderEntryService";
+export {
+  handleOrderEntryEditCell,
+  handleOrderEntryRpc,
+  type OrderEntryRpcName,
+} from "./entry/orderEntryRpc";
 export {
   type OmsTable,
   type OmsTableName,

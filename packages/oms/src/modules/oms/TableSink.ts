@@ -47,6 +47,7 @@ export class TableSink implements OmsSink, PnlHistorySink {
     accountPnlHistory: 0,
     clientBots: 0,
     clientBotParams: 0,
+    orderEntry: 0,
   };
 
   attach(name: OmsTableName, table: OmsTable) {
@@ -103,6 +104,8 @@ export class TableSink implements OmsSink, PnlHistorySink {
 
   clientBot = (row: object) => this.#write("clientBots", { ...row });
   clientBotParam = (row: object) => this.#write("clientBotParams", { ...row });
+  /** An orderEntry row (a full row to insert, or the changed columns). */
+  orderEntry = (row: Record<string, unknown>) => this.#write("orderEntry", row);
 
   /** Delete a row (or drop it from the pre-attach buffer). */
   deleteRow = (name: OmsTableName, key: string) => {

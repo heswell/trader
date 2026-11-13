@@ -1,5 +1,6 @@
 import {
   type CreateOrderRequest,
+  EntryRiskCode,
   type InstrumentStatic,
   isStopOrdType,
   OrdType,
@@ -139,27 +140,54 @@ export const checkPreTradeRisk = (
     if (reached) return reached;
   }
 
+  return riskLimitBreaches(order, account, instrument, ctx)[0];
+};
+
+/** A broken account limit or the collar (see riskLimitBreaches). */
+export interface RiskBreach extends OrderReject {
+  code: EntryRiskCode;
+}
+
+/**
+ * The account limits and the collar an order breaks, in checkPreTradeRisk's
+ * order: maxOrderQty, maxOrderNotional, the limit price collar (LIMIT only),
+ * maxPositionNotional. The order ticket shows them all; createOrder rejects
+ * on the first.
+ */
+export const riskLimitBreaches = (
+  order: RiskOrder,
+  account: Account,
+  instrument: RiskInstrument,
+  ctx: Pick<
+    RiskContext,
+    "market" | "collarPct" | "positionQty" | "workingBuyQty" | "workingSellQty"
+  >,
+): RiskBreach[] => {
+  const breaches: RiskBreach[] = [];
   if (order.quantity > account.maxOrderQty) {
-    return reject(
-      RejectReason.ExceedsMaxQuantity,
-      `quantity ${order.quantity} exceeds max ${account.maxOrderQty}`,
-    );
+    breaches.push({
+      code: EntryRiskCode.MaxOrderQty,
+      reason: RejectReason.ExceedsMaxQuantity,
+      text: `quantity ${order.quantity} exceeds max ${account.maxOrderQty}`,
+    });
   }
   const px = expectedPrice(order, instrument, ctx.market);
   const notionalUsd = order.quantity * px * usdPerUnit(instrument);
   if (notionalUsd > account.maxOrderNotional) {
-    return reject(
-      RejectReason.ExceedsMaxNotional,
-      `order notional ${fmtUsd(notionalUsd)} exceeds max ${fmtUsd(account.maxOrderNotional)}`,
-    );
+    breaches.push({
+      code: EntryRiskCode.MaxOrderNotional,
+      reason: RejectReason.ExceedsMaxNotional,
+      text: `order notional ${fmtUsd(notionalUsd)} exceeds max ${fmtUsd(account.maxOrderNotional)}`,
+    });
   }
   if (order.ordType === OrdType.Limit && order.price) {
     const ref = referencePrice(instrument, ctx.market);
     if (Math.abs(order.price / ref - 1) > ctx.collarPct + 1e-9) {
-      return reject(
-        RejectReason.PriceOutsideCollar,
-        `price ${order.price} is more than ${ctx.collarPct * 100}% from reference ${ref}`,
-      );
+      breaches.push({
+        code: EntryRiskCode.Collar,
+        reason: RejectReason.PriceOutsideCollar,
+        text: `price ${order.price} is more than ${ctx.collarPct * 100}% from reference ${ref}`,
+      });
     }
   }
   const sign = order.side === Side.Buy ? 1 : -1;
@@ -173,9 +201,11 @@ export const checkPreTradeRisk = (
     projected > Math.abs(ctx.positionQty) &&
     positionUsd > account.maxPositionNotional
   ) {
-    return reject(
-      RejectReason.ExceedsMaxNotional,
-      `projected position ${fmtUsd(positionUsd)} exceeds max ${fmtUsd(account.maxPositionNotional)}`,
-    );
+    breaches.push({
+      code: EntryRiskCode.MaxPositionNotional,
+      reason: RejectReason.ExceedsMaxNotional,
+      text: `projected position ${fmtUsd(positionUsd)} exceeds max ${fmtUsd(account.maxPositionNotional)}`,
+    });
   }
+  return breaches;
 };
