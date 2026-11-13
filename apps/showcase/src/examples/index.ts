@@ -25,6 +25,7 @@ import {
   PriceChartExample,
   SlippageChartExample,
   SpreadChartExample,
+  TimeSeriesChartExample,
 } from "./ChartExamples";
 import {
   ChannelPickerFit,
@@ -253,6 +254,14 @@ export const examples: ShowcaseExample[] = [
     description:
       "Spread in bps and top-5 book imbalance (-1..+1) over the last 5 minutes of bookSamples for the selected instrument.",
     Component: SpreadChartExample,
+  },
+  {
+    id: "time-series-chart",
+    group: "TimeSeriesChart",
+    title: "Large time series (server downsampling)",
+    description:
+      "Days of 1 s mid / spread per instrument, downsampled by the server (M4, MinMaxLTTB, LTTB or a plain stride) for the visible window at the chart's pixel width. Wheel to zoom, drag to pan; the numbers under the toolbar are per request. See docs/timeseries-downsampling.md.",
+    Component: TimeSeriesChartExample,
   },
   {
     id: "pnl-history-chart",

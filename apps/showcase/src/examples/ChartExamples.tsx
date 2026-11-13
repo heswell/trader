@@ -7,6 +7,7 @@ import {
   PriceChart,
   SlippageChart,
   SpreadChart,
+  TimeSeriesChart,
 } from "@heswell/trading-ui";
 import { Checkbox, FlexLayout } from "@salt-ds/core";
 import { type CSSProperties, useState } from "react";
@@ -91,6 +92,27 @@ export const SpreadChartExample = () => (
   <div style={withSelector("1fr")}>
     <InstrumentSelector />
     <SpreadChart style={panel} />
+  </div>
+);
+
+/**
+ * TimeSeriesChart following the selected instrument: two days of 1 s mid
+ * (172,800 points, engine-local) downsampled by the server for the window
+ * and pixel width. Wheel to zoom, drag to pan; switch the method to compare.
+ * Below, the same with mid and spread on two axes.
+ */
+export const TimeSeriesChartExample = () => (
+  <div style={withSelector("1fr 1fr")}>
+    <div style={{ gridRow: "1 / 3" }}>
+      <InstrumentSelector />
+    </div>
+    <TimeSeriesChart style={panel} />
+    <TimeSeriesChart
+      defaultMethod="m4"
+      fields={["mid", "spreadBps"]}
+      showMethodSelector={false}
+      style={panel}
+    />
   </div>
 );
 

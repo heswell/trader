@@ -1,0 +1,16 @@
+.tradingTimeSeriesChart-plot {
+  inset: 0;
+  position: absolute;
+}
+
+.tradingTimeSeriesChart-stats {
+  color: var(--salt-content-secondary-foreground);
+  font-size: var(--salt-text-notation-fontSize);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tradingTimeSeriesChart-error {
+  color: var(--salt-status-error-foreground-informative);
+}
