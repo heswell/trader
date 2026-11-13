@@ -83,3 +83,10 @@ export const botHistoryKey = (botId: string, time: number) =>
 /** botFills key: one row per side of a trade (M = maker, T = taker). */
 export const botFillKey = (tradeId: string, isMaker: boolean) =>
   `${tradeId}${SEP}${isMaker ? "M" : "T"}`;
+
+/** Key of a `timeSeriesBuckets` row. */
+export const timeSeriesBucketKey = (
+  subId: string,
+  field: string,
+  bucket: number,
+) => `${subId}|${field}|${bucket}`;

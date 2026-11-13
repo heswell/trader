@@ -4,6 +4,7 @@ import {
   ExchangeSimulator,
   handleExchangeAdminRpc,
   handleTimeSeriesRpc,
+  type TimeSeriesRpcName,
   ManualClock,
   systemClock,
 } from "@heswell/exchange-sim/engine";
@@ -98,6 +99,7 @@ export const EXCHANGE_TABLE_NAMES: readonly ExchangeTableName[] = [
   "scenarios",
   "scenarioRuns",
   "simSession",
+  "timeSeriesBuckets",
   "instrumentPrices",
 ];
 export const OMS_TABLE_NAMES: readonly OmsLocalTableName[] = [
@@ -228,6 +230,8 @@ const joinTableFor = (def: JoinDefinition, base: Table, join: Table) => {
 
 const isExchangeRpc = (name: string): name is ExchangeAdminRpcName =>
   (EXCHANGE_ADMIN_RPC_NAMES as readonly string[]).includes(name);
+const isTimeSeriesRpc = (name: string): name is TimeSeriesRpcName =>
+  (EXCHANGE_QUERY_RPC_NAMES as readonly string[]).includes(name);
 const isOmsRpc = (name: string): name is OmsRpcName =>
   (OMS_RPC_NAMES as readonly string[]).includes(name);
 const isOrderEntryRpc = (name: string): name is OrderEntryRpcName =>
@@ -305,6 +309,7 @@ export const createTradingTestData = ({
   const scenarios = tableFor(exchangeTables.scenarios);
   const scenarioRuns = tableFor(exchangeTables.scenarioRuns);
   const simSession = tableFor(exchangeTables.simSession);
+  const timeSeriesBuckets = tableFor(exchangeTables.timeSeriesBuckets);
   const omsTableMap = forEachTable(
     Object.keys(omsTables) as OmsTableName[],
     (name) => tableFor(omsTables[name]),
@@ -345,6 +350,7 @@ export const createTradingTestData = ({
     scenarios: scenarios.engineTable,
     scenarioRuns: scenarioRuns.engineTable,
     simSession: simSession.engineTable,
+    timeSeriesBuckets: timeSeriesBuckets.engineTable,
   });
   for (const name of Object.keys(omsTableMap) as OmsTableName[]) {
     omsService.tables.attach(name, omsTableMap[name].engineTable);
@@ -383,7 +389,8 @@ export const createTradingTestData = ({
       return handleClientAdminRpc(omsService, rpcName, params, user);
     if (isExchangeRpc(rpcName))
       return handleExchangeAdminRpc(sim, rpcName, params, user.name);
-    if (rpcName === "timeSeries") return handleTimeSeriesRpc(sim, params);
+    if (isTimeSeriesRpc(rpcName))
+      return handleTimeSeriesRpc(sim, rpcName, params, user.name);
     return {
       type: "ERROR_RESULT",
       errorMessage: `INVALID_REQUEST: unknown rpc ${rpcName}`,
@@ -427,6 +434,7 @@ export const createTradingTestData = ({
     scenarios,
     scenarioRuns,
     simSession,
+    timeSeriesBuckets,
     instrumentPrices: instrumentPricesJoin,
   };
   const exchangeSchemas = forEachTable(

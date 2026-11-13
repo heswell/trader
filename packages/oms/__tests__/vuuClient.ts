@@ -116,7 +116,12 @@ export class VuuClient {
     });
   }
 
-  async createViewport(module: string, table: string, columns: string[]) {
+  async createViewport(
+    module: string,
+    table: string,
+    columns: string[],
+    filter = "",
+  ) {
     const created = this.waitFor<VuuViewportCreateSuccessResponse>(
       (body) =>
         body.type === "CREATE_VP_SUCCESS" &&
@@ -125,7 +130,7 @@ export class VuuClient {
     this.send(module, {
       aggregations: [],
       columns,
-      filterSpec: { filter: "" },
+      filterSpec: { filter },
       groupBy: [],
       range: { from: 0, to: 100 },
       sort: { sortDefs: [] },

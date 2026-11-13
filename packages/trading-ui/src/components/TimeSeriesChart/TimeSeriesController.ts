@@ -1,8 +1,4 @@
-import type {
-  DownsampleMethod,
-  TimeSeriesRequest,
-  TimeSeriesResponse,
-} from "@heswell/trading-schemas";
+import type { SetTimeSeriesWindowResponse } from "@heswell/trading-schemas";
 import { resolveChartTheme } from "@vuu-ui/vuu-chart";
 import { LineChart } from "echarts/charts";
 import {
@@ -14,50 +10,15 @@ import {
 import { type ECharts, init, use } from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import {
-  type LoadedWindow,
-  mergeTail,
-  needsRequest,
-  planRequest,
-  tailStart,
-  toPoints,
+  type BucketRow,
+  bucketsToPoints,
+  needsWindow,
+  planRange,
+  planWindow,
+  type SeriesPoints,
   type ViewState,
+  type WindowPlan,
 } from "./timeSeriesWindow";
-
-/** Numbers from the last answered request, for the stats readout. */
-export interface TimeSeriesStats {
-  /** "window" (zoom / pan) or "tail" (live edge). */
-  kind: "window" | "tail";
-  method: DownsampleMethod;
-  /** Samples returned, all fields. */
-  returned: number;
-  /** Store points inside the requested range, all fields. */
-  sourcePoints: number;
-  serverMs: number;
-  /** Request to answer, client side. */
-  roundTripMs: number;
-  /** Size of the response data as JSON. */
-  payloadBytes: number;
-  bucketMs: number;
-  /** Visible span. */
-  spanMs: number;
-  /** Window requests so far (not counting tails). */
-  windowRequests: number;
-}
-
-export interface TimeSeriesControllerOptions {
-  ric: string;
-  fields: readonly string[];
-  method: DownsampleMethod;
-  /** Initial visible span, ending now. */
-  spanMs: number;
-  /** Fields drawn as step-hold (`step: "end"`), e.g. P&L. */
-  stepFields?: readonly string[];
-  /** Debounce of the window request after a zoom / pan (ms). */
-  debounceMs?: number;
-  send: (params: TimeSeriesRequest) => Promise<TimeSeriesResponse>;
-  onStats?: (stats: TimeSeriesStats) => void;
-  onError?: (error: unknown) => void;
-}
 
 // Same echarts as vuu-chart (6.1.0): registering again is a no-op.
 use([
@@ -69,34 +30,99 @@ use([
   CanvasRenderer,
 ]);
 
+/** Numbers for the stats readout. */
+export interface TimeSeriesStats {
+  /** Last window change: buckets held, rows sent / removed by it. */
+  buckets: number;
+  upserts: number;
+  removed: number;
+  bucketMs: number;
+  serverMs: number;
+  /** Request to answer, client side. */
+  roundTripMs: number;
+  /** Visible span. */
+  spanMs: number;
+  following: boolean;
+  /** Window changes sent so far (not counting keep-alives). */
+  windowRequests: number;
+  /** Row updates received (frames with changes) so far. */
+  rowUpdates: number;
+  /** Bucket rows held (all widths, all fields). */
+  rows: number;
+}
+
+export interface TimeSeriesWindowRequest {
+  start: number;
+  end: number;
+  points: number;
+  follow: boolean;
+}
+
+export interface TimeSeriesControllerOptions {
+  fields: readonly string[];
+  /** Initial visible span, ending now. */
+  spanMs: number;
+  /** Fields drawn as step-hold (`step: "end"`), e.g. P&L. */
+  stepFields?: readonly string[];
+  /** Debounce of the window change after a zoom / pan (ms). */
+  debounceMs?: number;
+  /** Send setTimeSeriesWindow for this subscription. */
+  send: (
+    window: TimeSeriesWindowRequest,
+  ) => Promise<SetTimeSeriesWindowResponse>;
+  onStats?: (stats: TimeSeriesStats) => void;
+  onError?: (error: unknown) => void;
+}
+
 const GRID = { left: 64, right: 64, top: 16, bottom: 56 };
 /** Smallest visible span: a minute. */
 const MIN_SPAN_MS = 60_000;
+/** Re-send the window this often to keep the subscription's lease. */
+const KEEP_ALIVE_MS = 20_000;
+
+type Current = WindowPlan & { from: number; to: number };
 
 /**
- * Drives one echarts line chart over the timeSeries RPC: zoom (wheel) and
- * pan (drag) move a dataZoom window over an x axis spanning everything the
- * store holds; a debounced request loads the window (plus overscan) at one
- * bucket per pixel. While the view touches the live edge it follows it,
- * refreshing just the last bucket every store interval.
+ * Drives one echarts line chart over a time-series subscription, like a
+ * grid over a viewport: the chart owns a window (visible span plus overscan,
+ * about one bucket per pixel) and sends setTimeSeriesWindow when the view
+ * leaves it or needs another bucket width; the server streams the buckets as
+ * `timeSeriesBuckets` rows (setRows) and keeps them up to date as data
+ * ticks. Pinned to the live edge, the window follows now on the server and
+ * the view follows it here.
  */
 export class TimeSeriesController {
   readonly #chart: ECharts;
   readonly #options: TimeSeriesControllerOptions;
-  #loaded: LoadedWindow | undefined;
+  #current: Current | undefined;
+  #rows: readonly BucketRow[] = [];
+  #series: Record<string, SeriesPoints> = {};
   #first = 0;
-  #now = 0;
-  #intervalMs = 1000;
+  /** Server clock minus local clock. */
+  #clockOffset = 0;
+  #baseMs = 1000;
+  #gapMs = 3000;
   #view = { start: 0, end: 0 };
   #following = true;
   #debounce: ReturnType<typeof setTimeout> | undefined;
   #liveTimer: ReturnType<typeof setInterval> | undefined;
   #seq = 0;
-  #windowRequests = 0;
-  #tailInFlight = false;
+  #lastSent = 0;
   #disposed = false;
-  /** Ignore the dataZoom event our own setOption causes. */
   #settingZoom = false;
+  #stats: TimeSeriesStats = {
+    buckets: 0,
+    upserts: 0,
+    removed: 0,
+    bucketMs: 0,
+    serverMs: 0,
+    roundTripMs: 0,
+    spanMs: 0,
+    following: true,
+    windowRequests: 0,
+    rowUpdates: 0,
+    rows: 0,
+  };
 
   constructor(
     readonly element: HTMLElement,
@@ -105,7 +131,16 @@ export class TimeSeriesController {
     this.#options = options;
     this.#chart = init(element, undefined, { renderer: "canvas" });
     this.#chart.on("datazoom", this.#onDataZoom);
-    void this.#start();
+    const now = Date.now();
+    this.#first = now - options.spanMs;
+    this.#view = { start: now - options.spanMs, end: now };
+    this.#render();
+    void this.#sendWindow();
+    this.#liveTimer = setInterval(this.#onLive, 1000);
+  }
+
+  get #now() {
+    return Date.now() + this.#clockOffset;
   }
 
   get #widthPx() {
@@ -116,32 +151,32 @@ export class TimeSeriesController {
     return {
       ...this.#view,
       widthPx: this.#widthPx,
-      method: this.#options.method,
-      now: this.#now,
+      baseMs: this.#baseMs,
+      follow: this.#following,
     };
   }
 
-  async #start() {
-    const { ric, fields, spanMs, send } = this.#options;
-    try {
-      // A tiny probe for the extent and the server clock.
-      const probe = await send({ ric, fields: fields.join(","), points: 8 });
-      if (this.#disposed) return;
-      this.#first = probe.first || probe.now - spanMs;
-      this.#now = probe.now;
-      this.#intervalMs = probe.intervalMs;
-      this.#view = { start: probe.now - spanMs, end: probe.now };
-      this.#render();
-      await this.#requestWindow();
-      this.#liveTimer = setInterval(this.#onLive, this.#intervalMs);
-    } catch (err) {
-      this.#options.onError?.(err);
-    }
+  /** The subscription's rows changed (all rows held, any order). */
+  setRows(rows: readonly BucketRow[]) {
+    this.#rows = rows;
+    this.#stats.rowUpdates++;
+    this.#stats.rows = rows.length;
+    this.#redraw();
+  }
+
+  #redraw() {
+    if (this.#disposed || !this.#current) return;
+    this.#series = bucketsToPoints(
+      this.#rows,
+      this.#current.width,
+      this.#gapMs,
+    );
+    this.#chart.setOption({ series: this.#seriesOptions() });
   }
 
   #seriesOptions() {
     const { fields, stepFields = [] } = this.#options;
-    const series = this.#loaded?.series ?? {};
+    const series = this.#series;
     return fields.map((field, i) => ({
       id: field,
       name: field,
@@ -186,7 +221,7 @@ export class TimeSeriesController {
         xAxis: {
           type: "time",
           min: this.#first,
-          max: this.#now,
+          max: this.#view.end,
           ...axis,
           splitLine: { show: false },
         },
@@ -219,11 +254,13 @@ export class TimeSeriesController {
   #readZoom() {
     const option = this.#chart.getOption() as {
       dataZoom?: { start?: number; end?: number }[];
+      xAxis?: { min?: number; max?: number }[];
     };
     const dz = option.dataZoom?.[0];
-    if (!dz) return;
-    const lo = this.#first;
-    const span = this.#now - lo;
+    const axis = option.xAxis?.[0];
+    if (!dz || axis?.min === undefined || axis.max === undefined) return;
+    const lo = axis.min;
+    const span = axis.max - lo;
     this.#view = {
       start: lo + (span * (dz.start ?? 0)) / 100,
       end: lo + (span * (dz.end ?? 100)) / 100,
@@ -234,145 +271,100 @@ export class TimeSeriesController {
     if (this.#settingZoom) return;
     this.#readZoom();
     const pixelMs = (this.#view.end - this.#view.start) / this.#widthPx;
-    this.#following = this.#view.end >= this.#now - 2 * pixelMs;
+    this.#following = this.#view.end >= this.#now - 2 * Math.max(pixelMs, 1000);
     clearTimeout(this.#debounce);
     this.#debounce = setTimeout(
-      () => this.#maybeRequest(),
+      () => this.#maybeWindow(),
       this.#options.debounceMs ?? 120,
     );
   };
 
-  #maybeRequest() {
-    if (needsRequest(this.#loaded, this.#viewState(), this.#first))
-      void this.#requestWindow();
+  #maybeWindow() {
+    if (needsWindow(this.#current, this.#viewState(), this.#first))
+      void this.#sendWindow();
   }
 
-  async #requestWindow() {
-    const { ric, fields, method, send } = this.#options;
-    const plan = planRequest(this.#viewState());
-    plan.start = Math.max(0, plan.start);
+  async #sendWindow(plan = planWindow(this.#viewState()), keepAlive = false) {
     const seq = ++this.#seq;
     const t0 = performance.now();
+    this.#lastSent = Date.now();
     try {
-      const res = await send({
-        ric,
-        fields: fields.join(","),
-        method,
-        start: plan.start,
-        end: plan.end,
+      const res = await this.#options.send({
+        start: Math.max(0, Math.round(plan.start)),
+        end: Math.round(plan.end),
         points: plan.points,
-        ...(plan.bucketMs ? { bucketMs: plan.bucketMs } : {}),
+        follow: plan.follow,
       });
-      // A later request supersedes this one.
       if (this.#disposed || seq !== this.#seq) return;
-      this.#windowRequests++;
-      this.#loaded = {
-        start: res.start,
-        end: res.end,
-        pixelMs: plan.pixelMs,
-        method,
-        series: toPoints(res),
+      this.#clockOffset = res.now - Date.now();
+      this.#baseMs = res.intervalMs;
+      this.#gapMs = res.gapMs;
+      if (res.first) this.#first = res.first;
+      this.#current = {
+        ...plan,
+        width: res.bucketMs,
+        from: res.from,
+        to: res.to,
       };
-      this.#first = res.first || this.#first;
-      this.#advance(res.now - this.#now);
-      this.#chart.setOption({ series: this.#seriesOptions() });
-      this.#report("window", res, performance.now() - t0);
+      if (!keepAlive) {
+        this.#stats = {
+          ...this.#stats,
+          buckets: res.buckets,
+          upserts: res.upserts,
+          removed: res.removed,
+          bucketMs: res.bucketMs,
+          serverMs: res.serverMs,
+          roundTripMs: performance.now() - t0,
+          spanMs: this.#view.end - this.#view.start,
+          following: plan.follow,
+          windowRequests: this.#stats.windowRequests + 1,
+        };
+        this.#options.onStats?.({ ...this.#stats });
+      }
+      this.#moveAxis();
+      this.#redraw();
     } catch (err) {
       this.#options.onError?.(err);
     }
   }
 
-  /** Every store interval: move the axis to now and, when following, the view. */
-  readonly #onLive = async () => {
-    const loaded = this.#loaded;
-    if (!loaded || this.#tailInFlight || this.#disposed) return;
-    const { ric, fields, method, send } = this.#options;
-    if (method !== "m4") {
-      // LTTB buckets are by index: a tail would not line up. Reload instead.
-      if (this.#following) await this.#requestWindow();
-      return;
+  /** Every second: the live edge moves; a following view moves with it. */
+  readonly #onLive = () => {
+    if (this.#disposed || !this.#current) return;
+    if (this.#following) {
+      const now = this.#now;
+      const span = this.#view.end - this.#view.start;
+      this.#view = { start: now - span, end: now };
+      const range = planRange(this.#current, now);
+      this.#current = { ...this.#current, ...range };
     }
-    if (!this.#following) return;
-    const from = tailStart(loaded);
-    this.#tailInFlight = true;
-    const t0 = performance.now();
-    try {
-      const end = this.#now + 2 * this.#intervalMs + loaded.pixelMs;
-      const res = await send({
-        ric,
-        fields: fields.join(","),
-        method: "m4",
-        start: from,
-        end,
-        bucketMs: loaded.pixelMs,
-        points: Math.max(8, 4 * Math.ceil((end - from) / loaded.pixelMs)),
-      });
-      if (this.#disposed || this.#loaded !== loaded) return;
-      this.#loaded = mergeTail(loaded, res, from);
-      this.#advance(res.now - this.#now);
-      this.#chart.setOption({ series: this.#seriesOptions() });
-      this.#report("tail", res, performance.now() - t0);
-    } catch (err) {
-      this.#options.onError?.(err);
-    } finally {
-      this.#tailInFlight = false;
-    }
+    this.#moveAxis();
+    this.#options.onStats?.({ ...this.#stats });
+    if (Date.now() - this.#lastSent > KEEP_ALIVE_MS && this.#current)
+      void this.#sendWindow(this.#current, true);
   };
 
-  /** Move the live edge (and a following view) on by `dt`. */
-  #advance(dt: number) {
-    if (!(dt > 0)) return;
-    this.#now += dt;
-    if (this.#following) {
-      this.#view = { start: this.#view.start + dt, end: this.#view.end + dt };
-    }
+  #moveAxis() {
     this.#settingZoom = true;
     this.#chart.setOption({
-      xAxis: { max: this.#now },
+      xAxis: { min: this.#first, max: Math.max(this.#now, this.#view.end) },
       dataZoom: [{ startValue: this.#view.start, endValue: this.#view.end }],
     });
     this.#settingZoom = false;
-  }
-
-  #report(kind: TimeSeriesStats["kind"], res: TimeSeriesResponse, rtt: number) {
-    let returned = 0;
-    let sourcePoints = 0;
-    for (const s of res.series) {
-      returned += s.t.length;
-      sourcePoints += s.sourcePoints;
-    }
-    this.#options.onStats?.({
-      kind,
-      method: res.method,
-      returned,
-      sourcePoints,
-      serverMs: res.serverMs,
-      roundTripMs: rtt,
-      payloadBytes: JSON.stringify(res).length,
-      bucketMs: res.bucketMs,
-      spanMs: this.#view.end - this.#view.start,
-      windowRequests: this.#windowRequests,
-    });
   }
 
   /** Show the last `spanMs` (at most everything) up to now and follow the live edge. */
   showLatest(spanMs: number) {
     this.#following = true;
-    this.#view = {
-      start: Math.max(this.#first, this.#now - spanMs),
-      end: this.#now,
-    };
-    this.#settingZoom = true;
-    this.#chart.setOption({
-      dataZoom: [{ startValue: this.#view.start, endValue: this.#view.end }],
-    });
-    this.#settingZoom = false;
-    this.#maybeRequest();
+    const now = this.#now;
+    this.#view = { start: Math.max(this.#first, now - spanMs), end: now };
+    this.#moveAxis();
+    this.#maybeWindow();
   }
 
   resize() {
     this.#chart.resize();
-    if (this.#loaded) this.#maybeRequest();
+    if (this.#current) this.#maybeWindow();
   }
 
   dispose() {

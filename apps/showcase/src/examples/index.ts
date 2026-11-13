@@ -258,9 +258,9 @@ export const examples: ShowcaseExample[] = [
   {
     id: "time-series-chart",
     group: "TimeSeriesChart",
-    title: "Large time series (server downsampling)",
+    title: "Large time series (streamed M4 buckets)",
     description:
-      "Days of 1 s mid / spread per instrument, downsampled by the server (M4, MinMaxLTTB, LTTB or a plain stride) for the visible window at the chart's pixel width. Wheel to zoom, drag to pan; the numbers under the toolbar are per request. See docs/timeseries-downsampling.md.",
+      "Days of 1 s mid / spread per instrument as a subscription: the chart sets a time window (with overscan, about one bucket per pixel) and the server streams M4 buckets as timeSeriesBuckets rows, inserting / deleting as you pan and updating the last bucket as prices tick. Wheel to zoom, drag to pan. See docs/timeseries-downsampling.md.",
     Component: TimeSeriesChartExample,
   },
   {

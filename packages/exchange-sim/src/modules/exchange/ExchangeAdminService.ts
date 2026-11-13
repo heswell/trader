@@ -1,5 +1,8 @@
 import { DefaultRpcHandler, type TableContainer } from "@heswell/vuu-server";
-import { EXCHANGE_ADMIN_RPC_NAMES, RpcName } from "@heswell/trading-schemas";
+import {
+  EXCHANGE_ADMIN_RPC_NAMES,
+  EXCHANGE_QUERY_RPC_NAMES,
+} from "@heswell/trading-schemas";
 import type { RpcResult } from "@vuu-ui/vuu-protocol-types";
 import type { ExchangeSimulator } from "../../engine/ExchangeSimulator";
 import { handleExchangeAdminRpc } from "./exchangeAdminRpc";
@@ -19,7 +22,7 @@ export {
 /**
  * Vuu RPC handler exposing the EXCHANGE admin RPCs (VIEWPORT_CONTEXT; the
  * caller needs the sim-admin role, see simAdminAccess.ts) and the read-only
- * timeSeries RPC (any user).
+ * time-series RPCs (any user).
  */
 export class ExchangeAdminRpcHandler extends DefaultRpcHandler {
   constructor(
@@ -37,8 +40,14 @@ export class ExchangeAdminRpcHandler extends DefaultRpcHandler {
         return handleExchangeAdminRpc(sim, rpcName, namedParams, user?.name);
       });
     }
-    this.registerRpc(RpcName.TimeSeries, ({ namedParams }) =>
-      handleTimeSeriesRpc(sim, namedParams),
-    );
+    for (const rpcName of EXCHANGE_QUERY_RPC_NAMES)
+      this.registerRpc(rpcName, ({ namedParams, ctx }) =>
+        handleTimeSeriesRpc(
+          sim,
+          rpcName,
+          namedParams,
+          (ctx.user as SimUser | undefined)?.name,
+        ),
+      );
   }
 }

@@ -1,129 +1,120 @@
 import { describe, expect, test } from "bun:test";
-import type { TimeSeriesResponse } from "@heswell/trading-schemas";
 import {
-  type LoadedWindow,
-  mergeTail,
-  needsRequest,
-  planRequest,
-  tailStart,
+  type BucketRow,
+  bucketsToPoints,
+  needsWindow,
+  planRange,
+  planWindow,
 } from "../src/components/TimeSeriesChart/timeSeriesWindow";
 
 const HOUR = 3_600_000;
 const now = 1_763_000_000_000;
 
-describe("planRequest", () => {
-  test("m4: one bucket per pixel, overscan, snapped to the pixel grid", () => {
-    const view = {
+describe("planWindow", () => {
+  test("overscan either side, one point per column, width on the 2^k ladder", () => {
+    const plan = planWindow({
       start: now - 10 * HOUR,
       end: now - 9 * HOUR,
       widthPx: 1_000,
-      method: "m4" as const,
-      now,
-    };
-    const plan = planRequest(view);
-    expect(plan.pixelMs).toBe(3_600);
-    expect(plan.bucketMs).toBe(3_600);
-    expect(plan.start % 3_600).toBe(0);
-    expect(plan.end % 3_600).toBe(0);
-    expect(plan.start).toBeLessThanOrEqual(view.start - HOUR / 2);
-    expect(plan.end).toBeGreaterThanOrEqual(view.end + HOUR / 2);
-    expect(plan.points).toBe(4 * ((plan.end - plan.start) / 3_600));
+      baseMs: 1_000,
+      follow: false,
+    });
+    expect(plan.start).toBe(now - 10.5 * HOUR);
+    expect(plan.end).toBe(now - 8.5 * HOUR);
+    expect(plan.points).toBe(2_000);
+    // 2 h / 2000 columns = 3.6 s per column: the 2 s level
+    expect(plan.width).toBe(2_000);
   });
-  test("does not overscan past the live edge", () => {
-    const plan = planRequest({
+  test("following: no overscan past now", () => {
+    const plan = planWindow({
       start: now - HOUR,
       end: now,
       widthPx: 1_000,
-      method: "lttb",
-      now,
+      baseMs: 1_000,
+      follow: true,
     });
-    expect(plan.end).toBeLessThanOrEqual(now + 2 * plan.pixelMs);
-    expect(plan.bucketMs).toBeUndefined();
-    expect(plan.points).toBe(
-      2 * Math.round((plan.end - plan.start) / plan.pixelMs),
-    );
-  });
-  test("caps the point budget", () => {
-    expect(
-      planRequest({ start: 0, end: HOUR, widthPx: 20_000, method: "m4", now })
-        .points,
-    ).toBe(20_000);
+    expect(plan.end).toBe(now);
+    expect(plan.points).toBe(1_500);
+    expect(planRange(plan, now + 5_000).to).toBeGreaterThan(now + 5_000);
   });
 });
 
-describe("needsRequest", () => {
-  const loaded: LoadedWindow = {
-    start: now - 3 * HOUR,
-    end: now,
-    pixelMs: 3_600,
-    method: "m4",
-    series: {},
-  };
+describe("needsWindow", () => {
   const view = {
     start: now - 2 * HOUR,
     end: now - HOUR,
     widthPx: 1_000,
-    method: "m4" as const,
-    now,
+    baseMs: 1_000,
+    follow: false,
   };
-  test("a pan inside the loaded range needs nothing", () => {
-    expect(needsRequest(loaded, view, 0)).toBe(false);
+  const plan = planWindow(view);
+  const current = { ...plan, ...planRange(plan, now) };
+  test("a pan inside the subscribed range needs nothing", () => {
+    expect(
+      needsWindow(
+        current,
+        { ...view, start: view.start + HOUR / 4, end: view.end + HOUR / 4 },
+        0,
+      ),
+    ).toBe(false);
   });
-  test("zooming past 10% does", () => {
-    expect(needsRequest(loaded, { ...view, end: view.end + HOUR / 5 }, 0)).toBe(
+  test("a zoom inside the width level needs nothing; to another level does", () => {
+    expect(
+      needsWindow(current, { ...view, end: view.end - HOUR / 10 }, 0),
+    ).toBe(false);
+    expect(needsWindow(current, { ...view, end: view.end + HOUR }, 0)).toBe(
       true,
     );
   });
-  test("panning out of the range does, unless there is no data there", () => {
-    const left = { ...view, start: now - 3.5 * HOUR, end: now - 2.5 * HOUR };
-    expect(needsRequest(loaded, left, 0)).toBe(true);
-    expect(needsRequest(loaded, left, now - 3 * HOUR)).toBe(false);
+  test("leaving the range does, unless there is no data there", () => {
+    const left = { ...view, start: view.start - HOUR, end: view.end - HOUR };
+    expect(needsWindow(current, left, 0)).toBe(true);
+    expect(needsWindow(current, left, current.from)).toBe(false);
   });
-  test("a method change does", () => {
-    expect(needsRequest(loaded, { ...view, method: "lttb" }, 0)).toBe(true);
+  test("following changes do", () => {
+    expect(needsWindow(current, { ...view, follow: true }, 0)).toBe(true);
   });
 });
 
-describe("mergeTail", () => {
-  test("replaces the last bucket with the tail's points", () => {
-    const loaded: LoadedWindow = {
-      start: 0,
-      end: 3_000,
-      pixelMs: 1_000,
-      method: "m4",
-      series: {
-        mid: [
-          [0, 1],
-          [999, 2],
-          [1_000, 3],
-          [2_000, 4],
-          [2_400, 5],
-        ],
-      },
-    };
-    const from = tailStart(loaded);
-    expect(from).toBe(2_000);
-    const tail = {
-      end: 4_000,
-      series: [
-        {
-          field: "mid",
-          t0: 1_000,
-          t: [0, 1_000, 500, 1_000],
-          v: [3, 4, 6, 7],
-          sourcePoints: 4,
-        },
+describe("bucketsToPoints", () => {
+  const row = (bucket: number, extra: Partial<BucketRow> = {}): BucketRow => ({
+    field: "mid",
+    bucket,
+    width: 1_000,
+    firstT: bucket,
+    first: 1,
+    minT: bucket + 500,
+    min: 0,
+    maxT: bucket + 200,
+    max: 3,
+    lastT: bucket + 900,
+    last: 2,
+    ...extra,
+  });
+  test("first / max / min / last in time order, buckets sorted, gaps broken, stale widths skipped", () => {
+    const pts = bucketsToPoints(
+      [
+        row(10_000),
+        row(0),
+        row(1_000, { width: 2_000 }),
+        row(2_000, { minT: 2_000, min: 1 }),
       ],
-    } as unknown as TimeSeriesResponse;
-    const merged = mergeTail(loaded, tail, from);
-    expect(merged.series.mid).toEqual([
+      1_000,
+      3_000,
+    );
+    expect(pts.mid).toEqual([
       [0, 1],
-      [999, 2],
-      [1_000, 3],
-      [2_000, 4],
-      [2_500, 6],
-      [3_500, 7],
+      [200, 3],
+      [500, 0],
+      [900, 2],
+      [2_000, 1],
+      [2_200, 3],
+      [2_900, 2],
+      [6_450, null],
+      [10_000, 1],
+      [10_200, 3],
+      [10_500, 0],
+      [10_900, 2],
     ]);
-    expect(merged.end).toBe(4_000);
   });
 });

@@ -76,7 +76,19 @@ export {
   type ExchangeAdminRpcName,
   handleExchangeAdminRpc,
 } from "./modules/exchange/exchangeAdminRpc";
-export { handleTimeSeriesRpc } from "./modules/exchange/timeSeriesRpc";
+export {
+  handleTimeSeriesRpc,
+  type TimeSeriesRpcName,
+} from "./modules/exchange/timeSeriesRpc";
+export {
+  bucketsIn,
+  bucketWidthFor,
+  type BucketDiff,
+  type BucketValue,
+  BucketWindow,
+  type WindowSpec,
+} from "./history/BucketWindow";
+export { TimeSeriesBucketPublisher } from "./publish/TimeSeriesBucketPublisher";
 export {
   type HistorySource,
   TimeSeriesError,

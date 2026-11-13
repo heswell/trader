@@ -217,6 +217,16 @@ export class TimeSeriesStore {
     return entry.series[field];
   }
 
+  /** Response decimals of a field of `ric` (series must exist). */
+  decimals(ric: string, field: TimeSeriesField) {
+    return FIELD_DECIMALS[field](this.#entry(ric).decimals);
+  }
+
+  /** The current series of a ric and field, without generating history. */
+  current(ric: string, field: TimeSeriesField) {
+    return this.#entry(ric).series[field];
+  }
+
   /** Instruments, points and bytes held. */
   stats() {
     let points = 0;

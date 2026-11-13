@@ -53,3 +53,40 @@ test("timeSeries: unknown ric and bad params are rejected", () => {
     type: "ERROR_RESULT",
   });
 });
+
+test("setTimeSeriesWindow: buckets stream as timeSeriesBuckets rows and tick", () => {
+  td = createTradingTestData({
+    seed: 1,
+    manualClock: true,
+    exchange: { activeInstruments: 4, timeSeriesHistoryHours: 2 },
+    oms: { flowRate: 0 },
+  });
+  td.advance(5_000);
+  const ric = td.sim.books[0].ric;
+  const now = td.sim.clock();
+  const result = td.rpc("setTimeSeriesWindow", {
+    subId: "sub-1",
+    ric,
+    start: now - 3_600_000,
+    end: now,
+    points: 900,
+    follow: true,
+  });
+  expect(result.type).toBe("SUCCESS_RESULT");
+  const data = (result as { data: { bucketMs: number; buckets: number } }).data;
+  expect(data.bucketMs).toBe(4_000);
+  const table = td.exchange.getTable("timeSeriesBuckets");
+  const rows = () => table.data.filter((r) => r[table.map.subId] === "sub-1");
+  expect(rows().length).toBe(data.buckets);
+  const lastBucket = () =>
+    Math.max(...rows().map((r) => r[table.map.bucket] as number));
+  const before = lastBucket();
+  td.advance(6_000);
+  // the window followed now: newer buckets, same count give or take one
+  expect(lastBucket()).toBeGreaterThan(before);
+  expect(Math.abs(rows().length - data.buckets)).toBeLessThanOrEqual(1);
+  expect(td.rpc("closeTimeSeries", { subId: "sub-1" }).type).toBe(
+    "SUCCESS_RESULT",
+  );
+  expect(rows().length).toBe(0);
+});

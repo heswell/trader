@@ -11,13 +11,16 @@ Schemas are in `@heswell/trading-schemas` (`bars`, `bookSamples`, `pnlHistory`, 
 | Table | Module | Key | Rows | Updates |
 | --- | --- | --- | --- | --- |
 | `bars` | EXCHANGE | `ric\|interval\|start` | `barHistory` closed bars + the current bar, per ric and interval | Current bar in place every publish cycle; closed bars are final |
+| `timeSeriesBuckets` | EXCHANGE | `subId\|field\|bucket` | The buckets of each open time-series subscription | Inserts / deletes as the window moves; the open bucket updated each sample |
 | `bookSamples` | EXCHANGE | `ric\|time` | `bookSampleHistory` per ric | Insert every `bookSampleIntervalMs`, oldest deleted |
 | `pnlHistory` | OMS | `account\|ric\|time` | up to `pnlHistoryLength` per position | Insert when a position changed, every `pnlHistoryIntervalMs` |
 | `accountPnlHistory` | OMS | `account\|time` | `pnlHistoryLength` per account | Insert every `pnlHistoryIntervalMs` |
 | `parentOrders` | OMS | `orderId` | | New execution-quality columns |
 
-For days of 1 s history (far more than a table holds) there is the `timeSeries` RPC, which downsamples on the
-server. See [timeseries-downsampling.md](timeseries-downsampling.md).
+For days of 1 s history (far more than a table holds) there is the time-series store. A chart subscribes to a time
+window with the `setTimeSeriesWindow` RPC and gets M4 buckets of it as rows of the EXCHANGE table
+`timeSeriesBuckets` (key `subId|field|bucket`), updated as the window moves and as the data ticks. The
+`timeSeries` RPC is a one-shot downsampled query. See [timeseries-downsampling.md](timeseries-downsampling.md).
 
 Existing tables that are useful for charts: `depth` (live ladder), `trades` (time and sales), `fills` (the user's
 executions), `positionPrices` (positions with live prices, sector and currency).
@@ -146,7 +149,7 @@ different currencies can be summed or compared.
 | `exchangeSim.barBackfill` | 1 | Seed synthetic history at startup |
 | `exchangeSim.bookSampleIntervalMs` | 1000 | 0 disables `bookSamples` |
 | `exchangeSim.bookSampleHistory` | 300 | Samples per ric |
-| `exchangeSim.timeSeriesIntervalMs` | 1000 | 0 disables the time-series store and `timeSeries` RPC |
+| `exchangeSim.timeSeriesIntervalMs` | 1000 | 0 disables the time-series store, its subscriptions and RPCs |
 | `exchangeSim.timeSeriesHistoryHours` | 168 (engine-local 48) | Generated 1 s history per instrument |
 | `exchangeSim.timeSeriesMaxRics` | 4 | Instruments holding generated history at once |
 | `oms.pnlHistoryIntervalMs` | 10000 | 0 disables P&L history |

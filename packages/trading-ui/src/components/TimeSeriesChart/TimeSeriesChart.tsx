@@ -1,18 +1,13 @@
-import {
-  DOWNSAMPLE_METHODS,
-  type DownsampleMethod,
-  RpcName,
-  type TimeSeriesField,
-} from "@heswell/trading-schemas";
+import { RpcName, type TimeSeriesField } from "@heswell/trading-schemas";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
-import { Button, ToggleButton, ToggleButtonGroup } from "@salt-ds/core";
+import { Button } from "@salt-ds/core";
 import cx from "clsx";
 import {
   forwardRef,
   type HTMLAttributes,
-  type SyntheticEvent,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -32,15 +27,18 @@ import {
   TimeSeriesController,
   type TimeSeriesStats,
 } from "./TimeSeriesController";
+import { BUCKET_COLUMNS, type BucketRow } from "./timeSeriesWindow";
 
 const classBase = "tradingTimeSeriesChart";
 
-const METHOD_LABELS: Record<DownsampleMethod, string> = {
-  m4: "M4",
-  minmaxlttb: "MinMaxLTTB",
-  lttb: "LTTB",
-  raw: "Stride",
-};
+/** Bucket rows a subscription can hold: (1 + 2 × overscan) × width × fields. */
+const MAX_ROWS = 20_000;
+
+let nextSubId = 0;
+const newSubId = () =>
+  `ts-${Date.now().toString(36)}-${(nextSubId++).toString(36)}-${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
 
 const SPANS = [
   ["1h", 3_600_000],
@@ -57,16 +55,9 @@ const formatSpan = (ms: number) =>
       ? `${(ms / 3_600_000).toFixed(1)}h`
       : `${Math.round(ms / 60_000)}m`;
 
-/** One line of numbers: the last window request, and the last live tail. */
-export const formatTimeSeriesStats = (
-  window: TimeSeriesStats,
-  tail?: TimeSeriesStats,
-) =>
-  `${METHOD_LABELS[window.method]} ${window.returned.toLocaleString()} of ${window.sourcePoints.toLocaleString()} pts · server ${window.serverMs.toFixed(2)} ms · rtt ${window.roundTripMs.toFixed(0)} ms · ${(window.payloadBytes / 1024).toFixed(1)} KB · bucket ${window.bucketMs.toLocaleString()} ms · span ${formatSpan(window.spanMs)} · ${window.windowRequests} req${
-    tail
-      ? ` | live ${tail.returned} pts ${(tail.payloadBytes / 1024).toFixed(1)} KB ${tail.serverMs.toFixed(2)} ms`
-      : ""
-  }`;
+/** One line of numbers: the last window change and the live stream. */
+export const formatTimeSeriesStats = (s: TimeSeriesStats) =>
+  `${s.buckets.toLocaleString()} buckets of ${s.bucketMs.toLocaleString()} ms · last change +${s.upserts.toLocaleString()} / −${s.removed.toLocaleString()} rows · server ${s.serverMs.toFixed(2)} ms · rtt ${s.roundTripMs.toFixed(0)} ms · span ${formatSpan(s.spanMs)} · ${s.windowRequests} windows · ${s.rowUpdates} row updates${s.following ? " · following" : ""}`;
 
 export interface TimeSeriesChartProps
   extends Omit<HTMLAttributes<HTMLDivElement>, "children">,
@@ -75,15 +66,9 @@ export interface TimeSeriesChartProps
   ric?: string;
   /** Fields of the EXCHANGE time-series store (first on the left axis, second on the right). */
   fields?: readonly TimeSeriesField[];
-  /** Downsampling method (controlled), or `defaultMethod` (uncontrolled, "m4"). */
-  method?: DownsampleMethod;
-  defaultMethod?: DownsampleMethod;
-  onMethodChange?: (method: DownsampleMethod) => void;
-  /** Show the method selector in the toolbar (default true). */
-  showMethodSelector?: boolean;
   /** Initial visible span ending now (ms), default an hour. */
   defaultSpanMs?: number;
-  /** Show request numbers (points, server time, payload) under the toolbar (default true). */
+  /** Show the subscription's numbers (buckets, rows sent, server time) under the toolbar (default true). */
   showStats?: boolean;
   /** Called with the numbers of every answered request. */
   onStats?: (stats: TimeSeriesStats) => void;
@@ -102,17 +87,13 @@ export const TimeSeriesChart = forwardRef<HTMLDivElement, TimeSeriesChartProps>(
     {
       className,
       defaultLinkGroup,
-      defaultMethod = "m4",
       defaultSpanMs = 3_600_000,
       fields = DEFAULT_FIELDS,
       linkGroup: linkGroupProp,
-      method: methodProp,
       onLinkGroupChange,
-      onMethodChange,
       onStats,
       ric: ricProp,
       showLinkGroupSelector = false,
-      showMethodSelector = true,
       showStats = true,
       ...htmlAttributes
     },
@@ -133,46 +114,41 @@ export const TimeSeriesChart = forwardRef<HTMLDivElement, TimeSeriesChartProps>(
         : "TimeSeriesChart",
     });
     const { ric } = useFollowedInstrument(ricProp, { linkGroup: channel });
-    const [methodState, setMethodState] = useState(defaultMethod);
-    const method = methodProp ?? methodState;
-    const changeMethod = (value: DownsampleMethod) => {
-      setMethodState(value);
-      onMethodChange?.(value);
-    };
-    // Any subscribed EXCHANGE viewport carries the RPC.
-    const { dataSource } = useTradingRows("instruments", {
-      columns: ["ric"],
-      filter: ric ? `ric = ${filterString(ric)}` : 'ric = ""',
-      rowCount: 1,
+    const fieldKey = fields.join(",");
+    // One subscription per instrument and fields: its buckets are the rows
+    // of timeSeriesBuckets with this subId, and the RPCs moving its window
+    // go through the same viewport.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: new id per ric / fields
+    const subId = useMemo(() => newSubId(), [ric, fieldKey]);
+    const { dataSource, rows } = useTradingRows("timeSeriesBuckets", {
+      columns: [...BUCKET_COLUMNS],
+      filter: `subId = ${filterString(subId)}`,
+      rowCount: MAX_ROWS,
     });
     const { state: connectionState } = useTradingConnectionStatus();
     const plotRef = useRef<HTMLDivElement>(null);
     const controllerRef = useRef<TimeSeriesController>(null);
-    const [stats, setStats] = useState<{
-      window?: TimeSeriesStats;
-      tail?: TimeSeriesStats;
-    }>({});
+    const [stats, setStats] = useState<TimeSeriesStats>();
     const [error, setError] = useState<string>();
     const onStatsRef = useRef(onStats);
     onStatsRef.current = onStats;
-    const fieldKey = fields.join(",");
-
     useEffect(() => {
       const element = plotRef.current;
       if (!element || !ric) return;
       setError(undefined);
-      setStats({});
+      setStats(undefined);
       const controller = new TimeSeriesController(element, {
-        ric,
         fields: fieldKey.split(","),
-        method,
         spanMs: defaultSpanMs,
-        send: (params) =>
-          sendTradingRpc(dataSource, RpcName.TimeSeries, params, {
-            connectionState,
-          }),
+        send: (window) =>
+          sendTradingRpc(
+            dataSource,
+            RpcName.SetTimeSeriesWindow,
+            { subId, ric, fields: fieldKey, ...window },
+            { connectionState },
+          ),
         onStats: (s) => {
-          setStats((prev) => ({ ...prev, [s.kind]: s }));
+          setStats(s);
           onStatsRef.current?.(s);
         },
         onError: (err) =>
@@ -189,8 +165,15 @@ export const TimeSeriesChart = forwardRef<HTMLDivElement, TimeSeriesChartProps>(
         observer.disconnect();
         controller.dispose();
         controllerRef.current = null;
+        sendTradingRpc(dataSource, RpcName.CloseTimeSeries, { subId }).catch(
+          () => undefined,
+        );
       };
-    }, [connectionState, dataSource, defaultSpanMs, fieldKey, method, ric]);
+    }, [connectionState, dataSource, defaultSpanMs, fieldKey, ric, subId]);
+
+    useEffect(() => {
+      controllerRef.current?.setRows(rows as unknown as BucketRow[]);
+    }, [rows]);
 
     const toolbar = (
       <>
@@ -210,21 +193,6 @@ export const TimeSeriesChart = forwardRef<HTMLDivElement, TimeSeriesChartProps>(
             {label}
           </Button>
         ))}
-        {showMethodSelector ? (
-          <ToggleButtonGroup
-            aria-label="Downsampling method"
-            value={method}
-            onChange={(e: SyntheticEvent<HTMLButtonElement>) =>
-              changeMethod(e.currentTarget.value as DownsampleMethod)
-            }
-          >
-            {DOWNSAMPLE_METHODS.map((value) => (
-              <ToggleButton key={value} value={value}>
-                {METHOD_LABELS[value]}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-        ) : null}
       </>
     );
 
@@ -233,7 +201,6 @@ export const TimeSeriesChart = forwardRef<HTMLDivElement, TimeSeriesChartProps>(
         {...htmlAttributes}
         className={cx(classBase, className)}
         data-link-group={linkGroup}
-        data-method={method}
         message={ric ? undefined : "Select an instrument"}
         ref={ref}
         toolbar={toolbar}
@@ -245,10 +212,7 @@ export const TimeSeriesChart = forwardRef<HTMLDivElement, TimeSeriesChartProps>(
             })}
             style={{ position: "absolute", left: 8, top: 2, zIndex: 1 }}
           >
-            {error ??
-              (stats.window
-                ? formatTimeSeriesStats(stats.window, stats.tail)
-                : "loading…")}
+            {error ?? (stats ? formatTimeSeriesStats(stats) : "loading…")}
           </output>
         ) : null}
         <div className={`${classBase}-plot vuuChart`} ref={plotRef} />

@@ -97,9 +97,9 @@ export const SpreadChartExample = () => (
 
 /**
  * TimeSeriesChart following the selected instrument: two days of 1 s mid
- * (172,800 points, engine-local) downsampled by the server for the window
- * and pixel width. Wheel to zoom, drag to pan; switch the method to compare.
- * Below, the same with mid and spread on two axes.
+ * (172,800 points, engine-local) as a subscription of M4 buckets that the
+ * server keeps up to date. Wheel to zoom, drag to pan. Below, mid and spread
+ * on two axes.
  */
 export const TimeSeriesChartExample = () => (
   <div style={withSelector("1fr 1fr")}>
@@ -107,12 +107,7 @@ export const TimeSeriesChartExample = () => (
       <InstrumentSelector />
     </div>
     <TimeSeriesChart style={panel} />
-    <TimeSeriesChart
-      defaultMethod="m4"
-      fields={["mid", "spreadBps"]}
-      showMethodSelector={false}
-      style={panel}
-    />
+    <TimeSeriesChart fields={["mid", "spreadBps"]} style={panel} />
   </div>
 );
 

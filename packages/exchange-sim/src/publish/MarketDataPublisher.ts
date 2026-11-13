@@ -44,6 +44,8 @@ export interface ExchangeTables {
   scenarios?: PublishTable;
   scenarioRuns?: PublishTable;
   simSession?: PublishTable;
+  /** Time-series subscriptions' M4 buckets (see TimeSeriesBucketPublisher). */
+  timeSeriesBuckets?: PublishTable;
 }
 
 export interface PublisherOptions {

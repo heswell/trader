@@ -64,6 +64,7 @@ import { type Clock, systemClock } from "../util/clock";
 import { Random } from "../util/random";
 import { generateBackfillBars } from "./barBackfill";
 import { TimeSeriesStore } from "../history/TimeSeriesStore";
+import { TimeSeriesBucketPublisher } from "../publish/TimeSeriesBucketPublisher";
 import { SECONDS_PER_YEAR } from "./PriceModel";
 import { BUILT_IN_SCENARIOS } from "../../scenarios";
 import { type SavedRun, ScenarioRunner } from "./control/ScenarioRunner";
@@ -213,6 +214,7 @@ export class ExchangeSimulator {
   readonly #tapeListeners = new Set<TapeListener>();
   #publisher: MarketDataPublisher | undefined;
   #timeSeries: TimeSeriesStore | undefined;
+  #timeSeriesBuckets: TimeSeriesBucketPublisher | undefined;
   #simAdmin: SimAdminPublisher | undefined;
   #controlPublisher: ControlPublisher | undefined;
   #lastStep: number | undefined;
@@ -746,6 +748,12 @@ export class ExchangeSimulator {
       });
     }
     if (config.barBackfill && publisher.bars) this.#backfillBars(publisher);
+    const store = this.timeSeries;
+    if (tables.timeSeriesBuckets && store)
+      this.#timeSeriesBuckets = new TimeSeriesBucketPublisher(
+        tables.timeSeriesBuckets,
+        store,
+      );
     this.flush();
     return publisher;
   }
@@ -1064,6 +1072,11 @@ export class ExchangeSimulator {
     return this.#timeSeries;
   }
 
+  /** Time-series subscriptions (`timeSeriesBuckets` rows), when that table is attached. */
+  get timeSeriesBuckets(): TimeSeriesBucketPublisher | undefined {
+    return this.#timeSeriesBuckets;
+  }
+
   #sampleTimeSeries(now: number) {
     const store = this.timeSeries;
     if (!store?.due(now)) return;
@@ -1074,6 +1087,7 @@ export class ExchangeSimulator {
         return { ric: book.ric, bid, ask };
       }),
     );
+    this.#timeSeriesBuckets?.tick(now);
   }
 
   /** The sim-admin publisher, when its tables are attached. */

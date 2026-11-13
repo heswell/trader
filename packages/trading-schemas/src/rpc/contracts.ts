@@ -70,6 +70,8 @@ export const RpcName = Object.freeze({
   SendOrder: "sendOrder",
   CloseOrderEntry: "closeOrderEntry",
   TimeSeries: "timeSeries",
+  SetTimeSeriesWindow: "setTimeSeriesWindow",
+  CloseTimeSeries: "closeTimeSeries",
 } as const);
 export type RpcName = (typeof RpcName)[keyof typeof RpcName];
 
@@ -110,6 +112,8 @@ export const ORDER_ENTRY_RPC_NAMES = Object.freeze([
  */
 export const EXCHANGE_QUERY_RPC_NAMES = Object.freeze([
   RpcName.TimeSeries,
+  RpcName.SetTimeSeriesWindow,
+  RpcName.CloseTimeSeries,
 ] as const);
 /** OMS simulator control (sim-admin): client bots and the background flow. */
 export const CLIENT_ADMIN_RPC_NAMES = Object.freeze([
@@ -562,6 +566,76 @@ export interface TimeSeriesResponse {
   serverMs: number;
 }
 
+/**
+ * Open or move a time-series subscription: the M4 buckets of `fields` over
+ * `[start, end)` are published as `timeSeriesBuckets` rows with this
+ * `subId` (a client-chosen id; filter a viewport on it). Bucket width is the
+ * largest base interval × 2^k not wider than `(end - start) / points`, so
+ * about one bucket per point. Like a viewport range change: moving the
+ * window inserts / deletes only the buckets entering / leaving it; a new
+ * width resends all. `follow` slides the window with the live edge (end =
+ * now). Re-send at least every TIME_SERIES_LEASE_MS to keep it open.
+ */
+export const setTimeSeriesWindowParams = object({
+  subId: string({ minLength: 1, maxLength: 64 }),
+  ric,
+  fields: optional(string({ maxLength: 64 })),
+  start: number({ min: 0 }),
+  end: number({ min: 0 }),
+  points: number({ min: 1, max: TIME_SERIES_MAX_POINTS }),
+  follow: optional(boolean()),
+});
+export type SetTimeSeriesWindowRequest = Infer<
+  typeof setTimeSeriesWindowParams
+>;
+
+/**
+ * Bucket width of a time-series window: the largest `baseMs × 2^k` not wider
+ * than `spanMs / points` (at least `baseMs`). A fixed ladder, so a zoom
+ * inside one level keeps every bucket and buckets never move as the window
+ * slides.
+ */
+export const bucketWidthFor = (
+  spanMs: number,
+  points: number,
+  baseMs: number,
+) => {
+  const target = spanMs / Math.max(1, points);
+  let width = Math.max(1, baseMs);
+  while (width * 2 <= target) width *= 2;
+  return width;
+};
+
+/** A subscription without a window change for this long is closed (ms). */
+export const TIME_SERIES_LEASE_MS = 60_000;
+
+export interface SetTimeSeriesWindowResponse {
+  subId: string;
+  /** Bucket width now published (rows with another width are stale). */
+  bucketMs: number;
+  /** Published bucket range [from, to). */
+  from: number;
+  to: number;
+  /** Buckets held, all fields. */
+  buckets: number;
+  /** Rows this change inserted or updated / removed. */
+  upserts: number;
+  removed: number;
+  /** Data extent in the store and the server clock. */
+  first: number;
+  last: number;
+  now: number;
+  intervalMs: number;
+  /** A step longer than this between points is a gap (break the line). */
+  gapMs: number;
+  serverMs: number;
+}
+
+export const closeTimeSeriesParams = object({
+  subId: string({ minLength: 1, maxLength: 64 }),
+});
+export type CloseTimeSeriesRequest = Infer<typeof closeTimeSeriesParams>;
+
 /** Decode a TimeSeriesData into absolute times and values (gaps as null). */
 export const decodeTimeSeries = ({ t0, t, v }: TimeSeriesData) => {
   const times = new Array<number>(t.length);
@@ -608,6 +682,11 @@ export interface RpcContracts {
   sendOrder: [SendOrderRequest, CreateOrderResponse];
   closeOrderEntry: [CloseOrderEntryRequest, OrderEntryResponse];
   timeSeries: [TimeSeriesRequest, TimeSeriesResponse];
+  setTimeSeriesWindow: [
+    SetTimeSeriesWindowRequest,
+    SetTimeSeriesWindowResponse,
+  ];
+  closeTimeSeries: [CloseTimeSeriesRequest, { subId: string }];
 }
 export type RpcRequestParams<N extends RpcName> = RpcContracts[N][0];
 export type RpcResponseData<N extends RpcName> = RpcContracts[N][1];
@@ -710,6 +789,8 @@ const validators = {
   sendOrder: sendOrderParams,
   closeOrderEntry: closeOrderEntryParams,
   timeSeries: timeSeriesParams,
+  setTimeSeriesWindow: setTimeSeriesWindowParams,
+  closeTimeSeries: closeTimeSeriesParams,
 } as const;
 
 /**

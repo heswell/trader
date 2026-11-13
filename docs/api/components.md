@@ -70,7 +70,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [SparklineCell](trading-ui.md#sparklinecell) | `components/Sparkline` |  |  |  | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#sparkline) |
 | [SpreadChart](trading-ui.md#spreadchart) | `components/SpreadChart` | `bookSamples`, `depth`, `instrumentPrices`, `trades` |  | ChartFrame, LinkGroupSelector | `chart-workspace`, `depth-chart`, `spread-chart` | [guide](../components/charts.md#spreadchart) |
 | [StaleIndicator](trading-ui.md#staleindicator) | `components/StaleIndicator` |  |  |  | `hosting-connection-override`, `notifications-connection` | [guide](../components/notifications-and-connection.md) |
-| [TimeSeriesChart](trading-ui.md#timeserieschart) | `components/TimeSeriesChart` | `depth`, `instrumentPrices`, `instruments`, `trades` | `timeSeries` | ChartFrame, LinkGroupSelector | `time-series-chart` | [guide](../components/charts.md#timeserieschart) |
+| [TimeSeriesChart](trading-ui.md#timeserieschart) | `components/TimeSeriesChart` | `depth`, `instrumentPrices`, `timeSeriesBuckets`, `trades` | `closeTimeSeries`, `setTimeSeriesWindow` | ChartFrame, LinkGroupSelector | `time-series-chart` | [guide](../components/charts.md#timeserieschart) |
 | [TradeTape](trading-ui.md#tradetape) | `components/TradeTape` | `trades` |  | InstrumentLookup, LinkGroupSelector, StaleIndicator | `channel-picker-workspace`, `trade-tape`, `trader-workspace` | [guide](../components/blotters.md) |
 | [TradingConnectionStateOverride](trading-ui.md#tradingconnectionstateoverride) | `connection` |  |  |  | `hosting-connection-override` | [guide](../components/hosting.md#tradingconnectionstateoverride) |
 | [TradingDataProvider](trading-ui.md#tradingdataprovider) | `data` |  |  |  | *host* | [guide](../components/hosting.md#tradingdataprovider) |
@@ -114,7 +114,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | `components/Sparkline` | `tradingSparkline` | `--trading-neutral` | `data-trend` |
 | `components/SpreadChart` | `tradingSpreadChart` |  | `data-link-group` |
 | `components/StaleIndicator` | `tradingStaleIndicator` |  | `data-stale`, `data-stale-reason` |
-| `components/TimeSeriesChart` | `tradingTimeSeriesChart` |  | `data-link-group`, `data-method` |
+| `components/TimeSeriesChart` | `tradingTimeSeriesChart` |  | `data-link-group` |
 | `components/TradeTape` | `tradingTradeTape` | `--trading-buy` | `data-aggressor`, `data-large`, `data-link-group`, `data-testid` |
 | `components/TradingCellRenderers` |  |  | `data-liquidity`, `data-position`, `data-stop-trigger` |
 
