@@ -17,7 +17,7 @@ export type RemoteStatus =
 // The standalone trading server (permissive auth: no password needed).
 // TRADING_REMOTE_* are set in rsbuild.config.ts; ?ws= / ?auth= override them
 // (packages/perf runs its server on free ports).
-const remoteConnection = () => {
+export const remoteConnection = () => {
   const params = new URLSearchParams(window.location.search);
   return {
     connectionId: REMOTE_CONNECTION_ID,

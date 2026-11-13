@@ -18,6 +18,8 @@ export async function startPerfServer(
     corsOrigins?: string[];
     wsPort?: number;
     httpPort?: number;
+    /** Server stdout, line by line, after the ready line. */
+    onLine?: (line: string) => void;
   } = {},
 ): Promise<PerfServer> {
   const wsPort = options.wsPort ?? (await freePort());
@@ -64,7 +66,15 @@ export async function startPerfServer(
   }
   // keep draining so server logging never blocks on a full pipe
   void (async () => {
-    while (!(await reader.read()).done) {}
+    let rest = "";
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      if (!options.onLine) continue;
+      const lines = (rest + decoder.decode(value)).split("\n");
+      rest = lines.pop() ?? "";
+      for (const line of lines) options.onLine(line);
+    }
   })();
   return {
     process: server,

@@ -38,6 +38,7 @@
     "perf:ws": "bun ./packages/perf/src/ws-load.ts",
     "perf:ui": "bun ./packages/perf/src/ui-profile.ts",
     "perf:ladder": "bun ./packages/perf/src/ladder-budget.ts",
+    "perf:export": "bun ./packages/perf/src/export-load.ts",
     "persistence:reset": "bun ./scripts/persistence-reset.ts"
   },
   "devDependencies": {

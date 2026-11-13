@@ -38,6 +38,7 @@ import {
   SelectorsExample,
 } from "./LinkingExamples";
 import { MarketDepthExamples } from "./MarketDepthExamples";
+import { TradesExportExample } from "./ExportExamples";
 import { PriceLadderLive, PriceLadderStress } from "./PriceLadderExamples";
 import {
   ConnectionStateExample,
@@ -216,6 +217,12 @@ export const examples: ShowcaseExample[] = [
     group: "TradeTape",
     title: "Time & sales for the selected order's instrument",
     Component: TradeTapeExample,
+  },
+  {
+    id: "trades-export-csv",
+    group: "Export",
+    title: "Stream a sorted, filtered trades viewport to CSV (remote server)",
+    Component: TradesExportExample,
   },
   {
     id: "positions-view",
