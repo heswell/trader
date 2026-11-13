@@ -7,7 +7,9 @@ import {
   type TimeSeriesRequest,
   type TimeSeriesResponse,
 } from "@heswell/trading-schemas";
+import { SECONDS_PER_YEAR } from "../engine/PriceModel";
 import { Random } from "../util/random";
+import { SeriesSource } from "./BucketWindow";
 import {
   lowerBound,
   lttbIndices,
@@ -16,7 +18,8 @@ import {
   rangeIndices,
   withGaps,
 } from "./downsample";
-import { generateHistory } from "./historyGen";
+import { generateHistory, SPREAD_SIGMA, SPREAD_THETA } from "./historyGen";
+import { HistoryTree, type OuParams } from "./HistoryTree";
 import { TimeSeries } from "./TimeSeries";
 
 /** What the store needs to know about an instrument to generate history. */
@@ -47,6 +50,8 @@ export interface TimeSeriesStoreOptions {
   maxHistoryRics: number;
   timeScale: number;
   seed: number;
+  /** false: always store history whole (no tree), as for short histories. */
+  tree?: boolean;
   /** Instrument details for history, undefined for an unknown ric. */
   source: (ric: string) => HistorySource | undefined;
 }
@@ -61,8 +66,15 @@ export class TimeSeriesError extends Error {
 }
 
 interface Entry {
+  /** Stored points: a generated tail (when history is held) then live samples. */
   series: Record<TimeSeriesField, TimeSeries>;
-  /** Generated points in front of the live ones (0 = live only). */
+  /** Older generated history, on demand at any resolution (long histories). */
+  trees: Record<TimeSeriesField, HistoryTree> | undefined;
+  /** What subscriptions read: tree + stored, replaced when either is. */
+  sources: Record<TimeSeriesField, SeriesSource>;
+  /** History is held (tree and / or generated tail). */
+  generated: boolean;
+  /** Generated points stored in front of the live ones. */
   historyPoints: number;
   lastQueried: number;
   decimals: number;
@@ -72,6 +84,27 @@ const FIELD_DECIMALS: Record<TimeSeriesField, (d: number) => number> = {
   mid: (d) => d + 1,
   spreadBps: () => 2,
 };
+
+const DAY_MS = 86_400_000;
+const CALENDAR_YEAR_MS = 365.25 * DAY_MS;
+/**
+ * Long histories: mid is a slow component (trends over months, at the
+ * instrument's volatility in real time) plus a fast one (the intraday wiggle,
+ * at the simulated speed live prices move with). Each reverts over its time
+ * and is capped, so five years stay within a plausible range of today's price.
+ */
+const MID_SLOW = { reversionMs: CALENDAR_YEAR_MS, maxSd: 0.3 };
+const MID_FAST = { reversionMs: 3 * DAY_MS, maxSd: 0.05 };
+/** Top-level tree buckets are about a day (rounded up to base × 2^k). */
+const TREE_TOP_MS = 86_400_000;
+
+const sourcesOf = (
+  series: Record<TimeSeriesField, TimeSeries>,
+  trees?: Record<TimeSeriesField, HistoryTree>,
+): Record<TimeSeriesField, SeriesSource> => ({
+  mid: new SeriesSource(series.mid, trees?.mid),
+  spreadBps: new SeriesSource(series.spreadBps, trees?.spreadBps),
+});
 
 /** Candidates per output point for MinMaxLTTB's preselection. */
 const MINMAX_LTTB_RATIO = 4;
@@ -84,8 +117,12 @@ const round = (v: number, decimals: number) => {
 /**
  * Per-instrument time series for large-history charts: mid and spread at
  * `intervalMs`, sampled live from every book, with `historyMs` of synthetic
- * history generated on the first query of an instrument (for at most
- * `maxHistoryRics` at once). `query` answers the timeSeries RPC.
+ * history made on the first use of an instrument (for at most
+ * `maxHistoryRics` at once). A history longer than a few days is a
+ * HistoryTree (generated per bucket on demand, down to single points) up to
+ * the last day boundary, then a stored generated tail up to the first live
+ * point; a shorter one is stored whole. `query` answers the timeSeries RPC
+ * from the stored points; subscriptions read `source`, tree included.
  */
 export class TimeSeriesStore {
   readonly #entries = new Map<string, Entry>();
@@ -107,11 +144,15 @@ export class TimeSeriesStore {
           RejectReason.UnknownInstrument,
           `no time series for ${ric}`,
         );
+      const series = {
+        mid: new TimeSeries(this.gapMs, 256),
+        spreadBps: new TimeSeries(this.gapMs, 256),
+      };
       entry = {
-        series: {
-          mid: new TimeSeries(this.gapMs, 256),
-          spreadBps: new TimeSeries(this.gapMs, 256),
-        },
+        series,
+        trees: undefined,
+        sources: sourcesOf(series),
+        generated: false,
         historyPoints: 0,
         lastQueried: 0,
         decimals: source.decimals,
@@ -150,13 +191,12 @@ export class TimeSeriesStore {
   /** Generate history for `ric` if it has none (evicting the LRU one). */
   #ensureHistory(ric: string, entry: Entry, now: number) {
     entry.lastQueried = ++this.#queries;
-    if (entry.historyPoints > 0) return;
+    if (entry.generated) return;
     const { intervalMs, historyMs, maxHistoryRics, timeScale, seed } =
       this.options;
-    const count = Math.floor(historyMs / intervalMs);
-    if (count <= 0) return;
+    if (Math.floor(historyMs / intervalMs) <= 0) return;
     const withHistory = [...this.#entries.entries()].filter(
-      ([, e]) => e.historyPoints > 0,
+      ([, e]) => e.generated,
     );
     if (withHistory.length >= maxHistoryRics) {
       withHistory.sort(([, a], [, b]) => a.lastQueried - b.lastQueried);
@@ -172,25 +212,85 @@ export class TimeSeriesStore {
     const end = mid.length
       ? (mid.first as number)
       : Math.floor(now / intervalMs) * intervalMs;
+    const topWidth = this.treeTopWidth;
+    // with a tree, only the tail after the last top-level boundary is stored
+    const treeEnd = topWidth ? Math.floor(end / topWidth) * topWidth : 0;
+    const count = topWidth
+      ? (end - treeEnd) / intervalMs
+      : Math.floor(historyMs / intervalMs);
     let hash = seed >>> 0;
     for (let i = 0; i < ric.length; i++)
       hash = Math.imul(hash ^ ric.charCodeAt(i), 0x01000193) >>> 0;
-    const gen = generateHistory({
-      count,
-      intervalMs,
-      end,
-      mid: mid.length ? mid.values[0] : source.mid,
-      volatility: source.volatility,
-      timeScale,
-      tick: source.tick,
-      spreadBps: spread.length ? spread.values[0] : source.spreadBps,
-      rng: new Random(hash),
-    });
-    entry.series = {
-      mid: mid.prepend(gen.times, gen.mid),
-      spreadBps: spread.prepend(gen.times, gen.spreadBps),
-    };
+    if (count > 0) {
+      const gen = generateHistory({
+        count,
+        intervalMs,
+        end,
+        mid: mid.length ? mid.values[0] : source.mid,
+        volatility: source.volatility,
+        timeScale,
+        tick: source.tick,
+        spreadBps: spread.length ? spread.values[0] : source.spreadBps,
+        rng: new Random(hash),
+      });
+      entry.series = {
+        mid: mid.prepend(gen.times, gen.mid),
+        spreadBps: spread.prepend(gen.times, gen.spreadBps),
+      };
+    }
     entry.historyPoints = count;
+    entry.generated = true;
+    entry.trees = undefined;
+    if (topWidth) {
+      const first = (s: TimeSeries, fallback: number) =>
+        Math.log(s.length ? s.values[0] : fallback);
+      const topLevel = Math.round(Math.log2(topWidth / intervalMs));
+      // diffusion per ms: real time, and the live walk's simulated time
+      const vol2 = source.volatility ** 2;
+      const component = (
+        diffusion: number,
+        { reversionMs, maxSd }: { reversionMs: number; maxSd: number },
+      ) => ({
+        variance: Math.min(maxSd ** 2, (diffusion * reversionMs) / 2),
+        theta: 1 / reversionMs,
+      });
+      const midParams: OuParams = {
+        level: Math.log(source.mid),
+        components: [
+          component(vol2 / CALENDAR_YEAR_MS, MID_SLOW),
+          component((vol2 * timeScale) / (SECONDS_PER_YEAR * 1000), MID_FAST),
+        ],
+      };
+      const spreadParams: OuParams = {
+        level: Math.log(Math.max(source.spreadBps, 0.1)),
+        components: [
+          { theta: SPREAD_THETA / 1000, variance: SPREAD_SIGMA ** 2 },
+        ],
+      };
+      const tree = (
+        field: TimeSeriesField,
+        params: OuParams,
+        endValue: number,
+      ) =>
+        new HistoryTree({
+          baseMs: intervalMs,
+          topLevel,
+          start: end - historyMs,
+          end: treeEnd,
+          endValue,
+          params,
+          seed: Math.imul(hash, field === "mid" ? 3 : 5) >>> 0,
+        });
+      entry.trees = {
+        mid: tree("mid", midParams, first(entry.series.mid, source.mid)),
+        spreadBps: tree(
+          "spreadBps",
+          spreadParams,
+          first(entry.series.spreadBps, source.spreadBps),
+        ),
+      };
+    }
+    entry.sources = sourcesOf(entry.series, entry.trees);
   }
 
   #dropHistory(entry: Entry) {
@@ -208,6 +308,9 @@ export class TimeSeriesStore {
       spreadBps: drop(entry.series.spreadBps),
     };
     entry.historyPoints = 0;
+    entry.generated = false;
+    entry.trees = undefined;
+    entry.sources = sourcesOf(entry.series);
   }
 
   /** The series of a ric and field (generating history), for tests and benches. */
@@ -222,9 +325,25 @@ export class TimeSeriesStore {
     return FIELD_DECIMALS[field](this.#entry(ric).decimals);
   }
 
-  /** The current series of a ric and field, without generating history. */
+  /** The current source (tree + stored) of a ric and field, without generating history. */
   current(ric: string, field: TimeSeriesField) {
-    return this.#entry(ric).series[field];
+    return this.#entry(ric).sources[field];
+  }
+
+  /** The source (tree + stored) of a ric and field, generating history. */
+  source(ric: string, field: TimeSeriesField, now: number) {
+    const entry = this.#entry(ric);
+    this.#ensureHistory(ric, entry, now);
+    return entry.sources[field];
+  }
+
+  /** Bucket width of the tree's top level (0: histories are stored whole). */
+  get treeTopWidth() {
+    const { intervalMs, historyMs } = this.options;
+    if (!(intervalMs > 0) || this.options.tree === false) return 0;
+    const top =
+      intervalMs * 2 ** Math.ceil(Math.log2(TREE_TOP_MS / intervalMs));
+    return historyMs >= 4 * top ? top : 0;
   }
 
   /** Instruments, points and bytes held. */
@@ -232,14 +351,27 @@ export class TimeSeriesStore {
     let points = 0;
     let bytes = 0;
     let withHistory = 0;
+    let treePoints = 0;
+    let treeNodes = 0;
     for (const entry of this.#entries.values()) {
-      if (entry.historyPoints) withHistory++;
+      if (entry.generated) withHistory++;
       for (const s of Object.values(entry.series)) {
         points += s.length;
         bytes += s.bytes;
       }
+      for (const t of Object.values(entry.trees ?? {})) {
+        treePoints += t.length;
+        treeNodes += t.cacheSize;
+      }
     }
-    return { rics: this.#entries.size, withHistory, points, bytes };
+    return {
+      rics: this.#entries.size,
+      withHistory,
+      points,
+      bytes,
+      treePoints,
+      treeNodes,
+    };
   }
 
   /** Answer a (validated) timeSeries request at server time `now`. */

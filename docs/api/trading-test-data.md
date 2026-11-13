@@ -22,7 +22,7 @@ Imports: `@heswell/trading-test-data`, `@heswell/trading-test-data/react`. 20 ex
 
 #### createTradingTestData
 
-*function* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L254)
+*function* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L251)
 
 Create the EXCHANGE and OMS engine-local modules, backed by the real
 
@@ -72,7 +72,7 @@ const OMS_TABLE_NAMES: readonly OmsLocalTableName[]
 
 #### TradingTestData
 
-*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L169)
+*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L166)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -94,7 +94,7 @@ const OMS_TABLE_NAMES: readonly OmsLocalTableName[]
 
 #### TradingTestDataOptions
 
-*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L146)
+*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L143)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |

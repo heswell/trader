@@ -102,12 +102,13 @@ area on a second axis. Props: `ric` and the link-group props.
 
 ## TimeSeriesChart
 
-A line chart over the EXCHANGE time-series store: days of 1 s `mid` / `spreadBps` per instrument. The chart
+A line chart over the EXCHANGE time-series store: five years of 1 s `mid` / `spreadBps` per instrument (generated
+per bucket on demand, so any second can be drilled into). The chart
 subscribes to a time window `{start, end, points}` (the visible span plus overscan, one point per pixel column) and
 the server streams M4 buckets of it as `timeSeriesBuckets` rows. Wheel to zoom, drag to pan; a pan past the
 overscan or a zoom to another bucket width moves the window, and the server sends only the buckets that change. At
 the live edge the window follows now on the server, so ticks arrive as row updates. A toolbar jumps to the last
-1h / 1d / All. A line of numbers shows buckets, bucket width, rows sent and removed, server ms and round trip.
+the last 1h, 1d, 1w, 1m, 6m, 1y, 2y or 5y. A line of numbers shows buckets, bucket width, rows sent and removed, server ms and round trip.
 Design and measurements: [timeseries-downsampling.md](../timeseries-downsampling.md).
 
 ```tsx

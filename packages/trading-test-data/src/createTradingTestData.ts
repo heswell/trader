@@ -133,9 +133,6 @@ export const METRICS_TABLE_NAMES: readonly MetricsTableName[] = [
 export const LOCAL_EXCHANGE_DEFAULTS: Partial<ExchangeSimConfig> = {
   activeInstruments: 50,
   barHistory: 200,
-  // 2 days of 1 s mid / spread (172,800 points per field) for at most 4
-  // instruments at once: about 14 MB each
-  timeSeriesHistoryHours: 48,
   // no market impact: UI tests and the showcase keep their exact prices
   impactVolShare: 0,
   // futures (front and next quarter) on two stocks and the synthetic US

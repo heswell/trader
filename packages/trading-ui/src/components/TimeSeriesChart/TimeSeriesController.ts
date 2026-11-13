@@ -75,8 +75,8 @@ export interface TimeSeriesControllerOptions {
 }
 
 const GRID = { left: 64, right: 64, top: 16, bottom: 56 };
-/** Smallest visible span: a minute. */
-const MIN_SPAN_MS = 60_000;
+/** Smallest visible span: 30 single points. */
+const MIN_SPAN_MS = 30_000;
 /** Re-send the window this often to keep the subscription's lease. */
 const KEEP_ALIVE_MS = 20_000;
 

@@ -17,6 +17,7 @@ import {
   type BucketValue,
   BucketWindow,
   bucketsIn,
+  SeriesSource,
 } from "../src/history/BucketWindow";
 
 const arg = (name: string, fallback: number) => {
@@ -36,6 +37,7 @@ const store = new TimeSeriesStore({
   maxHistoryRics: 4,
   timeScale: 10,
   seed: 7,
+  tree: false,
   source: () => ({
     mid: 182.5,
     volatility: 0.3,
@@ -49,6 +51,7 @@ const heap0 = process.memoryUsage().heapUsed;
 const g0 = performance.now();
 const mid = store.series("AAPL.OQ", "mid", now);
 const genMs = performance.now() - g0;
+const midSource = new SeriesSource(mid);
 const heap1 = process.memoryUsage().heapUsed;
 const stats = store.stats();
 console.log(
@@ -211,10 +214,10 @@ for (const [label, span] of windows) {
     points: width * 2,
   };
   const ts: number[] = [];
-  let w = new BucketWindow(["mid"], () => mid, 1000);
+  let w = new BucketWindow(["mid"], () => midSource, 1000);
   let first = w.setWindow(spec, now);
   for (let r = 0; r < runs; r++) {
-    w = new BucketWindow(["mid"], () => mid, 1000);
+    w = new BucketWindow(["mid"], () => midSource, 1000);
     const t0 = performance.now();
     first = w.setWindow(spec, now);
     ts.push(performance.now() - t0);
@@ -228,7 +231,7 @@ for (const [label, span] of windows) {
   );
   const raster = { start, end, width, height, yMin, yMax };
   const err = rasterError(full, toPoints(visible), raster);
-  const width2 = new BucketWindow(["mid"], () => mid, 1000).setWindow(
+  const width2 = new BucketWindow(["mid"], () => midSource, 1000).setWindow(
     { ...spec, points: width * 4 },
     now,
   ).width;
@@ -279,12 +282,13 @@ for (const [label, span] of windows) {
 // Ticks: N following subscriptions, one new point per second each.
 {
   const live = new TimeSeries(3_000, 1 << 20);
+  const liveSource = new SeriesSource(live);
   for (let i = 0; i < 86_400; i++)
     live.append(now - 86_400_000 + i * 1000, 100 + Math.sin(i / 300));
   const subs = 200;
   const ws = Array.from(
     { length: subs },
-    () => new BucketWindow(["mid"], () => live, 1000),
+    () => new BucketWindow(["mid"], () => liveSource, 1000),
   );
   for (const w of ws)
     w.setWindow(
@@ -327,4 +331,114 @@ for (const [label, span] of windows) {
   console.log(
     `a bucket row as JSON values: ${JSON.stringify(row).length} bytes (vs ~13 bytes per point in the RPC encoding, up to 4 points per bucket)`,
   );
+}
+
+// Five years as a HistoryTree: range presets, a pan, and a drill-down.
+{
+  const YEAR = 365.25 * DAY;
+  const longStore = () =>
+    new TimeSeriesStore({
+      intervalMs: 1000,
+      historyMs: 5 * YEAR,
+      maxHistoryRics: 4,
+      timeScale: 10,
+      seed: 7,
+      source: () => ({
+        mid: 182.5,
+        volatility: 0.3,
+        tick: 0.01,
+        decimals: 2,
+        spreadBps: 3,
+      }),
+    });
+  const s0 = longStore();
+  const g0 = performance.now();
+  const src = s0.source("AAPL.OQ", "mid", now);
+  s0.source("AAPL.OQ", "spreadBps", now);
+  const gen = performance.now() - g0;
+  const st = s0.stats();
+  console.log(
+    `\nfive years (tree): ${((src.length * 2) / 1e6).toFixed(0)} M points over 2 fields; history ready in ${gen.toFixed(0)} ms (stored tail ${src.stored.length.toLocaleString()} points per field, ${(st.bytes / 1e6).toFixed(1)} MB)`,
+  );
+  console.log(
+    "view   |  width (s) | buckets | cold ms | warm ms | pan 10%            | nodes cached",
+  );
+  // following views as the chart asks for them: span + 50% overscan before
+  const views: [string, number][] = [
+    ["1w", 7 * DAY],
+    ["1m", YEAR / 12],
+    ["6m", YEAR / 2],
+    ["1y", YEAR],
+    ["2y", 2 * YEAR],
+    ["5y", 5 * YEAR],
+  ];
+  for (const [label, span] of views) {
+    const fresh = longStore();
+    const source = fresh.source("AAPL.OQ", "mid", now);
+    const spec = {
+      start: now - 1.5 * span,
+      end: now,
+      points: Math.ceil(width * 1.5),
+    };
+    const t0 = performance.now();
+    const w = new BucketWindow(["mid"], () => source, 1000);
+    const d = w.setWindow(spec, now);
+    const cold = performance.now() - t0;
+    const t1 = performance.now();
+    new BucketWindow(["mid"], () => source, 1000).setWindow(spec, now);
+    const warm = performance.now() - t1;
+    const t2 = performance.now();
+    const pan = w.setWindow(
+      { ...spec, start: spec.start - span / 10, end: spec.end - span / 10 },
+      now,
+    );
+    const panMs = performance.now() - t2;
+    console.log(
+      [
+        label.padEnd(6),
+        String(d.width / 1000).padStart(10),
+        String(d.upserts.length).padStart(7),
+        cold.toFixed(2).padStart(7),
+        warm.toFixed(2).padStart(7),
+        `+${pan.upserts.length} / −${pan.removed.length}, ${panMs.toFixed(2)} ms`.padEnd(
+          18,
+        ),
+        String(fresh.stats().treeNodes).padStart(12),
+      ].join(" | "),
+    );
+  }
+  // drill down, one zoom step (÷4) at a time, into a point 3.7 years back
+  const fresh = longStore();
+  const source = fresh.source("AAPL.OQ", "mid", now);
+  const target = now - 3.7 * YEAR;
+  const w = new BucketWindow(["mid"], () => source, 1000);
+  let span = 5 * YEAR;
+  const steps: string[] = [];
+  let total = 0;
+  let maxMs = 0;
+  let n = 0;
+  while (span >= 60_000) {
+    const t0 = performance.now();
+    const d = w.setWindow(
+      {
+        start: target - span,
+        end: target + span,
+        points: width * 2,
+      },
+      now,
+    );
+    const ms = performance.now() - t0;
+    total += ms;
+    maxMs = Math.max(maxMs, ms);
+    n++;
+    if (n % 3 === 1)
+      steps.push(
+        `${(span / 1000).toFixed(0)}s span: ${d.width / 1000}s buckets ${ms.toFixed(2)} ms`,
+      );
+    span /= 4;
+  }
+  console.log(
+    `drill-down to a minute 3.7 years back, ÷4 per step: ${n} steps, ${total.toFixed(1)} ms in all, worst ${maxMs.toFixed(2)} ms; nodes cached ${fresh.stats().treeNodes.toLocaleString()}`,
+  );
+  console.log(`  ${steps.join("\n  ")}`);
 }

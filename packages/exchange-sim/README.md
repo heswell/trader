@@ -233,7 +233,7 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | `bookSampleIntervalMs` | 1000 | `bookSamples` interval (ms); 0 disables. |
 | `bookSampleHistory` | 300 | Book samples kept per instrument. |
 | `timeSeriesIntervalMs` | 1000 | Interval of the time-series store's mid / spread points (ms), streamed as `timeSeriesBuckets` rows (`setTimeSeriesWindow`) and served by the `timeSeries` RPC; 0 disables. See docs/timeseries-downsampling.md. |
-| `timeSeriesHistoryHours` | 168 | Synthetic history generated on an instrument's first time-series subscription or query. |
+| `timeSeriesHistoryHours` | 43830 | Synthetic history (5 years) made on an instrument's first time-series subscription or query. Beyond about 6 days it is a HistoryTree, generated per bucket on demand down to single points; the last day or so is stored. |
 | `timeSeriesMaxRics` | 4 | Instruments holding generated history at once (least recently queried dropped). |
 | `bookOrders` | 1 | 1 = publish the L3 `bookOrders` table; 0 = off. |
 | `bookEvents` | 0 | 1 = publish every L3 event to the `bookEvents` tape; 0 = off. |

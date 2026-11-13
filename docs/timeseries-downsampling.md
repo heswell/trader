@@ -1,8 +1,10 @@
 # Large time series: server downsampling
 
-An experiment in charting series far larger than a Vuu table holds: days of 1 s data per instrument (172,800 to
-604,800 points per series). A chart has about 1,000 pixel columns, so the server chooses the samples for the
-visible window and the chart's width. The client zooms and pans, and the data keeps ticking.
+An experiment in charting series far larger than a Vuu table holds: five years of 1 s data per instrument (about
+158 million points per series), from a 5-year overview down to single seconds. A chart has about 1,000 pixel
+columns, so the server chooses the samples for the visible window and the chart's width. The client zooms and pans,
+and the data keeps ticking. History that long is not stored: it is generated per bucket on demand, consistently at
+every resolution ([long histories](#long-histories-historytree)).
 
 The existing chart tables don't fit this. `bookSamples` keeps 300 points per ric, `pnlHistory` 180, `bars` 500
 per series, and `trades` about 250 per ric. All of them only fill in real time (see
@@ -21,7 +23,7 @@ Showcase: `#time-series-chart`. Component: [TimeSeriesChart](components/charts.m
 ```
 ExchangeSimulator.flush ──(every timeSeriesIntervalMs)──▶ TimeSeriesStore.sample      live mid / spread per book
                                                        └─▶ TimeSeriesBucketPublisher.tick   changed buckets → rows
-first use of a ric ──▶ generateHistory (backwards from the first live point) ──▶ prepended
+first use of a ric ──▶ HistoryTree (5 years, per bucket on demand)  +  generateHistory (tail to the first live point)
 
 client: CREATE_VP timeSeriesBuckets, filter subId = "<id>"         (any EXCHANGE viewport carries the RPCs)
         setTimeSeriesWindow {subId, ric, fields, start, end, points, follow}   (≈ CHANGE_VP_RANGE)
@@ -39,20 +41,55 @@ server: BucketWindow diff ──▶ insert / update / delete rows "subId|field|b
 - **`TimeSeriesStore`** keeps per ric a `mid` and a `spreadBps` series. Live points come from every book's touch on
   the flush after each `timeSeriesIntervalMs`, aligned to the interval. A book without a two-sided quote adds
   nothing, which leaves a gap.
-- **History is lazy.** The first query of a ric generates `timeSeriesHistoryHours` of 1 s points in front of its
-  live points, ending at the first live mid (`historyGen.ts`):
-  - mid: the price model's GBM run backwards with its volatility and `timeScale`, as `barBackfill`, plus rare
-    jumps so there are single spikes to keep;
-  - spread: a log-OU process with occasional blowouts.
+- **History is lazy.** The first use of a ric gives it `timeSeriesHistoryHours` of 1 s history in front of its
+  live points, ending at the first live mid:
+  - from 5 years back to the last top-level boundary (about a day and a half before the first live point): a
+    **HistoryTree** per field, which holds nothing but a cache and makes any bucket on demand (below);
+  - from there to the first live point: a stored **tail** from `historyGen.ts` — mid as the price model's GBM run
+    backwards with its volatility and `timeScale`, as `barBackfill`, plus rare jumps; spread as a log-OU process
+    with occasional blowouts. A history shorter than about 6 days is stored whole this way, as before.
 
   At most `timeSeriesMaxRics` instruments hold history at once. The least recently queried one drops back to its
-  live points only.
+  live points only. Subscriptions read a `SeriesSource` per field (tree, then stored points), which BucketWindow
+  sees as one series; the one-shot `timeSeries` RPC reads the stored points only.
 
-| Config (`exchangeSim.*`) | Server | Engine-local | |
-| --- | --- | --- | --- |
-| `timeSeriesIntervalMs` | 1000 | 1000 | 0 disables the store, the subscriptions and the RPCs |
-| `timeSeriesHistoryHours` | 168 (604,800 points) | 48 (172,800) | Generated on first query |
-| `timeSeriesMaxRics` | 4 | 4 | Instruments holding history at once |
+| Config (`exchangeSim.*`) | Default | |
+| --- | --- | --- |
+| `timeSeriesIntervalMs` | 1000 | 0 disables the store, the subscriptions and the RPCs |
+| `timeSeriesHistoryHours` | 43,830 (5 years, 158 M points per field) | Over about 6 days, a tree plus a stored tail |
+| `timeSeriesMaxRics` | 4 | Instruments holding history at once |
+
+### Long histories: HistoryTree
+
+Five years of 1 s points is about 2.5 GB per field per instrument, and generating it would take minutes. The tree
+generates only what a window asks for, at the width it asks for, and stays consistent between widths.
+
+- **Levels.** The bucket ladder is already `interval × 2^k`, so buckets form a binary tree: level 0 is one point,
+  level 17 is 131,072 s (about 36 h, the top). Five years is about 1,200 top buckets.
+- **Top level**, generated whole when the tree is made (about 2 ms): a walk of the model backwards from the stored
+  tail's first value, as M4 per top bucket (first and last from the walk, min and max from the distribution of a
+  bridge's extremes, at random times inside the bucket).
+- **Refining** a bucket into its two halves pins the parent's four points (first, min at `minT`, max at `maxT`,
+  last). The two new points at the split (the left half's last and the right half's first) are sampled from a
+  bridge between the nearest pinned points. The half that holds `minT` gets the parent's min; the other half's min
+  is its lowest pinned value, or a bridge-extreme sample at a random time between two pinned points if that goes
+  lower, kept strictly above the parent's min. The same for max. So:
+  - every value inside a bucket is within its parent's range, and the parent's extremes are reached exactly
+    where it said;
+  - **the halves' M4 merge to exactly the parent's M4**, so a line drawn at any width is exactly the M4 of the
+    single points underneath. Zooming in adds detail; it never moves or contradicts what a coarser width drew.
+- **Deterministic.** Each split is seeded by `(seed, level, index)`. A bucket regenerates identically in any order,
+  so the tree keeps only a cache (200,000 nodes, the older half dropped when full) and no data.
+- **Cost.** A window of N buckets at level k needs those nodes and their ancestors not yet cached: about 2N
+  splits, whatever the span. Buckets wider than the top level merge top buckets. A bucket straddling the tree's end
+  merges the tree part and the stored part.
+- **The model** (log space): `level` (today's mid) plus independent mean-reverting (OU) components. Mid has a slow
+  one (the instrument's volatility in real time, reverting over a year, capped at 30%) for trends over months, and
+  a fast one (the live walk's volatility at the simulated `timeScale`, capped at 5%) for the intraday wiggle. The
+  live walk itself runs 10× real time; at that speed a single component would wander from a quarter to four times
+  today's price over five years. Spread is one fast OU (the tail's parameters). Bridges use the components'
+  covariance; extremes use the Brownian-bridge maximum with the components' increment variance, widened where a
+  component reverts within the span.
 
 ### Downsampling (`downsample.ts`)
 
@@ -131,6 +168,31 @@ next bucket's `firstT` is over `gapMs` (3 × interval).
 
 ## Numbers
 
+### Five years (HistoryTree), server side
+
+`timeseriesBench.ts`, one instrument, 1,200 px, a following view plus 50% overscan before it, as the chart asks.
+"Cold" is a fresh store (nothing cached).
+
+| View | Bucket width | Buckets | setWindow cold | warm | Pan 10% | Nodes cached |
+| --- | --: | --: | --: | --: | --: | --: |
+| 1w | 256 s | 3,545 | 7.6 ms | 0.6 ms | +236 / −236, 0.4 ms | 6,816 |
+| 1m | 2,048 s | 1,927 | 2.8 ms | 0.3 ms | +129 / −128, 0.2 ms | 3,962 |
+| 6m | 8,192 s | 2,890 | 4.0 ms | 0.5 ms | +193 / −192, 0.3 ms | 5,760 |
+| 1y | 16,384 s | 2,890 | 3.5 ms | 0.3 ms | +192 / −192, 0.3 ms | 5,384 |
+| 2y | 32,768 s | 2,890 | 2.9 ms | 0.3 ms | +192 / −192, 0.2 ms | 4,620 |
+| 5y | 131,072 s | 1,205 | 0.2 ms | 0.1 ms | (no data before) | 0 |
+
+- **History ready** in 15 ms per instrument (both fields: the top levels and a stored tail of up to 131,072
+  points). Memory: the tail (about 3.9 MB for 95k points per field) and the node cache (about 30,000 nodes after a
+  full drill-down; at most 200,000 per field).
+- **Drill-down** from 5 years to a minute 3.7 years back, zooming ÷4 per step: 11 window changes, 21 ms in all,
+  the worst 3.5 ms.
+- **Consistency** (tests): for random buckets at every level, the two halves' M4 equal the parent's exactly; the
+  4,096 single points of a level-12 bucket reproduce its M4; buckets of 2w are pairs of buckets of w across the
+  join with the stored tail.
+- **In the browser** (engine-local, AAPL.OQ): the 5y button, then wheel zooming into mid-2023 down to 1 s buckets,
+  showed each width level arriving in 5–18 ms server time (7–22 ms round trip).
+
 ### Subscription, server side
 
 From the same bench script (`BucketWindow` alone, without the table). A week of 1 s mid. The window is the view
@@ -153,7 +215,7 @@ the middle of the history.
   the snapped one-shot M4 is: up to about 2 px in some columns at one bucket per pixel, under 1 px at two. At 1 s
   data and small spans every point is kept, so it is exact.
 
-### Subscription, in the browser (showcase, engine-local, 2 days = 172,800 points)
+### Subscription, in the browser (showcase, engine-local, 2 days = 172,800 points, before the tree)
 
 Chromium in the desktop app's browser pane, 1,600 px viewport, about 830 px plot.
 
@@ -230,6 +292,10 @@ network; over the websocket, expect the payloads above plus Vuu framing.
 
 ## Findings
 
+- **Drill-down over years needs no stored history.** Generating per bucket with the parent's M4 pinned gives
+  every width exactly the M4 of the points underneath, at a cost bounded by the window (a few ms per 2,000
+  buckets, cold), from a 5-year view to single seconds. The same structure would serve real data kept as tiers:
+  the tree's nodes are just M4 summaries, whether generated or computed.
 - **The subscription fits.** Buckets on a clock-aligned 2^k grid behave like rows:
   - a pan costs only the buckets entering and leaving the window (10% of the window for a 10% pan, 0.1–0.3 ms);
   - a zoom inside a width level costs nothing, or only the edges;
@@ -307,9 +373,22 @@ range change. A proper extension would be:
   window: all of its rows are resent. A real store backfilling data would want a "range changed" diff instead.
 - **LTTB live.** Not supported by the subscription. If it is wanted, a likely route is: LTTB over closed buckets
   only, with M4 for the open bucket.
-- **Retention.** The store grows by one point per second per field and instrument, without limit. A ring buffer
-  needs the pyramid to drop whole top-level blocks. Another way: keep raw data for a day and only the pyramid's
-  coarse levels (min/max/first/last per minute) beyond it.
+- **Retention.** Live points grow by one per second per field and instrument, without limit. A ring buffer
+  needs the pyramid to drop whole top-level blocks. Better: keep raw data for a day or so, then fold it into M4
+  nodes, as tiers (per minute for months, per hour for years) like a time-series database. Those are the tree's
+  nodes, so a real history could be served by the same code; drill-down to 1 s then works only where 1 s was kept.
+- **Realism of generated history.**
+  - The tree has no sessions: it runs 24/7, so no overnight or weekend gaps, and no market-hours volume pattern.
+    Gaps could be added as a property of the time axis (empty buckets), applied before refining.
+  - Spread history from the tree has no blowouts (the stored tail has); a spike would have to be pinned as an
+    extreme and would ramp at finer widths.
+  - Inside one bridge, the pull of each component towards `level` is left out; it matters only over spans that are
+    already pinned by coarser levels.
+  - Splits sample from continuous-time formulas, so at the finest levels (a few points per bucket) extremes are
+    slightly wider than a discrete walk would make them.
+- **The one-shot RPC and the tree.** `timeSeries` reads only the stored points (the tail and live data). Serving
+  M4 from the tree would be easy (it already produces buckets); LTTB over generated data would need points, so
+  generating at level 0 for the range.
 - **Memory.** Each field has its own time array. Sharing one time array per instrument saves 8 bytes per point per
   extra field, and `Float32Array` values would save 4 more (enough precision for display).
 - **Binary payload.** Bucket tuples as typed arrays in base64 (or a binary websocket frame) instead of JSON

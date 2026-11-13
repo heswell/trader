@@ -6342,7 +6342,7 @@ Props of [`StaleIndicator`](#staleindicator).
 
 #### TimeSeriesChart
 
-*component* · [components/TimeSeriesChart/TimeSeriesChart.tsx](../../packages/trading-ui/src/components/TimeSeriesChart/TimeSeriesChart.tsx#L85)
+*component* · [components/TimeSeriesChart/TimeSeriesChart.tsx](../../packages/trading-ui/src/components/TimeSeriesChart/TimeSeriesChart.tsx#L98)
 
 Line chart over a large time series (the EXCHANGE time-series store: days
 of 1 s mid / spread per instrument) that the server downsamples for the
@@ -6383,7 +6383,7 @@ bucketsToPoints(rows: readonly BucketRow[], width: number, gapMs: number): Recor
 
 #### formatTimeSeriesStats
 
-*function* · [components/TimeSeriesChart/TimeSeriesChart.tsx](../../packages/trading-ui/src/components/TimeSeriesChart/TimeSeriesChart.tsx#L59)
+*function* · [components/TimeSeriesChart/TimeSeriesChart.tsx](../../packages/trading-ui/src/components/TimeSeriesChart/TimeSeriesChart.tsx#L72)
 
 One line of numbers: the last window change and the live stream.
 
@@ -6470,7 +6470,7 @@ const OVERSCAN: 0.5
 
 #### TimeSeriesChartProps
 
-*interface* · [components/TimeSeriesChart/TimeSeriesChart.tsx](../../packages/trading-ui/src/components/TimeSeriesChart/TimeSeriesChart.tsx#L62)
+*interface* · [components/TimeSeriesChart/TimeSeriesChart.tsx](../../packages/trading-ui/src/components/TimeSeriesChart/TimeSeriesChart.tsx#L75)
 
 Props of [`TimeSeriesChart`](#timeserieschart).
 
