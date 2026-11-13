@@ -3,6 +3,7 @@ import {
   type ExchangeSimConfig,
   ExchangeSimulator,
   handleExchangeAdminRpc,
+  handleTimeSeriesRpc,
   ManualClock,
   systemClock,
 } from "@heswell/exchange-sim/engine";
@@ -26,6 +27,7 @@ import { canAdminSim } from "@heswell/exchange-sim/engine";
 import {
   CLIENT_ADMIN_RPC_NAMES,
   EXCHANGE_ADMIN_RPC_NAMES,
+  EXCHANGE_QUERY_RPC_NAMES,
   EXCHANGE_MODULE,
   exchangeTables,
   instrumentPrices,
@@ -129,6 +131,9 @@ export const METRICS_TABLE_NAMES: readonly MetricsTableName[] = [
 export const LOCAL_EXCHANGE_DEFAULTS: Partial<ExchangeSimConfig> = {
   activeInstruments: 50,
   barHistory: 200,
+  // 2 days of 1 s mid / spread (172,800 points per field) for at most 4
+  // instruments at once: about 14 MB each
+  timeSeriesHistoryHours: 48,
   // no market impact: UI tests and the showcase keep their exact prices
   impactVolShare: 0,
   // futures (front and next quarter) on two stocks and the synthetic US
@@ -378,6 +383,7 @@ export const createTradingTestData = ({
       return handleClientAdminRpc(omsService, rpcName, params, user);
     if (isExchangeRpc(rpcName))
       return handleExchangeAdminRpc(sim, rpcName, params, user.name);
+    if (rpcName === "timeSeries") return handleTimeSeriesRpc(sim, params);
     return {
       type: "ERROR_RESULT",
       errorMessage: `INVALID_REQUEST: unknown rpc ${rpcName}`,
@@ -428,7 +434,7 @@ export const createTradingTestData = ({
     (name) => exchangeTablesByName[name].schema,
   );
   const exchangeServices = rpcServices(
-    EXCHANGE_ADMIN_RPC_NAMES,
+    [...EXCHANGE_ADMIN_RPC_NAMES, ...EXCHANGE_QUERY_RPC_NAMES],
     () => exchange,
   );
   const exchange: TradingLocalModule<ExchangeTableName> =

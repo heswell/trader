@@ -231,6 +231,9 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | `barBackfill` | 1 | 1 = seed `barHistory` synthetic closed bars per series from the price model at startup. |
 | `bookSampleIntervalMs` | 1000 | `bookSamples` interval (ms); 0 disables. |
 | `bookSampleHistory` | 300 | Book samples kept per instrument. |
+| `timeSeriesIntervalMs` | 1000 | Interval of the time-series store's mid / spread points (ms), served by the `timeSeries` RPC; 0 disables. See docs/timeseries-downsampling.md. |
+| `timeSeriesHistoryHours` | 168 | Synthetic history generated on an instrument's first `timeSeries` query. |
+| `timeSeriesMaxRics` | 4 | Instruments holding generated history at once (least recently queried dropped). |
 | `bookOrders` | 1 | 1 = publish the L3 `bookOrders` table; 0 = off. |
 | `bookEvents` | 0 | 1 = publish every L3 event to the `bookEvents` tape; 0 = off. |
 | `bookEventsCapacity` | 50000 | `bookEvents` rows kept across all instruments (oldest deleted). |

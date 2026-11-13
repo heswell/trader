@@ -76,6 +76,17 @@ export {
   type ExchangeAdminRpcName,
   handleExchangeAdminRpc,
 } from "./modules/exchange/exchangeAdminRpc";
+export { handleTimeSeriesRpc } from "./modules/exchange/timeSeriesRpc";
+export {
+  type HistorySource,
+  TimeSeriesError,
+  TimeSeriesStore,
+  type TimeSeriesStoreOptions,
+  type TouchSample,
+} from "./history/TimeSeriesStore";
+export { TimeSeries } from "./history/TimeSeries";
+export * from "./history/downsample";
+export { rasterColumns, rasterError } from "./history/rasterError";
 export {
   canAdminSim,
   SIM_ADMIN_ROLE,

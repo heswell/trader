@@ -12,6 +12,7 @@ import {
   RejectReason,
   roundToLot,
   roundToTick,
+  tickSizeAt,
   type SessionSchedule,
   TradingPhase,
   VOLUME_PROFILES,
@@ -62,6 +63,7 @@ import { SimAdminPublisher } from "../publish/SimAdminPublisher";
 import { type Clock, systemClock } from "../util/clock";
 import { Random } from "../util/random";
 import { generateBackfillBars } from "./barBackfill";
+import { TimeSeriesStore } from "../history/TimeSeriesStore";
 import { SECONDS_PER_YEAR } from "./PriceModel";
 import { BUILT_IN_SCENARIOS } from "../../scenarios";
 import { type SavedRun, ScenarioRunner } from "./control/ScenarioRunner";
@@ -210,6 +212,7 @@ export class ExchangeSimulator {
   readonly #books: InstrumentBook[] = [];
   readonly #tapeListeners = new Set<TapeListener>();
   #publisher: MarketDataPublisher | undefined;
+  #timeSeries: TimeSeriesStore | undefined;
   #simAdmin: SimAdminPublisher | undefined;
   #controlPublisher: ControlPublisher | undefined;
   #lastStep: number | undefined;
@@ -1013,6 +1016,7 @@ export class ExchangeSimulator {
     const t0 = timer.start();
     const publisher = this.#publisher;
     publisher?.flush(this.#books, now);
+    this.#sampleTimeSeries(now);
     if (publisher)
       for (const index of this.#indices.values())
         publisher.publishIndex(
@@ -1024,6 +1028,52 @@ export class ExchangeSimulator {
     if (this.#simAdmin?.flush(this.#simulated.values(), now))
       this.#controlPublisher?.publishSession(now);
     timer.stop(t0);
+  }
+
+  /**
+   * Per-instrument mid / spread history for large time-series charts (see
+   * docs/timeseries-downsampling.md); undefined when timeSeriesIntervalMs is
+   * 0. Sampled from every book's touch on flush.
+   */
+  get timeSeries(): TimeSeriesStore | undefined {
+    const { config } = this;
+    if (!this.#timeSeries && config.timeSeriesIntervalMs > 0) {
+      this.#timeSeries = new TimeSeriesStore({
+        intervalMs: config.timeSeriesIntervalMs,
+        historyMs: config.timeSeriesHistoryHours * 3_600_000,
+        maxHistoryRics: config.timeSeriesMaxRics,
+        timeScale: config.timeScale,
+        seed: (config.seed ^ 0x2c1b3c6d) >>> 0,
+        source: (ric) => {
+          const book = this.getBook(ric);
+          if (!book) return undefined;
+          const { model, instrument } = book;
+          const mid = model.fairValue;
+          const tick = tickSizeAt(book.schedule, mid);
+          return {
+            mid,
+            volatility: model.volatility,
+            tick,
+            decimals: instrument.priceDecimals,
+            // a market maker quotes a few ticks wide
+            spreadBps: Math.max(1, ((tick * 2) / mid) * 1e4),
+          };
+        },
+      });
+    }
+    return this.#timeSeries;
+  }
+
+  #sampleTimeSeries(now: number) {
+    const store = this.timeSeries;
+    if (!store?.due(now)) return;
+    store.sample(
+      now,
+      this.#books.map((book) => {
+        const { bid, ask } = book.topOfBook();
+        return { ric: book.ric, bid, ask };
+      }),
+    );
   }
 
   /** The sim-admin publisher, when its tables are attached. */
