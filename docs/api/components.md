@@ -28,9 +28,9 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [FillProgressBar](trading-ui.md#fillprogressbar) | `components/FillProgressBar` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
 | [FillsBlotter](trading-ui.md#fillsblotter) | `components/FillsBlotter` | `fills` |  | InstrumentLookup, LinkGroupSelector, StaleIndicator, TradingCellRenderers | `fills-blotter`, `trader-workspace` | [guide](../components/blotters.md) |
 | [InstrumentContextProvider](trading-ui.md#instrumentcontextprovider) | `instrument-context` |  |  | InstrumentLookup | `linking-providers` | [guide](../components/selection-and-linking.md#how-linking-works) |
-| [InstrumentGrid](trading-ui.md#instrumentgrid) | `components/InstrumentGrid` | `instrumentPrices` |  | InstrumentLookup, LinkGroupSelector, OrderTicket, Sparkline, StaleIndicator, TradingCellRenderers | `chart-workspace`, `depth-chart`, `hosting-feature-root`, `hosting-user-settings`, `instrument-grid`, `instrument-grid-200`, `instrument-grid-continuations`, `instrument-grid-futures`, `instrument-grid-prices`, `market-depth-selected`, `price-chart`, `price-ladder-live`, `spread-chart`, `trader-workspace` | [guide](../components/instrument-grid.md#instrumentgrid) |
+| [InstrumentGrid](trading-ui.md#instrumentgrid) | `components/InstrumentGrid` | `instrumentPrices` |  | InstrumentLookup, LinkGroupSelector, OrderTicket, Sparkline, StaleIndicator, TradingCellRenderers | `chart-workspace`, `depth-chart`, `hosting-feature-root`, `hosting-user-settings`, `instrument-grid`, `instrument-grid-200`, `instrument-grid-continuations`, `instrument-grid-futures`, `instrument-grid-prices`, `market-depth-selected`, `price-chart`, `price-ladder-live`, `spread-chart`, `time-series-chart`, `trader-workspace` | [guide](../components/instrument-grid.md#instrumentgrid) |
 | [InstrumentLookupProvider](trading-ui.md#instrumentlookupprovider) | `components/InstrumentLookup` | `instruments` |  |  | `selectors` | [guide](../components/selection-and-linking.md) |
-| [InstrumentPicker](trading-ui.md#instrumentpicker) | `components/InstrumentPicker` | `instruments` |  | LinkGroupSelector | `chart-workspace`, `depth-chart`, `linking-providers`, `market-depth-selected`, `panel-link-group`, `price-chart`, `price-ladder-live`, `selectors`, `spread-chart`, `trader-workspace` | [guide](../components/selection-and-linking.md) |
+| [InstrumentPicker](trading-ui.md#instrumentpicker) | `components/InstrumentPicker` | `instruments` |  | LinkGroupSelector | `chart-workspace`, `depth-chart`, `linking-providers`, `market-depth-selected`, `panel-link-group`, `price-chart`, `price-ladder-live`, `selectors`, `spread-chart`, `time-series-chart`, `trader-workspace` | [guide](../components/selection-and-linking.md) |
 | [LinkGroupMenuButton](trading-ui.md#linkgroupmenubutton) | `components/LinkGroupSelector` |  |  |  | `panel-link-group` | [guide](../components/selection-and-linking.md) |
 | [LinkGroupProvider](trading-ui.md#linkgroupprovider) | `instrument-context` |  |  | InstrumentLookup | `linking-providers` | [guide](../components/selection-and-linking.md#how-linking-works) |
 | [LinkGroupSelector](trading-ui.md#linkgroupselector) | `components/LinkGroupSelector` |  |  |  | `linking-providers`, `selectors` | [guide](../components/selection-and-linking.md) |
@@ -70,6 +70,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [SparklineCell](trading-ui.md#sparklinecell) | `components/Sparkline` |  |  |  | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#sparkline) |
 | [SpreadChart](trading-ui.md#spreadchart) | `components/SpreadChart` | `bookSamples`, `depth`, `instrumentPrices`, `trades` |  | ChartFrame, LinkGroupSelector | `chart-workspace`, `depth-chart`, `spread-chart` | [guide](../components/charts.md#spreadchart) |
 | [StaleIndicator](trading-ui.md#staleindicator) | `components/StaleIndicator` |  |  |  | `hosting-connection-override`, `notifications-connection` | [guide](../components/notifications-and-connection.md) |
+| [TimeSeriesChart](trading-ui.md#timeserieschart) | `components/TimeSeriesChart` | `depth`, `instrumentPrices`, `instruments`, `trades` | `timeSeries` | ChartFrame, LinkGroupSelector | `time-series-chart` | [guide](../components/charts.md#timeserieschart) |
 | [TradeTape](trading-ui.md#tradetape) | `components/TradeTape` | `trades` |  | InstrumentLookup, LinkGroupSelector, StaleIndicator | `channel-picker-workspace`, `trade-tape`, `trader-workspace` | [guide](../components/blotters.md) |
 | [TradingConnectionStateOverride](trading-ui.md#tradingconnectionstateoverride) | `connection` |  |  |  | `hosting-connection-override` | [guide](../components/hosting.md#tradingconnectionstateoverride) |
 | [TradingDataProvider](trading-ui.md#tradingdataprovider) | `data` |  |  |  | *host* | [guide](../components/hosting.md#tradingdataprovider) |
@@ -113,6 +114,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | `components/Sparkline` | `tradingSparkline` | `--trading-neutral` | `data-trend` |
 | `components/SpreadChart` | `tradingSpreadChart` |  | `data-link-group` |
 | `components/StaleIndicator` | `tradingStaleIndicator` |  | `data-stale`, `data-stale-reason` |
+| `components/TimeSeriesChart` | `tradingTimeSeriesChart` |  | `data-link-group`, `data-method` |
 | `components/TradeTape` | `tradingTradeTape` | `--trading-buy` | `data-aggressor`, `data-large`, `data-link-group`, `data-testid` |
 | `components/TradingCellRenderers` |  |  | `data-liquidity`, `data-position`, `data-stop-trigger` |
 
@@ -151,5 +153,6 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | SlippageChart | `slippage-chart` | [guide](../components/charts.md#slippagechart) |
 | SpreadChart | `spread-chart` | [guide](../components/charts.md#spreadchart) |
 | Stack | `stack-instrument-prices` | [guide](../components/README.md) |
+| TimeSeriesChart | `time-series-chart` | [guide](../components/charts.md#timeserieschart) |
 | TradeTape | `trade-tape` | [guide](../components/blotters.md) |
 | Workspace | `trader-workspace` | [guide](../components/README.md) |

@@ -4,12 +4,12 @@
 
 The client entry of `@heswell/trading-schemas`: table definitions, enums, RPC contracts and validation, tick / lot maths. Shared by the UI, the servers and the in-browser engines. Overview: [schemas.md](../schemas.md), [package README](../../packages/trading-schemas/README.md).
 
-Imports: `@heswell/trading-schemas`. 331 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-schemas`. 342 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
 - **domain**: [acceptsOrders](#acceptsorders), [activityAt](#activityat), [ALGO_STRATEGIES](#algo_strategies), [ALGO_STRATEGY_DEFINITIONS](#algo_strategy_definitions), [ALGO_STRATEGY_GROUPS](#algo_strategy_groups), [AlgoParamDefinition](#algoparamdefinition), [AlgoParamType](#algoparamtype), [AlgoStrategy](#algostrategy), [algoStrategyDefinition](#algostrategydefinition), [AlgoStrategyDefinition](#algostrategydefinition-1), [AlgoStrategyGroup](#algostrategygroup), [allowedTimesInForce](#allowedtimesinforce), [assertTransition](#asserttransition), [BOOK_EVENT_TYPES](#book_event_types), [BookEventType](#bookeventtype), [BOT_TYPES](#bot_types), [BotType](#bottype), [canAmend](#canamend), [canCancel](#cancancel), [canTransition](#cantransition), [CLIENT_PERSONAS](#client_personas), [CLIENT_SIDE_MODES](#client_side_modes), [ClientPersona](#clientpersona), [ClientSideMode](#clientsidemode), [clockAtSessionMinute](#clockatsessionminute), [contractMultiplierOf](#contractmultiplierof), [cumulativeVolume](#cumulativevolume), [DAY_MS](#day_ms), [decimalsOf](#decimalsof), [decodeEntryMessages](#decodeentrymessages), [encodeEntryMessages](#encodeentrymessages), [entryFieldForCode](#entryfieldforcode), [EntryMessage](#entrymessage), [EntryMessageLevel](#entrymessagelevel), [entryReviewMessages](#entryreviewmessages), [EntryRiskCode](#entryriskcode), [EXEC_TYPES](#exec_types), [ExecType](#exectype), [FLAT_PROFILE](#flat_profile), [FORM_FIELD](#form_field), [formatTickBands](#formattickbands), [hasEntryErrors](#hasentryerrors), [INITIAL_ORDER_STATUS](#initial_order_status), [INSTRUMENT_TYPES](#instrument_types), [InstrumentStatic](#instrumentstatic), [InstrumentType](#instrumenttype), [isAlgoStrategy](#isalgostrategy), [isContinuousMatching](#iscontinuousmatching), [isEnumValue](#isenumvalue), [isOnTick](#isontick), [isPendingStatus](#ispendingstatus), [isPricedOrdType](#ispricedordtype), [isSessionOpen](#issessionopen), [isStopOrdType](#isstopordtype), [isStopTriggered](#isstoptriggered), [isStrategyAllowed](#isstrategyallowed), [isTerminalStatus](#isterminalstatus), [isTimeInForceAllowed](#istimeinforceallowed), [isValidLot](#isvalidlot), [isWorkingStatus](#isworkingstatus), [Liquidity](#liquidity), [LIQUIDITY_VALUES](#liquidity_values), [nextOpenAt](#nextopenat), [nonStopOrdType](#nonstopordtype), [oppositeSide](#oppositeside), [ORD_STATUSES](#ord_statuses), [ORD_TYPE_LABEL](#ord_type_label), [ORD_TYPES](#ord_types), [ORDER_STATUS_TRANSITIONS](#order_status_transitions), [ORDER_TICKET_TIFS](#order_ticket_tifs), [OrderReject](#orderreject), [OrderToValidate](#ordertovalidate), [OrdStatus](#ordstatus), [OrdType](#ordtype), [parseTickBands](#parsetickbands), [REJECT_REASONS](#reject_reasons), [RejectReason](#rejectreason), [RoundingMode](#roundingmode), [roundToLot](#roundtolot), [roundToTick](#roundtotick), [ScenarioStatus](#scenariostatus), [sessionCloseAt](#sessioncloseat), [sessionClosedSince](#sessionclosedsince), [sessionFraction](#sessionfraction), [sessionMinuteOfDay](#sessionminuteofday), [SessionSchedule](#sessionschedule), [sessionToClockMs](#sessiontoclockms), [sessionWindow](#sessionwindow), [Side](#side), [SIDES](#sides), [SIM_BOT_KINDS](#sim_bot_kinds), [SimBotKind](#simbotkind), [stepTicks](#stepticks), [STOP_TIME_IN_FORCE_VALUES](#stop_time_in_force_values), [SUPPORTED_ORD_TYPES](#supported_ord_types), [TickBand](#tickband), [ticksBetween](#ticksbetween), [TickSchedule](#tickschedule), [tickScheduleOf](#tickscheduleof), [tickSizeAt](#ticksizeat), [TIME_IN_FORCE_VALUES](#time_in_force_values), [TimeInForce](#timeinforce), [TRADING_PHASES](#trading_phases), [TradingPhase](#tradingphase), [U_SHAPED_PROFILE](#u_shaped_profile), [UNSCHEDULED](#unscheduled), [usdPerUnit](#usdperunit), [validateAmend](#validateamend), [validateOrder](#validateorder), [validatePrice](#validateprice), [validateQuantity](#validatequantity), [validateStopLimitPrices](#validatestoplimitprices), [validateStopPrice](#validatestopprice), [validateStopTrigger](#validatestoptrigger), [VOLUME_PROFILES](#volume_profiles), [volumeProfile](#volumeprofile), [VolumeProfileName](#volumeprofilename), [VolumeProfileParams](#volumeprofileparams), [workingStatusFor](#workingstatusfor)
-- **rpc**: [addBotParams](#addbotparams), [AddBotRequest](#addbotrequest), [AddBotResponse](#addbotresponse), [addClientBotParams](#addclientbotparams), [AddClientBotRequest](#addclientbotrequest), [AddClientBotResponse](#addclientbotresponse), [AdminRpcResponse](#adminrpcresponse), [amendOrderParams](#amendorderparams), [AmendOrderRequest](#amendorderrequest), [AmendOrderResponse](#amendorderresponse), [boolean](#boolean), [botSelectorParams](#botselectorparams), [BotSelectorRequest](#botselectorrequest), [cancelAllParams](#cancelallparams), [CancelAllRequest](#cancelallrequest), [CancelAllResponse](#cancelallresponse), [cancelOrderParams](#cancelorderparams), [CancelOrderRequest](#cancelorderrequest), [CancelOrderResponse](#cancelorderresponse), [CLIENT_ADMIN_RPC_NAMES](#client_admin_rpc_names), [ClientAdminRpcResponse](#clientadminrpcresponse), [clientBotSelectorParams](#clientbotselectorparams), [ClientBotSelectorRequest](#clientbotselectorrequest), [closeOrderEntryParams](#closeorderentryparams), [CloseOrderEntryRequest](#closeorderentryrequest), [createOrderParams](#createorderparams), [CreateOrderRequest](#createorderrequest), [CreateOrderResponse](#createorderresponse), [EXCHANGE_ADMIN_RPC_NAMES](#exchange_admin_rpc_names), [formatRpcError](#formatrpcerror), [haltInstrumentParams](#haltinstrumentparams), [HaltInstrumentRequest](#haltinstrumentrequest), [Infer](#infer), [InferShape](#infershape), [MARKET_SESSION_PHASES](#market_session_phases), [number](#number), [NumberOptions](#numberoptions), [object](#object), [OMS_RPC_NAMES](#oms_rpc_names), [oneOf](#oneof), [openOrderEntryParams](#openorderentryparams), [OpenOrderEntryRequest](#openorderentryrequest), [optional](#optional), [OptionalValidator](#optionalvalidator), [ORDER_ENTRY_RPC_NAMES](#order_entry_rpc_names), [OrderEntryResponse](#orderentryresponse), [parseRpcError](#parserpcerror), [removeBotParams](#removebotparams), [RemoveBotRequest](#removebotrequest), [removeClientBotParams](#removeclientbotparams), [RemoveClientBotRequest](#removeclientbotrequest), [resumeInstrumentParams](#resumeinstrumentparams), [ResumeInstrumentRequest](#resumeinstrumentrequest), [RpcContracts](#rpccontracts), [rpcError](#rpcerror), [RpcName](#rpcname), [RpcRequestParams](#rpcrequestparams), [RpcResponseData](#rpcresponsedata), [rpcSuccess](#rpcsuccess), [runScenarioParams](#runscenarioparams), [RunScenarioRequest](#runscenariorequest), [RunScenarioResponse](#runscenarioresponse), [sendOrderParams](#sendorderparams), [SendOrderRequest](#sendorderrequest), [setBotParamsParams](#setbotparamsparams), [SetBotParamsRequest](#setbotparamsrequest), [setBotRateParams](#setbotrateparams), [SetBotRateRequest](#setbotraterequest), [setClientBotParamsParams](#setclientbotparamsparams), [SetClientBotParamsRequest](#setclientbotparamsrequest), [setFlowParamsParams](#setflowparamsparams), [SetFlowParamsRequest](#setflowparamsrequest), [SetFlowParamsResponse](#setflowparamsresponse), [setInstrumentParamsParams](#setinstrumentparamsparams), [SetInstrumentParamsRequest](#setinstrumentparamsrequest), [setMarketPhaseParams](#setmarketphaseparams), [SetMarketPhaseRequest](#setmarketphaserequest), [setVolatilityParams](#setvolatilityparams), [SetVolatilityRequest](#setvolatilityrequest), [shiftFairValueParams](#shiftfairvalueparams), [ShiftFairValueRequest](#shiftfairvaluerequest), [stopScenarioParams](#stopscenarioparams), [StopScenarioRequest](#stopscenariorequest), [string](#string), [StringOptions](#stringoptions), [submitClientAlgoParams](#submitclientalgoparams), [SubmitClientAlgoRequest](#submitclientalgorequest), [tradingRpcRequest](#tradingrpcrequest), [TradingRpcRequest](#tradingrpcrequest-1), [TradingRpcResult](#tradingrpcresult), [TradingRpcSuccess](#tradingrpcsuccess), [updateOrderEntryParams](#updateorderentryparams), [UpdateOrderEntryRequest](#updateorderentryrequest), [validateRpcParams](#validaterpcparams), [ValidationResult](#validationresult), [Validator](#validator)
+- **rpc**: [addBotParams](#addbotparams), [AddBotRequest](#addbotrequest), [AddBotResponse](#addbotresponse), [addClientBotParams](#addclientbotparams), [AddClientBotRequest](#addclientbotrequest), [AddClientBotResponse](#addclientbotresponse), [AdminRpcResponse](#adminrpcresponse), [amendOrderParams](#amendorderparams), [AmendOrderRequest](#amendorderrequest), [AmendOrderResponse](#amendorderresponse), [boolean](#boolean), [botSelectorParams](#botselectorparams), [BotSelectorRequest](#botselectorrequest), [cancelAllParams](#cancelallparams), [CancelAllRequest](#cancelallrequest), [CancelAllResponse](#cancelallresponse), [cancelOrderParams](#cancelorderparams), [CancelOrderRequest](#cancelorderrequest), [CancelOrderResponse](#cancelorderresponse), [CLIENT_ADMIN_RPC_NAMES](#client_admin_rpc_names), [ClientAdminRpcResponse](#clientadminrpcresponse), [clientBotSelectorParams](#clientbotselectorparams), [ClientBotSelectorRequest](#clientbotselectorrequest), [closeOrderEntryParams](#closeorderentryparams), [CloseOrderEntryRequest](#closeorderentryrequest), [createOrderParams](#createorderparams), [CreateOrderRequest](#createorderrequest), [CreateOrderResponse](#createorderresponse), [decodeTimeSeries](#decodetimeseries), [DOWNSAMPLE_METHODS](#downsample_methods), [DownsampleMethod](#downsamplemethod), [EXCHANGE_ADMIN_RPC_NAMES](#exchange_admin_rpc_names), [EXCHANGE_QUERY_RPC_NAMES](#exchange_query_rpc_names), [formatRpcError](#formatrpcerror), [haltInstrumentParams](#haltinstrumentparams), [HaltInstrumentRequest](#haltinstrumentrequest), [Infer](#infer), [InferShape](#infershape), [MARKET_SESSION_PHASES](#market_session_phases), [number](#number), [NumberOptions](#numberoptions), [object](#object), [OMS_RPC_NAMES](#oms_rpc_names), [oneOf](#oneof), [openOrderEntryParams](#openorderentryparams), [OpenOrderEntryRequest](#openorderentryrequest), [optional](#optional), [OptionalValidator](#optionalvalidator), [ORDER_ENTRY_RPC_NAMES](#order_entry_rpc_names), [OrderEntryResponse](#orderentryresponse), [parseRpcError](#parserpcerror), [removeBotParams](#removebotparams), [RemoveBotRequest](#removebotrequest), [removeClientBotParams](#removeclientbotparams), [RemoveClientBotRequest](#removeclientbotrequest), [resumeInstrumentParams](#resumeinstrumentparams), [ResumeInstrumentRequest](#resumeinstrumentrequest), [RpcContracts](#rpccontracts), [rpcError](#rpcerror), [RpcName](#rpcname), [RpcRequestParams](#rpcrequestparams), [RpcResponseData](#rpcresponsedata), [rpcSuccess](#rpcsuccess), [runScenarioParams](#runscenarioparams), [RunScenarioRequest](#runscenariorequest), [RunScenarioResponse](#runscenarioresponse), [sendOrderParams](#sendorderparams), [SendOrderRequest](#sendorderrequest), [setBotParamsParams](#setbotparamsparams), [SetBotParamsRequest](#setbotparamsrequest), [setBotRateParams](#setbotrateparams), [SetBotRateRequest](#setbotraterequest), [setClientBotParamsParams](#setclientbotparamsparams), [SetClientBotParamsRequest](#setclientbotparamsrequest), [setFlowParamsParams](#setflowparamsparams), [SetFlowParamsRequest](#setflowparamsrequest), [SetFlowParamsResponse](#setflowparamsresponse), [setInstrumentParamsParams](#setinstrumentparamsparams), [SetInstrumentParamsRequest](#setinstrumentparamsrequest), [setMarketPhaseParams](#setmarketphaseparams), [SetMarketPhaseRequest](#setmarketphaserequest), [setVolatilityParams](#setvolatilityparams), [SetVolatilityRequest](#setvolatilityrequest), [shiftFairValueParams](#shiftfairvalueparams), [ShiftFairValueRequest](#shiftfairvaluerequest), [stopScenarioParams](#stopscenarioparams), [StopScenarioRequest](#stopscenariorequest), [string](#string), [StringOptions](#stringoptions), [submitClientAlgoParams](#submitclientalgoparams), [SubmitClientAlgoRequest](#submitclientalgorequest), [TIME_SERIES_FIELDS](#time_series_fields), [TIME_SERIES_MAX_POINTS](#time_series_max_points), [TimeSeriesData](#timeseriesdata), [TimeSeriesField](#timeseriesfield), [timeSeriesParams](#timeseriesparams), [TimeSeriesRequest](#timeseriesrequest), [TimeSeriesResponse](#timeseriesresponse), [tradingRpcRequest](#tradingrpcrequest), [TradingRpcRequest](#tradingrpcrequest-1), [TradingRpcResult](#tradingrpcresult), [TradingRpcSuccess](#tradingrpcsuccess), [updateOrderEntryParams](#updateorderentryparams), [UpdateOrderEntryRequest](#updateorderentryrequest), [validateRpcParams](#validaterpcparams), [ValidationResult](#validationresult), [Validator](#validator)
 - **tables**: [accountPnlHistory](#accountpnlhistory), [accountPnlHistoryKey](#accountpnlhistorykey), [AccountPnlHistoryRow](#accountpnlhistoryrow), [AccountRow](#accountrow), [accounts](#accounts), [barKey](#barkey), [BarRow](#barrow), [bars](#bars), [BOOK_SAMPLE_LEVELS](#book_sample_levels), [bookEventKey](#bookeventkey), [BookEventRow](#bookeventrow), [bookEvents](#bookevents), [BookOrderRow](#bookorderrow), [bookOrders](#bookorders), [bookSampleKey](#booksamplekey), [BookSampleRow](#booksamplerow), [bookSamples](#booksamples), [botFillKey](#botfillkey), [BotFillRow](#botfillrow), [botFills](#botfills), [botHistory](#bothistory), [botHistoryKey](#bothistorykey), [BotHistoryRow](#bothistoryrow), [botParamKey](#botparamkey), [BotParamRow](#botparamrow), [botParams](#botparams), [BotRow](#botrow), [bots](#bots), [ChildOrderRow](#childorderrow), [childOrders](#childorders), [clientBotParams](#clientbotparams), [clientBots](#clientbots), [ColumnDefinition](#columndefinition), [columnIndices](#columnindices), [ColumnName](#columnname), [columnNames](#columnnames), [defineJoin](#definejoin), [defineTable](#definetable), [depth](#depth), [depthKey](#depthkey), [DepthRow](#depthrow), [EXCHANGE_MODULE](#exchange_module), [exchangeTables](#exchangetables), [FillRow](#fillrow), [fills](#fills), [fromRowArray](#fromrowarray), [getTradingSchemas](#gettradingschemas), [instrumentPrices](#instrumentprices), [InstrumentRow](#instrumentrow), [instruments](#instruments), [JoinDefinition](#joindefinition), [joinTableColumns](#jointablecolumns), [JoinType](#jointype), [LinkDefinition](#linkdefinition), [MetricRow](#metricrow), [metrics](#metrics), [METRICS_MODULE](#metrics_module), [metricsHistory](#metricshistory), [metricsHistoryKey](#metricshistorykey), [MetricsHistoryRow](#metricshistoryrow), [metricsModuleTables](#metricsmoduletables), [metricsProcess](#metricsprocess), [MetricsProcessRow](#metricsprocessrow), [MetricsSessionRow](#metricssessionrow), [metricsSessions](#metricssessions), [MetricsTableRow](#metricstablerow), [metricsTables](#metricstables), [OMS_MODULE](#oms_module), [omsTables](#omstables), [ORDER_ENTRY_EDITABLE_COLUMNS](#order_entry_editable_columns), [orderEntry](#orderentry), [OrderEntryEditableColumn](#orderentryeditablecolumn), [orderEntryPrices](#orderentryprices), [OrderEntryRow](#orderentryrow), [PARENT_ORDER_PROGRESS_COLUMNS](#parent_order_progress_columns), [ParentOrderRow](#parentorderrow), [parentOrders](#parentorders), [parseBarInterval](#parsebarinterval), [parseDepthKey](#parsedepthkey), [parsePositionKey](#parsepositionkey), [pnlHistory](#pnlhistory), [pnlHistoryKey](#pnlhistorykey), [PnlHistoryRow](#pnlhistoryrow), [positionKey](#positionkey), [positionPrices](#positionprices), [PositionRow](#positionrow), [positions](#positions), [PriceRow](#pricerow), [prices](#prices), [RowArray](#rowarray), [RowOf](#rowof), [ScenarioRow](#scenariorow), [ScenarioRunRow](#scenariorunrow), [scenarioRuns](#scenarioruns), [scenarios](#scenarios), [SimBookRow](#simbookrow), [simBooks](#simbooks), [SimEventRow](#simeventrow), [simEvents](#simevents), [simSampleKey](#simsamplekey), [SimSampleRow](#simsamplerow), [simSamples](#simsamples), [simSession](#simsession), [SimSessionRow](#simsessionrow), [TableDefinition](#tabledefinition), [toRowArray](#torowarray), [toTableSchema](#totableschema), [TradeRow](#traderow), [trades](#trades), [TradingColumnDataType](#tradingcolumndatatype), [TradingJoinName](#tradingjoinname), [tradingJoins](#tradingjoins), [TradingModule](#tradingmodule), [TradingSchemaName](#tradingschemaname), [TradingTableName](#tradingtablename), [tradingTables](#tradingtables)
 
 ## domain
@@ -1282,9 +1282,19 @@ Validator for a boolean (`"true"` / `"false"` strings are accepted).
 boolean(): Validator<boolean>
 ```
 
+#### decodeTimeSeries
+
+*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L566)
+
+Decode a TimeSeriesData into absolute times and values (gaps as null).
+
+```ts
+decodeTimeSeries({ t0, t, v }: TimeSeriesData): { times: number[]; values: (number | null)[]; }
+```
+
 #### formatRpcError
 
-*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L557)
+*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L651)
 
 Error message of a reject: `REASON: text` (or the reason alone); parsed by
 parseRpcError.
@@ -1337,7 +1347,7 @@ optional<T>(validator: Validator<T>): OptionalValidator<T>
 
 #### parseRpcError
 
-*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L570)
+*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L664)
 
 Split an ERROR_RESULT message into reason code + text.
 
@@ -1347,7 +1357,7 @@ parseRpcError(errorMessage: string): { reason: RejectReason; text: string }
 
 #### rpcError
 
-*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L561)
+*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L655)
 
 An ERROR_RESULT with the message formatted by formatRpcError.
 
@@ -1357,7 +1367,7 @@ rpcError(reason: RejectReason, text?: string): RpcResultError
 
 #### rpcSuccess
 
-*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L548)
+*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L642)
 
 A SUCCESS_RESULT carrying the typed response data of an RPC.
 
@@ -1378,7 +1388,7 @@ string({ minLength = 1, maxLength = 128 }: StringOptions = {}): Validator<string
 
 #### tradingRpcRequest
 
-*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L536)
+*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L630)
 
 Build a client RPC_REQUEST message (send via DataSource.rpcRequest).
 
@@ -1388,7 +1398,7 @@ tradingRpcRequest<N extends RpcName>(rpcName: N, params: RpcRequestParams<N>, vi
 
 #### validateRpcParams
 
-*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L625)
+*function* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L720)
 
 Structural validation of RPC params (types, enums, required fields).
 createOrder defaults timeInForce to DAY. Business rules against the
@@ -1402,7 +1412,7 @@ validateRpcParams<N extends RpcName>(rpcName: N, params: unknown): ValidationRes
 
 #### addBotParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L361)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L369)
 
 ```ts
 const addBotParams: Validator<InferShape<{ ric: Validator<string>; kind: Validator<string>; params: OptionalValidator<string>; }>>
@@ -1410,7 +1420,7 @@ const addBotParams: Validator<InferShape<{ ric: Validator<string>; kind: Validat
 
 #### addClientBotParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L422)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L430)
 
 Add a client bot of `persona`. `account` defaults to the next Sim clients
 account (CLIENT-nn); any enabled account works, e.g. a trader's for demos.
@@ -1422,7 +1432,7 @@ const addClientBotParams: Validator<InferShape<{ persona: Validator<ValueOf<Read
 
 #### amendOrderParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L225)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L233)
 
 At least one of quantity / price / stopPrice must be supplied. Quantity is the new total.
 
@@ -1432,7 +1442,7 @@ const amendOrderParams: Validator<InferShape<{ orderId: Validator<string>; quant
 
 #### botSelectorParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L358)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L366)
 
 Pause / resume / pull quotes / reset stats of the selected bots.
 
@@ -1442,7 +1452,7 @@ const botSelectorParams: Validator<InferShape<{ ric: OptionalValidator<string>; 
 
 #### cancelAllParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L248)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L256)
 
 Filter fields are ANDed; an empty filter cancels all of the caller's working orders.
 
@@ -1452,7 +1462,7 @@ const cancelAllParams: Validator<InferShape<{ account: OptionalValidator<string>
 
 #### cancelOrderParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L238)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L246)
 
 ```ts
 const cancelOrderParams: Validator<InferShape<{ orderId: Validator<string>; }>>
@@ -1460,7 +1470,7 @@ const cancelOrderParams: Validator<InferShape<{ orderId: Validator<string>; }>>
 
 #### CLIENT_ADMIN_RPC_NAMES
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L107)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L115)
 
 OMS simulator control (sim-admin): client bots and the background flow.
 
@@ -1470,7 +1480,7 @@ const CLIENT_ADMIN_RPC_NAMES: readonly ["setClientBotParams", "pauseClientBots",
 
 #### clientBotSelectorParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L414)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L422)
 
 ```ts
 const clientBotSelectorParams: Validator<InferShape<{ botId: OptionalValidator<string>; persona: OptionalValidator<ValueOf<Readonly<{ readonly Pension: "pension"; readonly HedgeFund: "hedgeFund"; readonly Quant: "quant"; readonly Liquidation: "liquidation"; readonly Informed: "informed"; }>>>; }>>
@@ -1478,7 +1488,7 @@ const clientBotSelectorParams: Validator<InferShape<{ botId: OptionalValidator<s
 
 #### closeOrderEntryParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L216)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L224)
 
 ```ts
 const closeOrderEntryParams: Validator<InferShape<{ entryId: Validator<string>; }>>
@@ -1486,23 +1496,47 @@ const closeOrderEntryParams: Validator<InferShape<{ entryId: Validator<string>; 
 
 #### createOrderParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L124)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L132)
 
 ```ts
 const createOrderParams: Validator<InferShape<{ clOrdId: OptionalValidator<string>; account: Validator<string>; ric: Validator<string>; side: Validator<ValueOf<Readonly<{ readonly Buy: "BUY"; readonly Sell: "SELL"; }>>>; ... 8 more ...; participationPct: OptionalValidator<...>; }>>
 ```
 
+#### DOWNSAMPLE_METHODS
+
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L503)
+
+How the server picks samples (see docs/timeseries-downsampling.md):
+`m4` first/min/max/last per time bucket (pixel-exact, constant cost);
+`minmaxlttb` LTTB over pyramid min/max candidates; `lttb` LTTB over every
+point in the window (O(n)); `raw` every point (capped at `points`).
+
+```ts
+const DOWNSAMPLE_METHODS: readonly ["m4", "minmaxlttb", "lttb", "raw"]
+```
+
 #### EXCHANGE_ADMIN_RPC_NAMES
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L81)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L82)
 
 ```ts
 const EXCHANGE_ADMIN_RPC_NAMES: readonly ["setVolatility", "haltInstrument", "resumeInstrument", "setBotRate", "setMarketPhase", "setBotParams", "setInstrumentParams", "shiftFairValue", "pauseBots", "resumeBots", ... 5 more ..., "stopScenario"]
 ```
 
+#### EXCHANGE_QUERY_RPC_NAMES
+
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L111)
+
+Read-only EXCHANGE RPCs anyone can call (no sim-admin): downsampled
+history for charts.
+
+```ts
+const EXCHANGE_QUERY_RPC_NAMES: readonly ["timeSeries"]
+```
+
 #### haltInstrumentParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L269)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L277)
 
 ```ts
 const haltInstrumentParams: Validator<InferShape<{ ric: Validator<string>; reason: OptionalValidator<string>; }>>
@@ -1510,7 +1544,7 @@ const haltInstrumentParams: Validator<InferShape<{ ric: Validator<string>; reaso
 
 #### MARKET_SESSION_PHASES
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L292)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L300)
 
 Market-wide phases an exchange session can be forced into.
 
@@ -1520,7 +1554,7 @@ const MARKET_SESSION_PHASES: readonly ["PRE_OPEN", "CONTINUOUS", "CLOSED"]
 
 #### OMS_RPC_NAMES
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L75)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L76)
 
 ```ts
 const OMS_RPC_NAMES: readonly ["createOrder", "amendOrder", "cancelOrder", "cancelAll"]
@@ -1528,7 +1562,7 @@ const OMS_RPC_NAMES: readonly ["createOrder", "amendOrder", "cancelOrder", "canc
 
 #### openOrderEntryParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L188)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L196)
 
 Open (or reuse) the caller's row for a ticket. With any draft field the
 row is reset to those values (the rest default); without, an existing
@@ -1540,7 +1574,7 @@ const openOrderEntryParams: Validator<InferShape<{ ric: OptionalValidator<string
 
 #### ORDER_ENTRY_RPC_NAMES
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L100)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L101)
 
 Order ticket rows (orderEntry): open, edit several fields, send, close.
 
@@ -1550,7 +1584,7 @@ const ORDER_ENTRY_RPC_NAMES: readonly ["openOrderEntry", "updateOrderEntry", "se
 
 #### removeBotParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L372)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L380)
 
 ```ts
 const removeBotParams: Validator<InferShape<{ botId: Validator<string>; }>>
@@ -1558,7 +1592,7 @@ const removeBotParams: Validator<InferShape<{ botId: Validator<string>; }>>
 
 #### removeClientBotParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L434)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L442)
 
 Remove a client bot; its live parent orders are cancelled.
 
@@ -1568,7 +1602,7 @@ const removeClientBotParams: Validator<InferShape<{ botId: Validator<string>; }>
 
 #### resumeInstrumentParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L275)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L283)
 
 ```ts
 const resumeInstrumentParams: Validator<InferShape<{ ric: Validator<string>; auction: OptionalValidator<boolean>; }>>
@@ -1588,12 +1622,12 @@ Failure: ERROR_RESULT whose errorMessage is `"<RejectReason>: <text>"`
 (see formatRpcError / parseRpcError).
 
 ```ts
-const RpcName: Readonly<{ readonly CreateOrder: "createOrder"; readonly AmendOrder: "amendOrder"; readonly CancelOrder: "cancelOrder"; readonly CancelAll: "cancelAll"; readonly SetVolatility: "setVolatility"; ... 25 more ...; readonly CloseOrderEntry: "closeOrderEntry"; }>
+const RpcName: Readonly<{ readonly CreateOrder: "createOrder"; readonly AmendOrder: "amendOrder"; readonly CancelOrder: "cancelOrder"; readonly CancelAll: "cancelAll"; readonly SetVolatility: "setVolatility"; ... 26 more ...; readonly TimeSeries: "timeSeries"; }>
 ```
 
 #### runScenarioParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L381)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L389)
 
 Start a scenario. `rics` (comma separated) overrides its default targets;
 `args` is a JSON object overriding its default args.
@@ -1604,7 +1638,7 @@ const runScenarioParams: Validator<InferShape<{ name: Validator<string>; rics: O
 
 #### sendOrderParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L208)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L216)
 
 Send the row as an order. Refused while vuuMsg has errors; warnings that
 need review need `confirmed`.
@@ -1615,7 +1649,7 @@ const sendOrderParams: Validator<InferShape<{ entryId: Validator<string>; confir
 
 #### setBotParamsParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L325)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L333)
 
 Set one bot parameter (checked against the kind's paramSpec). `value` is
 absolute ("12", "true") or, for numbers, relative: "x2" multiplies,
@@ -1627,7 +1661,7 @@ const setBotParamsParams: Validator<InferShape<{ name: Validator<string>; value:
 
 #### setBotRateParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L283)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L291)
 
 Omitting ric applies to all simulated instruments; bot defaults to ALL.
 
@@ -1637,7 +1671,7 @@ const setBotRateParams: Validator<InferShape<{ ric: OptionalValidator<string>; b
 
 #### setClientBotParamsParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L407)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L415)
 
 Set one client bot parameter (checked against its spec); value as setBotParams.
 
@@ -1647,7 +1681,7 @@ const setClientBotParamsParams: Validator<InferShape<{ name: Validator<string>; 
 
 #### setFlowParamsParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L459)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L467)
 
 BackgroundFlow settings; omitted fields are unchanged.
 
@@ -1657,7 +1691,7 @@ const setFlowParamsParams: Validator<InferShape<{ rate: OptionalValidator<number
 
 #### setInstrumentParamsParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L334)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L342)
 
 Price-model settings; omitted fields are unchanged, no ric = all.
 
@@ -1667,7 +1701,7 @@ const setInstrumentParamsParams: Validator<InferShape<{ ric: OptionalValidator<s
 
 #### setMarketPhaseParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L303)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L311)
 
 Force the market-wide session phase now, until the next scheduled phase
 change (indefinitely when no session is configured). CLOSED expires
@@ -1679,7 +1713,7 @@ const setMarketPhaseParams: Validator<InferShape<{ phase: Validator<"CLOSED" | "
 
 #### setVolatilityParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L262)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L270)
 
 Omitting ric applies to all simulated instruments.
 
@@ -1689,7 +1723,7 @@ const setVolatilityParams: Validator<InferShape<{ ric: OptionalValidator<string>
 
 #### shiftFairValueParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L349)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L357)
 
 Move fair value by `bps` at once (a news jump), within the price band.
 
@@ -1699,7 +1733,7 @@ const shiftFairValueParams: Validator<InferShape<{ ric: Validator<string>; bps: 
 
 #### stopScenarioParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L392)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L400)
 
 Stop a live run; `revert` also puts its targets' settings back.
 
@@ -1709,7 +1743,7 @@ const stopScenarioParams: Validator<InferShape<{ runId: Validator<string>; rever
 
 #### submitClientAlgoParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L444)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L452)
 
 One parent order now, for `botId`'s account: `notionalUsd` (or
 `quantity`) on `ric`, worked by `strategy` (default the bot's mix).
@@ -1719,9 +1753,42 @@ Omitted fields come from the bot's parameters.
 const submitClientAlgoParams: Validator<InferShape<{ botId: Validator<string>; ric: Validator<string>; side: OptionalValidator<ValueOf<Readonly<{ readonly Buy: "BUY"; readonly Sell: "SELL"; }>>>; ... 5 more ...; limitBps: OptionalValidator<...>; }>>
 ```
 
+#### TIME_SERIES_FIELDS
+
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L494)
+
+Fields of the EXCHANGE time-series store (one value per second per ric).
+
+```ts
+const TIME_SERIES_FIELDS: readonly ["mid", "spreadBps"]
+```
+
+#### TIME_SERIES_MAX_POINTS
+
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L512)
+
+Most samples a timeSeries request can ask for (per field).
+
+```ts
+const TIME_SERIES_MAX_POINTS: 20000
+```
+
+#### timeSeriesParams
+
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L520)
+
+Downsampled history of one instrument over `[start, end)` (epoch ms; `end`
+defaults to now, `start` to an hour before `end`), at most about `points`
+samples per field. Pass `bucketMs` back from a previous response to
+re-request part of the window on the same bucket grid (the live edge).
+
+```ts
+const timeSeriesParams: Validator<InferShape<{ ric: Validator<string>; fields: OptionalValidator<string>; start: OptionalValidator<number>; end: OptionalValidator<number>; points: Validator<...>; method: OptionalValidator<...>; bucketMs: OptionalValidator<...>; }>>
+```
+
 #### updateOrderEntryParams
 
-*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L198)
+*const* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L206)
 
 Set several draft fields at once (an order line, a type change).
 
@@ -1733,7 +1800,7 @@ const updateOrderEntryParams: Validator<InferShape<{ ric: OptionalValidator<stri
 
 #### AddBotResponse
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L368)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L376)
 
 Extends `AdminRpcResponse`.
 
@@ -1744,7 +1811,7 @@ Extends `AdminRpcResponse`.
 
 #### AddClientBotResponse
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L428)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L436)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1753,7 +1820,7 @@ Extends `AdminRpcResponse`.
 
 #### AdminRpcResponse
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L478)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L486)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1761,7 +1828,7 @@ Extends `AdminRpcResponse`.
 
 #### AmendOrderResponse
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L233)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L241)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1770,7 +1837,7 @@ Extends `AdminRpcResponse`.
 
 #### CancelAllResponse
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L254)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L262)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1778,7 +1845,7 @@ Extends `AdminRpcResponse`.
 
 #### CancelOrderResponse
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L242)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L250)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1787,7 +1854,7 @@ Extends `AdminRpcResponse`.
 
 #### ClientAdminRpcResponse
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L468)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L476)
 
 Client bots affected.
 
@@ -1797,7 +1864,7 @@ Client bots affected.
 
 #### CreateOrderResponse
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L218)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L226)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1818,7 +1885,7 @@ Client bots affected.
 
 #### OrderEntryResponse
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L193)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L201)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1826,7 +1893,7 @@ Client bots affected.
 
 #### RpcContracts
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L485)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L578)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1861,10 +1928,11 @@ Client bots affected.
 | `updateOrderEntry` | `[UpdateOrderEntryRequest, OrderEntryResponse]` |  |  |
 | `sendOrder` | `[SendOrderRequest, CreateOrderResponse]` |  |  |
 | `closeOrderEntry` | `[CloseOrderEntryRequest, OrderEntryResponse]` |  |  |
+| `timeSeries` | `[TimeSeriesRequest, TimeSeriesResponse]` |  |  |
 
 #### RunScenarioResponse
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L387)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L395)
 
 Extends `AdminRpcResponse`.
 
@@ -1875,7 +1943,7 @@ Extends `AdminRpcResponse`.
 
 #### SetFlowParamsResponse
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L471)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L479)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1893,9 +1961,43 @@ Extends `AdminRpcResponse`.
 | `minLength?` | `number` |  |  |
 | `maxLength?` | `number` |  |  |
 
+#### TimeSeriesData
+
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L537)
+
+One field's samples. Times are delta encoded: `t[0]` is ms after `t0`,
+each later `t[i]` ms after `t[i - 1]`. A `null` value is a gap: the line
+breaks there (its time is between the points either side).
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `field` | `TimeSeriesField` |  |  |
+| `t0` | `number` |  |  |
+| `t` | `number[]` |  |  |
+| `v` | `(number \| null)[]` |  |  |
+| `sourcePoints` | `number` |  | Points in the store inside the requested window. |
+
+#### TimeSeriesResponse
+
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L546)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `ric` | `string` |  |  |
+| `start` | `number` |  |  |
+| `end` | `number` |  |  |
+| `method` | `DownsampleMethod` |  |  |
+| `bucketMs` | `number` |  | Bucket width used (m4 / minmaxlttb), aligned to multiples of itself. |
+| `first` | `number` |  | Data extent in the store: first and last point time (0 when empty). |
+| `last` | `number` |  |  |
+| `now` | `number` |  | Server clock when answered (the live edge). |
+| `intervalMs` | `number` |  | Store interval between points (ms). |
+| `series` | `TimeSeriesData[]` |  |  |
+| `serverMs` | `number` |  | Server time spent selecting and encoding (ms). |
+
 #### TradingRpcRequest
 
-*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L521)
+*interface* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L615)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1908,7 +2010,7 @@ Extends `AdminRpcResponse`.
 
 #### AddBotRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L367)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L375)
 
 ```ts
 type AddBotRequest = Infer<typeof addBotParams>
@@ -1916,7 +2018,7 @@ type AddBotRequest = Infer<typeof addBotParams>
 
 #### AddClientBotRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L427)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L435)
 
 ```ts
 type AddClientBotRequest = Infer<typeof addClientBotParams>
@@ -1924,7 +2026,7 @@ type AddClientBotRequest = Infer<typeof addClientBotParams>
 
 #### AmendOrderRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L232)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L240)
 
 ```ts
 type AmendOrderRequest = Infer<typeof amendOrderParams>
@@ -1932,7 +2034,7 @@ type AmendOrderRequest = Infer<typeof amendOrderParams>
 
 #### BotSelectorRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L359)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L367)
 
 ```ts
 type BotSelectorRequest = Infer<typeof botSelectorParams>
@@ -1940,7 +2042,7 @@ type BotSelectorRequest = Infer<typeof botSelectorParams>
 
 #### CancelAllRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L253)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L261)
 
 ```ts
 type CancelAllRequest = Infer<typeof cancelAllParams>
@@ -1948,7 +2050,7 @@ type CancelAllRequest = Infer<typeof cancelAllParams>
 
 #### CancelOrderRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L241)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L249)
 
 ```ts
 type CancelOrderRequest = Infer<typeof cancelOrderParams>
@@ -1956,7 +2058,7 @@ type CancelOrderRequest = Infer<typeof cancelOrderParams>
 
 #### ClientBotSelectorRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L415)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L423)
 
 ```ts
 type ClientBotSelectorRequest = Infer<typeof clientBotSelectorParams>
@@ -1964,7 +2066,7 @@ type ClientBotSelectorRequest = Infer<typeof clientBotSelectorParams>
 
 #### CloseOrderEntryRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L217)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L225)
 
 ```ts
 type CloseOrderEntryRequest = Infer<typeof closeOrderEntryParams>
@@ -1972,15 +2074,23 @@ type CloseOrderEntryRequest = Infer<typeof closeOrderEntryParams>
 
 #### CreateOrderRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L158)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L166)
 
 ```ts
 type CreateOrderRequest = Infer<typeof createOrderParams>
 ```
 
+#### DownsampleMethod
+
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L509)
+
+```ts
+type DownsampleMethod = (typeof DOWNSAMPLE_METHODS)[number]
+```
+
 #### HaltInstrumentRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L273)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L281)
 
 ```ts
 type HaltInstrumentRequest = Infer<typeof haltInstrumentParams>
@@ -2008,7 +2118,7 @@ type InferShape<S extends Shape> = {
 
 #### OpenOrderEntryRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L192)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L200)
 
 ```ts
 type OpenOrderEntryRequest = Infer<typeof openOrderEntryParams>
@@ -2026,7 +2136,7 @@ type OptionalValidator<T> = Validator<T | undefined> & {
 
 #### RemoveBotRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L375)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L383)
 
 ```ts
 type RemoveBotRequest = Infer<typeof removeBotParams>
@@ -2034,7 +2144,7 @@ type RemoveBotRequest = Infer<typeof removeBotParams>
 
 #### RemoveClientBotRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L437)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L445)
 
 ```ts
 type RemoveClientBotRequest = Infer<typeof removeClientBotParams>
@@ -2042,7 +2152,7 @@ type RemoveClientBotRequest = Infer<typeof removeClientBotParams>
 
 #### ResumeInstrumentRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L280)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L288)
 
 ```ts
 type ResumeInstrumentRequest = Infer<typeof resumeInstrumentParams>
@@ -2050,7 +2160,7 @@ type ResumeInstrumentRequest = Infer<typeof resumeInstrumentParams>
 
 #### RpcRequestParams
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L518)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L612)
 
 ```ts
 type RpcRequestParams<N extends RpcName> = RpcContracts[N][0]
@@ -2058,7 +2168,7 @@ type RpcRequestParams<N extends RpcName> = RpcContracts[N][0]
 
 #### RpcResponseData
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L519)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L613)
 
 ```ts
 type RpcResponseData<N extends RpcName> = RpcContracts[N][1]
@@ -2066,7 +2176,7 @@ type RpcResponseData<N extends RpcName> = RpcContracts[N][1]
 
 #### RunScenarioRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L386)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L394)
 
 ```ts
 type RunScenarioRequest = Infer<typeof runScenarioParams>
@@ -2074,7 +2184,7 @@ type RunScenarioRequest = Infer<typeof runScenarioParams>
 
 #### SendOrderRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L214)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L222)
 
 ```ts
 type SendOrderRequest = Infer<typeof sendOrderParams>
@@ -2082,7 +2192,7 @@ type SendOrderRequest = Infer<typeof sendOrderParams>
 
 #### SetBotParamsRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L331)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L339)
 
 ```ts
 type SetBotParamsRequest = Infer<typeof setBotParamsParams>
@@ -2090,7 +2200,7 @@ type SetBotParamsRequest = Infer<typeof setBotParamsParams>
 
 #### SetBotRateRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L289)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L297)
 
 ```ts
 type SetBotRateRequest = Infer<typeof setBotRateParams>
@@ -2098,7 +2208,7 @@ type SetBotRateRequest = Infer<typeof setBotRateParams>
 
 #### SetClientBotParamsRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L412)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L420)
 
 ```ts
 type SetClientBotParamsRequest = Infer<typeof setClientBotParamsParams>
@@ -2106,7 +2216,7 @@ type SetClientBotParamsRequest = Infer<typeof setClientBotParamsParams>
 
 #### SetFlowParamsRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L465)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L473)
 
 ```ts
 type SetFlowParamsRequest = Infer<typeof setFlowParamsParams>
@@ -2114,7 +2224,7 @@ type SetFlowParamsRequest = Infer<typeof setFlowParamsParams>
 
 #### SetInstrumentParamsRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L344)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L352)
 
 ```ts
 type SetInstrumentParamsRequest = Infer<
@@ -2124,7 +2234,7 @@ type SetInstrumentParamsRequest = Infer<
 
 #### SetMarketPhaseRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L306)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L314)
 
 ```ts
 type SetMarketPhaseRequest = Infer<typeof setMarketPhaseParams>
@@ -2132,7 +2242,7 @@ type SetMarketPhaseRequest = Infer<typeof setMarketPhaseParams>
 
 #### SetVolatilityRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L267)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L275)
 
 ```ts
 type SetVolatilityRequest = Infer<typeof setVolatilityParams>
@@ -2140,7 +2250,7 @@ type SetVolatilityRequest = Infer<typeof setVolatilityParams>
 
 #### ShiftFairValueRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L355)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L363)
 
 ```ts
 type ShiftFairValueRequest = Infer<typeof shiftFairValueParams>
@@ -2148,7 +2258,7 @@ type ShiftFairValueRequest = Infer<typeof shiftFairValueParams>
 
 #### StopScenarioRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L396)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L404)
 
 ```ts
 type StopScenarioRequest = Infer<typeof stopScenarioParams>
@@ -2156,15 +2266,31 @@ type StopScenarioRequest = Infer<typeof stopScenarioParams>
 
 #### SubmitClientAlgoRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L456)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L464)
 
 ```ts
 type SubmitClientAlgoRequest = Infer<typeof submitClientAlgoParams>
 ```
 
+#### TimeSeriesField
+
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L495)
+
+```ts
+type TimeSeriesField = (typeof TIME_SERIES_FIELDS)[number]
+```
+
+#### TimeSeriesRequest
+
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L530)
+
+```ts
+type TimeSeriesRequest = Infer<typeof timeSeriesParams>
+```
+
 #### TradingRpcResult
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L531)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L625)
 
 ```ts
 type TradingRpcResult<N extends RpcName> = | TradingRpcSuccess<N>
@@ -2173,7 +2299,7 @@ type TradingRpcResult<N extends RpcName> = | TradingRpcSuccess<N>
 
 #### TradingRpcSuccess
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L528)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L622)
 
 ```ts
 type TradingRpcSuccess<N extends RpcName> = RpcResultSuccess & {
@@ -2183,7 +2309,7 @@ type TradingRpcSuccess<N extends RpcName> = RpcResultSuccess & {
 
 #### UpdateOrderEntryRequest
 
-*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L202)
+*type* · [rpc/contracts.ts](../../packages/trading-schemas/src/rpc/contracts.ts#L210)
 
 ```ts
 type UpdateOrderEntryRequest = Infer<typeof updateOrderEntryParams>

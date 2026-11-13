@@ -1,6 +1,6 @@
 # Charts
 
-Six chart components in `@heswell/trading-ui`, built on `@vuu-ui/vuu-chart` (echarts) and the chart tables described
+Seven chart components in `@heswell/trading-ui`, built on `@vuu-ui/vuu-chart` (echarts) and the chart tables described
 in [charting-data.md](../charting-data.md). Like the other components they read through the Vuu protocol, so they work
 on the local test data and against a remote server, and they follow the linked instrument.
 
@@ -20,6 +20,7 @@ Reference: [PriceChart](../api/trading-ui.md#pricechart), [DepthChartView](../ap
 | `PnlHistoryChart` | `accountPnlHistory` | selected account | **P&L** |
 | `ExposureTreemap` | `positionPrices` | `account` prop | **Exposure** |
 | `SlippageChart` | `parentOrders` | `account` / `ric` props | **Execution quality** |
+| `TimeSeriesChart` | `timeSeries` RPC (not a table) | linked instrument | showcase only (`#time-series-chart`) |
 
 None of them call RPCs, so they are all view-only: `trading-view` users (dave) get the same charts as traders. OMS
 tables are account-filtered on the server, so fills, P&L, positions and slippage only show accounts the user can see.
@@ -98,6 +99,30 @@ Props: `ric`, the link-group props, `showMidPrice` (default `true`), `showToolba
 Book history for one instrument from `bookSamples` (one sample per second, the last 300): the quoted spread in basis
 points as a step line with an average mark line, and the touch imbalance (−1 … +1, positive = more bid size) as an
 area on a second axis. Props: `ric` and the link-group props.
+
+## TimeSeriesChart
+
+A line chart over the EXCHANGE time-series store: days of 1 s `mid` / `spreadBps` per instrument. The server
+downsamples it for the visible window and the chart's pixel width through the `timeSeries` RPC. Wheel to zoom, drag
+to pan. At the live edge the chart follows now. A toolbar switches the method (M4, MinMaxLTTB, LTTB, Stride) and
+jumps to the last 1h / 1d / All. A line of numbers shows each request: points, server ms, round trip, payload and
+bucket. Design and measurements: [timeseries-downsampling.md](../timeseries-downsampling.md).
+
+```tsx
+<TimeSeriesChart />                                   // follows the linked instrument, mid, M4
+<TimeSeriesChart ric="AAPL.OQ" fields={["mid", "spreadBps"]} defaultSpanMs={86_400_000} />
+```
+
+| Prop | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `ric` | `string` | linked instrument | |
+| `fields` | `TimeSeriesField[]` | `["mid"]` | First on the left axis, second on the right. |
+| `method` / `defaultMethod` / `onMethodChange` | `DownsampleMethod` | `"m4"` | `showMethodSelector` (default `true`) shows the toggle. |
+| `defaultSpanMs` | `number` | 1 hour | Initial visible span, ending now. |
+| `showStats` / `onStats` | `boolean` / `(stats) => void` | `true` | Per-request numbers. |
+
+It calls an RPC (read-only, any user) through a subscribed `instruments` viewport, and drives echarts directly
+rather than through a vuu-chart DataSource.
 
 ## PnlHistoryChart
 

@@ -16,6 +16,9 @@ Schemas are in `@heswell/trading-schemas` (`bars`, `bookSamples`, `pnlHistory`, 
 | `accountPnlHistory` | OMS | `account\|time` | `pnlHistoryLength` per account | Insert every `pnlHistoryIntervalMs` |
 | `parentOrders` | OMS | `orderId` | | New execution-quality columns |
 
+For days of 1 s history (far more than a table holds) there is the `timeSeries` RPC, which downsamples on the
+server. See [timeseries-downsampling.md](timeseries-downsampling.md).
+
 Existing tables that are useful for charts: `depth` (live ladder), `trades` (time and sales), `fills` (the user's
 executions), `positionPrices` (positions with live prices, sector and currency).
 
@@ -143,6 +146,9 @@ different currencies can be summed or compared.
 | `exchangeSim.barBackfill` | 1 | Seed synthetic history at startup |
 | `exchangeSim.bookSampleIntervalMs` | 1000 | 0 disables `bookSamples` |
 | `exchangeSim.bookSampleHistory` | 300 | Samples per ric |
+| `exchangeSim.timeSeriesIntervalMs` | 1000 | 0 disables the time-series store and `timeSeries` RPC |
+| `exchangeSim.timeSeriesHistoryHours` | 168 (engine-local 48) | Generated 1 s history per instrument |
+| `exchangeSim.timeSeriesMaxRics` | 4 | Instruments holding generated history at once |
 | `oms.pnlHistoryIntervalMs` | 10000 | 0 disables P&L history |
 | `oms.pnlHistoryLength` | 180 | Samples per position / account |
 
