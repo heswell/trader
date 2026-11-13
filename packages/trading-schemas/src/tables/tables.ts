@@ -318,6 +318,43 @@ export const bars = defineTable({
   ],
 });
 
+export const timeSeriesBuckets = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "timeSeriesBuckets",
+  keyField: "id",
+  description:
+    "Downsampled time-series windows, one row per subscription, field and M4 bucket; key 'subId|field|bucket' (see timeSeriesBucketKey). A client opens a viewport filtered on its subId and moves its window with the setTimeSeriesWindow RPC (docs/timeseries-downsampling.md).",
+  columns: [
+    { name: "id", dataType: "string" },
+    {
+      name: "subId",
+      dataType: "string",
+      description: "Subscription id chosen by the client.",
+    },
+    { name: "ric", dataType: "string" },
+    { name: "field", dataType: "string", description: "mid or spreadBps." },
+    {
+      name: "bucket",
+      dataType: "epochtimestamp",
+      description: "Bucket start, a multiple of width since the epoch.",
+    },
+    {
+      name: "width",
+      dataType: "long",
+      description: "Bucket width (ms): base interval × 2^k.",
+    },
+    { name: "count", dataType: "int", description: "Points in the bucket." },
+    { name: "firstT", dataType: "epochtimestamp" },
+    { name: "first", dataType: "double" },
+    { name: "minT", dataType: "epochtimestamp" },
+    { name: "min", dataType: "double" },
+    { name: "maxT", dataType: "epochtimestamp" },
+    { name: "max", dataType: "double" },
+    { name: "lastT", dataType: "epochtimestamp" },
+    { name: "last", dataType: "double" },
+  ],
+});
+
 export const bookSamples = defineTable({
   module: EXCHANGE_MODULE,
   name: "bookSamples",
@@ -1375,6 +1412,7 @@ export const exchangeTables = {
   scenarios,
   scenarioRuns,
   simSession,
+  timeSeriesBuckets,
 } as const;
 export const omsTables = {
   accounts,
@@ -1410,6 +1448,7 @@ export type PositionRow = RowOf<typeof positions>;
 export type OrderEntryRow = RowOf<typeof orderEntry>;
 export type BarRow = RowOf<typeof bars>;
 export type BookSampleRow = RowOf<typeof bookSamples>;
+export type TimeSeriesBucketRow = RowOf<typeof timeSeriesBuckets>;
 export type BookOrderRow = RowOf<typeof bookOrders>;
 export type BookEventRow = RowOf<typeof bookEvents>;
 export type SimBookRow = RowOf<typeof simBooks>;

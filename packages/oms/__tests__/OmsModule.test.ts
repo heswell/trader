@@ -6,6 +6,7 @@ import {
   OMS_MODULE,
   OrdStatus,
   RejectReason,
+  type TimeSeriesResponse,
 } from "@heswell/trading-schemas";
 import {
   ConfigFactory,
@@ -978,6 +979,70 @@ describe("OmsModule over the Vuu protocol", () => {
     expect(
       await alice.rpc(OMS_MODULE, vp, "closeOrderEntry", { entryId: key }),
     ).toMatchObject({ type: "SUCCESS_RESULT" });
+  });
+
+  test("timeSeries is answered for any user on an EXCHANGE viewport", async () => {
+    const vp = await sam.createViewport(EXCHANGE_MODULE, "instruments", [
+      "ric",
+    ]);
+    const result = await sam.rpc(EXCHANGE_MODULE, vp, "timeSeries", {
+      ric: AAPL,
+      fields: "mid,spreadBps",
+      points: 400,
+      start: Date.now() - 3_600_000,
+    });
+    expect(result.type).toBe("SUCCESS_RESULT");
+    const data = result.data as unknown as TimeSeriesResponse;
+    expect(data.series.map((s) => s.field)).toEqual(["mid", "spreadBps"]);
+    // a week of generated 1 s history in front of the live points
+    expect(data.series[0].sourcePoints).toBeGreaterThanOrEqual(3_599);
+    expect(data.series[0].t.length).toBeLessThanOrEqual(402);
+    expect(
+      await sam.rpc(EXCHANGE_MODULE, vp, "timeSeries", {
+        ric: "NOPE",
+        points: 10,
+      }),
+    ).toMatchObject({
+      errorMessage: expect.stringMatching(/^UNKNOWN_INSTRUMENT/),
+    });
+  });
+
+  test("a time-series subscription streams its buckets as rows", async () => {
+    const vp = await sam.createViewport(
+      EXCHANGE_MODULE,
+      "timeSeriesBuckets",
+      ["id", "subId", "field", "bucket", "width", "count", "last"],
+      'subId = "sam-1"',
+    );
+    const now = Date.now();
+    const result = await sam.rpc(EXCHANGE_MODULE, vp, "setTimeSeriesWindow", {
+      subId: "sam-1",
+      ric: AAPL,
+      start: now - 600_000,
+      end: now,
+      points: 40,
+    });
+    expect(result.type).toBe("SUCCESS_RESULT");
+    const data = result.data as { bucketMs: number; buckets: number };
+    expect(data.bucketMs).toBe(8_000);
+    const row = await sam.row(
+      vp,
+      (r) => r.field === "mid" && r.width === 8_000,
+    );
+    expect(row.count).toBe(8);
+    expect(sam.rowsOf(vp).length).toBe(data.buckets);
+    // another user cannot move or close it
+    const aliceVp = await alice.createViewport(EXCHANGE_MODULE, "instruments", [
+      "ric",
+    ]);
+    expect(
+      await alice.rpc(EXCHANGE_MODULE, aliceVp, "closeTimeSeries", {
+        subId: "sam-1",
+      }),
+    ).toMatchObject({
+      type: "ERROR_RESULT",
+      errorMessage: expect.stringContaining("another user"),
+    });
   });
 
   test("EXCHANGE and OMS modules coexist", async () => {

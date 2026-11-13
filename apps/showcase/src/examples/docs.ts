@@ -63,6 +63,7 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   Sparkline: "docs/components/instrument-grid.md#sparkline",
   SparklineCell: "docs/components/instrument-grid.md#sparkline",
   SpreadChart: "docs/components/charts.md#spreadchart",
+  TimeSeriesChart: "docs/components/charts.md#timeserieschart",
   StaleIndicator: "docs/components/notifications-and-connection.md",
   TradeTape: "docs/components/blotters.md",
   TradingConnectionStateOverride:

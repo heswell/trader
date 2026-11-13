@@ -213,6 +213,27 @@ declare module "@vuu-ui/vuu-chart" {
     where?: RowFilter;
   }
 
+  export interface ChartTheme {
+    axisLineColor: string;
+    backgroundColor: string;
+    crosshairColor: string;
+    downColor: string;
+    fontFamily: string;
+    foregroundColor: string;
+    heatmapColors: [string, string];
+    palette: string[];
+    secondaryForegroundColor: string;
+    splitLineColor: string;
+    tooltipBackgroundColor: string;
+    tooltipBorderColor: string;
+    upColor: string;
+  }
+  /** Chart colours from the `--vuuChart-*` css tokens of an element. */
+  export const resolveChartTheme: (
+    element: HTMLElement | null,
+    overrides?: Partial<ChartTheme>,
+  ) => ChartTheme;
+
   export const CandlestickChart: (props: CandlestickChartProps) => ReactElement;
   export const DepthChart: (props: DepthChartProps) => ReactElement;
   export const CartesianChart: (props: CartesianChartProps) => ReactElement;

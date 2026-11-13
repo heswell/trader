@@ -97,5 +97,6 @@ export const createFakeTables = (): FakeExchangeTables => {
     scenarios: make(defs.scenarios),
     scenarioRuns: make(defs.scenarioRuns),
     simSession: make(defs.simSession),
+    timeSeriesBuckets: make(defs.timeSeriesBuckets),
   };
 };

@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 530 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 544 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -45,6 +45,7 @@ Imports: `@heswell/trading-ui`. 530 exports. Types are shown as written in the s
 - **components/Sparkline**: [DEFAULT_SPARKLINE_LENGTH](#default_sparkline_length), [recordSample](#recordsample), [registerSparklineRenderer](#registersparklinerenderer), [Sparkline](#sparkline), [SparklineBuffer](#sparklinebuffer), [SparklineCell](#sparklinecell), [SparklineCellOptions](#sparklinecelloptions), [sparklineOptions](#sparklineoptions), [sparklinePoints](#sparklinepoints), [SparklineProps](#sparklineprops), [SparklineSampling](#sparklinesampling), [sparklineStore](#sparklinestore-1), [SparklineStore](#sparklinestore), [SparklineTrend](#sparklinetrend)
 - **components/SpreadChart**: [SpreadChart](#spreadchart), [SpreadChartProps](#spreadchartprops)
 - **components/StaleIndicator**: [STALE_DATA_CLASS](#stale_data_class), [StaleDataProps](#staledataprops), [StaleDataState](#staledatastate), [StaleIndicator](#staleindicator), [StaleIndicatorProps](#staleindicatorprops), [useStaleData](#usestaledata)
+- **components/TimeSeriesChart**: [BUCKET_COLUMNS](#bucket_columns), [BucketRow](#bucketrow), [bucketsToPoints](#bucketstopoints), [formatTimeSeriesStats](#formattimeseriesstats), [needsWindow](#needswindow), [OVERSCAN](#overscan), [planRange](#planrange), [planWindow](#planwindow), [SeriesPoints](#seriespoints), [TimeSeriesChart](#timeserieschart), [TimeSeriesChartProps](#timeserieschartprops), [TimeSeriesStats](#timeseriesstats), [ViewState](#viewstate), [WindowPlan](#windowplan)
 - **components/TradeTape**: [sizePercentile](#sizepercentile), [TradeTape](#tradetape), [TradeTapeProps](#tradetapeprops)
 - **components/TradingCellRenderers**: [registerTradingCellRenderers](#registertradingcellrenderers), [TradingRenderer](#tradingrenderer)
 - **utils**: [createLocalSettingsStorage](#createlocalsettingsstorage), [createMemorySettingsStorage](#creatememorysettingsstorage), [CsvColumn](#csvcolumn), [directionColour](#directioncolour), [DONE_STATUSES](#done_statuses), [downloadCsv](#downloadcsv), [filterString](#filterstring), [formatNotional](#formatnotional), [formatPercent](#formatpercent), [formatPrice](#formatprice), [formatQuantity](#formatquantity), [formatTime](#formattime), [instrumentTickSchedule](#instrumenttickschedule), [isInactivePhase](#isinactivephase), [isOrderAmendable](#isorderamendable), [isOrderCancellable](#isordercancellable), [orderStatusCategory](#orderstatuscategory), [OrderStatusCategory](#orderstatuscategory-1), [orderStatusColour](#orderstatuscolour), [orderStatusIcon](#orderstatusicon), [orderStatusLabel](#orderstatuslabel), [priceDecimals](#pricedecimals), [PriceFormat](#priceformat), [rowsToCsv](#rowstocsv), [sideColour](#sidecolour), [stopTriggerState](#stoptriggerstate), [TimeFormat](#timeformat), [TradingColour](#tradingcolour), [tradingPhaseColour](#tradingphasecolour), [tradingPhaseText](#tradingphasetext), [UserSettingsProvider](#usersettingsprovider), [UserSettingsProviderProps](#usersettingsproviderprops), [UserSettingsStorage](#usersettingsstorage), [useUserSettingsStorage](#useusersettingsstorage), [WORKING_STATUSES](#working_statuses)
@@ -6334,6 +6335,202 @@ Extends `StaleIndicatorState`.
 *interface* · [components/StaleIndicator/StaleIndicator.tsx](../../packages/trading-ui/src/components/StaleIndicator/StaleIndicator.tsx#L15)
 
 Props of [`StaleIndicator`](#staleindicator).
+
+## components/TimeSeriesChart
+
+### Components (components/TimeSeriesChart)
+
+#### TimeSeriesChart
+
+*component* · [components/TimeSeriesChart/TimeSeriesChart.tsx](../../packages/trading-ui/src/components/TimeSeriesChart/TimeSeriesChart.tsx#L85)
+
+Line chart over a large time series (the EXCHANGE time-series store: days
+of 1 s mid / spread per instrument) that the server downsamples for the
+visible window and the chart's pixel width (timeSeries RPC). Wheel zooms,
+drag pans; a debounced request reloads the window when the resolution or
+the loaded range (with overscan) no longer fits. At the live edge the
+chart follows now, refreshing only its last bucket.
+
+Props: `TimeSeriesChartProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `ric?` | `string` |  | Instrument to chart; defaults to the followed (linked) instrument. |
+| `fields?` | `readonly TimeSeriesField[]` | `DEFAULT_FIELDS` | Fields of the EXCHANGE time-series store (first on the left axis, second on the right). |
+| `defaultSpanMs?` | `number` | `3_600_000` | Initial visible span ending now (ms), default an hour. |
+| `showStats?` | `boolean` | `true` | Show the subscription's numbers (buckets, rows sent, server time) under the toolbar (default true). |
+| `onStats?` | `(stats: TimeSeriesStats) => void` |  | Called with the numbers of every answered request. |
+| `linkGroup?` | `LinkGroupId` |  | Link group (channel) to join: e.g. "red", "green", or "unlinked". The initial group when the user can change it (`showLinkGroupSelector`); a later change of the prop is applied too. Default: the saved group, then `defaultLinkGroup`, then the inherited group. (from `LinkGroupProps`) |
+| `defaultLinkGroup?` | `LinkGroupId` |  | Group used when there is no `linkGroup` prop and nothing saved. (from `LinkGroupProps`) |
+| `onLinkGroupChange?` | `(linkGroup: LinkGroupId) => void` |  | The user picked another group in the selector. (from `LinkGroupProps`) |
+| `showLinkGroupSelector?` | `boolean` | `false` | Show a LinkGroupSelector in the component header / toolbar. (from `LinkGroupProps`) |
+
+Also accepts the standard HTML attributes and `ref`.
+
+### Functions (components/TimeSeriesChart)
+
+#### bucketsToPoints
+
+*function* · [components/TimeSeriesChart/timeSeriesWindow.ts](../../packages/trading-ui/src/components/TimeSeriesChart/timeSeriesWindow.ts#L121)
+
+Bucket rows (any order) to line points per field: each bucket's first,
+min, max and last in time order, a null where the step to the next bucket
+is over `gapMs`. Rows of another width (stale, mid-reset) are skipped.
+
+```ts
+bucketsToPoints(rows: readonly BucketRow[], width: number, gapMs: number): Record<string, SeriesPoints>
+```
+
+#### formatTimeSeriesStats
+
+*function* · [components/TimeSeriesChart/TimeSeriesChart.tsx](../../packages/trading-ui/src/components/TimeSeriesChart/TimeSeriesChart.tsx#L59)
+
+One line of numbers: the last window change and the live stream.
+
+```ts
+formatTimeSeriesStats(s: TimeSeriesStats): string
+```
+
+#### needsWindow
+
+*function* · [components/TimeSeriesChart/timeSeriesWindow.ts](../../packages/trading-ui/src/components/TimeSeriesChart/timeSeriesWindow.ts#L103)
+
+True when the subscription no longer serves the view: none yet, follow
+changed, a different bucket width level, or the view left the subscribed
+range on a side that has data (before `first`, there is none).
+
+```ts
+needsWindow(current: (WindowPlan & { from: number; to: number }) | undefined, view: ViewState, first: number): boolean
+```
+
+#### planRange
+
+*function* · [components/TimeSeriesChart/timeSeriesWindow.ts](../../packages/trading-ui/src/components/TimeSeriesChart/timeSeriesWindow.ts#L90)
+
+The bucket range the server holds for a plan (as BucketWindow does).
+
+```ts
+planRange(plan: WindowPlan, now: number): { from: number; to: number; }
+```
+
+#### planWindow
+
+*function* · [components/TimeSeriesChart/timeSeriesWindow.ts](../../packages/trading-ui/src/components/TimeSeriesChart/timeSeriesWindow.ts#L70)
+
+The subscribed window for a view: the visible span plus OVERSCAN either
+side, with one point per pixel column (about one bucket per column: the
+width is the largest base × 2^k not wider than a pixel). Following, the
+window ends at now and the server slides it.
+
+```ts
+planWindow({ start, end, widthPx, baseMs, follow }: ViewState, overscan = OVERSCAN): WindowPlan
+```
+
+### Constants (components/TimeSeriesChart)
+
+#### BUCKET_COLUMNS
+
+*const* · [components/TimeSeriesChart/timeSeriesWindow.ts](../../packages/trading-ui/src/components/TimeSeriesChart/timeSeriesWindow.ts#L10)
+
+The columns of a `timeSeriesBuckets` row the chart reads.
+
+```ts
+const BUCKET_COLUMNS: readonly ["id", "field", "bucket", "width", "firstT", "first", "minT", "min", "maxT", "max", "lastT", "last"]
+```
+
+#### OVERSCAN
+
+*const* · [components/TimeSeriesChart/timeSeriesWindow.ts](../../packages/trading-ui/src/components/TimeSeriesChart/timeSeriesWindow.ts#L40)
+
+Share of the visible span subscribed either side (the viewport buffer).
+
+```ts
+const OVERSCAN: 0.5
+```
+
+### Interfaces (components/TimeSeriesChart)
+
+#### BucketRow
+
+*interface* · [components/TimeSeriesChart/timeSeriesWindow.ts](../../packages/trading-ui/src/components/TimeSeriesChart/timeSeriesWindow.ts#L25)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `field` | `string` |  |  |
+| `bucket` | `number` |  |  |
+| `width` | `number` |  |  |
+| `firstT` | `number` |  |  |
+| `first` | `number` |  |  |
+| `minT` | `number` |  |  |
+| `min` | `number` |  |  |
+| `maxT` | `number` |  |  |
+| `max` | `number` |  |  |
+| `lastT` | `number` |  |  |
+| `last` | `number` |  |  |
+
+#### TimeSeriesChartProps
+
+*interface* · [components/TimeSeriesChart/TimeSeriesChart.tsx](../../packages/trading-ui/src/components/TimeSeriesChart/TimeSeriesChart.tsx#L62)
+
+Props of [`TimeSeriesChart`](#timeserieschart).
+
+#### TimeSeriesStats
+
+*interface* · [components/TimeSeriesChart/TimeSeriesController.ts](../../packages/trading-ui/src/components/TimeSeriesChart/TimeSeriesController.ts#L34)
+
+Numbers for the stats readout.
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `buckets` | `number` |  | Last window change: buckets held, rows sent / removed by it. |
+| `upserts` | `number` |  |  |
+| `removed` | `number` |  |  |
+| `bucketMs` | `number` |  |  |
+| `serverMs` | `number` |  |  |
+| `roundTripMs` | `number` |  | Request to answer, client side. |
+| `spanMs` | `number` |  | Visible span. |
+| `following` | `boolean` |  |  |
+| `windowRequests` | `number` |  | Window changes sent so far (not counting keep-alives). |
+| `rowUpdates` | `number` |  | Row updates received (frames with changes) so far. |
+| `rows` | `number` |  | Bucket rows held (all widths, all fields). |
+
+#### ViewState
+
+*interface* · [components/TimeSeriesChart/timeSeriesWindow.ts](../../packages/trading-ui/src/components/TimeSeriesChart/timeSeriesWindow.ts#L42)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `start` | `number` |  | Visible time range. |
+| `end` | `number` |  |  |
+| `widthPx` | `number` |  | Plot width in pixels. |
+| `baseMs` | `number` |  | Store interval: the finest bucket width. |
+| `follow` | `boolean` |  | The view is pinned to the live edge. |
+
+#### WindowPlan
+
+*interface* · [components/TimeSeriesChart/timeSeriesWindow.ts](../../packages/trading-ui/src/components/TimeSeriesChart/timeSeriesWindow.ts#L55)
+
+The window to subscribe: what setTimeSeriesWindow is sent.
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `start` | `number` |  |  |
+| `end` | `number` |  |  |
+| `points` | `number` |  |  |
+| `follow` | `boolean` |  |  |
+| `width` | `number` |  | Bucket width the server will publish for it. |
+
+### Types (components/TimeSeriesChart)
+
+#### SeriesPoints
+
+*type* · [components/TimeSeriesChart/timeSeriesWindow.ts](../../packages/trading-ui/src/components/TimeSeriesChart/timeSeriesWindow.ts#L7)
+
+One field's points for echarts: [time, value | null].
+
+```ts
+type SeriesPoints = [number, number | null][]
+```
 
 ## components/TradeTape
 

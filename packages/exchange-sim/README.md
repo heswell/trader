@@ -49,6 +49,7 @@ serverConfig.withModule(ExchangeModule(sim));   // starts ticking once its table
 | `bookEvents` | `ric\|seq` | The L3 event tape (off by default, `bookEvents=1`). Ring buffer of `bookEventsCapacity` rows. See [L3 data](#l3-order-by-order-data). |
 | `instrumentPrices` | `ric` | A join of instruments and prices. |
 | `bars` | `ric\|interval\|start` | OHLCV candles per instrument and `barIntervals` interval (`1s`, `1m`, `5m`), built from trades. The current bar updates in place on each flush; `barHistory` closed bars are kept per series (oldest deleted). Intervals are exchange-clock (wall) time; intervals with no trades are gaps. `barBackfill` seeds synthetic history at startup. |
+| `timeSeriesBuckets` | `subId\|field\|bucket` | M4 buckets (first / min / max / last and their times) of each time-series subscription, opened and moved by `setTimeSeriesWindow`, closed by `closeTimeSeries` or after a 60 s lease. A client filters a viewport on its `subId`. See docs/timeseries-downsampling.md. |
 | `bookSamples` | `ric\|time` | Every `bookSampleIntervalMs`, a snapshot of each book's published top 5 levels: bid/ask/mid, spreadBps, touch sizes, top-5 cumulative depth, imbalance. `bookSampleHistory` samples per instrument. |
 
 See [docs/charting-data.md](../../docs/charting-data.md) for the chart data semantics.
@@ -231,6 +232,9 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | `barBackfill` | 1 | 1 = seed `barHistory` synthetic closed bars per series from the price model at startup. |
 | `bookSampleIntervalMs` | 1000 | `bookSamples` interval (ms); 0 disables. |
 | `bookSampleHistory` | 300 | Book samples kept per instrument. |
+| `timeSeriesIntervalMs` | 1000 | Interval of the time-series store's mid / spread points (ms), streamed as `timeSeriesBuckets` rows (`setTimeSeriesWindow`) and served by the `timeSeries` RPC; 0 disables. See docs/timeseries-downsampling.md. |
+| `timeSeriesHistoryHours` | 168 | Synthetic history generated on an instrument's first time-series subscription or query. |
+| `timeSeriesMaxRics` | 4 | Instruments holding generated history at once (least recently queried dropped). |
 | `bookOrders` | 1 | 1 = publish the L3 `bookOrders` table; 0 = off. |
 | `bookEvents` | 0 | 1 = publish every L3 event to the `bookEvents` tape; 0 = off. |
 | `bookEventsCapacity` | 50000 | `bookEvents` rows kept across all instruments (oldest deleted). |

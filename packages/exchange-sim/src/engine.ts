@@ -77,6 +77,29 @@ export {
   handleExchangeAdminRpc,
 } from "./modules/exchange/exchangeAdminRpc";
 export {
+  handleTimeSeriesRpc,
+  type TimeSeriesRpcName,
+} from "./modules/exchange/timeSeriesRpc";
+export {
+  bucketsIn,
+  bucketWidthFor,
+  type BucketDiff,
+  type BucketValue,
+  BucketWindow,
+  type WindowSpec,
+} from "./history/BucketWindow";
+export { TimeSeriesBucketPublisher } from "./publish/TimeSeriesBucketPublisher";
+export {
+  type HistorySource,
+  TimeSeriesError,
+  TimeSeriesStore,
+  type TimeSeriesStoreOptions,
+  type TouchSample,
+} from "./history/TimeSeriesStore";
+export { TimeSeries } from "./history/TimeSeries";
+export * from "./history/downsample";
+export { rasterColumns, rasterError } from "./history/rasterError";
+export {
   canAdminSim,
   SIM_ADMIN_ROLE,
   type SimPermissionMode,

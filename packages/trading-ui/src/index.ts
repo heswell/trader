@@ -81,6 +81,7 @@ export * from "./components/StaleIndicator";
 export * from "./components/PriceChart";
 export * from "./components/DepthChartView";
 export * from "./components/SpreadChart";
+export * from "./components/TimeSeriesChart";
 export * from "./components/PnlHistoryChart";
 export * from "./components/ExposureTreemap";
 export * from "./components/SlippageChart";

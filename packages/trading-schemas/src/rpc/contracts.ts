@@ -69,6 +69,9 @@ export const RpcName = Object.freeze({
   UpdateOrderEntry: "updateOrderEntry",
   SendOrder: "sendOrder",
   CloseOrderEntry: "closeOrderEntry",
+  TimeSeries: "timeSeries",
+  SetTimeSeriesWindow: "setTimeSeriesWindow",
+  CloseTimeSeries: "closeTimeSeries",
 } as const);
 export type RpcName = (typeof RpcName)[keyof typeof RpcName];
 
@@ -102,6 +105,15 @@ export const ORDER_ENTRY_RPC_NAMES = Object.freeze([
   RpcName.UpdateOrderEntry,
   RpcName.SendOrder,
   RpcName.CloseOrderEntry,
+] as const);
+/**
+ * Read-only EXCHANGE RPCs anyone can call (no sim-admin): downsampled
+ * history for charts.
+ */
+export const EXCHANGE_QUERY_RPC_NAMES = Object.freeze([
+  RpcName.TimeSeries,
+  RpcName.SetTimeSeriesWindow,
+  RpcName.CloseTimeSeries,
 ] as const);
 /** OMS simulator control (sim-admin): client bots and the background flow. */
 export const CLIENT_ADMIN_RPC_NAMES = Object.freeze([
@@ -480,6 +492,161 @@ export interface AdminRpcResponse {
   rics: string[];
 }
 
+// ---------------------------------------------------------------- time series
+
+/** Fields of the EXCHANGE time-series store (one value per second per ric). */
+export const TIME_SERIES_FIELDS = Object.freeze(["mid", "spreadBps"] as const);
+export type TimeSeriesField = (typeof TIME_SERIES_FIELDS)[number];
+
+/**
+ * How the server picks samples (see docs/timeseries-downsampling.md):
+ * `m4` first/min/max/last per time bucket (pixel-exact, constant cost);
+ * `minmaxlttb` LTTB over pyramid min/max candidates; `lttb` LTTB over every
+ * point in the window (O(n)); `raw` every point (capped at `points`).
+ */
+export const DOWNSAMPLE_METHODS = Object.freeze([
+  "m4",
+  "minmaxlttb",
+  "lttb",
+  "raw",
+] as const);
+export type DownsampleMethod = (typeof DOWNSAMPLE_METHODS)[number];
+
+/** Most samples a timeSeries request can ask for (per field). */
+export const TIME_SERIES_MAX_POINTS = 20_000;
+
+/**
+ * Downsampled history of one instrument over `[start, end)` (epoch ms; `end`
+ * defaults to now, `start` to an hour before `end`), at most about `points`
+ * samples per field. Pass `bucketMs` back from a previous response to
+ * re-request part of the window on the same bucket grid (the live edge).
+ */
+export const timeSeriesParams = object({
+  ric,
+  /** Comma separated TIME_SERIES_FIELDS, default "mid". */
+  fields: optional(string({ maxLength: 64 })),
+  start: optional(number({ min: 0 })),
+  end: optional(number({ min: 0 })),
+  points: number({ min: 4, max: TIME_SERIES_MAX_POINTS }),
+  method: optional(oneOf(DOWNSAMPLE_METHODS)),
+  bucketMs: optional(number({ min: 1 })),
+});
+export type TimeSeriesRequest = Infer<typeof timeSeriesParams>;
+
+/**
+ * One field's samples. Times are delta encoded: `t[0]` is ms after `t0`,
+ * each later `t[i]` ms after `t[i - 1]`. A `null` value is a gap: the line
+ * breaks there (its time is between the points either side).
+ */
+export interface TimeSeriesData {
+  field: TimeSeriesField;
+  t0: number;
+  t: number[];
+  v: (number | null)[];
+  /** Points in the store inside the requested window. */
+  sourcePoints: number;
+}
+
+export interface TimeSeriesResponse {
+  ric: string;
+  start: number;
+  end: number;
+  method: DownsampleMethod;
+  /** Bucket width used (m4 / minmaxlttb), aligned to multiples of itself. */
+  bucketMs: number;
+  /** Data extent in the store: first and last point time (0 when empty). */
+  first: number;
+  last: number;
+  /** Server clock when answered (the live edge). */
+  now: number;
+  /** Store interval between points (ms). */
+  intervalMs: number;
+  series: TimeSeriesData[];
+  /** Server time spent selecting and encoding (ms). */
+  serverMs: number;
+}
+
+/**
+ * Open or move a time-series subscription: the M4 buckets of `fields` over
+ * `[start, end)` are published as `timeSeriesBuckets` rows with this
+ * `subId` (a client-chosen id; filter a viewport on it). Bucket width is the
+ * largest base interval × 2^k not wider than `(end - start) / points`, so
+ * about one bucket per point. Like a viewport range change: moving the
+ * window inserts / deletes only the buckets entering / leaving it; a new
+ * width resends all. `follow` slides the window with the live edge (end =
+ * now). Re-send at least every TIME_SERIES_LEASE_MS to keep it open.
+ */
+export const setTimeSeriesWindowParams = object({
+  subId: string({ minLength: 1, maxLength: 64 }),
+  ric,
+  fields: optional(string({ maxLength: 64 })),
+  start: number({ min: 0 }),
+  end: number({ min: 0 }),
+  points: number({ min: 1, max: TIME_SERIES_MAX_POINTS }),
+  follow: optional(boolean()),
+});
+export type SetTimeSeriesWindowRequest = Infer<
+  typeof setTimeSeriesWindowParams
+>;
+
+/**
+ * Bucket width of a time-series window: the largest `baseMs × 2^k` not wider
+ * than `spanMs / points` (at least `baseMs`). A fixed ladder, so a zoom
+ * inside one level keeps every bucket and buckets never move as the window
+ * slides.
+ */
+export const bucketWidthFor = (
+  spanMs: number,
+  points: number,
+  baseMs: number,
+) => {
+  const target = spanMs / Math.max(1, points);
+  let width = Math.max(1, baseMs);
+  while (width * 2 <= target) width *= 2;
+  return width;
+};
+
+/** A subscription without a window change for this long is closed (ms). */
+export const TIME_SERIES_LEASE_MS = 60_000;
+
+export interface SetTimeSeriesWindowResponse {
+  subId: string;
+  /** Bucket width now published (rows with another width are stale). */
+  bucketMs: number;
+  /** Published bucket range [from, to). */
+  from: number;
+  to: number;
+  /** Buckets held, all fields. */
+  buckets: number;
+  /** Rows this change inserted or updated / removed. */
+  upserts: number;
+  removed: number;
+  /** Data extent in the store and the server clock. */
+  first: number;
+  last: number;
+  now: number;
+  intervalMs: number;
+  /** A step longer than this between points is a gap (break the line). */
+  gapMs: number;
+  serverMs: number;
+}
+
+export const closeTimeSeriesParams = object({
+  subId: string({ minLength: 1, maxLength: 64 }),
+});
+export type CloseTimeSeriesRequest = Infer<typeof closeTimeSeriesParams>;
+
+/** Decode a TimeSeriesData into absolute times and values (gaps as null). */
+export const decodeTimeSeries = ({ t0, t, v }: TimeSeriesData) => {
+  const times = new Array<number>(t.length);
+  let time = t0;
+  for (let i = 0; i < t.length; i++) {
+    time += t[i];
+    times[i] = time;
+  }
+  return { times, values: v };
+};
+
 // ---------------------------------------------------------------- typing
 
 export interface RpcContracts {
@@ -514,6 +681,12 @@ export interface RpcContracts {
   updateOrderEntry: [UpdateOrderEntryRequest, OrderEntryResponse];
   sendOrder: [SendOrderRequest, CreateOrderResponse];
   closeOrderEntry: [CloseOrderEntryRequest, OrderEntryResponse];
+  timeSeries: [TimeSeriesRequest, TimeSeriesResponse];
+  setTimeSeriesWindow: [
+    SetTimeSeriesWindowRequest,
+    SetTimeSeriesWindowResponse,
+  ];
+  closeTimeSeries: [CloseTimeSeriesRequest, { subId: string }];
 }
 export type RpcRequestParams<N extends RpcName> = RpcContracts[N][0];
 export type RpcResponseData<N extends RpcName> = RpcContracts[N][1];
@@ -615,6 +788,9 @@ const validators = {
   updateOrderEntry: updateOrderEntryParams,
   sendOrder: sendOrderParams,
   closeOrderEntry: closeOrderEntryParams,
+  timeSeries: timeSeriesParams,
+  setTimeSeriesWindow: setTimeSeriesWindowParams,
+  closeTimeSeries: closeTimeSeriesParams,
 } as const;
 
 /**

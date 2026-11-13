@@ -126,6 +126,19 @@ export interface ExchangeSimConfig {
   bookSampleIntervalMs: number;
   /** Samples kept per instrument (oldest deleted). */
   bookSampleHistory: number;
+  /**
+   * Interval of the time-series store's mid / spread points per instrument
+   * (ms), served downsampled by the `timeSeries` RPC; 0 disables it.
+   */
+  timeSeriesIntervalMs: number;
+  /** Synthetic history generated in front of the live points (hours). */
+  timeSeriesHistoryHours: number;
+  /**
+   * Instruments holding generated history at once (each about 20 bytes per
+   * point: 12 MB per day of 1 s history); the least recently queried drops
+   * back to live points only.
+   */
+  timeSeriesMaxRics: number;
   /** 1 = publish the L3 `bookOrders` table (one row per resting order); 0 = off. */
   bookOrders: number;
   /**
@@ -196,6 +209,9 @@ export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
   barBackfill: 1,
   bookSampleIntervalMs: 1_000,
   bookSampleHistory: 300,
+  timeSeriesIntervalMs: 1_000,
+  timeSeriesHistoryHours: 168,
+  timeSeriesMaxRics: 4,
   bookOrders: 1,
   bookEvents: 0,
   bookEventsCapacity: 50_000,
@@ -281,6 +297,8 @@ export const validateConfig = (config: ExchangeSimConfig) => {
     "takerRate",
     "defaultVolatility",
     "bookSampleIntervalMs",
+    "timeSeriesIntervalMs",
+    "timeSeriesHistoryHours",
     "simPublishIntervalMs",
     "simSampleIntervalMs",
     "botHistoryIntervalMs",
@@ -323,6 +341,7 @@ export const validateConfig = (config: ExchangeSimConfig) => {
   for (const key of [
     "barHistory",
     "bookSampleHistory",
+    "timeSeriesMaxRics",
     "bookEventsCapacity",
     "simSampleHistory",
     "botHistorySamples",
