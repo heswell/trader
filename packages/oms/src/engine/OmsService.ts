@@ -21,9 +21,13 @@ import {
   simClientAccounts,
 } from "../reference/accounts";
 import { TableSink } from "../modules/oms/TableSink";
+import { OrderEntryService } from "../entry/OrderEntryService";
 import { DelayedGateway, type OmsGateway, type Scheduler } from "./gateway";
 import { OmsEngine } from "./OmsEngine";
 import { PnlHistory } from "./PnlHistory";
+
+/** How often order ticket rows' messages are rebuilt (ms). */
+export const ORDER_ENTRY_REFRESH_MS = 500;
 
 /** Structurally a vuu-server Logger, so getLogger("trader.oms") fits. */
 export interface OmsLogger {
@@ -64,6 +68,8 @@ export class OmsService {
   readonly tables = new TableSink();
   readonly gateway: OmsGateway;
   readonly logger: OmsLogger;
+  /** Order ticket rows (the orderEntry table). */
+  readonly orderEntry: OrderEntryService;
   /** P&L history sampler; undefined when oms.pnlHistoryIntervalMs is 0. */
   readonly pnlHistory: PnlHistory | undefined;
   #timers: ReturnType<typeof setInterval>[] = [];
@@ -98,6 +104,13 @@ export class OmsService {
       restrictedRics: splitList(config.restrictedRics),
       log: options.log ?? ((message) => this.logger.warn(message)),
       algoSliceMs: config.algoSliceMs,
+    });
+    this.orderEntry = new OrderEntryService({
+      engine: this.engine,
+      gateway: this.gateway,
+      tables: this.tables,
+      accessFor: (user) => this.accessFor(user),
+      clock: this.#clock,
     });
     if (config.pnlHistoryIntervalMs > 0) {
       this.pnlHistory = new PnlHistory(this.tables, {
@@ -184,6 +197,10 @@ export class OmsService {
         this.clients.step(elapsed);
         last = now;
       }, flowStepMs),
+    );
+    // Order ticket messages follow prices and phases.
+    this.#timers.push(
+      setInterval(() => this.orderEntry.refresh(), ORDER_ENTRY_REFRESH_MS),
     );
     // Without a mark timer, P&L history still samples on its own interval.
     const markEvery = markIntervalMs || pnlHistoryIntervalMs;
