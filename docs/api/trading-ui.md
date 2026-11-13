@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 544 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 567 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -50,6 +50,7 @@ Imports: `@heswell/trading-ui`. 544 exports. Types are shown as written in the s
 - **components/TradingCellRenderers**: [registerTradingCellRenderers](#registertradingcellrenderers), [TradingRenderer](#tradingrenderer)
 - **utils**: [createLocalSettingsStorage](#createlocalsettingsstorage), [createMemorySettingsStorage](#creatememorysettingsstorage), [CsvColumn](#csvcolumn), [directionColour](#directioncolour), [DONE_STATUSES](#done_statuses), [downloadCsv](#downloadcsv), [filterString](#filterstring), [formatNotional](#formatnotional), [formatPercent](#formatpercent), [formatPrice](#formatprice), [formatQuantity](#formatquantity), [formatTime](#formattime), [instrumentTickSchedule](#instrumenttickschedule), [isInactivePhase](#isinactivephase), [isOrderAmendable](#isorderamendable), [isOrderCancellable](#isordercancellable), [orderStatusCategory](#orderstatuscategory), [OrderStatusCategory](#orderstatuscategory-1), [orderStatusColour](#orderstatuscolour), [orderStatusIcon](#orderstatusicon), [orderStatusLabel](#orderstatuslabel), [priceDecimals](#pricedecimals), [PriceFormat](#priceformat), [rowsToCsv](#rowstocsv), [sideColour](#sidecolour), [stopTriggerState](#stoptriggerstate), [TimeFormat](#timeformat), [TradingColour](#tradingcolour), [tradingPhaseColour](#tradingphasecolour), [tradingPhaseText](#tradingphasetext), [UserSettingsProvider](#usersettingsprovider), [UserSettingsProviderProps](#usersettingsproviderprops), [UserSettingsStorage](#usersettingsstorage), [useUserSettingsStorage](#useusersettingsstorage), [WORKING_STATUSES](#working_statuses)
 - **domain**: [allowedTimesInForce](#allowedtimesinforce), [isAlgoStrategy](#isalgostrategy), [isStrategyAllowed](#isstrategyallowed), [isTimeInForceAllowed](#istimeinforceallowed), [nonStopOrdType](#nonstopordtype), [ORD_TYPE_LABEL](#ord_type_label), [ORDER_TICKET_TIFS](#order_ticket_tifs)
+- **export**: [canStreamToFile](#canstreamtofile), [CellTextFormatter](#celltextformatter), [CellTextFormatters](#celltextformatters), [columnLabel](#columnlabel), [csvField](#csvfield), [csvFormatter](#csvformatter), [CsvFormatterOptions](#csvformatteroptions), [EXPORT_VIEWPORT_RPC](#export_viewport_rpc), [ExportColumn](#exportcolumn), [exportColumns](#exportcolumns), [ExportColumnsOptions](#exportcolumnsoptions), [ExportDataRow](#exportdatarow), [ExportProgress](#exportprogress), [ExportResult](#exportresult), [ExportSink](#exportsink), [ExportTicket](#exportticket), [ExportViewportOptions](#exportviewportoptions), [exportViewportToCsv](#exportviewporttocsv), [memoryDownloadSink](#memorydownloadsink), [ndjsonRows](#ndjsonrows), [pickExportSink](#pickexportsink), [requestViewportExport](#requestviewportexport), [tradingTextFormatters](#tradingtextformatters)
 
 ## data
 
@@ -6587,7 +6588,7 @@ Props of [`TradeTape`](#tradetape).
 
 #### registerTradingCellRenderers
 
-*function* · [components/TradingCellRenderers/TradingCellRenderers.tsx](../../packages/trading-ui/src/components/TradingCellRenderers/TradingCellRenderers.tsx#L186)
+*function* · [components/TradingCellRenderers/TradingCellRenderers.tsx](../../packages/trading-ui/src/components/TradingCellRenderers/TradingCellRenderers.tsx#L148)
 
 Register the generic trading cell renderers with the vuu component registry (idempotent).
 
@@ -6599,7 +6600,7 @@ registerTradingCellRenderers(): void
 
 #### TradingRenderer
 
-*const* · [components/TradingCellRenderers/TradingCellRenderers.tsx](../../packages/trading-ui/src/components/TradingCellRenderers/TradingCellRenderers.tsx#L39)
+*const* · [components/TradingCellRenderers/rendererNames.ts](../../packages/trading-ui/src/components/TradingCellRenderers/rendererNames.ts#L13)
 
 Names of the generic trading cell renderers. Use them as a column
 `type`:
@@ -7084,4 +7085,282 @@ Times in force offered on the ticket, in display order.
 
 ```ts
 const ORDER_TICKET_TIFS: readonly TimeInForce[]
+```
+
+## export
+
+### Functions (export)
+
+#### canStreamToFile
+
+*function* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L38)
+
+true if the browser can stream to a file the user picks (Chromium).
+
+```ts
+canStreamToFile(): boolean
+```
+
+#### columnLabel
+
+*function* · [export/exportColumns.ts](../../packages/trading-ui/src/export/exportColumns.ts#L29)
+
+Header text, as the grid shows it: label, else the column name.
+
+```ts
+columnLabel(column: ColumnDescriptor): string
+```
+
+#### csvField
+
+*function* · [export/csvStreams.ts](../../packages/trading-ui/src/export/csvStreams.ts#L74)
+
+RFC 4180 field.
+
+```ts
+csvField(text: string): string
+```
+
+#### csvFormatter
+
+*function* · [export/csvStreams.ts](../../packages/trading-ui/src/export/csvStreams.ts#L93)
+
+Formats raw row arrays as CSV text, a header line first, each value
+through its ExportColumn's formatter.
+
+```ts
+csvFormatter(columns: readonly ExportColumn[], { sourceColumns, eol = "\r\n", bom = true, batchRows = 500, onProgress, }: CsvFormatterOptions = {}): TransformStream<unknown[], string>
+```
+
+#### exportColumns
+
+*function* · [export/exportColumns.ts](../../packages/trading-ui/src/export/exportColumns.ts#L47)
+
+ExportColumns for the visible columns of a table config, formatted the way
+the grid formats them:
+1. a registered CellTextFormatter for the column's renderer;
+2. otherwise vuu's value formatter (getValueFormatter): mapped values,
+   numeric decimals / rounding / locale grouping, temporal patterns. This
+   is what the default cell renderer displays. Alignment padding is
+   trimmed.
+
+```ts
+exportColumns(columns: readonly ColumnDescriptor[], { textFormatters = {}, serverDataTypes = {} }: ExportColumnsOptions = {}): ExportColumn[]
+```
+
+#### exportViewportToCsv
+
+*function* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L141)
+
+Export the data source's rows, in its current sort and filter, as CSV:
+EXPORT_VIEWPORT rpc over the websocket (snapshot on the server), then the
+rows over HTTP, formatted client side as the grid formats them.
+
+```ts
+exportViewportToCsv({ dataSource, columns, sourceColumns = dataSource.columns, sink, baseUrl, signal, onProgress, fetch: fetchImpl = fetch, }: ExportViewportOptions): Promise<ExportResult>
+```
+
+#### memoryDownloadSink
+
+*function* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L45)
+
+Buffers the file in memory, then downloads it through an object url. The
+fallback where there is no showSaveFilePicker (Firefox, Safari): the
+file is held in memory once, as a Blob.
+
+```ts
+memoryDownloadSink(fileName: string): ExportSink
+```
+
+#### ndjsonRows
+
+*function* · [export/csvStreams.ts](../../packages/trading-ui/src/export/csvStreams.ts#L36)
+
+Splits text into lines and parses each as JSON. Emits the header (column
+names) through `onHeader`, then each row array.
+
+```ts
+ndjsonRows(onHeader?: (columns: string[]) => void): TransformStream<string, unknown[]>
+```
+
+#### pickExportSink
+
+*function* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L73)
+
+Ask for a file (must be called from a user gesture, before any await),
+else fall back to an in-memory download. Rejects with an AbortError if
+the user cancels the picker.
+
+```ts
+pickExportSink(fileName: string): Promise<ExportSink>
+```
+
+#### requestViewportExport
+
+*function* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L85)
+
+Snapshot the data source's viewport on the server.
+
+```ts
+requestViewportExport(dataSource: DataSource, columns: readonly string[]): Promise<ExportTicket>
+```
+
+#### tradingTextFormatters
+
+*function* · [export/tradingTextFormatters.ts](../../packages/trading-ui/src/export/tradingTextFormatters.ts#L25)
+
+Text forms of the trading cell renderers (TradingCellRenderers), for CSV
+export: the same text the cell shows, without the markup. Kept beside the
+renderers so the two stay in step. `lookup` provides instrument price
+precision (the Price renderer reads it from InstrumentLookup context).
+
+```ts
+tradingTextFormatters(lookup: InstrumentLookup = new Map()): CellTextFormatters
+```
+
+### Constants (export)
+
+#### EXPORT_VIEWPORT_RPC
+
+*const* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L6)
+
+vuu-server viewport RPC (`EXPORT_VIEWPORT_RPC`).
+
+```ts
+const EXPORT_VIEWPORT_RPC: "EXPORT_VIEWPORT"
+```
+
+### Interfaces (export)
+
+#### ExportColumn
+
+*interface* · [export/csvStreams.ts](../../packages/trading-ui/src/export/csvStreams.ts#L19)
+
+A column of the output file.
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `name` | `string` |  | Source column (in the server rows). |
+| `label` | `string` |  | Header text. |
+| `format` | `(value: unknown, row: ExportDataRow) => string` |  | Text for a cell. `row` holds every source column of the row by name, for formatters that read sibling columns (e.g. a price formatted by the row's instrument). It is reused between rows: copy, don't keep. |
+
+#### ExportProgress
+
+*interface* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L105)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `rows` | `number` |  |  |
+| `rowCount` | `number` |  |  |
+
+#### ExportResult
+
+*interface* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L110)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `rows` | `number` |  |  |
+| `bytes` | `number` |  |  |
+| `ms` | `number` |  |  |
+| `sink` | `ExportSink["kind"]` |  |  |
+
+#### ExportSink
+
+*interface* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L21)
+
+Where the CSV goes.
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `writable` | `WritableStream<Uint8Array>` |  |  |
+| `finish?` | `() => void \| Promise<void>` |  | Called after the stream closes (e.g. to start a download). |
+| `kind` | `"file" \| "memory"` |  | "file" (streamed to disk) or "memory" (buffered, then downloaded). |
+
+#### ExportTicket
+
+*interface* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L9)
+
+EXPORT_VIEWPORT response: a one-time ticket for the HTTP fetch.
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `exportId` | `string` |  |  |
+| `path` | `string` |  | Path on the server's REST (auth) server. |
+| `url?` | `string` |  | Absolute url, when the server knows its REST url. |
+| `columns` | `string[]` |  |  |
+| `rowCount` | `number` |  |  |
+| `expiresAt` | `number` |  |  |
+
+#### ExportViewportOptions
+
+*interface* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L117)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `dataSource` | `DataSource` |  |  |
+| `columns` | `readonly ExportColumn[]` |  | Output columns, in order (see exportColumns). |
+| `sourceColumns?` | `readonly string[]` |  | Columns to fetch: output columns plus any sibling columns their formatters read. Must be subscribed columns of the data source. Default: dataSource.columns. |
+| `sink` | `ExportSink` |  | Destination. Resolve it first (pickExportSink) inside the click. |
+| `baseUrl` | `string` |  | Base for the ticket path when the server sends no url (the auth url). |
+| `signal?` | `AbortSignal` |  |  |
+| `onProgress?` | `(progress: ExportProgress) => void` |  |  |
+| `fetch?` | `typeof fetch` |  |  |
+
+### Types (export)
+
+#### CellTextFormatter
+
+*type* · [export/exportColumns.ts](../../packages/trading-ui/src/export/exportColumns.ts#L11)
+
+Text form of a custom cell renderer: what the renderer shows, as a string.
+Keyed by renderer name (column.type.renderer.name). The grid's renderers
+are React components, so an export cannot run them; a renderer that
+wants its columns exported as displayed registers one of these.
+
+```ts
+type CellTextFormatter = (
+  value: unknown,
+  row: ExportDataRow,
+  column: ColumnDescriptor,
+) => string
+```
+
+#### CellTextFormatters
+
+*type* · [export/exportColumns.ts](../../packages/trading-ui/src/export/exportColumns.ts#L17)
+
+```ts
+type CellTextFormatters = Readonly<Record<string, CellTextFormatter>>
+```
+
+#### CsvFormatterOptions
+
+*type* · [export/csvStreams.ts](../../packages/trading-ui/src/export/csvStreams.ts#L77)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `sourceColumns?` | `() => string[]` |  | Source column names, in server row order. Default: from ndjsonRows. |
+| `eol?` | `string` |  | Line ending. Default "\r\n" (RFC 4180, what Excel writes). |
+| `bom?` | `boolean` |  | Start with a UTF-8 BOM so Excel detects the encoding. Default true. |
+| `batchRows?` | `number` |  | Rows per emitted chunk. Default 500. |
+| `onProgress?` | `(rows: number) => void` |  |  |
+
+#### ExportColumnsOptions
+
+*type* · [export/exportColumns.ts](../../packages/trading-ui/src/export/exportColumns.ts#L32)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `textFormatters?` | `CellTextFormatters` |  |  |
+| `serverDataTypes?` | `Readonly<Record<string, string>>` |  | Server data types by column name, when the descriptors lack them. |
+
+#### ExportDataRow
+
+*type* · [export/csvStreams.ts](../../packages/trading-ui/src/export/csvStreams.ts#L16)
+
+Streams for a viewport export. Generic (no trading or React dependencies)
+so they can move to
+
+```ts
+type ExportDataRow = Record<string, unknown>
 ```
