@@ -12,11 +12,14 @@ import {
   exchangeMetricsSource,
   handleClientAdminRpc,
   handleOmsRpc,
+  handleOrderEntryEditCell,
+  handleOrderEntryRpc,
   type OmsConfig,
   type OmsRpcName,
   OmsService,
   omsMetricsSource,
   type OmsTableName,
+  type OrderEntryRpcName,
   type TradingUser,
 } from "@heswell/oms/engine";
 import { canAdminSim } from "@heswell/exchange-sim/engine";
@@ -31,6 +34,8 @@ import {
   OMS_MODULE,
   OMS_RPC_NAMES,
   omsTables,
+  ORDER_ENTRY_RPC_NAMES,
+  orderEntryPrices,
   type JoinDefinition,
   positionPrices,
   type RpcName,
@@ -62,7 +67,10 @@ import { visualLinksFor } from "./modules/visualLinks";
 export type ExchangeTableName =
   | keyof typeof exchangeTables
   | "instrumentPrices";
-export type OmsLocalTableName = OmsTableName | "positionPrices";
+export type OmsLocalTableName =
+  | OmsTableName
+  | "positionPrices"
+  | "orderEntryPrices";
 export type TradingLocalTableName =
   | ExchangeTableName
   | OmsLocalTableName
@@ -100,7 +108,9 @@ export const OMS_TABLE_NAMES: readonly OmsLocalTableName[] = [
   "accountPnlHistory",
   "clientBots",
   "clientBotParams",
+  "orderEntry",
   "positionPrices",
+  "orderEntryPrices",
 ];
 
 export const METRICS_TABLE_NAMES: readonly MetricsTableName[] = [
@@ -215,6 +225,8 @@ const isExchangeRpc = (name: string): name is ExchangeAdminRpcName =>
   (EXCHANGE_ADMIN_RPC_NAMES as readonly string[]).includes(name);
 const isOmsRpc = (name: string): name is OmsRpcName =>
   (OMS_RPC_NAMES as readonly string[]).includes(name);
+const isOrderEntryRpc = (name: string): name is OrderEntryRpcName =>
+  (ORDER_ENTRY_RPC_NAMES as readonly string[]).includes(name);
 const isClientAdminRpc = (name: string): name is ClientAdminRpcName =>
   (CLIENT_ADMIN_RPC_NAMES as readonly string[]).includes(name);
 
@@ -303,6 +315,12 @@ export const createTradingTestData = ({
     prices,
   );
 
+  const orderEntryPricesJoin = joinTableFor(
+    orderEntryPrices,
+    omsTableMap.orderEntry,
+    prices,
+  );
+
   sim.attachTables({
     instruments: instruments.engineTable,
     prices: prices.engineTable,
@@ -354,6 +372,8 @@ export const createTradingTestData = ({
   ): RpcResult => {
     if (isOmsRpc(rpcName))
       return handleOmsRpc(omsService, rpcName, params, user);
+    if (isOrderEntryRpc(rpcName))
+      return handleOrderEntryRpc(omsService, rpcName, params, user);
     if (isClientAdminRpc(rpcName))
       return handleClientAdminRpc(omsService, rpcName, params, user);
     if (isExchangeRpc(rpcName))
@@ -428,6 +448,7 @@ export const createTradingTestData = ({
   const omsTablesByName: Record<OmsLocalTableName, Table> = {
     ...omsTableMap,
     positionPrices: positionPricesJoin,
+    orderEntryPrices: orderEntryPricesJoin,
   };
   const omsSchemas = forEachTable(
     OMS_TABLE_NAMES,
@@ -436,6 +457,7 @@ export const createTradingTestData = ({
   const omsServices: RpcService[] = [
     ...rpcServices(OMS_RPC_NAMES, () => oms),
     ...rpcServices(CLIENT_ADMIN_RPC_NAMES, () => oms),
+    ...rpcServices(ORDER_ENTRY_RPC_NAMES, () => oms),
     {
       // As OmsRpcHandler: orders are only entered with createOrder.
       rpcName: "addRow",
@@ -452,6 +474,31 @@ export const createTradingTestData = ({
       ? AllowAllPermissionFilter
       : PermissionFilter("account", new Set(access.accounts));
   };
+  // Order ticket rows: each user sees only their own (as OmsModule).
+  const ownRows: PermissionFunction = (viewport) =>
+    PermissionFilter("user", new Set([viewport.user.name]));
+  // The ticket edits its row directly through the orderEntryPrices join;
+  // the edit is written to orderEntry by OrderEntryService (as
+  // OmsRpcHandler's applyCellEdit on the server).
+  const orderEntryServices: RpcService[] = [
+    ...omsServices,
+    {
+      rpcName: "editCell",
+      service: async (request) => {
+        const user =
+          request.context.type === "VIEWPORT_CONTEXT"
+            ? oms.userForViewport(request.context.viewPortId)
+            : getCurrentUser();
+        return handleOrderEntryEditCell(
+          omsService,
+          request.params as { key?: unknown; column?: unknown; data?: unknown },
+          user,
+        ) as Awaited<ReturnType<RpcService["service"]>>;
+      },
+    },
+  ];
+  const isOrderEntryTable = (name: OmsLocalTableName) =>
+    name === "orderEntry" || name === "orderEntryPrices";
   // clientBots / clientBotParams: sim admins only (as OmsModule)
   const simAdminOnly: PermissionFunction = (viewport) =>
     canAdminSim(viewport.user, omsService.permissionMode)
@@ -461,12 +508,16 @@ export const createTradingTestData = ({
     name: OMS_MODULE,
     schemas: omsSchemas,
     tables: omsTablesByName,
-    services: forEachTable(OMS_TABLE_NAMES, () => omsServices),
+    services: forEachTable(OMS_TABLE_NAMES, (name) =>
+      isOrderEntryTable(name) ? orderEntryServices : omsServices,
+    ),
     visualLinks: visualLinksFor<OmsLocalTableName>(omsTables, OMS_TABLE_NAMES),
     permissionFunctions: forEachTable(OMS_TABLE_NAMES, (name) =>
       name === "clientBots" || name === "clientBotParams"
         ? simAdminOnly
-        : permission,
+        : isOrderEntryTable(name)
+          ? ownRows
+          : permission,
     ),
     onCreateDataSource,
     editHooks: {
@@ -553,6 +604,7 @@ export const createTradingTestData = ({
       }
       sim.flush();
       omsService.mark();
+      omsService.orderEntry.refresh();
       metricsCollector.sample(clock.time);
     },
     rpc,

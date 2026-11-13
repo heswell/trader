@@ -14,6 +14,10 @@ import {
 import {
   CLIENT_ADMIN_RPC_NAMES,
   OMS_RPC_NAMES,
+  ORDER_ENTRY_EDITABLE_COLUMNS,
+  ORDER_ENTRY_RPC_NAMES,
+  orderEntry,
+  orderEntryPrices,
   PARENT_ORDER_PROGRESS_COLUMNS,
   parentOrders,
   RejectReason,
@@ -24,6 +28,7 @@ import type { RpcResult } from "@vuu-ui/vuu-protocol-types";
 import type { OmsService } from "../../engine/OmsService";
 import type { TradingUser } from "../../permissions/access";
 import { handleClientAdminRpc } from "./clientAdminRpc";
+import { handleOrderEntryRpc } from "../../entry/orderEntryRpc";
 import { handleOmsRpc } from "./omsRpc";
 
 export { handleOmsRpc, type OmsRpcName } from "./omsRpc";
@@ -38,6 +43,11 @@ const error = (errorMessage: string): RpcResult => ({
 
 const isParentOrders = (table: DataTable) =>
   table.tableDef.name === parentOrders.name;
+
+/** orderEntry, or the orderEntryPrices join the ticket edits through. */
+const isOrderEntry = (table: DataTable) =>
+  table.tableDef.name === orderEntryPrices.name ||
+  table.tableDef.name === orderEntry.name;
 
 /**
  * Vuu RPC handler for every OMS table (and positionPrices): the order RPCs
@@ -68,6 +78,11 @@ export class OmsRpcHandler extends CreateSessionTableRpcHandler {
     for (const rpcName of OMS_RPC_NAMES) {
       this.registerRpc(rpcName, ({ namedParams, ctx }) =>
         handleOmsRpc(oms, rpcName, namedParams, ctx.user),
+      );
+    }
+    for (const rpcName of ORDER_ENTRY_RPC_NAMES) {
+      this.registerRpc(rpcName, ({ namedParams, ctx }) =>
+        handleOrderEntryRpc(oms, rpcName, namedParams, ctx.user),
       );
     }
     for (const rpcName of CLIENT_ADMIN_RPC_NAMES) {
@@ -101,7 +116,22 @@ export class OmsRpcHandler extends CreateSessionTableRpcHandler {
     return super.processRpcRequest(rpcName, params);
   }
 
+  /**
+   * Order ticket rows are edited directly (no session), through the
+   * orderEntryPrices join: the edit is written to orderEntry by
+   * OrderEntryService (applyCellEdit), as vuu-websocket's basket
+   * constituent join does.
+   */
+  protected canEditSource(viewport: Viewport) {
+    return isOrderEntry(viewport.dataTable);
+  }
+
   protected isEditableColumn(table: DataTable, column: string) {
+    if (isOrderEntry(table)) {
+      return (ORDER_ENTRY_EDITABLE_COLUMNS as readonly string[]).includes(
+        column,
+      );
+    }
     return (
       table instanceof InMemSessionDataTable &&
       isParentOrders(table) &&
@@ -109,8 +139,27 @@ export class OmsRpcHandler extends CreateSessionTableRpcHandler {
     );
   }
 
+  protected applyCellEdit(edit: CellEdit) {
+    if (!isOrderEntry(edit.table)) return super.applyCellEdit(edit);
+    const result = this.oms.orderEntry.editCell(
+      edit.ctx.user as TradingUser,
+      edit.key,
+      edit.column,
+      edit.value,
+    );
+    if (!result.ok) throw Error(`${result.reason}: ${result.text}`);
+  }
+
   /** The amendOrder validation (lot size, tick, filled quantity, market price). */
-  protected validateCellEdit({ column, key, value }: CellEdit) {
+  protected validateCellEdit({ column, ctx, key, table, value }: CellEdit) {
+    if (isOrderEntry(table)) {
+      return this.oms.orderEntry.checkEdit(
+        ctx.user as TradingUser,
+        key,
+        column,
+        value,
+      );
+    }
     const order = this.oms.engine.getOrder(key);
     const instrument = order && this.oms.gateway.getInstrument(order.ric);
     if (!order || !instrument) return undefined;

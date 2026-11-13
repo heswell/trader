@@ -141,7 +141,7 @@ describe("determinism", () => {
     expect(other.oms.getTable("parentOrders").data.length).toBe(1);
     expect(td.oms.getTable("parentOrders").data.length).toBe(0);
     other.dispose();
-    expect(td.engine.getTableList().length).toBe(35);
+    expect(td.engine.getTableList().length).toBe(36);
   });
 
   test("advance requires a manual clock", () => {
@@ -741,5 +741,82 @@ describe("METRICS", () => {
     } finally {
       local.dispose();
     }
+  });
+});
+
+describe("order ticket rows (orderEntry)", () => {
+  const ALICE = { name: "alice", authorizations: ["trading-execute"] };
+  const BOB = { name: "bob", authorizations: ["trading-execute"] };
+
+  test("edits through orderEntryPrices write orderEntry; vuuMsg carries the errors", async () => {
+    setCurrentUser(ALICE);
+    td.advance(500);
+    const ric = ricAt(0);
+    const ds = createDs(td.oms, "orderEntryPrices");
+    const c = collector();
+    await ds.subscribe({ range: RANGE }, c.callback);
+    const opened = await ds.rpcRequest?.({
+      type: "RPC_REQUEST",
+      rpcName: "openOrderEntry",
+      params: { ticketId: "t1", ric },
+    });
+    expect(opened).toMatchObject({
+      type: "SUCCESS_RESULT",
+      data: { entryId: "alice:t1" },
+    });
+    const table = td.oms.getTable("orderEntry");
+    const value = (column: string) =>
+      table.findByKey("alice:t1")?.[table.map[column]];
+    expect(value("account")).toBe("ACC-US-01");
+    expect(String(value("vuuMsg"))).toContain("MISSING_PRICE");
+
+    // wrong types are refused, a joined price column is not editable
+    expect(await ds.editCell?.("alice:t1", "quantity", "abc")).toMatchObject({
+      type: "ERROR_RESULT",
+    });
+    expect(await ds.editCell?.("alice:t1", "bid", 1)).toMatchObject({
+      type: "ERROR_RESULT",
+    });
+
+    const prices = td.exchange.getTable("prices");
+    const bid = prices.findByKey(ric)?.[prices.map.bid] as number;
+    expect(await ds.editCell?.("alice:t1", "quantity", 100)).toMatchObject({
+      type: "SUCCESS_RESULT",
+    });
+    expect(await ds.editCell?.("alice:t1", "price", bid)).toMatchObject({
+      type: "SUCCESS_RESULT",
+    });
+    expect(value("quantity")).toBe(100);
+    expect(value("vuuMsg")).toBe("");
+    // the join row has the draft and the live prices
+    const join = td.oms.getTable("orderEntryPrices");
+    expect(join.findByKey("alice:t1")?.[join.map.quantity]).toBe(100);
+    expect(join.findByKey("alice:t1")?.[join.map.bid]).toBe(bid);
+
+    const sent = await ds.rpcRequest?.({
+      type: "RPC_REQUEST",
+      rpcName: "sendOrder",
+      params: { entryId: "alice:t1" },
+    });
+    expect(sent).toMatchObject({ type: "SUCCESS_RESULT" });
+    const { orderId } = (sent as { data: { orderId: string } }).data;
+    expect(value("orderId")).toBe(orderId);
+    expect(value("quantity")).toBe(0);
+    ds.unsubscribe();
+  });
+
+  test("each user sees and edits only their own rows", async () => {
+    setCurrentUser(ALICE);
+    td.rpc("openOrderEntry", { ticketId: "t1", ric: ricAt(0) }, ALICE);
+    setCurrentUser(BOB);
+    const ds = createDs(td.oms, "orderEntryPrices");
+    const c = collector();
+    await ds.subscribe({ range: RANGE }, c.callback);
+    await tick();
+    expect(c.size).toBe(0);
+    expect(await ds.editCell?.("alice:t1", "quantity", 5)).toMatchObject({
+      type: "ERROR_RESULT",
+    });
+    ds.unsubscribe();
   });
 });

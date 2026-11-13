@@ -187,6 +187,7 @@ describe("OmsModule over the Vuu protocol", () => {
         "accountPnlHistory",
         "clientBots",
         "clientBotParams",
+        "orderEntry",
       ].sort(),
     );
     const vp = await sam.createViewport(OMS_MODULE, "accounts", [
@@ -873,6 +874,110 @@ describe("OmsModule over the Vuu protocol", () => {
       errorMessage: `${RejectReason.PermissionDenied}: sam may not trade`,
     });
     expect(oms.engine.getOrder(orderId)?.state.status).toBe(OrdStatus.New);
+  });
+
+  test("order ticket: editCell through orderEntryPrices, errors in vuuMsg, sendOrder", async () => {
+    const columns = [
+      "entryId",
+      "user",
+      "ric",
+      "quantity",
+      "price",
+      "tickSize",
+      "bid",
+      "ask",
+      "orderId",
+      "vuuMsg",
+    ];
+    const vp = await alice.createViewport(
+      OMS_MODULE,
+      "orderEntryPrices",
+      columns,
+    );
+    const opened = await alice.rpc(OMS_MODULE, vp, "openOrderEntry", {
+      ticketId: "module-test",
+      ric: AAPL,
+    });
+    expect(opened).toMatchObject({
+      type: "SUCCESS_RESULT",
+      data: { entryId: "alice:module-test" },
+    });
+    const key = "alice:module-test";
+    // the joined row has the instrument static and the empty-field errors
+    const first = await alice.row(
+      vp,
+      (r) => r.entryId === key && String(r.vuuMsg).includes("MISSING_PRICE"),
+    );
+    expect(first.tickSize as number).toBeGreaterThan(0);
+
+    // wrong types are refused; business errors are stored and reported
+    expect(
+      await alice.rpc(OMS_MODULE, vp, "editCell", {
+        key,
+        column: "ordType",
+        data: "ICEBERG",
+      }),
+    ).toMatchObject({ type: "ERROR_RESULT" });
+    expect(
+      await alice.rpc(OMS_MODULE, vp, "editCell", {
+        key,
+        column: "bid",
+        data: 1,
+      }),
+    ).toMatchObject({ errorMessage: expect.stringMatching(/not editable/) });
+    for (const [column, data] of [
+      ["quantity", 100],
+      ["price", 160.003],
+    ] as const) {
+      expect(
+        await alice.rpc(OMS_MODULE, vp, "editCell", { key, column, data }),
+      ).toMatchObject({ type: "SUCCESS_RESULT" });
+    }
+    await alice.row(
+      vp,
+      (r) =>
+        r.entryId === key &&
+        r.price === 160.003 &&
+        String(r.vuuMsg).includes("INVALID_TICK_SIZE"),
+    );
+    expect(
+      await alice.rpc(OMS_MODULE, vp, "sendOrder", { entryId: key }),
+    ).toMatchObject({ type: "ERROR_RESULT" });
+
+    await alice.rpc(OMS_MODULE, vp, "editCell", {
+      key,
+      column: "price",
+      data: 160,
+    });
+    await alice.row(vp, (r) => r.entryId === key && r.vuuMsg === "");
+    const sent = await alice.rpc(OMS_MODULE, vp, "sendOrder", {
+      entryId: key,
+    });
+    expect(sent.type).toBe("SUCCESS_RESULT");
+    const orderId = sent.data?.orderId;
+    await alice.row(
+      vp,
+      (r) => r.entryId === key && r.orderId === orderId && r.quantity === 0,
+    );
+
+    // other users neither see nor edit alice's row
+    const bobVp = await bob.createViewport(
+      OMS_MODULE,
+      "orderEntryPrices",
+      columns,
+    );
+    await Bun.sleep(100);
+    expect(bob.rowsOf(bobVp)).toEqual([]);
+    expect(
+      await bob.rpc(OMS_MODULE, bobVp, "editCell", {
+        key,
+        column: "quantity",
+        data: 1,
+      }),
+    ).toMatchObject({ type: "ERROR_RESULT" });
+    expect(
+      await alice.rpc(OMS_MODULE, vp, "closeOrderEntry", { entryId: key }),
+    ).toMatchObject({ type: "SUCCESS_RESULT" });
   });
 
   test("EXCHANGE and OMS modules coexist", async () => {
