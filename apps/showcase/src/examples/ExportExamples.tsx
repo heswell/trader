@@ -182,8 +182,8 @@ const Inner = () => {
 
 /**
  * The whole sorted, filtered trades viewport as CSV, formatted as the grid
- * shows it. Remote server only (the server snapshots the viewport and
- * streams it over HTTP).
+ * shows it. Remote: the server snapshots the viewport and streams it over
+ * HTTP. Local: the in-browser engine's viewport is snapshot in the page.
  */
 export const TradesExportExample = () => (
   <InstrumentLookupProvider>

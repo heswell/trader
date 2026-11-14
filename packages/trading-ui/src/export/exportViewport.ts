@@ -1,6 +1,7 @@
 import type { DataSource } from "@vuu-ui/vuu-data-types";
 import type { VuuRowDataItemType } from "@vuu-ui/vuu-protocol-types";
 import { csvFormatter, type ExportColumn, ndjsonRows } from "./csvStreams";
+import { isLocalEngineDataSource, localExportRows } from "./localExport";
 
 /** vuu-server viewport RPC (`EXPORT_VIEWPORT_RPC`). */
 export const EXPORT_VIEWPORT_RPC = "EXPORT_VIEWPORT";
@@ -126,8 +127,11 @@ export interface ExportViewportOptions {
   sourceColumns?: readonly string[];
   /** Destination. Resolve it first (pickExportSink) inside the click. */
   sink: ExportSink;
-  /** Base for the ticket path when the server sends no url (the auth url). */
-  baseUrl: string;
+  /**
+   * Base for the ticket path when the server sends no url (the auth url).
+   * Not needed for a local (in-browser engine) data source.
+   */
+  baseUrl?: string;
   signal?: AbortSignal;
   onProgress?: (progress: ExportProgress) => void;
   fetch?: typeof fetch;
@@ -136,7 +140,8 @@ export interface ExportViewportOptions {
 /**
  * Export the data source's rows, in its current sort and filter, as CSV:
  * EXPORT_VIEWPORT rpc over the websocket (snapshot on the server), then the
- * rows over HTTP, formatted client side as the grid formats them.
+ * rows over HTTP, formatted client side as the grid formats them. A local
+ * data source (in-browser engine) is snapshot in the browser instead.
  */
 export const exportViewportToCsv = async ({
   dataSource,
@@ -149,42 +154,44 @@ export const exportViewportToCsv = async ({
   fetch: fetchImpl = fetch,
 }: ExportViewportOptions): Promise<ExportResult> => {
   const start = performance.now();
-  let ticket: ExportTicket;
-  let response: Response;
+  let rowSource: {
+    columns: () => string[];
+    rowCount: number;
+    rows: ReadableStream<unknown[]>;
+  };
+  let bytes = 0;
   try {
-    ticket = await requestViewportExport(dataSource, sourceColumns);
-    response = await fetchImpl(ticket.url ?? new URL(ticket.path, baseUrl), {
-      signal,
-    });
-    if (!response.ok || !response.body) {
-      throw Error(`export: HTTP ${response.status}`);
-    }
+    rowSource = isLocalEngineDataSource(dataSource)
+      ? (({ columns, rowCount, rows }) => ({
+          columns: () => columns,
+          rowCount,
+          rows,
+        }))(localExportRows(dataSource, sourceColumns))
+      : await fetchServerRows(
+          dataSource,
+          sourceColumns,
+          baseUrl,
+          fetchImpl,
+          signal,
+        );
   } catch (error) {
     await sink.writable.abort(error).catch(() => undefined);
     throw error;
   }
-  let serverColumns: string[] = [];
   let rows = 0;
-  let bytes = 0;
   const countBytes = new TransformStream<Uint8Array, Uint8Array>({
     transform(chunk, controller) {
       bytes += chunk.byteLength;
       controller.enqueue(chunk);
     },
   });
-  await response.body
-    .pipeThrough(new TextDecoderStream())
-    .pipeThrough(
-      ndjsonRows((names) => {
-        serverColumns = names;
-      }),
-    )
+  await rowSource.rows
     .pipeThrough(
       csvFormatter(columns, {
-        sourceColumns: () => serverColumns,
+        sourceColumns: rowSource.columns,
         onProgress: (n) => {
           rows = n;
-          onProgress?.({ rows: n, rowCount: ticket.rowCount });
+          onProgress?.({ rows: n, rowCount: rowSource.rowCount });
         },
       }),
     )
@@ -193,4 +200,37 @@ export const exportViewportToCsv = async ({
     .pipeTo(sink.writable, { signal });
   await sink.finish?.();
   return { rows, bytes, ms: performance.now() - start, sink: sink.kind };
+};
+
+/** EXPORT_VIEWPORT, then the NDJSON body parsed into row arrays. */
+const fetchServerRows = async (
+  dataSource: DataSource,
+  sourceColumns: readonly string[],
+  baseUrl: string | undefined,
+  fetchImpl: typeof fetch,
+  signal: AbortSignal | undefined,
+) => {
+  const ticket = await requestViewportExport(dataSource, sourceColumns);
+  if (!ticket.url && !baseUrl) {
+    throw Error("export: the server sent no url and there is no baseUrl");
+  }
+  const response = await fetchImpl(
+    ticket.url ?? new URL(ticket.path, baseUrl),
+    {
+      signal,
+    },
+  );
+  if (!response.ok || !response.body) {
+    throw Error(`export: HTTP ${response.status}`);
+  }
+  let serverColumns: string[] = [];
+  return {
+    columns: () => serverColumns,
+    rowCount: ticket.rowCount,
+    rows: response.body.pipeThrough(new TextDecoderStream()).pipeThrough(
+      ndjsonRows((names) => {
+        serverColumns = names;
+      }),
+    ),
+  };
 };

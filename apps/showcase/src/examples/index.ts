@@ -221,7 +221,7 @@ export const examples: ShowcaseExample[] = [
   {
     id: "trades-export-csv",
     group: "Export",
-    title: "Stream a sorted, filtered trades viewport to CSV (remote server)",
+    title: "Stream a sorted, filtered trades viewport to CSV",
     Component: TradesExportExample,
   },
   {
