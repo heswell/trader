@@ -139,3 +139,29 @@ export const sendTradingRpc = async <N extends RpcName>(
     result?.errorMessage ?? "INTERNAL_ERROR: no response",
   );
 };
+
+const PENDING_STATUS = new Set(["initialising", "subscribing"]);
+
+/**
+ * Resolves once `dataSource` has its viewport (a remote VuuDataSource only
+ * accepts RPCs after the server answers the subscribe), at once if it is
+ * past subscribing. Rejects with rpcTimeoutError after `timeoutMs`.
+ */
+export const whenSubscribed = (
+  dataSource: DataSource,
+  rpcName: RpcName,
+  timeoutMs = DEFAULT_RPC_TIMEOUT_MS,
+): Promise<void> => {
+  if (!PENDING_STATUS.has(dataSource.status)) return Promise.resolve();
+  return withRpcTimeout(
+    new Promise<void>((resolve) => {
+      const done = () => {
+        dataSource.removeListener("subscribed", done);
+        resolve();
+      };
+      dataSource.on("subscribed", done);
+    }),
+    rpcName,
+    timeoutMs,
+  );
+};
