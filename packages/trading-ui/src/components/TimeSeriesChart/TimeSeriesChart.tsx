@@ -12,7 +12,11 @@ import {
   useState,
 } from "react";
 import { useTradingConnectionStatus } from "../../connection/useTradingConnectionStatus";
-import { sendTradingRpc, TradingRpcError } from "../../data/tradingRpc";
+import {
+  sendTradingRpc,
+  TradingRpcError,
+  whenSubscribed,
+} from "../../data/tradingRpc";
 import { useTradingRows } from "../../data/useTradingRows";
 import { useFollowedInstrument } from "../../hooks/useMarketData";
 import {
@@ -153,13 +157,16 @@ export const TimeSeriesChart = forwardRef<HTMLDivElement, TimeSeriesChartProps>(
       const controller = new TimeSeriesController(element, {
         fields: fieldKey.split(","),
         spanMs: defaultSpanMs,
-        send: (window) =>
-          sendTradingRpc(
+        // A remote data source takes RPCs only once its viewport exists.
+        send: async (window) => {
+          await whenSubscribed(dataSource, RpcName.SetTimeSeriesWindow);
+          return sendTradingRpc(
             dataSource,
             RpcName.SetTimeSeriesWindow,
             { subId, ric, fields: fieldKey, ...window },
             { connectionState },
-          ),
+          );
+        },
         onStats: (s) => {
           setStats(s);
           onStatsRef.current?.(s);
