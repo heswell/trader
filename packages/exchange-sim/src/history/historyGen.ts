@@ -31,8 +31,8 @@ const JUMP_RATE = 1 / 7_200;
 /** Jump size, in units of one point's diffusion. */
 const JUMP_SIGMAS = 25;
 /** Spread: mean reversion per second and volatility of log spread. */
-const SPREAD_THETA = 1 / 120;
-const SPREAD_SIGMA = 0.08;
+export const SPREAD_THETA = 1 / 120;
+export const SPREAD_SIGMA = 0.08;
 /** Spread blowouts (a pulled quote), per point, and their size (× level). */
 const SPREAD_SPIKE_RATE = 1 / 3_600;
 const SPREAD_SPIKE = 6;

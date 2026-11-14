@@ -40,20 +40,33 @@ const newSubId = () =>
     .toString(36)
     .slice(2, 8)}`;
 
+const DAY_MS = 86_400_000;
+const YEAR_MS = 365.25 * DAY_MS;
+
+/** Range buttons: the last span up to now (clamped to the history held). */
 const SPANS = [
   ["1h", 3_600_000],
-  ["1d", 86_400_000],
-  ["All", Number.MAX_SAFE_INTEGER],
+  ["1d", DAY_MS],
+  ["1w", 7 * DAY_MS],
+  ["1m", YEAR_MS / 12],
+  ["6m", YEAR_MS / 2],
+  ["1y", YEAR_MS],
+  ["2y", 2 * YEAR_MS],
+  ["5y", 5 * YEAR_MS],
 ] as const;
 
 const DEFAULT_FIELDS: readonly TimeSeriesField[] = ["mid"];
 
 const formatSpan = (ms: number) =>
-  ms >= 86_400_000
-    ? `${(ms / 86_400_000).toFixed(1)}d`
-    : ms >= 3_600_000
-      ? `${(ms / 3_600_000).toFixed(1)}h`
-      : `${Math.round(ms / 60_000)}m`;
+  ms >= YEAR_MS
+    ? `${(ms / YEAR_MS).toFixed(1)}y`
+    : ms >= DAY_MS
+      ? `${(ms / DAY_MS).toFixed(1)}d`
+      : ms >= 3_600_000
+        ? `${(ms / 3_600_000).toFixed(1)}h`
+        : ms >= 60_000
+          ? `${Math.round(ms / 60_000)}min`
+          : `${Math.round(ms / 1000)}s`;
 
 /** One line of numbers: the last window change and the live stream. */
 export const formatTimeSeriesStats = (s: TimeSeriesStats) =>

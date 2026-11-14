@@ -17,7 +17,7 @@ Schemas are in `@heswell/trading-schemas` (`bars`, `bookSamples`, `pnlHistory`, 
 | `accountPnlHistory` | OMS | `account\|time` | `pnlHistoryLength` per account | Insert every `pnlHistoryIntervalMs` |
 | `parentOrders` | OMS | `orderId` | | New execution-quality columns |
 
-For days of 1 s history (far more than a table holds) there is the time-series store. A chart subscribes to a time
+For years of 1 s history (far more than a table holds) there is the time-series store. A chart subscribes to a time
 window with the `setTimeSeriesWindow` RPC and gets M4 buckets of it as rows of the EXCHANGE table
 `timeSeriesBuckets` (key `subId|field|bucket`), updated as the window moves and as the data ticks. The
 `timeSeries` RPC is a one-shot downsampled query. See [timeseries-downsampling.md](timeseries-downsampling.md).
@@ -150,7 +150,7 @@ different currencies can be summed or compared.
 | `exchangeSim.bookSampleIntervalMs` | 1000 | 0 disables `bookSamples` |
 | `exchangeSim.bookSampleHistory` | 300 | Samples per ric |
 | `exchangeSim.timeSeriesIntervalMs` | 1000 | 0 disables the time-series store, its subscriptions and RPCs |
-| `exchangeSim.timeSeriesHistoryHours` | 168 (engine-local 48) | Generated 1 s history per instrument |
+| `exchangeSim.timeSeriesHistoryHours` | 43,830 (5 years) | Generated 1 s history per instrument (on demand per bucket beyond about 6 days) |
 | `exchangeSim.timeSeriesMaxRics` | 4 | Instruments holding generated history at once |
 | `oms.pnlHistoryIntervalMs` | 10000 | 0 disables P&L history |
 | `oms.pnlHistoryLength` | 180 | Samples per position / account |

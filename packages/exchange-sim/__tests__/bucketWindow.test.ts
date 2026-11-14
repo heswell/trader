@@ -4,6 +4,7 @@ import {
   bucketsIn,
   bucketWidthFor,
   BucketWindow,
+  SeriesSource,
 } from "../src/history/BucketWindow";
 import { lowerBound, scanMinMax } from "../src/history/downsample";
 import { TimeSeries } from "../src/history/TimeSeries";
@@ -57,7 +58,10 @@ describe("bucketsIn", () => {
 });
 
 describe("BucketWindow", () => {
-  const make = (s: TimeSeries) => new BucketWindow(["mid"], () => s, 1000);
+  const make = (s: TimeSeries) => {
+    const source = new SeriesSource(s);
+    return new BucketWindow(["mid"], () => source, 1000);
+  };
   const now = T0 + 10_000 * 1000;
 
   test("a pan sends only the buckets entering and leaving", () => {

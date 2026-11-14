@@ -137,12 +137,16 @@ export interface ExchangeSimConfig {
    * (ms), served downsampled by the `timeSeries` RPC; 0 disables it.
    */
   timeSeriesIntervalMs: number;
-  /** Synthetic history generated in front of the live points (hours). */
+  /**
+   * Synthetic history in front of the live points (hours; 43,830 = 5 years).
+   * Over 4 days or so it is generated on demand per bucket (a HistoryTree),
+   * apart from a stored tail of up to a day and a half; a shorter history is
+   * stored whole (about 20 bytes per point: 3.5 MB per day of 1 s history).
+   */
   timeSeriesHistoryHours: number;
   /**
-   * Instruments holding generated history at once (each about 20 bytes per
-   * point: 12 MB per day of 1 s history); the least recently queried drops
-   * back to live points only.
+   * Instruments holding generated history at once; the least recently queried
+   * drops back to live points only.
    */
   timeSeriesMaxRics: number;
   /** 1 = publish the L3 `bookOrders` table (one row per resting order); 0 = off. */
@@ -217,7 +221,7 @@ export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
   bookSampleIntervalMs: 1_000,
   bookSampleHistory: 300,
   timeSeriesIntervalMs: 1_000,
-  timeSeriesHistoryHours: 168,
+  timeSeriesHistoryHours: 43_830,
   timeSeriesMaxRics: 4,
   bookOrders: 1,
   bookEvents: 0,

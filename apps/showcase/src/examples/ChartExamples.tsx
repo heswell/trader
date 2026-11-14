@@ -96,10 +96,11 @@ export const SpreadChartExample = () => (
 );
 
 /**
- * TimeSeriesChart following the selected instrument: two days of 1 s mid
- * (172,800 points, engine-local) as a subscription of M4 buckets that the
- * server keeps up to date. Wheel to zoom, drag to pan. Below, mid and spread
- * on two axes.
+ * TimeSeriesChart following the selected instrument: five years of 1 s mid
+ * (about 158 million points, generated per bucket on demand) as a
+ * subscription of M4 buckets that the server keeps up to date. Range buttons
+ * from 1h to 5y; wheel to zoom down to single seconds, drag to pan. Below,
+ * mid and spread on two axes.
  */
 export const TimeSeriesChartExample = () => (
   <div style={withSelector("1fr 1fr")}>

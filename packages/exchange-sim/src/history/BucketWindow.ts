@@ -1,8 +1,9 @@
 import { bucketWidthFor } from "@heswell/trading-schemas";
 import { lowerBound } from "./downsample";
+import type { HistoryTree } from "./HistoryTree";
+import type { TimeSeries } from "./TimeSeries";
 
 export { bucketWidthFor };
-import type { TimeSeries } from "./TimeSeries";
 
 /** M4 of one time bucket: count and the first / min / max / last point. */
 export interface BucketValue {
@@ -62,6 +63,67 @@ export const bucketsIn = (
   return out;
 };
 
+/**
+ * One field's data as a BucketWindow sees it: generated history in a
+ * HistoryTree (optional, older), then stored points (generated tail and live
+ * samples) in a TimeSeries, which is where new points are appended. A new
+ * source object is made whenever either part is replaced.
+ */
+export class SeriesSource {
+  constructor(
+    readonly stored: TimeSeries,
+    readonly tree?: HistoryTree,
+    /** Tree values to output values (the tree works in log space). */
+    readonly toValue: (x: number) => number = Math.exp,
+  ) {}
+
+  /** Time of the first point, if any. */
+  get first() {
+    return this.tree ? this.tree.start : this.stored.first;
+  }
+  /** Time of the last point, if any. */
+  get last() {
+    return (
+      this.stored.last ??
+      (this.tree ? this.tree.end - this.tree.baseMs : undefined)
+    );
+  }
+  /** Points, tree included. */
+  get length() {
+    return this.stored.length + (this.tree?.length ?? 0);
+  }
+
+  /** M4 of every non-empty bucket of `width` in `[from, to)` (aligned). */
+  bucketsIn(from: number, to: number, width: number, out: BucketValue[] = []) {
+    const { tree } = this;
+    if (!tree) return bucketsIn(this.stored, from, to, width, out);
+    tree.bucketsIn(from, to, width, this.toValue, out);
+    if (to <= tree.end) return out;
+    const split = out.length;
+    bucketsIn(this.stored, Math.max(from, tree.end), to, width, out);
+    // a bucket wider than the tree's top level can straddle its end
+    if (split > 0 && split < out.length) {
+      const a = out[split - 1];
+      const b = out[split];
+      if (a.bucket === b.bucket) {
+        a.count += b.count;
+        if (b.min < a.min) {
+          a.min = b.min;
+          a.minT = b.minT;
+        }
+        if (b.max > a.max) {
+          a.max = b.max;
+          a.maxT = b.maxT;
+        }
+        a.last = b.last;
+        a.lastT = b.lastT;
+        out.splice(split, 1);
+      }
+    }
+    return out;
+  }
+}
+
 const sameValue = (a: BucketValue, b: BucketValue) =>
   a.count === b.count &&
   a.lastT === b.lastT &&
@@ -100,12 +162,12 @@ export class BucketWindow {
   #from = 0;
   #to = 0;
   readonly #rows = new Map<string, Map<number, BucketValue>>();
-  /** Series instance and length per field when last computed. */
-  readonly #seen = new Map<string, { series: TimeSeries; length: number }>();
+  /** Source instance and stored length per field when last computed. */
+  readonly #seen = new Map<string, { series: SeriesSource; length: number }>();
 
   constructor(
     readonly fields: readonly string[],
-    readonly series: (field: string) => TimeSeries,
+    readonly series: (field: string) => SeriesSource,
     readonly baseMs: number,
   ) {
     for (const f of fields) this.#rows.set(f, new Map());
@@ -172,10 +234,10 @@ export class BucketWindow {
         }
         const s = this.series(field);
         const added: BucketValue[] = [];
-        if (reset || oldFrom >= oldTo) bucketsIn(s, from, to, width, added);
+        if (reset || oldFrom >= oldTo) s.bucketsIn(from, to, width, added);
         else {
-          bucketsIn(s, from, Math.min(to, oldFrom), width, added);
-          bucketsIn(s, Math.max(from, oldTo), to, width, added);
+          s.bucketsIn(from, Math.min(to, oldFrom), width, added);
+          s.bucketsIn(Math.max(from, oldTo), to, width, added);
         }
         for (const value of added) {
           rows.set(value.bucket, value);
@@ -189,7 +251,7 @@ export class BucketWindow {
     if (ticked && !reset) this.#refreshTouched(diff);
     for (const field of this.fields) {
       const s = this.series(field);
-      this.#seen.set(field, { series: s, length: s.length });
+      this.#seen.set(field, { series: s, length: s.stored.length });
     }
     return diff;
   }
@@ -198,7 +260,7 @@ export class BucketWindow {
   #refreshTouched(diff: BucketDiff) {
     const width = this.#width;
     for (const field of this.fields) {
-      const s = this.series(field);
+      const s = this.series(field).stored;
       const seen = this.#seen.get(field);
       const since = seen ? seen.length : 0;
       if (s.length <= since) continue;
@@ -207,7 +269,7 @@ export class BucketWindow {
         this.#from,
         Math.floor(s.times[since] / width) * width,
       );
-      const fresh = bucketsIn(s, from, this.#to, width);
+      const fresh = this.series(field).bucketsIn(from, this.#to, width);
       for (const value of fresh) {
         const held = rows.get(value.bucket);
         if (held && sameValue(held, value)) continue;
