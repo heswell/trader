@@ -52,6 +52,12 @@ export interface ExchangeSimConfig {
   depthLevels: number;
   /** Trades table ring buffer capacity (oldest rows evicted). */
   tradesCapacity: number;
+  /**
+   * Historical trades generated into the trades table at startup (0 = none),
+   * e.g. 1_000_000 for a large table to export. Raises tradesCapacity to at
+   * least this. Ids `TH…`; the trades go to the table only (not bars).
+   */
+  tradesSeed: number;
   /** Static price band around refPrice, e.g. 0.2 = ±20%. */
   priceBandPct: number;
   /** Simulated-time multiplier for the price model (1 = real time). */
@@ -186,6 +192,7 @@ export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
   publishIntervalMs: 60,
   depthLevels: 10,
   tradesCapacity: 50_000,
+  tradesSeed: 0,
   priceBandPct: 0.2,
   timeScale: 10,
   defaultVolatility: 0,
@@ -304,6 +311,7 @@ export const validateConfig = (config: ExchangeSimConfig) => {
     "botHistoryIntervalMs",
     "botFillsCapacity",
     "markoutMs",
+    "tradesSeed",
   ] as const) {
     if (!(config[key] >= 0)) throw Error(`exchangeSim.${key} must be >= 0`);
   }

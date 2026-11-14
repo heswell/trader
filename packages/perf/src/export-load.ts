@@ -49,6 +49,8 @@ const out = resultsPath("export-load");
 
 const env = {
   EXCHANGE_SIM_TRADES_CAPACITY: String(rows),
+  // start full: the ring is seeded with --rows historical trades
+  EXCHANGE_SIM_TRADES_SEED: String(rows),
   EXCHANGE_SIM_MM_RATE: String(10 * tick),
   EXCHANGE_SIM_TAKER_RATE: String(8 * tick),
   VUU_LOG_LEVEL: "info",

@@ -38,7 +38,10 @@ import {
   SelectorsExample,
 } from "./LinkingExamples";
 import { MarketDepthExamples } from "./MarketDepthExamples";
-import { TradesExportExample } from "./ExportExamples";
+import {
+  MillionTradesExportExample,
+  TradesExportExample,
+} from "./ExportExamples";
 import { PriceLadderLive, PriceLadderStress } from "./PriceLadderExamples";
 import {
   ConnectionStateExample,
@@ -223,6 +226,12 @@ export const examples: ShowcaseExample[] = [
     group: "Export",
     title: "Stream a sorted, filtered trades viewport to CSV",
     Component: TradesExportExample,
+  },
+  {
+    id: "million-trades-export-csv",
+    group: "Export",
+    title: "Export from a 1M-row remote trades table",
+    Component: MillionTradesExportExample,
   },
   {
     id: "positions-view",

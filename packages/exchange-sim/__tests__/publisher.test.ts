@@ -209,6 +209,34 @@ describe("MarketDataPublisher", () => {
     expect(sim.publisher?.stats.tradeEvictions).toBe(2);
   });
 
+  test("tradesSeed fills the trades table at startup, live trades evict it", () => {
+    const { sim, tables, book, limit } = quietSim({
+      tradesCapacity: 2,
+      tradesSeed: 5,
+    });
+    // capacity is raised to the seed
+    expect(tables.trades.rowCount).toBe(5);
+    const seeded = tables.trades.all();
+    expect(seeded.map(({ tradeId }) => tradeId).sort()).toEqual([
+      "TH000000001",
+      "TH000000002",
+      "TH000000003",
+      "TH000000004",
+      "TH000000005",
+    ]);
+    for (const trade of seeded) {
+      expect(trade.ric).toBe("AAPL.OQ");
+      expect(trade.size).toBeGreaterThan(0);
+      expect(trade.timestamp).toBeLessThan(sim.clock());
+    }
+    limit(BookSide.SELL, 100.1, 100);
+    book.market({ id: "m", side: BookSide.BUY, size: 1 });
+    sim.flush();
+    expect(tables.trades.rowCount).toBe(5);
+    expect(tables.trades.get("TH000000001")).toBeUndefined();
+    expect(tables.trades.get("TR000000001")).toBeDefined();
+  });
+
   test("publishes a live simulation with bounded updates per flush", () => {
     const clock = new ManualClock();
     const sim = createExchangeSimulator({

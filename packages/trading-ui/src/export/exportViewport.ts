@@ -111,7 +111,15 @@ export interface ExportProgress {
 export interface ExportResult {
   rows: number;
   bytes: number;
+  /** Total, from the call to the file closed. */
   ms: number;
+  /**
+   * Until the rows start: the EXPORT_VIEWPORT round trip (server snapshot)
+   * plus the HTTP response headers, or the in-page snapshot when local.
+   */
+  snapshotMs: number;
+  /** Until the first batch of formatted rows reached the sink. */
+  firstRowsMs: number | undefined;
   sink: ExportSink["kind"];
 }
 
@@ -178,6 +186,8 @@ export const exportViewportToCsv = async ({
     await sink.writable.abort(error).catch(() => undefined);
     throw error;
   }
+  const snapshotMs = performance.now() - start;
+  let firstRowsMs: number | undefined;
   let rows = 0;
   const countBytes = new TransformStream<Uint8Array, Uint8Array>({
     transform(chunk, controller) {
@@ -191,6 +201,7 @@ export const exportViewportToCsv = async ({
         sourceColumns: rowSource.columns,
         onProgress: (n) => {
           rows = n;
+          firstRowsMs ??= performance.now() - start;
           onProgress?.({ rows: n, rowCount: rowSource.rowCount });
         },
       }),
@@ -199,7 +210,14 @@ export const exportViewportToCsv = async ({
     .pipeThrough(countBytes)
     .pipeTo(sink.writable, { signal });
   await sink.finish?.();
-  return { rows, bytes, ms: performance.now() - start, sink: sink.kind };
+  return {
+    rows,
+    bytes,
+    ms: performance.now() - start,
+    snapshotMs,
+    firstRowsMs,
+    sink: sink.kind,
+  };
 };
 
 /** EXPORT_VIEWPORT, then the NDJSON body parsed into row arrays. */

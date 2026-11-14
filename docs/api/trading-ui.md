@@ -7150,7 +7150,7 @@ exportColumns(columns: readonly ColumnDescriptor[], { textFormatters = {}, serve
 
 #### exportViewportToCsv
 
-*function* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L146)
+*function* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L154)
 
 Export the data source's rows, in its current sort and filter, as CSV:
 EXPORT_VIEWPORT rpc over the websocket (snapshot on the server), then the
@@ -7288,7 +7288,9 @@ A column of the output file.
 | --- | --- | --- | --- |
 | `rows` | `number` |  |  |
 | `bytes` | `number` |  |  |
-| `ms` | `number` |  |  |
+| `ms` | `number` |  | Total, from the call to the file closed. |
+| `snapshotMs` | `number` |  | Until the rows start: the EXPORT_VIEWPORT round trip (server snapshot) plus the HTTP response headers, or the in-page snapshot when local. |
+| `firstRowsMs` | `number \| undefined` |  | Until the first batch of formatted rows reached the sink. |
 | `sink` | `ExportSink["kind"]` |  |  |
 
 #### ExportSink
@@ -7320,7 +7322,7 @@ EXPORT_VIEWPORT response: a one-time ticket for the HTTP fetch.
 
 #### ExportViewportOptions
 
-*interface* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L118)
+*interface* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L126)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
