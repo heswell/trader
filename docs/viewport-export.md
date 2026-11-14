@@ -139,8 +139,23 @@ Setup:
   - the file starts with a UTF-8 BOM.
 - The unfiltered ring (200,000 rows) produced 11.1 MB in 1.8 s.
 
+### 1M rows
+
+`bun ./packages/perf/src/export-load.ts --rows=1000000 --mode=http,http-raw --exports=3 --baseline=10 --settle=5 --tick=1` (2026-11-14). The trades table is seeded with 1M trades at startup (`exchangeSim.tradesSeed`) and ticks at the default rate. The machine was heavily loaded (load average 18–20: Spotlight indexing, another trading server, a JVM Vuu server), so treat the absolute numbers as rough.
+
+| mode | total s | first byte ms | wire MB | CSV MB | client peak RSS MB |
+| --- | --- | --- | --- | --- | --- |
+| http (parse + format + write) | 6.2 / 7.3 / 13.5 | 15–466 | 60.2 | 53.7 | 143–161 |
+| http-raw (bytes only) | 2.7 / 3.4 / 4.6 | 64–95 | 60.2 | – | 74–92 |
+
+- Server snapshot of 1M rows: 6–35 ms. 500 chunks of 2,000 rows; the worst chunk was 25–83 ms.
+- The server streams as fast as the client reads: about 3 s for 1M rows when the client only counts bytes. With parsing and formatting, the client sets the pace at 6–13 s.
+- Other sessions while exports ran back to back: trades p95 129 → 161 ms (http) and 141 ms (http-raw), recovering at once. Server loop-lag p99 rose from 121 to 467 ms during the http window (336 ms for http-raw). Under this load that is the cost of one export's serialisation sharing the event loop; time-budgeted chunks would cap it.
+- Browser (showcase `#million-trades-export-csv`, remote, OPFS handle in place of the picker): 1,000,000 rows, 53.4 MB in 11.2 s. Snapshot ready (rpc + HTTP headers) 55 ms, first rows written 70 ms, about 89,000 rows/s.
+
 Reproduce:
 - `bun run perf:export --mode=both` (needs vuu-server with `feat/viewport-export`)
+- `--rows=1000000` for 1M (the ring is seeded, so there's no fill wait);
 - `--table=bars` for the mostly static bars table;
 - `--mode=http,http-raw` to skip the slow ws-range leg.
 
