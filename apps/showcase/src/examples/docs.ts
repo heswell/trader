@@ -79,6 +79,7 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   ChannelPicker:
     "docs/components/selection-and-linking.md#workspace-channel-picker",
   Charts: "docs/components/charts.md",
+  Export: "docs/viewport-export.md",
   Hosting: "docs/components/hosting.md",
   Linking: "docs/components/selection-and-linking.md",
   Primitives: "docs/components/primitives.md",

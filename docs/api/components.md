@@ -29,7 +29,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [FillsBlotter](trading-ui.md#fillsblotter) | `components/FillsBlotter` | `fills` |  | InstrumentLookup, LinkGroupSelector, StaleIndicator, TradingCellRenderers | `fills-blotter`, `trader-workspace` | [guide](../components/blotters.md) |
 | [InstrumentContextProvider](trading-ui.md#instrumentcontextprovider) | `instrument-context` |  |  | InstrumentLookup | `linking-providers` | [guide](../components/selection-and-linking.md#how-linking-works) |
 | [InstrumentGrid](trading-ui.md#instrumentgrid) | `components/InstrumentGrid` | `instrumentPrices` |  | InstrumentLookup, LinkGroupSelector, OrderTicket, Sparkline, StaleIndicator, TradingCellRenderers | `chart-workspace`, `depth-chart`, `hosting-feature-root`, `hosting-user-settings`, `instrument-grid`, `instrument-grid-200`, `instrument-grid-continuations`, `instrument-grid-futures`, `instrument-grid-prices`, `market-depth-selected`, `price-chart`, `price-ladder-live`, `spread-chart`, `time-series-chart`, `trader-workspace` | [guide](../components/instrument-grid.md#instrumentgrid) |
-| [InstrumentLookupProvider](trading-ui.md#instrumentlookupprovider) | `components/InstrumentLookup` | `instruments` |  |  | `selectors` | [guide](../components/selection-and-linking.md) |
+| [InstrumentLookupProvider](trading-ui.md#instrumentlookupprovider) | `components/InstrumentLookup` | `instruments` |  |  | `selectors`, `trades-export-csv` | [guide](../components/selection-and-linking.md) |
 | [InstrumentPicker](trading-ui.md#instrumentpicker) | `components/InstrumentPicker` | `instruments` |  | LinkGroupSelector | `chart-workspace`, `depth-chart`, `linking-providers`, `market-depth-selected`, `panel-link-group`, `price-chart`, `price-ladder-live`, `selectors`, `spread-chart`, `time-series-chart`, `trader-workspace` | [guide](../components/selection-and-linking.md) |
 | [LinkGroupMenuButton](trading-ui.md#linkgroupmenubutton) | `components/LinkGroupSelector` |  |  |  | `panel-link-group` | [guide](../components/selection-and-linking.md) |
 | [LinkGroupProvider](trading-ui.md#linkgroupprovider) | `instrument-context` |  |  | InstrumentLookup | `linking-providers` | [guide](../components/selection-and-linking.md#how-linking-works) |
@@ -132,6 +132,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | ChannelPicker | `channel-picker-fit`, `channel-picker-workspace` | [guide](../components/selection-and-linking.md#workspace-channel-picker) |
 | Charts | `chart-workspace` | [guide](../components/charts.md) |
 | DepthChartView | `depth-chart` | [guide](../components/charts.md#depthchartview) |
+| Export | `trades-export-csv` | [guide](../viewport-export.md) |
 | ExposureTreemap | `exposure-treemap` | [guide](../components/charts.md#exposuretreemap) |
 | FillsBlotter | `fills-blotter` | [guide](../components/blotters.md) |
 | Hosting | `hosting-connection-override`, `hosting-feature-root`, `hosting-user-settings` | [guide](../components/hosting.md) |
