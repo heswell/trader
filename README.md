@@ -108,8 +108,72 @@ packages it needs at alpha.31, and the install has one copy of each. No `overrid
 | `bun run docs:api` | Regenerate the [API reference](docs/api/README.md) after changing an export |
 | `bun run persistence:reset` | Clear the trading server's persisted order state |
 
-All scripts, the e2e and perf tools, and troubleshooting are in the
-[operations runbook](docs/operations.md#checks-tests-perf-and-e2e).
+Every script is listed in the [scripts reference](#scripts-reference) below. How to use the e2e and perf
+tools, and troubleshooting, are in the [operations runbook](docs/operations.md#checks-tests-perf-and-e2e).
+
+## Scripts reference
+
+All scripts run with bun (`preinstall` refuses npm and yarn). Flags take the form `--key=value`, and a bare
+`--flag` means true. Defaults are in brackets.
+
+### Dev stack
+
+| Script | What it does | Params |
+| --- | --- | --- |
+| `dev`, `start:all` | Whole local stack ([start-all.ts](scripts/start-all.ts)): Keycloak, portal and trading Vuu servers, portal host, feature remotes | `--build` rebuild host and features first; `--reseed` reset the portal module list to the defaults; `--prepare` certs, builds and module list only, then exit; `--keycloak-only` Keycloak and realm only; `--restart-trading` respawn the trading server when it exits. Env: `TRADER_*` ([config.ts](scripts/stack/config.ts)), `KEYCLOAK_HOME`, `KEYCLOAK_ADMIN_USERNAME`, `KEYCLOAK_ADMIN_PASSWORD` |
+| `dev:showcase` | Showcase app (`rsbuild dev`) on in-browser data | none |
+| `dev:trading-server` | OMS and exchange-sim Vuu server on their own | Env: `VUU_CONFIG_FILE`, `TRADER_PERF_STATS_FILE`, `TRADER_PERF_STATS_INTERVAL_MS`, `EXCHANGE_SIM_*` |
+| `dev:trading-server:1m` | `dev:trading-server` with a 1M-row trades seed (`EXCHANGE_SIM_TRADES_SEED=1000000`) | none |
+| `certs` | Generate the local TLS certs | `--force` regenerate existing certs |
+| `keycloak:realm` | Manage the Keycloak realm | `export`, or `bootstrap [--reset]` (`--reset` drops and recreates). Env: `TRADER_DEV_PASSWORD` [password], `KEYCLOAK_ADMIN_*` |
+| `persistence:reset` | Clear the trading server's persisted state | Optional directory argument, else `TRADER_DATA_DIR` or `PERSISTENCE_DIR` |
+
+### Build and quality
+
+| Script | What it does | Params |
+| --- | --- | --- |
+| `build` | `features:sync`, then build the portal host and the feature remotes | none |
+| `features:sync`, `features:check` | Regenerate the feature build config from the catalog; `features:check` only reports drift | `--check` |
+| `typecheck` | `tsc --noEmit` | none |
+| `lint` | `biome lint .` | none |
+| `format`, `format:check` | Biome format: `format` writes, `format:check` only checks | none |
+| `docs:api` | Regenerate [docs/api](docs/api/README.md) | `--check` fail if out of date |
+| `docs:check` | `docs:api --check` plus the relative link and anchor check | none |
+
+### Tests
+
+| Script | What it does | Params |
+| --- | --- | --- |
+| `test` | `test:server`, then `test:ui` | none |
+| `test:server` | `bun test` over schemas, exchange-sim, oms, persistence, metrics, test-data and features | Extra `bun test` args pass through |
+| `test:ui` | `bun test` with the happy-dom preload over trading-ui and portal-host | Extra `bun test` args pass through |
+| `e2e:persistence` | Playwright persistence check | `--no-build`, `--headed` |
+| `e2e:palette` | Playwright palette check | `--no-build`, `--headed` |
+| `e2e:resilience` | Kill and restart the servers; check reconnect, stale views and the ticket | `--no-build`, `--headed`, `--restarts` [3], `--portal-restarts` [1], `--no-session-limit`. Env: `E2E_PORT_OFFSET` [30], `E2E_VERBOSE` |
+
+### Perf
+
+| Script | Params |
+| --- | --- |
+| `perf:ws` | `--preset=smoke\|heavy` [smoke: 5 clients, 5 viewports, 10s; heavy: 50, 8, 30s], `--target=local\|stack` [local], `--clients`, `--viewports`, `--duration`, `--warmup`, `--tick`, `--mm-rate`, `--taker-rate`, `--publish-ms`, `--active`, `--workers`, `--users=a,b`, `--sessions-per-user`, `--max-p95-ms` [1000], `--stats-file`, `--assert` |
+| `perf:ui` | `--data=remote\|local` [remote], `--scenario` [trader-workspace], `--tick` [4], `--duration` [15], `--warmup` [5], `--throttle` [1], `--cpu-profile`, `--reuse-build`, `--headed` |
+| `perf:ladder` | `--rates` [50,100,200], `--seconds` [10], `--budget` ms [16], `--throttle` [1], `--max-dropped-pct`, `--assert`, `--reuse-build`, `--headed` |
+| `perf:export` | `--rows` [500000], `--mode=http\|http-raw\|ws-range\|both` [http], `--clients` [4], `--tick` [4], `--baseline` s [15], `--exports` [3], `--ws-exports` [1], `--settle` s [15], `--table` [trades], `--filter` |
+
+### Workspace scripts
+
+Run these with `bun run --filter <package> <script>`.
+
+| Package | Scripts |
+| --- | --- |
+| `@heswell/oms` | `start` (what `dev:trading-server` runs), `test` |
+| `@heswell/exchange-sim` | `start` (the sim on its own), `test`, `bench` (`--mode` [both], `--seconds` [10], `--subscribe`, `--timers` [off]) |
+| `@heswell/trading-perf` | `ws`, `ui`, `ladder`: aliases of the root `perf:*` scripts |
+| `@heswell/trading-showcase` | `dev`, `build`, `preview` (rsbuild) |
+| `@heswell/trading-portal-config` | `start` (`vuu-portal --config ./application.conf`), `start:trading` |
+| `@heswell/trading-portal-host` | `build` (portal-build) |
+| `@heswell/trading-features` | `build [key ...]`: build only the named feature remotes, or all of them |
+| metrics, persistence, trading-schemas, trading-test-data | `test` |
 
 ## Verified
 
