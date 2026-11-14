@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 567 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 570 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -50,7 +50,7 @@ Imports: `@heswell/trading-ui`. 567 exports. Types are shown as written in the s
 - **components/TradingCellRenderers**: [registerTradingCellRenderers](#registertradingcellrenderers), [TradingRenderer](#tradingrenderer)
 - **utils**: [createLocalSettingsStorage](#createlocalsettingsstorage), [createMemorySettingsStorage](#creatememorysettingsstorage), [CsvColumn](#csvcolumn), [directionColour](#directioncolour), [DONE_STATUSES](#done_statuses), [downloadCsv](#downloadcsv), [filterString](#filterstring), [formatNotional](#formatnotional), [formatPercent](#formatpercent), [formatPrice](#formatprice), [formatQuantity](#formatquantity), [formatTime](#formattime), [instrumentTickSchedule](#instrumenttickschedule), [isInactivePhase](#isinactivephase), [isOrderAmendable](#isorderamendable), [isOrderCancellable](#isordercancellable), [orderStatusCategory](#orderstatuscategory), [OrderStatusCategory](#orderstatuscategory-1), [orderStatusColour](#orderstatuscolour), [orderStatusIcon](#orderstatusicon), [orderStatusLabel](#orderstatuslabel), [priceDecimals](#pricedecimals), [PriceFormat](#priceformat), [rowsToCsv](#rowstocsv), [sideColour](#sidecolour), [stopTriggerState](#stoptriggerstate), [TimeFormat](#timeformat), [TradingColour](#tradingcolour), [tradingPhaseColour](#tradingphasecolour), [tradingPhaseText](#tradingphasetext), [UserSettingsProvider](#usersettingsprovider), [UserSettingsProviderProps](#usersettingsproviderprops), [UserSettingsStorage](#usersettingsstorage), [useUserSettingsStorage](#useusersettingsstorage), [WORKING_STATUSES](#working_statuses)
 - **domain**: [allowedTimesInForce](#allowedtimesinforce), [isAlgoStrategy](#isalgostrategy), [isStrategyAllowed](#isstrategyallowed), [isTimeInForceAllowed](#istimeinforceallowed), [nonStopOrdType](#nonstopordtype), [ORD_TYPE_LABEL](#ord_type_label), [ORDER_TICKET_TIFS](#order_ticket_tifs)
-- **export**: [canStreamToFile](#canstreamtofile), [CellTextFormatter](#celltextformatter), [CellTextFormatters](#celltextformatters), [columnLabel](#columnlabel), [csvField](#csvfield), [csvFormatter](#csvformatter), [CsvFormatterOptions](#csvformatteroptions), [EXPORT_VIEWPORT_RPC](#export_viewport_rpc), [ExportColumn](#exportcolumn), [exportColumns](#exportcolumns), [ExportColumnsOptions](#exportcolumnsoptions), [ExportDataRow](#exportdatarow), [ExportProgress](#exportprogress), [ExportResult](#exportresult), [ExportSink](#exportsink), [ExportTicket](#exportticket), [ExportViewportOptions](#exportviewportoptions), [exportViewportToCsv](#exportviewporttocsv), [memoryDownloadSink](#memorydownloadsink), [ndjsonRows](#ndjsonrows), [pickExportSink](#pickexportsink), [requestViewportExport](#requestviewportexport), [tradingTextFormatters](#tradingtextformatters)
+- **export**: [canStreamToFile](#canstreamtofile), [CellTextFormatter](#celltextformatter), [CellTextFormatters](#celltextformatters), [columnLabel](#columnlabel), [csvField](#csvfield), [csvFormatter](#csvformatter), [CsvFormatterOptions](#csvformatteroptions), [EXPORT_VIEWPORT_RPC](#export_viewport_rpc), [ExportColumn](#exportcolumn), [exportColumns](#exportcolumns), [ExportColumnsOptions](#exportcolumnsoptions), [ExportDataRow](#exportdatarow), [ExportProgress](#exportprogress), [ExportResult](#exportresult), [ExportSink](#exportsink), [ExportTicket](#exportticket), [ExportViewportOptions](#exportviewportoptions), [exportViewportToCsv](#exportviewporttocsv), [isLocalEngineDataSource](#islocalenginedatasource), [localExportRows](#localexportrows), [LocalExportRows](#localexportrows-1), [memoryDownloadSink](#memorydownloadsink), [ndjsonRows](#ndjsonrows), [pickExportSink](#pickexportsink), [requestViewportExport](#requestviewportexport), [tradingTextFormatters](#tradingtextformatters)
 
 ## data
 
@@ -7093,7 +7093,7 @@ const ORDER_TICKET_TIFS: readonly TimeInForce[]
 
 #### canStreamToFile
 
-*function* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L38)
+*function* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L39)
 
 true if the browser can stream to a file the user picks (Chromium).
 
@@ -7150,19 +7150,46 @@ exportColumns(columns: readonly ColumnDescriptor[], { textFormatters = {}, serve
 
 #### exportViewportToCsv
 
-*function* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L141)
+*function* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L154)
 
 Export the data source's rows, in its current sort and filter, as CSV:
 EXPORT_VIEWPORT rpc over the websocket (snapshot on the server), then the
-rows over HTTP, formatted client side as the grid formats them.
+rows over HTTP, formatted client side as the grid formats them. A local
+data source (in-browser engine) is snapshot in the browser instead.
 
 ```ts
 exportViewportToCsv({ dataSource, columns, sourceColumns = dataSource.columns, sink, baseUrl, signal, onProgress, fetch: fetchImpl = fetch, }: ExportViewportOptions): Promise<ExportResult>
 ```
 
+#### isLocalEngineDataSource
+
+*function* · [export/localExport.ts](../../packages/trading-ui/src/export/localExport.ts#L21)
+
+true for a data source served by the in-browser engine (no server).
+
+```ts
+isLocalEngineDataSource(dataSource: DataSource): dataSource is DataSource & LocalEngineDataSource
+```
+
+#### localExportRows
+
+*function* · [export/localExport.ts](../../packages/trading-ui/src/export/localExport.ts#L50)
+
+The local counterpart of EXPORT_VIEWPORT + the HTTP fetch: a point-in-time
+snapshot of the viewport (sort, filter, permission and link filters
+applied by the engine), streamed `chunkRows` rows per pull with a yield
+between pulls so the grid keeps rendering.
+
+Values are copied at snapshot time: unlike vuu-server, the local tables
+make no promise that rows are replaced rather than mutated on update.
+
+```ts
+localExportRows(dataSource: DataSource & LocalEngineDataSource, columns: readonly string[], { chunkRows = 2_000 }: { chunkRows?: number } = {}): LocalExportRows
+```
+
 #### memoryDownloadSink
 
-*function* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L45)
+*function* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L46)
 
 Buffers the file in memory, then downloads it through an object url. The
 fallback where there is no showSaveFilePicker (Firefox, Safari): the
@@ -7185,7 +7212,7 @@ ndjsonRows(onHeader?: (columns: string[]) => void): TransformStream<string, unkn
 
 #### pickExportSink
 
-*function* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L73)
+*function* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L74)
 
 Ask for a file (must be called from a user gesture, before any await),
 else fall back to an in-memory download. Rejects with an AbortError if
@@ -7197,7 +7224,7 @@ pickExportSink(fileName: string): Promise<ExportSink>
 
 #### requestViewportExport
 
-*function* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L85)
+*function* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L86)
 
 Snapshot the data source's viewport on the server.
 
@@ -7222,7 +7249,7 @@ tradingTextFormatters(lookup: InstrumentLookup = new Map()): CellTextFormatters
 
 #### EXPORT_VIEWPORT_RPC
 
-*const* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L6)
+*const* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L7)
 
 vuu-server viewport RPC (`EXPORT_VIEWPORT_RPC`).
 
@@ -7246,7 +7273,7 @@ A column of the output file.
 
 #### ExportProgress
 
-*interface* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L105)
+*interface* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L106)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -7255,18 +7282,20 @@ A column of the output file.
 
 #### ExportResult
 
-*interface* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L110)
+*interface* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L111)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
 | `rows` | `number` |  |  |
 | `bytes` | `number` |  |  |
-| `ms` | `number` |  |  |
+| `ms` | `number` |  | Total, from the call to the file closed. |
+| `snapshotMs` | `number` |  | Until the rows start: the EXPORT_VIEWPORT round trip (server snapshot) plus the HTTP response headers, or the in-page snapshot when local. |
+| `firstRowsMs` | `number \| undefined` |  | Until the first batch of formatted rows reached the sink. |
 | `sink` | `ExportSink["kind"]` |  |  |
 
 #### ExportSink
 
-*interface* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L21)
+*interface* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L22)
 
 Where the CSV goes.
 
@@ -7278,7 +7307,7 @@ Where the CSV goes.
 
 #### ExportTicket
 
-*interface* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L9)
+*interface* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L10)
 
 EXPORT_VIEWPORT response: a one-time ticket for the HTTP fetch.
 
@@ -7293,7 +7322,7 @@ EXPORT_VIEWPORT response: a one-time ticket for the HTTP fetch.
 
 #### ExportViewportOptions
 
-*interface* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L117)
+*interface* · [export/exportViewport.ts](../../packages/trading-ui/src/export/exportViewport.ts#L126)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -7301,10 +7330,20 @@ EXPORT_VIEWPORT response: a one-time ticket for the HTTP fetch.
 | `columns` | `readonly ExportColumn[]` |  | Output columns, in order (see exportColumns). |
 | `sourceColumns?` | `readonly string[]` |  | Columns to fetch: output columns plus any sibling columns their formatters read. Must be subscribed columns of the data source. Default: dataSource.columns. |
 | `sink` | `ExportSink` |  | Destination. Resolve it first (pickExportSink) inside the click. |
-| `baseUrl` | `string` |  | Base for the ticket path when the server sends no url (the auth url). |
+| `baseUrl?` | `string` |  | Base for the ticket path when the server sends no url (the auth url). Not needed for a local (in-browser engine) data source. |
 | `signal?` | `AbortSignal` |  |  |
 | `onProgress?` | `(progress: ExportProgress) => void` |  |  |
 | `fetch?` | `typeof fetch` |  |  |
+
+#### LocalExportRows
+
+*interface* · [export/localExport.ts](../../packages/trading-ui/src/export/localExport.ts#L31)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `columns` | `string[]` |  |  |
+| `rowCount` | `number` |  |  |
+| `rows` | `ReadableStream<unknown[]>` |  | Row arrays (values of `columns`), in viewport order. |
 
 ### Types (export)
 

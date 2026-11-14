@@ -35,6 +35,7 @@ import {
   MarketDataPublisher,
   type TapeTrade,
 } from "../publish/MarketDataPublisher";
+import { seedTrades } from "../publish/seedTrades";
 import {
   carriedPrice,
   isContinuation,
@@ -687,7 +688,7 @@ export class ExchangeSimulator {
     const publisher = new MarketDataPublisher(
       tables,
       config.depthLevels,
-      config.tradesCapacity,
+      Math.max(config.tradesCapacity, config.tradesSeed),
       {
         bars: {
           intervals: barIntervalList(config.barIntervals),
@@ -721,6 +722,14 @@ export class ExchangeSimulator {
     for (const def of this.#universe)
       if (isContinuation(def)) publisher.setAlias(def.ric, def.contract ?? "");
     publisher.l3?.attach(this.#books);
+    if (config.tradesSeed > 0) {
+      const defs = [...this.#simulated.keys()]
+        .map((ric) => this.#listed.get(ric))
+        .filter((def): def is InstrumentDef => def !== undefined);
+      publisher.seedTrades(
+        seedTrades(config.tradesSeed, defs, this.clock(), config.seed),
+      );
+    }
     this.#publisher = publisher;
     const { simBooks, bots, botParams, simSamples, botHistory, botFills } =
       tables;

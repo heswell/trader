@@ -7,6 +7,7 @@ import {
   csvFormatter,
   exportColumns,
   exportViewportToCsv,
+  isLocalEngineDataSource,
   ndjsonRows,
   tradingTextFormatters,
 } from "../src/export";
@@ -186,5 +187,66 @@ describe("csv export streams", () => {
         Buffer.concat(written),
       ),
     ).toBe("﻿RIC,price\r\nVOD.L,1.500\r\nVOD.L,2.000\r\n");
+  });
+
+  test("exportViewportToCsv: local engine data source, no rpc or fetch", async () => {
+    // the shape of an engine-local EngineDataSource: the viewport index
+    // (sorted, filtered) over the table's raw rows
+    const tableRows = [
+      ["k1", "VOD.L", 1.5],
+      ["k2", "BARC.L", 9],
+      ["k3", "VOD.L", 2],
+    ];
+    const dataSource = {
+      columns: ["ric", "price"],
+      size: 2,
+      config: { groupBy: [] },
+      engine: { rowIndexAt: (pos: number) => [2, 0][pos] ?? -1 },
+      dataTable: {
+        engineTable: {
+          rows: tableRows,
+          columnMap: { key: 0, ric: 1, price: 2 },
+        },
+      },
+      rpcRequest: () => {
+        throw Error("no rpc for a local export");
+      },
+    } as unknown as DataSource;
+    expect(isLocalEngineDataSource(dataSource)).toBe(true);
+    const written: Uint8Array[] = [];
+    const progress: unknown[] = [];
+    const result = await exportViewportToCsv({
+      dataSource,
+      columns: exportColumns(
+        [
+          { name: "ric", label: "RIC" },
+          { name: "price", type: renderer(TradingRenderer.Price) },
+        ],
+        { textFormatters: tradingTextFormatters(lookup as never) },
+      ),
+      sink: {
+        kind: "file",
+        writable: new WritableStream({ write: (c) => void written.push(c) }),
+      },
+      onProgress: (p) => void progress.push(p),
+      fetch: (() => {
+        throw Error("no fetch for a local export");
+      }) as unknown as typeof fetch,
+    });
+    // a snapshot: later changes to the table don't reach the file
+    tableRows[2][2] = 99;
+    expect(result.rows).toBe(2);
+    expect(progress.at(-1)).toEqual({ rows: 2, rowCount: 2 });
+    expect(
+      new TextDecoder("utf-8", { ignoreBOM: true }).decode(
+        Buffer.concat(written),
+      ),
+    ).toBe("\uFEFFRIC,price\r\nVOD.L,2.000\r\nVOD.L,1.500\r\n");
+  });
+
+  test("a remote data source is not a local engine one", () => {
+    expect(
+      isLocalEngineDataSource({ columns: [] } as unknown as DataSource),
+    ).toBe(false);
   });
 });

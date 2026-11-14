@@ -18,6 +18,7 @@
     "dev": "bun ./scripts/start-all.ts",
     "dev:showcase": "bun run --filter @heswell/trading-showcase dev",
     "dev:trading-server": "bun run --filter @heswell/oms start",
+    "dev:trading-server:1m": "EXCHANGE_SIM_TRADES_SEED=1000000 bun run --filter @heswell/oms start",
     "build": "bun run features:sync && bun run --filter @heswell/trading-portal-host --filter @heswell/trading-features build",
     "typecheck": "tsc --noEmit",
     "lint": "biome lint .",

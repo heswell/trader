@@ -227,6 +227,7 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | `publishIntervalMs` | 60 | Table flush interval (ms). Keep it a multiple of vuu-server's 60 ms send cycle. |
 | `depthLevels` | 10 | Depth levels per side. |
 | `tradesCapacity` | 50000 | Trades ring buffer size. |
+| `tradesSeed` | 0 | Historical trades generated into the trades table at startup (ids `TH…`, not in bars), e.g. 1000000 for a large table to export (`bun run dev:trading-server:1m`). Raises `tradesCapacity` to at least this. |
 | `barIntervals` | `1s,1m,5m` | `bars` intervals (`<n>s\|m\|h\|d`); empty disables bars. |
 | `barHistory` | 500 | Closed bars kept per ric and interval. |
 | `barBackfill` | 1 | 1 = seed `barHistory` synthetic closed bars per series from the price model at startup. |

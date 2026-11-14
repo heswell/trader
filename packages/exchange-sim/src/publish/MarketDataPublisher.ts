@@ -244,6 +244,15 @@ export class MarketDataPublisher {
     else this.tables.instruments.update(rowIdx, row);
   }
 
+  /**
+   * Historical trades straight into the trades table (oldest first), before
+   * live trading: not into bars, which keep their own backfill.
+   */
+  seedTrades(trades: Iterable<TapeTrade>) {
+    for (const trade of trades) this.#pendingTrades.push(trade);
+    this.#publishTrades();
+  }
+
   addTrade(trade: TapeTrade) {
     this.#pendingTrades.push(trade);
     this.bars?.addTrade(trade.ric, trade.price, trade.size, trade.timestamp);
