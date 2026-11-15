@@ -61,3 +61,11 @@ ratios against them. `exchange-sim/src/reference/fundamentals.ts` draws each
 stock from its sector's typical P/E, ROE and payout, and from a per-venue
 market-cap median, seeded by ric. Values are therefore the same every run,
 independent of the rest of the universe, and consistent with `refPrice`.
+
+`prices` carries the price-dependent ratios, recalculated each time an
+equity's row is published: `marketCapUsd`, `pe` (null for a loss), `pb` and
+`dividendYield` (%). The price used is `last` once the stock has traded,
+otherwise `close`, so inactive equities show their ratios at the reference
+price. They reach the instrument grid through `instrumentPrices`, where vuu
+can sort and filter on them, e.g. `marketCapUsd > 1e11 and pe < 15`. The
+ratios are null for futures, indices and continuations.

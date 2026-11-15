@@ -166,3 +166,34 @@ export const generateFundamentals = ({
     roe: round((100 * eps) / bookValuePerShare, 2),
   };
 };
+
+/** Price-dependent screening ratios of an equity (prices table). */
+export interface Ratios {
+  /** sharesOutstanding x px in USD. */
+  marketCapUsd: number;
+  /** px / eps; null for a loss. */
+  pe: number | null;
+  pb: number;
+  /** 100 x dividendPerShare / px, %. */
+  dividendYield: number;
+}
+
+/**
+ * Ratios of an equity at price `px` (price currency); undefined when it has
+ * no fundamentals (futures, indices, continuations) or no usable price.
+ */
+export const ratiosAt = (
+  instrument: { fundamentals?: Fundamentals; usdPerPriceUnit: number },
+  px: number,
+): Ratios | undefined => {
+  const f = instrument.fundamentals;
+  if (!f || !(px > 0)) return undefined;
+  return {
+    marketCapUsd: Math.round(
+      f.sharesOutstanding * px * instrument.usdPerPriceUnit,
+    ),
+    pe: f.eps > 0 ? round(px / f.eps, 2) : null,
+    pb: round(px / f.bookValuePerShare, 2),
+    dividendYield: round((100 * f.dividendPerShare) / px, 3),
+  };
+};

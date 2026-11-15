@@ -145,6 +145,31 @@ export const prices = defineTable({
     { name: "vwap", dataType: "double" },
     { name: "change", dataType: "double", description: "last - close" },
     { name: "changePct", dataType: "double", description: "100*change/close" },
+    {
+      name: "marketCapUsd",
+      dataType: "double",
+      optional: true,
+      description:
+        "Equities: sharesOutstanding x px in USD, px = last once traded, else close. Null otherwise.",
+    },
+    {
+      name: "pe",
+      dataType: "double",
+      optional: true,
+      description: "Equities: px / eps. Null for a loss (eps <= 0).",
+    },
+    {
+      name: "pb",
+      dataType: "double",
+      optional: true,
+      description: "Equities: px / bookValuePerShare.",
+    },
+    {
+      name: "dividendYield",
+      dataType: "double",
+      optional: true,
+      description: "Equities: 100 x dividendPerShare / px, %.",
+    },
     { name: "phase", dataType: "string", description: "TradingPhase" },
     { name: "seq", dataType: "long", description: "Book sequence number." },
     { name: "timestamp", dataType: "epochtimestamp" },

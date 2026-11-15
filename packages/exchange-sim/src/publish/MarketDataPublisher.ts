@@ -11,6 +11,7 @@ import {
   trades as tradesDef,
 } from "@heswell/trading-schemas";
 import type { InstrumentBook } from "../engine/InstrumentBook";
+import { ratiosAt } from "../reference/fundamentals";
 import type { InstrumentDef } from "../reference/instruments";
 import { BarAggregator, type BarOptions } from "./BarAggregator";
 import { BookL3Publisher, type BookL3Options } from "./BookL3Publisher";
@@ -238,6 +239,7 @@ export class MarketDataPublisher {
     price[this.#prices.idx.ric] = instrument.ric;
     price[this.#prices.idx.close] = instrument.refPrice;
     price[this.#prices.idx.phase] = TradingPhase.Closed;
+    this.#setRatios(price, instrument, instrument.refPrice);
     this.tables.prices.insert(price);
     this.stats.staticRows += 2;
   }
@@ -421,10 +423,22 @@ export class MarketDataPublisher {
     row[idx.phase] = book.phase;
     row[idx.seq] = book.seq;
     row[idx.timestamp] = now;
+    this.#setRatios(row, instrument, traded ? stats.last : close);
     this.#writePrices(row);
     this.#lastPriceRows.set(book.ric, row);
     for (const alias of this.#aliases.get(book.ric) ?? [])
       this.#writePrices(row, alias);
+  }
+
+  /** Screening ratios at `px` (equities only; others keep null). */
+  #setRatios(row: RowValue[], instrument: InstrumentDef, px: number) {
+    const ratios = ratiosAt(instrument, px);
+    if (!ratios) return;
+    const { idx } = this.#prices;
+    row[idx.marketCapUsd] = ratios.marketCapUsd;
+    row[idx.pe] = ratios.pe;
+    row[idx.pb] = ratios.pb;
+    row[idx.dividendYield] = ratios.dividendYield;
   }
 
   /** Upsert a prices row, under another ric when mirroring a continuation. */
