@@ -166,5 +166,7 @@ describe("ExchangeSimulator with indices", () => {
     expect(row?.last).toBeCloseTo(level, 2);
     expect(row?.change).toBeCloseTo(level - INDEX_BASE, 2);
     expect(row?.bid).toBeNull();
+    expect(row?.marketCapUsd).toBeNull();
+    expect(row?.pe).toBeNull();
   });
 });

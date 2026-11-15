@@ -5,6 +5,7 @@ import {
   MAX_MARKET_CAP_USD,
   MEGA_CAPS,
   MIN_MARKET_CAP_USD,
+  ratiosAt,
   SECTOR_PROFILES,
 } from "../src/reference/fundamentals";
 import { createExchangeSimulator } from "../src/engine/ExchangeSimulator";
@@ -148,5 +149,36 @@ describe("simulated fundamentals", () => {
       expect(row?.[field]).toBeNull();
     }
     expect(tables.instruments.get("AAPL.OQ")?.eps).toBeGreaterThan(0);
+    const prices = tables.prices.get(future as string);
+    for (const field of ["marketCapUsd", "pe", "pb", "dividendYield"]) {
+      expect(prices?.[field]).toBeNull();
+    }
+  });
+
+  test("ratiosAt: P/E null for a loss, nothing without fundamentals", () => {
+    const fundamentals = {
+      sharesOutstanding: 1_000,
+      eps: -2,
+      bookValuePerShare: 40,
+      dividendPerShare: 0,
+      roe: -5,
+    };
+    expect(ratiosAt({ fundamentals, usdPerPriceUnit: 0.5 }, 80)).toEqual({
+      marketCapUsd: 40_000,
+      pe: null,
+      pb: 2,
+      dividendYield: 0,
+    });
+    expect(
+      ratiosAt(
+        {
+          fundamentals: { ...fundamentals, eps: 4, dividendPerShare: 2 },
+          usdPerPriceUnit: 1,
+        },
+        80,
+      ),
+    ).toMatchObject({ pe: 20, dividendYield: 2.5 });
+    expect(ratiosAt({ usdPerPriceUnit: 1 }, 80)).toBeUndefined();
+    expect(ratiosAt({ fundamentals, usdPerPriceUnit: 1 }, 0)).toBeUndefined();
   });
 });

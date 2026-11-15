@@ -193,6 +193,42 @@ describe("MarketDataPublisher", () => {
     expect(row?.changePct).toBeCloseTo((100 * (99.9 - refPrice)) / refPrice, 3);
   });
 
+  test("publishes screening ratios at close, then at last once traded", () => {
+    const { sim, tables, limit } = quietSim();
+    const instrument = sim.getInstrument("AAPL.OQ");
+    const f = instrument?.fundamentals;
+    if (!instrument || !f) throw Error("no AAPL.OQ fundamentals");
+    const ratiosAtPx = (px: number) => ({
+      marketCapUsd: Math.round(
+        f.sharesOutstanding * px * instrument.usdPerPriceUnit,
+      ),
+      pb: Math.round((100 * px) / f.bookValuePerShare) / 100,
+      dividendYield: Math.round((100_000 * f.dividendPerShare) / px) / 1000,
+    });
+    // inactive equity: the initial CLOSED row prices at refPrice
+    const vod = ALL_INSTRUMENTS.find((i) => i.ric === "VOD.L");
+    const vodRow = tables.prices.get("VOD.L");
+    expect(vodRow?.marketCapUsd).toBeCloseTo(
+      (vod?.fundamentals?.sharesOutstanding ?? 0) *
+        (vod?.refPrice ?? 0) *
+        (vod?.usdPerPriceUnit ?? 0),
+      -1,
+    );
+    // quoted, not traded: still at close
+    limit(BookSide.BUY, 100, 10);
+    sim.flush();
+    expect(tables.prices.get("AAPL.OQ")).toMatchObject(
+      ratiosAtPx(instrument.refPrice),
+    );
+    // traded (the sell crosses the bid): at last
+    limit(BookSide.SELL, 100, 5);
+    sim.flush();
+    const row = tables.prices.get("AAPL.OQ");
+    expect(row?.last).toBe(100);
+    expect(row).toMatchObject(ratiosAtPx(100));
+    expect(row?.pe).toBeCloseTo(f.eps > 0 ? 100 / f.eps : Number.NaN, 2);
+  });
+
   test("appends trades to the tape and evicts beyond capacity", () => {
     const { sim, tables, book, limit } = quietSim({ tradesCapacity: 4 });
     limit(BookSide.SELL, 100.1, 100);
