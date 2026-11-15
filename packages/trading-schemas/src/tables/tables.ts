@@ -28,6 +28,40 @@ export const instruments = defineTable({
       description: "GICS sector, e.g. Financials.",
     },
     {
+      name: "sharesOutstanding",
+      dataType: "long",
+      optional: true,
+      description: "Equities: shares in issue (simulated). Null otherwise.",
+    },
+    {
+      name: "eps",
+      dataType: "double",
+      optional: true,
+      description:
+        "Equities: trailing 12-month earnings per share in the price currency (pence for GBX); negative for a loss (simulated).",
+    },
+    {
+      name: "bookValuePerShare",
+      dataType: "double",
+      optional: true,
+      description:
+        "Equities: book value per share in the price currency (simulated).",
+    },
+    {
+      name: "dividendPerShare",
+      dataType: "double",
+      optional: true,
+      description:
+        "Equities: trailing 12-month dividend per share in the price currency (simulated).",
+    },
+    {
+      name: "roe",
+      dataType: "double",
+      optional: true,
+      description:
+        "Equities: return on equity, % (eps / bookValuePerShare; simulated).",
+    },
+    {
       name: "instrumentType",
       dataType: "string",
       description: "InstrumentType: EQUITY | FUTURE | INDEX | CONTINUATION.",

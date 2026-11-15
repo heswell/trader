@@ -207,6 +207,12 @@ export class MarketDataPublisher {
     row[idx.currency] = instrument.currency;
     row[idx.exchange] = instrument.exchange;
     row[idx.sector] = instrument.sector;
+    const f = instrument.fundamentals;
+    row[idx.sharesOutstanding] = f?.sharesOutstanding ?? null;
+    row[idx.eps] = f?.eps ?? null;
+    row[idx.bookValuePerShare] = f?.bookValuePerShare ?? null;
+    row[idx.dividendPerShare] = f?.dividendPerShare ?? null;
+    row[idx.roe] = f?.roe ?? null;
     row[idx.instrumentType] =
       instrument.instrumentType ?? InstrumentType.Equity;
     row[idx.underlying] = instrument.underlying ?? "";

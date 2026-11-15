@@ -7,6 +7,7 @@ import {
   type TickSchedule,
   tickSizeAt,
 } from "@heswell/trading-schemas";
+import { type Fundamentals, generateFundamentals } from "./fundamentals";
 import { SECTOR_BY_RIC } from "./sectors";
 import { UNIVERSE, type UniverseRow } from "./universe";
 
@@ -25,6 +26,8 @@ export interface InstrumentDef extends InstrumentStatic {
   usdPerPriceUnit: number;
   /** Index: rics of its constituents (equal weighted). */
   constituents?: readonly string[];
+  /** Equities: simulated fundamentals for screening (see fundamentals.ts). */
+  fundamentals?: Fundamentals;
 }
 
 /** Venue conventions: tick schedules (MiFID II style bands for Europe) and lots. */
@@ -66,12 +69,14 @@ export const toInstrumentDef = ([
   const schedule: TickSchedule = parseTickBands(tickBands) ?? 0.01;
   const refPrice = roundToTick(rawPrice, schedule);
   const tickSize = tickSizeAt(schedule, refPrice);
+  const sector = SECTOR_BY_RIC.get(ric) ?? "";
+  const usdPerPriceUnit = USD_RATE[currency] ?? 1;
   return {
     ric,
     description,
     currency,
     exchange,
-    sector: SECTOR_BY_RIC.get(ric) ?? "",
+    sector,
     instrumentType: InstrumentType.Equity,
     contractMultiplier: 1,
     tickSize,
@@ -83,7 +88,14 @@ export const toInstrumentDef = ([
       decimalsOf(tickSizeAt(schedule, refPrice * 0.5)),
     ),
     refPrice,
-    usdPerPriceUnit: USD_RATE[currency] ?? 1,
+    usdPerPriceUnit,
+    fundamentals: generateFundamentals({
+      ric,
+      sector,
+      exchange,
+      refPrice,
+      usdPerPriceUnit,
+    }),
   };
 };
 
