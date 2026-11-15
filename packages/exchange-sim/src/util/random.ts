@@ -73,3 +73,13 @@ export class Random {
     return new Random((this.#state ^ Math.imul(salt + 1, 0x9e3779b1)) >>> 0);
   }
 }
+
+/** 32-bit FNV-1a: stable salts for per-bot generators. */
+export const hashString = (text: string) => {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+};

@@ -46,3 +46,18 @@ RPCs `setVolatility`, `haltInstrument`, `resumeInstrument`, `setBotRate`, `setMa
 Order status semantics (FIX-like, `ORDER_STATUS_TRANSITIONS`) and tick/lot
 validation (`validateOrder`) are shared so that the order ticket, blotters and
 OMS agree. See the package README for full column lists and signatures.
+
+## Simulated fundamentals
+
+Equities in `instruments` carry simulated fundamentals for stock screening:
+`sharesOutstanding`, `eps` (trailing 12 months), `bookValuePerShare`,
+`dividendPerShare` and `roe` (%). Per-share values are in the price currency
+(pence for GBX), so `refPrice / eps` is a P/E with no FX conversion. The columns
+are null for futures, indices and continuations.
+
+The values are generated, not real. The universe and its reference prices are
+stale (around 2015, some before splits), so real figures would give meaningless
+ratios against them. `exchange-sim/src/reference/fundamentals.ts` draws each
+stock from its sector's typical P/E, ROE and payout, and from a per-venue
+market-cap median, seeded by ric. Values are therefore the same every run,
+independent of the rest of the universe, and consistent with `refPrice`.

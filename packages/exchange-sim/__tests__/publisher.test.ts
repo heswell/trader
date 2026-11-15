@@ -64,6 +64,14 @@ describe("MarketDataPublisher", () => {
     expect(vod?.sector).toBe("Communication Services");
     expect(vod?.instrumentType).toBe(InstrumentType.Equity);
     expect(vod?.contractMultiplier).toBe(1);
+    const fundamentals = ALL_INSTRUMENTS.find(
+      (i) => i.ric === "VOD.L",
+    )?.fundamentals;
+    expect(vod?.sharesOutstanding).toBe(fundamentals?.sharesOutstanding);
+    expect(vod?.eps).toBe(fundamentals?.eps);
+    expect(vod?.bookValuePerShare).toBe(fundamentals?.bookValuePerShare);
+    expect(vod?.dividendPerShare).toBe(fundamentals?.dividendPerShare);
+    expect(vod?.roe).toBe(fundamentals?.roe);
     expect(tables.prices.rowCount).toBe(ALL_INSTRUMENTS.length);
     expect(tables.prices.get("VOD.L")?.phase).toBe(TradingPhase.Closed);
     expect(tables.prices.get("AAPL.OQ")?.phase).toBe(TradingPhase.Continuous);

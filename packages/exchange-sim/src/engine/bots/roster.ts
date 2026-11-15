@@ -1,5 +1,5 @@
 import type { ExchangeSimConfig } from "../../config";
-import type { Random } from "../../util/random";
+import { hashString, type Random } from "../../util/random";
 import type { InstrumentBook } from "../InstrumentBook";
 import {
   type Bot,
@@ -103,15 +103,7 @@ export const futuresRosterFor = (
   { kind: INFORMED.kind, count: 1, params: { alwaysOn: true } },
 ];
 
-/** 32-bit FNV-1a: stable salts for per-bot generators. */
-export const hashString = (text: string) => {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) {
-    hash ^= text.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return hash >>> 0;
-};
+export { hashString };
 
 /** One bot: the n-th of its kind on the instrument. */
 export const createBot = (
