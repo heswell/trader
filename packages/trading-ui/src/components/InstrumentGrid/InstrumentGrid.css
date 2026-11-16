@@ -50,7 +50,13 @@
     var(--salt-container-primary-borderColor, currentColor);
 }
 
-.tradingInstrumentGrid-columnPicker {
-  width: 320px;
-  height: 420px;
+.tradingInstrumentGrid-filterBar {
+  flex: none;
+}
+
+/* Without a shell the column picker opens in a dialog, which has no height
+   of its own for the picker's lists. */
+.saltDialogContent .vuuColumnPicker {
+  height: min(560px, 70vh);
+  width: 340px;
 }

@@ -17,6 +17,11 @@ const renderer = (
 
 const right = { align: "right" as const };
 
+const ratio = (decimals: number): ColumnDescriptor["type"] => ({
+  name: "number",
+  formatting: { decimals },
+});
+
 /** Presets for the known columns of instrumentPrices / prices. */
 const presets: Record<string, ColumnDescriptor> = {
   ric: { name: "ric", width: 90 },
@@ -156,7 +161,60 @@ const presets: Record<string, ColumnDescriptor> = {
     width: 110,
     type: renderer("trading.phase"),
   },
+  // screening: fundamentals (instruments) and live ratios (prices)
+  marketCapUsd: {
+    name: "marketCapUsd",
+    label: "mkt cap $",
+    width: 90,
+    ...right,
+    type: renderer("trading.quantity", { componentProps: { compact: true } }),
+  },
+  pe: { name: "pe", label: "P/E", width: 70, ...right, type: ratio(1) },
+  pb: { name: "pb", label: "P/B", width: 70, ...right, type: ratio(2) },
+  dividendYield: {
+    name: "dividendYield",
+    label: "yield %",
+    width: 75,
+    ...right,
+    type: ratio(2),
+  },
+  roe: { name: "roe", label: "ROE %", width: 75, ...right, type: ratio(1) },
+  eps: { name: "eps", width: 80, ...right, type: ratio(2) },
+  bookValuePerShare: {
+    name: "bookValuePerShare",
+    label: "book / share",
+    width: 95,
+    ...right,
+    type: ratio(2),
+  },
+  dividendPerShare: {
+    name: "dividendPerShare",
+    label: "div / share",
+    width: 90,
+    ...right,
+    type: ratio(2),
+  },
+  sharesOutstanding: {
+    name: "sharesOutstanding",
+    label: "shares",
+    width: 90,
+    ...right,
+    type: renderer("trading.quantity", { componentProps: { compact: true } }),
+  },
 };
+
+/** Screening columns: hidden by default, offered by the column picker. */
+export const SCREENING_COLUMNS = [
+  "marketCapUsd",
+  "pe",
+  "pb",
+  "dividendYield",
+  "roe",
+  "eps",
+  "bookValuePerShare",
+  "dividendPerShare",
+  "sharesOutstanding",
+] as const;
 
 /** Visible by default, in this order (those present in the data source). */
 export const DEFAULT_INSTRUMENT_GRID_COLUMNS = [
@@ -173,6 +231,22 @@ export const DEFAULT_INSTRUMENT_GRID_COLUMNS = [
   "sparkline",
   "volume",
   "turnover",
+];
+
+/** The screening column set offered alongside the default (watchlist) columns. */
+export const SCREENING_SET_COLUMNS = [
+  "ric",
+  "description",
+  "exchange",
+  "sector",
+  "last",
+  "changePct",
+  "marketCapUsd",
+  "pe",
+  "pb",
+  "dividendYield",
+  "roe",
+  "volume",
 ];
 
 /** Descriptor for a column of the grid; unknown columns get plain vuu defaults. */
