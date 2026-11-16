@@ -20,6 +20,7 @@ import {
   View,
 } from "@vuu-ui/vuu-layout";
 import { type CSSProperties, useCallback, useState } from "react";
+import { ShowcaseContextPanel } from "./shared/ShowcaseContextPanel";
 
 /** Stable View ids: they key the persisted View state in the saved layout. */
 const ID = {
@@ -94,151 +95,159 @@ export const TraderWorkspace = () => {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 4,
-        height: "100%",
-      }}
-    >
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <InstrumentPicker
-          aria-label="Green instrument"
-          linkGroup="green"
-          placeholder="Green: search ric"
-          showLinkGroupSelector
-          style={{ width: 260 }}
-        />
-        <Button onClick={reset}>Reset layout</Button>
-      </div>
-      <LayoutProvider onLayoutChange={handleLayoutChange}>
-        <FlexboxLayout
-          id={ID.root}
-          path=""
-          style={{ flex: 1, flexDirection: "row", minHeight: 0 }}
-        >
+    <ShowcaseContextPanel>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+          height: "100%",
+        }}
+      >
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <InstrumentPicker
+            aria-label="Green instrument"
+            linkGroup="green"
+            placeholder="Green: search ric"
+            showLinkGroupSelector
+            style={{ width: 260 }}
+          />
+          <Button onClick={reset}>Reset layout</Button>
+        </div>
+        <LayoutProvider onLayoutChange={handleLayoutChange}>
           <FlexboxLayout
-            id={ID.left}
-            resizeable
-            style={{ ...fill, flexGrow: 1.4, flexDirection: "column" }}
+            id={ID.root}
+            path=""
+            style={{ flex: 1, flexDirection: "row", minHeight: 0 }}
           >
-            <View
-              id={ID.grid}
-              header
+            <FlexboxLayout
+              id={ID.left}
               resizeable
-              style={fill}
-              title="Instruments"
+              style={{ ...fill, flexGrow: 1.4, flexDirection: "column" }}
             >
-              <InstrumentGrid
-                defaultLinkGroup="red"
-                id={ID.gridTable}
-                showLinkGroupSelector
-                simulatedOnly
-                style={content}
-              />
-            </View>
-            <StackLayout
-              id={ID.blotters}
-              showTabs="top"
-              style={fill}
-              active={0}
+              <View
+                id={ID.grid}
+                header
+                resizeable
+                style={fill}
+                title="Instruments"
+              >
+                <InstrumentGrid
+                  defaultLinkGroup="red"
+                  id={ID.gridTable}
+                  showLinkGroupSelector
+                  simulatedOnly
+                  style={content}
+                />
+              </View>
+              <StackLayout
+                id={ID.blotters}
+                showTabs="top"
+                style={fill}
+                active={0}
+              >
+                <View id={ID.orders} title="Orders">
+                  <OrderBlotter
+                    defaultLinkGroup="red"
+                    showLinkGroupSelector
+                    style={content}
+                  />
+                </View>
+                <View id={ID.fills} title="Fills">
+                  <FillsBlotter
+                    defaultLinkGroup="red"
+                    showLinkGroupSelector
+                    style={content}
+                  />
+                </View>
+                <View id={ID.positions} title="Positions">
+                  <PositionsView
+                    defaultLinkGroup="green"
+                    showLinkGroupSelector
+                    style={content}
+                  />
+                </View>
+              </StackLayout>
+            </FlexboxLayout>
+            <FlexboxLayout
+              id={ID.middle}
+              resizeable
+              style={{ ...fill, flexDirection: "column" }}
             >
-              <View id={ID.orders} title="Orders">
-                <OrderBlotter
+              <View
+                id={ID.ticket}
+                header
+                resizeable
+                style={fill}
+                title="Ticket"
+              >
+                <OrderTicketPanel
                   defaultLinkGroup="red"
                   showLinkGroupSelector
                   style={content}
                 />
               </View>
-              <View id={ID.fills} title="Fills">
-                <FillsBlotter
-                  defaultLinkGroup="red"
+              <StackLayout
+                active={0}
+                id={ID.market}
+                showTabs="top"
+                style={{ ...fill, flexGrow: 1.5 }}
+              >
+                <View id={ID.chart} title="Chart">
+                  <PriceChart
+                    account={ACCOUNT}
+                    defaultLinkGroup="red"
+                    showLinkGroupSelector
+                    style={content}
+                  />
+                </View>
+                <View id={ID.depth} title="Depth">
+                  <MarketDepth
+                    account={ACCOUNT}
+                    defaultLinkGroup="red"
+                    showLinkGroupSelector
+                  />
+                </View>
+                <View id={ID.depthChart} title="Depth chart">
+                  <DepthChartView
+                    defaultLinkGroup="red"
+                    showLinkGroupSelector
+                    style={content}
+                  />
+                </View>
+              </StackLayout>
+            </FlexboxLayout>
+            <FlexboxLayout
+              id={ID.right}
+              resizeable
+              style={{ ...fill, flexDirection: "column" }}
+            >
+              <View
+                id={ID.ladder}
+                header
+                resizeable
+                style={{ ...fill, flexGrow: 2 }}
+                title="Ladder"
+              >
+                <PriceLadder
+                  account={ACCOUNT}
+                  defaultLinkGroup="green"
+                  defaultQuantity={100}
                   showLinkGroupSelector
                   style={content}
                 />
               </View>
-              <View id={ID.positions} title="Positions">
-                <PositionsView
+              <View id={ID.tape} header resizeable style={fill} title="Tape">
+                <TradeTape
                   defaultLinkGroup="green"
                   showLinkGroupSelector
                   style={content}
                 />
               </View>
-            </StackLayout>
+            </FlexboxLayout>
           </FlexboxLayout>
-          <FlexboxLayout
-            id={ID.middle}
-            resizeable
-            style={{ ...fill, flexDirection: "column" }}
-          >
-            <View id={ID.ticket} header resizeable style={fill} title="Ticket">
-              <OrderTicketPanel
-                defaultLinkGroup="red"
-                showLinkGroupSelector
-                style={content}
-              />
-            </View>
-            <StackLayout
-              active={0}
-              id={ID.market}
-              showTabs="top"
-              style={{ ...fill, flexGrow: 1.5 }}
-            >
-              <View id={ID.chart} title="Chart">
-                <PriceChart
-                  account={ACCOUNT}
-                  defaultLinkGroup="red"
-                  showLinkGroupSelector
-                  style={content}
-                />
-              </View>
-              <View id={ID.depth} title="Depth">
-                <MarketDepth
-                  account={ACCOUNT}
-                  defaultLinkGroup="red"
-                  showLinkGroupSelector
-                />
-              </View>
-              <View id={ID.depthChart} title="Depth chart">
-                <DepthChartView
-                  defaultLinkGroup="red"
-                  showLinkGroupSelector
-                  style={content}
-                />
-              </View>
-            </StackLayout>
-          </FlexboxLayout>
-          <FlexboxLayout
-            id={ID.right}
-            resizeable
-            style={{ ...fill, flexDirection: "column" }}
-          >
-            <View
-              id={ID.ladder}
-              header
-              resizeable
-              style={{ ...fill, flexGrow: 2 }}
-              title="Ladder"
-            >
-              <PriceLadder
-                account={ACCOUNT}
-                defaultLinkGroup="green"
-                defaultQuantity={100}
-                showLinkGroupSelector
-                style={content}
-              />
-            </View>
-            <View id={ID.tape} header resizeable style={fill} title="Tape">
-              <TradeTape
-                defaultLinkGroup="green"
-                showLinkGroupSelector
-                style={content}
-              />
-            </View>
-          </FlexboxLayout>
-        </FlexboxLayout>
-      </LayoutProvider>
-    </div>
+        </LayoutProvider>
+      </div>
+    </ShowcaseContextPanel>
   );
 };
