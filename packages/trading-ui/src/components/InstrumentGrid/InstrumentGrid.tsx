@@ -58,30 +58,24 @@ import cx from "clsx";
 import {
   forwardRef,
   type HTMLAttributes,
+  type KeyboardEvent,
+  type MouseEvent,
   type ReactNode,
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { tradingTableSchema } from "../../data/tradingTables";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
-import {
-  type SelectedInstrument,
-  useSelectedInstrument,
-} from "../../instrument-context/InstrumentContext";
-import {
-  type LinkGroupProps,
-  useComponentLinkGroup,
-} from "../../instrument-context/useComponentLinkGroup";
+import type { LinkGroupId } from "../../instrument-context/linkGroups";
+import type { SelectedInstrument } from "../../instrument-context/selectedInstrument";
 import {
   type UserSettingsStorage,
   useUserSettingsStorage,
 } from "../../utils/userSettingsStorage";
 import { useStableCallback } from "../../hooks/useStableCallback";
 import { InstrumentLookupProvider } from "../InstrumentLookup";
-import { LinkGroupSelector } from "../LinkGroupSelector";
 import { useStaleData } from "../StaleIndicator/useStaleData";
 import { useOrderTicketLauncher } from "../OrderTicket/OrderTicketLauncher";
 import { registerTradingCellRenderers } from "../TradingCellRenderers";
@@ -102,15 +96,24 @@ import {
   SPARKLINE_COLUMN,
 } from "./instrumentGridColumns";
 import { buildInstrumentGridFilter } from "./instrumentGridFilter";
+import { toInstrument } from "./instrumentRow";
+import {
+  GridChannelLinksProvider,
+  isInLinkCell,
+  linkColumnDescriptor,
+  registerLinkCellRenderer,
+  rowRicOf,
+  useGridChannelLinks,
+} from "./linkColumn";
 import { useWatchlists } from "./watchlists";
 import type { SparklineCellOptions } from "../Sparkline/Sparkline";
 import gridCss from "./InstrumentGrid.css";
 
 registerInstrumentGridRenderers();
+registerLinkCellRenderer();
 registerTradingCellRenderers();
 
 const classBase = "tradingInstrumentGrid";
-const SOURCE = "InstrumentGrid";
 const ALL = "__all__";
 const NONE = "__none__";
 const TYPE_LABELS: Readonly<Record<string, string>> = {
@@ -124,8 +127,7 @@ const TYPE_LABELS: Readonly<Record<string, string>> = {
 export type InstrumentAction = (instrument: SelectedInstrument) => void;
 
 export interface InstrumentGridProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect">,
-    LinkGroupProps {
+  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect"> {
   /** Supply a data source (otherwise one is created from `table`). */
   dataSource?: DataSource;
   /** Table to bind to. "prices" has no static data (description, sector...). */
@@ -162,11 +164,6 @@ export interface InstrumentGridProps
    * launcher is present and no onBuy / onSell is given. Default true.
    */
   launchOrderTicket?: boolean;
-  /**
-   * Select (highlight) the instrument selected elsewhere in this component's
-   * link group. Default true.
-   */
-  followSelection?: boolean;
   onOpenDepth?: InstrumentAction;
   /**
    * Where watchlists, column sets and saved filters are persisted (default:
@@ -212,33 +209,6 @@ const DEFAULT_QUICK_FILTER_COLUMNS = [
   "dividendYield",
 ];
 
-const toInstrument = (row: {
-  [key: string]: unknown;
-  hasColumn?: (name: string) => boolean;
-}): SelectedInstrument => {
-  const get = (name: string) =>
-    row.hasColumn && !row.hasColumn(name) ? undefined : row[name];
-  const num = (name: string) => {
-    const v = get(name);
-    return v === undefined || v === "" || v === null ? undefined : Number(v);
-  };
-  const str = (name: string) => {
-    const v = get(name);
-    return v === undefined || v === null ? undefined : String(v);
-  };
-  return {
-    ric: String(row.ric),
-    description: str("description"),
-    currency: str("currency"),
-    exchange: str("exchange"),
-    tickSize: num("tickSize"),
-    tickBands: str("tickBands"),
-    lotSize: num("lotSize"),
-    priceDecimals: num("priceDecimals"),
-    contractMultiplier: num("contractMultiplier"),
-  };
-};
-
 /**
  * Instrument grid: a preset over the vuu Table bound to instrumentPrices
  * (or prices). Price-move and change renderers, formatting per instrument,
@@ -246,10 +216,14 @@ const toInstrument = (row: {
  * sets (switched in the toolbar, edited in the column picker), watchlists,
  * phase badge, optional sparklines and client-side context menu actions.
  * The footer shows the row count and opens the column picker in the
- * context panel. Selecting a row calls
- * `setSelectedInstrument(instrument, "InstrumentGrid")` in the grid's link
- * group; instruments selected elsewhere in the group are selected in the
- * grid (`followSelection`).
+ * context panel.
+ *
+ * The first column links rows to the workspace channels: a channel dot on
+ * rows whose instrument a channel holds (ringed for the active channel),
+ * and a menu to link a row, one channel per instrument. On a focused row,
+ * Enter (or double-click) links to the active channel, 1-4 to a channel and
+ * L opens the menu. Selecting a row is local to the grid: only an explicit
+ * link publishes.
  */
 export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
   function InstrumentGrid(props, ref) {
@@ -306,21 +280,16 @@ const InstrumentGridInner = forwardRef<
     className,
     columns,
     dataSource: dataSourceProp,
-    defaultLinkGroup,
-    followSelection = true,
     id,
     initialGroupBy,
     instrumentType: initialInstrumentType,
     launchOrderTicket = true,
-    linkGroup: linkGroupProp,
     onBuy: onBuyProp,
     onColumnSetsChange,
     onFilterStateChange,
-    onLinkGroupChange,
     onOpenDepth,
     onSell: onSellProp,
     showFooter = true,
-    showLinkGroupSelector = false,
     showToolbar = true,
     simulatedOnly = false,
     sparkline,
@@ -377,7 +346,7 @@ const InstrumentGridInner = forwardRef<
     useState<readonly ColumnDescriptor[]>(initialVisible);
   useEffect(() => setVisibleColumns(initialVisible), [initialVisible]);
   const config = useMemo<TableConfig>(
-    () => ({ columns: [...visibleColumns] }),
+    () => ({ columns: [linkColumnDescriptor, ...visibleColumns] }),
     [visibleColumns],
   );
   // the model is the picker's own state; rebuild only when the available
@@ -540,51 +509,52 @@ const InstrumentGridInner = forwardRef<
     [onSellProp, launch, openOrderTicket],
   );
 
-  // --- selection, shared through the link group
-  const { linkGroup, channel, setLinkGroup } = useComponentLinkGroup({
-    defaultLinkGroup,
-    linkGroup: linkGroupProp,
-    onLinkGroupChange,
-    persistKey: id ? `${SOURCE}:${id}` : SOURCE,
-  });
-  const { selectedInstrument, setSelectedInstrument } = useSelectedInstrument({
-    linkGroup: channel,
-  });
+  // --- selection is local to the grid (toolbar actions, watchlists)
   const [selected, setSelected] = useState<SelectedInstrument>();
-  const selectedRef = useRef(selected);
-  selectedRef.current = selected;
-  // Follow a selection made elsewhere in the group. The grid's own
-  // selections are already `selected`, so they are not echoed back.
-  useEffect(() => {
-    const ric = selectedInstrument?.ric;
-    if (!followSelection || !ric || ric === selectedRef.current?.ric) return;
-    setSelected(selectedInstrument);
-    // the ric may not be in the grid (filtered, unknown): nothing to show
-    Promise.resolve(
-      dataSource.select?.({
-        type: "SELECT_ROW",
-        rowKey: ric,
-        preserveExistingSelection: false,
-        // Omit<> over the SelectRequest union drops rowKey
-      } as Parameters<NonNullable<DataSource["select"]>>[0]),
-    ).catch(() => undefined);
-  }, [dataSource, followSelection, selectedInstrument]);
-  const handleSelect = useCallback<TableRowSelectHandler>(
-    (row) => {
-      if (row && row.isLeaf !== false) {
-        const instrument = toInstrument(
-          row as unknown as Parameters<typeof toInstrument>[0],
-        );
-        setSelected(instrument);
-        setSelectedInstrument(instrument, SOURCE);
-      } else if (!row) {
-        setSelected(undefined);
-        setSelectedInstrument(undefined, SOURCE);
-      }
-    },
-    [setSelectedInstrument],
-  );
+  const handleSelect = useCallback<TableRowSelectHandler>((row) => {
+    if (row && row.isLeaf !== false) {
+      setSelected(
+        toInstrument(row as unknown as Parameters<typeof toInstrument>[0]),
+      );
+    } else if (!row) {
+      setSelected(undefined);
+    }
+  }, []);
   const stableHandleSelect = useStableCallback(handleSelect);
+
+  // --- channel links: the link column and its keys
+  const channelLinks = useGridChannelLinks();
+  const { activeChannel, channels, linkRic, setMenuRic } = channelLinks;
+  const handleKeyDownCapture = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (e.altKey || e.ctrlKey || e.metaKey || e.defaultPrevented) return;
+      const ric = rowRicOf(e.target);
+      if (!ric) return;
+      let channel: LinkGroupId | undefined;
+      if (e.key === "Enter") channel = activeChannel;
+      else if (/^[1-9]$/.test(e.key)) channel = channels[Number(e.key) - 1]?.id;
+      else if (e.key === "l" || e.key === "L") {
+        e.preventDefault();
+        e.stopPropagation();
+        setMenuRic(ric);
+        return;
+      }
+      if (!channel) return;
+      // Ahead of the table, which would select the row on Enter.
+      e.preventDefault();
+      e.stopPropagation();
+      linkRic(ric, channel);
+    },
+    [activeChannel, channels, linkRic, setMenuRic],
+  );
+  const handleDoubleClick = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      if (isInLinkCell(e.target)) return;
+      const ric = rowRicOf(e.target);
+      if (ric) linkRic(ric, activeChannel);
+    },
+    [activeChannel, linkRic],
+  );
 
   // --- context menu (client-side only)
   const menuBuilder = useCallback<MenuBuilder>(
@@ -661,7 +631,6 @@ const InstrumentGridInner = forwardRef<
       {...htmlAttributes}
       {...staleProps}
       className={cx(classBase, className, staleProps.className)}
-      data-link-group={linkGroup}
       id={id}
       ref={ref}
     >
@@ -671,9 +640,6 @@ const InstrumentGridInner = forwardRef<
           role="toolbar"
           aria-label="Instrument grid"
         >
-          {showLinkGroupSelector ? (
-            <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
-          ) : null}
           <Input
             aria-label="Filter instruments"
             className={`${classBase}-search`}
@@ -823,18 +789,25 @@ const InstrumentGridInner = forwardRef<
           vuuTable={dataSource.table}
         />
       ) : null}
-      <div className={`${classBase}-table`}>
-        <ContextMenuProvider
-          menuActionHandler={menuActionHandler}
-          menuBuilder={menuBuilder}
-        >
-          <Table
-            config={config}
-            dataSource={dataSource}
-            onSelect={stableHandleSelect}
-            selectionModel="single"
-          />
-        </ContextMenuProvider>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: keys and double-click of the table's rows */}
+      <div
+        className={`${classBase}-table`}
+        onDoubleClick={handleDoubleClick}
+        onKeyDownCapture={handleKeyDownCapture}
+      >
+        <GridChannelLinksProvider value={channelLinks}>
+          <ContextMenuProvider
+            menuActionHandler={menuActionHandler}
+            menuBuilder={menuBuilder}
+          >
+            <Table
+              config={config}
+              dataSource={dataSource}
+              onSelect={stableHandleSelect}
+              selectionModel="single"
+            />
+          </ContextMenuProvider>
+        </GridChannelLinksProvider>
       </div>
       {showFooter ? (
         <TableFooter className={`${classBase}-footer`}>

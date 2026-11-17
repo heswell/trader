@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Instrument grid with the new FilterBar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3B5B8C}a:hover{color:#1E3A63}
+button,input{font:inherit;color:inherit}
+.g-root{
+  --app:#EEF0F3;--panel:#FFFFFF;--bar:#F6F7F9;--border:#D9DDE3;--rowline:#F0F2F4;
+  --fg:#1F2329;--fg2:#4A525D;--fg3:#5B6470;--th:#3A424D;--hover:#E9ECF0;--rowhover:#F3F5F8;--sel:#E8EEF6;
+  --field-border:#C3CAD3;--field-bg:#FFFFFF;--label-bg:#E4E8ED;--label-fg:#4A525D;--placeholder:#9AA2AC;
+  --set-border:#8FA6C8;--set-label-bg:#DCE5F1;--accent:#3B5B8C;--focus:#3B5B8C;--focus-ring:rgba(59,91,140,.15);
+  --toggle-bg:#D5DFEC;--toggle-fg:#1E3A63;--badge:#5A78A6;--pill:#5A78A6;--pill-off-border:#CDD3DB;--pill-off-fg:#5B6470;
+  --x:#8A929D;--x-hover:#E6EAF0;--strong:#2B3440;--up:#1E7F45;--down:#B3261E;--buy:#1E7F45;--sell:#B3261E;
+  font-family:'Nunito Sans',system-ui,sans-serif;color:var(--fg);background:var(--app);-webkit-font-smoothing:antialiased}
+.g-root.dark{
+  --app:#15171A;--panel:#1D2024;--bar:#191C20;--border:#2E3339;--rowline:#24282D;
+  --fg:#E6E8EB;--fg2:#B8BEC6;--fg3:#A3A9B1;--th:#C7CCD2;--hover:#2C323A;--rowhover:#262A30;--sel:#243142;
+  --field-border:#4A515A;--field-bg:#15171A;--label-bg:#2A2F36;--label-fg:#B8BEC6;--placeholder:#7D848D;
+  --set-border:#5A7EA8;--set-label-bg:#24303E;--accent:#9CC3F0;--focus:#7FB2FF;--focus-ring:rgba(127,178,255,.2);
+  --toggle-bg:#2F3C4C;--toggle-fg:#E6E8EB;--badge:#3B82D9;--pill:#3B6AA8;--pill-off-border:#4A515A;--pill-off-fg:#A3A9B1;
+  --x:#A3A9B1;--x-hover:#353B44;--strong:#E6E8EB;--up:#4FC27A;--down:#F0705F;--buy:#2F8A4F;--sell:#C2453A}
+.g-num{font-variant-numeric:tabular-nums}
+.g-row{position:relative;--rowbg:var(--rowbase);background:var(--rowbg)}
+.g-row:hover{--rowbg:var(--rowhover)}
+.g-acts{position:absolute;right:4px;top:0;bottom:0;display:none;align-items:center;gap:4px;padding-left:20px;background:linear-gradient(90deg,transparent,var(--rowbg) 16px)}
+.g-row:hover .g-acts,.g-acts.sel{display:flex}
+.g-act{height:18px;padding:0 8px;border:0;border-radius:3px;font-weight:700;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.g-act kbd{font:inherit;font-weight:400;opacity:.75}
+.g-linkBtn{background:transparent;border:0;padding:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:3px;color:var(--fg3)}
+.g-linkBtn:hover{background:var(--hover)}
+.g-linkBtn:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.g-glyph{opacity:0}
+.g-row:hover .g-glyph,.g-linkBtn:focus-visible .g-glyph{opacity:1}
+.g-mi{width:100%;height:28px;padding:0 10px;display:grid;grid-template-columns:12px 52px 1fr auto;align-items:center;gap:8px;background:transparent;border:0;text-align:left;cursor:pointer;border-radius:3px}
+.g-mi:hover{background:var(--hover)}
+.g-key{min-width:16px;height:16px;padding:0 3px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--field-border);border-radius:3px;color:var(--fg2);font-size:10px}
+.g-act.buy{background:var(--buy);color:#fff}
+.g-act.sell{background:var(--sell);color:#fff}
+.g-act.depth{background:var(--panel);color:var(--fg);box-shadow:inset 0 0 0 1px var(--field-border)}
+.g-hbtn{cursor:pointer}
+.g-hbtn:hover{background:var(--hover) !important}
+.fb-bar{height:28px;box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:0 4px 0 6px;background:var(--bar);border-bottom:1px solid var(--border);min-width:0}
+.fb-inline{background:transparent;border-bottom:0;flex:1;padding:0}
+.fb-ico{width:20px;height:20px;flex:none;display:inline-flex;align-items:center;justify-content:center;color:var(--fg3);border:0;background:none;padding:0;border-radius:3px;position:relative;cursor:pointer}
+.fb-ico:hover{background:var(--hover);color:var(--fg)}
+.fb-ico.on{background:var(--toggle-bg);color:var(--toggle-fg)}
+.fb-badge{position:absolute;top:-3px;right:-5px;min-width:12px;height:12px;box-sizing:border-box;padding:0 3px;border-radius:6px;background:var(--badge);color:#fff;font:700 8px/12px 'Nunito Sans',system-ui,sans-serif;text-align:center;box-shadow:0 0 0 1.5px var(--bar)}
+.fb-box{height:20px;box-sizing:border-box;display:inline-flex;align-items:center;gap:4px;padding:0 6px 0 5px;border:1px solid var(--field-border);border-radius:3px;background:var(--field-bg);font-size:11px;width:140px;flex:none}
+.fb-box input{border:0;outline:none;background:transparent;flex:1;min-width:0;height:16px;font-size:11px;padding:0;color:var(--fg)}
+.fb-box input::placeholder{color:var(--placeholder)}
+.fb-box.foc{border-color:var(--focus);box-shadow:0 0 0 2px var(--focus-ring)}
+.fb-seg{height:20px;box-sizing:border-box;flex:none;display:inline-flex;align-items:stretch;border:1px solid var(--field-border);border-radius:3px;overflow:hidden;font-size:11px;white-space:nowrap}
+.fb-sl{display:inline-flex;align-items:center;gap:6px;padding:0 6px;background:var(--label-bg);color:var(--label-fg)}
+.fb-sop{font-weight:800;color:var(--accent);padding:0 2px;border-radius:2px}
+.fb-si{display:inline-flex;align-items:center;gap:6px;min-width:40px;padding:0 6px;background:var(--field-bg)}
+.fb-v{font-weight:700;flex:1 1 auto}
+.fb-seg.set{border-color:var(--set-border)}
+.fb-seg.set .fb-sl{background:var(--set-label-bg);color:var(--accent);font-weight:700}
+.fb-seg.set .fb-si{min-width:56px;padding-right:2px}
+.fb-x{display:inline-flex;flex:none;width:12px;height:12px;align-items:center;justify-content:center;border-radius:2px;color:var(--x);margin-left:auto;border:0;background:none;padding:0;cursor:pointer}
+.fb-x:hover{background:var(--x-hover);color:var(--strong)}
+.fb-more{height:20px;flex:none;display:inline-flex;align-items:center;gap:4px;padding:0 6px;border:1px solid var(--field-border);border-radius:3px;background:var(--field-bg);font:700 11px/1 'Nunito Sans',system-ui,sans-serif;color:var(--strong);cursor:pointer}
+.fb-pill{height:20px;box-sizing:border-box;flex:none;display:inline-flex;align-items:center;gap:6px;padding:0 8px;font:700 11px/1 'Nunito Sans',system-ui,sans-serif;color:#fff;background:var(--pill);border:1px solid var(--pill);border-radius:3px;cursor:pointer}
+.fb-pill .fb-dot{width:6px;height:6px;border-radius:50%;background:#fff}
+.fb-pill.off{background:var(--field-bg);border-color:var(--pill-off-border);color:var(--pill-off-fg);font-weight:400}
+.fb-pill.off .fb-dot{background:transparent;box-shadow:inset 0 0 0 1px var(--pill-off-fg)}
+.fb-sp{flex:1 1 auto}
+</style>
+</helmet>
+<div class="{{rootClass}}" style="width: 100%; min-height: 800px; font-size: 11px; display: flex; flex-direction: column">
+
+  <header style="height: 40px; display: flex; align-items: center; gap: 16px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--border)">
+    <span style="font-weight: 800; font-size: 13px">Trader <span style="color: var(--fg3); font-weight: 400">/ Equities</span></span>
+    <div aria-label="Workspace channels" style="display: flex; gap: 2px; margin: 0 auto; background: var(--bar); border: 1px solid var(--border); border-radius: 4px; padding: 2px">
+      <sc-for list="{{segments}}" as="seg" hint-placeholder-count="4">
+        <span style="{{seg.style}}"><span aria-hidden="true" style="{{seg.dot}}"></span><span style="font-weight: 700">{{seg.ric}}</span></span>
+      </sc-for>
+    </div>
+    <span style="width: 120px"></span>
+  </header>
+
+  <main style="flex: 1; padding: 10px; display: flex; flex-direction: column; min-height: 0">
+    <section aria-label="Instruments" style="flex: 1; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; min-height: 0; position: relative">
+
+      <div style="{{headerStyle}}">
+        <button class="g-hbtn" aria-haspopup="menu" style="height: 24px; padding: 0 6px; display: flex; align-items: center; gap: 6px; background: transparent; border: 0; border-radius: 3px; flex: none">
+          <span style="font-weight: 800; font-size: 12px">All instruments</span>
+          <svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path d="M6 9l6 6 6-6"></path></svg>
+        </button>
+
+        <span style="flex: 1"></span>
+        <sc-if value="{{hiddenFiltered}}" hint-placeholder-val="{{ false }}">
+          <button class="g-hbtn" aria-label="{{hiddenFilterLabel}}" title="{{hiddenFilterLabel}}" onClick="{{showBar}}" style="height: 20px; padding: 0 6px; display: flex; align-items: center; gap: 4px; background: var(--set-label-bg); border: 1px solid var(--set-border); border-radius: 3px; color: var(--accent); font-weight: 700; flex: none">
+            <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"></path></svg>{{badge}}
+          </button>
+        </sc-if>
+        <button class="g-hbtn" aria-label="Panel settings" aria-haspopup="menu" aria-expanded="{{menuExpanded}}" onClick="{{toggleMenu}}" style="{{settingsStyle}}">
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>
+        </button>
+      </div>
+
+      <sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}">
+        <button aria-label="Close panel settings" onClick="{{toggleMenu}}" style="position: absolute; inset: 0; background: transparent; border: 0; cursor: default; z-index: 4"></button>
+        <div role="menu" aria-label="Panel settings" style="position: absolute; right: 4px; top: 28px; width: 220px; z-index: 5; background: var(--panel); border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 6px 16px rgba(0,0,0,.18); padding: 3px; font-size: 11px">
+          <sc-for list="{{menuItems}}" as="mi" hint-placeholder-count="2">
+            <button class="g-hbtn" role="menuitemcheckbox" aria-checked="{{mi.checked}}" onClick="{{mi.toggle}}" style="width: 100%; height: 24px; padding: 0 8px; display: grid; grid-template-columns: 14px 1fr auto; gap: 6px; align-items: center; background: transparent; border: 0; border-radius: 3px; text-align: left">
+              <span aria-hidden="true" style="color: var(--accent); font-weight: 800">{{mi.tick}}</span>
+              <span>{{mi.label}}</span>
+              <kbd style="font-family: inherit; font-size: 10px; color: var(--fg3)">{{mi.key}}</kbd>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{barShown}}" hint-placeholder-val="{{ true }}">
+        <div class="fb-bar" role="toolbar" aria-label="Filters">
+          <button class="{{toggleClass}}" aria-pressed="{{togglePressed}}" aria-label="{{toggleLabel}}" title="{{toggleLabel}}" onClick="{{toggleMode}}">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 4h7M12 4h2M2 8h2M7 8h7M2 12h9M14 12h0"></path><circle cx="10.5" cy="4" r="1.5"></circle><circle cx="5.5" cy="8" r="1.5"></circle><circle cx="12.5" cy="12" r="1.5"></circle></svg>
+            <sc-if value="{{hasBadge}}" hint-placeholder-val="{{ true }}"><span class="fb-badge">{{badge}}</span></sc-if>
+          </button>
+          <sc-if value="{{quick}}" hint-placeholder-val="{{ true }}">
+            <label class="{{searchClass}}"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="color: var(--x)"><circle cx="7" cy="7" r="4.5"></circle><path d="M10.5 10.5L14 14"></path></svg><input aria-label="Search ric and description" placeholder="Search" value="{{text}}" onChange="{{onText}}"></label>
+            <sc-for list="{{fieldsShown}}" as="f" hint-placeholder-count="4">
+              <span class="{{f.cls}}"><span class="fb-sl">{{f.label}}<sc-if value="{{f.hasOp}}" hint-placeholder-val="{{ false }}"><span class="fb-sop">{{f.op}}</span></sc-if></span><span class="fb-si"><span class="fb-v">{{f.value}}</span><sc-if value="{{f.isSet}}" hint-placeholder-val="{{ false }}"><button class="fb-x" aria-label="{{f.clearLabel}}" onClick="{{f.clear}}"><svg width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"></path></svg></button></sc-if></span></span>
+            </sc-for>
+            <span class="fb-sp"></span>
+            <sc-if value="{{hasMore}}" hint-placeholder-val="{{ false }}"><button class="fb-more" aria-label="{{moreLabel}}">{{moreText}}</button></sc-if>
+            <button class="fb-ico" aria-label="Choose quick filter columns"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="2.5" width="12" height="11" rx="1.5"></rect><path d="M6 2.5v11M10 2.5v11"></path></svg></button>
+          </sc-if>
+          <sc-if value="{{saved}}" hint-placeholder-val="{{ false }}">
+            <sc-for list="{{pills}}" as="p" hint-placeholder-count="3">
+              <button class="{{p.cls}}" aria-pressed="{{p.pressed}}" onClick="{{p.toggle}}"><span class="fb-dot" aria-hidden="true"></span>{{p.label}}</button>
+            </sc-for>
+            <button class="fb-ico" aria-label="New filter"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"></path></svg></button>
+            <span class="fb-sp"></span>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <div style="flex: 1; overflow: auto; min-height: 0">
+        <div role="table" aria-label="Instruments" style="min-width: 860px; position: relative">
+          <div role="row" style="display: grid; grid-template-columns: 34px 92px minmax(160px, 1fr) 160px 52px 80px 70px 80px 52px; height: 24px; align-items: center; background: var(--panel); border-bottom: 1px solid var(--border); color: var(--th); font-weight: 700; position: sticky; top: 0; z-index: 1">
+            <span role="columnheader" style="height: 24px; padding: 2px; box-sizing: border-box">
+              <button aria-label="Pin linked rows to top" aria-pressed="{{pinPressed}}" title="{{pinTitle}}" onClick="{{togglePin}}" style="{{pinStyle}}">
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg>
+                <sc-if value="{{pinned}}" hint-placeholder-val="{{ false }}"><svg aria-hidden="true" width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l9 12H3z"></path></svg></sc-if>
+              </button>
+            </span>
+            <span role="columnheader" style="padding: 0 6px">RIC</span>
+            <span role="columnheader" style="padding: 0 6px">Description</span>
+            <span role="columnheader" style="padding: 0 6px">Sector</span>
+            <span role="columnheader" style="padding: 0 6px">Exch</span>
+            <span role="columnheader" style="padding: 0 6px; text-align: right">Last</span>
+            <span role="columnheader" style="padding: 0 6px; text-align: right">Chg %</span>
+            <span role="columnheader" style="padding: 0 6px; text-align: right">Mkt cap</span>
+            <span role="columnheader" style="padding: 0 6px; text-align: right">P/E</span>
+          </div>
+          <sc-for list="{{rows}}" as="row" hint-placeholder-count="10">
+            <div class="g-row" role="row" aria-selected="{{row.selectedAttr}}" onClick="{{row.select}}" style="{{row.style}}">
+              <span role="cell" style="height: 24px; padding: 2px; box-sizing: border-box">
+                <button class="g-linkBtn" aria-haspopup="menu" aria-label="{{row.linkLabel}}" title="{{row.linkLabel}}" onClick="{{row.openMenu}}">
+                  <sc-for list="{{row.dots}}" as="d" hint-placeholder-count="1"><span aria-hidden="true" style="{{d}}"></span></sc-for>
+                  <sc-if value="{{row.noLink}}" hint-placeholder-val="{{ true }}"><svg class="g-glyph" aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"></path><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"></path></svg></sc-if>
+                </button>
+              </span>
+              <span role="cell" style="padding: 0 6px; font-weight: 700">{{row.ric}}</span>
+              <span role="cell" style="padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{row.desc}}</span>
+              <span role="cell" style="padding: 0 6px; color: var(--fg2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{row.sector}}</span>
+              <span role="cell" style="padding: 0 6px; color: var(--fg2)">{{row.exch}}</span>
+              <span role="cell" class="g-num" style="padding: 0 6px; text-align: right">{{row.last}}</span>
+              <span role="cell" class="g-num" style="{{row.chgStyle}}">{{row.chg}}</span>
+              <span role="cell" class="g-num" style="padding: 0 6px; text-align: right; color: var(--fg2)">{{row.cap}}</span>
+              <span role="cell" class="g-num" style="padding: 0 6px; text-align: right; color: var(--fg2)">{{row.pe}}</span>
+              <span class="{{row.actsClass}}">
+                <button class="g-act buy" aria-label="{{row.buyLabel}}" title="Buy (B)">Buy <kbd>B</kbd></button>
+                <button class="g-act sell" aria-label="{{row.sellLabel}}" title="Sell (S)">Sell <kbd>S</kbd></button>
+                <button class="g-act depth" aria-label="{{row.depthLabel}}" title="Depth (D)">Depth <kbd>D</kbd></button>
+              </span>
+            </div>
+          </sc-for>
+
+          <sc-if value="{{linkMenuOpen}}" hint-placeholder-val="{{ false }}">
+            <button aria-label="Close link menu" onClick="{{closeLinkMenu}}" style="position: absolute; inset: 0; background: transparent; border: 0; cursor: default; z-index: 3"></button>
+            <div role="menu" aria-label="{{linkMenuTitle}}" style="{{linkMenuStyle}}">
+              <div style="padding: 8px 10px 4px; color: var(--fg3)">{{linkLead}} <strong style="color: var(--fg)">{{linkRic}}</strong> {{linkTail}}</div>
+              <sc-for list="{{linkItems}}" as="li" hint-placeholder-count="4">
+                <button class="g-mi" role="menuitemradio" aria-checked="{{li.checked}}" onClick="{{li.pick}}">
+                  <span aria-hidden="true" style="{{li.dot}}"></span>
+                  <span style="font-weight: 700">{{li.label}}</span>
+                  <span style="{{li.noteStyle}}">{{li.note}}</span>
+                  <kbd class="g-key">{{li.key}}</kbd>
+                </button>
+              </sc-for>
+              <div style="margin-top: 3px; padding: 5px 10px 7px; border-top: 1px solid var(--border); color: var(--fg3); display: flex; gap: 12px">
+                <span><kbd class="g-key">Enter</kbd> active channel</span>
+                <span><kbd class="g-key">Esc</kbd> close</span>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <sc-if value="{{footerShown}}" hint-placeholder-val="{{ true }}">
+      <footer style="height: 24px; display: flex; align-items: stretch; gap: 12px; padding: 0 6px 0 0; border-top: 1px solid var(--border); background: var(--bar); color: var(--fg3)">
+        <div role="tablist" aria-label="Column sets" style="display: flex; align-items: stretch">
+          <button role="tab" aria-selected="false" style="padding: 0 10px; border: 0; border-right: 1px solid var(--border); background: transparent; color: var(--fg3)">Prices</button>
+          <button role="tab" aria-selected="true" style="padding: 0 10px; border: 0; border-right: 1px solid var(--border); background: var(--panel); color: var(--fg); font-weight: 700; box-shadow: inset 0 2px 0 var(--focus)">Overview</button>
+          <button role="tab" aria-selected="false" style="padding: 0 10px; border: 0; border-right: 1px solid var(--border); background: transparent; color: var(--fg3)">Valuation</button>
+          <button aria-label="New column set" style="width: 24px; background: transparent; border: 0; border-right: 1px solid var(--border); color: var(--fg3); font-size: 13px">+</button>
+        </div>
+        <span style="flex: 1"></span>
+        <span style="display: flex; align-items: center; gap: 6px">Linked
+          <sc-for list="{{segments}}" as="seg" hint-placeholder-count="4">
+            <span style="display: inline-flex; align-items: center; gap: 4px; color: var(--fg)"><span aria-hidden="true" style="{{seg.dotSmall}}"></span>{{seg.ric}}</span>
+          </sc-for>
+        </span>
+        <span class="g-num" style="{{countStyle}}">
+          <sc-if value="{{filtered}}" hint-placeholder-val="{{ true }}"><svg aria-label="Filtered" role="img" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"></path></svg></sc-if>
+          {{countText}}
+        </span>
+        <button class="g-hbtn" aria-label="Columns" style="background: transparent; border: 0; color: var(--fg3); padding: 0 6px; display: flex; align-items: center; gap: 4px; border-radius: 3px"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="1"></rect><path d="M9 4v16M15 4v16"></path></svg>Columns</button>
+      </footer>
+      </sc-if>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","options":["quick","saved","menu","hidden","link"],"default":"link"},"theme":{"editor":"enum","options":["light","dark"],"default":"dark"},"$preview":{"width":1280,"height":800}}'>
+const VARIANT_DEFAULT = 'link';
+const THEME_DEFAULT = 'dark';
+const CHANNELS = [
+  { id: 'red', label: 'Red', color: '#d6493d', key: '1' },
+  { id: 'green', label: 'Green', color: '#3a9c56', key: '2' },
+  { id: 'blue', label: 'Blue', color: '#2f7bd6', key: '3' },
+  { id: 'yellow', label: 'Yellow', color: '#d9a400', key: '4' }
+];
+const ROW_H = 24;
+const HEAD_H = 24;
+const MENU_H = 190;
+const ROWS = [
+  ['AAPL.OQ', 'Apple Inc', 'Technology', 'NSQ', '228.41', 0.84, 3470, 34.6],
+  ['MSFT.OQ', 'Microsoft Corp', 'Technology', 'NSQ', '431.07', -0.32, 3200, 35.2],
+  ['NVDA.OQ', 'NVIDIA Corp', 'Technology', 'NSQ', '138.62', 2.17, 3390, 54.1],
+  ['AMZN.OQ', 'Amazon.com Inc', 'Consumer Discretionary', 'NSQ', '197.35', 0.11, 2070, 42.3],
+  ['GOOGL.OQ', 'Alphabet Inc Class A', 'Communication Services', 'NSQ', '171.90', -1.04, 2110, 22.8],
+  ['META.OQ', 'Meta Platforms Inc', 'Communication Services', 'NSQ', '583.22', 1.36, 1470, 27.4],
+  ['TSLA.OQ', 'Tesla Inc', 'Consumer Discretionary', 'NSQ', '246.88', -2.41, 790, 67.0],
+  ['VOD.L', 'Vodafone Group PLC', 'Communication Services', 'LSE', '71.24', 0.45, 24, null],
+  ['BP.L', 'BP PLC', 'Energy', 'LSE', '389.15', -0.67, 79, 7.2],
+  ['HSBA.L', 'HSBC Holdings PLC', 'Financials', 'LSE', '702.40', 0.29, 160, 7.9],
+  ['SHEL.L', 'Shell PLC', 'Energy', 'LSE', '2,561.50', 0.08, 205, 12.4],
+  ['AZN.L', 'AstraZeneca PLC', 'Health Care', 'LSE', '11,214.00', -0.53, 225, 31.8],
+  ['SAPG.DE', 'SAP SE', 'Technology', 'XET', '218.65', 1.12, 268, 48.5],
+  ['SIEGn.DE', 'Siemens AG', 'Industrials', 'XET', '179.32', -0.18, 150, 18.6]
+].map(([ric, desc, sector, exch, last, chg, cap, pe]) => ({ ric, desc, sector, exch, last, chg, cap, pe }));
+// Quick filter columns, in bar order.
+const FIELDS = [
+  { key: 'exch', label: 'exchange', test: (r, v) => r.exch === v },
+  { key: 'sector', label: 'sector', test: (r, v) => r.sector === v },
+  { key: 'cap', label: 'mktCap', op: '>', test: (r, v) => r.cap > v, fmt: (v) => v + 'B' },
+  { key: 'pe', label: 'pe', op: '<', test: (r, v) => r.pe != null && r.pe < v }
+];
+// Saved filters (pills) and their clauses.
+const PILLS = [
+  { id: 'lcv', label: 'Large-cap value', clauses: 2, test: (r) => r.cap > 100 && r.pe != null && r.pe < 20 },
+  { id: 'uk', label: 'UK listed', clauses: 1, test: (r) => r.exch === 'LSE' },
+  { id: 'energy', label: 'Energy', clauses: 1, test: (r) => r.sector === 'Energy' },
+  { id: 'mom', label: 'High momentum', clauses: 1, test: (r) => r.chg > 1 }
+];
+const fmtCap = (b) => (b >= 1000 ? '$' + (b / 1000).toFixed(2) + 'T' : '$' + (b < 100 ? b.toFixed(1) : b.toFixed(0)) + 'B');
+const fmtChg = (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(2) + '%';
+const chgColour = (v) => (v > 0 ? 'var(--up)' : v < 0 ? 'var(--down)' : 'var(--fg2)');
+const dot = (color, size, ring) =>
+  'display: inline-block; width: ' + size + 'px; height: ' + size + 'px; border-radius: 50%; flex: none; background: ' + color + ';' +
+  (ring ? ' box-shadow: 0 0 0 2px ' + ring + ', 0 0 0 3.5px var(--fg);' : '');
+const initial = (variant) => {
+  const base = variant === 'saved'
+    ? { mode: 'saved', text: '', values: {}, applied: ['lcv'] }
+    : { mode: 'quick', text: '', values: { exch: 'LSE', pe: 15 }, applied: [] };
+  return { ...base, selected: 'HSBA.L',
+    channels: { red: 'SHEL.L', green: 'VOD.L', blue: 'NVDA.OQ', yellow: 'HSBA.L' },
+    active: 'red', linkMenu: variant === 'link' ? 'BP.L' : null, pinned: false, showBar: variant !== 'hidden', showFooter: true, menuOpen: variant === 'menu' };
+};
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = initial(props.variant ?? VARIANT_DEFAULT);
+  }
+  componentDidUpdate(prev) {
+    if (prev.variant !== this.props.variant) this.setState(initial(this.props.variant ?? VARIANT_DEFAULT));
+  }
+  renderVals() {
+    const s = this.state;
+    const variant = this.props.variant ?? VARIANT_DEFAULT;
+    const theme = this.props.theme ?? THEME_DEFAULT;
+    const quick = s.mode === 'quick';
+    const q = s.text.trim().toLowerCase();
+    const setFields = FIELDS.filter((f) => s.values[f.key] != null);
+    const appliedPills = PILLS.filter((p) => s.applied.includes(p.id));
+    // Quick filters and applied saved filters both apply, whichever mode is shown.
+    const shown = ROWS.filter((r) =>
+      setFields.every((f) => f.test(r, s.values[f.key])) &&
+      appliedPills.every((p) => p.test(r)) &&
+      (!q || r.ric.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q)));
+    const badge = setFields.length + appliedPills.reduce((n, p) => n + p.clauses, 0) + (q ? 1 : 0);
+    const visible = FIELDS;
+    const hidden = [];
+    const hiddenSet = false;
+    // The server reports only the filtered row count, never the unfiltered total.
+    const filtered = badge > 0;
+
+    // --- link column: one channel per instrument; pinned rows first
+    const onChannel = (ric) => CHANNELS.find((c) => s.channels[c.id] === ric);
+    const pinnedRics = s.pinned ? CHANNELS.map((c) => s.channels[c.id]).filter((ric) => ric && shown.some((r) => r.ric === ric)) : [];
+    const ordered = [...pinnedRics.map((ric) => shown.find((r) => r.ric === ric)), ...shown.filter((r) => !pinnedRics.includes(r.ric))];
+    const menuIndex = ordered.findIndex((r) => r.ric === s.linkMenu);
+    const menuTop = menuIndex > 8 ? HEAD_H + menuIndex * ROW_H - MENU_H - 2 : HEAD_H + (menuIndex + 1) * ROW_H + 2;
+    const menuCh = onChannel(s.linkMenu);
+    const linkItems = CHANNELS.map((c) => {
+      const current = s.channels[c.id];
+      const isThis = current === s.linkMenu;
+      return {
+        label: c.label,
+        key: c.key,
+        checked: isThis ? 'true' : 'false',
+        dot: dot(c.color, 9, c.id === s.active ? 'var(--panel)' : null),
+        note: isThis ? 'Linked · click to clear' : current ? 'replaces ' + current : 'empty',
+        noteStyle: 'color: ' + (isThis ? 'var(--fg)' : 'var(--fg3)') + '; white-space: nowrap',
+        pick: () => {
+          const next = { ...s.channels };
+          if (isThis) next[c.id] = null;
+          else {
+            CHANNELS.forEach((o) => { if (next[o.id] === s.linkMenu) next[o.id] = null; });
+            next[c.id] = s.linkMenu;
+          }
+          this.setState({ channels: next, linkMenu: null });
+        }
+      };
+    });
+    return {
+      pinned: s.pinned,
+      pinPressed: s.pinned ? 'true' : 'false',
+      pinTitle: s.pinned ? 'Linked rows pinned to top. Click to unpin' : 'Pin linked rows to top',
+      pinStyle: 'width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; gap: 1px; border: 0; border-radius: 3px; cursor: pointer; ' +
+        (s.pinned ? 'background: var(--toggle-bg); color: var(--toggle-fg)' : 'background: transparent; color: var(--fg3)'),
+      togglePin: () => this.setState({ pinned: !s.pinned, linkMenu: null }),
+      linkMenuOpen: s.linkMenu != null && menuIndex >= 0,
+      closeLinkMenu: () => this.setState({ linkMenu: null }),
+      linkRic: s.linkMenu,
+      linkLead: menuCh ? 'Move' : 'Link',
+      linkTail: menuCh ? 'from ' + menuCh.label + ' to' : 'to channel',
+      linkMenuTitle: (menuCh ? 'Move ' + s.linkMenu + ' from ' + menuCh.label + ' to' : 'Link ' + s.linkMenu + ' to') + ' channel',
+      linkMenuStyle: 'position: absolute; left: 30px; top: ' + menuTop + 'px; width: 270px; z-index: 4; background: var(--panel); border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 6px 16px rgba(0,0,0,.2); padding: 0 3px',
+      linkItems,
+      rootClass: 'g-root' + (theme === 'dark' ? ' dark' : ''),
+      barShown: s.showBar,
+      footerShown: s.showFooter,
+      // Filters still apply when the bar is hidden, so the header says so.
+      hiddenFiltered: !s.showBar && badge > 0,
+      hiddenFilterLabel: badge + ' filter clauses applied. Show filter bar',
+      showBar: () => this.setState({ showBar: true }),
+      menuOpen: s.menuOpen,
+      menuExpanded: s.menuOpen ? 'true' : 'false',
+      toggleMenu: () => this.setState({ menuOpen: !s.menuOpen }),
+      settingsStyle: 'width: 24px; height: 24px; border: 0; border-radius: 3px; color: var(--fg3); display: flex; align-items: center; justify-content: center; flex: none; background: ' + (s.menuOpen ? 'var(--hover)' : 'transparent'),
+      menuItems: [
+        { label: 'Show filter bar', key: 'Ctrl+Shift+F', on: s.showBar, toggle: () => this.setState({ showBar: !s.showBar, menuOpen: false }) },
+        { label: 'Show footer', key: '', on: s.showFooter, toggle: () => this.setState({ showFooter: !s.showFooter, menuOpen: false }) }
+      ].map((m) => ({ ...m, checked: m.on ? 'true' : 'false', tick: m.on ? '✓' : '' })),
+      headerStyle: 'height: 30px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 4px; border-bottom: 1px solid var(--border); background: var(--panel); min-width: 0',
+      segments: CHANNELS.map((c) => ({
+        ric: s.channels[c.id] || 'Link…',
+        dot: dot(c.color, 8),
+        dotSmall: dot(c.color, 7),
+        style: 'height: 24px; padding: 0 10px; display: flex; align-items: center; gap: 7px; border-radius: 3px; font-size: 11px; ' +
+          (c.id === s.active ? 'background: var(--panel); box-shadow: inset 0 -2px 0 ' + c.color + ', 0 0 0 1px var(--border)' : '')
+      })),
+      quick,
+      saved: !quick,
+      toggleClass: 'fb-ico' + (quick ? ' on' : ''),
+      togglePressed: quick ? 'true' : 'false',
+      toggleLabel: quick ? 'Show saved filters' : 'Show quick filters',
+      toggleMode: () => this.setState({ mode: quick ? 'saved' : 'quick' }),
+      hasBadge: badge > 0,
+      badge: String(badge),
+      text: s.text,
+      onText: (e) => this.setState({ text: e.target.value }),
+      searchClass: 'fb-box' + (s.text ? ' foc' : ''),
+      fieldsShown: visible.map((f) => {
+        const v = s.values[f.key];
+        const isSet = v != null;
+        return {
+          label: f.label,
+          op: f.op || '',
+          hasOp: !!f.op,
+          value: isSet ? (f.fmt ? f.fmt(v) : String(v)) : '',
+          isSet,
+          cls: 'fb-seg' + (isSet ? ' set' : ''),
+          clearLabel: 'Clear ' + f.label,
+          clear: () => {
+            const values = { ...s.values };
+            delete values[f.key];
+            this.setState({ values });
+          }
+        };
+      }),
+      hasMore: hidden.length > 0,
+      moreText: '+' + hidden.length + (hiddenSet ? ' •' : ''),
+      moreLabel: hidden.length + ' more quick filters',
+      pills: PILLS.map((p) => {
+        const on = s.applied.includes(p.id);
+        return {
+          label: p.label,
+          cls: 'fb-pill' + (on ? '' : ' off'),
+          pressed: on ? 'true' : 'false',
+          toggle: () => this.setState({ applied: on ? s.applied.filter((x) => x !== p.id) : [...s.applied, p.id] })
+        };
+      }),
+      rows: ordered.map((r, i) => {
+        const ch = onChannel(r.ric);
+        const isPinned = i < pinnedRics.length;
+        const lastPinned = isPinned && i === pinnedRics.length - 1;
+        const selected = r.ric === s.selected;
+        const bg = selected ? 'var(--sel)' : 'var(--panel)';
+        return {
+          ric: r.ric, desc: r.desc, sector: r.sector, exch: r.exch, last: r.last,
+          chg: fmtChg(r.chg),
+          chgStyle: 'padding: 0 6px; text-align: right; color: ' + chgColour(r.chg),
+          cap: fmtCap(r.cap),
+          pe: r.pe == null ? '—' : r.pe.toFixed(1),
+          dots: ch ? [dot(ch.color, 9, ch.id === s.active ? bg : null)] : [],
+          noLink: !ch,
+          linkLabel: ch ? r.ric + ' is on ' + ch.label + '. Change link' : 'Link ' + r.ric + ' to a channel',
+          openMenu: (e) => {
+            if (e && e.stopPropagation) e.stopPropagation();
+            this.setState({ linkMenu: r.ric, selected: r.ric });
+          },
+          // Row actions: shown on hover, and always on the selected row.
+          actsClass: 'g-acts' + (selected ? ' sel' : ''),
+          buyLabel: 'Buy ' + r.ric,
+          sellLabel: 'Sell ' + r.ric,
+          depthLabel: 'Market depth for ' + r.ric,
+          select: () => this.setState({ selected: r.ric }),
+          selectedAttr: selected ? 'true' : 'false',
+          style: 'display: grid; grid-template-columns: 34px 92px minmax(160px, 1fr) 160px 52px 80px 70px 80px 52px; height: 24px; box-sizing: border-box; align-items: center; --rowbase: ' + bg +
+            (lastPinned ? '; border-bottom: 2px solid var(--field-border)' : '; border-bottom: 1px solid var(--rowline)') +
+            (isPinned ? '; position: sticky; z-index: 1; top: ' + (HEAD_H + i * ROW_H) + 'px' : '')
+        };
+      }),
+      filtered,
+      countText: shown.length + (shown.length === 1 ? ' row' : ' rows'),
+      countStyle: 'display: flex; align-items: center; gap: 4px; ' + (filtered ? 'color: var(--fg); font-weight: 700' : '')
+    };
+  }
+}
+</script>
+</body>
+</html>

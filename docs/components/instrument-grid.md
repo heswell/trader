@@ -13,7 +13,7 @@ Showcase: `#instrument-grid`, `#instrument-grid-prices`, `#instrument-grid-futur
 | Tables | `instrumentPrices` (default) or `prices`; `instruments` through `InstrumentLookupProvider` |
 | RPCs | none itself. Buy / Sell open the order ticket, which sends `createOrder`. |
 | Roles | none in the component. Pass `launchOrderTicket={canTrade}` to hide Buy / Sell for view-only users (as the Watchlist feature does). |
-| Class base | `tradingInstrumentGrid`, cells `tradingInstrumentCell`; `data-direction`, `data-phase`, `data-link-group` |
+| Class base | `tradingInstrumentGrid`, cells `tradingInstrumentCell`, link cell `tradingLinkCell`; `data-direction`, `data-phase` |
 
 ## InstrumentGrid
 
@@ -34,11 +34,21 @@ A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns 
 | `showToolbar?` | Quick filter (ric / description), watchlist selector + manager, group-by, columns, Buy/Sell/Depth buttons. |
 | `onBuy` / `onSell` / `onOpenDepth` | `(instrument: SelectedInstrument) => void`. The context-menu items and toolbar buttons exist only when the prop is set, or (Buy / Sell) when an `OrderTicketLauncherProvider` is mounted. The menu items are client-side and call direct RPCs; vuu-server 3.3.0 supports server menu RPCs, but trader declares none (trader upstream issues 11 and 63–66 in [upstream-issues.md](../upstream-issues.md)). |
 | `launchOrderTicket?` | Default `true`: without `onBuy` / `onSell`, Buy / Sell open the ticket via `useOrderTicketLauncher()` when a launcher is present. |
-| `followSelection?` | Default `true`: select and highlight the row of the instrument selected elsewhere in the link group. It clears for an unknown ric, and does not scroll (trader upstream issue 37). |
-| `LinkGroupProps` | `linkGroup`, `defaultLinkGroup`, `onLinkGroupChange`, `showLinkGroupSelector` (toolbar). |
 | `watchlistStorage?` | `UserSettingsStorage` override for the watchlists. |
 
-Row selection calls `setSelectedInstrument(instrument, "InstrumentGrid")`. Pure helpers are exported too:
+## Channel links
+
+The grid is not in a link group. Its first column (`link`, client-side, outside column sets and the column picker) links rows to the workspace channels set by the ChannelPicker; with no `WorkspaceChannelProvider` it uses the default channels with Red active.
+
+- A row whose instrument a channel holds shows that channel's dot, ringed when it is the active channel. An unlinked row shows a link glyph on hover or focus.
+- Clicking the cell opens the link menu: each channel with what it holds ("replaces X", "empty", or "Linked · click to clear"). The heading is "Link RIC to channel", or "Move RIC from Green to" when the instrument is already linked.
+- One channel per instrument (`linkInstrument`): linking to another channel moves it and empties the old one. The ChannelPicker follows the same rule.
+- Keys on the focused row: Enter links to the active channel, 1–4 to Red, Green, Blue, Yellow, L opens the menu, Esc closes it. Double-click a row to link it to the active channel.
+- Row selection is local to the grid (toolbar Buy / Sell / Depth, watchlists): only an explicit link publishes, with source `"InstrumentGrid"`.
+
+Design spec: [docs/design/instrument-grid](../design/instrument-grid/README.md).
+
+ Pure helpers are exported too:
 `buildInstrumentGridFilter`, `instrumentGridColumns`, watchlist functions and `useWatchlists`.
 
 **Watchlists and user settings.** Watchlists are client-side lists of rics stored under `trading.watchlists` through a

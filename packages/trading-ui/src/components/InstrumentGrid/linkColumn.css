@@ -1,0 +1,82 @@
+.tradingLinkCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.tradingLinkCell-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--salt-palette-corner-weak, 2px);
+  background: transparent;
+  color: var(--salt-content-secondary-foreground);
+  cursor: pointer;
+}
+
+.tradingLinkCell-button:hover {
+  background: var(--salt-actionable-subtle-background-hover);
+}
+
+/* unlinked rows show the glyph only on hover, focus or with the menu open */
+.tradingLinkCell-glyph {
+  opacity: 0;
+}
+.vuuTableRow:hover .tradingLinkCell-glyph,
+.vuuTableCell:focus .tradingLinkCell-glyph,
+.tradingLinkCell-button:focus-visible .tradingLinkCell-glyph,
+.tradingLinkCell-button[aria-expanded="true"] .tradingLinkCell-glyph {
+  opacity: 1;
+}
+
+.tradingLinkCell-dot {
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--channel-color);
+}
+
+/* the active channel is ringed, like the active segment of the picker */
+.tradingLinkCell-active.tradingLinkCell-dot,
+.tradingLinkCell-active .tradingLinkCell-dot {
+  box-shadow:
+    0 0 0 2px var(--salt-container-primary-background),
+    0 0 0 3.5px var(--channel-color);
+}
+
+.tradingLinkCell-menu .saltMenuGroup-label,
+.tradingLinkCell-menu [role="group"] > :first-child {
+  white-space: nowrap;
+}
+
+.tradingLinkCell-item {
+  display: flex;
+  align-items: center;
+  gap: var(--salt-spacing-100);
+  min-width: 220px;
+}
+
+.tradingLinkCell-itemLabel {
+  min-width: 48px;
+}
+
+.tradingLinkCell-itemNote {
+  flex: 1;
+  color: var(--salt-content-secondary-foreground);
+}
+
+.tradingLinkCell-key {
+  font-family: var(--salt-typography-fontFamily-code, monospace);
+  font-size: var(--salt-text-label-fontSize);
+  color: var(--salt-content-secondary-foreground);
+  padding: 0 4px;
+  border: 1px solid var(--salt-separable-secondary-borderColor);
+  border-radius: 3px;
+}
