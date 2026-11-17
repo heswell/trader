@@ -34,9 +34,11 @@ const right = { start: 3, span: 1 };
  * Link groups: the market panels (ticket, chart, depth, depth chart,
  * ladder, tape) are in the `active` group: they follow the channel picked
  * in the workspace header's ChannelPicker, and its search sets their
- * instrument. The instruments grid, orders and fills keep their module
- * default (red) and positions its own (green): clicking a row drives that
- * channel, and the market panels follow when it is the active one. The
+ * instrument. The instruments grid is in no link group: its link column
+ * (or Enter / 1-4 on a row) puts a row's instrument on a channel. Orders
+ * and fills keep their module default (red) and positions its own (green):
+ * clicking a row drives that channel, and the market panels follow when it
+ * is the active one. The
  * Ladder and Tape drop their toolbar pickers while they follow the active
  * channel.
  */

@@ -29,12 +29,22 @@ A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns 
 | `columns?` | Visible column names in order (default: ric, description, exchange, currency, bid, ask, last, change, changePct, phase, sparkline, volume, turnover). The "Columns" button opens the vuu column picker; the header menu gives sort / group / hide. |
 | `simulatedOnly?` | Default false. True: only instruments quoted by the simulator (instrumentPrices). Unquoted instruments show empty price cells. |
 | `instrumentType?` | `EQUITY` / `FUTURE` / `INDEX` / `CONTINUATION`: only that type. Otherwise, when the data has an `instrumentType` column, type is a quick filter in the filter bar. |
-| `initialGroupBy?` | `exchange` / `sector` / `currency` / `instrumentType` / `underlying` (a stock or index with its futures); volume and turnover are summed in group rows. |
+| `initialGroupBy?` | `exchange` / `sector` / `currency` / `instrumentType` / `underlying` (a stock or index with its futures); volume and turnover are summed in group rows. It sets the first grouping only: after that, group from the column header menu (the grid has no group-by control). |
 | `sparkline?` | `false` or `{ valueColumn, length, bucketMs }`. |
-| `showToolbar?` | The toolbar (watchlist selector + manager, group-by, column sets, Buy/Sell/Depth buttons) and the filter bar. |
+| `id?` | Keys the saved column sets, filters and panel settings, so differently configured grids keep their own. |
+| `showToolbar?` | Default true. False hides the panel header (scope picker, panel settings), the toolbar (column sets, Buy/Sell/Depth buttons) and the filter bar. |
+| `showFooter?` | Default true: the grid offers a footer, shown or hidden from Panel settings. False removes it and its menu item. |
 | `onBuy` / `onSell` / `onOpenDepth` | `(instrument: SelectedInstrument) => void`. The context-menu items and toolbar buttons exist only when the prop is set, or (Buy / Sell) when an `OrderTicketLauncherProvider` is mounted. The menu items are client-side and call direct RPCs; vuu-server 3.3.0 supports server menu RPCs, but trader declares none (trader upstream issues 11 and 63–66 in [upstream-issues.md](../upstream-issues.md)). |
 | `launchOrderTicket?` | Default `true`: without `onBuy` / `onSell`, Buy / Sell open the ticket via `useOrderTicketLauncher()` when a launcher is present. |
 | `watchlistStorage?` | `UserSettingsStorage` override for the watchlists. |
+
+## Panel header
+
+- **Scope picker** (the title): All instruments or a watchlist, with its count. The same menu adds or removes the selected row's ric on the current watchlist, creates a watchlist (named in a prompt, then shown) and deletes the current one.
+- **Panel settings** (gear): Show filter bar (Ctrl+Shift+F anywhere in the grid) and Show footer. Saved per grid `id` under `trading.instrumentGrid.view`.
+- **Filter badge**: while the filter bar is hidden its filters still apply, and the header shows a badge with the clause count; clicking it shows the bar.
+
+In a `@vuu-ui/grid-layout` panel these go into the panel's own header: the scope picker as the title (at the start of the tab bar when the panel is stacked), the badge and gear at the end. Anywhere else the grid shows them in a header row of its own.
 
 ## Channel links
 
@@ -44,7 +54,7 @@ The grid is not in a link group. Its first column (`link`, client-side, outside 
 - Clicking the cell opens the link menu: each channel with what it holds ("replaces X", "empty", or "Linked · click to clear"). The heading is "Link RIC to channel", or "Move RIC from Green to" when the instrument is already linked.
 - One channel per instrument (`linkInstrument`): linking to another channel moves it and empties the old one. The ChannelPicker follows the same rule.
 - Keys on the focused row: Enter links to the active channel, 1–4 to Red, Green, Blue, Yellow, L opens the menu, Esc closes it. Double-click a row to link it to the active channel.
-- Row selection is local to the grid (toolbar Buy / Sell / Depth, watchlists): only an explicit link publishes, with source `"InstrumentGrid"`.
+- Row selection is local to the grid (toolbar Buy / Sell / Depth, watchlist add / remove): only an explicit link publishes, with source `"InstrumentGrid"`.
 
 Design spec: [docs/design/instrument-grid](../design/instrument-grid/README.md).
 

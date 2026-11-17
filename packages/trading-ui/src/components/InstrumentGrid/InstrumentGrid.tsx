@@ -3,16 +3,7 @@ import {
   Side,
   type TradingSchemaName,
 } from "@heswell/trading-schemas";
-import {
-  Button,
-  Dropdown,
-  Input,
-  Option,
-  Overlay,
-  OverlayPanel,
-  OverlayPanelContent,
-  OverlayTrigger,
-} from "@salt-ds/core";
+import { Button } from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
 import {
@@ -82,15 +73,18 @@ import { registerTradingCellRenderers } from "../TradingCellRenderers";
 import { registerInstrumentGridRenderers } from "./cellRenderers";
 import {
   COLUMN_SETS_SETTINGS_KEY,
+  DEFAULT_VIEW_SETTINGS,
   defaultColumnSets,
   FILTERS_SETTINGS_KEY,
+  type GridViewSettings,
   gridSettingsKey,
   parseColumnSets,
   parseFilterState,
+  parseViewSettings,
   useStoredSetting,
+  VIEW_SETTINGS_KEY,
 } from "./gridSettings";
 import {
-  GROUPABLE_COLUMNS,
   instrumentGridColumns,
   SCREENING_SET_COLUMNS,
   SPARKLINE_COLUMN,
@@ -99,6 +93,11 @@ import {
   buildInstrumentGridFilter,
   withSearchCasings,
 } from "./instrumentGridFilter";
+import {
+  ALL_INSTRUMENTS,
+  filterClauseCount,
+  InstrumentGridHeader,
+} from "./InstrumentGridHeader";
 import { toInstrument } from "./instrumentRow";
 import {
   GridChannelLinksProvider,
@@ -117,8 +116,6 @@ registerLinkCellRenderer();
 registerTradingCellRenderers();
 
 const classBase = "tradingInstrumentGrid";
-const ALL = "__all__";
-const NONE = "__none__";
 
 export type InstrumentAction = (instrument: SelectedInstrument) => void;
 
@@ -141,13 +138,23 @@ export interface InstrumentGridProps
    * quick filter in the filter bar.
    */
   instrumentType?: InstrumentType;
-  /** Group by this column initially ("exchange" | "sector" | "currency"). */
+  /**
+   * Group by this column initially ("exchange" | "sector" | "currency" |
+   * "instrumentType" | "underlying"). After that, grouping is done from the
+   * column header menu.
+   */
   initialGroupBy?: string;
   /** Sparkline column options; false removes it. */
   sparkline?: false | Partial<SparklineCellOptions>;
-  /** Hide the toolbar (watchlists, search, grouping, column sets) and filter bar. */
+  /**
+   * Show the header (scope picker, panel settings), toolbar (column sets,
+   * Buy / Sell / Depth) and filter bar. Default true; false hides them all.
+   */
   showToolbar?: boolean;
-  /** Hide the footer (row count, column picker). Default true. */
+  /**
+   * Offer the footer (row count, column picker). Default true; the panel
+   * settings menu then shows or hides it.
+   */
   showFooter?: boolean;
   /**
    * Client-side actions; the matching menu items / buttons appear when set.
@@ -177,6 +184,9 @@ interface InstrumentGridInnerProps extends InstrumentGridProps {
   /** FilterBar filters as persisted. */
   storedFilterState?: FilterState;
   onFilterStateChange: (state: FilterState) => void;
+  /** Panel settings (filter bar, footer) as persisted. */
+  storedViewSettings?: GridViewSettings;
+  onViewSettingsChange: (settings: GridViewSettings) => void;
 }
 
 /**
@@ -238,21 +248,28 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
       gridSettingsKey(FILTERS_SETTINGS_KEY, id),
       parseFilterState,
     );
-    // Column sets and filters are initial state of the grid's models, so
+    const viewSettings = useStoredSetting(
+      storage,
+      gridSettingsKey(VIEW_SETTINGS_KEY, id),
+      parseViewSettings,
+    );
+    // Column sets, filters and view settings are initial state of the grid's models, so
     // the grid is rendered once they have been read.
     return (
       <InstrumentLookupProvider>
         <ContextPanelProvider>
           <SlotContextPanelProvider>
             <ContextPanelBridge>
-              {columnSets.loaded && filters.loaded ? (
+              {columnSets.loaded && filters.loaded && viewSettings.loaded ? (
                 <InstrumentGridInner
                   {...props}
                   onColumnSetsChange={columnSets.save}
                   onFilterStateChange={filters.save}
+                  onViewSettingsChange={viewSettings.save}
                   ref={ref}
                   storedColumnSets={columnSets.value}
                   storedFilterState={filters.value}
+                  storedViewSettings={viewSettings.value}
                 />
               ) : (
                 <div
@@ -287,12 +304,14 @@ const InstrumentGridInner = forwardRef<
     onFilterStateChange,
     onOpenDepth,
     onSell: onSellProp,
+    onViewSettingsChange,
     showFooter = true,
     showToolbar = true,
     simulatedOnly = false,
     sparkline,
     storedColumnSets,
     storedFilterState,
+    storedViewSettings,
     table = "instrumentPrices",
     watchlistStorage,
     ...htmlAttributes
@@ -425,7 +444,7 @@ const InstrumentGridInner = forwardRef<
 
   // --- filtering: watchlist + FilterBar (search, quick and saved filters)
   const watchlists = useWatchlists(watchlistStorage);
-  const [watchlistId, setWatchlistId] = useState(ALL);
+  const [watchlistId, setWatchlistId] = useState(ALL_INSTRUMENTS);
   const watchlist = watchlists.lists.find((l) => l.id === watchlistId);
   const filter = useMemo(
     () =>
@@ -433,7 +452,8 @@ const InstrumentGridInner = forwardRef<
         instrumentType: fixedType,
         simulatedOnly: simulatedOnly && hasStaticData,
         userFilter: userFilterQuery,
-        watchlistRics: watchlistId === ALL ? undefined : watchlist?.rics,
+        watchlistRics:
+          watchlistId === ALL_INSTRUMENTS ? undefined : watchlist?.rics,
       }),
     [
       userFilterQuery,
@@ -449,24 +469,64 @@ const InstrumentGridInner = forwardRef<
   }, [dataSource, filter]);
   // a deleted selected watchlist falls back to all instruments
   useEffect(() => {
-    if (watchlistId !== ALL && watchlists.loaded && !watchlist) {
-      setWatchlistId(ALL);
+    if (watchlistId !== ALL_INSTRUMENTS && watchlists.loaded && !watchlist) {
+      setWatchlistId(ALL_INSTRUMENTS);
     }
   }, [watchlistId, watchlist, watchlists.loaded]);
 
-  // --- grouping
-  const groupable = GROUPABLE_COLUMNS.filter((c) => available.includes(c));
-  const [groupBy, setGroupBy] = useState(initialGroupBy ?? NONE);
+  // --- grouping is done from the column menus; volume and turnover are
+  // summed in group rows. initialGroupBy only sets the first grouping.
   useEffect(() => {
-    if (groupBy === NONE || !available.includes(groupBy)) {
-      dataSource.groupBy = [];
-    } else {
-      dataSource.aggregations = ["volume", "turnover"]
-        .filter((c) => available.includes(c))
-        .map((column) => ({ column, aggType: AggregationType.Sum }));
-      dataSource.groupBy = [groupBy];
+    dataSource.aggregations = ["volume", "turnover"]
+      .filter((c) => available.includes(c))
+      .map((column) => ({ column, aggType: AggregationType.Sum }));
+  }, [dataSource, available]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: initial grouping only
+  useEffect(() => {
+    if (initialGroupBy && available.includes(initialGroupBy)) {
+      dataSource.groupBy = [initialGroupBy];
     }
-  }, [dataSource, groupBy, available]);
+  }, [dataSource]);
+
+  // --- panel settings: filter bar and footer
+  const [viewSettings, setViewSettings] = useState<GridViewSettings>(
+    () => storedViewSettings ?? DEFAULT_VIEW_SETTINGS,
+  );
+  const updateViewSettings = useCallback(
+    (change: Partial<GridViewSettings>) =>
+      setViewSettings((current) => {
+        const next = { ...current, ...change };
+        onViewSettingsChange(next);
+        return next;
+      }),
+    [onViewSettingsChange],
+  );
+  const setShowFilterBar = useCallback(
+    (filterBar: boolean) => updateViewSettings({ filterBar }),
+    [updateViewSettings],
+  );
+  const setShowFooter = useCallback(
+    (footer: boolean) => updateViewSettings({ footer }),
+    [updateViewSettings],
+  );
+  const filterBarVisible = showToolbar && viewSettings.filterBar;
+  const footerVisible = showFooter && viewSettings.footer;
+  const handleRootKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (
+        showToolbar &&
+        e.ctrlKey &&
+        e.shiftKey &&
+        !e.altKey &&
+        !e.metaKey &&
+        e.key.toLowerCase() === "f"
+      ) {
+        e.preventDefault();
+        setShowFilterBar(!viewSettings.filterBar);
+      }
+    },
+    [showToolbar, setShowFilterBar, viewSettings.filterBar],
+  );
 
   // --- Buy / Sell default to the order ticket launcher
   const launcher = useOrderTicketLauncher();
@@ -608,106 +668,48 @@ const InstrumentGridInner = forwardRef<
     [onBuy, onSell, onOpenDepth, watchlists, targetWindow],
   );
 
-  const [newName, setNewName] = useState("");
-  const createFromInput = () => {
-    if (!newName.trim()) return;
-    const id = watchlists.create(newName, selected ? [selected.ric] : []);
-    setNewName("");
-    setWatchlistId(id);
-  };
+  const createWatchlist = useCallback(() => {
+    const name = targetWindow?.prompt("Watchlist name");
+    if (!name?.trim()) return;
+    setWatchlistId(watchlists.create(name, selected ? [selected.ric] : []));
+  }, [targetWindow, watchlists, selected]);
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: Ctrl+Shift+F shortcut for the grid
     <div
       {...htmlAttributes}
       {...staleProps}
       className={cx(classBase, className, staleProps.className)}
       id={id}
+      onKeyDown={(e) => {
+        htmlAttributes.onKeyDown?.(e);
+        if (!e.defaultPrevented) handleRootKeyDown(e);
+      }}
       ref={ref}
     >
+      {showToolbar ? (
+        <InstrumentGridHeader
+          filterCount={filterClauseCount(userFilter)}
+          onAddToWatchlist={watchlists.add}
+          onDeleteWatchlist={watchlists.remove}
+          onNewWatchlist={createWatchlist}
+          onRemoveFromWatchlist={watchlists.removeRic}
+          onScopeChange={setWatchlistId}
+          onShowFilterBarChange={setShowFilterBar}
+          onShowFooterChange={setShowFooter}
+          scope={watchlistId}
+          selectedRic={selected?.ric}
+          showFilterBar={viewSettings.filterBar}
+          showFooter={showFooter ? viewSettings.footer : undefined}
+          watchlists={watchlists.lists}
+        />
+      ) : null}
       {showToolbar ? (
         <div
           className={`${classBase}-toolbar`}
           role="toolbar"
           aria-label="Instrument grid"
         >
-          <Dropdown
-            aria-label="Watchlist"
-            className={`${classBase}-select`}
-            selected={[watchlistId]}
-            value={watchlist?.name ?? "All instruments"}
-            onSelectionChange={(_, [id]) => id && setWatchlistId(id)}
-          >
-            <Option value={ALL}>All instruments</Option>
-            {watchlists.lists.map((l) => (
-              <Option key={l.id} value={l.id}>
-                {`${l.name} (${l.rics.length})`}
-              </Option>
-            ))}
-          </Dropdown>
-          <Overlay placement="bottom">
-            <OverlayTrigger>
-              <Button aria-label="Manage watchlists" appearance="bordered">
-                Watchlists
-              </Button>
-            </OverlayTrigger>
-            <OverlayPanel className={`${classBase}-popover`}>
-              <OverlayPanelContent>
-                <div className={`${classBase}-watchlistForm`}>
-                  <Input
-                    aria-label="New watchlist name"
-                    placeholder="New watchlist"
-                    value={newName}
-                    onChange={(e) =>
-                      setNewName((e.target as HTMLInputElement).value)
-                    }
-                    onKeyDown={(e) => e.key === "Enter" && createFromInput()}
-                  />
-                  <Button onClick={createFromInput}>Create</Button>
-                </div>
-                {watchlist ? (
-                  <div className={`${classBase}-watchlistForm`}>
-                    <Button
-                      disabled={!selected}
-                      onClick={() =>
-                        selected && watchlists.add(watchlist.id, selected.ric)
-                      }
-                    >
-                      {`Add ${selected?.ric ?? "selected"} to ${watchlist.name}`}
-                    </Button>
-                    <Button
-                      disabled={!selected}
-                      onClick={() =>
-                        selected &&
-                        watchlists.removeRic(watchlist.id, selected.ric)
-                      }
-                    >
-                      Remove
-                    </Button>
-                    <Button
-                      sentiment="negative"
-                      onClick={() => watchlists.remove(watchlist.id)}
-                    >
-                      Delete list
-                    </Button>
-                  </div>
-                ) : null}
-              </OverlayPanelContent>
-            </OverlayPanel>
-          </Overlay>
-          {groupable.length ? (
-            <Dropdown
-              aria-label="Group by"
-              className={`${classBase}-select`}
-              selected={[groupBy]}
-              value={groupBy === NONE ? "No grouping" : `Group: ${groupBy}`}
-              onSelectionChange={(_, [g]) => g && setGroupBy(g)}
-            >
-              <Option value={NONE}>No grouping</Option>
-              {groupable.map((c) => (
-                <Option key={c} value={c}>{`Group by ${c}`}</Option>
-              ))}
-            </Dropdown>
-          ) : null}
           <ColumnSetSwitcher
             className={`${classBase}-columnSets`}
             columnSetModel={columnSetModel}
@@ -747,7 +749,11 @@ const InstrumentGridInner = forwardRef<
       {showToolbar ? (
         <FilterBar
           QuickFilterProps={quickFilterProps}
-          className={`${classBase}-filterBar`}
+          // Hidden, not unmounted: it keeps its quick filter values, and
+          // its filters still apply.
+          className={cx(`${classBase}-filterBar`, {
+            [`${classBase}-filterBarHidden`]: !filterBarVisible,
+          })}
           columnDescriptors={filterColumns}
           // Search and the quick filters first, as in the design
           defaultFilterMode="quick-filter"
@@ -779,7 +785,7 @@ const InstrumentGridInner = forwardRef<
           </ContextMenuProvider>
         </GridChannelLinksProvider>
       </div>
-      {showFooter ? (
+      {footerVisible ? (
         <TableFooter className={`${classBase}-footer`}>
           <DataSourceStats dataSource={dataSource} />
           <TableFooterTray>

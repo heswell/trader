@@ -13,26 +13,10 @@
   gap: var(--salt-spacing-100);
 }
 
-.tradingInstrumentGrid .tradingInstrumentGrid-select {
-  width: 170px;
-}
-
 .tradingInstrumentGrid-actions {
   display: flex;
   gap: var(--salt-spacing-100);
   margin-left: auto;
-}
-
-.tradingInstrumentGrid-popover {
-  display: flex;
-  flex-direction: column;
-  gap: var(--salt-spacing-100);
-  padding: var(--salt-spacing-100);
-}
-
-.tradingInstrumentGrid-watchlistForm {
-  display: flex;
-  gap: var(--salt-spacing-100);
 }
 
 .tradingInstrumentGrid-table {
@@ -40,13 +24,78 @@
   min-height: 0;
 }
 
-.tradingInstrumentGrid .tradingInstrumentGrid-select {
-  border: var(--salt-size-border, 1px) var(--salt-borderStyle-solid, solid)
-    var(--salt-container-primary-borderColor, currentColor);
-}
-
 .tradingInstrumentGrid-filterBar {
   flex: none;
+}
+
+/* hidden from the panel settings: still mounted, its filters still apply */
+.tradingInstrumentGrid .tradingInstrumentGrid-filterBarHidden {
+  display: none;
+}
+
+/* header: scope picker (title), filter badge, panel settings */
+.tradingInstrumentGridHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--salt-spacing-50);
+  min-width: 0;
+}
+
+.tradingInstrumentGridHeader-inline {
+  flex: none;
+  height: var(--salt-size-base, 28px);
+}
+
+.tradingInstrumentGridHeader-spacer {
+  flex: 1;
+}
+
+.tradingInstrumentGridHeader .tradingInstrumentGridHeader-scope {
+  gap: var(--salt-spacing-50);
+  min-width: 0;
+  font-weight: var(--salt-text-fontWeight-strong);
+  padding-inline: var(--salt-spacing-50);
+  /* a panel title, not a button label */
+  text-transform: none;
+}
+
+.tradingInstrumentGridHeader-scopeLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tradingInstrumentGridHeader .tradingInstrumentGridHeader-filterBadge {
+  gap: 2px;
+  color: var(--salt-content-accent-foreground, currentColor);
+  padding-inline: var(--salt-spacing-50);
+}
+
+.tradingInstrumentGridHeader-count {
+  font-size: var(--salt-text-label-fontSize);
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+.tradingInstrumentGridHeader-menu .saltMenuItem {
+  gap: var(--salt-spacing-100);
+}
+
+.tradingInstrumentGridHeader-check {
+  flex: none;
+}
+
+.tradingInstrumentGridHeader-itemLabel {
+  flex: 1;
+}
+
+.tradingInstrumentGridHeader-itemNote,
+.tradingInstrumentGridHeader-key {
+  color: var(--salt-content-secondary-foreground);
+  font-size: var(--salt-text-label-fontSize);
+}
+
+.tradingInstrumentGridHeader-key {
+  font-family: var(--salt-typography-fontFamily-code, monospace);
 }
 
 /* Without a shell the column picker opens in a dialog, which has no height
