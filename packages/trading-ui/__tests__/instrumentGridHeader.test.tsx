@@ -15,7 +15,9 @@ describe("view settings", () => {
     expect(parseViewSettings('{"filterBar":false,"footer":false}')).toEqual({
       filterBar: false,
       footer: false,
+      pinLinked: true,
     });
+    expect(parseViewSettings('{"pinLinked":false}')?.pinLinked).toBe(false);
     expect(parseViewSettings('{"footer":"no"}')).toEqual(DEFAULT_VIEW_SETTINGS);
     expect(parseViewSettings("not json")).toBeUndefined();
     expect(parseViewSettings(null)).toBeUndefined();
@@ -36,6 +38,7 @@ const renderHeader = (props: Partial<InstrumentGridHeaderProps> = {}) => {
     onAddToWatchlist: mock(),
     onDeleteWatchlist: mock(),
     onNewWatchlist: mock(),
+    onPinLinkedChange: mock(),
     onRemoveFromWatchlist: mock(),
     onScopeChange: mock(),
     onShowFilterBarChange: mock(),
@@ -44,6 +47,7 @@ const renderHeader = (props: Partial<InstrumentGridHeaderProps> = {}) => {
   render(
     <InstrumentGridHeader
       filterCount={0}
+      pinLinked
       scope={ALL_INSTRUMENTS}
       showFilterBar
       showFooter
@@ -86,6 +90,14 @@ describe("InstrumentGridHeader", () => {
       await screen.findByRole("menuitemcheckbox", { name: /Show footer/ }),
     );
     expect(h.onShowFooterChange).toHaveBeenCalledWith(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "Panel settings" }));
+    fireEvent.click(
+      await screen.findByRole("menuitemcheckbox", {
+        name: /Pin linked rows to the top/,
+      }),
+    );
+    expect(h.onPinLinkedChange).toHaveBeenCalledWith(false);
   });
 
   test("a badge shows applied filters while the bar is hidden", () => {

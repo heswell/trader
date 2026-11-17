@@ -38,6 +38,7 @@ import { Table } from "@vuu-ui/vuu-table";
 import type {
   ColumnDescriptor,
   TableConfig,
+  TablePinnedRows,
   TableRowSelectHandler,
 } from "@vuu-ui/vuu-table-types";
 import {
@@ -509,6 +510,10 @@ const InstrumentGridInner = forwardRef<
     (footer: boolean) => updateViewSettings({ footer }),
     [updateViewSettings],
   );
+  const setPinLinked = useCallback(
+    (pinLinked: boolean) => updateViewSettings({ pinLinked }),
+    [updateViewSettings],
+  );
   const filterBarVisible = showToolbar && viewSettings.filterBar;
   const footerVisible = showFooter && viewSettings.footer;
   const handleRootKeyDown = useCallback(
@@ -573,8 +578,25 @@ const InstrumentGridInner = forwardRef<
   const stableHandleSelect = useStableCallback(handleSelect);
 
   // --- channel links: the link column and its keys
-  const channelLinks = useGridChannelLinks();
-  const { activeChannel, channels, linkRic, setMenuRic } = channelLinks;
+  const links = useGridChannelLinks();
+  const { activeChannel, channels, linkRic, linkedRics, setMenuRic } = links;
+  const channelLinks = useMemo(
+    () => ({ ...links, pinLinked: viewSettings.pinLinked, setPinLinked }),
+    [links, viewSettings.pinLinked, setPinLinked],
+  );
+  // Linked rows pin above the rest whatever the grid's filters: the Table's
+  // pinned data source filters on the keys alone.
+  const pinnedRows = useMemo<TablePinnedRows | undefined>(
+    () =>
+      viewSettings.pinLinked && linkedRics.length
+        ? {
+            keyColumn: "ric",
+            keys: [...linkedRics],
+            maxPinnedRows: channels.length,
+          }
+        : undefined,
+    [channels.length, linkedRics, viewSettings.pinLinked],
+  );
   const handleKeyDownCapture = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
       if (e.altKey || e.ctrlKey || e.metaKey || e.defaultPrevented) return;
@@ -697,6 +719,8 @@ const InstrumentGridInner = forwardRef<
           onScopeChange={setWatchlistId}
           onShowFilterBarChange={setShowFilterBar}
           onShowFooterChange={setShowFooter}
+          onPinLinkedChange={setPinLinked}
+          pinLinked={viewSettings.pinLinked}
           scope={watchlistId}
           selectedRic={selected?.ric}
           showFilterBar={viewSettings.filterBar}
@@ -780,6 +804,7 @@ const InstrumentGridInner = forwardRef<
               config={config}
               dataSource={dataSource}
               onSelect={stableHandleSelect}
+              pinnedRows={pinnedRows}
               selectionModel="single"
             />
           </ContextMenuProvider>

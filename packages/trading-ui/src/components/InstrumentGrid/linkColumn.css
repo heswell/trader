@@ -80,3 +80,35 @@
   border: 1px solid var(--salt-separable-secondary-borderColor);
   border-radius: 3px;
 }
+
+.tradingLinkCell-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.tradingLinkCell-pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--salt-palette-corner-weak, 2px);
+  background: transparent;
+  color: var(--salt-content-secondary-foreground);
+  cursor: pointer;
+}
+
+.tradingLinkCell-pin:hover {
+  background: var(--salt-actionable-subtle-background-hover);
+}
+
+.tradingLinkCell-pinOn {
+  color: var(
+    --salt-content-accent-foreground,
+    var(--salt-content-primary-foreground)
+  );
+}

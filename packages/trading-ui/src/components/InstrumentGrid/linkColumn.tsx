@@ -40,6 +40,7 @@ const classBase = "tradingLinkCell";
 /** Name of the grid's client-side link column. */
 export const LINK_COLUMN = "link";
 const LINK_RENDERER = "trading.instrument-link";
+const LINK_HEADER_RENDERER = "trading.instrument-link-header";
 
 /** Selection source of the grid's link publishes. */
 export const INSTRUMENT_GRID_LINK_SOURCE = "InstrumentGrid";
@@ -53,6 +54,7 @@ export const linkColumnDescriptor: ColumnDescriptor = {
   sortable: false,
   source: "client",
   width: 36,
+  colHeaderLabelRenderer: LINK_HEADER_RENDERER,
   type: { name: "string", renderer: { name: LINK_RENDERER } },
 };
 
@@ -61,6 +63,8 @@ export interface GridChannelLinks {
   channels: readonly LinkGroupDefinition[];
   /** The channel Enter / double-click link to. */
   activeChannel: LinkGroupId;
+  /** Rics on a channel, in channel order (at most one per channel). */
+  linkedRics: readonly string[];
   /** The channel holding `ric`, if any (at most one). */
   channelOf: (ric: string) => LinkGroupDefinition | undefined;
   /** The instrument `channel` holds now. */
@@ -75,6 +79,9 @@ export interface GridChannelLinks {
   setMenuRic: (ric: string | undefined) => void;
   /** Keep a rendered row's instrument, for linkRic from the keyboard. */
   remember: (instrument: SelectedInstrument) => void;
+  /** Whether linked rows are pinned above the others (set by the grid). */
+  pinLinked?: boolean;
+  setPinLinked?: (pinLinked: boolean) => void;
 }
 
 const GridChannelLinksContext = createContext<GridChannelLinks | undefined>(
@@ -104,6 +111,12 @@ export const useGridChannelLinks = (): GridChannelLinks => {
     }
     return map;
   }, [channels, selections]);
+  const linkedRicsJson = JSON.stringify([...byRic.keys()]);
+  // stable while the set of linked rics is unchanged
+  const linkedRics = useMemo<readonly string[]>(
+    () => JSON.parse(linkedRicsJson),
+    [linkedRicsJson],
+  );
 
   const link = useCallback(
     (instrument: SelectedInstrument, channel: LinkGroupId) => {
@@ -141,6 +154,7 @@ export const useGridChannelLinks = (): GridChannelLinks => {
       instrumentOf: (channel: LinkGroupId) => selections.get(channel),
       link,
       linkRic,
+      linkedRics,
       menuRic,
       remember,
       setMenuRic,
@@ -152,6 +166,7 @@ export const useGridChannelLinks = (): GridChannelLinks => {
       clear,
       link,
       linkRic,
+      linkedRics,
       menuRic,
       remember,
       selections,
@@ -317,9 +332,68 @@ export const LinkCell = ({ dataRow }: TableCellRendererProps) => {
   );
 };
 
+const PinGlyph = () => (
+  <svg
+    aria-hidden="true"
+    className={`${classBase}-pinGlyph`}
+    fill="none"
+    height="12"
+    stroke="currentColor"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth="1.4"
+    viewBox="0 0 16 16"
+    width="12"
+  >
+    <path d="M3 3h10" />
+    <path d="M8 13V6M5 9l3-3 3 3" />
+  </svg>
+);
+
+/**
+ * `trading.instrument-link-header`: the link column's header, a toggle
+ * that pins linked rows above the others.
+ */
+export const LinkHeader = () => {
+  useComponentCssInjection({
+    testId: "trading-instrument-link-cell",
+    css: linkCss,
+    window: useWindow(),
+  });
+  const links = useContext(GridChannelLinksContext);
+  if (!links?.setPinLinked) {
+    return <div className={`${classBase}-header`} />;
+  }
+  const { pinLinked = false, setPinLinked } = links;
+  const label = "Pin linked rows to the top";
+  return (
+    // Clicks and keys are the toggle's, not the header's (sort, drag).
+    // biome-ignore lint/a11y/noStaticElementInteractions: only stops propagation
+    <div
+      className={`${classBase}-header`}
+      onClick={stopPropagation}
+      onKeyDown={stopPropagation}
+      onMouseDown={stopPropagation}
+    >
+      <button
+        aria-label={label}
+        aria-pressed={pinLinked}
+        className={cx(`${classBase}-pin`, {
+          [`${classBase}-pinOn`]: pinLinked,
+        })}
+        onClick={() => setPinLinked(!pinLinked)}
+        title={pinLinked ? "Linked rows pinned to the top" : label}
+        type="button"
+      >
+        <PinGlyph />
+      </button>
+    </div>
+  );
+};
+
 let registered = false;
 
-/** Register the link cell renderer with vuu (idempotent). */
+/** Register the link cell and header renderers with vuu (idempotent). */
 export const registerLinkCellRenderer = () => {
   if (registered) return;
   registered = true;
@@ -329,4 +403,13 @@ export const registerLinkCellRenderer = () => {
     label: "Instrument link",
     serverDataType: ["string"],
   });
+  registerComponent(
+    "trading.instrument-link-header",
+    LinkHeader,
+    "column-header-label-renderer",
+    {
+      description: "Toggle: pin linked rows to the top",
+      label: "Instrument link header",
+    },
+  );
 };

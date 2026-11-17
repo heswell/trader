@@ -3214,7 +3214,7 @@ Also accepts the props of `TableCellProps (@vuu-ui/vuu-table-types)`, `TableCell
 
 #### InstrumentGrid
 
-*component* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L236)
+*component* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L237)
 
 Instrument grid: a preset over the vuu Table bound to instrumentPrices
 (or prices). Price-move and change renderers, formatting per instrument,
@@ -3290,7 +3290,7 @@ Also accepts the props of `TableCellProps (@vuu-ui/vuu-table-types)`, `TableCell
 
 #### useGridChannelLinks
 
-*hook* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L90)
+*hook* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L97)
 
 Channel links for the grid: which channel holds each ric, and actions
 that link with one channel per instrument. Uses the workspace channels
@@ -3302,7 +3302,7 @@ useGridChannelLinks(): GridChannelLinks
 
 #### useStoredSetting
 
-*hook* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L150)
+*hook* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L157)
 
 A JSON setting read once from `storage` (per key) and written on save.
 A storage failure leaves the setting unsaved, never throws.
@@ -3369,7 +3369,7 @@ createWatchlist(state: WatchlistState, name: string, rics: string[] = []): { sta
 
 #### defaultColumnSets
 
-*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L119)
+*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L126)
 
 Column sets offered before the user has saved any.
 
@@ -3389,7 +3389,7 @@ deleteWatchlist(state: WatchlistState, id: string): WatchlistState
 
 #### gridSettingsKey
 
-*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L49)
+*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L56)
 
 Settings are per grid when it has an id, so differently configured grids keep their own.
 
@@ -3421,7 +3421,7 @@ instrumentGridColumns({ available, sparkline, visible = DEFAULT_INSTRUMENT_GRID_
 
 #### isInLinkCell
 
-*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L172)
+*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L187)
 
 Whether `target` is inside a link cell.
 
@@ -3431,7 +3431,7 @@ isInLinkCell(target: EventTarget | null): boolean
 
 #### parseColumnSets
 
-*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L56)
+*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L63)
 
 Defensive parse: persisted settings can come from any version / host.
 
@@ -3441,7 +3441,7 @@ parseColumnSets(json: string | null | undefined): ColumnSetsState | undefined
 
 #### parseFilterState
 
-*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L98)
+*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L105)
 
 Defensive parse of the FilterBar's saved filters.
 
@@ -3451,7 +3451,7 @@ parseFilterState(json: string | null | undefined): FilterState | undefined
 
 #### parseViewSettings
 
-*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L26)
+*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L29)
 
 Defensive parse: unknown or missing fields keep their default.
 
@@ -3512,9 +3512,9 @@ registerInstrumentGridRenderers(): void
 
 #### registerLinkCellRenderer
 
-*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L323)
+*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L397)
 
-Register the link cell renderer with vuu (idempotent).
+Register the link cell and header renderers with vuu (idempotent).
 
 ```ts
 registerLinkCellRenderer(): void
@@ -3542,7 +3542,7 @@ renameWatchlist(state: WatchlistState, id: string, name: string): WatchlistState
 
 #### rowRicOf
 
-*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L163)
+*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L178)
 
 The ric of the grid row containing `target` (from its link cell).
 
@@ -3606,7 +3606,7 @@ const DEFAULT_INSTRUMENT_GRID_COLUMNS: string[]
 
 #### DEFAULT_VIEW_SETTINGS
 
-*const* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L20)
+*const* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L22)
 
 ```ts
 const DEFAULT_VIEW_SETTINGS: GridViewSettings
@@ -3630,7 +3630,7 @@ const FILTERS_SETTINGS_KEY: "trading.instrumentGrid.filters"
 
 #### GridChannelLinksProvider
 
-*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L83)
+*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L90)
 
 ```ts
 const GridChannelLinksProvider: Provider<GridChannelLinks | undefined>
@@ -3648,7 +3648,7 @@ const GROUPABLE_COLUMNS: readonly ["exchange", "sector", "currency", "instrument
 
 #### INSTRUMENT_GRID_LINK_SOURCE
 
-*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L45)
+*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L46)
 
 Selection source of the grid's link publishes.
 
@@ -3668,7 +3668,7 @@ const LINK_COLUMN: "link"
 
 #### linkColumnDescriptor
 
-*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L48)
+*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L49)
 
 The link column: always first, not in column sets or the column picker.
 
@@ -3724,12 +3724,13 @@ const WATCHLISTS_SETTINGS_KEY: "trading.watchlists"
 
 #### GridChannelLinks
 
-*interface* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L59)
+*interface* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L61)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
 | `channels` | `readonly LinkGroupDefinition[]` |  | The workspace channels, in picker order. |
 | `activeChannel` | `LinkGroupId` |  | The channel Enter / double-click link to. |
+| `linkedRics` | `readonly string[]` |  | Rics on a channel, in channel order (at most one per channel). |
 | `channelOf` | `(ric: string) => LinkGroupDefinition \| undefined` |  | The channel holding `ric`, if any (at most one). |
 | `instrumentOf` | `(channel: LinkGroupId) => SelectedInstrument \| undefined` |  | The instrument `channel` holds now. |
 | `link` | `(instrument: SelectedInstrument, channel: LinkGroupId) => void` |  | Link to `channel`, moving the instrument off any other channel. |
@@ -3738,17 +3739,20 @@ const WATCHLISTS_SETTINGS_KEY: "trading.watchlists"
 | `menuRic` | `string \| undefined` |  | Ric whose link menu is open. |
 | `setMenuRic` | `(ric: string \| undefined) => void` |  |  |
 | `remember` | `(instrument: SelectedInstrument) => void` |  | Keep a rendered row's instrument, for linkRic from the keyboard. |
+| `pinLinked?` | `boolean` |  | Whether linked rows are pinned above the others (set by the grid). |
+| `setPinLinked?` | `(pinLinked: boolean) => void` |  |  |
 
 #### GridViewSettings
 
 *interface* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L15)
 
-What the panel settings (gear) menu shows or hides.
+View settings from the panel settings (gear) menu and the link column header.
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
 | `filterBar` | `boolean` |  |  |
 | `footer` | `boolean` |  |  |
+| `pinLinked` | `boolean` |  | Pin rows linked to a channel above the scrolling rows. |
 
 #### InstrumentGridColumnOptions
 
@@ -3775,13 +3779,13 @@ What the panel settings (gear) menu shows or hides.
 
 #### InstrumentGridProps
 
-*interface* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L122)
+*interface* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L123)
 
 Props of [`InstrumentGrid`](#instrumentgrid).
 
 #### StoredSetting
 
-*interface* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L138)
+*interface* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L145)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -3825,7 +3829,7 @@ Props of [`InstrumentGrid`](#instrumentgrid).
 
 #### InstrumentAction
 
-*type* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L120)
+*type* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L121)
 
 ```ts
 type InstrumentAction = (instrument: SelectedInstrument) => void

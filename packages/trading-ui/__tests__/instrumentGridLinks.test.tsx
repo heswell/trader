@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, mock, test } from "bun:test";
 import {
   act,
   fireEvent,
@@ -8,7 +8,7 @@ import {
   screen,
 } from "@testing-library/react";
 import type { TableCellRendererProps } from "@vuu-ui/vuu-table-types";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import {
   channelOfRic,
   clearChannel,
@@ -22,7 +22,11 @@ import {
   useGridChannelLinks,
   WorkspaceChannelProvider,
 } from "../src";
-import { LinkCell } from "../src/components/InstrumentGrid/linkColumn";
+import {
+  type GridChannelLinks,
+  LinkCell,
+  LinkHeader,
+} from "../src/components/InstrumentGrid/linkColumn";
 
 afterEach(cleanup);
 
@@ -99,6 +103,27 @@ describe("useGridChannelLinks", () => {
     expect(ricOf(bus, "blue")).toBe("BP.L");
     expect(ricOf(bus, "red")).toBeUndefined();
   });
+
+  test("lists linked rics in channel order, stable while unchanged", () => {
+    const bus = createInstrumentLinkBus();
+    bus.publish("blue", { ric: "VOD.L" });
+    bus.publish("red", { ric: "BP.L" });
+    const { result } = renderHook(() => useGridChannelLinks(), {
+      wrapper: wrapperFor(bus),
+    });
+    const first = result.current.linkedRics;
+    expect(first).toEqual(["BP.L", "VOD.L"]);
+
+    act(() => {
+      result.current.setMenuRic("BP.L");
+    });
+    expect(result.current.linkedRics).toBe(first);
+
+    act(() => {
+      bus.publish("green", { ric: "HSBA.L" });
+    });
+    expect(result.current.linkedRics).toEqual(["BP.L", "HSBA.L", "VOD.L"]);
+  });
 });
 
 const GridLinks = ({ children }: { children: ReactNode }) => {
@@ -173,5 +198,47 @@ describe("LinkCell", () => {
     );
     fireEvent.click(await screen.findByRole("menuitem", { name: /Red/ }));
     expect(ricOf(bus, "red")).toBeUndefined();
+  });
+});
+
+describe("LinkHeader", () => {
+  const PinState = ({ children }: { children: ReactNode }) => {
+    const links = useGridChannelLinks();
+    const [pinLinked, setPinLinked] = useState(true);
+    const value: GridChannelLinks = { ...links, pinLinked, setPinLinked };
+    return (
+      <GridChannelLinksProvider value={value}>
+        {children}
+      </GridChannelLinksProvider>
+    );
+  };
+
+  test("toggles pinning of linked rows", () => {
+    const Wrapper = wrapperFor(createInstrumentLinkBus());
+    const onHeaderClick = mock();
+    render(
+      <Wrapper>
+        <PinState>
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: test of propagation */}
+          {/* biome-ignore lint/a11y/useKeyWithClickEvents: test of propagation */}
+          <div onClick={onHeaderClick}>
+            <LinkHeader />
+          </div>
+        </PinState>
+      </Wrapper>,
+    );
+    const toggle = screen.getByRole("button", {
+      name: "Pin linked rows to the top",
+    });
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+    // not a click on the column header (sort)
+    expect(onHeaderClick).not.toHaveBeenCalled();
+  });
+
+  test("renders nothing to press outside a grid", () => {
+    const { container } = render(<LinkHeader />);
+    expect(container.querySelector("button")).toBeNull();
   });
 });

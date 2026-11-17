@@ -11,15 +11,18 @@ export const COLUMN_SETS_SETTINGS_KEY = "trading.instrumentGrid.columnSets";
 export const FILTERS_SETTINGS_KEY = "trading.instrumentGrid.filters";
 export const VIEW_SETTINGS_KEY = "trading.instrumentGrid.view";
 
-/** What the panel settings (gear) menu shows or hides. */
+/** View settings from the panel settings (gear) menu and the link column header. */
 export interface GridViewSettings {
   filterBar: boolean;
   footer: boolean;
+  /** Pin rows linked to a channel above the scrolling rows. */
+  pinLinked: boolean;
 }
 
 export const DEFAULT_VIEW_SETTINGS: GridViewSettings = Object.freeze({
   filterBar: true,
   footer: true,
+  pinLinked: true,
 });
 
 /** Defensive parse: unknown or missing fields keep their default. */
@@ -39,6 +42,10 @@ export const parseViewSettings = (
         typeof parsed.footer === "boolean"
           ? parsed.footer
           : DEFAULT_VIEW_SETTINGS.footer,
+      pinLinked:
+        typeof parsed.pinLinked === "boolean"
+          ? parsed.pinLinked
+          : DEFAULT_VIEW_SETTINGS.pinLinked,
     };
   } catch {
     return undefined;

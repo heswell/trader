@@ -91,6 +91,9 @@ export interface InstrumentGridHeaderProps {
   /** Undefined when the grid offers no footer (showFooter={false}). */
   showFooter?: boolean;
   onShowFooterChange: (show: boolean) => void;
+  /** Pin linked rows above the others (also the link column header). */
+  pinLinked: boolean;
+  onPinLinkedChange: (pin: boolean) => void;
   /** Applied filter clauses; with the bar hidden, a badge shows them. */
   filterCount: number;
 }
@@ -203,8 +206,10 @@ const FilterBadge = ({
 
 /** The gear: Panel settings. */
 const PanelSettings = ({
+  onPinLinkedChange,
   onShowFilterBarChange,
   onShowFooterChange,
+  pinLinked,
   showFilterBar,
   showFooter,
 }: InstrumentGridHeaderProps) => (
@@ -240,6 +245,16 @@ const PanelSettings = ({
             <span className={`${classBase}-itemLabel`}>Show footer</span>
           </MenuItem>
         ) : null}
+        <MenuItem
+          aria-checked={pinLinked}
+          onClick={() => onPinLinkedChange(!pinLinked)}
+          role="menuitemcheckbox"
+        >
+          <CheckIcon checked={pinLinked} />
+          <span className={`${classBase}-itemLabel`}>
+            Pin linked rows to the top
+          </span>
+        </MenuItem>
       </MenuGroup>
     </MenuPanel>
   </Menu>
