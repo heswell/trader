@@ -3,7 +3,6 @@ import {
   Side,
   type TradingSchemaName,
 } from "@heswell/trading-schemas";
-import { Button } from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
 import {
@@ -92,6 +91,13 @@ import {
 } from "./instrumentGridFilter";
 import { InstrumentGridFooter } from "./InstrumentGridFooter";
 import {
+  actionsColumnDescriptor,
+  type RowActionHandlers,
+  RowActionsProvider,
+  registerRowActionsRenderer,
+  rowActionOfKey,
+} from "./rowActions";
+import {
   ALL_INSTRUMENTS,
   filterClauseCount,
   InstrumentGridHeader,
@@ -111,6 +117,7 @@ import gridCss from "./InstrumentGrid.css";
 
 registerInstrumentGridRenderers();
 registerLinkCellRenderer();
+registerRowActionsRenderer();
 registerTradingCellRenderers();
 
 const classBase = "tradingInstrumentGrid";
@@ -145,8 +152,8 @@ export interface InstrumentGridProps
   /** Sparkline column options; false removes it. */
   sparkline?: false | Partial<SparklineCellOptions>;
   /**
-   * Show the header (scope picker, panel settings), toolbar (column sets,
-   * Buy / Sell / Depth) and filter bar. Default true; false hides them all.
+   * Show the header (scope picker, panel settings) and the filter bar.
+   * Default true; false hides both.
    */
   showToolbar?: boolean;
   /**
@@ -219,10 +226,11 @@ const DEFAULT_QUICK_FILTER_COLUMNS = [
  * Instrument grid: a preset over the vuu Table bound to instrumentPrices
  * (or prices). Price-move and change renderers, formatting per instrument,
  * grouping, a FilterBar for saved screens and quick filters, named column
- * sets (switched in the toolbar, edited in the column picker), watchlists,
- * phase badge, optional sparklines and client-side context menu actions.
- * The footer shows the row count and opens the column picker in the
- * context panel.
+ * sets (tabs in the footer, edited in the column picker), watchlists,
+ * phase badge, optional sparklines, a link column for the workspace
+ * channels and Buy / Sell / Depth row actions (hover, selected row, B / S /
+ * D keys, context menu). The footer also shows the row count and opens the
+ * column picker in the context panel.
  *
  * The first column links rows to the workspace channels: a channel dot on
  * rows whose instrument a channel holds (ringed for the active channel),
@@ -561,7 +569,22 @@ const InstrumentGridInner = forwardRef<
     [onSellProp, launch, openOrderTicket],
   );
 
-  // --- selection is local to the grid (toolbar actions, watchlists)
+  // --- row actions: Buy / Sell / Depth on hover and the selected row,
+  // B / S / D on the focused row, and in the context menu
+  const rowActions = useMemo<RowActionHandlers>(
+    () => ({ buy: onBuy, sell: onSell, depth: onOpenDepth }),
+    [onBuy, onSell, onOpenDepth],
+  );
+  const hasRowActions = Boolean(onBuy || onSell || onOpenDepth);
+  const tableConfig = useMemo<TableConfig>(
+    () =>
+      hasRowActions
+        ? { columns: [...config.columns, actionsColumnDescriptor] }
+        : config,
+    [config, hasRowActions],
+  );
+
+  // --- selection is local to the grid (watchlist add / remove)
   const [selected, setSelected] = useState<SelectedInstrument>();
   const handleSelect = useCallback<TableRowSelectHandler>((row) => {
     if (row && row.isLeaf !== false) {
@@ -576,7 +599,14 @@ const InstrumentGridInner = forwardRef<
 
   // --- channel links: the link column and its keys
   const links = useGridChannelLinks();
-  const { activeChannel, channels, linkRic, linkedRics, setMenuRic } = links;
+  const {
+    activeChannel,
+    channels,
+    instrumentForRic,
+    linkRic,
+    linkedRics,
+    setMenuRic,
+  } = links;
   const channelLinks = useMemo(
     () => ({ ...links, pinLinked: viewSettings.pinLinked, setPinLinked }),
     [links, viewSettings.pinLinked, setPinLinked],
@@ -616,6 +646,13 @@ const InstrumentGridInner = forwardRef<
       if (e.altKey || e.ctrlKey || e.metaKey || e.defaultPrevented) return;
       const ric = rowRicOf(e.target);
       if (!ric) return;
+      const action = rowActionOfKey(e.key);
+      if (action && rowActions[action]) {
+        e.preventDefault();
+        e.stopPropagation();
+        rowActions[action]?.(instrumentForRic(ric));
+        return;
+      }
       let channel: LinkGroupId | undefined;
       if (e.key === "Enter") channel = activeChannel;
       else if (/^[1-9]$/.test(e.key)) channel = channels[Number(e.key) - 1]?.id;
@@ -631,7 +668,14 @@ const InstrumentGridInner = forwardRef<
       e.stopPropagation();
       linkRic(ric, channel);
     },
-    [activeChannel, channels, linkRic, setMenuRic],
+    [
+      activeChannel,
+      channels,
+      instrumentForRic,
+      linkRic,
+      rowActions,
+      setMenuRic,
+    ],
   );
   const handleDoubleClick = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
@@ -655,17 +699,21 @@ const InstrumentGridInner = forwardRef<
       if (onBuy)
         items.push({
           id: "buy",
-          label: `Buy ${instrument.ric}`,
+          label: `Buy ${instrument.ric} (B)`,
           options: instrument,
         });
       if (onSell)
         items.push({
           id: "sell",
-          label: `Sell ${instrument.ric}`,
+          label: `Sell ${instrument.ric} (S)`,
           options: instrument,
         });
       if (onOpenDepth)
-        items.push({ id: "depth", label: "Open depth", options: instrument });
+        items.push({
+          id: "depth",
+          label: `Depth ${instrument.ric} (D)`,
+          options: instrument,
+        });
       items.push({
         label: "Add to watchlist",
         dividerBefore: items.length > 0,
@@ -743,44 +791,6 @@ const InstrumentGridInner = forwardRef<
         />
       ) : null}
       {showToolbar ? (
-        <div
-          className={`${classBase}-toolbar`}
-          role="toolbar"
-          aria-label="Instrument grid"
-        >
-          <span className={`${classBase}-actions`}>
-            {onBuy ? (
-              <Button
-                appearance="solid"
-                sentiment="positive"
-                disabled={!selected}
-                onClick={() => selected && onBuy(selected)}
-              >
-                Buy
-              </Button>
-            ) : null}
-            {onSell ? (
-              <Button
-                appearance="solid"
-                sentiment="negative"
-                disabled={!selected}
-                onClick={() => selected && onSell(selected)}
-              >
-                Sell
-              </Button>
-            ) : null}
-            {onOpenDepth ? (
-              <Button
-                disabled={!selected}
-                onClick={() => selected && onOpenDepth(selected)}
-              >
-                Depth
-              </Button>
-            ) : null}
-          </span>
-        </div>
-      ) : null}
-      {showToolbar ? (
         <FilterBar
           QuickFilterProps={quickFilterProps}
           // Hidden, not unmounted: it keeps its quick filter values, and
@@ -811,13 +821,15 @@ const InstrumentGridInner = forwardRef<
             menuActionHandler={menuActionHandler}
             menuBuilder={menuBuilder}
           >
-            <Table
-              config={config}
-              dataSource={dataSource}
-              onSelect={stableHandleSelect}
-              pinnedRows={pinnedRows}
-              selectionModel="single"
-            />
+            <RowActionsProvider value={rowActions}>
+              <Table
+                config={tableConfig}
+                dataSource={dataSource}
+                onSelect={stableHandleSelect}
+                pinnedRows={pinnedRows}
+                selectionModel="single"
+              />
+            </RowActionsProvider>
           </ContextMenuProvider>
         </GridChannelLinksProvider>
       </div>

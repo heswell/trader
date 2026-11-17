@@ -3214,15 +3214,16 @@ Also accepts the props of `TableCellProps (@vuu-ui/vuu-table-types)`, `TableCell
 
 #### InstrumentGrid
 
-*component* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L234)
+*component* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L242)
 
 Instrument grid: a preset over the vuu Table bound to instrumentPrices
 (or prices). Price-move and change renderers, formatting per instrument,
 grouping, a FilterBar for saved screens and quick filters, named column
-sets (switched in the toolbar, edited in the column picker), watchlists,
-phase badge, optional sparklines and client-side context menu actions.
-The footer shows the row count and opens the column picker in the
-context panel.
+sets (tabs in the footer, edited in the column picker), watchlists,
+phase badge, optional sparklines, a link column for the workspace
+channels and Buy / Sell / Depth row actions (hover, selected row, B / S /
+D keys, context menu). The footer also shows the row count and opens the
+column picker in the context panel.
 
 The first column links rows to the workspace channels: a channel dot on
 rows whose instrument a channel holds (ringed for the active channel),
@@ -3242,7 +3243,7 @@ Props: `InstrumentGridProps`
 | `instrumentType?` | `InstrumentType` |  | Show only this instrument type (EQUITY \| FUTURE \| ...), when the data source has an instrumentType column. Without it, instrument type is a quick filter in the filter bar. |
 | `initialGroupBy?` | `string` |  | Group by this column initially ("exchange" \| "sector" \| "currency" \| "instrumentType" \| "underlying"). After that, grouping is done from the column header menu. |
 | `sparkline?` | `false \| Partial<SparklineCellOptions>` |  | Sparkline column options; false removes it. |
-| `showToolbar?` | `boolean` | `true` | Show the header (scope picker, panel settings), toolbar (column sets, Buy / Sell / Depth) and filter bar. Default true; false hides them all. |
+| `showToolbar?` | `boolean` | `true` | Show the header (scope picker, panel settings) and the filter bar. Default true; false hides both. |
 | `showFooter?` | `boolean` | `true` | Offer the footer (row count, column picker). Default true; the panel settings menu then shows or hides it. |
 | `onBuy?` | `InstrumentAction` |  | Client-side actions; the matching menu items / buttons appear when set. Inside an OrderTicketLauncherProvider, Buy / Sell default to opening the order ticket (see `launchOrderTicket`). |
 | `onSell?` | `InstrumentAction` |  |  |
@@ -3290,7 +3291,7 @@ Also accepts the props of `TableCellProps (@vuu-ui/vuu-table-types)`, `TableCell
 
 #### useGridChannelLinks
 
-*hook* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L97)
+*hook* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L99)
 
 Channel links for the grid: which channel holds each ric, and actions
 that link with one channel per instrument. Uses the workspace channels
@@ -3421,7 +3422,7 @@ instrumentGridColumns({ available, sparkline, visible = DEFAULT_INSTRUMENT_GRID_
 
 #### isInLinkCell
 
-*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L187)
+*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L194)
 
 Whether `target` is inside a link cell.
 
@@ -3512,7 +3513,7 @@ registerInstrumentGridRenderers(): void
 
 #### registerLinkCellRenderer
 
-*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L397)
+*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L404)
 
 Register the link cell and header renderers with vuu (idempotent).
 
@@ -3542,7 +3543,7 @@ renameWatchlist(state: WatchlistState, id: string, name: string): WatchlistState
 
 #### rowRicOf
 
-*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L178)
+*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L185)
 
 The ric of the grid row containing `target` (from its link cell).
 
@@ -3630,7 +3631,7 @@ const FILTERS_SETTINGS_KEY: "trading.instrumentGrid.filters"
 
 #### GridChannelLinksProvider
 
-*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L90)
+*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L92)
 
 ```ts
 const GridChannelLinksProvider: Provider<GridChannelLinks | undefined>
@@ -3739,6 +3740,7 @@ const WATCHLISTS_SETTINGS_KEY: "trading.watchlists"
 | `menuRic` | `string \| undefined` |  | Ric whose link menu is open. |
 | `setMenuRic` | `(ric: string \| undefined) => void` |  |  |
 | `remember` | `(instrument: SelectedInstrument) => void` |  | Keep a rendered row's instrument, for linkRic from the keyboard. |
+| `instrumentForRic` | `(ric: string) => SelectedInstrument` |  | A rendered row's instrument (static data), else just its ric. |
 | `pinLinked?` | `boolean` |  | Whether linked rows are pinned above the others (set by the grid). |
 | `setPinLinked?` | `(pinLinked: boolean) => void` |  |  |
 
@@ -3779,7 +3781,7 @@ View settings from the panel settings (gear) menu and the link column header.
 
 #### InstrumentGridProps
 
-*interface* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L120)
+*interface* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L127)
 
 Props of [`InstrumentGrid`](#instrumentgrid).
 
@@ -3829,7 +3831,7 @@ Props of [`InstrumentGrid`](#instrumentgrid).
 
 #### InstrumentAction
 
-*type* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L118)
+*type* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L125)
 
 ```ts
 type InstrumentAction = (instrument: SelectedInstrument) => void

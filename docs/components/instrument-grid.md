@@ -32,9 +32,9 @@ A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns 
 | `initialGroupBy?` | `exchange` / `sector` / `currency` / `instrumentType` / `underlying` (a stock or index with its futures); volume and turnover are summed in group rows. It sets the first grouping only: after that, group from the column header menu (the grid has no group-by control). |
 | `sparkline?` | `false` or `{ valueColumn, length, bucketMs }`. |
 | `id?` | Keys the saved column sets, filters and panel settings, so differently configured grids keep their own. |
-| `showToolbar?` | Default true. False hides the panel header (scope picker, panel settings), the toolbar (Buy/Sell/Depth buttons) and the filter bar. |
+| `showToolbar?` | Default true. False hides the panel header (scope picker, panel settings) and the filter bar. (The grid has no toolbar row any more; the name is kept for compatibility.) |
 | `showFooter?` | Default true: the grid offers a footer (see [Footer](#footer)), shown or hidden from Panel settings. False removes it and its menu item. |
-| `onBuy` / `onSell` / `onOpenDepth` | `(instrument: SelectedInstrument) => void`. The context-menu items and toolbar buttons exist only when the prop is set, or (Buy / Sell) when an `OrderTicketLauncherProvider` is mounted. The menu items are client-side and call direct RPCs; vuu-server 3.3.0 supports server menu RPCs, but trader declares none (trader upstream issues 11 and 63–66 in [upstream-issues.md](../upstream-issues.md)). |
+| `onBuy` / `onSell` / `onOpenDepth` | `(instrument: SelectedInstrument) => void`. The row actions, B / S / D keys and context-menu items exist only when the prop is set, or (Buy / Sell) when an `OrderTicketLauncherProvider` is mounted. The menu items are client-side and call direct RPCs; vuu-server 3.3.0 supports server menu RPCs, but trader declares none (trader upstream issues 11 and 63–66 in [upstream-issues.md](../upstream-issues.md)). |
 | `launchOrderTicket?` | Default `true`: without `onBuy` / `onSell`, Buy / Sell open the ticket via `useOrderTicketLauncher()` when a launcher is present. |
 | `watchlistStorage?` | `UserSettingsStorage` override for the watchlists. |
 
@@ -55,9 +55,18 @@ The grid is not in a link group. Its first column (`link`, client-side, outside 
 - One channel per instrument (`linkInstrument`): linking to another channel moves it and empties the old one. The ChannelPicker follows the same rule.
 - Keys on the focused row: Enter links to the active channel, 1–4 to Red, Green, Blue, Yellow, L opens the menu, Esc closes it. Double-click a row to link it to the active channel.
 - **Pinned linked rows**: linked rows are pinned above the scrolling rows, in channel order, by default. The link column header (pin icon) and Panel settings turn this off and on. The grid passes the linked rics to the vuu Table's `pinnedRows` (vuu-ui 5.0.0-alpha.8), which subscribes to them separately and leaves them out of the body. Pinned rows ignore the grid's filters (fixed type, watchlist, filter bar) on purpose: a linked instrument is always in view. They follow the body's sort and columns and are never grouped. Arrow keys move across the divider, and the footer row count is for the body only.
-- Row selection is local to the grid (toolbar Buy / Sell / Depth, watchlist add / remove): only an explicit link publishes, with source `"InstrumentGrid"`.
+- Row selection is local to the grid (row actions, watchlist add / remove): only an explicit link publishes, with source `"InstrumentGrid"`.
 
 Design spec: [docs/design/instrument-grid](../design/instrument-grid/README.md).
+
+## Row actions
+
+Buy, Sell and Depth sit at the right edge of a row, in a narrow client-side column (`actions`, pinned right, outside column sets and the column picker) whose buttons overflow leftwards over the last cells. They show on the selected row, on hover and on a focused row, and fade in over the cells below them.
+
+- Keys on the focused row: **B** Buy, **S** Sell, **D** Depth.
+- The context menu has the same three items, labelled with their keys.
+- Each one is shown only when its handler exists (`onBuy` / `onSell` / `onOpenDepth`, or Buy / Sell from an `OrderTicketLauncherProvider`). With none, there is no actions column.
+- Buy / Sell use the order ticket's side colours (`--trading-buy`, `--trading-sell`, over Salt's positive / negative bold actionable colours).
 
 ## Footer
 

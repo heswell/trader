@@ -79,6 +79,8 @@ export interface GridChannelLinks {
   setMenuRic: (ric: string | undefined) => void;
   /** Keep a rendered row's instrument, for linkRic from the keyboard. */
   remember: (instrument: SelectedInstrument) => void;
+  /** A rendered row's instrument (static data), else just its ric. */
+  instrumentForRic: (ric: string) => SelectedInstrument;
   /** Whether linked rows are pinned above the others (set by the grid). */
   pinLinked?: boolean;
   setPinLinked?: (pinLinked: boolean) => void;
@@ -130,10 +132,13 @@ export const useGridChannelLinks = (): GridChannelLinks => {
     },
     [bus, channels],
   );
+  const instrumentForRic = useCallback(
+    (ric: string) => instruments.current.get(ric) ?? { ric },
+    [],
+  );
   const linkRic = useCallback(
-    (ric: string, channel: LinkGroupId) =>
-      link(instruments.current.get(ric) ?? { ric }, channel),
-    [link],
+    (ric: string, channel: LinkGroupId) => link(instrumentForRic(ric), channel),
+    [instrumentForRic, link],
   );
   const clear = useCallback(
     (channel: LinkGroupId) => {
@@ -151,6 +156,7 @@ export const useGridChannelLinks = (): GridChannelLinks => {
       channelOf: (ric: string) => byRic.get(ric),
       channels,
       clear,
+      instrumentForRic,
       instrumentOf: (channel: LinkGroupId) => selections.get(channel),
       link,
       linkRic,
@@ -164,6 +170,7 @@ export const useGridChannelLinks = (): GridChannelLinks => {
       byRic,
       channels,
       clear,
+      instrumentForRic,
       link,
       linkRic,
       linkedRics,
