@@ -1,7 +1,8 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import {
   act,
   fireEvent,
+  cleanup,
   render,
   renderHook,
   screen,
@@ -22,6 +23,8 @@ import {
   WorkspaceChannelProvider,
 } from "../src";
 import { LinkCell } from "../src/components/InstrumentGrid/linkColumn";
+
+afterEach(cleanup);
 
 const channels = DEFAULT_LINK_GROUPS;
 const ricOf = (bus: InstrumentLinkBus, channel: string) =>

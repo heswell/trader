@@ -1,5 +1,5 @@
-import { describe, expect, mock, test } from "bun:test";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, mock, test } from "bun:test";
+import { fireEvent, cleanup, render, screen } from "@testing-library/react";
 import { DEFAULT_VIEW_SETTINGS, parseViewSettings } from "../src";
 import {
   ALL_INSTRUMENTS,
@@ -7,6 +7,8 @@ import {
   InstrumentGridHeader,
   type InstrumentGridHeaderProps,
 } from "../src/components/InstrumentGrid/InstrumentGridHeader";
+
+afterEach(cleanup);
 
 describe("view settings", () => {
   test("parses saved settings, defaulting missing or bad fields", () => {
