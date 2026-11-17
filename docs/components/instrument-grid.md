@@ -32,8 +32,8 @@ A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns 
 | `initialGroupBy?` | `exchange` / `sector` / `currency` / `instrumentType` / `underlying` (a stock or index with its futures); volume and turnover are summed in group rows. It sets the first grouping only: after that, group from the column header menu (the grid has no group-by control). |
 | `sparkline?` | `false` or `{ valueColumn, length, bucketMs }`. |
 | `id?` | Keys the saved column sets, filters and panel settings, so differently configured grids keep their own. |
-| `showToolbar?` | Default true. False hides the panel header (scope picker, panel settings), the toolbar (column sets, Buy/Sell/Depth buttons) and the filter bar. |
-| `showFooter?` | Default true: the grid offers a footer, shown or hidden from Panel settings. False removes it and its menu item. |
+| `showToolbar?` | Default true. False hides the panel header (scope picker, panel settings), the toolbar (Buy/Sell/Depth buttons) and the filter bar. |
+| `showFooter?` | Default true: the grid offers a footer (see [Footer](#footer)), shown or hidden from Panel settings. False removes it and its menu item. |
 | `onBuy` / `onSell` / `onOpenDepth` | `(instrument: SelectedInstrument) => void`. The context-menu items and toolbar buttons exist only when the prop is set, or (Buy / Sell) when an `OrderTicketLauncherProvider` is mounted. The menu items are client-side and call direct RPCs; vuu-server 3.3.0 supports server menu RPCs, but trader declares none (trader upstream issues 11 and 63–66 in [upstream-issues.md](../upstream-issues.md)). |
 | `launchOrderTicket?` | Default `true`: without `onBuy` / `onSell`, Buy / Sell open the ticket via `useOrderTicketLauncher()` when a launcher is present. |
 | `watchlistStorage?` | `UserSettingsStorage` override for the watchlists. |
@@ -58,6 +58,15 @@ The grid is not in a link group. Its first column (`link`, client-side, outside 
 - Row selection is local to the grid (toolbar Buy / Sell / Depth, watchlist add / remove): only an explicit link publishes, with source `"InstrumentGrid"`.
 
 Design spec: [docs/design/instrument-grid](../design/instrument-grid/README.md).
+
+## Footer
+
+One 24px row under the table:
+
+- **Column-set tabs** on the left: click, or Left / Right arrows on a focused tab, to show a set. "+" saves the columns in view as a new set, named in a prompt.
+- **Linked**: a channel dot and ric per channel that holds an instrument. While linked rows are pinned, clicking one selects and focuses its row. With pinning off they are labels only: vuu Table cannot scroll to a row by key yet (`ScrollingAPI.scrollToKey` is a stub, trader upstream issue 114).
+- **Row count**: the rows in the body, "N rows", kept current from the data source's `resize` events. Under a filter-bar filter it is the filtered count, bold with a filter icon; the server sends no unfiltered total, so it is never "x of y". Pinned rows are not counted.
+- **Columns** on the right opens the vuu column picker.
 
 ## Filter bar
 

@@ -734,3 +734,11 @@ Found moving to @vuu-ui 4.0.0-alpha.30 (`docs/portal-integration.md`, "Panels pa
      *Proposed:* a case-insensitive `contains` (operator or option) in the server and filter language, used by
      Search. *Workaround in this repo:* `withSearchCasings` (InstrumentGrid) widens the Search clause to the text's
      common casings (as typed, upper, lower, capitalised; upper only for ric) before the filter is sent.
+
+114. **Table `ScrollingAPI.scrollToKey` does nothing.** (finos `@vuu-ui/vuu-table` 5.0.0-alpha.8,
+     `src/useTableScroll.js`.) `scrollToKey(rowKey)` only logs `scrollToKey <key>`; `scrollToIndex` works, but a host
+     knows a row's key, not its index under the current sort and filter. *Repro:* pass `scrollingApiRef` to a Table
+     and call `scrollToKey` with the key of a row out of view: the console logs, the Table does not scroll.
+     *Proposed:* implement it (the server can return a row's index for a key, or the Table can select by key with
+     `revealSelected`). *Workaround in this repo:* the InstrumentGrid footer's linked instruments go to their rows
+     only while linked rows are pinned, so the rows are always rendered; otherwise they are labels.

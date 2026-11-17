@@ -92,7 +92,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | `components/ExposureTreemap` | `tradingExposureTreemap` |  | `data-measure` |
 | `components/FillProgressBar` | `tradingFillProgressBar` | `--tradingFillProgressBar-colour`, `--tradingFillProgressBar-pct` | `data-pct`, `data-target-pct` |
 | `components/FillsBlotter` | `tradingFillsBlotter` |  | `data-link-group`, `data-testid` |
-| `components/InstrumentGrid` | `tradingInstrumentCell`, `tradingInstrumentGrid`, `tradingInstrumentGridHeader`, `tradingLinkCell` | `--trading-down`, `--trading-neutral`, `--trading-up` | `data-direction`, `data-phase`, `data-ric` |
+| `components/InstrumentGrid` | `tradingInstrumentCell`, `tradingInstrumentGrid`, `tradingInstrumentGridFooter`, `tradingInstrumentGridHeader`, `tradingLinkCell` | `--trading-down`, `--trading-neutral`, `--trading-up` | `data-direction`, `data-phase`, `data-ric` |
 | `components/InstrumentPicker` | `tradingInstrumentPicker` |  | `data-instrument-picker`, `data-link-group` |
 | `components/LinkGroupSelector` | `tradingLinkGroupSelector` | `--tradingLinkGroupSelector-haloSize`, `--tradingLinkGroupSelector-swatchSize` | `data-link-group` |
 | `components/MarketDepth` | `tradingMarketDepth` | `--tradingMarketDepth-ask-bar`, `--tradingMarketDepth-bid-bar`, `--tradingMarketDepth-flash`, `--tradingMarketDepth-own`, `--tradingMarketDepth-rowHeight` | `data-flash`, `data-inactive`, `data-level`, `data-link-group`, `data-own`, `data-phase` |

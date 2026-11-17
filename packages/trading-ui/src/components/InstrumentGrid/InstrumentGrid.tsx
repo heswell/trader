@@ -24,14 +24,9 @@ import type { Filter, FilterState } from "@vuu-ui/vuu-filter-types";
 import { FilterBar } from "@vuu-ui/vuu-filters";
 import {
   ColumnModel,
-  ColumnPickerAction,
   type ColumnSetsChangeHandler,
   type ColumnSetsState,
-  ColumnSetSwitcher,
-  DataSourceStats,
   getActiveColumnSetColumns,
-  TableFooter,
-  TableFooterTray,
   useColumnSetModel,
 } from "@vuu-ui/vuu-table-extras";
 import { Table } from "@vuu-ui/vuu-table";
@@ -56,6 +51,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { tradingTableSchema } from "../../data/tradingTables";
@@ -94,6 +90,7 @@ import {
   buildInstrumentGridFilter,
   withSearchCasings,
 } from "./instrumentGridFilter";
+import { InstrumentGridFooter } from "./InstrumentGridFooter";
 import {
   ALL_INSTRUMENTS,
   filterClauseCount,
@@ -597,6 +594,23 @@ const InstrumentGridInner = forwardRef<
         : undefined,
     [channels.length, linkedRics, viewSettings.pinLinked],
   );
+  // From the footer: select and focus a linked row. Only offered while
+  // linked rows are pinned, as the Table cannot scroll to a row by key yet
+  // (ScrollingAPI.scrollToKey is a stub in vuu-ui 5.0.0-alpha.8).
+  const tableRef = useRef<HTMLDivElement>(null);
+  const showLinkedRow = useCallback((ric: string) => {
+    const row = tableRef.current
+      ?.querySelector(`.tradingLinkCell-button[data-ric="${CSS.escape(ric)}"]`)
+      ?.closest(".vuuTableRow");
+    // a data cell: the link cell keeps its clicks from the table
+    const cell = row?.querySelector<HTMLElement>(
+      ".vuuTableCell:not(:has(.tradingLinkCell))",
+    );
+    if (cell) {
+      cell.click();
+      cell.focus();
+    }
+  }, []);
   const handleKeyDownCapture = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
       if (e.altKey || e.ctrlKey || e.metaKey || e.defaultPrevented) return;
@@ -734,10 +748,6 @@ const InstrumentGridInner = forwardRef<
           role="toolbar"
           aria-label="Instrument grid"
         >
-          <ColumnSetSwitcher
-            className={`${classBase}-columnSets`}
-            columnSetModel={columnSetModel}
-          />
           <span className={`${classBase}-actions`}>
             {onBuy ? (
               <Button
@@ -792,6 +802,7 @@ const InstrumentGridInner = forwardRef<
       {/* biome-ignore lint/a11y/noStaticElementInteractions: keys and double-click of the table's rows */}
       <div
         className={`${classBase}-table`}
+        ref={tableRef}
         onDoubleClick={handleDoubleClick}
         onKeyDownCapture={handleKeyDownCapture}
       >
@@ -811,15 +822,14 @@ const InstrumentGridInner = forwardRef<
         </GridChannelLinksProvider>
       </div>
       {footerVisible ? (
-        <TableFooter className={`${classBase}-footer`}>
-          <DataSourceStats dataSource={dataSource} />
-          <TableFooterTray>
-            <ColumnPickerAction
-              columnModel={columnModel}
-              columnSetModel={columnSetModel}
-            />
-          </TableFooterTray>
-        </TableFooter>
+        <InstrumentGridFooter
+          columnModel={columnModel}
+          columnSetModel={columnSetModel}
+          dataSource={dataSource}
+          filtered={filterClauseCount(userFilter) > 0}
+          links={links}
+          onShowLinked={viewSettings.pinLinked ? showLinkedRow : undefined}
+        />
       ) : null}
     </div>
   );
