@@ -28,10 +28,10 @@ A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns 
 | `dataSource?` / `table?` | Supply a data source, or bind `"instrumentPrices"` (default) / `"prices"`. |
 | `columns?` | Visible column names in order (default: ric, description, exchange, currency, bid, ask, last, change, changePct, phase, sparkline, volume, turnover). The "Columns" button opens the vuu column picker; the header menu gives sort / group / hide. |
 | `simulatedOnly?` | Default false. True: only instruments quoted by the simulator (instrumentPrices). Unquoted instruments show empty price cells. |
-| `instrumentType?` | `EQUITY` / `FUTURE` / `INDEX` / `CONTINUATION`: only that type. Otherwise, when the data has an `instrumentType` column, the toolbar shows a type dropdown (All types / Equities / Futures / Indices / Continuations). |
+| `instrumentType?` | `EQUITY` / `FUTURE` / `INDEX` / `CONTINUATION`: only that type. Otherwise, when the data has an `instrumentType` column, type is a quick filter in the filter bar. |
 | `initialGroupBy?` | `exchange` / `sector` / `currency` / `instrumentType` / `underlying` (a stock or index with its futures); volume and turnover are summed in group rows. |
 | `sparkline?` | `false` or `{ valueColumn, length, bucketMs }`. |
-| `showToolbar?` | Quick filter (ric / description), watchlist selector + manager, group-by, columns, Buy/Sell/Depth buttons. |
+| `showToolbar?` | The toolbar (watchlist selector + manager, group-by, column sets, Buy/Sell/Depth buttons) and the filter bar. |
 | `onBuy` / `onSell` / `onOpenDepth` | `(instrument: SelectedInstrument) => void`. The context-menu items and toolbar buttons exist only when the prop is set, or (Buy / Sell) when an `OrderTicketLauncherProvider` is mounted. The menu items are client-side and call direct RPCs; vuu-server 3.3.0 supports server menu RPCs, but trader declares none (trader upstream issues 11 and 63–66 in [upstream-issues.md](../upstream-issues.md)). |
 | `launchOrderTicket?` | Default `true`: without `onBuy` / `onSell`, Buy / Sell open the ticket via `useOrderTicketLauncher()` when a launcher is present. |
 | `watchlistStorage?` | `UserSettingsStorage` override for the watchlists. |
@@ -48,8 +48,15 @@ The grid is not in a link group. Its first column (`link`, client-side, outside 
 
 Design spec: [docs/design/instrument-grid](../design/instrument-grid/README.md).
 
- Pure helpers are exported too:
-`buildInstrumentGridFilter`, `instrumentGridColumns`, watchlist functions and `useWatchlists`.
+## Filter bar
+
+The vuu FilterBar sits on its own row and opens on the quick filters:
+
+- **Search** comes first: free text over ric and description (ric only on `prices`). vuu's `contains` is case sensitive, so the grid widens the Search clause to the common casings of the text (`withSearchCasings`, trader upstream issue 113): "bp" finds BP.L.
+- **Quick filters**: exchange, sector, type, market cap, P/E and yield by default, where the data has them; the column chooser changes them. Type is left out when `instrumentType` is set.
+- **Saved filters**: the toggle switches to the saved filter pills. Its badge counts the applied clauses. Saved filters persist per grid `id` (`trading.instrumentGrid.filters`).
+
+Pure helpers are exported too: `buildInstrumentGridFilter`, `withSearchCasings`, `instrumentGridColumns`, watchlist functions and `useWatchlists`.
 
 **Watchlists and user settings.** Watchlists are client-side lists of rics stored under `trading.watchlists` through a
 `UserSettingsStorage` (a `getItem` / `setItem` subset of Web Storage, may be async). The default is localStorage

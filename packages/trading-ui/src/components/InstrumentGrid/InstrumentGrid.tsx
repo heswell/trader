@@ -1,5 +1,5 @@
 import {
-  InstrumentType,
+  type InstrumentType,
   Side,
   type TradingSchemaName,
 } from "@heswell/trading-schemas";
@@ -95,7 +95,10 @@ import {
   SCREENING_SET_COLUMNS,
   SPARKLINE_COLUMN,
 } from "./instrumentGridColumns";
-import { buildInstrumentGridFilter } from "./instrumentGridFilter";
+import {
+  buildInstrumentGridFilter,
+  withSearchCasings,
+} from "./instrumentGridFilter";
 import { toInstrument } from "./instrumentRow";
 import {
   GridChannelLinksProvider,
@@ -116,13 +119,6 @@ registerTradingCellRenderers();
 const classBase = "tradingInstrumentGrid";
 const ALL = "__all__";
 const NONE = "__none__";
-const TYPE_LABELS: Readonly<Record<string, string>> = {
-  [ALL]: "All types",
-  [InstrumentType.Equity]: "Equities",
-  [InstrumentType.Future]: "Futures",
-  [InstrumentType.Index]: "Indices",
-  [InstrumentType.Continuation]: "Continuations",
-};
 
 export type InstrumentAction = (instrument: SelectedInstrument) => void;
 
@@ -140,8 +136,9 @@ export interface InstrumentGridProps
    */
   simulatedOnly?: boolean;
   /**
-   * Show only this instrument type initially (EQUITY | FUTURE); the toolbar
-   * can change it when the data source has an instrumentType column.
+   * Show only this instrument type (EQUITY | FUTURE | ...), when the data
+   * source has an instrumentType column. Without it, instrument type is a
+   * quick filter in the filter bar.
    */
   instrumentType?: InstrumentType;
   /** Group by this column initially ("exchange" | "sector" | "currency"). */
@@ -204,6 +201,7 @@ const ContextPanelBridge = ({ children }: { children: ReactNode }) => {
 const DEFAULT_QUICK_FILTER_COLUMNS = [
   "exchange",
   "sector",
+  "instrumentType",
   "marketCapUsd",
   "pe",
   "dividendYield",
@@ -282,7 +280,7 @@ const InstrumentGridInner = forwardRef<
     dataSource: dataSourceProp,
     id,
     initialGroupBy,
-    instrumentType: initialInstrumentType,
+    instrumentType,
     launchOrderTicket = true,
     onBuy: onBuyProp,
     onColumnSetsChange,
@@ -396,58 +394,50 @@ const InstrumentGridInner = forwardRef<
     () => getColumnsByName(filterColumns),
     [filterColumns],
   );
+  // FilterBar Search: free text over ric and description
+  const searchColumns = useMemo(
+    () => ["ric", "description"].filter((c) => available.includes(c)),
+    [available],
+  );
+  const hasTypes = available.includes("instrumentType");
+  const fixedType = hasTypes ? instrumentType : undefined;
   const quickFilterProps = useMemo(
     () => ({
-      allowFind: false,
-      defaultQuickFilterColumns: DEFAULT_QUICK_FILTER_COLUMNS.filter((c) =>
-        available.includes(c),
+      allowFind: searchColumns.length > 0,
+      defaultQuickFilterColumns: DEFAULT_QUICK_FILTER_COLUMNS.filter(
+        (c) => available.includes(c) && !(c === "instrumentType" && fixedType),
       ),
+      showFind: searchColumns,
     }),
-    [available],
+    [available, fixedType, searchColumns],
   );
   const [userFilter, setUserFilter] = useState<Filter>();
   const clearUserFilter = useCallback(() => setUserFilter(undefined), []);
   const userFilterQuery = useMemo(
-    () => (userFilter ? filterAsQuery(userFilter, { columnsByName }) : ""),
-    [userFilter, columnsByName],
+    () =>
+      userFilter
+        ? filterAsQuery(withSearchCasings(userFilter, searchColumns), {
+            columnsByName,
+          })
+        : "",
+    [userFilter, columnsByName, searchColumns],
   );
 
-  // --- filtering: watchlist + search + FilterBar
+  // --- filtering: watchlist + FilterBar (search, quick and saved filters)
   const watchlists = useWatchlists(watchlistStorage);
   const [watchlistId, setWatchlistId] = useState(ALL);
-  const [text, setText] = useState("");
-  const [debounced, setDebounced] = useState("");
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(text), 150);
-    return () => clearTimeout(t);
-  }, [text]);
   const watchlist = watchlists.lists.find((l) => l.id === watchlistId);
-  const hasTypes = available.includes("instrumentType");
-  const [typeFilter, setTypeFilter] = useState<string>(
-    initialInstrumentType ?? ALL,
-  );
-  useEffect(
-    () => setTypeFilter(initialInstrumentType ?? ALL),
-    [initialInstrumentType],
-  );
   const filter = useMemo(
     () =>
       buildInstrumentGridFilter({
-        instrumentType: hasTypes && typeFilter !== ALL ? typeFilter : undefined,
-        quickFilter: debounced,
-        searchColumns: ["ric", "description"].filter((c) =>
-          available.includes(c),
-        ),
+        instrumentType: fixedType,
         simulatedOnly: simulatedOnly && hasStaticData,
         userFilter: userFilterQuery,
         watchlistRics: watchlistId === ALL ? undefined : watchlist?.rics,
       }),
     [
       userFilterQuery,
-      debounced,
-      available,
-      hasTypes,
-      typeFilter,
+      fixedType,
       simulatedOnly,
       hasStaticData,
       watchlistId,
@@ -640,13 +630,6 @@ const InstrumentGridInner = forwardRef<
           role="toolbar"
           aria-label="Instrument grid"
         >
-          <Input
-            aria-label="Filter instruments"
-            className={`${classBase}-search`}
-            placeholder="Search ric / description"
-            value={text}
-            onChange={(e) => setText((e.target as HTMLInputElement).value)}
-          />
           <Dropdown
             aria-label="Watchlist"
             className={`${classBase}-select`}
@@ -711,21 +694,6 @@ const InstrumentGridInner = forwardRef<
               </OverlayPanelContent>
             </OverlayPanel>
           </Overlay>
-          {hasTypes ? (
-            <Dropdown
-              aria-label="Instrument type"
-              className={`${classBase}-select`}
-              selected={[typeFilter]}
-              value={TYPE_LABELS[typeFilter] ?? typeFilter}
-              onSelectionChange={(_, [t]) => t && setTypeFilter(t)}
-            >
-              {Object.entries(TYPE_LABELS).map(([value, label]) => (
-                <Option key={value} value={value}>
-                  {label}
-                </Option>
-              ))}
-            </Dropdown>
-          ) : null}
           {groupable.length ? (
             <Dropdown
               aria-label="Group by"
@@ -781,6 +749,8 @@ const InstrumentGridInner = forwardRef<
           QuickFilterProps={quickFilterProps}
           className={`${classBase}-filterBar`}
           columnDescriptors={filterColumns}
+          // Search and the quick filters first, as in the design
+          defaultFilterMode="quick-filter"
           defaultFilterState={storedFilterState}
           onApplyFilter={setUserFilter}
           onClearFilter={clearUserFilter}

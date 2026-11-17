@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 595 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 596 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -22,7 +22,7 @@ Imports: `@heswell/trading-ui`. 595 exports. Types are shown as written in the s
 - **components/ExposureTreemap**: [ExposureMeasure](#exposuremeasure), [ExposureTreemap](#exposuretreemap), [ExposureTreemapProps](#exposuretreemapprops)
 - **components/FillProgressBar**: [FillProgressBar](#fillprogressbar), [FillProgressBarProps](#fillprogressbarprops)
 - **components/FillsBlotter**: [FillsBlotter](#fillsblotter), [FillsBlotterProps](#fillsblotterprops), [FillsGrouping](#fillsgrouping), [FillsLinkContext](#fillslinkcontext)
-- **components/InstrumentGrid**: [addToWatchlist](#addtowatchlist), [buildInstrumentGridFilter](#buildinstrumentgridfilter), [cellUnchanged](#cellunchanged), [ChangeCell](#changecell), [COLUMN_SETS_SETTINGS_KEY](#column_sets_settings_key), [createWatchlist](#createwatchlist), [DEFAULT_INSTRUMENT_GRID_COLUMNS](#default_instrument_grid_columns), [defaultColumnSets](#defaultcolumnsets), [deleteWatchlist](#deletewatchlist), [EMPTY_WATCHLISTS](#empty_watchlists), [FILTERS_SETTINGS_KEY](#filters_settings_key), [GridChannelLinks](#gridchannellinks), [GridChannelLinksProvider](#gridchannellinksprovider), [gridSettingsKey](#gridsettingskey), [GROUPABLE_COLUMNS](#groupable_columns), [INSTRUMENT_GRID_LINK_SOURCE](#instrument_grid_link_source), [InstrumentAction](#instrumentaction), [InstrumentGrid](#instrumentgrid), [instrumentGridColumn](#instrumentgridcolumn), [InstrumentGridColumnOptions](#instrumentgridcolumnoptions), [instrumentGridColumns](#instrumentgridcolumns), [InstrumentGridFilterParts](#instrumentgridfilterparts), [InstrumentGridProps](#instrumentgridprops), [InstrumentRow](#instrumentrow), [isInLinkCell](#isinlinkcell), [LINK_COLUMN](#link_column), [linkColumnDescriptor](#linkcolumndescriptor), [parseColumnSets](#parsecolumnsets), [parseFilterState](#parsefilterstate), [parseWatchlists](#parsewatchlists), [PhaseCell](#phasecell), [phaseLabel](#phaselabel), [priceFormatOf](#priceformatof), [PriceMoveCell](#pricemovecell), [QuantityCell](#quantitycell), [quickFilterExpression](#quickfilterexpression), [registerInstrumentGridRenderers](#registerinstrumentgridrenderers), [registerLinkCellRenderer](#registerlinkcellrenderer), [removeFromWatchlist](#removefromwatchlist), [renameWatchlist](#renamewatchlist), [rowRicOf](#rowricof), [SCREENING_COLUMNS](#screening_columns), [SCREENING_SET_COLUMNS](#screening_set_columns), [SPARKLINE_COLUMN](#sparkline_column), [StoredSetting](#storedsetting), [toInstrument](#toinstrument), [useGridChannelLinks](#usegridchannellinks), [useStoredSetting](#usestoredsetting), [useWatchlists](#usewatchlists), [UseWatchlistsResult](#usewatchlistsresult), [Watchlist](#watchlist), [watchlistFilterExpression](#watchlistfilterexpression), [WATCHLISTS_SETTINGS_KEY](#watchlists_settings_key), [WatchlistState](#watchliststate)
+- **components/InstrumentGrid**: [addToWatchlist](#addtowatchlist), [buildInstrumentGridFilter](#buildinstrumentgridfilter), [cellUnchanged](#cellunchanged), [ChangeCell](#changecell), [COLUMN_SETS_SETTINGS_KEY](#column_sets_settings_key), [createWatchlist](#createwatchlist), [DEFAULT_INSTRUMENT_GRID_COLUMNS](#default_instrument_grid_columns), [defaultColumnSets](#defaultcolumnsets), [deleteWatchlist](#deletewatchlist), [EMPTY_WATCHLISTS](#empty_watchlists), [FILTERS_SETTINGS_KEY](#filters_settings_key), [GridChannelLinks](#gridchannellinks), [GridChannelLinksProvider](#gridchannellinksprovider), [gridSettingsKey](#gridsettingskey), [GROUPABLE_COLUMNS](#groupable_columns), [INSTRUMENT_GRID_LINK_SOURCE](#instrument_grid_link_source), [InstrumentAction](#instrumentaction), [InstrumentGrid](#instrumentgrid), [instrumentGridColumn](#instrumentgridcolumn), [InstrumentGridColumnOptions](#instrumentgridcolumnoptions), [instrumentGridColumns](#instrumentgridcolumns), [InstrumentGridFilterParts](#instrumentgridfilterparts), [InstrumentGridProps](#instrumentgridprops), [InstrumentRow](#instrumentrow), [isInLinkCell](#isinlinkcell), [LINK_COLUMN](#link_column), [linkColumnDescriptor](#linkcolumndescriptor), [parseColumnSets](#parsecolumnsets), [parseFilterState](#parsefilterstate), [parseWatchlists](#parsewatchlists), [PhaseCell](#phasecell), [phaseLabel](#phaselabel), [priceFormatOf](#priceformatof), [PriceMoveCell](#pricemovecell), [QuantityCell](#quantitycell), [quickFilterExpression](#quickfilterexpression), [registerInstrumentGridRenderers](#registerinstrumentgridrenderers), [registerLinkCellRenderer](#registerlinkcellrenderer), [removeFromWatchlist](#removefromwatchlist), [renameWatchlist](#renamewatchlist), [rowRicOf](#rowricof), [SCREENING_COLUMNS](#screening_columns), [SCREENING_SET_COLUMNS](#screening_set_columns), [SPARKLINE_COLUMN](#sparkline_column), [StoredSetting](#storedsetting), [toInstrument](#toinstrument), [useGridChannelLinks](#usegridchannellinks), [useStoredSetting](#usestoredsetting), [useWatchlists](#usewatchlists), [UseWatchlistsResult](#usewatchlistsresult), [Watchlist](#watchlist), [watchlistFilterExpression](#watchlistfilterexpression), [WATCHLISTS_SETTINGS_KEY](#watchlists_settings_key), [WatchlistState](#watchliststate), [withSearchCasings](#withsearchcasings)
 - **components/InstrumentLookup**: [InstrumentLookup](#instrumentlookup), [InstrumentLookupProvider](#instrumentlookupprovider), [useInstrumentLookup](#useinstrumentlookup)
 - **components/InstrumentPicker**: [INSTRUMENT_PICKER_SOURCE](#instrument_picker_source), [InstrumentPicker](#instrumentpicker), [InstrumentPickerProps](#instrumentpickerprops), [instrumentSearchFilter](#instrumentsearchfilter), [toSelectedInstrument](#toselectedinstrument)
 - **components/LinkGroupSelector**: [LinkGroupMenuButton](#linkgroupmenubutton), [LinkGroupSelector](#linkgroupselector), [LinkGroupSelectorProps](#linkgroupselectorprops), [LinkGroupSwatch](#linkgroupswatch), [PanelLinkGroupSelector](#panellinkgroupselector)
@@ -3214,7 +3214,7 @@ Also accepts the props of `TableCellProps (@vuu-ui/vuu-table-types)`, `TableCell
 
 #### InstrumentGrid
 
-*component* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L228)
+*component* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L226)
 
 Instrument grid: a preset over the vuu Table bound to instrumentPrices
 (or prices). Price-move and change renderers, formatting per instrument,
@@ -3239,7 +3239,7 @@ Props: `InstrumentGridProps`
 | `table?` | `Extract<TradingSchemaName, "instrumentPrices" \| "prices">` | `"instrumentPrices"` | Table to bind to. "prices" has no static data (description, sector...). |
 | `columns?` | `readonly string[]` |  | Visible column names, in order. Defaults to a trading preset. |
 | `simulatedOnly?` | `boolean` | `false` | Only instruments quoted by the exchange simulator (default false). Unquoted rows show empty (null) price cells. |
-| `instrumentType?` | `InstrumentType` |  | Show only this instrument type initially (EQUITY \| FUTURE); the toolbar can change it when the data source has an instrumentType column. |
+| `instrumentType?` | `InstrumentType` |  | Show only this instrument type (EQUITY \| FUTURE \| ...), when the data source has an instrumentType column. Without it, instrument type is a quick filter in the filter bar. |
 | `initialGroupBy?` | `string` |  | Group by this column initially ("exchange" \| "sector" \| "currency"). |
 | `sparkline?` | `false \| Partial<SparklineCellOptions>` |  | Sparkline column options; false removes it. |
 | `showToolbar?` | `boolean` | `true` | Hide the toolbar (watchlists, search, grouping, column sets) and filter bar. |
@@ -3337,7 +3337,7 @@ addToWatchlist(state: WatchlistState, id: string, ric: string): WatchlistState
 
 #### buildInstrumentGridFilter
 
-*function* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L51)
+*function* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L113)
 
 AND of the grid's filters as one vuu filter string ("" = no filter).
 
@@ -3482,7 +3482,7 @@ priceFormatOf(dataRow: DataRow): PriceFormat
 
 #### quickFilterExpression
 
-*function* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L15)
+*function* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L17)
 
 Quick filter: text search over ric and description. "" when there is no text.
 
@@ -3553,12 +3553,25 @@ toInstrument(row: InstrumentRow): SelectedInstrument
 
 #### watchlistFilterExpression
 
-*function* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L33)
+*function* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L95)
 
 Filter for a watchlist: its rics (an empty list matches nothing).
 
 ```ts
 watchlistFilterExpression(rics: readonly string[]): string
+```
+
+#### withSearchCasings
+
+*function* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L54)
+
+The FilterBar's Search is a plain `contains`, which vuu matches case
+sensitively: "bp" would not find BP.L. Its clause (one `contains`, or an
+`or` of `contains` with the same text, over `searchColumns`) is widened
+to the casings quickFilterExpression tries. Other clauses are unchanged.
+
+```ts
+withSearchCasings(filter: Filter, searchColumns: readonly string[]): Filter
 ```
 
 ### Constants (components/InstrumentGrid)
@@ -3712,7 +3725,7 @@ const WATCHLISTS_SETTINGS_KEY: "trading.watchlists"
 
 #### InstrumentGridFilterParts
 
-*interface* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L36)
+*interface* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L98)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -3725,7 +3738,7 @@ const WATCHLISTS_SETTINGS_KEY: "trading.watchlists"
 
 #### InstrumentGridProps
 
-*interface* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L129)
+*interface* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L125)
 
 Props of [`InstrumentGrid`](#instrumentgrid).
 
@@ -3775,7 +3788,7 @@ Props of [`InstrumentGrid`](#instrumentgrid).
 
 #### InstrumentAction
 
-*type* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L127)
+*type* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L123)
 
 ```ts
 type InstrumentAction = (instrument: SelectedInstrument) => void

@@ -13,10 +13,6 @@
   gap: var(--salt-spacing-100);
 }
 
-.tradingInstrumentGrid .tradingInstrumentGrid-search {
-  width: 220px;
-}
-
 .tradingInstrumentGrid .tradingInstrumentGrid-select {
   width: 170px;
 }
@@ -44,7 +40,6 @@
   min-height: 0;
 }
 
-.tradingInstrumentGrid .tradingInstrumentGrid-search,
 .tradingInstrumentGrid .tradingInstrumentGrid-select {
   border: var(--salt-size-border, 1px) var(--salt-borderStyle-solid, solid)
     var(--salt-container-primary-borderColor, currentColor);

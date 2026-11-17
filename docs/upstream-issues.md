@@ -723,3 +723,14 @@ Found moving to @vuu-ui 4.0.0-alpha.30 (`docs/portal-integration.md`, "Panels pa
      Chart/Depth/Depth chart stack, or above the Orders/Fills/Positions stack, while column 3 (no stacks) has one.
      *Proposed:* fall back to the members' setting (`stackTemplate?.props.resizeable ?? items[0]?.resizeable`), or
      add `resizeable` to `GridStackSnapshot`. *Workaround in this repo:* none; those panels can't be resized.
+
+## Found in the instrument grid redesign
+
+113. **FilterBar Search is case sensitive.** (finos `@vuu-ui/vuu-filters` 5.0.0-alpha.6,
+     `src/filter-bar/quick-filters/useQuickFilters.js` `getSearchFilter`; vuu server `contains`.) The quick filters'
+     Search sends the text as typed in a `contains` clause per search column, and the server matches `contains`
+     case sensitively, so "bp" does not find `BP.L` / "BP plc". The filter language has no case-insensitive
+     operator. *Repro:* in the Instrument grid showcase, type "bp" in Search with the filter unwidened: no rows.
+     *Proposed:* a case-insensitive `contains` (operator or option) in the server and filter language, used by
+     Search. *Workaround in this repo:* `withSearchCasings` (InstrumentGrid) widens the Search clause to the text's
+     common casings (as typed, upper, lower, capitalised; upper only for ric) before the filter is sent.

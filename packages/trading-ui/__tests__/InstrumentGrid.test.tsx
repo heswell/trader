@@ -10,6 +10,7 @@ import {
   parseWatchlists,
   quickFilterExpression,
   removeFromWatchlist,
+  withSearchCasings,
   renameWatchlist,
   useWatchlists,
   WATCHLISTS_SETTINGS_KEY,
@@ -92,6 +93,51 @@ describe("filters", () => {
         instrumentType: "INDEX",
       }),
     ).toBe('simulated = true and instrumentType = "INDEX"');
+  });
+
+  test("FilterBar Search is widened to the casings of the text", () => {
+    const columns = ["ric", "description"];
+    const search = {
+      op: "or" as const,
+      filters: [
+        { column: "ric", op: "contains" as const, value: "bp" },
+        { column: "description", op: "contains" as const, value: "bp" },
+      ],
+    };
+    expect(withSearchCasings(search, columns)).toEqual({
+      op: "or",
+      filters: [
+        { column: "ric", op: "contains", value: "BP" },
+        { column: "description", op: "contains", value: "bp" },
+        { column: "description", op: "contains", value: "BP" },
+        { column: "description", op: "contains", value: "Bp" },
+      ],
+    });
+    // inside the quick filters' "and", other clauses unchanged
+    const exchange = { column: "exchange", op: "=" as const, value: "XLON" };
+    expect(
+      withSearchCasings({ op: "and", filters: [exchange, search] }, columns),
+    ).toEqual({
+      op: "and",
+      filters: [exchange, withSearchCasings(search, columns)],
+    });
+    // a single search column (prices: ric only)
+    expect(
+      withSearchCasings({ column: "ric", op: "contains", value: "vod" }, [
+        "ric",
+      ]),
+    ).toEqual({ column: "ric", op: "contains", value: "VOD" });
+  });
+
+  test("an or that is not a Search is left alone", () => {
+    const filter = {
+      op: "or" as const,
+      filters: [
+        { column: "ric", op: "contains" as const, value: "bp" },
+        { column: "description", op: "contains" as const, value: "shell" },
+      ],
+    };
+    expect(withSearchCasings(filter, ["ric", "description"])).toBe(filter);
   });
 });
 

@@ -1,3 +1,5 @@
+import type { Filter, SingleValueFilterClause } from "@vuu-ui/vuu-filter-types";
+
 const quote = (value: string) => `"${value.replace(/["\\]/g, "")}"`;
 
 const capitalise = (text: string) =>
@@ -27,6 +29,66 @@ export const quickFilterExpression = (
     }
   }
   return parts.join(" or ");
+};
+
+const isContains = (
+  filter: Filter,
+  columns: readonly string[],
+): filter is SingleValueFilterClause<string> =>
+  filter.op === "contains" &&
+  "column" in filter &&
+  typeof filter.column === "string" &&
+  columns.includes(filter.column) &&
+  "value" in filter &&
+  typeof filter.value === "string";
+
+const searchVariants = (column: string, text: string) =>
+  column === "ric" ? [text.toUpperCase()] : casings(text);
+
+/**
+ * The FilterBar's Search is a plain `contains`, which vuu matches case
+ * sensitively: "bp" would not find BP.L. Its clause (one `contains`, or an
+ * `or` of `contains` with the same text, over `searchColumns`) is widened
+ * to the casings quickFilterExpression tries. Other clauses are unchanged.
+ */
+export const withSearchCasings = (
+  filter: Filter,
+  searchColumns: readonly string[],
+): Filter => {
+  const expand = (clause: SingleValueFilterClause<string>): Filter[] =>
+    searchVariants(clause.column, clause.value).map((value) => ({
+      column: clause.column,
+      op: "contains",
+      value,
+    }));
+  if (isContains(filter, searchColumns)) {
+    const filters = expand(filter);
+    return filters.length === 1 ? filters[0] : { op: "or", filters };
+  }
+  if (!("filters" in filter)) return filter;
+  const isSearch =
+    filter.op === "or" &&
+    filter.filters.length > 0 &&
+    filter.filters.every(
+      (f) =>
+        isContains(f, searchColumns) &&
+        f.value === (filter.filters[0] as SingleValueFilterClause).value,
+    );
+  if (isSearch) {
+    return {
+      ...filter,
+      filters: (filter.filters as SingleValueFilterClause<string>[]).flatMap(
+        expand,
+      ),
+    };
+  }
+  if (filter.op === "and") {
+    return {
+      ...filter,
+      filters: filter.filters.map((f) => withSearchCasings(f, searchColumns)),
+    };
+  }
+  return filter;
 };
 
 /** Filter for a watchlist: its rics (an empty list matches nothing). */
