@@ -43,6 +43,8 @@ export interface InstrumentGridFilterParts {
   searchColumns?: readonly string[];
   /** Only instruments of this type (instrumentType, e.g. FUTURE). */
   instrumentType?: string;
+  /** The FilterBar's filter, as a vuu filter string. */
+  userFilter?: string;
 }
 
 /** AND of the grid's filters as one vuu filter string ("" = no filter). */
@@ -51,6 +53,7 @@ export const buildInstrumentGridFilter = ({
   quickFilter = "",
   searchColumns,
   simulatedOnly,
+  userFilter = "",
   watchlistRics,
 }: InstrumentGridFilterParts) => {
   const parts: string[] = [];
@@ -62,5 +65,7 @@ export const buildInstrumentGridFilter = ({
     parts.push(
       parts.length || search.includes(" or ") ? `(${search})` : search,
     );
+  const user = userFilter.trim();
+  if (user) parts.push(parts.length ? `(${user})` : user);
   return parts.join(" and ");
 };

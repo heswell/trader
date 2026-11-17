@@ -2,6 +2,7 @@ import { InstrumentType } from "@heswell/trading-schemas";
 import { InstrumentGrid, type SelectedInstrument } from "@heswell/trading-ui";
 import { Text } from "@salt-ds/core";
 import { useCallback, useState } from "react";
+import { ShowcaseContextPanel } from "./shared/ShowcaseContextPanel";
 
 const useLog = () => {
   const [log, setLog] = useState(
@@ -21,14 +22,12 @@ const Layout = ({
   children: React.ReactNode;
   log: string;
 }) => (
-  <div
-    style={{ display: "flex", flexDirection: "column", height: "100%", gap: 8 }}
-  >
+  <ShowcaseContextPanel>
     <div style={{ flex: 1, minHeight: 0 }}>{children}</div>
-    <Text role="status" aria-live="polite">
+    <Text role="status" aria-live="polite" style={{ marginTop: 8 }}>
       {log}
     </Text>
-  </div>
+  </ShowcaseContextPanel>
 );
 
 export const InstrumentGridExamples = () => {
