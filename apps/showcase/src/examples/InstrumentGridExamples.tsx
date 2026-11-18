@@ -1,6 +1,10 @@
 import { InstrumentType } from "@heswell/trading-schemas";
-import { InstrumentGrid, type SelectedInstrument } from "@heswell/trading-ui";
-import { Text } from "@salt-ds/core";
+import {
+  InstrumentGrid,
+  NamePrompt,
+  type SelectedInstrument,
+} from "@heswell/trading-ui";
+import { Button, Text } from "@salt-ds/core";
 import { useCallback, useState } from "react";
 import { ShowcaseContextPanel } from "./shared/ShowcaseContextPanel";
 
@@ -123,5 +127,34 @@ export const InstrumentGridFutures = () => {
         onSell={action("Sell")}
       />
     </Layout>
+  );
+};
+
+/** The grid's Salt dialogs on their own: name a new list or column set. */
+export const InstrumentGridDialogs = () => {
+  const [open, setOpen] = useState(false);
+  const [log, setLog] = useState("Open a dialog");
+  return (
+    <ShowcaseContextPanel>
+      <div style={{ display: "flex", gap: 8 }}>
+        <Button onClick={() => setOpen(true)}>New column set…</Button>
+      </div>
+      {open ? (
+        <NamePrompt
+          onClose={() => setOpen(false)}
+          onConfirm={(name) => setLog(`Created ${name}`)}
+          placeholder="e.g. Screening"
+          title="New column set"
+          validate={(name) =>
+            name.toLowerCase() === "prices"
+              ? `A column set called ${name} already exists`
+              : undefined
+          }
+        />
+      ) : null}
+      <Text role="status" aria-live="polite" style={{ marginTop: 8 }}>
+        {log}
+      </Text>
+    </ShowcaseContextPanel>
   );
 };

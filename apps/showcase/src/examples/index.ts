@@ -7,6 +7,7 @@ import {
 } from "./BlotterExamples";
 import {
   InstrumentGridContinuations,
+  InstrumentGridDialogs,
   InstrumentGridExamples,
   InstrumentGridFutures,
   InstrumentGridPrices,
@@ -147,6 +148,14 @@ export const examples: ShowcaseExample[] = [
     description:
       "Open with ?active=200 (local mode) to tick 200 instruments with sparklines.",
     Component: InstrumentGridTicking200,
+  },
+  {
+    id: "instrument-grid-dialogs",
+    group: "InstrumentGrid",
+    title: "Dialogs",
+    description:
+      "The grid's Salt dialogs on their own (no browser prompts). New column set: a name, checked against the sets there are (try prices); Enter creates.",
+    Component: InstrumentGridDialogs,
   },
   {
     id: "side-label-variants",

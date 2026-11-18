@@ -34,6 +34,7 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   InstrumentGrid: "docs/components/instrument-grid.md#instrumentgrid",
   InstrumentLookupProvider: "docs/components/selection-and-linking.md",
   InstrumentPicker: "docs/components/selection-and-linking.md",
+  NamePrompt: "docs/components/instrument-grid.md#dialogs",
   LinkGroupMenuButton: "docs/components/selection-and-linking.md",
   LinkGroupProvider:
     "docs/components/selection-and-linking.md#how-linking-works",

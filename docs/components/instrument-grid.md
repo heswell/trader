@@ -79,10 +79,14 @@ Buy, Sell and Depth sit at the right edge of a row, in a narrow client-side colu
 
 One 22px row under the table (linked instruments show in the link column and the workspace ChannelPicker, so the footer does not repeat them):
 
-- **Column-set tabs** on the left, text tabs; the active one is on the grid's surface (`--salt-container-primary-background`), moved up 1px over the footer's top border with that border down its sides and along its bottom, so the line runs along the footer and round the tab (no indicator bar); other tabs show a neutral underline on hover: click, or Left / Right arrows on a focused tab, to show a set. "+" saves the columns in view as a new set, named in a prompt.
+- **Column-set tabs** on the left, text tabs; the active one is on the grid's surface (`--salt-container-primary-background`), moved up 1px over the footer's top border with that border down its sides and along its bottom, so the line runs along the footer and round the tab (no indicator bar); other tabs show a neutral underline on hover: click, or Left / Right arrows on a focused tab, to show a set. "+" saves the columns in view as a new set, named in a `NamePrompt` (see [Dialogs](#dialogs)).
 - **Row count**: the rows in the body, "N rows", kept current from the data source's `resize` events. Under a filter-bar filter it is the filtered count, bold with a filter icon; the server sends no unfiltered total, so it is never "x of y". Pinned rows are not counted.
 - **Columns** on the right opens the vuu column picker.
 
+
+## Dialogs
+
+The grid never uses browser prompts. Naming (a new watchlist, a new column set) uses `NamePrompt`: a vuu `Prompt` (Salt Dialog) with one Salt Input, focused and selected on open. Enter or Create confirms; `validate` returns an error shown under the field, and while there is one Create is disabled. Deleting a watchlist asks in a warning `Prompt`, Cancel focused. Showcase: `#instrument-grid-dialogs`.
 
 ## Rows
 
