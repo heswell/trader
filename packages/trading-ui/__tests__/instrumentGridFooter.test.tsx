@@ -93,4 +93,29 @@ describe("InstrumentGridFooter", () => {
     });
     expect(columnSetModel.activeColumnSet?.name).toBe("Prices");
   });
+
+  test("+ names a new column set in a prompt, refusing duplicates", () => {
+    const { columnSetModel } = renderFooter();
+    fireEvent.click(screen.getByRole("button", { name: "New column set" }));
+    const input = screen.getByRole("textbox", { name: "Name" });
+    const create = screen.getByRole("button", {
+      name: "Create",
+    }) as HTMLButtonElement;
+
+    fireEvent.change(input, { target: { value: "prices" } });
+    expect(
+      screen.getByText("A column set with this name already exists"),
+    ).toBeTruthy();
+    expect(create.disabled).toBe(true);
+
+    fireEvent.change(input, { target: { value: "Spreads" } });
+    fireEvent.click(create);
+    expect(columnSetModel.columnSets.map(({ name }) => name)).toEqual([
+      "Prices",
+      "Valuation",
+      "Spreads",
+    ]);
+    expect(columnSetModel.activeColumnSet?.name).toBe("Spreads");
+    expect(screen.queryByRole("textbox", { name: "Name" })).toBeNull();
+  });
 });

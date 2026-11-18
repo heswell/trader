@@ -1,5 +1,4 @@
 import { Button } from "@salt-ds/core";
-import { useWindow } from "@salt-ds/window";
 import type { DataSource } from "@vuu-ui/vuu-data-types";
 import {
   type ColumnModel,
@@ -10,6 +9,7 @@ import {
 } from "@vuu-ui/vuu-table-extras";
 import cx from "clsx";
 import { type KeyboardEvent, useEffect, useState } from "react";
+import { NamePrompt } from "../NamePrompt";
 
 const classBase = "tradingInstrumentGridFooter";
 
@@ -70,19 +70,8 @@ const ColumnSetTabs = ({
 }: {
   columnSetModel: ColumnSetModel;
 }) => {
-  const targetWindow = useWindow();
   const { activeColumnSet, columnSets } = useColumnSetsState(columnSetModel);
-
-  const newColumnSet = () => {
-    const name = targetWindow?.prompt("Name the new column set")?.trim();
-    if (!name) return;
-    const error = getColumnSetNameError(name, columnSetModel.columnSets);
-    if (error) {
-      targetWindow?.alert(error);
-      return;
-    }
-    columnSetModel.saveAs(name);
-  };
+  const [naming, setNaming] = useState(false);
 
   // Arrow keys move between tabs and show that set, like a tablist.
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -138,12 +127,23 @@ const ColumnSetTabs = ({
       <button
         aria-label="New column set"
         className={`${classBase}-newSet`}
-        onClick={newColumnSet}
+        onClick={() => setNaming(true)}
         title="Save the columns in view as a new column set"
         type="button"
       >
         +
       </button>
+      {naming ? (
+        <NamePrompt
+          onClose={() => setNaming(false)}
+          onConfirm={(name) => columnSetModel.saveAs(name)}
+          placeholder="e.g. Screening"
+          title="New column set"
+          validate={(name) =>
+            getColumnSetNameError(name, columnSetModel.columnSets)
+          }
+        />
+      ) : null}
     </div>
   );
 };

@@ -32,6 +32,23 @@ const newId = (name: string, existing: Watchlist[]) => {
   return id;
 };
 
+/**
+ * Why `name` can't name a new watchlist, or undefined if it can. Names are
+ * compared trimmed and ignoring case; `currentId` is the list being renamed.
+ */
+export const watchlistNameError = (
+  name: string,
+  lists: readonly Watchlist[],
+  currentId?: string,
+) => {
+  const trimmed = name.trim();
+  if (!trimmed) return "Enter a name";
+  const lower = trimmed.toLowerCase();
+  return lists.some((l) => l.id !== currentId && l.name.toLowerCase() === lower)
+    ? `A watchlist called ${trimmed} already exists`
+    : undefined;
+};
+
 /** Defensive parse: persisted settings can come from any version / host. */
 export const parseWatchlists = (json: string | null | undefined) => {
   if (!json) return EMPTY_WATCHLISTS;

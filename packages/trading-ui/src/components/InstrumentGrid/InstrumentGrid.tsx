@@ -11,7 +11,10 @@ import {
   useContextPanel,
   useHideContextPanel,
 } from "@vuu-ui/core";
-import { ContextPanelProvider as ControlsContextPanelProvider } from "@vuu-ui/vuu-ui-controls";
+import {
+  ContextPanelProvider as ControlsContextPanelProvider,
+  Prompt,
+} from "@vuu-ui/vuu-ui-controls";
 import type { DataSource } from "@vuu-ui/vuu-data-types";
 import { ContextMenuProvider } from "@vuu-ui/vuu-context-menu";
 import type {
@@ -111,7 +114,8 @@ import {
   rowRicOf,
   useGridChannelLinks,
 } from "./linkColumn";
-import { useWatchlists } from "./watchlists";
+import { NamePrompt } from "../NamePrompt";
+import { useWatchlists, watchlistNameError } from "./watchlists";
 import type { SparklineCellOptions } from "../Sparkline/Sparkline";
 import gridCss from "./InstrumentGrid.css";
 
@@ -730,21 +734,61 @@ const InstrumentGridInner = forwardRef<
       else if (id === "sell") onSell?.(instrument);
       else if (id === "depth") onOpenDepth?.(instrument);
       else if (id === "watchlist-new") {
-        const name = targetWindow?.prompt("Watchlist name");
-        if (name) watchlists.create(name, [instrument.ric]);
+        setNewWatchlist({ rics: [instrument.ric], show: false });
       } else if (id.startsWith("watchlist-add:")) {
         watchlists.add(id.slice("watchlist-add:".length), instrument.ric);
       } else return false;
       return true;
     },
-    [onBuy, onSell, onOpenDepth, watchlists, targetWindow],
+    [onBuy, onSell, onOpenDepth, watchlists],
   );
 
-  const createWatchlist = useCallback(() => {
-    const name = targetWindow?.prompt("Watchlist name");
-    if (!name?.trim()) return;
-    setWatchlistId(watchlists.create(name, selected ? [selected.ric] : []));
-  }, [targetWindow, watchlists, selected]);
+  // --- watchlist prompts: name a new list, confirm a delete
+  /** A new list's first rics, and whether to show it once created. */
+  const [newWatchlist, setNewWatchlist] = useState<{
+    rics: string[];
+    show: boolean;
+  }>();
+  const [deletingId, setDeletingId] = useState<string>();
+  const deleting = watchlists.lists.find((l) => l.id === deletingId);
+  const createWatchlist = useCallback(
+    () => setNewWatchlist({ rics: selected ? [selected.ric] : [], show: true }),
+    [selected],
+  );
+  const confirmNewWatchlist = (name: string) => {
+    if (!newWatchlist) return;
+    const id = watchlists.create(name, newWatchlist.rics);
+    if (newWatchlist.show) setWatchlistId(id);
+  };
+  const watchlistPrompts = (
+    <>
+      {newWatchlist ? (
+        <NamePrompt
+          onClose={() => setNewWatchlist(undefined)}
+          onConfirm={confirmNewWatchlist}
+          placeholder="e.g. Energy majors"
+          title="New watchlist"
+          validate={(name) => watchlistNameError(name, watchlists.lists)}
+        />
+      ) : null}
+      {deleting ? (
+        <Prompt
+          confirmButtonLabel="Delete"
+          disableAccent
+          initialFocusedItem="cancel"
+          onClose={() => setDeletingId(undefined)}
+          onConfirm={() => watchlists.remove(deleting.id)}
+          open
+          status="warning"
+          title={`Delete ${deleting.name}?`}
+        >
+          {`The watchlist and its ${deleting.rics.length} ${
+            deleting.rics.length === 1 ? "instrument" : "instruments"
+          } are removed. This can't be undone.`}
+        </Prompt>
+      ) : null}
+    </>
+  );
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: Ctrl+Shift+F shortcut for the grid
@@ -763,7 +807,7 @@ const InstrumentGridInner = forwardRef<
         <InstrumentGridHeader
           filterCount={filterClauseCount(userFilter)}
           onAddToWatchlist={watchlists.add}
-          onDeleteWatchlist={watchlists.remove}
+          onDeleteWatchlist={setDeletingId}
           onNewWatchlist={createWatchlist}
           onRemoveFromWatchlist={watchlists.removeRic}
           onScopeChange={setWatchlistId}
@@ -833,6 +877,7 @@ const InstrumentGridInner = forwardRef<
           filtered={filterClauseCount(userFilter) > 0}
         />
       ) : null}
+      {watchlistPrompts}
     </div>
   );
 });
