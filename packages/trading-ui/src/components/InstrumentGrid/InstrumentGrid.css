@@ -159,7 +159,7 @@
   padding-top: 1px;
 }
 
-/* column-set tabs: text tabs, the active one underlined */
+/* column-set tabs: text tabs; the active one on the grid surface, bordered */
 .tradingInstrumentGridFooter-tabs {
   gap: var(--salt-spacing-50);
   padding-inline: var(--salt-spacing-50);
@@ -190,7 +190,10 @@
   background: transparent;
 }
 
-.tradingInstrumentGridFooter-tab:hover::after {
+/* the selected tab needs none: its surface and borders mark it */
+.tradingInstrumentGridFooter-tab:not(
+    .tradingInstrumentGridFooter-tabSelected
+  ):hover::after {
   background: var(--salt-navigable-indicator-hover);
 }
 
@@ -205,10 +208,6 @@
   background: var(--salt-container-primary-background);
   color: var(--salt-content-primary-foreground);
   font-weight: var(--salt-text-fontWeight-strong);
-}
-
-.tradingInstrumentGridFooter .tradingInstrumentGridFooter-tabSelected::after {
-  background: var(--salt-navigable-indicator-active);
 }
 
 .tradingInstrumentGridFooter-newSet {
