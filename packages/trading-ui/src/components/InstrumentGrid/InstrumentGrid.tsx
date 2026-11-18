@@ -626,7 +626,7 @@ const InstrumentGridInner = forwardRef<
   );
   // From the footer: select and focus a linked row. Only offered while
   // linked rows are pinned, as the Table cannot scroll to a row by key yet
-  // (ScrollingAPI.scrollToKey is a stub in vuu-ui 5.0.0-alpha.8).
+  // (ScrollingAPI.scrollToKey is a stub in vuu-ui 5.0.0-alpha.8 and alpha.9).
   const tableRef = useRef<HTMLDivElement>(null);
   const showLinkedRow = useCallback((ric: string) => {
     const row = tableRef.current
