@@ -119,7 +119,10 @@ export const UserSettingsExample = () => {
   const { storage, writes } = useObservedStorage();
   return (
     <div style={column}>
-      <Text>Create a watchlist from the grid toolbar; writes appear here:</Text>
+      <Text>
+        Create a watchlist from the grid's scope menu (the panel title); writes
+        appear here:
+      </Text>
       <pre style={{ margin: 0, minHeight: 48, whiteSpace: "pre-wrap" }}>
         {writes.join("\n") || "(none yet)"}
       </pre>

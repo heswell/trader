@@ -1,3 +1,4 @@
+import { linkInstrument } from "../../instrument-context/channelLinks";
 import { useInstrumentLinkBus } from "../../instrument-context/InstrumentContext";
 import type { LinkGroupId } from "../../instrument-context/linkGroups";
 import type { SelectedInstrument } from "../../instrument-context/selectedInstrument";
@@ -186,7 +187,15 @@ export const ChannelPicker = ({
     instrument: SelectedInstrument,
     viaKeyboard: boolean,
   ) => {
-    bus.publish(activeChannel, instrument, CHANNEL_PICKER_SOURCE);
+    // One channel per instrument: picking a ric another channel holds
+    // moves it to the active channel.
+    linkInstrument(
+      bus,
+      channels,
+      activeChannel,
+      instrument,
+      CHANNEL_PICKER_SOURCE,
+    );
     addRecentRic(instrument.ric);
     closeSearch(viaKeyboard);
   };

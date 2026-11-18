@@ -4,12 +4,12 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 581 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 600 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
 - **data**: [applySelectionChange](#applyselectionchange), [ChartDataSourceOptions](#chartdatasourceoptions), [connectToVuuServer](#connecttovuuserver), [DataSourceRows](#datasourcerows), [DataSourceRowsConfig](#datasourcerowsconfig), [DataSourceRowsUpdate](#datasourcerowsupdate), [DEFAULT_RPC_TIMEOUT_MS](#default_rpc_timeout_ms), [disconnectedRpcError](#disconnectedrpcerror), [disconnectFromVuuServer](#disconnectfromvuuserver), [editOrdersInSession](#editordersinsession), [openOrderEditSession](#openordereditsession), [OrderEdits](#orderedits), [OrderEditSession](#ordereditsession), [rpcTimeoutError](#rpctimeouterror), [RpcTransportFailure](#rpctransportfailure), [sendTradingRpc](#sendtradingrpc), [StaleOrderEditError](#staleorderediterror), [subscribeTradingRows](#subscribetradingrows), [toTradingRow](#totradingrow), [tradingColumnNames](#tradingcolumnnames), [TradingDataMode](#tradingdatamode), [TradingDataModeContextValue](#tradingdatamodecontextvalue), [TradingDataProvider](#tradingdataprovider), [TradingDataProviderProps](#tradingdataproviderprops), [TradingDataSourceOptions](#tradingdatasourceoptions), [TradingRow](#tradingrow), [TradingRows](#tradingrows), [TradingRowsOptions](#tradingrowsoptions), [TradingRpcError](#tradingrpcerror), [TradingRpcOptions](#tradingrpcoptions), [tradingTableSchema](#tradingtableschema), [tradingVuuTable](#tradingvuutable), [useChartDataSource](#usechartdatasource), [useDataSourceRows](#usedatasourcerows), [UseDataSourceRowsOptions](#usedatasourcerowsoptions), [useHasDataProvider](#usehasdataprovider), [useTableSelectedKeys](#usetableselectedkeys), [useTradingDataMode](#usetradingdatamode), [useTradingDataSource](#usetradingdatasource), [useTradingRows](#usetradingrows), [VuuServerConnection](#vuuserverconnection), [whenSubscribed](#whensubscribed), [withRpcTimeout](#withrpctimeout)
-- **instrument-context**: [ACTIVE_CHANNEL_STATE_KEY](#active_channel_state_key), [ACTIVE_GROUP](#active_group), [ACTIVE_LINK_GROUP](#active_link_group), [bindInstrumentLinkStore](#bindinstrumentlinkstore), [BroadcastChannelLike](#broadcastchannellike), [ComponentLinkGroup](#componentlinkgroup), [connectBroadcastChannel](#connectbroadcastchannel), [ConnectBroadcastChannelOptions](#connectbroadcastchanneloptions), [createInstrumentLinkBus](#createinstrumentlinkbus), [CreateInstrumentLinkBusOptions](#createinstrumentlinkbusoptions), [DEFAULT_LINK_CHANNEL_NAME](#default_link_channel_name), [DEFAULT_LINK_GROUP](#default_link_group), [DEFAULT_LINK_GROUPS](#default_link_groups), [ensureInstrumentLinkPersistence](#ensureinstrumentlinkpersistence), [getInstrumentLinkBus](#getinstrumentlinkbus), [getInstrumentLinkStore](#getinstrumentlinkstore), [INSTRUMENT_LINK_BUS_VERSION](#instrument_link_bus_version), [INSTRUMENT_LINK_STATE_KEY](#instrument_link_state_key), [INSTRUMENT_LINK_STATE_TITLE](#instrument_link_state_title), [INSTRUMENT_LINK_STATE_VERSION](#instrument_link_state_version), [InstrumentContextProvider](#instrumentcontextprovider), [InstrumentContextProviderProps](#instrumentcontextproviderprops), [InstrumentContextValue](#instrumentcontextvalue), [InstrumentLinkBus](#instrumentlinkbus), [InstrumentLinkListener](#instrumentlinklistener), [InstrumentLinkPersistence](#instrumentlinkpersistence), [InstrumentLinkSelection](#instrumentlinkselection), [InstrumentLinkStateStore](#instrumentlinkstatestore), [InstrumentLinkTransport](#instrumentlinktransport), [InstrumentSelection](#instrumentselection), [isUnlinkedGroup](#isunlinkedgroup), [LINK_GROUP_PERSIST_PREFIX](#link_group_persist_prefix), [LINK_GROUP_STATE_KEY](#link_group_state_key), [LINK_SELECTIONS_KEY](#link_selections_key), [linkGroupDefinition](#linkgroupdefinition), [LinkGroupDefinition](#linkgroupdefinition-1), [LinkGroupId](#linkgroupid), [LinkGroupProps](#linkgroupprops), [LinkGroupProvider](#linkgroupprovider), [MAX_RECENT_RICS](#max_recent_rics), [readSavedSelections](#readsavedselections), [resetInstrumentLinkPersistence](#resetinstrumentlinkpersistence), [sameInstrument](#sameinstrument), [sanitizeSelectedInstrument](#sanitizeselectedinstrument), [SelectedInstrument](#selectedinstrument), [UNLINKED](#unlinked), [UNLINKED_GROUP](#unlinked_group), [useActiveChannelPersistence](#useactivechannelpersistence), [useComponentLinkGroup](#usecomponentlinkgroup), [UseComponentLinkGroupOptions](#usecomponentlinkgroupoptions), [useComponentSetting](#usecomponentsetting), [useInheritedLinkGroup](#useinheritedlinkgroup), [useInstrumentLinkBus](#useinstrumentlinkbus), [useInstrumentLinkPersistence](#useinstrumentlinkpersistence), [useOptionalWorkspaceChannel](#useoptionalworkspacechannel), [useSelectedInstrument](#useselectedinstrument), [UseSelectedInstrumentOptions](#useselectedinstrumentoptions), [useWorkspaceChannel](#useworkspacechannel), [useWorkspaceItemState](#useworkspaceitemstate), [WORKSPACE_ITEM_STATE_TYPE](#workspace_item_state_type), [WORKSPACE_ITEM_STATE_VERSION](#workspace_item_state_version), [WorkspaceChannelContextValue](#workspacechannelcontextvalue), [WorkspaceChannelProvider](#workspacechannelprovider), [WorkspaceChannelProviderProps](#workspacechannelproviderprops), [workspaceItemState](#workspaceitemstate), [WorkspaceItemState](#workspaceitemstate-1)
+- **instrument-context**: [ACTIVE_CHANNEL_STATE_KEY](#active_channel_state_key), [ACTIVE_GROUP](#active_group), [ACTIVE_LINK_GROUP](#active_link_group), [bindInstrumentLinkStore](#bindinstrumentlinkstore), [BroadcastChannelLike](#broadcastchannellike), [channelOfRic](#channelofric), [clearChannel](#clearchannel), [ComponentLinkGroup](#componentlinkgroup), [connectBroadcastChannel](#connectbroadcastchannel), [ConnectBroadcastChannelOptions](#connectbroadcastchanneloptions), [createInstrumentLinkBus](#createinstrumentlinkbus), [CreateInstrumentLinkBusOptions](#createinstrumentlinkbusoptions), [DEFAULT_LINK_CHANNEL_NAME](#default_link_channel_name), [DEFAULT_LINK_GROUP](#default_link_group), [DEFAULT_LINK_GROUPS](#default_link_groups), [ensureInstrumentLinkPersistence](#ensureinstrumentlinkpersistence), [getInstrumentLinkBus](#getinstrumentlinkbus), [getInstrumentLinkStore](#getinstrumentlinkstore), [INSTRUMENT_LINK_BUS_VERSION](#instrument_link_bus_version), [INSTRUMENT_LINK_STATE_KEY](#instrument_link_state_key), [INSTRUMENT_LINK_STATE_TITLE](#instrument_link_state_title), [INSTRUMENT_LINK_STATE_VERSION](#instrument_link_state_version), [InstrumentContextProvider](#instrumentcontextprovider), [InstrumentContextProviderProps](#instrumentcontextproviderprops), [InstrumentContextValue](#instrumentcontextvalue), [InstrumentLinkBus](#instrumentlinkbus), [InstrumentLinkListener](#instrumentlinklistener), [InstrumentLinkPersistence](#instrumentlinkpersistence), [InstrumentLinkSelection](#instrumentlinkselection), [InstrumentLinkStateStore](#instrumentlinkstatestore), [InstrumentLinkTransport](#instrumentlinktransport), [InstrumentSelection](#instrumentselection), [isUnlinkedGroup](#isunlinkedgroup), [LINK_GROUP_PERSIST_PREFIX](#link_group_persist_prefix), [LINK_GROUP_STATE_KEY](#link_group_state_key), [LINK_SELECTIONS_KEY](#link_selections_key), [linkGroupDefinition](#linkgroupdefinition), [LinkGroupDefinition](#linkgroupdefinition-1), [LinkGroupId](#linkgroupid), [LinkGroupProps](#linkgroupprops), [LinkGroupProvider](#linkgroupprovider), [linkInstrument](#linkinstrument), [MAX_RECENT_RICS](#max_recent_rics), [readSavedSelections](#readsavedselections), [resetInstrumentLinkPersistence](#resetinstrumentlinkpersistence), [sameInstrument](#sameinstrument), [sanitizeSelectedInstrument](#sanitizeselectedinstrument), [SelectedInstrument](#selectedinstrument), [UNLINKED](#unlinked), [UNLINKED_GROUP](#unlinked_group), [useActiveChannelPersistence](#useactivechannelpersistence), [useComponentLinkGroup](#usecomponentlinkgroup), [UseComponentLinkGroupOptions](#usecomponentlinkgroupoptions), [useComponentSetting](#usecomponentsetting), [useInheritedLinkGroup](#useinheritedlinkgroup), [useInstrumentLinkBus](#useinstrumentlinkbus), [useInstrumentLinkPersistence](#useinstrumentlinkpersistence), [useOptionalWorkspaceChannel](#useoptionalworkspacechannel), [useSelectedInstrument](#useselectedinstrument), [UseSelectedInstrumentOptions](#useselectedinstrumentoptions), [useWorkspaceChannel](#useworkspacechannel), [useWorkspaceItemState](#useworkspaceitemstate), [WORKSPACE_ITEM_STATE_TYPE](#workspace_item_state_type), [WORKSPACE_ITEM_STATE_VERSION](#workspace_item_state_version), [WorkspaceChannelContextValue](#workspacechannelcontextvalue), [WorkspaceChannelProvider](#workspacechannelprovider), [WorkspaceChannelProviderProps](#workspacechannelproviderprops), [workspaceItemState](#workspaceitemstate), [WorkspaceItemState](#workspaceitemstate-1)
 - **hooks**: [actionableOrders](#actionableorders), [BookOrderRow](#bookorderrow), [BookQueueOptions](#bookqueueoptions), [BookQueueState](#bookqueuestate), [buildLadderQueues](#buildladderqueues), [DepthLevel](#depthlevel), [FlashDirection](#flashdirection), [FollowedInstrument](#followedinstrument), [InstrumentPrice](#instrumentprice), [LadderQueue](#ladderqueue), [LadderQueues](#ladderqueues), [LevelFlash](#levelflash), [levelKey](#levelkey), [MarketDepthState](#marketdepthstate), [OrderBookChildOrder](#orderbookchildorder), [OrderBookOptions](#orderbookoptions), [OrderBookParentOrder](#orderbookparentorder), [OrderBookState](#orderbookstate), [OWN_ORDER_STATUSES](#own_order_statuses), [OwnOrder](#ownorder), [OwnOrdersAtPrice](#ownordersatprice), [ownOrdersKey](#ownorderskey), [OwnWorkingOrders](#ownworkingorders), [OwnWorkingOrdersOptions](#ownworkingordersoptions), [priceKey](#pricekey), [QueueOrder](#queueorder), [QueuePosition](#queueposition), [restsAtLimit](#restsatlimit), [useBookQueue](#usebookqueue), [useFollowedInstrument](#usefollowedinstrument), [useInstrumentPrice](#useinstrumentprice), [useLevelFlash](#uselevelflash), [useMarketDepth](#usemarketdepth), [useOrderBook](#useorderbook), [useOwnExchangeOrderIds](#useownexchangeorderids), [useOwnWorkingOrders](#useownworkingorders), [useStableCallback](#usestablecallback), [useTradedVolume](#usetradedvolume)
 - **connection**: [combineConnectionState](#combineconnectionstate), [CONNECTION_STATE_SEVERITY](#connection_state_severity), [ConnectionAttemptClosedError](#connectionattemptclosederror), [ConnectionAttemptTimeoutError](#connectionattempttimeouterror), [connectionClientWithTimeout](#connectionclientwithtimeout), [ConnectionReconnectInfo](#connectionreconnectinfo), [connectionStateStore](#connectionstatestore), [createResilientConnectionRegistry](#createresilientconnectionregistry), [DEFAULT_LOGIN_TIMEOUT_MS](#default_login_timeout_ms), [DEFAULT_RECONNECT_POLICY](#default_reconnect_policy), [observeConnectionRegistry](#observeconnectionregistry), [observeDefaultConnectionRegistry](#observedefaultconnectionregistry), [reconnectDelay](#reconnectdelay), [ReconnectPolicy](#reconnectpolicy), [reconnectSchedule](#reconnectschedule), [ReconnectState](#reconnectstate), [ReconnectSupervisor](#reconnectsupervisor), [ReconnectSupervisorOptions](#reconnectsupervisoroptions), [ReconnectTimers](#reconnecttimers), [ResilientConnectionRegistryOptions](#resilientconnectionregistryoptions), [resolveReconnectPolicy](#resolvereconnectpolicy), [StaleIndicatorOptions](#staleindicatoroptions), [StaleIndicatorState](#staleindicatorstate), [StaleReason](#stalereason), [SupervisorSnapshot](#supervisorsnapshot), [SupervisorState](#supervisorstate), [toConnectionState](#toconnectionstate), [TradingConnectionState](#tradingconnectionstate), [TradingConnectionStateOverride](#tradingconnectionstateoverride), [TradingConnectionStatus](#tradingconnectionstatus), [useStaleIndicator](#usestaleindicator), [useTradingConnectionStatus](#usetradingconnectionstatus), [useVuuConnectionStatuses](#usevuuconnectionstatuses), [withConnectTimeout](#withconnecttimeout), [worstConnectionState](#worstconnectionstate)
 - **notifications**: [DEFAULT_DEDUPE_MS](#default_dedupe_ms), [DEFAULT_NOTIFICATION_KINDS](#default_notification_kinds), [DEFAULT_RATE_LIMIT](#default_rate_limit), [describeOrderEvent](#describeorderevent), [describeSuppressed](#describesuppressed), [FillEventTracker](#filleventtracker), [FillSound](#fillsound), [NotificationGate](#notificationgate), [NotificationGateOptions](#notificationgateoptions), [orderEventFromFill](#ordereventfromfill), [orderEventFromParentOrder](#ordereventfromparentorder), [orderEventKey](#ordereventkey), [orderEventKindForStatus](#ordereventkindforstatus), [OrderEventPriceFormat](#ordereventpriceformat), [OrderEventToast](#ordereventtoast), [ParentOrderEventTracker](#parentordereventtracker), [RateLimit](#ratelimit), [rpcRejectEvent](#rpcrejectevent), [ToastStatus](#toaststatus), [TRADING_ORDER_EVENT_KINDS](#trading_order_event_kinds), [TradingNotificationKinds](#tradingnotificationkinds), [TradingNotificationsContextValue](#tradingnotificationscontextvalue), [TradingNotificationSettings](#tradingnotificationsettings), [TradingNotificationsProvider](#tradingnotificationsprovider), [TradingNotificationsProviderProps](#tradingnotificationsproviderprops), [TradingNotificationToast](#tradingnotificationtoast), [TradingOrderEvent](#tradingorderevent), [TradingOrderEventKind](#tradingordereventkind), [useTradingNotifications](#usetradingnotifications)
@@ -22,7 +22,7 @@ Imports: `@heswell/trading-ui`. 581 exports. Types are shown as written in the s
 - **components/ExposureTreemap**: [ExposureMeasure](#exposuremeasure), [ExposureTreemap](#exposuretreemap), [ExposureTreemapProps](#exposuretreemapprops)
 - **components/FillProgressBar**: [FillProgressBar](#fillprogressbar), [FillProgressBarProps](#fillprogressbarprops)
 - **components/FillsBlotter**: [FillsBlotter](#fillsblotter), [FillsBlotterProps](#fillsblotterprops), [FillsGrouping](#fillsgrouping), [FillsLinkContext](#fillslinkcontext)
-- **components/InstrumentGrid**: [addToWatchlist](#addtowatchlist), [buildInstrumentGridFilter](#buildinstrumentgridfilter), [cellUnchanged](#cellunchanged), [ChangeCell](#changecell), [COLUMN_SETS_SETTINGS_KEY](#column_sets_settings_key), [createWatchlist](#createwatchlist), [DEFAULT_INSTRUMENT_GRID_COLUMNS](#default_instrument_grid_columns), [defaultColumnSets](#defaultcolumnsets), [deleteWatchlist](#deletewatchlist), [EMPTY_WATCHLISTS](#empty_watchlists), [FILTERS_SETTINGS_KEY](#filters_settings_key), [gridSettingsKey](#gridsettingskey), [GROUPABLE_COLUMNS](#groupable_columns), [InstrumentAction](#instrumentaction), [InstrumentGrid](#instrumentgrid), [instrumentGridColumn](#instrumentgridcolumn), [InstrumentGridColumnOptions](#instrumentgridcolumnoptions), [instrumentGridColumns](#instrumentgridcolumns), [InstrumentGridFilterParts](#instrumentgridfilterparts), [InstrumentGridProps](#instrumentgridprops), [parseColumnSets](#parsecolumnsets), [parseFilterState](#parsefilterstate), [parseWatchlists](#parsewatchlists), [PhaseCell](#phasecell), [phaseLabel](#phaselabel), [priceFormatOf](#priceformatof), [PriceMoveCell](#pricemovecell), [QuantityCell](#quantitycell), [quickFilterExpression](#quickfilterexpression), [registerInstrumentGridRenderers](#registerinstrumentgridrenderers), [removeFromWatchlist](#removefromwatchlist), [renameWatchlist](#renamewatchlist), [SCREENING_COLUMNS](#screening_columns), [SCREENING_SET_COLUMNS](#screening_set_columns), [SPARKLINE_COLUMN](#sparkline_column), [StoredSetting](#storedsetting), [useStoredSetting](#usestoredsetting), [useWatchlists](#usewatchlists), [UseWatchlistsResult](#usewatchlistsresult), [Watchlist](#watchlist), [watchlistFilterExpression](#watchlistfilterexpression), [WATCHLISTS_SETTINGS_KEY](#watchlists_settings_key), [WatchlistState](#watchliststate)
+- **components/InstrumentGrid**: [addToWatchlist](#addtowatchlist), [buildInstrumentGridFilter](#buildinstrumentgridfilter), [cellUnchanged](#cellunchanged), [ChangeCell](#changecell), [COLUMN_SETS_SETTINGS_KEY](#column_sets_settings_key), [createWatchlist](#createwatchlist), [DEFAULT_INSTRUMENT_GRID_COLUMNS](#default_instrument_grid_columns), [DEFAULT_VIEW_SETTINGS](#default_view_settings), [defaultColumnSets](#defaultcolumnsets), [deleteWatchlist](#deletewatchlist), [EMPTY_WATCHLISTS](#empty_watchlists), [FILTERS_SETTINGS_KEY](#filters_settings_key), [GridChannelLinks](#gridchannellinks), [GridChannelLinksProvider](#gridchannellinksprovider), [gridSettingsKey](#gridsettingskey), [GridViewSettings](#gridviewsettings), [GROUPABLE_COLUMNS](#groupable_columns), [INSTRUMENT_GRID_LINK_SOURCE](#instrument_grid_link_source), [InstrumentAction](#instrumentaction), [InstrumentGrid](#instrumentgrid), [instrumentGridColumn](#instrumentgridcolumn), [InstrumentGridColumnOptions](#instrumentgridcolumnoptions), [instrumentGridColumns](#instrumentgridcolumns), [InstrumentGridFilterParts](#instrumentgridfilterparts), [InstrumentGridProps](#instrumentgridprops), [InstrumentRow](#instrumentrow), [isInLinkCell](#isinlinkcell), [LINK_COLUMN](#link_column), [linkColumnDescriptor](#linkcolumndescriptor), [parseColumnSets](#parsecolumnsets), [parseFilterState](#parsefilterstate), [parseViewSettings](#parseviewsettings), [parseWatchlists](#parsewatchlists), [PhaseCell](#phasecell), [phaseLabel](#phaselabel), [priceFormatOf](#priceformatof), [PriceMoveCell](#pricemovecell), [QuantityCell](#quantitycell), [quickFilterExpression](#quickfilterexpression), [registerInstrumentGridRenderers](#registerinstrumentgridrenderers), [registerLinkCellRenderer](#registerlinkcellrenderer), [removeFromWatchlist](#removefromwatchlist), [renameWatchlist](#renamewatchlist), [rowRicOf](#rowricof), [SCREENING_COLUMNS](#screening_columns), [SCREENING_SET_COLUMNS](#screening_set_columns), [SPARKLINE_COLUMN](#sparkline_column), [StoredSetting](#storedsetting), [toInstrument](#toinstrument), [useGridChannelLinks](#usegridchannellinks), [useStoredSetting](#usestoredsetting), [useWatchlists](#usewatchlists), [UseWatchlistsResult](#usewatchlistsresult), [VIEW_SETTINGS_KEY](#view_settings_key), [Watchlist](#watchlist), [watchlistFilterExpression](#watchlistfilterexpression), [WATCHLISTS_SETTINGS_KEY](#watchlists_settings_key), [WatchlistState](#watchliststate), [withSearchCasings](#withsearchcasings)
 - **components/InstrumentLookup**: [InstrumentLookup](#instrumentlookup), [InstrumentLookupProvider](#instrumentlookupprovider), [useInstrumentLookup](#useinstrumentlookup)
 - **components/InstrumentPicker**: [INSTRUMENT_PICKER_SOURCE](#instrument_picker_source), [InstrumentPicker](#instrumentpicker), [InstrumentPickerProps](#instrumentpickerprops), [instrumentSearchFilter](#instrumentsearchfilter), [toSelectedInstrument](#toselectedinstrument)
 - **components/LinkGroupSelector**: [LinkGroupMenuButton](#linkgroupmenubutton), [LinkGroupSelector](#linkgroupselector), [LinkGroupSelectorProps](#linkgroupselectorprops), [LinkGroupSwatch](#linkgroupswatch), [PanelLinkGroupSelector](#panellinkgroupselector)
@@ -815,6 +815,26 @@ dialog clears the selections. Returns unbind.
 bindInstrumentLinkStore(bus: InstrumentLinkBus, store: InstrumentLinkStateStore): (() => void)
 ```
 
+#### channelOfRic
+
+*function* · [instrument-context/channelLinks.ts](../../packages/trading-ui/src/instrument-context/channelLinks.ts#L6)
+
+The channel (one of `channels`) whose instrument is `ric`, if any.
+
+```ts
+channelOfRic(bus: InstrumentLinkBus, channels: readonly LinkGroupDefinition[], ric: string): LinkGroupDefinition | undefined
+```
+
+#### clearChannel
+
+*function* · [instrument-context/channelLinks.ts](../../packages/trading-ui/src/instrument-context/channelLinks.ts#L38)
+
+Empty `channel`. Returns whether anything changed.
+
+```ts
+clearChannel(bus: InstrumentLinkBus, channel: LinkGroupId, source?: string): boolean
+```
+
 #### connectBroadcastChannel
 
 *function* · [instrument-context/broadcastChannelTransport.ts](../../packages/trading-ui/src/instrument-context/broadcastChannelTransport.ts#L53)
@@ -908,6 +928,18 @@ labelled with the id.
 
 ```ts
 linkGroupDefinition(group: LinkGroupId, groups: readonly LinkGroupDefinition[] = DEFAULT_LINK_GROUPS): LinkGroupDefinition
+```
+
+#### linkInstrument
+
+*function* · [instrument-context/channelLinks.ts](../../packages/trading-ui/src/instrument-context/channelLinks.ts#L18)
+
+Link `instrument` to `channel`, one channel per instrument: any other of
+`channels` that holds the same ric is cleared, so linking to another
+channel moves the instrument. Returns whether anything changed.
+
+```ts
+linkInstrument(bus: InstrumentLinkBus, channels: readonly LinkGroupDefinition[], channel: LinkGroupId, instrument: SelectedInstrument, source?: string): boolean
 ```
 
 #### readSavedSelections
@@ -2873,7 +2905,7 @@ Props of [`AccountSelector`](#accountselector).
 
 #### ChannelPicker
 
-*component* · [components/ChannelPicker/ChannelPicker.tsx](../../packages/trading-ui/src/components/ChannelPicker/ChannelPicker.tsx#L92)
+*component* · [components/ChannelPicker/ChannelPicker.tsx](../../packages/trading-ui/src/components/ChannelPicker/ChannelPicker.tsx#L93)
 
 The workspace channel picker: one segment per channel showing the
 channel's instrument. Clicking a segment makes it the active channel
@@ -2892,7 +2924,7 @@ Also accepts the standard HTML attributes.
 
 #### CHANNEL_PICKER_SOURCE
 
-*const* · [components/ChannelPicker/ChannelPicker.tsx](../../packages/trading-ui/src/components/ChannelPicker/ChannelPicker.tsx#L39)
+*const* · [components/ChannelPicker/ChannelPicker.tsx](../../packages/trading-ui/src/components/ChannelPicker/ChannelPicker.tsx#L40)
 
 Selection source id of the picker's publishes.
 
@@ -2904,7 +2936,7 @@ const CHANNEL_PICKER_SOURCE: "ChannelPicker"
 
 #### ChannelPickerProps
 
-*interface* · [components/ChannelPicker/ChannelPicker.tsx](../../packages/trading-ui/src/components/ChannelPicker/ChannelPicker.tsx#L41)
+*interface* · [components/ChannelPicker/ChannelPicker.tsx](../../packages/trading-ui/src/components/ChannelPicker/ChannelPicker.tsx#L42)
 
 Props of [`ChannelPicker`](#channelpicker).
 
@@ -3182,18 +3214,23 @@ Also accepts the props of `TableCellProps (@vuu-ui/vuu-table-types)`, `TableCell
 
 #### InstrumentGrid
 
-*component* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L254)
+*component* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L242)
 
 Instrument grid: a preset over the vuu Table bound to instrumentPrices
 (or prices). Price-move and change renderers, formatting per instrument,
 grouping, a FilterBar for saved screens and quick filters, named column
-sets (switched in the toolbar, edited in the column picker), watchlists,
-phase badge, optional sparklines and client-side context menu actions.
-The footer shows the row count and opens the column picker in the
-context panel. Selecting a row calls
-`setSelectedInstrument(instrument, "InstrumentGrid")` in the grid's link
-group; instruments selected elsewhere in the group are selected in the
-grid (`followSelection`).
+sets (tabs in the footer, edited in the column picker), watchlists,
+phase badge, optional sparklines, a link column for the workspace
+channels and Buy / Sell / Depth row actions (hover, selected row, B / S /
+D keys, context menu). The footer also shows the row count and opens the
+column picker in the context panel.
+
+The first column links rows to the workspace channels: a channel dot on
+rows whose instrument a channel holds (ringed for the active channel),
+and a menu to link a row, one channel per instrument. On a focused row,
+Enter (or double-click) links to the active channel, 1-4 to a channel and
+L opens the menu. Selecting a row is local to the grid: only an explicit
+link publishes.
 
 Props: `InstrumentGridProps`
 
@@ -3203,21 +3240,16 @@ Props: `InstrumentGridProps`
 | `table?` | `Extract<TradingSchemaName, "instrumentPrices" \| "prices">` | `"instrumentPrices"` | Table to bind to. "prices" has no static data (description, sector...). |
 | `columns?` | `readonly string[]` |  | Visible column names, in order. Defaults to a trading preset. |
 | `simulatedOnly?` | `boolean` | `false` | Only instruments quoted by the exchange simulator (default false). Unquoted rows show empty (null) price cells. |
-| `instrumentType?` | `InstrumentType` |  | Show only this instrument type initially (EQUITY \| FUTURE); the toolbar can change it when the data source has an instrumentType column. |
-| `initialGroupBy?` | `string` |  | Group by this column initially ("exchange" \| "sector" \| "currency"). |
+| `instrumentType?` | `InstrumentType` |  | Show only this instrument type (EQUITY \| FUTURE \| ...), when the data source has an instrumentType column. Without it, instrument type is a quick filter in the filter bar. |
+| `initialGroupBy?` | `string` |  | Group by this column initially ("exchange" \| "sector" \| "currency" \| "instrumentType" \| "underlying"). After that, grouping is done from the column header menu. |
 | `sparkline?` | `false \| Partial<SparklineCellOptions>` |  | Sparkline column options; false removes it. |
-| `showToolbar?` | `boolean` | `true` | Hide the toolbar (watchlists, search, grouping, column sets) and filter bar. |
-| `showFooter?` | `boolean` | `true` | Hide the footer (row count, column picker). Default true. |
+| `showToolbar?` | `boolean` | `true` | Show the header (scope picker, panel settings) and the filter bar. Default true; false hides both. |
+| `showFooter?` | `boolean` | `true` | Offer the footer (row count, column picker). Default true; the panel settings menu then shows or hides it. |
 | `onBuy?` | `InstrumentAction` |  | Client-side actions; the matching menu items / buttons appear when set. Inside an OrderTicketLauncherProvider, Buy / Sell default to opening the order ticket (see `launchOrderTicket`). |
 | `onSell?` | `InstrumentAction` |  |  |
 | `launchOrderTicket?` | `boolean` | `true` | Default Buy / Sell to `useOrderTicketLauncher().openOrderTicket` when a launcher is present and no onBuy / onSell is given. Default true. |
-| `followSelection?` | `boolean` | `true` | Select (highlight) the instrument selected elsewhere in this component's link group. Default true. |
 | `onOpenDepth?` | `InstrumentAction` |  |  |
 | `watchlistStorage?` | `UserSettingsStorage` |  | Where watchlists, column sets and saved filters are persisted (default: UserSettingsProvider / localStorage). Column sets and filters are kept per grid `id`. |
-| `linkGroup?` | `LinkGroupId` |  | Link group (channel) to join: e.g. "red", "green", or "unlinked". The initial group when the user can change it (`showLinkGroupSelector`); a later change of the prop is applied too. Default: the saved group, then `defaultLinkGroup`, then the inherited group. (from `LinkGroupProps`) |
-| `defaultLinkGroup?` | `LinkGroupId` |  | Group used when there is no `linkGroup` prop and nothing saved. (from `LinkGroupProps`) |
-| `onLinkGroupChange?` | `(linkGroup: LinkGroupId) => void` |  | The user picked another group in the selector. (from `LinkGroupProps`) |
-| `showLinkGroupSelector?` | `boolean` | `false` | Show a LinkGroupSelector in the component header / toolbar. (from `LinkGroupProps`) |
 
 Also accepts the standard HTML attributes and `ref`.
 
@@ -3257,9 +3289,21 @@ Also accepts the props of `TableCellProps (@vuu-ui/vuu-table-types)`, `TableCell
 
 ### Hooks (components/InstrumentGrid)
 
+#### useGridChannelLinks
+
+*hook* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L99)
+
+Channel links for the grid: which channel holds each ric, and actions
+that link with one channel per instrument. Uses the workspace channels
+(WorkspaceChannelProvider), else the default channels with red active.
+
+```ts
+useGridChannelLinks(): GridChannelLinks
+```
+
 #### useStoredSetting
 
-*hook* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L115)
+*hook* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L157)
 
 A JSON setting read once from `storage` (per key) and written on save.
 A storage failure leaves the setting unsaved, never throws.
@@ -3294,7 +3338,7 @@ addToWatchlist(state: WatchlistState, id: string, ric: string): WatchlistState
 
 #### buildInstrumentGridFilter
 
-*function* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L51)
+*function* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L113)
 
 AND of the grid's filters as one vuu filter string ("" = no filter).
 
@@ -3326,7 +3370,7 @@ createWatchlist(state: WatchlistState, name: string, rics: string[] = []): { sta
 
 #### defaultColumnSets
 
-*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L84)
+*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L126)
 
 Column sets offered before the user has saved any.
 
@@ -3346,7 +3390,7 @@ deleteWatchlist(state: WatchlistState, id: string): WatchlistState
 
 #### gridSettingsKey
 
-*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L14)
+*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L56)
 
 Settings are per grid when it has an id, so differently configured grids keep their own.
 
@@ -3376,9 +3420,19 @@ columns, e.g. `prices` only has no description / currency / sector.
 instrumentGridColumns({ available, sparkline, visible = DEFAULT_INSTRUMENT_GRID_COLUMNS, }: InstrumentGridColumnOptions): { all: ColumnDescriptor[]; visible: ColumnDescriptor[]; }
 ```
 
+#### isInLinkCell
+
+*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L194)
+
+Whether `target` is inside a link cell.
+
+```ts
+isInLinkCell(target: EventTarget | null): boolean
+```
+
 #### parseColumnSets
 
-*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L21)
+*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L63)
 
 Defensive parse: persisted settings can come from any version / host.
 
@@ -3388,12 +3442,22 @@ parseColumnSets(json: string | null | undefined): ColumnSetsState | undefined
 
 #### parseFilterState
 
-*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L63)
+*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L105)
 
 Defensive parse of the FilterBar's saved filters.
 
 ```ts
 parseFilterState(json: string | null | undefined): FilterState | undefined
+```
+
+#### parseViewSettings
+
+*function* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L29)
+
+Defensive parse: unknown or missing fields keep their default.
+
+```ts
+parseViewSettings(json: string | null | undefined): GridViewSettings | undefined
 ```
 
 #### parseWatchlists
@@ -3429,7 +3493,7 @@ priceFormatOf(dataRow: DataRow): PriceFormat
 
 #### quickFilterExpression
 
-*function* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L15)
+*function* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L17)
 
 Quick filter: text search over ric and description. "" when there is no text.
 
@@ -3445,6 +3509,16 @@ Register the instrument grid cell renderers with vuu (idempotent).
 
 ```ts
 registerInstrumentGridRenderers(): void
+```
+
+#### registerLinkCellRenderer
+
+*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L404)
+
+Register the link cell and header renderers with vuu (idempotent).
+
+```ts
+registerLinkCellRenderer(): void
 ```
 
 #### removeFromWatchlist
@@ -3467,14 +3541,48 @@ Renames a watchlist (a blank name keeps the old one).
 renameWatchlist(state: WatchlistState, id: string, name: string): WatchlistState
 ```
 
+#### rowRicOf
+
+*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L185)
+
+The ric of the grid row containing `target` (from its link cell).
+
+```ts
+rowRicOf(target: EventTarget | null): string | undefined
+```
+
+#### toInstrument
+
+*function* · [components/InstrumentGrid/instrumentRow.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentRow.ts#L13)
+
+The instrument of a grid row, with the static fields the row has (a
+`prices` row has none of description, currency, ...).
+
+```ts
+toInstrument(row: InstrumentRow): SelectedInstrument
+```
+
 #### watchlistFilterExpression
 
-*function* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L33)
+*function* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L95)
 
 Filter for a watchlist: its rics (an empty list matches nothing).
 
 ```ts
 watchlistFilterExpression(rics: readonly string[]): string
+```
+
+#### withSearchCasings
+
+*function* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L54)
+
+The FilterBar's Search is a plain `contains`, which vuu matches case
+sensitively: "bp" would not find BP.L. Its clause (one `contains`, or an
+`or` of `contains` with the same text, over `searchColumns`) is widened
+to the casings quickFilterExpression tries. Other clauses are unchanged.
+
+```ts
+withSearchCasings(filter: Filter, searchColumns: readonly string[]): Filter
 ```
 
 ### Constants (components/InstrumentGrid)
@@ -3497,6 +3605,14 @@ Visible by default, in this order (those present in the data source).
 const DEFAULT_INSTRUMENT_GRID_COLUMNS: string[]
 ```
 
+#### DEFAULT_VIEW_SETTINGS
+
+*const* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L22)
+
+```ts
+const DEFAULT_VIEW_SETTINGS: GridViewSettings
+```
+
 #### EMPTY_WATCHLISTS
 
 *const* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L19)
@@ -3513,6 +3629,14 @@ const EMPTY_WATCHLISTS: WatchlistState
 const FILTERS_SETTINGS_KEY: "trading.instrumentGrid.filters"
 ```
 
+#### GridChannelLinksProvider
+
+*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L92)
+
+```ts
+const GridChannelLinksProvider: Provider<GridChannelLinks | undefined>
+```
+
 #### GROUPABLE_COLUMNS
 
 *const* · [components/InstrumentGrid/instrumentGridColumns.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridColumns.ts#L317)
@@ -3521,6 +3645,36 @@ Columns a user can group by (when present).
 
 ```ts
 const GROUPABLE_COLUMNS: readonly ["exchange", "sector", "currency", "instrumentType", "underlying"]
+```
+
+#### INSTRUMENT_GRID_LINK_SOURCE
+
+*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L46)
+
+Selection source of the grid's link publishes.
+
+```ts
+const INSTRUMENT_GRID_LINK_SOURCE: "InstrumentGrid"
+```
+
+#### LINK_COLUMN
+
+*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L41)
+
+Name of the grid's client-side link column.
+
+```ts
+const LINK_COLUMN: "link"
+```
+
+#### linkColumnDescriptor
+
+*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L49)
+
+The link column: always first, not in column sets or the column picker.
+
+```ts
+const linkColumnDescriptor: ColumnDescriptor
 ```
 
 #### SCREENING_COLUMNS
@@ -3551,6 +3705,14 @@ const SCREENING_SET_COLUMNS: string[]
 const SPARKLINE_COLUMN: "sparkline"
 ```
 
+#### VIEW_SETTINGS_KEY
+
+*const* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L12)
+
+```ts
+const VIEW_SETTINGS_KEY: "trading.instrumentGrid.view"
+```
+
 #### WATCHLISTS_SETTINGS_KEY
 
 *const* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L17)
@@ -3560,6 +3722,39 @@ const WATCHLISTS_SETTINGS_KEY: "trading.watchlists"
 ```
 
 ### Interfaces (components/InstrumentGrid)
+
+#### GridChannelLinks
+
+*interface* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L61)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `channels` | `readonly LinkGroupDefinition[]` |  | The workspace channels, in picker order. |
+| `activeChannel` | `LinkGroupId` |  | The channel Enter / double-click link to. |
+| `linkedRics` | `readonly string[]` |  | Rics on a channel, in channel order (at most one per channel). |
+| `channelOf` | `(ric: string) => LinkGroupDefinition \| undefined` |  | The channel holding `ric`, if any (at most one). |
+| `instrumentOf` | `(channel: LinkGroupId) => SelectedInstrument \| undefined` |  | The instrument `channel` holds now. |
+| `link` | `(instrument: SelectedInstrument, channel: LinkGroupId) => void` |  | Link to `channel`, moving the instrument off any other channel. |
+| `linkRic` | `(ric: string, channel: LinkGroupId) => void` |  | Link a ric shown in the grid (with the row's static data when known). |
+| `clear` | `(channel: LinkGroupId) => void` |  |  |
+| `menuRic` | `string \| undefined` |  | Ric whose link menu is open. |
+| `setMenuRic` | `(ric: string \| undefined) => void` |  |  |
+| `remember` | `(instrument: SelectedInstrument) => void` |  | Keep a rendered row's instrument, for linkRic from the keyboard. |
+| `instrumentForRic` | `(ric: string) => SelectedInstrument` |  | A rendered row's instrument (static data), else just its ric. |
+| `pinLinked?` | `boolean` |  | Whether linked rows are pinned above the others (set by the grid). |
+| `setPinLinked?` | `(pinLinked: boolean) => void` |  |  |
+
+#### GridViewSettings
+
+*interface* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L15)
+
+View settings from the panel settings (gear) menu and the link column header.
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `filterBar` | `boolean` |  |  |
+| `footer` | `boolean` |  |  |
+| `pinLinked` | `boolean` |  | Pin rows linked to a channel above the scrolling rows. |
 
 #### InstrumentGridColumnOptions
 
@@ -3573,7 +3768,7 @@ const WATCHLISTS_SETTINGS_KEY: "trading.watchlists"
 
 #### InstrumentGridFilterParts
 
-*interface* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L36)
+*interface* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L98)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -3586,13 +3781,13 @@ const WATCHLISTS_SETTINGS_KEY: "trading.watchlists"
 
 #### InstrumentGridProps
 
-*interface* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L126)
+*interface* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L127)
 
 Props of [`InstrumentGrid`](#instrumentgrid).
 
 #### StoredSetting
 
-*interface* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L103)
+*interface* · [components/InstrumentGrid/gridSettings.ts](../../packages/trading-ui/src/components/InstrumentGrid/gridSettings.ts#L145)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -3636,11 +3831,21 @@ Props of [`InstrumentGrid`](#instrumentgrid).
 
 #### InstrumentAction
 
-*type* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L124)
+*type* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L125)
 
 ```ts
 type InstrumentAction = (instrument: SelectedInstrument) => void
 ```
+
+#### InstrumentRow
+
+*type* · [components/InstrumentGrid/instrumentRow.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentRow.ts#L4)
+
+A grid data row (or context menu `dataRow`).
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `hasColumn?` | `(name: string) => boolean` |  |  |
 
 ## components/InstrumentLookup
 
@@ -4186,7 +4391,7 @@ Also accepts the standard HTML attributes.
 
 #### OrderTicketLauncherProvider
 
-*component* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L78)
+*component* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L80)
 
 Lets any component open the order ticket with a prefill
 (`useOrderTicketLauncher().openOrderTicket({ ric, side, price, quantity })`)
@@ -4203,17 +4408,21 @@ Props: `OrderTicketLauncherProviderProps`
 
 #### OrderTicketPanel
 
-*component* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L168)
+*component* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L174)
 
 The docked order ticket: a panel-variant OrderTicket that also receives
 `openOrderTicket` prefills while mounted (instead of a dialog opening).
 A `prefill` prop applies until the launcher sends one.
+
+A launch (Buy / Sell from a grid row, say) focuses and selects quantity,
+so the user can type the size straight away: keyboard first.
 
 Props: `OrderTicketPanelProps`
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `launcherTarget?` | `boolean` | `true` | Receive openOrderTicket prefills (default true). |
+| `ref?` | `Ref<HTMLDivElement>` |  |  |
 | `variant?` | `OrderTicketVariant` |  | "panel" (default): full form for a docked panel or dialog. "compact": a one-line strip for a grid row or ladder. (from `OrderTicketProps`) |
 | `showInstrumentPicker?` | `boolean` |  | Show the instrument picker (default true; false for a fixed ric). (from `OrderTicketProps`) |
 | `actions?` | `ReactNode` |  | Extra content in the actions row (e.g. a Close button). (from `OrderTicketProps`) |
@@ -4256,7 +4465,7 @@ useOrderTicket({ prefill, followSelection = true, linkGroup, publishSelection = 
 
 #### useOrderTicketLauncher
 
-*hook* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L134)
+*hook* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L136)
 
 Open the order ticket from anywhere (see OrderTicketLauncherProvider).
 
@@ -4266,7 +4475,7 @@ useOrderTicketLauncher(): OrderTicketLauncher
 
 #### useOrderTicketTarget
 
-*hook* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L148)
+*hook* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L150)
 
 Receive launcher prefills in a custom docked ticket; returns the latest
 prefill (a new object per openOrderTicket call).
@@ -4816,7 +5025,7 @@ it loads.
 
 #### OrderTicketLauncher
 
-*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L20)
+*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L22)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -4826,13 +5035,13 @@ it loads.
 
 #### OrderTicketLauncherProviderProps
 
-*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L62)
+*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L64)
 
 Props of [`OrderTicketLauncherProvider`](#orderticketlauncherprovider).
 
 #### OrderTicketPanelProps
 
-*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L158)
+*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L160)
 
 Props of [`OrderTicketPanel`](#orderticketpanel).
 
@@ -5003,7 +5212,7 @@ type OrderTicketSubmission = | { state: "idle" }
 
 #### OrderTicketTarget
 
-*type* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L18)
+*type* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L20)
 
 ```ts
 type OrderTicketTarget = (prefill: OrderTicketPrefill) => void

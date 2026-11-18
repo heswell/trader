@@ -113,7 +113,7 @@ export const examples: ShowcaseExample[] = [
     group: "InstrumentGrid",
     title: "Instrument grid",
     description:
-      "instrumentPrices with price-move, change, phase, sparkline; watchlists, grouping, column picker, quick filter, context menu (Buy/Sell/Depth callbacks).",
+      "The redesigned grid. Header: the title picks All instruments or a watchlist; the gear shows or hides the filter bar (Ctrl+Shift+F) and footer. Filter bar: Search and quick filters. Link column: link a row to a channel (or press 1-4); linked rows pin to the top. Row actions: Buy / Sell / Depth on hover or the selected row (B / S / D). Footer: column-set tabs, linked instruments, row count. Try it in Dark too.",
     Component: InstrumentGridExamples,
   },
   {

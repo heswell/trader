@@ -1,18 +1,8 @@
 import {
-  InstrumentType,
+  type InstrumentType,
   Side,
   type TradingSchemaName,
 } from "@heswell/trading-schemas";
-import {
-  Button,
-  Dropdown,
-  Input,
-  Option,
-  Overlay,
-  OverlayPanel,
-  OverlayPanelContent,
-  OverlayTrigger,
-} from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
 import {
@@ -33,20 +23,16 @@ import type { Filter, FilterState } from "@vuu-ui/vuu-filter-types";
 import { FilterBar } from "@vuu-ui/vuu-filters";
 import {
   ColumnModel,
-  ColumnPickerAction,
   type ColumnSetsChangeHandler,
   type ColumnSetsState,
-  ColumnSetSwitcher,
-  DataSourceStats,
   getActiveColumnSetColumns,
-  TableFooter,
-  TableFooterTray,
   useColumnSetModel,
 } from "@vuu-ui/vuu-table-extras";
 import { Table } from "@vuu-ui/vuu-table";
 import type {
   ColumnDescriptor,
   TableConfig,
+  TablePinnedRows,
   TableRowSelectHandler,
 } from "@vuu-ui/vuu-table-types";
 import {
@@ -58,6 +44,8 @@ import cx from "clsx";
 import {
   forwardRef,
   type HTMLAttributes,
+  type KeyboardEvent,
+  type MouseEvent,
   type ReactNode,
   useCallback,
   useEffect,
@@ -67,65 +55,77 @@ import {
 } from "react";
 import { tradingTableSchema } from "../../data/tradingTables";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
-import {
-  type SelectedInstrument,
-  useSelectedInstrument,
-} from "../../instrument-context/InstrumentContext";
-import {
-  type LinkGroupProps,
-  useComponentLinkGroup,
-} from "../../instrument-context/useComponentLinkGroup";
+import type { LinkGroupId } from "../../instrument-context/linkGroups";
+import type { SelectedInstrument } from "../../instrument-context/selectedInstrument";
 import {
   type UserSettingsStorage,
   useUserSettingsStorage,
 } from "../../utils/userSettingsStorage";
 import { useStableCallback } from "../../hooks/useStableCallback";
 import { InstrumentLookupProvider } from "../InstrumentLookup";
-import { LinkGroupSelector } from "../LinkGroupSelector";
 import { useStaleData } from "../StaleIndicator/useStaleData";
 import { useOrderTicketLauncher } from "../OrderTicket/OrderTicketLauncher";
 import { registerTradingCellRenderers } from "../TradingCellRenderers";
 import { registerInstrumentGridRenderers } from "./cellRenderers";
 import {
   COLUMN_SETS_SETTINGS_KEY,
+  DEFAULT_VIEW_SETTINGS,
   defaultColumnSets,
   FILTERS_SETTINGS_KEY,
+  type GridViewSettings,
   gridSettingsKey,
   parseColumnSets,
   parseFilterState,
+  parseViewSettings,
   useStoredSetting,
+  VIEW_SETTINGS_KEY,
 } from "./gridSettings";
 import {
-  GROUPABLE_COLUMNS,
   instrumentGridColumns,
   SCREENING_SET_COLUMNS,
   SPARKLINE_COLUMN,
 } from "./instrumentGridColumns";
-import { buildInstrumentGridFilter } from "./instrumentGridFilter";
+import {
+  buildInstrumentGridFilter,
+  withSearchCasings,
+} from "./instrumentGridFilter";
+import { InstrumentGridFooter } from "./InstrumentGridFooter";
+import {
+  actionsColumnDescriptor,
+  type RowActionHandlers,
+  RowActionsProvider,
+  registerRowActionsRenderer,
+  rowActionOfKey,
+} from "./rowActions";
+import {
+  ALL_INSTRUMENTS,
+  filterClauseCount,
+  InstrumentGridHeader,
+} from "./InstrumentGridHeader";
+import { toInstrument } from "./instrumentRow";
+import {
+  GridChannelLinksProvider,
+  isInLinkCell,
+  linkColumnDescriptor,
+  registerLinkCellRenderer,
+  rowRicOf,
+  useGridChannelLinks,
+} from "./linkColumn";
 import { useWatchlists } from "./watchlists";
 import type { SparklineCellOptions } from "../Sparkline/Sparkline";
 import gridCss from "./InstrumentGrid.css";
 
 registerInstrumentGridRenderers();
+registerLinkCellRenderer();
+registerRowActionsRenderer();
 registerTradingCellRenderers();
 
 const classBase = "tradingInstrumentGrid";
-const SOURCE = "InstrumentGrid";
-const ALL = "__all__";
-const NONE = "__none__";
-const TYPE_LABELS: Readonly<Record<string, string>> = {
-  [ALL]: "All types",
-  [InstrumentType.Equity]: "Equities",
-  [InstrumentType.Future]: "Futures",
-  [InstrumentType.Index]: "Indices",
-  [InstrumentType.Continuation]: "Continuations",
-};
 
 export type InstrumentAction = (instrument: SelectedInstrument) => void;
 
 export interface InstrumentGridProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect">,
-    LinkGroupProps {
+  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect"> {
   /** Supply a data source (otherwise one is created from `table`). */
   dataSource?: DataSource;
   /** Table to bind to. "prices" has no static data (description, sector...). */
@@ -138,17 +138,28 @@ export interface InstrumentGridProps
    */
   simulatedOnly?: boolean;
   /**
-   * Show only this instrument type initially (EQUITY | FUTURE); the toolbar
-   * can change it when the data source has an instrumentType column.
+   * Show only this instrument type (EQUITY | FUTURE | ...), when the data
+   * source has an instrumentType column. Without it, instrument type is a
+   * quick filter in the filter bar.
    */
   instrumentType?: InstrumentType;
-  /** Group by this column initially ("exchange" | "sector" | "currency"). */
+  /**
+   * Group by this column initially ("exchange" | "sector" | "currency" |
+   * "instrumentType" | "underlying"). After that, grouping is done from the
+   * column header menu.
+   */
   initialGroupBy?: string;
   /** Sparkline column options; false removes it. */
   sparkline?: false | Partial<SparklineCellOptions>;
-  /** Hide the toolbar (watchlists, search, grouping, column sets) and filter bar. */
+  /**
+   * Show the header (scope picker, panel settings) and the filter bar.
+   * Default true; false hides both.
+   */
   showToolbar?: boolean;
-  /** Hide the footer (row count, column picker). Default true. */
+  /**
+   * Offer the footer (row count, column picker). Default true; the panel
+   * settings menu then shows or hides it.
+   */
   showFooter?: boolean;
   /**
    * Client-side actions; the matching menu items / buttons appear when set.
@@ -162,11 +173,6 @@ export interface InstrumentGridProps
    * launcher is present and no onBuy / onSell is given. Default true.
    */
   launchOrderTicket?: boolean;
-  /**
-   * Select (highlight) the instrument selected elsewhere in this component's
-   * link group. Default true.
-   */
-  followSelection?: boolean;
   onOpenDepth?: InstrumentAction;
   /**
    * Where watchlists, column sets and saved filters are persisted (default:
@@ -183,6 +189,9 @@ interface InstrumentGridInnerProps extends InstrumentGridProps {
   /** FilterBar filters as persisted. */
   storedFilterState?: FilterState;
   onFilterStateChange: (state: FilterState) => void;
+  /** Panel settings (filter bar, footer) as persisted. */
+  storedViewSettings?: GridViewSettings;
+  onViewSettingsChange: (settings: GridViewSettings) => void;
 }
 
 /**
@@ -207,49 +216,28 @@ const ContextPanelBridge = ({ children }: { children: ReactNode }) => {
 const DEFAULT_QUICK_FILTER_COLUMNS = [
   "exchange",
   "sector",
+  "instrumentType",
   "marketCapUsd",
   "pe",
   "dividendYield",
 ];
 
-const toInstrument = (row: {
-  [key: string]: unknown;
-  hasColumn?: (name: string) => boolean;
-}): SelectedInstrument => {
-  const get = (name: string) =>
-    row.hasColumn && !row.hasColumn(name) ? undefined : row[name];
-  const num = (name: string) => {
-    const v = get(name);
-    return v === undefined || v === "" || v === null ? undefined : Number(v);
-  };
-  const str = (name: string) => {
-    const v = get(name);
-    return v === undefined || v === null ? undefined : String(v);
-  };
-  return {
-    ric: String(row.ric),
-    description: str("description"),
-    currency: str("currency"),
-    exchange: str("exchange"),
-    tickSize: num("tickSize"),
-    tickBands: str("tickBands"),
-    lotSize: num("lotSize"),
-    priceDecimals: num("priceDecimals"),
-    contractMultiplier: num("contractMultiplier"),
-  };
-};
-
 /**
  * Instrument grid: a preset over the vuu Table bound to instrumentPrices
  * (or prices). Price-move and change renderers, formatting per instrument,
  * grouping, a FilterBar for saved screens and quick filters, named column
- * sets (switched in the toolbar, edited in the column picker), watchlists,
- * phase badge, optional sparklines and client-side context menu actions.
- * The footer shows the row count and opens the column picker in the
- * context panel. Selecting a row calls
- * `setSelectedInstrument(instrument, "InstrumentGrid")` in the grid's link
- * group; instruments selected elsewhere in the group are selected in the
- * grid (`followSelection`).
+ * sets (tabs in the footer, edited in the column picker), watchlists,
+ * phase badge, optional sparklines, a link column for the workspace
+ * channels and Buy / Sell / Depth row actions (hover, selected row, B / S /
+ * D keys, context menu). The footer also shows the row count and opens the
+ * column picker in the context panel.
+ *
+ * The first column links rows to the workspace channels: a channel dot on
+ * rows whose instrument a channel holds (ringed for the active channel),
+ * and a menu to link a row, one channel per instrument. On a focused row,
+ * Enter (or double-click) links to the active channel, 1-4 to a channel and
+ * L opens the menu. Selecting a row is local to the grid: only an explicit
+ * link publishes.
  */
 export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
   function InstrumentGrid(props, ref) {
@@ -266,21 +254,28 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
       gridSettingsKey(FILTERS_SETTINGS_KEY, id),
       parseFilterState,
     );
-    // Column sets and filters are initial state of the grid's models, so
+    const viewSettings = useStoredSetting(
+      storage,
+      gridSettingsKey(VIEW_SETTINGS_KEY, id),
+      parseViewSettings,
+    );
+    // Column sets, filters and view settings are initial state of the grid's models, so
     // the grid is rendered once they have been read.
     return (
       <InstrumentLookupProvider>
         <ContextPanelProvider>
           <SlotContextPanelProvider>
             <ContextPanelBridge>
-              {columnSets.loaded && filters.loaded ? (
+              {columnSets.loaded && filters.loaded && viewSettings.loaded ? (
                 <InstrumentGridInner
                   {...props}
                   onColumnSetsChange={columnSets.save}
                   onFilterStateChange={filters.save}
+                  onViewSettingsChange={viewSettings.save}
                   ref={ref}
                   storedColumnSets={columnSets.value}
                   storedFilterState={filters.value}
+                  storedViewSettings={viewSettings.value}
                 />
               ) : (
                 <div
@@ -306,26 +301,23 @@ const InstrumentGridInner = forwardRef<
     className,
     columns,
     dataSource: dataSourceProp,
-    defaultLinkGroup,
-    followSelection = true,
     id,
     initialGroupBy,
-    instrumentType: initialInstrumentType,
+    instrumentType,
     launchOrderTicket = true,
-    linkGroup: linkGroupProp,
     onBuy: onBuyProp,
     onColumnSetsChange,
     onFilterStateChange,
-    onLinkGroupChange,
     onOpenDepth,
     onSell: onSellProp,
+    onViewSettingsChange,
     showFooter = true,
-    showLinkGroupSelector = false,
     showToolbar = true,
     simulatedOnly = false,
     sparkline,
     storedColumnSets,
     storedFilterState,
+    storedViewSettings,
     table = "instrumentPrices",
     watchlistStorage,
     ...htmlAttributes
@@ -377,7 +369,7 @@ const InstrumentGridInner = forwardRef<
     useState<readonly ColumnDescriptor[]>(initialVisible);
   useEffect(() => setVisibleColumns(initialVisible), [initialVisible]);
   const config = useMemo<TableConfig>(
-    () => ({ columns: [...visibleColumns] }),
+    () => ({ columns: [linkColumnDescriptor, ...visibleColumns] }),
     [visibleColumns],
   );
   // the model is the picker's own state; rebuild only when the available
@@ -427,58 +419,51 @@ const InstrumentGridInner = forwardRef<
     () => getColumnsByName(filterColumns),
     [filterColumns],
   );
+  // FilterBar Search: free text over ric and description
+  const searchColumns = useMemo(
+    () => ["ric", "description"].filter((c) => available.includes(c)),
+    [available],
+  );
+  const hasTypes = available.includes("instrumentType");
+  const fixedType = hasTypes ? instrumentType : undefined;
   const quickFilterProps = useMemo(
     () => ({
-      allowFind: false,
-      defaultQuickFilterColumns: DEFAULT_QUICK_FILTER_COLUMNS.filter((c) =>
-        available.includes(c),
+      allowFind: searchColumns.length > 0,
+      defaultQuickFilterColumns: DEFAULT_QUICK_FILTER_COLUMNS.filter(
+        (c) => available.includes(c) && !(c === "instrumentType" && fixedType),
       ),
+      showFind: searchColumns,
     }),
-    [available],
+    [available, fixedType, searchColumns],
   );
   const [userFilter, setUserFilter] = useState<Filter>();
   const clearUserFilter = useCallback(() => setUserFilter(undefined), []);
   const userFilterQuery = useMemo(
-    () => (userFilter ? filterAsQuery(userFilter, { columnsByName }) : ""),
-    [userFilter, columnsByName],
+    () =>
+      userFilter
+        ? filterAsQuery(withSearchCasings(userFilter, searchColumns), {
+            columnsByName,
+          })
+        : "",
+    [userFilter, columnsByName, searchColumns],
   );
 
-  // --- filtering: watchlist + search + FilterBar
+  // --- filtering: watchlist + FilterBar (search, quick and saved filters)
   const watchlists = useWatchlists(watchlistStorage);
-  const [watchlistId, setWatchlistId] = useState(ALL);
-  const [text, setText] = useState("");
-  const [debounced, setDebounced] = useState("");
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(text), 150);
-    return () => clearTimeout(t);
-  }, [text]);
+  const [watchlistId, setWatchlistId] = useState(ALL_INSTRUMENTS);
   const watchlist = watchlists.lists.find((l) => l.id === watchlistId);
-  const hasTypes = available.includes("instrumentType");
-  const [typeFilter, setTypeFilter] = useState<string>(
-    initialInstrumentType ?? ALL,
-  );
-  useEffect(
-    () => setTypeFilter(initialInstrumentType ?? ALL),
-    [initialInstrumentType],
-  );
   const filter = useMemo(
     () =>
       buildInstrumentGridFilter({
-        instrumentType: hasTypes && typeFilter !== ALL ? typeFilter : undefined,
-        quickFilter: debounced,
-        searchColumns: ["ric", "description"].filter((c) =>
-          available.includes(c),
-        ),
+        instrumentType: fixedType,
         simulatedOnly: simulatedOnly && hasStaticData,
         userFilter: userFilterQuery,
-        watchlistRics: watchlistId === ALL ? undefined : watchlist?.rics,
+        watchlistRics:
+          watchlistId === ALL_INSTRUMENTS ? undefined : watchlist?.rics,
       }),
     [
       userFilterQuery,
-      debounced,
-      available,
-      hasTypes,
-      typeFilter,
+      fixedType,
       simulatedOnly,
       hasStaticData,
       watchlistId,
@@ -490,24 +475,68 @@ const InstrumentGridInner = forwardRef<
   }, [dataSource, filter]);
   // a deleted selected watchlist falls back to all instruments
   useEffect(() => {
-    if (watchlistId !== ALL && watchlists.loaded && !watchlist) {
-      setWatchlistId(ALL);
+    if (watchlistId !== ALL_INSTRUMENTS && watchlists.loaded && !watchlist) {
+      setWatchlistId(ALL_INSTRUMENTS);
     }
   }, [watchlistId, watchlist, watchlists.loaded]);
 
-  // --- grouping
-  const groupable = GROUPABLE_COLUMNS.filter((c) => available.includes(c));
-  const [groupBy, setGroupBy] = useState(initialGroupBy ?? NONE);
+  // --- grouping is done from the column menus; volume and turnover are
+  // summed in group rows. initialGroupBy only sets the first grouping.
   useEffect(() => {
-    if (groupBy === NONE || !available.includes(groupBy)) {
-      dataSource.groupBy = [];
-    } else {
-      dataSource.aggregations = ["volume", "turnover"]
-        .filter((c) => available.includes(c))
-        .map((column) => ({ column, aggType: AggregationType.Sum }));
-      dataSource.groupBy = [groupBy];
+    dataSource.aggregations = ["volume", "turnover"]
+      .filter((c) => available.includes(c))
+      .map((column) => ({ column, aggType: AggregationType.Sum }));
+  }, [dataSource, available]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: initial grouping only
+  useEffect(() => {
+    if (initialGroupBy && available.includes(initialGroupBy)) {
+      dataSource.groupBy = [initialGroupBy];
     }
-  }, [dataSource, groupBy, available]);
+  }, [dataSource]);
+
+  // --- panel settings: filter bar and footer
+  const [viewSettings, setViewSettings] = useState<GridViewSettings>(
+    () => storedViewSettings ?? DEFAULT_VIEW_SETTINGS,
+  );
+  const updateViewSettings = useCallback(
+    (change: Partial<GridViewSettings>) =>
+      setViewSettings((current) => {
+        const next = { ...current, ...change };
+        onViewSettingsChange(next);
+        return next;
+      }),
+    [onViewSettingsChange],
+  );
+  const setShowFilterBar = useCallback(
+    (filterBar: boolean) => updateViewSettings({ filterBar }),
+    [updateViewSettings],
+  );
+  const setShowFooter = useCallback(
+    (footer: boolean) => updateViewSettings({ footer }),
+    [updateViewSettings],
+  );
+  const setPinLinked = useCallback(
+    (pinLinked: boolean) => updateViewSettings({ pinLinked }),
+    [updateViewSettings],
+  );
+  const filterBarVisible = showToolbar && viewSettings.filterBar;
+  const footerVisible = showFooter && viewSettings.footer;
+  const handleRootKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (
+        showToolbar &&
+        e.ctrlKey &&
+        e.shiftKey &&
+        !e.altKey &&
+        !e.metaKey &&
+        e.key.toLowerCase() === "f"
+      ) {
+        e.preventDefault();
+        setShowFilterBar(!viewSettings.filterBar);
+      }
+    },
+    [showToolbar, setShowFilterBar, viewSettings.filterBar],
+  );
 
   // --- Buy / Sell default to the order ticket launcher
   const launcher = useOrderTicketLauncher();
@@ -540,51 +569,122 @@ const InstrumentGridInner = forwardRef<
     [onSellProp, launch, openOrderTicket],
   );
 
-  // --- selection, shared through the link group
-  const { linkGroup, channel, setLinkGroup } = useComponentLinkGroup({
-    defaultLinkGroup,
-    linkGroup: linkGroupProp,
-    onLinkGroupChange,
-    persistKey: id ? `${SOURCE}:${id}` : SOURCE,
-  });
-  const { selectedInstrument, setSelectedInstrument } = useSelectedInstrument({
-    linkGroup: channel,
-  });
-  const [selected, setSelected] = useState<SelectedInstrument>();
-  const selectedRef = useRef(selected);
-  selectedRef.current = selected;
-  // Follow a selection made elsewhere in the group. The grid's own
-  // selections are already `selected`, so they are not echoed back.
-  useEffect(() => {
-    const ric = selectedInstrument?.ric;
-    if (!followSelection || !ric || ric === selectedRef.current?.ric) return;
-    setSelected(selectedInstrument);
-    // the ric may not be in the grid (filtered, unknown): nothing to show
-    Promise.resolve(
-      dataSource.select?.({
-        type: "SELECT_ROW",
-        rowKey: ric,
-        preserveExistingSelection: false,
-        // Omit<> over the SelectRequest union drops rowKey
-      } as Parameters<NonNullable<DataSource["select"]>>[0]),
-    ).catch(() => undefined);
-  }, [dataSource, followSelection, selectedInstrument]);
-  const handleSelect = useCallback<TableRowSelectHandler>(
-    (row) => {
-      if (row && row.isLeaf !== false) {
-        const instrument = toInstrument(
-          row as unknown as Parameters<typeof toInstrument>[0],
-        );
-        setSelected(instrument);
-        setSelectedInstrument(instrument, SOURCE);
-      } else if (!row) {
-        setSelected(undefined);
-        setSelectedInstrument(undefined, SOURCE);
-      }
-    },
-    [setSelectedInstrument],
+  // --- row actions: Buy / Sell / Depth on hover and the selected row,
+  // B / S / D on the focused row, and in the context menu
+  const rowActions = useMemo<RowActionHandlers>(
+    () => ({ buy: onBuy, sell: onSell, depth: onOpenDepth }),
+    [onBuy, onSell, onOpenDepth],
   );
+  const hasRowActions = Boolean(onBuy || onSell || onOpenDepth);
+  const tableConfig = useMemo<TableConfig>(
+    () =>
+      hasRowActions
+        ? { columns: [...config.columns, actionsColumnDescriptor] }
+        : config,
+    [config, hasRowActions],
+  );
+
+  // --- selection is local to the grid (watchlist add / remove)
+  const [selected, setSelected] = useState<SelectedInstrument>();
+  const handleSelect = useCallback<TableRowSelectHandler>((row) => {
+    if (row && row.isLeaf !== false) {
+      setSelected(
+        toInstrument(row as unknown as Parameters<typeof toInstrument>[0]),
+      );
+    } else if (!row) {
+      setSelected(undefined);
+    }
+  }, []);
   const stableHandleSelect = useStableCallback(handleSelect);
+
+  // --- channel links: the link column and its keys
+  const links = useGridChannelLinks();
+  const {
+    activeChannel,
+    channels,
+    instrumentForRic,
+    linkRic,
+    linkedRics,
+    setMenuRic,
+  } = links;
+  const channelLinks = useMemo(
+    () => ({ ...links, pinLinked: viewSettings.pinLinked, setPinLinked }),
+    [links, viewSettings.pinLinked, setPinLinked],
+  );
+  // Linked rows pin above the rest whatever the grid's filters: the Table's
+  // pinned data source filters on the keys alone.
+  const pinnedRows = useMemo<TablePinnedRows | undefined>(
+    () =>
+      viewSettings.pinLinked && linkedRics.length
+        ? {
+            keyColumn: "ric",
+            keys: [...linkedRics],
+            maxPinnedRows: channels.length,
+          }
+        : undefined,
+    [channels.length, linkedRics, viewSettings.pinLinked],
+  );
+  // From the footer: select and focus a linked row. Only offered while
+  // linked rows are pinned, as the Table cannot scroll to a row by key yet
+  // (ScrollingAPI.scrollToKey is a stub in vuu-ui 5.0.0-alpha.8).
+  const tableRef = useRef<HTMLDivElement>(null);
+  const showLinkedRow = useCallback((ric: string) => {
+    const row = tableRef.current
+      ?.querySelector(`.tradingLinkCell-button[data-ric="${CSS.escape(ric)}"]`)
+      ?.closest(".vuuTableRow");
+    // a data cell: the link cell keeps its clicks from the table
+    const cell = row?.querySelector<HTMLElement>(
+      ".vuuTableCell:not(:has(.tradingLinkCell))",
+    );
+    if (cell) {
+      cell.click();
+      cell.focus();
+    }
+  }, []);
+  const handleKeyDownCapture = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (e.altKey || e.ctrlKey || e.metaKey || e.defaultPrevented) return;
+      const ric = rowRicOf(e.target);
+      if (!ric) return;
+      const action = rowActionOfKey(e.key);
+      if (action && rowActions[action]) {
+        e.preventDefault();
+        e.stopPropagation();
+        rowActions[action]?.(instrumentForRic(ric));
+        return;
+      }
+      let channel: LinkGroupId | undefined;
+      if (e.key === "Enter") channel = activeChannel;
+      else if (/^[1-9]$/.test(e.key)) channel = channels[Number(e.key) - 1]?.id;
+      else if (e.key === "l" || e.key === "L") {
+        e.preventDefault();
+        e.stopPropagation();
+        setMenuRic(ric);
+        return;
+      }
+      if (!channel) return;
+      // Ahead of the table, which would select the row on Enter.
+      e.preventDefault();
+      e.stopPropagation();
+      linkRic(ric, channel);
+    },
+    [
+      activeChannel,
+      channels,
+      instrumentForRic,
+      linkRic,
+      rowActions,
+      setMenuRic,
+    ],
+  );
+  const handleDoubleClick = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      if (isInLinkCell(e.target)) return;
+      const ric = rowRicOf(e.target);
+      if (ric) linkRic(ric, activeChannel);
+    },
+    [activeChannel, linkRic],
+  );
 
   // --- context menu (client-side only)
   const menuBuilder = useCallback<MenuBuilder>(
@@ -599,17 +699,21 @@ const InstrumentGridInner = forwardRef<
       if (onBuy)
         items.push({
           id: "buy",
-          label: `Buy ${instrument.ric}`,
+          label: `Buy ${instrument.ric} (B)`,
           options: instrument,
         });
       if (onSell)
         items.push({
           id: "sell",
-          label: `Sell ${instrument.ric}`,
+          label: `Sell ${instrument.ric} (S)`,
           options: instrument,
         });
       if (onOpenDepth)
-        items.push({ id: "depth", label: "Open depth", options: instrument });
+        items.push({
+          id: "depth",
+          label: `Depth ${instrument.ric} (D)`,
+          options: instrument,
+        });
       items.push({
         label: "Add to watchlist",
         dividerBefore: items.length > 0,
@@ -648,173 +752,55 @@ const InstrumentGridInner = forwardRef<
     [onBuy, onSell, onOpenDepth, watchlists, targetWindow],
   );
 
-  const [newName, setNewName] = useState("");
-  const createFromInput = () => {
-    if (!newName.trim()) return;
-    const id = watchlists.create(newName, selected ? [selected.ric] : []);
-    setNewName("");
-    setWatchlistId(id);
-  };
+  const createWatchlist = useCallback(() => {
+    const name = targetWindow?.prompt("Watchlist name");
+    if (!name?.trim()) return;
+    setWatchlistId(watchlists.create(name, selected ? [selected.ric] : []));
+  }, [targetWindow, watchlists, selected]);
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: Ctrl+Shift+F shortcut for the grid
     <div
       {...htmlAttributes}
       {...staleProps}
       className={cx(classBase, className, staleProps.className)}
-      data-link-group={linkGroup}
       id={id}
+      onKeyDown={(e) => {
+        htmlAttributes.onKeyDown?.(e);
+        if (!e.defaultPrevented) handleRootKeyDown(e);
+      }}
       ref={ref}
     >
       {showToolbar ? (
-        <div
-          className={`${classBase}-toolbar`}
-          role="toolbar"
-          aria-label="Instrument grid"
-        >
-          {showLinkGroupSelector ? (
-            <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
-          ) : null}
-          <Input
-            aria-label="Filter instruments"
-            className={`${classBase}-search`}
-            placeholder="Search ric / description"
-            value={text}
-            onChange={(e) => setText((e.target as HTMLInputElement).value)}
-          />
-          <Dropdown
-            aria-label="Watchlist"
-            className={`${classBase}-select`}
-            selected={[watchlistId]}
-            value={watchlist?.name ?? "All instruments"}
-            onSelectionChange={(_, [id]) => id && setWatchlistId(id)}
-          >
-            <Option value={ALL}>All instruments</Option>
-            {watchlists.lists.map((l) => (
-              <Option key={l.id} value={l.id}>
-                {`${l.name} (${l.rics.length})`}
-              </Option>
-            ))}
-          </Dropdown>
-          <Overlay placement="bottom">
-            <OverlayTrigger>
-              <Button aria-label="Manage watchlists" appearance="bordered">
-                Watchlists
-              </Button>
-            </OverlayTrigger>
-            <OverlayPanel className={`${classBase}-popover`}>
-              <OverlayPanelContent>
-                <div className={`${classBase}-watchlistForm`}>
-                  <Input
-                    aria-label="New watchlist name"
-                    placeholder="New watchlist"
-                    value={newName}
-                    onChange={(e) =>
-                      setNewName((e.target as HTMLInputElement).value)
-                    }
-                    onKeyDown={(e) => e.key === "Enter" && createFromInput()}
-                  />
-                  <Button onClick={createFromInput}>Create</Button>
-                </div>
-                {watchlist ? (
-                  <div className={`${classBase}-watchlistForm`}>
-                    <Button
-                      disabled={!selected}
-                      onClick={() =>
-                        selected && watchlists.add(watchlist.id, selected.ric)
-                      }
-                    >
-                      {`Add ${selected?.ric ?? "selected"} to ${watchlist.name}`}
-                    </Button>
-                    <Button
-                      disabled={!selected}
-                      onClick={() =>
-                        selected &&
-                        watchlists.removeRic(watchlist.id, selected.ric)
-                      }
-                    >
-                      Remove
-                    </Button>
-                    <Button
-                      sentiment="negative"
-                      onClick={() => watchlists.remove(watchlist.id)}
-                    >
-                      Delete list
-                    </Button>
-                  </div>
-                ) : null}
-              </OverlayPanelContent>
-            </OverlayPanel>
-          </Overlay>
-          {hasTypes ? (
-            <Dropdown
-              aria-label="Instrument type"
-              className={`${classBase}-select`}
-              selected={[typeFilter]}
-              value={TYPE_LABELS[typeFilter] ?? typeFilter}
-              onSelectionChange={(_, [t]) => t && setTypeFilter(t)}
-            >
-              {Object.entries(TYPE_LABELS).map(([value, label]) => (
-                <Option key={value} value={value}>
-                  {label}
-                </Option>
-              ))}
-            </Dropdown>
-          ) : null}
-          {groupable.length ? (
-            <Dropdown
-              aria-label="Group by"
-              className={`${classBase}-select`}
-              selected={[groupBy]}
-              value={groupBy === NONE ? "No grouping" : `Group: ${groupBy}`}
-              onSelectionChange={(_, [g]) => g && setGroupBy(g)}
-            >
-              <Option value={NONE}>No grouping</Option>
-              {groupable.map((c) => (
-                <Option key={c} value={c}>{`Group by ${c}`}</Option>
-              ))}
-            </Dropdown>
-          ) : null}
-          <ColumnSetSwitcher
-            className={`${classBase}-columnSets`}
-            columnSetModel={columnSetModel}
-          />
-          <span className={`${classBase}-actions`}>
-            {onBuy ? (
-              <Button
-                appearance="solid"
-                sentiment="positive"
-                disabled={!selected}
-                onClick={() => selected && onBuy(selected)}
-              >
-                Buy
-              </Button>
-            ) : null}
-            {onSell ? (
-              <Button
-                appearance="solid"
-                sentiment="negative"
-                disabled={!selected}
-                onClick={() => selected && onSell(selected)}
-              >
-                Sell
-              </Button>
-            ) : null}
-            {onOpenDepth ? (
-              <Button
-                disabled={!selected}
-                onClick={() => selected && onOpenDepth(selected)}
-              >
-                Depth
-              </Button>
-            ) : null}
-          </span>
-        </div>
+        <InstrumentGridHeader
+          filterCount={filterClauseCount(userFilter)}
+          onAddToWatchlist={watchlists.add}
+          onDeleteWatchlist={watchlists.remove}
+          onNewWatchlist={createWatchlist}
+          onRemoveFromWatchlist={watchlists.removeRic}
+          onScopeChange={setWatchlistId}
+          onShowFilterBarChange={setShowFilterBar}
+          onShowFooterChange={setShowFooter}
+          onPinLinkedChange={setPinLinked}
+          pinLinked={viewSettings.pinLinked}
+          scope={watchlistId}
+          selectedRic={selected?.ric}
+          showFilterBar={viewSettings.filterBar}
+          showFooter={showFooter ? viewSettings.footer : undefined}
+          watchlists={watchlists.lists}
+        />
       ) : null}
       {showToolbar ? (
         <FilterBar
           QuickFilterProps={quickFilterProps}
-          className={`${classBase}-filterBar`}
+          // Hidden, not unmounted: it keeps its quick filter values, and
+          // its filters still apply.
+          className={cx(`${classBase}-filterBar`, {
+            [`${classBase}-filterBarHidden`]: !filterBarVisible,
+          })}
           columnDescriptors={filterColumns}
+          // Search and the quick filters first, as in the design
+          defaultFilterMode="quick-filter"
           defaultFilterState={storedFilterState}
           onApplyFilter={setUserFilter}
           onClearFilter={clearUserFilter}
@@ -823,29 +809,39 @@ const InstrumentGridInner = forwardRef<
           vuuTable={dataSource.table}
         />
       ) : null}
-      <div className={`${classBase}-table`}>
-        <ContextMenuProvider
-          menuActionHandler={menuActionHandler}
-          menuBuilder={menuBuilder}
-        >
-          <Table
-            config={config}
-            dataSource={dataSource}
-            onSelect={stableHandleSelect}
-            selectionModel="single"
-          />
-        </ContextMenuProvider>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: keys and double-click of the table's rows */}
+      <div
+        className={`${classBase}-table`}
+        ref={tableRef}
+        onDoubleClick={handleDoubleClick}
+        onKeyDownCapture={handleKeyDownCapture}
+      >
+        <GridChannelLinksProvider value={channelLinks}>
+          <ContextMenuProvider
+            menuActionHandler={menuActionHandler}
+            menuBuilder={menuBuilder}
+          >
+            <RowActionsProvider value={rowActions}>
+              <Table
+                config={tableConfig}
+                dataSource={dataSource}
+                onSelect={stableHandleSelect}
+                pinnedRows={pinnedRows}
+                selectionModel="single"
+              />
+            </RowActionsProvider>
+          </ContextMenuProvider>
+        </GridChannelLinksProvider>
       </div>
-      {showFooter ? (
-        <TableFooter className={`${classBase}-footer`}>
-          <DataSourceStats dataSource={dataSource} />
-          <TableFooterTray>
-            <ColumnPickerAction
-              columnModel={columnModel}
-              columnSetModel={columnSetModel}
-            />
-          </TableFooterTray>
-        </TableFooter>
+      {footerVisible ? (
+        <InstrumentGridFooter
+          columnModel={columnModel}
+          columnSetModel={columnSetModel}
+          dataSource={dataSource}
+          filtered={filterClauseCount(userFilter) > 0}
+          links={links}
+          onShowLinked={viewSettings.pinLinked ? showLinkedRow : undefined}
+        />
       ) : null}
     </div>
   );

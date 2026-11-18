@@ -133,9 +133,7 @@ export const TraderWorkspace = () => {
                 title="Instruments"
               >
                 <InstrumentGrid
-                  defaultLinkGroup="red"
                   id={ID.gridTable}
-                  showLinkGroupSelector
                   simulatedOnly
                   style={content}
                 />

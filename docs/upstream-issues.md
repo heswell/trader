@@ -723,3 +723,33 @@ Found moving to @vuu-ui 4.0.0-alpha.30 (`docs/portal-integration.md`, "Panels pa
      Chart/Depth/Depth chart stack, or above the Orders/Fills/Positions stack, while column 3 (no stacks) has one.
      *Proposed:* fall back to the members' setting (`stackTemplate?.props.resizeable ?? items[0]?.resizeable`), or
      add `resizeable` to `GridStackSnapshot`. *Workaround in this repo:* none; those panels can't be resized.
+
+## Found in the instrument grid redesign
+
+113. **FilterBar Search is case sensitive.** (finos `@vuu-ui/vuu-filters` 5.0.0-alpha.6,
+     `src/filter-bar/quick-filters/useQuickFilters.js` `getSearchFilter`; vuu server `contains`.) The quick filters'
+     Search sends the text as typed in a `contains` clause per search column, and the server matches `contains`
+     case sensitively, so "bp" does not find `BP.L` / "BP plc". The filter language has no case-insensitive
+     operator. *Repro:* in the Instrument grid showcase, type "bp" in Search with the filter unwidened: no rows.
+     *Proposed:* a case-insensitive `contains` (operator or option) in the server and filter language, used by
+     Search. *Workaround in this repo:* `withSearchCasings` (InstrumentGrid) widens the Search clause to the text's
+     common casings (as typed, upper, lower, capitalised; upper only for ric) before the filter is sent.
+
+114. **Table `ScrollingAPI.scrollToKey` does nothing.** (finos `@vuu-ui/vuu-table` 5.0.0-alpha.8,
+     `src/useTableScroll.js`.) `scrollToKey(rowKey)` only logs `scrollToKey <key>`; `scrollToIndex` works, but a host
+     knows a row's key, not its index under the current sort and filter. *Repro:* pass `scrollingApiRef` to a Table
+     and call `scrollToKey` with the key of a row out of view: the console logs, the Table does not scroll.
+     *Proposed:* implement it (the server can return a row's index for a key, or the Table can select by key with
+     `revealSelected`). *Workaround in this repo:* the InstrumentGrid footer's linked instruments go to their rows
+     only while linked rows are pinned, so the rows are always rendered; otherwise they are labels.
+
+115. **Dark mode selects and highlights in light teal, under white text.** (finos `@vuu-ui/vuu-theme`
+     5.0.0-alpha.8, `css/next/palette/accent.css` and `css/next/characteristics/selectable.css`.) In
+     `[data-mode="dark"]` `--salt-palette-accent-weaker` is `teal-200` and `--salt-palette-accent-weakest` is
+     `teal-100`, and `--salt-selectable-background-selected` / `-hover` use them, while the dark foreground is white.
+     A selected Table row (`--vuu-table-row-background-selected`), a hovered row, and the highlighted item of every
+     Salt Menu are near-white with white text. *Repro:* showcase, Dark, Instrument grid: select a row, or open
+     Panel settings and arrow through the items. *Proposed:* dark tones in dark mode (for example
+     `accent-strongest` for selected, a container tone for hover), as the instrument grid's dark design boards do.
+     *Workaround in this repo:* the InstrumentGrid sets vuu's per-table hooks (`--vuuTableRow-background-selected`,
+     `-bookend-background-selected`, `-background-highlighted`) under `[data-mode="dark"]`; menus are not patched.

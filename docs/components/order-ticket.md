@@ -76,7 +76,9 @@ const { openOrderTicket } = useOrderTicketLauncher();
 
 `openOrderTicket` routes to the most recently mounted `OrderTicketPanel` if there is one. Otherwise it opens an
 `OrderTicketDialog`. Without an `OrderTicketLauncherProvider` it is a no-op, and `available` is `false`, so a
-component can hide its button. For an inline ticket, render `<OrderTicket variant="compact" prefill={…} />`
+component can hide its button. A prefill replaces the ticket's draft, including values typed but not sent
+(only the account is kept). A docked `OrderTicketPanel` then takes focus on its quantity field, so the
+user can type the size straight away. For an inline ticket, render `<OrderTicket variant="compact" prefill={…} />`
 directly.
 
 ## Layout

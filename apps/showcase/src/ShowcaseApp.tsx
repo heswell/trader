@@ -61,7 +61,17 @@ const LinkGroupSelections = () => {
   );
 };
 
-export const ShowcaseApp = () => {
+export type ShowcaseThemeMode = "light" | "dark";
+
+export interface ShowcaseAppProps {
+  mode?: ShowcaseThemeMode;
+  onModeChange?: (mode: ShowcaseThemeMode) => void;
+}
+
+export const ShowcaseApp = ({
+  mode: themeMode = "light",
+  onModeChange,
+}: ShowcaseAppProps) => {
   const [example, setExample] = useState(exampleFromHash);
   const { error, localServer, mode, remoteStatus, switchMode } =
     useShowcaseDataMode();
@@ -92,6 +102,18 @@ export const ShowcaseApp = () => {
             {remoteStatus === "connecting" ? "Connecting…" : "Remote server"}
           </ToggleButton>
         </ToggleButtonGroup>
+        {onModeChange ? (
+          <ToggleButtonGroup
+            aria-label="Theme"
+            value={themeMode}
+            onChange={(e: SyntheticEvent<HTMLButtonElement>) =>
+              onModeChange(e.currentTarget.value as ShowcaseThemeMode)
+            }
+          >
+            <ToggleButton value="light">Light</ToggleButton>
+            <ToggleButton value="dark">Dark</ToggleButton>
+          </ToggleButtonGroup>
+        ) : null}
       </header>
       <nav className="showcaseApp-nav" aria-label="Examples">
         {groups.map((group) => (

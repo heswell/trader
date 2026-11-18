@@ -6,37 +6,17 @@
   gap: var(--salt-spacing-100);
 }
 
-.tradingInstrumentGrid-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--salt-spacing-100);
-}
-
-.tradingInstrumentGrid .tradingInstrumentGrid-search {
-  width: 220px;
-}
-
-.tradingInstrumentGrid .tradingInstrumentGrid-select {
-  width: 170px;
-}
-
-.tradingInstrumentGrid-actions {
-  display: flex;
-  gap: var(--salt-spacing-100);
-  margin-left: auto;
-}
-
-.tradingInstrumentGrid-popover {
-  display: flex;
-  flex-direction: column;
-  gap: var(--salt-spacing-100);
-  padding: var(--salt-spacing-100);
-}
-
-.tradingInstrumentGrid-watchlistForm {
-  display: flex;
-  gap: var(--salt-spacing-100);
+/* vuu-theme's dark mode selects and highlights rows in light teal
+   (accent-weaker / -weakest), under white text: use dark tones, as the dark
+   design boards do (trader upstream issue 115). */
+[data-mode="dark"] .tradingInstrumentGrid {
+  --vuuTableRow-background-selected: var(--salt-palette-accent-strongest);
+  --vuuTableRow-bookend-background-selected: var(
+    --salt-palette-accent-strongest
+  );
+  --vuuTableRow-background-highlighted: var(
+    --salt-container-secondary-background
+  );
 }
 
 .tradingInstrumentGrid-table {
@@ -44,14 +24,78 @@
   min-height: 0;
 }
 
-.tradingInstrumentGrid .tradingInstrumentGrid-search,
-.tradingInstrumentGrid .tradingInstrumentGrid-select {
-  border: var(--salt-size-border, 1px) var(--salt-borderStyle-solid, solid)
-    var(--salt-container-primary-borderColor, currentColor);
-}
-
 .tradingInstrumentGrid-filterBar {
   flex: none;
+}
+
+/* hidden from the panel settings: still mounted, its filters still apply */
+.tradingInstrumentGrid .tradingInstrumentGrid-filterBarHidden {
+  display: none;
+}
+
+/* header: scope picker (title), filter badge, panel settings */
+.tradingInstrumentGridHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--salt-spacing-50);
+  min-width: 0;
+}
+
+.tradingInstrumentGridHeader-inline {
+  flex: none;
+  height: var(--salt-size-base, 28px);
+}
+
+.tradingInstrumentGridHeader-spacer {
+  flex: 1;
+}
+
+.tradingInstrumentGridHeader .tradingInstrumentGridHeader-scope {
+  gap: var(--salt-spacing-50);
+  min-width: 0;
+  font-weight: var(--salt-text-fontWeight-strong);
+  padding-inline: var(--salt-spacing-50);
+  /* a panel title, not a button label */
+  text-transform: none;
+}
+
+.tradingInstrumentGridHeader-scopeLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tradingInstrumentGridHeader .tradingInstrumentGridHeader-filterBadge {
+  gap: 2px;
+  color: var(--salt-content-accent-foreground, currentColor);
+  padding-inline: var(--salt-spacing-50);
+}
+
+.tradingInstrumentGridHeader-count {
+  font-size: var(--salt-text-label-fontSize);
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+.tradingInstrumentGridHeader-menu .saltMenuItem {
+  gap: var(--salt-spacing-100);
+}
+
+.tradingInstrumentGridHeader-check {
+  flex: none;
+}
+
+.tradingInstrumentGridHeader-itemLabel {
+  flex: 1;
+}
+
+.tradingInstrumentGridHeader-itemNote,
+.tradingInstrumentGridHeader-key {
+  color: var(--salt-content-secondary-foreground);
+  font-size: var(--salt-text-label-fontSize);
+}
+
+.tradingInstrumentGridHeader-key {
+  font-family: var(--salt-typography-fontFamily-code, monospace);
 }
 
 /* Without a shell the column picker opens in a dialog, which has no height
@@ -59,4 +103,124 @@
 .saltDialogContent .vuuColumnPicker {
   height: min(560px, 70vh);
   width: 340px;
+}
+
+/* footer: column-set tabs, linked instruments, row count, column picker */
+.tradingInstrumentGridFooter {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  gap: var(--salt-spacing-150);
+  height: 24px;
+  /* flush under the table rows */
+  margin-top: calc(-1 * var(--salt-spacing-100));
+  padding-right: var(--salt-spacing-75);
+  border-top: 1px solid var(--salt-separable-primary-borderColor);
+  background: var(--salt-container-secondary-background);
+  color: var(--salt-content-secondary-foreground);
+  font-size: var(--salt-text-label-fontSize);
+  white-space: nowrap;
+}
+
+.tradingInstrumentGridFooter-columnSets,
+.tradingInstrumentGridFooter-tabs {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.tradingInstrumentGridFooter-columnSets {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tradingInstrumentGridFooter-tab,
+.tradingInstrumentGridFooter-newSet {
+  padding: 0 var(--salt-spacing-150);
+  border: 0;
+  border-right: 1px solid var(--salt-separable-primary-borderColor);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tradingInstrumentGridFooter-newSet {
+  width: 24px;
+  padding: 0;
+}
+
+.tradingInstrumentGridFooter-tab:hover,
+.tradingInstrumentGridFooter-newSet:hover {
+  background: var(--salt-actionable-subtle-background-hover);
+}
+
+.tradingInstrumentGridFooter-tabSelected {
+  background: var(--salt-container-primary-background);
+  color: var(--salt-content-primary-foreground);
+  font-weight: var(--salt-text-fontWeight-strong);
+  box-shadow: inset 0 2px 0 var(--salt-focused-outlineColor);
+}
+
+.tradingInstrumentGridFooter-tab:focus-visible,
+.tradingInstrumentGridFooter-newSet:focus-visible,
+.tradingInstrumentGridFooter-linkedItem:focus-visible {
+  outline: var(--salt-focused-outline);
+  outline-offset: -2px;
+}
+
+.tradingInstrumentGridFooter-spacer {
+  flex: 1;
+}
+
+.tradingInstrumentGridFooter-linked,
+.tradingInstrumentGridFooter-count {
+  display: flex;
+  align-items: center;
+  gap: var(--salt-spacing-75);
+}
+
+.tradingInstrumentGridFooter-linkedItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--salt-spacing-50);
+  padding: 0 var(--salt-spacing-50);
+  border: 0;
+  border-radius: var(--salt-palette-corner-weak, 2px);
+  background: transparent;
+  color: var(--salt-content-primary-foreground);
+  font: inherit;
+}
+
+button.tradingInstrumentGridFooter-linkedItem {
+  cursor: pointer;
+}
+
+button.tradingInstrumentGridFooter-linkedItem:hover {
+  background: var(--salt-actionable-subtle-background-hover);
+}
+
+.tradingInstrumentGridFooter-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--channel-color);
+}
+
+.tradingInstrumentGridFooter-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.tradingInstrumentGridFooter-countFiltered {
+  color: var(--salt-content-primary-foreground);
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+.tradingInstrumentGridFooter .tradingInstrumentGridFooter-columns {
+  gap: var(--salt-spacing-50);
+  align-self: center;
+  min-height: 20px;
+  height: 20px;
+  padding-inline: var(--salt-spacing-75);
+  text-transform: none;
 }

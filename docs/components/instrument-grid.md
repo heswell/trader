@@ -13,7 +13,13 @@ Showcase: `#instrument-grid`, `#instrument-grid-prices`, `#instrument-grid-futur
 | Tables | `instrumentPrices` (default) or `prices`; `instruments` through `InstrumentLookupProvider` |
 | RPCs | none itself. Buy / Sell open the order ticket, which sends `createOrder`. |
 | Roles | none in the component. Pass `launchOrderTicket={canTrade}` to hide Buy / Sell for view-only users (as the Watchlist feature does). |
-| Class base | `tradingInstrumentGrid`, cells `tradingInstrumentCell`; `data-direction`, `data-phase`, `data-link-group` |
+| Class base | `tradingInstrumentGrid`, cells `tradingInstrumentCell`, link cell `tradingLinkCell`; `data-direction`, `data-phase` |
+
+![Instrument grid, light](../screenshots/instrument-grid-light.png)
+![Instrument grid, dark](../screenshots/instrument-grid-dark.png)
+
+ADM.L linked to Red and pinned above the other rows; ABF.L selected, with its Buy / Sell / Depth. Regenerate with
+`bun ./scripts/docs/screenshots-instrument-grid.ts` while the showcase runs.
 
 ## InstrumentGrid
 
@@ -28,18 +34,77 @@ A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns 
 | `dataSource?` / `table?` | Supply a data source, or bind `"instrumentPrices"` (default) / `"prices"`. |
 | `columns?` | Visible column names in order (default: ric, description, exchange, currency, bid, ask, last, change, changePct, phase, sparkline, volume, turnover). The "Columns" button opens the vuu column picker; the header menu gives sort / group / hide. |
 | `simulatedOnly?` | Default false. True: only instruments quoted by the simulator (instrumentPrices). Unquoted instruments show empty price cells. |
-| `instrumentType?` | `EQUITY` / `FUTURE` / `INDEX` / `CONTINUATION`: only that type. Otherwise, when the data has an `instrumentType` column, the toolbar shows a type dropdown (All types / Equities / Futures / Indices / Continuations). |
-| `initialGroupBy?` | `exchange` / `sector` / `currency` / `instrumentType` / `underlying` (a stock or index with its futures); volume and turnover are summed in group rows. |
+| `instrumentType?` | `EQUITY` / `FUTURE` / `INDEX` / `CONTINUATION`: only that type. Otherwise, when the data has an `instrumentType` column, type is a quick filter in the filter bar. |
+| `initialGroupBy?` | `exchange` / `sector` / `currency` / `instrumentType` / `underlying` (a stock or index with its futures); volume and turnover are summed in group rows. It sets the first grouping only: after that, group from the column header menu (the grid has no group-by control). |
 | `sparkline?` | `false` or `{ valueColumn, length, bucketMs }`. |
-| `showToolbar?` | Quick filter (ric / description), watchlist selector + manager, group-by, columns, Buy/Sell/Depth buttons. |
-| `onBuy` / `onSell` / `onOpenDepth` | `(instrument: SelectedInstrument) => void`. The context-menu items and toolbar buttons exist only when the prop is set, or (Buy / Sell) when an `OrderTicketLauncherProvider` is mounted. The menu items are client-side and call direct RPCs; vuu-server 3.3.0 supports server menu RPCs, but trader declares none (trader upstream issues 11 and 63–66 in [upstream-issues.md](../upstream-issues.md)). |
+| `id?` | Keys the saved column sets, filters and panel settings, so differently configured grids keep their own. |
+| `showToolbar?` | Default true. False hides the panel header (scope picker, panel settings) and the filter bar. (The grid has no toolbar row any more; the name is kept for compatibility.) |
+| `showFooter?` | Default true: the grid offers a footer (see [Footer](#footer)), shown or hidden from Panel settings. False removes it and its menu item. |
+| `onBuy` / `onSell` / `onOpenDepth` | `(instrument: SelectedInstrument) => void`. The row actions, B / S / D keys and context-menu items exist only when the prop is set, or (Buy / Sell) when an `OrderTicketLauncherProvider` is mounted. The menu items are client-side and call direct RPCs; vuu-server 3.3.0 supports server menu RPCs, but trader declares none (trader upstream issues 11 and 63–66 in [upstream-issues.md](../upstream-issues.md)). |
 | `launchOrderTicket?` | Default `true`: without `onBuy` / `onSell`, Buy / Sell open the ticket via `useOrderTicketLauncher()` when a launcher is present. |
-| `followSelection?` | Default `true`: select and highlight the row of the instrument selected elsewhere in the link group. It clears for an unknown ric, and does not scroll (trader upstream issue 37). |
-| `LinkGroupProps` | `linkGroup`, `defaultLinkGroup`, `onLinkGroupChange`, `showLinkGroupSelector` (toolbar). |
 | `watchlistStorage?` | `UserSettingsStorage` override for the watchlists. |
 
-Row selection calls `setSelectedInstrument(instrument, "InstrumentGrid")`. Pure helpers are exported too:
-`buildInstrumentGridFilter`, `instrumentGridColumns`, watchlist functions and `useWatchlists`.
+## Panel header
+
+- **Scope picker** (the title): All instruments or a watchlist, with its count. The same menu adds or removes the selected row's ric on the current watchlist, creates a watchlist (named in a prompt, then shown) and deletes the current one.
+- **Panel settings** (gear): Show filter bar (Ctrl+Shift+F anywhere in the grid), Show footer and Pin linked rows to the top. Saved per grid `id` under `trading.instrumentGrid.view`.
+- **Filter badge**: while the filter bar is hidden its filters still apply, and the header shows a badge with the clause count; clicking it shows the bar.
+
+In a `@vuu-ui/grid-layout` panel these go into the panel's own header: the scope picker as the title (at the start of the tab bar when the panel is stacked), the badge and gear at the end. Anywhere else the grid shows them in a header row of its own.
+
+## Channel links
+
+The grid is not in a link group. Its first column (`link`, client-side, outside column sets and the column picker) links rows to the workspace channels set by the ChannelPicker; with no `WorkspaceChannelProvider` it uses the default channels with Red active.
+
+- A row whose instrument a channel holds shows that channel's dot, ringed when it is the active channel. An unlinked row shows a link glyph on hover or focus.
+- Clicking the cell opens the link menu: each channel with what it holds ("replaces X", "empty", or "Linked · click to clear"). The heading is "Link RIC to channel", or "Move RIC from Green to" when the instrument is already linked.
+- One channel per instrument (`linkInstrument`): linking to another channel moves it and empties the old one. The ChannelPicker follows the same rule.
+- Keys on the focused row: Enter links to the active channel, 1–4 to Red, Green, Blue, Yellow, L opens the menu, Esc closes it. Double-click a row to link it to the active channel.
+- **Pinned linked rows**: linked rows are pinned above the scrolling rows, in channel order, by default. The link column header (pin icon) and Panel settings turn this off and on. The grid passes the linked rics to the vuu Table's `pinnedRows` (vuu-ui 5.0.0-alpha.8), which subscribes to them separately and leaves them out of the body. Pinned rows ignore the grid's filters (fixed type, watchlist, filter bar) on purpose: a linked instrument is always in view. They follow the body's sort and columns and are never grouped. Arrow keys move across the divider, and the footer row count is for the body only.
+- Row selection is local to the grid (row actions, watchlist add / remove): only an explicit link publishes, with source `"InstrumentGrid"`.
+
+Design spec: [docs/design/instrument-grid](../design/instrument-grid/README.md).
+
+## Row actions
+
+Buy, Sell and Depth sit at the right edge of a row, in a narrow client-side column (`actions`, pinned right, outside column sets and the column picker) whose buttons overflow leftwards over the last cells. They show on the selected row, on hover and on a focused row, and fade in over the cells below them.
+
+- Keys on the focused row: **B** Buy, **S** Sell, **D** Depth.
+- The context menu has the same three items, labelled with their keys.
+- Buy / Sell through the launcher fill a docked order ticket and move focus to its quantity field; the new instrument and side replace anything typed but not sent.
+- Each one is shown only when its handler exists (`onBuy` / `onSell` / `onOpenDepth`, or Buy / Sell from an `OrderTicketLauncherProvider`). With none, there is no actions column.
+- Buy / Sell use the order ticket's side colours (`--trading-buy`, `--trading-sell`, over Salt's positive / negative bold actionable colours).
+
+## Footer
+
+One 24px row under the table:
+
+- **Column-set tabs** on the left: click, or Left / Right arrows on a focused tab, to show a set. "+" saves the columns in view as a new set, named in a prompt.
+- **Linked**: a channel dot and ric per channel that holds an instrument. While linked rows are pinned, clicking one selects and focuses its row. With pinning off they are labels only: vuu Table cannot scroll to a row by key yet (`ScrollingAPI.scrollToKey` is a stub, trader upstream issue 114).
+- **Row count**: the rows in the body, "N rows", kept current from the data source's `resize` events. Under a filter-bar filter it is the filtered count, bold with a filter icon; the server sends no unfiltered total, so it is never "x of y". Pinned rows are not counted.
+- **Columns** on the right opens the vuu column picker.
+
+
+## Light and dark
+
+Both themes use vuu-theme / Salt variables only; the dark design boards are in
+[docs/design/instrument-grid](../design/instrument-grid/README.md).
+
+- In dark mode the grid sets vuu's per-table row hooks (`--vuuTableRow-background-selected`,
+  `--vuuTableRow-bookend-background-selected`, `--vuuTableRow-background-highlighted`) to dark tones: vuu-theme's
+  dark selected and hover rows are light teal under white text (upstream issue 115). Menus, outside the grid, are not
+  patched.
+- Buy / Sell take Salt's bold positive / negative colours, or a host's `--trading-buy` / `--trading-sell`; Depth's
+  hover is neutral, not the theme's coral.
+## Filter bar
+
+The vuu FilterBar sits on its own row and opens on the quick filters:
+
+- **Search** comes first: free text over ric and description (ric only on `prices`). vuu's `contains` is case sensitive, so the grid widens the Search clause to the common casings of the text (`withSearchCasings`, trader upstream issue 113): "bp" finds BP.L.
+- **Quick filters**: exchange, sector, type, market cap, P/E and yield by default, where the data has them; the column chooser changes them. Type is left out when `instrumentType` is set.
+- **Saved filters**: the toggle switches to the saved filter pills. Its badge counts the applied clauses. Saved filters persist per grid `id` (`trading.instrumentGrid.filters`).
+
+Pure helpers are exported too: `buildInstrumentGridFilter`, `withSearchCasings`, `instrumentGridColumns`, watchlist functions and `useWatchlists`.
 
 **Watchlists and user settings.** Watchlists are client-side lists of rics stored under `trading.watchlists` through a
 `UserSettingsStorage` (a `getItem` / `setItem` subset of Web Storage, may be async). The default is localStorage

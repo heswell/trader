@@ -9,6 +9,48 @@ import type { UserSettingsStorage } from "../../utils/userSettingsStorage";
 
 export const COLUMN_SETS_SETTINGS_KEY = "trading.instrumentGrid.columnSets";
 export const FILTERS_SETTINGS_KEY = "trading.instrumentGrid.filters";
+export const VIEW_SETTINGS_KEY = "trading.instrumentGrid.view";
+
+/** View settings from the panel settings (gear) menu and the link column header. */
+export interface GridViewSettings {
+  filterBar: boolean;
+  footer: boolean;
+  /** Pin rows linked to a channel above the scrolling rows. */
+  pinLinked: boolean;
+}
+
+export const DEFAULT_VIEW_SETTINGS: GridViewSettings = Object.freeze({
+  filterBar: true,
+  footer: true,
+  pinLinked: true,
+});
+
+/** Defensive parse: unknown or missing fields keep their default. */
+export const parseViewSettings = (
+  json: string | null | undefined,
+): GridViewSettings | undefined => {
+  if (!json) return undefined;
+  try {
+    const parsed = JSON.parse(json) as Partial<GridViewSettings> | null;
+    if (!parsed || typeof parsed !== "object") return undefined;
+    return {
+      filterBar:
+        typeof parsed.filterBar === "boolean"
+          ? parsed.filterBar
+          : DEFAULT_VIEW_SETTINGS.filterBar,
+      footer:
+        typeof parsed.footer === "boolean"
+          ? parsed.footer
+          : DEFAULT_VIEW_SETTINGS.footer,
+      pinLinked:
+        typeof parsed.pinLinked === "boolean"
+          ? parsed.pinLinked
+          : DEFAULT_VIEW_SETTINGS.pinLinked,
+    };
+  } catch {
+    return undefined;
+  }
+};
 
 /** Settings are per grid when it has an id, so differently configured grids keep their own. */
 export const gridSettingsKey = (key: string, id?: string) =>

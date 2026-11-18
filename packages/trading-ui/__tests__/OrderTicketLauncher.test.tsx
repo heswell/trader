@@ -90,6 +90,35 @@ describe("OrderTicketLauncher", () => {
     ).toContain("VOD.L");
   });
 
+  test("a launch moves focus to the docked panel's quantity", async () => {
+    render(
+      <TradingDataProvider localServer={localServer} mode="local">
+        <OrderTicketLauncherProvider>
+          <Grab />
+          <button type="button">grid</button>
+          <OrderTicketPanel
+            followSelection={false}
+            showInstrumentPicker={false}
+          />
+        </OrderTicketLauncherProvider>
+      </TradingDataProvider>,
+    );
+    const grid = screen.getByRole("button", { name: "grid" });
+    grid.focus();
+    act(() => launcher.openOrderTicket({ ric: "VOD.L", side: Side.Buy }));
+    await act(
+      () => new Promise((resolve) => requestAnimationFrame(() => resolve(0))),
+    );
+    const quantity = screen
+      .getByRole("form")
+      .querySelector('[data-order-ticket-field="quantity"]');
+    expect(quantity).not.toBeNull();
+    expect(
+      quantity === document.activeElement ||
+        quantity?.contains(document.activeElement),
+    ).toBe(true);
+  });
+
   test("routes prefills to a panel docked under a sibling provider", () => {
     render(
       <TradingDataProvider localServer={localServer} mode="local">

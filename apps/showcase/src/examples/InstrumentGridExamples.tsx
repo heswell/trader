@@ -6,7 +6,7 @@ import { ShowcaseContextPanel } from "./shared/ShowcaseContextPanel";
 
 const useLog = () => {
   const [log, setLog] = useState(
-    "Right-click a row or use the toolbar buttons",
+    "Hover or select a row for Buy / Sell / Depth, press B / S / D, or right-click",
   );
   const action = useCallback(
     (verb: string) => (i: SelectedInstrument) => setLog(`${verb} ${i.ric}`),

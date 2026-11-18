@@ -10,6 +10,7 @@ export * from "./data/useTradingRows";
 
 // cross-component instrument linking (P3.11 link groups / bus)
 export * from "./instrument-context/broadcastChannelTransport";
+export * from "./instrument-context/channelLinks";
 export * from "./instrument-context/InstrumentContext";
 export * from "./instrument-context/instrumentLinkBus";
 export * from "./instrument-context/instrumentLinkPersistence";
