@@ -44,6 +44,7 @@ ModuleFactory.withNameSpace(EXCHANGE_MODULE)
 | `depth` | `id` = `ric\|side\|level` | ric, side, level (0 = best), price, size, cumSize, orderCount, ownSize?, seq |
 | `trades` | `tradeId` | ric, price, size, aggressorSide, timestamp, seq |
 | `bars` | `id` = `ric\|interval\|start` (`barKey`) | ric, interval (`1s`, `1m`, ...; `parseBarInterval`), start, end, open, high, low, close, volume, turnover, vwap, trades, closed, backfilled |
+| `optionAnalytics` | `ric` | underlying, forward, theo, modelVol, impliedVol (from the mid), baseVol (impliedVol / √timeScale), delta, gamma, vega (per vol point), theta (per day), timestamp |
 | `bookSamples` | `id` = `ric\|time` (`bookSampleKey`) | ric, time, bid, ask, mid, spreadBps, bidSize, askSize, bidDepth, askDepth (top 5), imbalance, bidPx0..4, bidSz0..4, askPx0..4, askSz0..4 |
 
 ### `OMS` module

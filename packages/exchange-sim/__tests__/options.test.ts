@@ -168,15 +168,20 @@ describe("ExchangeSimulator with options", () => {
     expect(options).toHaveLength(168);
     expect(sim.isSimulated("AAPL.OQ")).toBe(true);
     expect(sim.indices.map((i) => i.ric)).toEqual(["STECH"]);
-    // options are listed only in phase 1: no books
-    expect(options.some((o) => sim.isSimulated(o.ric))).toBe(false);
+    // the liquid core of each chain has a book: 10 on AAPL, 10 on STECH
+    const booked = options.filter((o) => sim.isSimulated(o.ric));
+    expect(booked).toHaveLength(20);
+    expect(booked.every((o) => o.liquid)).toBe(true);
+    expect(options.filter((o) => o.liquid)).toHaveLength(20);
+    // a quote-only strike is priced, so published as simulated
     const row = tables.instruments.get(options[0].ric);
+    expect(options[0].liquid).toBe(false);
     expect(row).toMatchObject({
       instrumentType: InstrumentType.Option,
       putCall: options[0].putCall,
       strike: options[0].strike,
-      liquid: options[0].liquid,
-      simulated: false,
+      liquid: false,
+      simulated: true,
     });
     expect(sim.gateway.getInstrument(options[0].ric)?.strike).toBe(
       options[0].strike,

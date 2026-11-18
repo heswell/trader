@@ -434,6 +434,63 @@ export const timeSeriesBuckets = defineTable({
   ],
 });
 
+export const optionAnalytics = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "optionAnalytics",
+  keyField: "ric",
+  description:
+    "Model value and Greeks of every listed option (Black-76 on the vol surface), published every exchangeSim.optionAnalyticsIntervalMs. Vols are as priced on the sim's clock: the underlying's volatility scaled by the square root of timeScale.",
+  columns: [
+    { name: "ric", dataType: "string" },
+    { name: "underlying", dataType: "string" },
+    {
+      name: "forward",
+      dataType: "double",
+      description:
+        "The underlying's fair value (or index level) carried to expiry.",
+    },
+    {
+      name: "theo",
+      dataType: "double",
+      description: "Model premium at the surface vol.",
+    },
+    {
+      name: "modelVol",
+      dataType: "double",
+      description: "Surface vol at the strike, as priced (0.25 = 25%).",
+    },
+    {
+      name: "impliedVol",
+      dataType: "double",
+      description:
+        "Vol implied by the mid: the book's for a liquid strike, the theoretical quote's otherwise (null when there is no two-sided price).",
+    },
+    {
+      name: "baseVol",
+      dataType: "double",
+      description:
+        "impliedVol divided by the square root of timeScale: comparable with the underlying's annual volatility.",
+    },
+    { name: "delta", dataType: "double", description: "dPremium / dForward." },
+    { name: "gamma", dataType: "double", description: "dDelta / dForward." },
+    {
+      name: "vega",
+      dataType: "double",
+      description: "Premium change per vol point (0.01 of vol).",
+    },
+    {
+      name: "theta",
+      dataType: "double",
+      description: "Premium change per calendar day (negative as time passes).",
+    },
+    { name: "timestamp", dataType: "epochtimestamp" },
+  ],
+  links: [
+    { fromColumn: "ric", toTable: "instruments", toColumn: "ric" },
+    { fromColumn: "ric", toTable: "prices", toColumn: "ric" },
+  ],
+});
+
 export const bookSamples = defineTable({
   module: EXCHANGE_MODULE,
   name: "bookSamples",
@@ -1492,6 +1549,7 @@ export const exchangeTables = {
   scenarioRuns,
   simSession,
   timeSeriesBuckets,
+  optionAnalytics,
 } as const;
 export const omsTables = {
   accounts,
@@ -1528,6 +1586,7 @@ export type OrderEntryRow = RowOf<typeof orderEntry>;
 export type BarRow = RowOf<typeof bars>;
 export type BookSampleRow = RowOf<typeof bookSamples>;
 export type TimeSeriesBucketRow = RowOf<typeof timeSeriesBuckets>;
+export type OptionAnalyticsRow = RowOf<typeof optionAnalytics>;
 export type BookOrderRow = RowOf<typeof bookOrders>;
 export type BookEventRow = RowOf<typeof bookEvents>;
 export type SimBookRow = RowOf<typeof simBooks>;

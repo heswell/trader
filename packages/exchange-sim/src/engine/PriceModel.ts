@@ -37,6 +37,17 @@ export interface PriceAnchor {
   price(): number;
   basisBps: number;
   halfLifeSec: number;
+  /**
+   * The anchored price for a log basis, when it is not `price() ×
+   * exp(basis)`: an option's basis is a log shift of its vol.
+   */
+  withBasis?(basis: number): number;
+  /**
+   * Re-centre the band on the anchored price whenever it leaves the middle
+   * half of the band: an option's premium can move far more in a session
+   * than any fixed band allows.
+   */
+  trackBand?: boolean;
 }
 
 /** Saved impact state (alongside the fair value). */
@@ -283,8 +294,16 @@ export class PriceModel {
   }
 
   #followAnchor() {
-    const price = this.anchor?.price() ?? 0;
-    if (Number.isFinite(price) && price > 0)
-      this.#walk = this.clampToBand(price * Math.exp(this.#basis));
+    const anchor = this.anchor;
+    if (!anchor) return;
+    const price = anchor.withBasis
+      ? anchor.withBasis(this.#basis)
+      : anchor.price() * Math.exp(this.#basis);
+    if (!(Number.isFinite(price) && price > 0)) return;
+    if (anchor.trackBand) {
+      const half = (this.bandPct / 2) * this.#bandCentre;
+      if (Math.abs(price - this.#bandCentre) > half) this.#setBand(price);
+    }
+    this.#walk = this.clampToBand(price);
   }
 }

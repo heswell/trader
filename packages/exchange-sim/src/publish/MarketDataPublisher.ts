@@ -47,6 +47,8 @@ export interface ExchangeTables {
   simSession?: PublishTable;
   /** Time-series subscriptions' M4 buckets (see TimeSeriesBucketPublisher). */
   timeSeriesBuckets?: PublishTable;
+  /** Option values and Greeks; omit to skip (see OptionAnalyticsPublisher). */
+  optionAnalytics?: PublishTable;
 }
 
 export interface PublisherOptions {
@@ -152,6 +154,11 @@ export class MarketDataPublisher {
   readonly #lastPriceRows = new Map<string, RowValue[]>();
   /** Last published level + phase per index ric. */
   readonly #indexLevels = new Map<string, { last: number; phase: string }>();
+  /** Last theoretical quote + phase per quote-only option ric. */
+  readonly #quotes = new Map<
+    string,
+    { bid: number | undefined; ask: number; phase: string }
+  >();
   readonly #prices: RowLayout<typeof pricesDef>;
   readonly #depth: RowLayout<typeof depthDef>;
   readonly #trades: RowLayout<typeof tradesDef>;
@@ -507,6 +514,38 @@ export class MarketDataPublisher {
     if (rowIdx === -1) table.insert(row);
     else table.update(rowIdx, row);
     this.stats.priceUpdates++;
+  }
+
+  /**
+   * A quote-only option's prices row: a theoretical bid / ask (no sizes, no
+   * trades), close at the listing price. Only written when the quote or
+   * the phase changes.
+   */
+  publishQuote(
+    instrument: InstrumentDef,
+    bid: number | undefined,
+    ask: number,
+    phase: string,
+    now: number,
+  ) {
+    const prev = this.#quotes.get(instrument.ric);
+    if (prev && prev.bid === bid && prev.ask === ask && prev.phase === phase)
+      return;
+    this.#quotes.set(instrument.ric, { bid, ask, phase });
+    const { idx } = this.#prices;
+    const row = this.#prices.row();
+    row[idx.ric] = instrument.ric;
+    row[idx.bid] = bid ?? null;
+    row[idx.ask] = ask;
+    row[idx.close] = instrument.refPrice;
+    row[idx.phase] = phase;
+    row[idx.timestamp] = now;
+    this.#writePrices(row);
+  }
+
+  /** Stop mirroring quotes for `ric` (it has a book now). */
+  dropQuote(ric: string) {
+    this.#quotes.delete(ric);
   }
 
   #publishTrades() {
