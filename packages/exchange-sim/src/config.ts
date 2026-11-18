@@ -26,6 +26,22 @@ export interface ExchangeSimConfig {
    * Empty = no futures.
    */
   futures: string;
+  /**
+   * Comma separated rics to list European options on (monthly expiries):
+   * equities or synthetic indices (listed as if named in `indices`). Each
+   * stock underlying (an index's constituents) gets a live book. Empty = none.
+   */
+  options: string;
+  /** Monthly option expiries listed per underlying. */
+  optionsExpiries: number;
+  /** Option strikes listed each side of at-the-money. */
+  optionsStrikes: number;
+  /** Strikes each side of at-the-money that are liquid (get a book). */
+  optionsBookStrikes: number;
+  /** Nearest expiries whose liquid strikes get a book. */
+  optionsBookExpiries: number;
+  /** Most option books per underlying (re-centring stops adding books). */
+  optionsMaxBooks: number;
   /** Contracts listed per underlying: front month, next, ... */
   futuresContracts: number;
   /** Annual carry rate of the futures fair value over spot (e.g. 0.03 = 3%). */
@@ -186,6 +202,12 @@ export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
   indices: "",
   futures: "",
   futuresContracts: 2,
+  options: "",
+  optionsExpiries: 2,
+  optionsStrikes: 10,
+  optionsBookStrikes: 2,
+  optionsBookExpiries: 1,
+  optionsMaxBooks: 20,
   futuresCarryRate: 0.03,
   futuresBasisBps: 3,
   futuresBasisHalfLifeSec: 60,
@@ -330,6 +352,20 @@ export const validateConfig = (config: ExchangeSimConfig) => {
   ) {
     throw Error("exchangeSim.futuresContracts must be a positive integer");
   }
+  for (const key of [
+    "optionsExpiries",
+    "optionsStrikes",
+    "optionsBookStrikes",
+    "optionsBookExpiries",
+    "optionsMaxBooks",
+  ] as const) {
+    if (!(Number.isInteger(config[key]) && config[key] >= 0))
+      throw Error(`exchangeSim.${key} must be a non-negative integer`);
+  }
+  if (config.optionsBookStrikes > config.optionsStrikes)
+    throw Error("exchangeSim.optionsBookStrikes must be <= optionsStrikes");
+  if (config.optionsBookExpiries > config.optionsExpiries)
+    throw Error("exchangeSim.optionsBookExpiries must be <= optionsExpiries");
   if (!Number.isFinite(config.futuresCarryRate)) {
     throw Error("exchangeSim.futuresCarryRate must be a number");
   }

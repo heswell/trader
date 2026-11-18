@@ -113,6 +113,16 @@ nothing visible changed.
   `S × exp(futuresCarryRate × τ)`, times a basis that mean-reverts (sd `futuresBasisBps`, half-life
   `futuresBasisHalfLifeSec`); impact on a future goes into that basis. The roster is the equity one
   plus an always-on informed bot that trades the future back towards fair.
+- **Options** (off by default; phase 1 of the options plan: listed, not yet traded). `options` lists equity rics or
+  synthetic indices. Each gets European options on the next `optionsExpiries` (2) monthly expiries (third Friday at
+  `sessionClose`), calls and puts on `optionsStrikes` (10) strikes each side of at-the-money. Strikes step by a 1 / 2 /
+  2.5 / 5 number near 2.5% of spot (`AAPL.OQ` at 175: 5). Rics are the root, the strike, a month letter (calls A–L,
+  puts M–X) and the year digit: `AAPL200L6` is the Dec 2026 200 call, `AAPL200X6` the put; a decimal point in the
+  strike is written `D`. The contract has the futures multiplier (100 shares, 1000 for GBX; per point on an index), a
+  premium tick of 0.01 (0.5 GBX, 0.05 index points) and a Black-76 reference price. The nearest `optionsBookStrikes`
+  (2) strikes each side in the first `optionsBookExpiries` (1) expiries are `liquid` (they will get books); the rest
+  are quote-only, and `validateOrder` rejects them as `RESTRICTED_INSTRUMENT`. Stock underlyings get a book.
+  `optionsMaxBooks` (20) will cap books added by re-centring.
 - **Continuations.** Each underlying with futures gets continuation rics `c1..cN` (root + `c` + position: `AZNc1`
   is the front month, `AZNc2` the next; `STECHc1`). A continuation copies its contract's static data (instrument type
   `CONTINUATION`, `contract` names the contract) and has no book: its `prices` row mirrors the contract's on every
@@ -217,6 +227,12 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | `indices` | `""` | Comma-separated synthetic indices to publish (`STECH`, `SUK`); their constituents get books. |
 | `futures` | `""` | Comma-separated equity rics or synthetic indices to list futures on (each future and its underlying, or the index's constituents, get a book). |
 | `futuresContracts` | 2 | Quarterly contracts listed per underlying. |
+| `options` | `""` | Comma-separated equity rics or synthetic indices to list options on. |
+| `optionsExpiries` | 2 | Monthly option expiries listed per underlying. |
+| `optionsStrikes` | 10 | Strikes listed each side of at-the-money. |
+| `optionsBookStrikes` | 2 | Strikes each side of at-the-money that are liquid (get a book). |
+| `optionsBookExpiries` | 1 | Nearest expiries whose liquid strikes get a book. |
+| `optionsMaxBooks` | 20 | Most option books per underlying. |
 | `futuresCarryRate` | 0.03 | Annual carry of futures fair value over spot. |
 | `futuresBasisBps` | 3 | Standard deviation of the futures basis noise (bps). |
 | `futuresBasisHalfLifeSec` | 60 | Half-life of the basis noise and of impact on a future (wall-clock s). |

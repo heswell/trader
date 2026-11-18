@@ -39,7 +39,7 @@ ModuleFactory.withNameSpace(EXCHANGE_MODULE)
 
 | Table | Key | Columns |
 |---|---|---|
-| `instruments` | `ric` | description, isin?, currency, exchange (MIC), sector?, instrumentType (EQUITY \| FUTURE \| INDEX \| CONTINUATION), underlying? (a future's stock or index), contract? (the contract a continuation such as AZNc1 points at), expiry?, settlementPrice? (expired futures), contractMultiplier, tickSize, tickBands?, lotSize, priceDecimals, refPrice, simulated |
+| `instruments` | `ric` | description, isin?, currency, exchange (MIC), sector?, instrumentType (EQUITY \| FUTURE \| INDEX \| CONTINUATION \| OPTION), underlying? (a future's or option's stock or index), contract? (the contract a continuation such as AZNc1 points at), putCall?, strike?, liquid? (options: has a book), expiry?, settlementPrice? (expired futures), contractMultiplier, tickSize, tickBands?, lotSize, priceDecimals, refPrice, simulated |
 | `prices` | `ric` | bid, ask, bidSize, askSize, last, lastSize, open, high, low, close (prev), volume, turnover, vwap, change, changePct, phase (`TradingPhase`), seq, timestamp |
 | `depth` | `id` = `ric\|side\|level` | ric, side, level (0 = best), price, size, cumSize, orderCount, ownSize?, seq |
 | `trades` | `tradeId` | ric, price, size, aggressorSide, timestamp, seq |
@@ -92,9 +92,15 @@ Values are the strings stored in table columns and sent in RPC params.
 | `OrdStatus` | PENDING_NEW, NEW, PARTIALLY_FILLED, FILLED, PENDING_CANCEL, CANCELLED, PENDING_REPLACE, REPLACED, REJECTED, EXPIRED |
 | `ExecType` | PENDING_NEW, NEW, TRADE, PENDING_CANCEL, CANCELLED, PENDING_REPLACE, REPLACED, REJECTED, EXPIRED |
 | `TradingPhase` | CLOSED, PRE_OPEN, OPENING_AUCTION, CONTINUOUS, CLOSING_AUCTION, POST_CLOSE, HALTED |
-| `Liquidity` | ADDED, REMOVED, AUCTION |
+| `Liquidity` | ADDED, REMOVED, AUCTION, SETTLEMENT |
+| `InstrumentType` | EQUITY, FUTURE, INDEX, CONTINUATION, OPTION |
+| `PutCall` | CALL, PUT |
 | `BotType` | MARKET_MAKER, TAKER, ALL |
 | `RejectReason` | INVALID_REQUEST, UNKNOWN_INSTRUMENT, UNKNOWN_ACCOUNT, ACCOUNT_DISABLED, UNKNOWN_ORDER, DUPLICATE_CLORDID, UNSUPPORTED_ORD_TYPE, UNSUPPORTED_TIF, MISSING_PRICE, MISSING_STOP_PRICE, INVALID_STOP_PRICE, INVALID_PRICE, INVALID_TICK_SIZE, INVALID_QUANTITY, INVALID_LOT_SIZE, EXCEEDS_MAX_QUANTITY, EXCEEDS_MAX_NOTIONAL, PRICE_OUTSIDE_COLLAR, RESTRICTED_INSTRUMENT, INSTRUMENT_HALTED, MARKET_CLOSED, NO_LIQUIDITY, FOK_NOT_FILLABLE, TOO_LATE_TO_AMEND, TOO_LATE_TO_CANCEL, ORDER_PENDING, PERMISSION_DENIED, INTERNAL_ERROR |
+
+## Option math
+
+`black76(inputs)` prices a European option on a forward and returns price, delta, gamma, vega (per 1.00 of vol) and theta (per year); Greeks are with respect to the forward. `black76Price`, `impliedVol(price, inputs)` (Newton, falling back to bisection; undefined outside the no-arbitrage bounds), `intrinsicValue`, `normCdf` and `normPdf` complete it. The exchange simulator, the OMS and the UI share these functions.
 
 ## Order status transitions
 

@@ -3,6 +3,7 @@ export * from "./domain/algoStrategies";
 export * from "./domain/orderStatus";
 export * from "./domain/orderValidation";
 export * from "./domain/ticks";
+export * from "./domain/optionMath";
 export * from "./domain/session";
 export * from "./domain/entryMessages";
 export * from "./domain/orderEntryRules";

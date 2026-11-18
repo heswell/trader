@@ -46,6 +46,7 @@ import {
   toFutureDef,
   withFutures,
 } from "../reference/futures";
+import { listOptions } from "../reference/options";
 import {
   indexLevel,
   isIndex,
@@ -262,9 +263,11 @@ export class ExchangeSimulator {
     this.clock = clock;
     this.#expiryTime = this.config.sessionClose || "16:30";
     const futureUnderlyings = splitList(this.config.futures);
+    const optionUnderlyings = splitList(this.config.options);
     const indices = listIndices(universe, [
       ...splitList(this.config.indices),
       ...futureUnderlyings.filter(isIndexRic),
+      ...optionUnderlyings.filter(isIndexRic),
     ]);
     const futures = listFutures(
       [...universe, ...indices],
@@ -276,13 +279,32 @@ export class ExchangeSimulator {
         expiryTime: this.#expiryTime,
       },
     );
-    this.#universe = [...universe, ...indices, ...futures];
+    const options = listOptions(
+      [...universe, ...indices],
+      optionUnderlyings,
+      clock(),
+      {
+        expiries: this.config.optionsExpiries,
+        strikes: this.config.optionsStrikes,
+        bookStrikes: this.config.optionsBookStrikes,
+        bookExpiries: this.config.optionsBookExpiries,
+        carryRate: this.config.futuresCarryRate,
+        expiryTime: this.#expiryTime,
+        vol:
+          this.config.defaultVolatility > 0
+            ? this.config.defaultVolatility
+            : undefined,
+      },
+    );
+    this.#universe = [...universe, ...indices, ...futures, ...options];
     for (const instrument of this.#universe)
       this.#listed.set(instrument.ric, instrument);
 
     // listed futures always get a book (with their underlyings), indices
     // their constituents' books; the rest of the selection is equities only
-    const derived = new Set([...indices, ...futures].map((i) => i.ric));
+    const derived = new Set(
+      [...indices, ...futures, ...options].map((i) => i.ric),
+    );
     const rics = splitList(this.config.instruments);
     const equityRics = rics.filter((ric) => !derived.has(ric));
     const active = withFutures(
@@ -300,6 +322,16 @@ export class ExchangeSimulator {
       futures,
       this.#universe,
     );
+    // option underlyings that are stocks get a book (an index's constituents
+    // already have one); the options themselves are listed only
+    const activeRics = new Set(active.map((i) => i.ric));
+    for (const ric of new Set(options.map((o) => o.underlying ?? ""))) {
+      const stock = universe.find((i) => i.ric === ric);
+      if (stock && !isIndex(stock) && !activeRics.has(ric)) {
+        active.push(stock);
+        activeRics.add(ric);
+      }
+    }
     const rng = new Random(this.config.seed);
     for (const [i, instrument] of active.entries()) {
       this.#addInstrument(instrument, rng.fork(i));

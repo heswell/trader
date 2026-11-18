@@ -64,14 +64,15 @@ export const instruments = defineTable({
     {
       name: "instrumentType",
       dataType: "string",
-      description: "InstrumentType: EQUITY | FUTURE | INDEX | CONTINUATION.",
+      description:
+        "InstrumentType: EQUITY | FUTURE | INDEX | CONTINUATION | OPTION.",
     },
     {
       name: "underlying",
       dataType: "string",
       optional: true,
       description:
-        "Futures and continuations: ric of the underlying instrument (an equity or an index).",
+        "Futures, continuations and options: ric of the underlying instrument (an equity or an index).",
     },
     {
       name: "contract",
@@ -81,10 +82,29 @@ export const instruments = defineTable({
         "Continuation (AZNc1): ric of the contract it points at, repointed at each roll.",
     },
     {
+      name: "putCall",
+      dataType: "string",
+      optional: true,
+      description: "Options: PutCall, CALL | PUT.",
+    },
+    {
+      name: "strike",
+      dataType: "double",
+      optional: true,
+      description: "Options: strike, in the price currency.",
+    },
+    {
+      name: "liquid",
+      dataType: "boolean",
+      optional: true,
+      description:
+        "Options: true if the strike has an order book; false = quote-only (model prices, no orders).",
+    },
+    {
       name: "expiry",
       dataType: "epochtimestamp",
       optional: true,
-      description: "Futures: last trading time.",
+      description: "Futures and options: last trading time.",
     },
     {
       name: "settlementPrice",

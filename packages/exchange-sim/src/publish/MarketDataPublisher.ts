@@ -220,6 +220,9 @@ export class MarketDataPublisher {
     row[idx.expiry] = instrument.expiry ?? 0;
     row[idx.settlementPrice] = instrument.settlementPrice ?? 0;
     row[idx.contract] = instrument.contract ?? "";
+    row[idx.putCall] = instrument.putCall ?? "";
+    row[idx.strike] = instrument.strike ?? null;
+    row[idx.liquid] = instrument.liquid ?? null;
     row[idx.contractMultiplier] = contractMultiplierOf(instrument);
     row[idx.tickSize] = instrument.tickSize;
     row[idx.tickBands] = instrument.tickBands;

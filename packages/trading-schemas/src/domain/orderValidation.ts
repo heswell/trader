@@ -1,6 +1,7 @@
 import {
   InstrumentType,
   OrdType,
+  type PutCall,
   RejectReason,
   SUPPORTED_ORD_TYPES,
   TimeInForce,
@@ -27,13 +28,22 @@ export interface InstrumentStatic {
   /** EQUITY when absent. */
   instrumentType?: InstrumentType;
   /**
-   * Futures and continuations: ric of the underlying instrument (an equity
+   * Futures, continuations and options: ric of the underlying instrument (an equity
    * or an index).
    */
   underlying?: string;
   /** Continuation: ric of the contract it currently points at. */
   contract?: string;
-  /** Futures: last trading time (epoch ms). */
+  /** Options: CALL or PUT. */
+  putCall?: PutCall;
+  /** Options: strike, in the price currency. */
+  strike?: number;
+  /**
+   * Options: true when the strike has an order book. A quote-only strike
+   * (false) shows model prices and takes no orders.
+   */
+  liquid?: boolean;
+  /** Futures and options: last trading time (epoch ms). */
   expiry?: number;
   /** Futures: final settlement price, set once the contract has expired. */
   settlementPrice?: number;
@@ -212,6 +222,15 @@ export const validateOrder = (
     return reject(
       RejectReason.RestrictedInstrument,
       `${instrument.ric} is a continuation: trade ${instrument.contract || "the contract"}`,
+    );
+  }
+  if (
+    instrument.instrumentType === InstrumentType.Option &&
+    instrument.liquid === false
+  ) {
+    return reject(
+      RejectReason.RestrictedInstrument,
+      `${instrument.ric} is quote-only: trade a liquid strike`,
     );
   }
   if (phase === TradingPhase.Halted) {
