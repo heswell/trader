@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Orders with a link column</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3B5B8C}a:hover{color:#1E3A63}
+button{font:inherit;color:inherit}
+.g-root{
+  --app:#EEF0F3;--panel:#FFFFFF;--bar:#F6F7F9;--hdr:#E4E7EB;--border:#D9DDE3;--rowline:#EEF0F3;--track:#E3E7EC;
+  --fg:#1F2329;--fg2:#4A525D;--fg3:#5B6470;--th:#3A424D;--hover:#E9ECF0;--rowhover:#F3F5F8;--sel:#E8EEF6;--focusrow:#DCE6F3;
+  --field-border:#C3CAD3;--field-bg:#FFFFFF;--accent:#3B5B8C;
+  --tg-on:#2B3440;--tg-on-fg:#FFFFFF;
+  --neg:#B3261E;--neg-border:#D98A84;--neg-solid:#C62828;--buy:#1E7F45;--sell:#B3261E;
+  --st-new:#2670C8;--st-part:#B07800;--st-fill:#1E7F45;--st-done:#6B737E;--bar-fill:#3B82D9;--bar-done:#1E7F45;
+  --red:#D6493D;--green:#3A9C56;--blue:#2670C8;--yellow:#D9A400;
+  font-family:'Nunito Sans',system-ui,sans-serif;color:var(--fg);background:var(--app);-webkit-font-smoothing:antialiased}
+.g-num{font-variant-numeric:tabular-nums}
+.p{background:var(--panel);border:1px solid var(--border);display:flex;flex-direction:column;height:100%;box-sizing:border-box;overflow:hidden}
+.sh{height:32px;flex:0 0 32px;display:flex;align-items:stretch;background:var(--hdr);border-bottom:1px solid var(--border)}
+.tab{display:flex;align-items:center;padding:0 14px;font-size:12px;font-weight:600;color:var(--fg2);border:0;background:transparent;border-right:1px solid var(--border);cursor:pointer}
+.tab.on{background:var(--panel);color:var(--fg);box-shadow:inset 0 2px 0 var(--accent);margin-bottom:-1px}
+.sh-end{margin-left:auto;display:flex;align-items:center;gap:2px;padding-right:6px}
+.ib{width:24px;height:24px;border:0;border-radius:3px;background:transparent;display:inline-flex;align-items:center;justify-content:center;color:var(--fg3);cursor:pointer}
+.tb{height:40px;flex:0 0 40px;display:flex;align-items:center;gap:8px;padding:0 8px;border-bottom:1px solid var(--border);white-space:nowrap;box-sizing:border-box}
+.sp{flex:1}
+.tg{display:inline-flex;border:1px solid var(--field-border);border-radius:3px;overflow:hidden}
+.tg button{height:24px;padding:0 10px;border:0;border-right:1px solid var(--field-border);background:var(--field-bg);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--fg2);cursor:pointer}
+.tg button:last-child{border-right:0}
+.tg button.on{background:var(--tg-on);color:var(--tg-on-fg)}
+.btn{height:26px;padding:0 10px;border-radius:3px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;display:inline-flex;align-items:center;gap:6px;cursor:pointer;box-sizing:border-box}
+.btn.neu{border:1px solid var(--field-border);background:var(--field-bg);color:var(--fg)}
+.btn.negb{border:1px solid var(--neg-border);background:var(--field-bg);color:var(--neg)}
+.btn.negs{border:1px solid var(--neg-solid);background:var(--neg-solid);color:#FFFFFF}
+.split{flex:1;display:flex;flex-direction:column;min-height:0}
+.pane{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.pane.child{flex:0 0 150px}
+.gh,.gr{display:grid;align-items:center;font-size:12px}
+.gh{height:28px;flex:0 0 28px;color:var(--th);font-weight:700;border-bottom:1px solid var(--border)}
+.gr{height:26px;border-bottom:1px solid var(--rowline)}
+.gr.hov{background:var(--rowhover)}
+.gr.focus{background:var(--focusrow)}
+.gh>span,.gr>span{padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gh>span.lc,.gr>span.lc{padding:0;display:flex;align-items:center;justify-content:center;height:100%}
+.lb{width:26px;height:22px;border:0;border-radius:3px;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--fg3)}
+.lb:hover,.lb.open{background:var(--hover)}
+.lb.open{outline:1px solid var(--field-border)}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:0 0 10px;box-sizing:border-box}
+.dot.ring{box-shadow:0 0 0 2px var(--panel),0 0 0 3.5px currentColor}
+.r{text-align:right}
+.st{display:inline-flex;align-items:center;gap:6px}
+.st .dot{width:8px;height:8px;flex-basis:8px}
+.buy{color:var(--buy);font-weight:700}
+.sell{color:var(--sell);font-weight:700}
+.mut{color:var(--fg3)}
+.fp{display:flex;align-items:center;gap:6px}
+.fp .t{flex:1;height:4px;border-radius:2px;background:var(--track);overflow:hidden;display:flex}
+.fp .t i{display:block;background:var(--bar-fill)}
+.fp .n{min-width:52px;text-align:right}
+.spl{flex:0 0 6px;height:6px;background:var(--bar);border-top:1px solid var(--border);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center}
+.spl i{display:block;width:28px;height:2px;border-top:1px solid var(--fg3);border-bottom:1px solid var(--fg3);opacity:.6;box-sizing:border-box}
+.cc{height:28px;flex:0 0 28px;display:flex;align-items:center;gap:8px;padding:0 8px;font-size:12px;background:var(--bar);border-bottom:1px solid var(--border)}
+.cc strong{font-weight:700}
+.cols-o{grid-template-columns:36px 120px 128px 52px 72px 76px 60px 80px 76px 140px 76px 1fr}
+.cols-c{grid-template-columns:36px 120px 128px 52px 80px 76px 1fr}
+.menu{position:absolute;left:49px;top:280px;width:232px;background:var(--panel);border:1px solid var(--border);border-radius:4px;box-shadow:0 8px 24px rgba(0,0,0,.16);padding:4px 0;z-index:2}
+.mh{padding:6px 10px 2px;font-size:12px;font-weight:800}
+.ms{padding:0 10px 6px;font-size:11px;color:var(--fg3)}
+.mi{width:100%;height:28px;padding:0 10px;border:0;background:transparent;display:grid;grid-template-columns:14px 52px 1fr 14px;align-items:center;gap:6px;font-size:12px;text-align:left;cursor:pointer}
+.mi:hover,.mi.cur{background:var(--sel)}
+.mi .ins{color:var(--fg3);font-size:11px}
+.mi .ck{color:var(--accent)}
+.sep{height:1px;background:var(--border);margin:4px 0}
+.mx{width:100%;height:28px;padding:0 10px;border:0;background:transparent;text-align:left;font-size:12px;color:var(--fg2);cursor:pointer}
+</style>
+</helmet>
+<div class="g-root" style="width:1040px;height:620px;padding:16px;box-sizing:border-box;position:relative">
+<div class="p">
+  <div class="sh">
+    <button class="tab on" type="button">Orders</button>
+    <button class="tab" type="button">Fills</button>
+    <button class="tab" type="button">Positions</button>
+    <div class="sh-end">
+      <button class="ib" type="button" aria-label="Maximize"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" rx="1"/></svg></button>
+      <button class="ib" type="button" aria-label="Close"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7"/></svg></button>
+    </div>
+  </div>
+  <div class="tb">
+    <div class="tg" role="group" aria-label="Order status">
+      <button class="on" type="button" aria-pressed="true">Working</button>
+      <button type="button" aria-pressed="false">Filled</button>
+      <button type="button" aria-pressed="false">Closed</button>
+      <button type="button" aria-pressed="false">All</button>
+    </div>
+    <span class="sp"></span>
+    <button class="btn neu" type="button">Order book</button>
+    <button class="btn negb" type="button">Cancel selected (1)</button>
+    <button class="btn negs" type="button">Cancel all</button>
+  </div>
+  <div class="split">
+    <div class="pane">
+      <div class="gh cols-o"><span class="lc" title="Channel link"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-label="Channel link" role="img"><path d="M6 8a2.5 2.5 0 0 0 3.5 0l2-2a2.5 2.5 0 0 0-3.5-3.5l-.6.6M8 6a2.5 2.5 0 0 0-3.5 0l-2 2A2.5 2.5 0 0 0 6 11.5l.6-.6"/></svg></span><span>Order</span><span>Status</span><span>Side</span><span>RIC</span><span>Type</span><span>Algo</span><span class="r">Qty</span><span class="r">Price</span><span>Filled</span><span class="r">Avg px</span><span>Created</span></div>
+
+      <div class="gr cols-o g-num focus"><span class="lc"><button class="lb" type="button" aria-label="BARC.L linked to Red (active channel)" style="color:var(--red)"><span class="dot ring" style="background:var(--red)"></span></button></span><span><b style="font-weight:600">O-112</b></span><span class="st"><span class="dot" style="background:var(--st-part)"></span>Partially filled</span><span class="buy">BUY</span><span>BARC.L</span><span>LIMIT</span><span>TWAP</span><span class="r">50,000</span><span class="r">229.10</span><span class="fp"><span class="t"><i style="width:37%"></i></span><span class="n">18,500</span></span><span class="r">229.04</span><span>13:12:05</span></div>
+
+      <div class="gr cols-o g-num hov"><span class="lc"><button class="lb" type="button" aria-label="Link VOD.L to a channel"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M6 8a2.5 2.5 0 0 0 3.5 0l2-2a2.5 2.5 0 0 0-3.5-3.5l-.6.6M8 6a2.5 2.5 0 0 0-3.5 0l-2 2A2.5 2.5 0 0 0 6 11.5l.6-.6"/></svg></button></span><span><b style="font-weight:600">O-118</b></span><span class="st"><span class="dot" style="background:var(--st-new)"></span>New</span><span class="sell">SELL</span><span>VOD.L</span><span>LIMIT</span><span>DMA</span><span class="r">12,000</span><span class="r">72.36</span><span class="fp"><span class="t"><i style="width:0%"></i></span><span class="n">0</span></span><span class="r mut">–</span><span>13:31:47</span></div>
+
+      <div class="gr cols-o g-num"><span class="lc"><button class="lb" type="button" aria-label="AAL.L linked to Green"><span class="dot" style="background:var(--green)"></span></button></span><span><b style="font-weight:600">O-121</b></span><span class="st"><span class="dot" style="background:var(--st-part)"></span>Partially filled</span><span class="buy">BUY</span><span>AAL.L</span><span>LIMIT</span><span>VWAP</span><span class="r">8,000</span><span class="r">438.50</span><span class="fp"><span class="t"><i style="width:30%"></i></span><span class="n">2,400</span></span><span class="r">437.92</span><span>13:38:10</span></div>
+
+      <div class="gr cols-o g-num"><span class="lc"></span><span><b style="font-weight:600">O-124</b></span><span class="st"><span class="dot" style="background:var(--st-new)"></span>New</span><span class="buy">BUY</span><span>BP.L</span><span>STOP LMT</span><span>DMA</span><span class="r">5,000</span><span class="r">471.20</span><span class="fp"><span class="t"><i style="width:0%"></i></span><span class="n">0</span></span><span class="r mut">–</span><span>13:40:31</span></div>
+
+      <div class="gr cols-o g-num"><span class="lc"></span><span><b style="font-weight:600">O-127</b></span><span class="st"><span class="dot" style="background:var(--st-part)"></span>Partially filled</span><span class="sell">SELL</span><span>HSBA.L</span><span>LIMIT</span><span>POV</span><span class="r">20,000</span><span class="r">648.90</span><span class="fp"><span class="t"><i style="width:16%"></i></span><span class="n">3,100</span></span><span class="r">649.12</span><span>13:44:22</span></div>
+
+      <div class="gr cols-o g-num"><span class="lc"><button class="lb open" type="button" aria-label="BARC.L linked to Red (active channel)" aria-expanded="true" style="color:var(--red)"><span class="dot ring" style="background:var(--red)"></span></button></span><span><b style="font-weight:600">O-129</b></span><span class="st"><span class="dot" style="background:var(--st-new)"></span>New</span><span class="buy">BUY</span><span>BARC.L</span><span>LIMIT</span><span>DMA</span><span class="r">3,000</span><span class="r">228.80</span><span class="fp"><span class="t"><i style="width:0%"></i></span><span class="n">0</span></span><span class="r mut">–</span><span>13:45:03</span></div>
+
+      <div class="gr cols-o g-num"><span class="lc"><button class="lb" type="button" aria-label="AAL.L linked to Green"><span class="dot" style="background:var(--green)"></span></button></span><span><b style="font-weight:600">O-130</b></span><span class="st"><span class="dot" style="background:var(--st-new)"></span>New</span><span class="sell">SELL</span><span>AAL.L</span><span>LIMIT</span><span>DMA</span><span class="r">1,500</span><span class="r">439.40</span><span class="fp"><span class="t"><i style="width:0%"></i></span><span class="n">0</span></span><span class="r mut">–</span><span>13:46:58</span></div>
+    </div>
+    <div class="spl"><i></i></div>
+    <div class="pane child">
+      <div class="cc"><strong>Child orders</strong><span class="mut">O-112 · BUY 50,000 BARC.L · TWAP</span></div>
+      <div class="gh cols-c"><span></span><span>Child</span><span>Status</span><span>Side</span><span class="r">Qty</span><span class="r">Price</span><span></span></div>
+      <div class="gr cols-c g-num"><span></span><span>O-112-4</span><span class="st"><span class="dot" style="background:var(--st-fill)"></span>Filled</span><span class="buy">BUY</span><span class="r">5,300</span><span class="r">229.10</span><span></span></div>
+      <div class="gr cols-c g-num"><span></span><span>O-112-5</span><span class="st"><span class="dot" style="background:var(--st-new)"></span>New</span><span class="buy">BUY</span><span class="r">6,000</span><span class="r">229.10</span><span></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="menu" role="menu" aria-label="Link BARC.L">
+  <div class="mh">Link BARC.L to</div>
+  <div class="ms">Applies to the instrument: both BARC.L orders show it</div>
+  <button class="mi cur" type="button" role="menuitem" aria-current="true"><span class="dot" style="background:var(--red)"></span><span>Red</span><span class="ins">BARC.L</span><span class="ck"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2.5 6.2l2.4 2.4L9.5 3.5"/></svg></span></button>
+  <button class="mi" type="button" role="menuitem"><span class="dot" style="background:var(--green)"></span><span>Green</span><span class="ins">AAL.L</span><span></span></button>
+  <button class="mi" type="button" role="menuitem"><span class="dot" style="background:var(--blue)"></span><span>Blue</span><span class="ins">TSCO.L</span><span></span></button>
+  <button class="mi" type="button" role="menuitem"><span class="dot" style="background:var(--yellow)"></span><span>Yellow</span><span class="ins">empty</span><span></span></button>
+  <div class="sep"></div>
+  <button class="mx" type="button" role="menuitem">Unlink BARC.L</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1040,"height":620}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

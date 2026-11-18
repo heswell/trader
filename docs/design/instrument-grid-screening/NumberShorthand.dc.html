@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Number shorthand in filters</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.r{font-family:'Nunito Sans',system-ui,sans-serif;color:#1F2329;-webkit-font-smoothing:antialiased;font-size:12px}
+.st{display:flex;flex-direction:column;gap:8px}
+.cap{font-size:10px;font-weight:700;color:#5B6470;letter-spacing:.06em;text-transform:uppercase}
+.sub{font-size:12px;color:#4A525D;line-height:1.5;margin:0}
+.h2{font-size:15px;font-weight:800;margin:0}
+.z{zoom:2;display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.bar{height:32px;box-sizing:border-box;display:flex;align-items:center;gap:4px;padding:0 6px;background:#F6F7F9;border:1px solid #D9DDE3;border-radius:3px}
+.qf{height:24px;box-sizing:border-box;flex:none;display:inline-flex;align-items:stretch;border:1px solid #D6DBE2;border-radius:3px;background:#fff;overflow:hidden;font-size:12px}
+.qf .lb{display:flex;align-items:center;padding:0 6px;background:#D6DBE2;color:#4A525D;font-size:11px;white-space:nowrap}
+.qf .ctl{display:flex;align-items:center;gap:6px;padding:0 6px}
+.qf .val{font-weight:700}
+.qf .op{display:inline-flex;align-items:center;gap:3px;color:#3A424D;font-weight:700}
+.qf .caret{width:1px;height:14px;background:#1F2329;margin-left:-5px}
+.qf.foc{border:1px dashed #3B5B8C}
+.qf.set{border-color:#8FA6C8}
+.qf.set .lb{background:#DCE5F1;color:#3B5B8C;font-weight:700}
+.qf.err{border:1px dashed #B42323}
+.qf.err .lb{background:#F6DADA;color:#8E1B1B;font-weight:700}
+.tip{background:#2B3440;color:#fff;font-size:10px;padding:3px 7px;border-radius:3px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tip.err{background:#8E1B1B}
+.pill{height:24px;box-sizing:border-box;display:inline-flex;align-items:center;padding:0 10px;font:700 12px/22px 'Nunito Sans',system-ui,sans-serif;color:#fff;background:#5A78A6;border-radius:3px}
+.q{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#F1F3F6;border:1px solid #E1E5EA;border-radius:3px;padding:8px 10px;color:#1F2329}
+table{border-collapse:collapse;font-size:12px;width:100%}
+th{text-align:left;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#5B6470;padding:6px 10px;border-bottom:1px solid #D9DDE3}
+td{padding:6px 10px;border-bottom:1px solid #EEF0F3;font-variant-numeric:tabular-nums}
+td code{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:#F1F3F6;padding:1px 4px;border-radius:2px}
+.no{color:#8E1B1B}
+</style>
+</helmet>
+<div class="r" style="width: 960px; height: 900px; box-sizing: border-box; padding: 28px 32px; display: flex; flex-direction: column; gap: 24px; background: #FFFFFF">
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+    <div class="st">
+      <span class="cap">Typing: the parsed value shows as you type</span>
+      <div class="z">
+        <div class="bar"><span class="qf foc"><span class="lb">mkt cap $</span><span class="ctl"><span class="op">&gt;</span><span class="val">30bn</span><span class="caret"></span></span></span></div>
+        <span class="tip" role="status">= 30,000,000,000</span>
+      </div>
+    </div>
+    <div class="st">
+      <span class="cap">Not a number: refused inline, nothing applied</span>
+      <div class="z">
+        <div class="bar"><span class="qf err"><span class="lb">mkt cap $</span><span class="ctl"><span class="op">&gt;</span><span class="val">30bx</span><span class="caret"></span></span></span></div>
+        <span class="tip err" role="alert">Use a number with k, m, bn or tn</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="st">
+    <span class="cap">Committed: shorthand on screen, the raw value in the query</span>
+    <div style="display: flex; align-items: center; gap: 16px">
+      <div class="z"><div class="bar"><span class="qf set"><span class="lb">mkt cap $</span><span class="ctl"><span class="op">&gt;</span><span class="val">30bn</span></span></span></div></div>
+      <svg width="28" height="12" viewBox="0 0 28 12" fill="none" stroke="#8A929D" stroke-width="1.5" aria-hidden="true"><path d="M0 6h24M19 1l5 5-5 5"/></svg>
+      <code class="q">marketCapUsd &gt; 30000000000</code>
+    </div>
+    <p class="sub">The filter keeps the raw number. Pills, the hover summary and the field all show it in the shortest exact shorthand, so 30000000000 reads as 30bn and 1250000 as 1.25m. Saved screens hold raw values, so they don't depend on how the number was typed.</p>
+  </div>
+
+  <div class="st">
+    <h2 class="h2">What parses</h2>
+    <table>
+      <thead><tr><th>Typed</th><th>Value</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td><code>2.5k</code></td><td>2,500</td><td>k = 10³</td></tr>
+        <tr><td><code>40m</code> <code>40M</code></td><td>40,000,000</td><td>m = 10⁶; suffixes ignore case</td></tr>
+        <tr><td><code>30bn</code> <code>30b</code></td><td>30,000,000,000</td><td>bn or b = 10⁹</td></tr>
+        <tr><td><code>1.2tn</code> <code>1.2t</code></td><td>1,200,000,000,000</td><td>tn or t = 10¹²</td></tr>
+        <tr><td><code>30 bn</code></td><td>30,000,000,000</td><td>a space before the suffix is fine</td></tr>
+        <tr><td><code>-5m</code></td><td>−5,000,000</td><td>negative values</td></tr>
+        <tr><td><code>1,500</code></td><td>1,500</td><td>thousands separators are ignored</td></tr>
+        <tr><td><code>1.5k</code> on an int column</td><td>1,500</td><td>accepted, because the result is a whole number</td></tr>
+        <tr><td class="no"><code>1.2345k</code> on an int column</td><td class="no">refused</td><td>1,234.5 is not a whole number</td></tr>
+        <tr><td><code>3e10</code></td><td>30,000,000,000</td><td>exponent form still parses, as it does today</td></tr>
+      </tbody>
+    </table>
+    <p class="sub">One parser, <code class="q" style="padding: 1px 4px">parseNumericValue</code>, serves both the filter clause editor and the quick-filter ColumnFilter, so shorthand works in every number filter.</p>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

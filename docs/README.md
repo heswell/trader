@@ -14,6 +14,7 @@
 | --- | --- |
 | [components/](components/README.md) | Hand-written component guides: what each component is for, data it subscribes to, RPCs, roles, CSS hooks, examples |
 | [api/](api/README.md) | **Generated** API reference: every export of trading-ui, trading-schemas and trading-test-data, with props, types, defaults and showcase links (`bun run docs:api`) |
+| [design/](design/README.md) | **Design boards**: every UI design canvas, grouped by area with status, plus local copies of the boards |
 | [ui-guide.md](ui-guide.md) | Conventions for writing components: folders, CSS injection and theming, data access, linking, tests, MF packaging |
 | [Showcase](../apps/showcase/README.md) | A runnable example of every reusable component on in-browser data (`bun run dev:showcase`) |
 

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New column set dialog (dark)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#9CC3F0}a:hover{color:#C4DCF7}
+button,input{font:inherit;color:inherit}
+.r{--app:#15171A;--panel:#1D2024;--bar:#191C20;--border:#2E3339;--rowline:#24282D;--fg:#E6E8EB;--fg2:#B8BEC6;--fg3:#A3A9B1;--hover:#2C323A;--field-border:#4A515A;--field-bg:#15171A;--label-bg:#2A2F36;--placeholder:#7D848D;--set-border:#5A7EA8;--set-label-bg:#24303E;--accent:#9CC3F0;--focus:#7FB2FF;--focus-ring:rgba(127,178,255,.2);--primary:#2F6FC0;--primary-fg:#FFFFFF;--toggle-bg:#2F3C4C;--toggle-fg:#E6E8EB;--strong:#E6E8EB;--up:#4FC27A;--down:#F0705F;--err:#F0705F;--scrim:rgba(0,0,0,.55);
+font-family:'Nunito Sans',system-ui,sans-serif;font-size:11px;color:var(--fg);background:var(--app);-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums;text-align:right}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.th,.tr{height:24px;display:grid;grid-template-columns:80px minmax(0,1fr) 120px 86px 56px 70px 60px 80px;gap:8px;align-items:center;padding:0 8px;border-bottom:1px solid var(--rowline)}
+.th{background:var(--bar);font-weight:700;color:var(--fg2);border-bottom-color:var(--border)}
+.ft-tab{height:24px;padding:0 10px;border:0;background:transparent;border-radius:0 0 3px 3px;color:var(--fg2);display:inline-flex;align-items:center}
+.ft-tab.on{background:var(--panel);color:var(--fg);font-weight:800;box-shadow:inset 0 -1px 0 var(--border),inset 1px 0 0 var(--border),inset -1px 0 0 var(--border)}
+.btn{height:24px;box-sizing:border-box;padding:0 12px;border-radius:3px;border:1px solid var(--field-border);background:var(--field-bg);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--hover)}
+.btn.pri{background:var(--primary);border-color:var(--primary);color:var(--primary-fg)}
+.btn:disabled{opacity:.5;cursor:default}
+.kbd{font:inherit;font-size:10px;font-weight:400;min-width:14px;height:14px;padding:0 3px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--field-border);border-radius:3px;color:var(--fg2)}
+.btn.pri .kbd{border-color:rgba(255,255,255,.55);color:inherit}
+.fld{height:28px;box-sizing:border-box;display:flex;align-items:center;padding:0 8px;border:1px solid var(--field-border);border-radius:3px;background:var(--field-bg)}
+.fld input{border:0;outline:none;background:transparent;flex:1;min-width:0;font-size:12px;padding:0;color:var(--fg)}
+.fld.foc{border-color:var(--focus);box-shadow:0 0 0 2px var(--focus-ring)}
+.fld.bad{border-color:var(--err);box-shadow:0 0 0 2px rgba(240,112,95,.2)}
+.cbl{display:flex;align-items:flex-start;gap:8px;cursor:pointer;line-height:1.45}
+.cbl input{margin:2px 0 0;accent-color:#2F6FC0}
+.chip{height:18px;display:inline-flex;align-items:center;padding:0 6px;border-radius:3px;background:var(--label-bg);color:var(--fg2);white-space:nowrap}
+.ico{width:24px;height:24px;border:0;background:none;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;color:var(--fg3);cursor:pointer;padding:0}
+.ico:hover{background:var(--hover);color:var(--fg)}
+</style>
+</helmet>
+<div class="r" style="width: 100%; height: 800px; padding: 10px; box-sizing: border-box; display: flex; position: relative">
+  <section aria-hidden="true" style="flex: 1; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; min-width: 0">
+    <div style="height: 28px; flex: none; display: flex; align-items: center; padding: 0 10px; border-bottom: 1px solid var(--border); font-weight: 800; font-size: 12px">All instruments</div>
+    <div style="height: 28px; flex: none; background: var(--bar); border-bottom: 1px solid var(--border)"></div>
+    <div class="th"><span>RIC</span><span>Name</span><span>Sector</span><span class="num">Mkt cap $bn</span><span class="num">P/E</span><span class="num">Div yld %</span><span class="num">ROE %</span><span class="num">Last</span></div>
+    <div style="flex: 1; min-height: 0; overflow: hidden">
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="15">
+        <div class="tr"><span style="font-weight: 700">{{r.ric}}</span><span class="ell">{{r.name}}</span><span class="ell">{{r.sector}}</span><span class="num">{{r.mcap}}</span><span class="num">{{r.pe}}</span><span class="num">{{r.dy}}</span><span class="num">{{r.roe}}</span><span class="num">{{r.last}}</span></div>
+      </sc-for>
+    </div>
+    <div style="height: 26px; flex: none; display: flex; align-items: flex-start; gap: 2px; padding: 0 6px; border-top: 1px solid var(--border); background: var(--bar)">
+      <span class="ft-tab">Watchlist</span><span class="ft-tab on">Screening</span><span class="ft-tab" style="box-shadow: inset 0 0 0 2px var(--focus); border-radius: 3px">+</span>
+    </div>
+  </section>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: var(--scrim)"></div>
+
+  <div role="dialog" aria-modal="true" aria-labelledby="cs-title" style="position: absolute; left: 50%; top: 200px; transform: translateX(-50%); width: 440px; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 16px 40px rgba(0,0,0,.5); overflow: hidden">
+    <div style="height: 44px; display: flex; align-items: center; padding: 0 8px 0 16px; border-bottom: 1px solid var(--border)">
+      <h2 id="cs-title" style="margin: 0; font-size: 14px; font-weight: 800; flex: 1">New column set</h2>
+      <button class="ico" aria-label="Close"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"></path></svg></button>
+    </div>
+    <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="cs-name" style="font-weight: 700; color: var(--fg2)">Name</label>
+        <div class="{{nameCls}}">
+          <input id="cs-name" value="{{name}}" onChange="{{onName}}" aria-invalid="{{bad}}" aria-describedby="cs-err" autocomplete="off">
+        </div>
+        <sc-if value="{{bad}}" hint-placeholder-val="{{ false }}">
+          <span id="cs-err" style="color: var(--err); font-weight: 700">{{error}}</span>
+        </sc-if>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-weight: 700; color: var(--fg2)">Starts from Screening, with your unsaved changes</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 4px">
+          <sc-for list="{{cols}}" as="c" hint-placeholder-count="8"><span class="chip">{{c}}</span></sc-for>
+        </div>
+      </div>
+      <label class="cbl">
+        <input type="checkbox" checked="{{withQuick}}" onChange="{{toggleQuick}}">
+        <span><span style="font-weight: 700">Include quick filters</span><br><span style="color: var(--fg3)">{{quickNote}}</span></span>
+      </label>
+    </div>
+    <div style="height: 48px; display: flex; align-items: center; gap: 8px; padding: 0 12px 0 16px; border-top: 1px solid var(--border); background: var(--bar)">
+      <span style="flex: 1"></span>
+      <button class="btn">Cancel <span class="kbd">Esc</span></button>
+      <button class="btn pri" disabled="{{bad}}">Create <span class="kbd">↵</span></button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+const ROWS = [
+  ['BP.L', 'BP plc', 'Energy', '78', '7.1', '4.9', '14.2', '468.20'], ['SHEL.L', 'Shell plc', 'Energy', '214', '11.8', '3.9', '12.6', '2,712.5'],
+  ['VOD.L', 'Vodafone Group', 'Communication', '19', '9.4', '7.6', '3.1', '71.36'], ['AZN.L', 'AstraZeneca', 'Health Care', '238', '31.5', '2.0', '18.9', '11,842'],
+  ['GSK.L', 'GSK plc', 'Health Care', '74', '13.2', '3.8', '41.0', '1,486.0'], ['HSBA.L', 'HSBC Holdings', 'Financials', '162', '7.9', '6.8', '13.4', '712.40'],
+  ['BARC.L', 'Barclays', 'Financials', '49', '8.6', '3.1', '8.2', '268.15'], ['ULVR.L', 'Unilever', 'Consumer Staples', '141', '19.8', '3.4', '33.0', '4,631'],
+  ['RIO.L', 'Rio Tinto', 'Materials', '104', '10.3', '5.9', '19.0', '5,213'], ['XOM.N', 'Exxon Mobil Corp', 'Energy', '498', '13.9', '3.4', '15.1', '112.36'],
+  ['CVX.N', 'Chevron Corp', 'Energy', '285', '15.7', '4.1', '11.3', '158.07'], ['AAPL.OQ', 'Apple Inc', 'Info Tech', '3,480', '34.6', '0.4', '147.0', '228.52'],
+  ['MSFT.OQ', 'Microsoft Corp', 'Info Tech', '3,200', '35.8', '0.7', '35.6', '431.10'], ['SAP.DE', 'SAP SE', 'Info Tech', '250', '46.0', '1.0', '12.0', '214.65'],
+  ['TTE.PA', 'TotalEnergies SE', 'Energy', '140', '8.1', '5.1', '16.9', '61.84']
+];
+const EXISTING = ['watchlist', 'screening'];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { name: 'Screening', withQuick: true };
+  }
+  renderVals() {
+    const s = this.state;
+    const n = s.name.trim();
+    const error = !n ? 'Enter a name' : EXISTING.includes(n.toLowerCase()) ? 'A column set called ' + n + ' already exists' : '';
+    return {
+      name: s.name, bad: !!error, error,
+      nameCls: 'fld ' + (error ? 'bad' : 'foc'),
+      onName: (e) => this.setState({ name: e.target.value }),
+      withQuick: s.withQuick,
+      toggleQuick: () => this.setState({ withQuick: !s.withQuick }),
+      quickNote: s.withQuick ? 'Sector, Mkt cap, P/E, Div yld, Exchange' : 'The new set uses the default quick filters',
+      cols: ['RIC', 'Name', 'Sector', 'Mkt cap', 'P/E', 'Div yld', 'ROE', 'Last'],
+      rows: ROWS.map((r) => ({ ric: r[0], name: r[1], sector: r[2], mcap: r[3], pe: r[4], dy: r[5], roe: r[6], last: r[7] }))
+    };
+  }
+}
+</script>
+</body>
+</html>

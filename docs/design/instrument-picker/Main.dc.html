@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Instrument picker prototype</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#6D18BD}a:hover{color:#4E0F8A}
+.ipSeg{transition:background-color .12s, box-shadow .12s}
+.ipSeg:hover{background:#FFFFFF}
+.ipSearchBtn:hover{background:#F1F2F5}
+.ipRow{transition:background-color .1s}
+.ipFlash{transition:background-color .5s ease-out}
+.ipPanelHead{transition:background-color .2s}
+.ipInput:focus{outline:none}
+.ipInput::placeholder{color:#7A7F87}
+</style>
+</helmet>
+<div style="width: 1440px; height: 820px; position: relative; overflow: hidden; display: flex; font-family: 'Nunito Sans', system-ui, sans-serif; color: #15171A; background: #FFFFFF; font-variant-numeric: tabular-nums">
+
+  <!-- Sidebar (context only) -->
+  <aside style="width: 232px; flex: 0 0 232px; border-right: 1px solid #E3E5E9; display: flex; flex-direction: column; gap: 18px; padding: 16px 14px; box-sizing: border-box; background: #FFFFFF">
+    <div style="display: flex; align-items: center; gap: 10px; height: 24px">
+      <div style="width: 24px; height: 24px; border-radius: 6px; background: #6D18BD"></div>
+      <span style="font-weight: 800; font-size: 16px">Trader</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 14px">
+      <div style="height: 10px; width: 90px; border-radius: 3px; background: #ECEDF0"></div>
+      <div style="height: 30px; border-radius: 6px; background: #EFE7FA"></div>
+      <div style="height: 10px; width: 120px; border-radius: 3px; background: #ECEDF0"></div>
+      <div style="height: 10px; width: 70px; border-radius: 3px; background: #F1F2F4; margin-top: 18px"></div>
+      <div style="height: 10px; width: 130px; border-radius: 3px; background: #ECEDF0"></div>
+      <div style="height: 10px; width: 110px; border-radius: 3px; background: #ECEDF0"></div>
+      <div style="height: 10px; width: 124px; border-radius: 3px; background: #ECEDF0"></div>
+      <div style="height: 10px; width: 70px; border-radius: 3px; background: #F1F2F4; margin-top: 18px"></div>
+      <div style="height: 10px; width: 116px; border-radius: 3px; background: #ECEDF0"></div>
+      <div style="height: 10px; width: 96px; border-radius: 3px; background: #ECEDF0"></div>
+    </div>
+  </aside>
+
+  <main style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; position: relative; background: #F4F5F7">
+
+    <!-- Title bar: 2px rule in the active channel colour -->
+    <header style="height: 56px; flex: 0 0 56px; position: relative; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: #FFFFFF; border-bottom: 1px solid #E3E5E9; box-shadow: inset 0 -2px 0 {{activeColor}}; z-index: 6">
+      <div style="display: flex; align-items: baseline; gap: 8px">
+        <span style="font-size: 13px; color: #5B6068">Workspaces /</span>
+        <span style="font-size: 16px; font-weight: 700">Trader</span>
+        <span style="font-size: 12px; color: #5B6068; margin-left: 4px">Default</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px">
+        <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #5B6068"><span style="width: 7px; height: 7px; border-radius: 50%; background: #1F9D55"></span>Connected</span>
+        <button type="button" style="height: 34px; padding: 0 16px; border: 0; border-radius: 8px; background: #6D18BD; color: #FFFFFF; font: 700 13px 'Nunito Sans', sans-serif; letter-spacing: .03em">+ Add panel</button>
+      </div>
+
+      <!-- The picker: one segment per channel. Click = make it the workspace channel. Search button on the active one. -->
+      <div role="group" aria-label="Workspace channel" style="position: absolute; left: 50%; top: 10px; transform: translateX(-50%); height: 36px; display: flex; align-items: stretch; gap: 2px; padding: 3px; box-sizing: border-box; border: 1px solid #DADDE2; border-radius: 10px; background: #F1F2F5">
+        <sc-for list="{{channels}}" as="c" hint-placeholder-count="4">
+          <div class="ipSeg" style="display: flex; align-items: stretch; border-radius: 7px; overflow: hidden; background: {{c.bg}}; box-shadow: {{c.shadow}}">
+            <button type="button" onClick="{{c.select}}" aria-pressed="{{c.activeStr}}" aria-label="{{c.aria}}" style="display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 0; background: transparent; cursor: pointer; font-family: inherit; color: #15171A">
+              <span aria-hidden="true" style="width: 9px; height: 9px; border-radius: 50%; box-sizing: border-box; background: {{c.dotFill}}; border: 2px solid {{c.color}}"></span>
+              <span style="font-weight: {{c.weight}}; font-size: 13px; letter-spacing: .01em; color: {{c.labelColor}}">{{c.label}}</span>
+              <sc-if value="{{c.showPrice}}" hint-placeholder-val="{{ true }}">
+                <span class="ipFlash" style="font-size: 12px; color: #3E434A; padding: 1px 4px; border-radius: 4px; background: {{c.flashBg}}">{{c.lastStr}}</span>
+                <span style="font-size: 11px; font-weight: 700; color: {{c.chgColor}}">{{c.chgStr}}</span>
+              </sc-if>
+            </button>
+            <sc-if value="{{c.isActive}}" hint-placeholder-val="{{ false }}">
+              <button type="button" class="ipSearchBtn" onClick="{{c.toggleSearch}}" aria-label="{{c.searchAria}}" aria-haspopup="dialog" aria-expanded="{{c.openStr}}" style="width: 30px; display: flex; align-items: center; justify-content: center; border: 0; border-left: 1px solid #ECEDF0; background: {{c.searchBg}}; cursor: pointer; color: #3E434A">
+                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4-4"></path></svg>
+              </button>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </header>
+
+    <!-- Workspace (context only): bound panels follow the active channel -->
+    <section style="flex: 1 1 auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 8px; box-sizing: border-box">
+      <sc-for list="{{panels}}" as="p" hint-placeholder-count="5">
+        <div style="background: #FFFFFF; border: 1px solid #E3E5E9; border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; grid-column: {{p.col}}; grid-row: {{p.row}}">
+          <div class="ipPanelHead" style="height: 30px; flex: 0 0 30px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; background: {{p.headBg}}; font-size: 12px; font-weight: 600">
+            <span>{{p.name}}</span>
+            <span style="display: flex; align-items: center; gap: 6px; font-weight: 700">
+              <sc-if value="{{p.pinned}}" hint-placeholder-val="{{ false }}"><span style="font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #5B6068">Pinned</span></sc-if>
+              <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: {{p.color}}"></span>{{p.ric}}
+            </span>
+          </div>
+          <div style="flex: 1 1 auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 10px">
+            <div style="height: 8px; width: 72%; border-radius: 3px; background: #EEEFF2"></div>
+            <div style="height: 8px; width: 54%; border-radius: 3px; background: #EEEFF2"></div>
+            <div style="height: 8px; width: 84%; border-radius: 3px; background: #EEEFF2"></div>
+            <div style="height: 8px; width: 40%; border-radius: 3px; background: #EEEFF2"></div>
+            <div style="height: 8px; width: 66%; border-radius: 3px; background: #EEEFF2"></div>
+          </div>
+        </div>
+      </sc-for>
+    </section>
+
+    <sc-if value="{{open}}" hint-placeholder-val="{{ true }}">
+      <!-- click-away -->
+      <button type="button" aria-label="Close instrument search" onClick="{{close}}" style="position: absolute; inset: 56px 0 0 0; border: 0; padding: 0; background: rgba(21,23,26,.06); cursor: default; z-index: 4"></button>
+
+      <!-- Dropdown -->
+      <div role="dialog" aria-label="Find instrument" style="position: absolute; top: 52px; left: 50%; transform: translateX(-50%); width: 720px; z-index: 5; background: #FFFFFF; border: 1px solid #DADDE2; border-radius: 12px; box-shadow: 0 18px 48px rgba(21,23,26,.16), 0 2px 6px rgba(21,23,26,.06); overflow: hidden">
+
+        <!-- search -->
+        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid #ECEDF0">
+          <span style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px 0 8px; border-radius: 14px; font-size: 12px; font-weight: 700; background: {{target.tint}}; color: {{target.ink}}">
+            <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: {{target.color}}"></span>{{target.name}}
+          </span>
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B6068" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+          <label for="ipSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search by RIC or name</label>
+          <input id="ipSearch" class="ipInput" autoFocus="{{ true }}" autoComplete="off" value="{{query}}" onChange="{{onQuery}}" onKeyDown="{{onKey}}" placeholder="Search RIC or name…" style="flex: 1 1 auto; min-width: 0; height: 32px; border: 0; background: transparent; font: 600 16px 'Nunito Sans', sans-serif; color: #15171A">
+          <kbd style="font: 600 11px 'Nunito Sans', sans-serif; color: #5B6068; border: 1px solid #DADDE2; border-bottom-width: 2px; border-radius: 5px; padding: 2px 6px">Esc</kbd>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px 4px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #5B6068">
+          <span>{{sectionLabel}}</span>
+          <span style="text-transform: none; letter-spacing: 0; font-weight: 600">{{countLabel}}</span>
+        </div>
+
+        <!-- completions: a vuu Table with a custom Row -->
+        <div role="listbox" aria-label="Instruments" style="max-height: 380px; overflow: auto; padding: 2px 6px 6px">
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+            <button type="button" role="option" aria-selected="{{r.current}}" class="ipRow" onClick="{{r.pick}}" onMouseEnter="{{r.hover}}" style="width: 100%; display: grid; grid-template-columns: 16px minmax(0, 1fr) 120px 96px 100px; column-gap: 16px; align-items: center; min-height: 56px; padding: 8px 12px; box-sizing: border-box; border: 0; border-radius: 8px; text-align: left; cursor: pointer; font-family: inherit; color: #15171A; background: {{r.bg}}; box-shadow: {{r.ring}}">
+              <span aria-hidden="true" style="display: flex; flex-direction: column; gap: 3px; align-items: center">
+                <sc-for list="{{r.dots}}" as="d"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{d.color}}"></span></sc-for>
+              </span>
+              <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+                <span style="display: flex; align-items: center; gap: 8px">
+                  <span style="font-size: 15px; font-weight: 700; letter-spacing: .01em">{{r.ricA}}<mark style="background: #EADCFB; color: #15171A; border-radius: 3px; padding: 0 1px">{{r.ricB}}</mark>{{r.ricC}}</span>
+                  <sc-if value="{{r.hasPhase}}" hint-placeholder-val="{{ false }}"><span style="font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: {{r.phaseBg}}; color: {{r.phaseInk}}">{{r.phase}}</span></sc-if>
+                </span>
+                <span style="font-size: 12px; color: #5B6068; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.descA}}<mark style="background: #EADCFB; color: #15171A; border-radius: 3px; padding: 0 1px">{{r.descB}}</mark>{{r.descC}} · {{r.exch}} · {{r.ccy}}</span>
+              </span>
+              <!-- day range -->
+              <span aria-label="{{r.rangeAria}}" style="display: flex; flex-direction: column; gap: 5px">
+                <span style="position: relative; height: 4px; border-radius: 2px; background: #E6E8EC">
+                  <span style="position: absolute; top: -3px; width: 2px; height: 10px; border-radius: 1px; background: #8A8F97; left: {{r.closePos}}"></span>
+                  <span style="position: absolute; top: -2px; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: #15171A; left: {{r.lastPos}}"></span>
+                </span>
+                <span style="display: flex; justify-content: space-between; font-size: 11px; color: #5B6068"><span>{{r.lowStr}}</span><span>{{r.highStr}}</span></span>
+              </span>
+              <!-- bid / ask -->
+              <span style="display: flex; flex-direction: column; gap: 2px; font-size: 12px; align-items: flex-end">
+                <span><span style="color: #5B6068">B </span><span style="font-weight: 600">{{r.bidStr}}</span></span>
+                <span><span style="color: #5B6068">A </span><span style="font-weight: 600">{{r.askStr}}</span></span>
+              </span>
+              <!-- last / change -->
+              <span style="display: flex; flex-direction: column; gap: 2px; align-items: flex-end">
+                <span class="ipFlash" style="font-size: 16px; font-weight: 700; padding: 0 5px; margin-right: -5px; border-radius: 4px; background: {{r.flashBg}}; opacity: {{r.priceOpacity}}">{{r.lastStr}}</span>
+                <span style="display: flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 700; color: {{r.chgColor}}">
+                  <sc-if value="{{r.up}}" hint-placeholder-val="{{ true }}"><svg aria-hidden="true" width="8" height="8" viewBox="0 0 8 8"><path d="M4 1l3.5 5.5h-7z" fill="currentColor"></path></svg></sc-if>
+                  <sc-if value="{{r.down}}" hint-placeholder-val="{{ false }}"><svg aria-hidden="true" width="8" height="8" viewBox="0 0 8 8"><path d="M4 7L.5 1.5h7z" fill="currentColor"></path></svg></sc-if>
+                  {{r.chgStr}}
+                </span>
+              </span>
+            </button>
+          </sc-for>
+          <sc-if value="{{noResults}}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 36px 16px; text-align: center; color: #5B6068; font-size: 13px">No instruments match “{{query}}”</div>
+          </sc-if>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-top: 1px solid #ECEDF0; background: #FAFAFB; font-size: 12px; color: #5B6068">
+          <span style="display: flex; gap: 14px">
+            <span><kbd style="font: 700 11px 'Nunito Sans', sans-serif; border: 1px solid #DADDE2; border-radius: 4px; padding: 0 5px; background: #FFFFFF">↑↓</kbd> move</span>
+            <span><kbd style="font: 700 11px 'Nunito Sans', sans-serif; border: 1px solid #DADDE2; border-radius: 4px; padding: 0 5px; background: #FFFFFF">↵</kbd> link to {{target.name}}</span>
+            <span><kbd style="font: 700 11px 'Nunito Sans', sans-serif; border: 1px solid #DADDE2; border-radius: 4px; padding: 0 5px; background: #FFFFFF">Tab</kbd> switch channel</span>
+          </span>
+          <span>Prices live</span>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"showPrices":{"editor":"boolean","default":true},"startOpen":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":820}}'>
+var CH = [
+  { id: 'red', name: 'Red', color: '#D9363E', tint: '#FCE8E9', ink: '#9E1E25', head: '#F7E3E4' },
+  { id: 'green', name: 'Green', color: '#1F9D55', tint: '#E3F4EA', ink: '#126B38', head: '#DFF0E6' },
+  { id: 'blue', name: 'Blue', color: '#2B6FD6', tint: '#E4EDFB', ink: '#1B4E9E', head: '#E0E9F7' },
+  { id: 'yellow', name: 'Yellow', color: '#D4A106', tint: '#FBF1D3', ink: '#7A5C00', head: '#F6EDD2' }
+];
+var SEED = [
+  ['AAL.L','Anglo American','Materials',438.1,436.4,1,0.1,'Open'],
+  ['BARC.L','Barclays','Financials',229.1,227.4,1,0.05,'Open'],
+  ['VOD.L','Vodafone Group','Comms',71.42,71.88,2,0.02,'Open'],
+  ['BA.L','BAE Systems','Industrials',1312.5,1298.0,1,0.5,'Open'],
+  ['BATS.L','British American Tobacco','Staples',2864.0,2881.0,1,1,'Open'],
+  ['BAB.L','Babcock International','Industrials',512.0,509.5,1,0.5,'Auction'],
+  ['BKG.L','Berkeley Group','Real Estate',4120.0,4096.0,1,2,'Open'],
+  ['BNZL.L','Bunzl','Industrials',3150.0,3162.0,1,2,'Open'],
+  ['BP.L','BP','Energy',452.35,449.9,2,0.05,'Open'],
+  ['BT.A.L','BT Group','Comms',141.85,142.6,2,0.05,'Open'],
+  ['BAG.L','A.G. Barr','Staples',612.0,612.0,1,2,'Halted'],
+  ['AZN.L','AstraZeneca','Health Care',11920,11862,0,2,'Open'],
+  ['HSBA.L','HSBC Holdings','Financials',684.2,680.0,1,0.1,'Open'],
+  ['LLOY.L','Lloyds Banking Group','Financials',56.12,55.8,2,0.02,'Open'],
+  ['SHEL.L','Shell','Energy',2701.5,2690.0,1,0.5,'Open'],
+  ['ULVR.L','Unilever','Staples',4436.0,4450.0,1,1,'Open'],
+  ['RIO.L','Rio Tinto','Materials',4985.0,4961.0,1,1,'Open'],
+  ['GSK.L','GSK','Health Care',1442.5,1449.0,1,0.5,'Open']
+];
+var RECENT = ['BARC.L','AAL.L','VOD.L','BP.L','HSBA.L','AZN.L'];
+/* pin: a fixed channel index; otherwise the panel follows the workspace channel */
+var PANELS = [
+  { name: 'Watchlist', col: '1', row: '1' },
+  { name: 'Chart', col: '2', row: '1' },
+  { name: 'Ladder', col: '3', row: '1 / span 2' },
+  { name: 'Depth', col: '1', row: '2', pin: 2 },
+  { name: 'Ticket', col: '2', row: '2' }
+];
+function fmt(v, d) { return v.toFixed(d); }
+function split(s, q) {
+  if (!q) return ['', '', s];
+  var i = s.toLowerCase().indexOf(q.toLowerCase());
+  if (i < 0) return [s, '', ''];
+  return [s.slice(0, i), s.slice(i, i + q.length), s.slice(i + q.length)];
+}
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    var inst = {};
+    SEED.forEach(function (s) {
+      var spread = Math.max(Math.abs(s[3] - s[4]) * 1.6, s[3] * 0.008);
+      inst[s[0]] = { ric: s[0], desc: s[1], sector: s[2], last: s[3], close: s[4], dec: s[5], tick: s[6], phase: s[7],
+        low: Math.min(s[3], s[4]) - spread * 0.4, high: Math.max(s[3], s[4]) + spread * 0.5 };
+    });
+    var open = props.startOpen !== false;
+    this.state = { inst: inst, flash: {}, rics: ['AAL.L', 'BARC.L', 'VOD.L', null], open: open, active: 1, query: open ? 'BA' : '', hi: 0 };
+  }
+  componentDidMount() {
+    var self = this;
+    this.timer = setInterval(function () {
+      var inst = Object.assign({}, self.state.inst);
+      var flash = {};
+      var keys = Object.keys(inst);
+      for (var n = 0; n < 4; n++) {
+        var k = keys[Math.floor(Math.random() * keys.length)];
+        var it = Object.assign({}, inst[k]);
+        if (it.phase !== 'Open') continue;
+        var steps = (Math.floor(Math.random() * 3) + 1) * (Math.random() < 0.5 ? -1 : 1);
+        it.last = Math.max(it.tick, +(it.last + steps * it.tick).toFixed(it.dec));
+        it.low = Math.min(it.low, it.last); it.high = Math.max(it.high, it.last);
+        inst[k] = it; flash[k] = steps > 0 ? 'up' : 'down';
+      }
+      self.setState({ inst: inst, flash: flash });
+    }, 900);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  matches() {
+    var q = this.state.query.trim().toLowerCase();
+    var inst = this.state.inst;
+    if (!q) return RECENT.map(function (r) { return inst[r]; });
+    return Object.keys(inst).map(function (k) { return inst[k]; }).filter(function (i) {
+      return i.ric.toLowerCase().indexOf(q) === 0 || i.desc.toLowerCase().split(/\s+/).some(function (w) { return w.indexOf(q) === 0; });
+    }).sort(function (a, b) {
+      var ar = a.ric.toLowerCase().indexOf(q) === 0 ? 0 : 1, br = b.ric.toLowerCase().indexOf(q) === 0 ? 0 : 1;
+      return ar - br || a.ric.length - b.ric.length || a.ric.localeCompare(b.ric);
+    });
+  }
+  pick(ric) {
+    var rics = this.state.rics.slice(); rics[this.state.active] = ric;
+    this.setState({ rics: rics, open: false, query: '' });
+  }
+  renderVals() {
+    var self = this, st = this.state, showPrices = this.props.showPrices !== false;
+    var flashBg = function (r) { return st.flash[r] === 'up' ? '#D5F0E0' : st.flash[r] === 'down' ? '#FADCDC' : 'transparent'; };
+    var channels = CH.map(function (c, i) {
+      var ric = st.rics[i], it = ric ? st.inst[ric] : null, isActive = st.active === i;
+      var pct = it ? (it.last - it.close) / it.close * 100 : 0;
+      var isOpen = st.open && isActive;
+      return {
+        color: c.color, label: ric || 'Link…', labelColor: ric ? (isActive ? '#15171A' : '#3E434A') : '#5B6068',
+        weight: isActive ? 800 : 700,
+        dotFill: ric ? c.color : 'transparent',
+        bg: isActive ? '#FFFFFF' : 'transparent',
+        shadow: isActive ? '0 0 0 1.5px ' + c.color + ', 0 1px 3px rgba(21,23,26,.14)' : 'none',
+        isActive: isActive, activeStr: isActive ? 'true' : 'false', openStr: isOpen ? 'true' : 'false',
+        searchBg: isOpen ? c.tint : 'transparent',
+        aria: c.name + ' channel, ' + (ric || 'no instrument') + (isActive ? ', active' : ''),
+        searchAria: 'Search instruments for the ' + c.name + ' channel',
+        showPrice: !!(it && showPrices), lastStr: it ? fmt(it.last, it.dec) : '',
+        chgStr: it ? (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%' : '',
+        chgColor: pct >= 0 ? '#12804A' : '#C62828', flashBg: ric ? flashBg(ric) : 'transparent',
+        select: function () {
+          if (isActive) self.setState({ open: !st.open, query: '', hi: 0 });
+          else self.setState({ active: i, hi: 0, open: st.open || !ric, query: st.open ? st.query : '' });
+        },
+        toggleSearch: function () { self.setState({ open: !st.open, query: '', hi: 0 }); }
+      };
+    });
+    var list = this.matches();
+    var q = st.query.trim();
+    var rows = list.map(function (it, idx) {
+      var ricMatch = q && it.ric.toLowerCase().indexOf(q.toLowerCase()) === 0;
+      var rs = ricMatch ? split(it.ric, q) : ['', '', it.ric];
+      var ds = !ricMatch && q ? split(it.desc, q) : ['', '', it.desc];
+      var pct = (it.last - it.close) / it.close * 100, span = it.high - it.low || 1;
+      var spread = it.tick * (it.phase === 'Open' ? 1 : 2);
+      var current = st.rics[st.active] === it.ric;
+      var dots = []; st.rics.forEach(function (r, i) { if (r === it.ric) dots.push({ color: CH[i].color }); });
+      var halted = it.phase === 'Halted';
+      return {
+        ricA: rs[0], ricB: rs[1], ricC: rs[2], descA: ds[0], descB: ds[1], descC: ds[2],
+        exch: 'XLON', ccy: 'GBp', dots: dots, current: current ? 'true' : 'false',
+        hasPhase: it.phase !== 'Open', phase: it.phase,
+        phaseBg: halted ? '#FCE8E9' : '#FBF1D3', phaseInk: halted ? '#9E1E25' : '#7A5C00',
+        bg: idx === st.hi ? '#EEF0F4' : current ? CH[st.active].tint : 'transparent',
+        ring: current ? 'inset 0 0 0 1px ' + CH[st.active].color : 'none',
+        lowStr: fmt(it.low, it.dec), highStr: fmt(it.high, it.dec),
+        lastPos: ((it.last - it.low) / span * 100).toFixed(1) + '%',
+        closePos: ((it.close - it.low) / span * 100).toFixed(1) + '%',
+        rangeAria: 'Day range ' + fmt(it.low, it.dec) + ' to ' + fmt(it.high, it.dec),
+        bidStr: halted ? '—' : fmt(it.last - spread, it.dec), askStr: halted ? '—' : fmt(it.last + spread, it.dec),
+        lastStr: fmt(it.last, it.dec), priceOpacity: halted ? '0.45' : '1', flashBg: flashBg(it.ric),
+        chgStr: (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%', up: pct > 0, down: pct < 0,
+        chgColor: pct > 0 ? '#12804A' : pct < 0 ? '#C62828' : '#5B6068',
+        pick: function () { self.pick(it.ric); },
+        hover: function () { if (st.hi !== idx) self.setState({ hi: idx }); }
+      };
+    });
+    var t = CH[st.active];
+    return {
+      channels: channels, rows: rows, open: st.open, query: st.query, activeColor: t.color,
+      target: { name: t.name, color: t.color, tint: t.tint, ink: t.ink },
+      sectionLabel: q ? 'Matches' : 'Recent',
+      countLabel: q ? rows.length + ' of ' + SEED.length + ' instruments' : 'Type to search ' + SEED.length + ' instruments',
+      noResults: q && rows.length === 0,
+      panels: PANELS.map(function (p) {
+        var ci = p.pin != null ? p.pin : st.active;
+        return { name: p.name, col: p.col, row: p.row, pinned: p.pin != null, color: CH[ci].color, headBg: CH[ci].head, ric: st.rics[ci] || 'No instrument' };
+      }),
+      close: function () { self.setState({ open: false }); },
+      onQuery: function (e) { self.setState({ query: e.target.value, hi: 0 }); },
+      onKey: function (e) {
+        var n = rows.length;
+        if (e.key === 'ArrowDown') { e.preventDefault(); self.setState({ hi: n ? (st.hi + 1) % n : 0 }); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); self.setState({ hi: n ? (st.hi - 1 + n) % n : 0 }); }
+        else if (e.key === 'Enter' && list[st.hi]) { self.pick(list[st.hi].ric); }
+        else if (e.key === 'Escape') { self.setState({ open: false }); }
+        else if (e.key === 'Tab') { e.preventDefault(); self.setState({ active: (st.active + (e.shiftKey ? 3 : 1)) % 4, hi: 0 }); }
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

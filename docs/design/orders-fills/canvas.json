@@ -1,0 +1,39 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-18T10:30:00Z" },
+  "title": "Orders & Fills redesign",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1040, "h": 620, "title": "Orders · stacked panel, light (link after tabs, Salt toolbar, SplitPane)" },
+    "OrdersNarrow.dc.html": { "x": 1120, "y": 0, "w": 560, "h": 620, "title": "Orders · narrow stack (560px), no wrapping" },
+    "CancelAll.dc.html": { "x": 0, "y": 740, "w": 1040, "h": 620, "title": "Cancel all · confirmation prompt" },
+    "Standalone.dc.html": { "x": 1120, "y": 740, "w": 760, "h": 620, "title": "Orders · standalone panel (link in header bar)" },
+    "Fills.dc.html": { "x": 0, "y": 1480, "w": 1040, "h": 620, "title": "Fills · stacked panel, link menu open" },
+    "OrdersDark.dc.html": { "x": 1120, "y": 1480, "w": 1040, "h": 620, "title": "Orders · dark" },
+    "PublisherMark.dc.html": { "x": 0, "y": 2220, "w": 1040, "h": 470, "title": "Link button · publisher vs consumer (options)" },
+    "LinkColA.dc.html": { "x": 0, "y": 3040, "w": 1040, "h": 620, "title": "Experiment A · link column (as instrument grid), menu open on O-129" },
+    "LinkColB.dc.html": { "x": 1120, "y": 3040, "w": 1040, "h": 620, "title": "Experiment B · channel stripe + hover link action + linked footer" },
+    "OrdersLinked.dc.html": { "x": 0, "y": 4040, "w": 1040, "h": 620, "title": "Orders · display-only channel stripes, no link button" },
+    "FillsLinked.dc.html": { "x": 1120, "y": 4040, "w": 1040, "h": 620, "title": "Fills · BARC.L chip pressed: filtered to the Red instrument" }
+  },
+  "order": [
+    "Main.dc.html",
+    "OrdersNarrow.dc.html",
+    "CancelAll.dc.html",
+    "Standalone.dc.html",
+    "Fills.dc.html",
+    "OrdersDark.dc.html",
+    "PublisherMark.dc.html",
+    "LinkColA.dc.html",
+    "LinkColB.dc.html",
+    "OrdersLinked.dc.html",
+    "FillsLinked.dc.html"
+  ],
+  "notes": {
+    "heading": { "x": 0, "y": -300, "text": "Orders & Fills: header, toolbar, split", "kind": "title1", "maxW": 2160 },
+    "experiment": { "x": 0, "y": 2790, "text": "Experiment: per-row channel links in Orders", "kind": "title1", "maxW": 2160 },
+    "displayOnly": { "x": 0, "y": 3780, "text": "Display-only links: channels set from the watchlist", "kind": "title1", "maxW": 2160 }
+  },
+  "designSystems": []
+}

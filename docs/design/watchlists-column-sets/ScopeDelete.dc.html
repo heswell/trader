@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Delete watchlist with its column sets (dark)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#9CC3F0}a:hover{color:#C4DCF7}
+button,input{font:inherit;color:inherit}
+.r{--app:#15171A;--panel:#1D2024;--bar:#191C20;--border:#2E3339;--rowline:#24282D;--fg:#E6E8EB;--fg2:#B8BEC6;--fg3:#A3A9B1;--hover:#2C323A;--sel:#243142;--field-border:#4A515A;--field-bg:#15171A;--label-bg:#2A2F36;--set-border:#5A7EA8;--accent:#9CC3F0;--focus:#7FB2FF;--danger:#C2453A;--danger-fg:#FFFFFF;--up:#4FC27A;--down:#F0705F;--scrim:rgba(0,0,0,.55);
+font-family:'Nunito Sans',system-ui,sans-serif;font-size:11px;color:var(--fg);background:var(--app);-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums;text-align:right}
+.up{color:var(--up)}.down{color:var(--down)}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.th,.tr{height:24px;display:grid;grid-template-columns:80px minmax(0,1fr) 56px 70px 86px 80px 64px;gap:8px;align-items:center;padding:0 8px;border-bottom:1px solid var(--rowline)}
+.th{background:var(--bar);font-weight:700;color:var(--fg2);border-bottom-color:var(--border)}
+.ft-tab{height:24px;padding:0 10px;border:0;background:transparent;border-radius:0 0 3px 3px;color:var(--fg2);display:inline-flex;align-items:center;gap:5px}
+.ft-tab.on{background:var(--panel);color:var(--fg);font-weight:800;box-shadow:inset 0 -1px 0 var(--border),inset 1px 0 0 var(--border),inset -1px 0 0 var(--border)}
+.btn{height:24px;box-sizing:border-box;padding:0 12px;border-radius:3px;border:1px solid var(--field-border);background:var(--field-bg);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--hover)}
+.btn.neg{background:var(--danger);border-color:var(--danger);color:var(--danger-fg)}
+.btn.neg:hover{filter:brightness(1.1)}
+.kbd{font:inherit;font-size:10px;font-weight:400;min-width:14px;height:14px;padding:0 3px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--field-border);border-radius:3px;color:var(--fg2)}
+.btn.neg .kbd{border-color:rgba(255,255,255,.55);color:inherit}
+.cbl{display:grid;grid-template-columns:16px minmax(0,1fr);gap:8px;align-items:start;padding:8px 10px;border:1px solid var(--field-border);border-radius:4px;cursor:pointer;line-height:1.45}
+.cbl:hover{background:var(--hover)}
+.cbl.on{border-color:var(--set-border);background:var(--sel)}
+.cbl input{margin:2px 0 0;accent-color:#2F6FC0}
+.ico{width:24px;height:24px;border:0;background:none;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;color:var(--fg3);cursor:pointer;padding:0}
+.ico:hover{background:var(--hover);color:var(--fg)}
+</style>
+</helmet>
+<div class="r" style="width: 100%; height: 800px; padding: 10px; box-sizing: border-box; display: flex; position: relative">
+  <section aria-hidden="true" style="flex: 1; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; min-width: 0">
+    <div style="height: 28px; flex: none; display: flex; align-items: center; padding: 0 10px; border-bottom: 1px solid var(--border); font-weight: 800; font-size: 12px">Energy basket</div>
+    <div style="height: 28px; flex: none; background: var(--bar); border-bottom: 1px solid var(--border)"></div>
+    <div class="th"><span>RIC</span><span>Name</span><span class="num">P/E</span><span class="num">Div yld %</span><span class="num">Mkt cap $bn</span><span class="num">Last</span><span class="num">Chg %</span></div>
+    <div style="flex: 1; min-height: 0; overflow: hidden">
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+        <div class="tr"><span style="font-weight: 700">{{r.ric}}</span><span class="ell">{{r.name}}</span><span class="num">{{r.pe}}</span><span class="num">{{r.dy}}</span><span class="num">{{r.mcap}}</span><span class="num">{{r.last}}</span><span class="{{r.chgCls}}">{{r.chg}}</span></div>
+      </sc-for>
+    </div>
+    <div style="height: 26px; flex: none; display: flex; align-items: flex-start; gap: 2px; padding: 0 6px; border-top: 1px solid var(--border); background: var(--bar)">
+      <span class="ft-tab">Watchlist</span><span class="ft-tab">Screening</span>
+      <span aria-hidden="true" style="width: 1px; height: 14px; margin: 5px 4px 0; background: var(--field-border)"></span>
+      <span class="ft-tab on"><svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent)"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>Energy value</span>
+    </div>
+  </section>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: var(--scrim)"></div>
+
+  <div role="alertdialog" aria-modal="true" aria-labelledby="dl-title" aria-describedby="dl-desc" style="position: absolute; left: 50%; top: 200px; transform: translateX(-50%); width: 440px; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 16px 40px rgba(0,0,0,.5); overflow: hidden">
+    <div style="height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 16px; border-bottom: 1px solid var(--border)">
+      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--down)"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18v.01"></path></svg>
+      <h2 id="dl-title" style="margin: 0; font-size: 14px; font-weight: 800; flex: 1">Delete Energy basket?</h2>
+      <button class="ico" aria-label="Close"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"></path></svg></button>
+    </div>
+    <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px">
+      <p id="dl-desc" style="margin: 0; color: var(--fg2); line-height: 1.5">The watchlist and its 5 instruments are removed. This can’t be undone.</p>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-weight: 700; color: var(--fg2)">Column sets only in Energy basket</span>
+        <label class="{{keepCls}}">
+          <input type="checkbox" checked="{{keep}}" onChange="{{toggleKeep}}">
+          <span><span style="font-weight: 700">Keep Energy value as a shared column set</span><br><span style="color: var(--fg3)">{{keepNote}}</span></span>
+        </label>
+      </div>
+    </div>
+    <div style="height: 48px; display: flex; align-items: center; gap: 8px; padding: 0 12px 0 16px; border-top: 1px solid var(--border); background: var(--bar)">
+      <span style="flex: 1"></span>
+      <button class="btn">Cancel <span class="kbd">Esc</span></button>
+      <button class="btn neg">{{deleteLabel}}</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+const ROWS = [
+  ['BP.L', 'BP plc', '7.1', '4.9', '78', '468.20', 0.84], ['SHEL.L', 'Shell plc', '11.8', '3.9', '214', '2,712.5', 0.41],
+  ['XOM.N', 'Exxon Mobil Corp', '13.9', '3.4', '498', '112.36', -0.22], ['CVX.N', 'Chevron Corp', '15.7', '4.1', '285', '158.07', -0.48],
+  ['TTE.PA', 'TotalEnergies SE', '8.1', '5.1', '140', '61.84', 0.35]
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { keep: false };
+  }
+  renderVals() {
+    const k = this.state.keep;
+    return {
+      keep: k,
+      keepCls: 'cbl' + (k ? ' on' : ''),
+      toggleKeep: () => this.setState({ keep: !k }),
+      keepNote: k ? 'It becomes a tab in every watchlist and All instruments' : 'Left unticked, it is deleted with the watchlist',
+      deleteLabel: k ? 'Delete watchlist' : 'Delete watchlist and 1 column set',
+      rows: ROWS.map((r) => ({ ric: r[0], name: r[1], pe: r[2], dy: r[3], mcap: r[4], last: r[5], chg: (r[6] >= 0 ? '+' : '') + r[6].toFixed(2) + '%', chgCls: 'num ' + (r[6] >= 0 ? 'up' : 'down') }))
+    };
+  }
+}
+</script>
+</body>
+</html>

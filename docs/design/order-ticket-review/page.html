@@ -1,0 +1,722 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Order Ticket Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a design-review document. Narrow reading column for prose, wide canvas rows for ticket mock-ups. */
+:root {
+  --bg: #f4f5f7;
+  --paper: #ffffff;
+  --fg: #1b1e24;
+  --muted: #5d6573;
+  --line: #d9dde4;
+  --accent: #3a4fd6;
+  --accent-soft: #e7eafc;
+  --note: #8a5a00;
+  --note-soft: #fff4dc;
+
+  /* Salt-like tokens for the ticket mock-ups (current look) */
+  --t-bg: #ffffff;
+  --t-fg: #15171b;
+  --t-muted: #61656e;
+  --t-faint: #a7abb3;
+  --t-border: #c5c9d0;
+  --t-input: #f2f4f6;
+  --t-input-line: #8c9099;
+  --t-sel: #2a2c2f;
+  --t-sel-fg: #ffffff;
+  --t-buy: #00875f;
+  --t-sell: #d2232f;
+  --t-warn: #a35b00;
+  --t-err: #d2232f;
+  --t-down: #c6202a;
+  --t-up: #00875f;
+
+  --f-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-ticket: "Open Sans", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121418; --paper: #1a1d23; --fg: #e8eaee; --muted: #9aa2b1; --line: #2e333c;
+    --accent: #8f9cff; --accent-soft: #252a4a; --note: #f0b44a; --note-soft: #33280f;
+    --t-bg: #1f2227; --t-fg: #eceef1; --t-muted: #a3a8b2; --t-faint: #626772; --t-border: #4a4f58;
+    --t-input: #2a2e35; --t-input-line: #7d828c; --t-sel: #e6e8eb; --t-sel-fg: #15171b;
+    --t-buy: #2fb47f; --t-sell: #f0545d; --t-warn: #f0a640; --t-err: #f0545d; --t-down: #f0545d; --t-up: #2fb47f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121418; --paper: #1a1d23; --fg: #e8eaee; --muted: #9aa2b1; --line: #2e333c;
+  --accent: #8f9cff; --accent-soft: #252a4a; --note: #f0b44a; --note-soft: #33280f;
+  --t-bg: #1f2227; --t-fg: #eceef1; --t-muted: #a3a8b2; --t-faint: #626772; --t-border: #4a4f58;
+  --t-input: #2a2e35; --t-input-line: #7d828c; --t-sel: #e6e8eb; --t-sel-fg: #15171b;
+  --t-buy: #2fb47f; --t-sell: #f0545d; --t-warn: #f0a640; --t-err: #f0545d; --t-down: #f0545d; --t-up: #2fb47f;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--f-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px;
+}
+.wrap { max-width: 1240px; margin: 0 auto; }
+.prose { max-width: 72ch; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: 2.1rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.45rem; font-weight: 700; }
+h3 { font-size: 1.05rem; font-weight: 600; }
+p { margin: 0; }
+code { font-family: var(--f-mono); font-size: 0.85em; background: var(--accent-soft); padding: 0.05em 0.35em; border-radius: 3px; }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+header.top { padding-block: 40px 24px; display: grid; gap: 14px; border-bottom: 1px solid var(--line); }
+.eyebrow { font-size: 0.75rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.lede { font-size: 1.05rem; color: var(--muted); max-width: 70ch; }
+
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.9rem; padding-top: 6px; }
+nav.toc a { text-decoration: none; }
+nav.toc a:hover { text-decoration: underline; }
+
+section { padding-block: 44px 8px; display: grid; gap: 18px; }
+section > .head { display: grid; gap: 8px; }
+
+/* Facts strip */
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.facts div { background: var(--paper); padding: 14px 16px; display: grid; gap: 2px; }
+.facts b { font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.facts span { color: var(--muted); font-size: 0.85rem; }
+
+/* Tables */
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.y { color: var(--t-buy); font-weight: 600; }
+td.n { color: var(--muted); }
+td.num { font-variant-numeric: tabular-nums; }
+
+/* Controls */
+.switch { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--paper); }
+.switch button { font: inherit; font-size: 0.85rem; border: 0; background: transparent; color: var(--fg); padding: 6px 14px; cursor: pointer; }
+.switch button[aria-pressed="true"] { background: var(--fg); color: var(--bg); font-weight: 600; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 0.88rem; color: var(--muted); }
+
+/* Mock-up canvas */
+.canvas { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 22px; }
+.card { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.card .cap { display: grid; gap: 4px; }
+.card .cap h3 { font-size: 0.98rem; }
+.card .cap p { color: var(--muted); font-size: 0.85rem; }
+.tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.tag { font-size: 0.72rem; font-family: var(--f-mono); padding: 1px 6px; border-radius: 3px; background: var(--accent-soft); color: var(--fg); }
+.tag.off { background: transparent; border: 1px dashed var(--line); color: var(--muted); text-decoration: line-through; }
+
+.callout { background: var(--note-soft); border-left: 3px solid var(--note); padding: 12px 16px; border-radius: 0 6px 6px 0; font-size: 0.92rem; }
+
+/* Ticket mock (approximates Salt DS as rendered today) */
+.tk {
+  --side: var(--t-buy);
+  font-family: var(--f-ticket); font-size: 12px; color: var(--t-fg);
+  background: var(--t-bg); border-top: 2px solid var(--side);
+  box-shadow: 0 0 0 1px var(--line);
+  padding: 16px; display: flex; flex-direction: column; gap: 12px; position: relative;
+  width: 100%; max-width: 380px;
+}
+.tk[data-side="SELL"] { --side: var(--t-sell); }
+.tk .lbl { font-size: 11px; color: var(--t-fg); font-weight: 600; display: block; margin-bottom: 3px; }
+.tk .fld { display: flex; flex-direction: column; flex: 1 1 12ch; min-width: 0; }
+.tk .fld.dis .lbl { color: var(--t-faint); }
+.tk .row { display: flex; flex-wrap: wrap; gap: 12px; }
+.tk .inp { background: var(--t-input); border-bottom: 1px solid var(--t-input-line); height: 28px; display: flex; align-items: center; padding: 0 8px; min-width: 0; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
+.tk .inp.r { justify-content: flex-end; }
+.tk .inp.ph { color: var(--t-faint); }
+.tk .inp.dd::after { content: ""; margin-left: auto; width: 6px; height: 6px; border-right: 1.5px solid var(--t-muted); border-bottom: 1.5px solid var(--t-muted); transform: rotate(45deg) translateY(-2px); flex: none; }
+.tk .inp.dd { justify-content: space-between; gap: 8px; }
+.tk .fld.dis .inp { background: transparent; border-bottom-color: var(--t-border); color: var(--t-faint); }
+.tk .fld.err .inp { border-bottom: 2px solid var(--t-err); }
+.tk .help { font-size: 11px; color: var(--t-err); margin-top: 3px; }
+.tk .step { display: flex; gap: 4px; }
+.tk .step .inp { flex: 1; }
+.tk .sbtn { width: 28px; height: 28px; border: 1px solid var(--t-border); display: grid; place-items: center; color: var(--t-fg); flex: none; font-size: 11px; }
+.tk .fld.dis .sbtn { color: var(--t-faint); border-color: var(--t-border); opacity: 0.6; }
+.tk .tg { display: inline-flex; border: 1px solid var(--t-border); padding: 2px; gap: 2px; }
+.tk .tg span { padding: 3px 14px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.02em; }
+.tk .tg span.on { background: var(--t-sel); color: var(--t-sel-fg); }
+.tk .tg.side span.on { box-shadow: inset 0 -4px 0 var(--side-on); }
+.tk .tg.side span.b { --side-on: var(--t-buy); }
+.tk .tg.side span.s { --side-on: var(--t-sell); }
+.tk .tg span.x { color: var(--t-faint); }
+.tk .quote { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-variant-numeric: tabular-nums; }
+.tk .quote .q { display: inline-flex; gap: 4px; align-items: baseline; }
+.tk .quote .q i { font-style: normal; font-size: 11px; color: var(--t-muted); }
+.tk .quote .q b { font-weight: 700; }
+.tk .quote .q.dim b, .tk .quote .q.dim i { color: var(--t-faint); }
+.tk .quote .dn { color: var(--t-down); }
+.tk .quote .up { color: var(--t-up); }
+.tk .phase { font-size: 11px; color: var(--t-warn); font-weight: 600; }
+.tk .prev { font-variant-numeric: tabular-nums; display: grid; gap: 3px; }
+.tk .prev i { font-style: normal; color: var(--t-muted); font-size: 11px; }
+.tk .prev .usd { color: var(--t-muted); }
+.tk ul.warn { margin: 0; padding-left: 16px; color: var(--t-warn); font-size: 11px; }
+.tk .status { font-size: 11px; }
+.tk .status .oid { color: var(--t-muted); }
+.tk .status.rej, .tk .ferr { color: var(--t-err); font-size: 11px; }
+.tk .blocked { color: var(--t-warn); font-size: 11px; }
+.tk .acts { display: flex; justify-content: flex-end; gap: 8px; }
+.tk .btn { height: 28px; padding: 0 14px; display: inline-grid; place-items: center; text-transform: uppercase; font-weight: 600; font-size: 11px; letter-spacing: 0.02em; border: 1px solid var(--t-border); white-space: nowrap; }
+.tk .btn.go { background: var(--side); color: #fff; border-color: var(--side); min-width: 16ch; }
+.tk .btn.go.dis { opacity: 0.4; }
+.tk .btn.go.load { opacity: 0.8; }
+.tk .btn.go.load::before { content: ""; width: 10px; height: 10px; border: 2px solid #fff; border-right-color: transparent; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.tk .btn.go.load { display: inline-flex; align-items: center; }
+.tk .ric { font-weight: 700; font-size: 13px; }
+.tk .anno { position: absolute; right: -9px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: #fff; font: 600 10px/18px var(--f-body); text-align: center; }
+
+/* Dialog frame */
+.dlg { box-shadow: 0 8px 28px rgba(0,0,0,0.18), 0 0 0 1px var(--line); background: var(--t-bg); width: 100%; max-width: 420px; font-family: var(--f-ticket); }
+.dlg .dh { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px 2px; font-size: 15px; font-weight: 700; color: var(--t-fg); }
+.dlg .dh span:last-child { font-weight: 400; color: var(--t-muted); }
+.dlg .tk { box-shadow: none; max-width: none; }
+
+/* Compact strip */
+.tk.compact { flex-direction: row; flex-wrap: wrap; align-items: flex-end; gap: 8px; padding: 8px; max-width: none; }
+.tk.compact .row { flex-wrap: nowrap; gap: 8px; }
+.tk.compact .fld { flex: 0 1 auto; }
+.tk.compact .full { flex-basis: 100%; }
+.tk.compact .acts { margin-left: auto; }
+.stripbox { overflow-x: auto; padding: 2px; }
+
+/* Annotated anatomy */
+.anat { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 28px; align-items: start; }
+.anat ol { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 10px; counter-reset: a; }
+.anat li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; font-size: 0.9rem; }
+.anat li::before { counter-increment: a; content: counter(a); width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; font-weight: 600; display: grid; place-items: center; margin-top: 2px; }
+.anat li span { color: var(--muted); }
+
+/* Issues list */
+.issues { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap: 14px; }
+.issue { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+.issue h3 { font-size: 0.95rem; }
+.issue p { color: var(--muted); font-size: 0.87rem; }
+.sev { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.sev.h { color: var(--t-err); } .sev.m { color: var(--note); } .sev.l { color: var(--muted); }
+
+/* Research */
+.plat { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 14px; }
+.pc { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.pc h3 { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.pc h3 small { font-weight: 500; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.pc dl { margin: 0; display: grid; grid-template-columns: 82px 1fr; gap: 4px 10px; font-size: 0.85rem; }
+.pc dt { color: var(--muted); font-weight: 500; }
+.pc dd { margin: 0; min-width: 0; }
+.pc .src { font-size: 0.8rem; display: flex; flex-wrap: wrap; gap: 4px 12px; border-top: 1px solid var(--line); padding-top: 8px; }
+.pc .src a { overflow-wrap: anywhere; }
+
+.patterns { display: grid; gap: 10px; }
+.pat { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; }
+.pat p { color: var(--muted); font-size: 0.87rem; grid-column: 1; }
+.pat .us { grid-column: 2; grid-row: 1 / span 2; align-self: center; font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+.us.has { background: color-mix(in srgb, var(--t-buy) 15%, transparent); color: var(--t-buy); }
+.us.part { background: var(--note-soft); color: var(--note); }
+.us.no { background: color-mix(in srgb, var(--t-err) 12%, transparent); color: var(--t-err); }
+
+@media (max-width: 760px) {
+  .anat { grid-template-columns: 1fr; }
+  h1 { font-size: 1.7rem; }
+  .pat { grid-template-columns: 1fr; }
+  .pat .us { grid-column: 1; grid-row: auto; justify-self: start; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">trading-ui · OrderTicket · design review</div>
+  <h1>Order Ticket Review</h1>
+  <p class="lede">Every permutation the current ticket supports, drawn from the code as it stands on <code>main</code> (after the TWAP / VWAP / POV change), followed by research into how other trading systems lay out their tickets and the patterns they share. The first redesign is the <a href="https://claude.ai/artifact/MxNxyfCP55hoipn4bX9LHk">Order Ticket Concept</a>.</p>
+  <nav class="toc" aria-label="Sections">
+    <a href="#anatomy">Anatomy</a>
+    <a href="#rules">Rules</a>
+    <a href="#matrix">Type × strategy</a>
+    <a href="#states">States</a>
+    <a href="#layouts">Layouts</a>
+    <a href="#issues">Issues</a>
+    <a href="#research">Research</a>
+    <a href="#patterns">Patterns</a>
+    <a href="#next">Directions</a>
+  </nav>
+</header>
+
+<!-- ANATOMY -->
+<section id="anatomy">
+  <div class="head prose">
+    <h2>Anatomy of today's ticket</h2>
+    <p>One form core (<code>useOrderTicket</code>) rendered top to bottom. Every element sits in a wrapping flex row, so the field order is fixed and algo fields push everything below them down.</p>
+  </div>
+  <div class="facts">
+    <div><b>2</b><span>sides: Buy, Sell</span></div>
+    <div><b>2</b><span>order types: Market, Limit (Stop reserved)</span></div>
+    <div><b>4</b><span>strategies: DMA, TWAP, VWAP, POV</span></div>
+    <div><b>4</b><span>TIFs: Day, IOC, FOK, GTC</span></div>
+    <div><b>32</b><span>valid side × type × strategy × TIF combinations</span></div>
+    <div><b>3</b><span>layouts: docked panel, dialog, compact strip</span></div>
+  </div>
+  <div class="anat">
+    <div id="anatomyMock"></div>
+    <ol>
+      <li><div><b>Instrument picker</b> <span>Salt ComboBox over <code>instruments</code>; hidden when <code>showInstrumentPicker=false</code> (RIC shown as a label).</span></div></li>
+      <li><div><b>Quote strip</b> <span>Bid and Ask are buttons that copy the price into the limit field (disabled for Market). Last, change, trading phase (when not continuous) and a stale indicator.</span></div></li>
+      <li><div><b>Side and order type</b> <span>Two segmented toggles on one row. Side shows its colour as a 4px underline on the selected button and the 2px top border of the ticket. Keys B / S.</span></div></li>
+      <li><div><b>Strategy</b> <span>A third segmented toggle: DMA, TWAP, VWAP, POV. Always visible.</span></div></li>
+      <li><div><b>Algo parameters</b> <span>Inserted above quantity when the strategy is not DMA. Free-text inputs; which ones appear depends on the strategy.</span></div></li>
+      <li><div><b>Quantity and price</b> <span>Steppers. Quantity steps by lot (− / +), price by tick, band-aware (▼ / ▲). Arrow keys nudge, Shift ×10. Quantity accepts <code>10k</code>, <code>1.5m</code>. Price is disabled with a "Market" placeholder for market orders.</span></div></li>
+      <li><div><b>TIF and account</b> <span>Two dropdowns. Invalid TIFs stay listed but disabled. Last used account remembered in localStorage.</span></div></li>
+      <li><div><b>Risk preview</b> <span>Notional in instrument currency with indicative USD. Advisory warnings: max order qty, max notional, ±10% collar, no price.</span></div></li>
+      <li><div><b>Status and actions</b> <span>Inline status of the submitted order (pending, accepted, partial, filled, rejected), a connection-blocked reason, Reset and a side-coloured submit that echoes side, quantity and RIC. F9 or Ctrl+Enter submits.</span></div></li>
+    </ol>
+  </div>
+</section>
+
+<!-- RULES -->
+<section id="rules">
+  <div class="head prose">
+    <h2>Rules that shape the permutations</h2>
+    <p>From <code>orderTicketModel.ts</code>. The OMS re-validates; these are the client-side rules the ticket enforces or shows.</p>
+  </div>
+  <h3>Time in force by order type and strategy</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Order type</th><th>Strategy</th><th>Day</th><th>IOC</th><th>FOK</th><th>GTC</th><th>Valid</th></tr></thead>
+    <tbody>
+      <tr><td>Limit</td><td>DMA</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="num">4</td></tr>
+      <tr><td>Market</td><td>DMA</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="n">disabled</td><td class="num">3</td></tr>
+      <tr><td>Limit</td><td>TWAP / VWAP / POV</td><td class="y">✓</td><td class="n">disabled</td><td class="n">disabled</td><td class="y">✓</td><td class="num">2 each</td></tr>
+      <tr><td>Market</td><td>TWAP / VWAP / POV</td><td class="y">✓</td><td class="n">disabled</td><td class="n">disabled</td><td class="n">disabled</td><td class="num">1 each</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Strategy parameters</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Strategy</th><th>Fields shown</th><th>Default when empty</th><th>Validation</th></tr></thead>
+    <tbody>
+      <tr><td>DMA</td><td class="n">none</td><td class="n">–</td><td class="n">–</td></tr>
+      <tr><td>TWAP</td><td>Duration (min)</td><td>30 minutes (placeholder)</td><td>1 to 1440 minutes</td></tr>
+      <tr><td>VWAP</td><td>End time</td><td>The close</td><td><code>HH:MM</code> session time</td></tr>
+      <tr><td>POV</td><td>Participation %, Duration (min)</td><td>Participation required; duration runs to close</td><td>Participation 1 to 50%; duration 1 to 1440</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Trading phase</h3>
+  <p class="prose" style="color:var(--muted)">The quote strip shows the phase when it is not <code>CONTINUOUS</code>: Pre open, Opening auction, Closing auction, Post close, Closed, Halted. <code>validateOrder</code> rejects orders on a halted instrument and when the market is closed, and accepts IOC / FOK only in continuous trading. None of this is reflected in the TIF list.</p>
+</section>
+
+<!-- MATRIX -->
+<section id="matrix">
+  <div class="head prose">
+    <h2>Order type × strategy</h2>
+    <p>The eight layouts the form takes. Switch side to see how little of the ticket changes colour. The example is 5,000 AAL.L (GBX, tick 0.1, lot 100) on account ACC-US-01.</p>
+  </div>
+  <div class="toolbar">
+    <span>Side</span>
+    <div class="switch" role="group" aria-label="Side for the mock-ups">
+      <button type="button" id="sideBuy" aria-pressed="true">Buy</button>
+      <button type="button" id="sideSell" aria-pressed="false">Sell</button>
+    </div>
+  </div>
+  <div class="canvas" id="matrixCanvas"></div>
+</section>
+
+<!-- STATES -->
+<section id="states">
+  <div class="head prose">
+    <h2>States</h2>
+    <p>Validation, pre-trade warnings, market phase, connection, and the lifecycle of the submitted order. All shown in the docked panel.</p>
+  </div>
+  <div class="canvas" id="statesCanvas"></div>
+</section>
+
+<!-- LAYOUTS -->
+<section id="layouts">
+  <div class="head prose">
+    <h2>Layouts</h2>
+    <p>The same form in three containers. The dialog opens from <code>openOrderTicket()</code> when no docked panel is mounted; outside clicks don't dismiss it.</p>
+  </div>
+  <div class="canvas" id="layoutCanvas"></div>
+  <div class="card">
+    <div class="cap"><h3>Compact strip, with an algo selected</h3><p>The <code>compact</code> variant for a grid row or ladder. It keeps every row of the panel, including strategy and algo fields, so it gets wide quickly and wraps.</p></div>
+    <div class="stripbox" id="compactMock"></div>
+  </div>
+  <div class="card">
+    <div class="cap"><h3>Compact strip, fixed instrument</h3><p><code>showInstrumentPicker=false</code>: the RIC becomes a label and the quote strip comes back.</p></div>
+    <div class="stripbox" id="compactMock2"></div>
+  </div>
+</section>
+
+<!-- ISSUES -->
+<section id="issues">
+  <div class="head prose">
+    <h2>What the permutations show</h2>
+    <p>Observations from laying every variant side by side. These are the starting points for the redesign.</p>
+  </div>
+  <div class="issues">
+    <div class="issue"><span class="sev h">High</span><h3>Side is too quiet for what it does</h3><p>Buy and Sell use the same toggle style as order type and strategy. The only colour cues are a 2px top border, a 4px underline and the submit button. Switching side barely changes the ticket.</p></div>
+    <div class="issue"><span class="sev h">High</span><h3>Fields move when the strategy changes</h3><p>Algo parameters are inserted above quantity and price, so the two fields traders use most jump down a row on TWAP / VWAP / POV and back on DMA.</p></div>
+    <div class="issue"><span class="sev h">High</span><h3>Three stacked toggles of equal weight</h3><p>Side, order type and strategy are three segmented controls with the same visual weight. Strategy has nothing to do with side, and sits apart from the parameters it controls.</p></div>
+    <div class="issue"><span class="sev m">Medium</span><h3>Algo parameters are inconsistent and bare</h3><p>TWAP and POV take a duration in minutes; VWAP takes an end time. No start time, no units on the inputs beyond the label, no time picker, and no preview of when the order will finish or how much it will trade per interval.</p></div>
+    <div class="issue"><span class="sev m">Medium</span><h3>Disabled price field for Market</h3><p>Market keeps a disabled price stepper with a "Market" placeholder. It holds space and reads like a field that failed to load.</p></div>
+    <div class="issue"><span class="sev m">Medium</span><h3>Invalid TIFs are only discoverable in the dropdown</h3><p>Algo orders allow Day and GTC only; Market disallows GTC. These are disabled options, so the reason is never stated, and a TIF chosen earlier can become invalid after a strategy change.</p></div>
+    <div class="issue"><span class="sev m">Medium</span><h3>Quote strip is small and not side-aware</h3><p>Bid / Ask are clickable but look like text. No spread or mid. A buyer usually cares about the ask and a seller about the bid; both get the same weight.</p></div>
+    <div class="issue"><span class="sev m">Medium</span><h3>Quantity aids are hidden</h3><p><code>10k</code> / <code>1.5m</code> parsing exists but nothing says so. No notional entry, no % of ADV, no position, which matter most for algos (POV at 10% of a 2m ADV is a different order from 10% of 20k).</p></div>
+    <div class="issue"><span class="sev l">Low</span><h3>Inconsistent stepper glyphs</h3><p>Quantity uses − / + and price uses ▼ / ▲. In a wide panel the buttons sit far from the value.</p></div>
+    <div class="issue"><span class="sev l">Low</span><h3>Submit label leaves out price and strategy</h3><p>"Buy 5000 AAL.L" echoes side, quantity and RIC, but not the limit or the algo. The quantity isn't grouped.</p></div>
+    <div class="issue"><span class="sev l">Low</span><h3>The compact variant isn't compact</h3><p>It carries the strategy row and algo fields, so a ladder or grid-row strip grows to two or three lines.</p></div>
+    <div class="issue"><span class="sev l">Low</span><h3>Account is a peer of TIF</h3><p>Account is usually set once per session or desk, yet it sits at the same level as per-order fields, and an empty account only fails on submit.</p></div>
+  </div>
+</section>
+
+<!-- RESEARCH -->
+<section id="research">
+  <div class="head prose">
+    <h2>How other platforms do it</h2>
+    <p>Fourteen tickets, from vendor help centres, user guides and PDFs. Screenshots are linked rather than embedded: open them from each card. Bloomberg EMSX, FlexTrade, Charles River and Fidessa publish no ticket UI documentation, so they are covered only where API docs describe ticket concepts.</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Platform</th><th>Segment</th><th>Layout</th><th>Side control</th><th>Order type</th><th>Algo parameters</th><th>Confirm</th></tr></thead>
+    <tbody>
+      <tr><td>IBKR TWS (Mosaic)</td><td>Retail / pro</td><td>Horizontal strip</td><td>Toggle; panel background takes side colour</td><td>Dropdown, algos as "IBALGO"</td><td>Advanced flyout</td><td>Submit → Transmit modal</td></tr>
+      <tr><td>Trading Technologies</td><td>Pro futures</td><td>Compact grid</td><td>Two big Buy / Sell buttons</td><td>Dropdown incl. algos</td><td>Embedded tabbed panel or fly-out; templates</td><td>Above qty threshold</td></tr>
+      <tr><td>TradeStation</td><td>Retail / active</td><td>Tabbed bar</td><td>Buy / Sell / Short / Cover buttons</td><td>Dropdown</td><td>Advanced dialog</td><td>Click side button</td></tr>
+      <tr><td>thinkorswim</td><td>Retail / active</td><td>Row strip + ladder</td><td>From BUY / SELL launch</td><td>Dropdown swaps row template</td><td>–</td><td>Confirm and Send (opt-out)</td></tr>
+      <tr><td>Sterling Trader Pro</td><td>Pro equities</td><td>Dense L2 window</td><td>SHRT / SELL / BUY, side-coloured</td><td>Dropdown</td><td>Per destination</td><td>Click side / hotkey</td></tr>
+      <tr><td>Eze EMS</td><td>Buy-side EMS</td><td>Embedded or pop-up form, user-editable</td><td>Side buttons / hot buttons</td><td>Dropdown</td><td>Pop-up per broker route; saved strategies</td><td>Hotkey; bracket confirm</td></tr>
+      <tr><td>Bloomberg EMSX</td><td>Institutional</td><td>(no public UI docs)</td><td>–</td><td>–</td><td>Broker-defined fields from server</td><td>Threshold warnings: qty, value, %ADV, price</td></tr>
+      <tr><td>Saxo</td><td>Retail / pro</td><td>Vertical form</td><td>Toggle</td><td>Stepper-dropdown</td><td>Inline below strategy, with mandatory / optional flags</td><td>Confirm (1-click opt-out)</td></tr>
+      <tr><td>Kraken Pro</td><td>Crypto</td><td>Vertical form</td><td>Segmented toggle</td><td>Dropdown</td><td>–</td><td>One click; Ctrl+Enter</td></tr>
+      <tr><td>Binance</td><td>Crypto</td><td>Vertical panel</td><td>Tabs</td><td>Tabs</td><td>–</td><td>Pop-up then toast</td></tr>
+      <tr><td>Robinhood Legend</td><td>Retail desktop</td><td>Vertical form seeded from context</td><td>Toggle; implied by bid / ask click</td><td>Dropdown</td><td>–</td><td>Review (auto-send opt-out)</td></tr>
+      <tr><td>Fidelity ATP</td><td>Retail / active</td><td>Form + multi-trade rows</td><td>Action dropdown</td><td>Dropdown driven by action</td><td>–</td><td>Preview → Place</td></tr>
+      <tr><td>CQG</td><td>Pro futures</td><td>Ticket + mini DOM; command line</td><td>Price-aware buy / sell buttons</td><td>Implied by price vs market</td><td>–</td><td>Click button</td></tr>
+      <tr><td>Infront Terminal</td><td>Pro</td><td>New Order window, Strategy page</td><td>–</td><td>–</td><td>Form built from server definitions</td><td>–</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="plat">
+    <div class="pc"><h3>IBKR TWS <small>Retail / pro</small></h3>
+      <dl><dt>Layout</dt><dd>Wide, short panel: information on top (position, shortable flag, bid / ask), one row of inputs below.</dd>
+      <dt>Price</dt><dd>A slider under the quote labelled Bid · Mid · Ask steps through prices either side of the spread. One-click Bid / Mid / Ask.</dd>
+      <dt>Algos</dt><dd>Picking an algo opens an Advanced flyout with strategy-specific fields (Arrival Price: max %, risk aversion, start / end time). Warns with suggested times when the window is too short for expected volume.</dd>
+      <dt>Distinct</dt><dd>Connector lines from Position to Qty and quote to Price. "Save" stages instead of sending. "Check Margin" shows the impact before sending.</dd></dl>
+      <div class="src"><a href="https://www.interactivebrokers.com/campus/trading-lessons/getting-started-with-the-order-entry-panel/">Order entry guide</a><a href="https://www.interactivebrokers.com/campus/wp-content/uploads/sites/2/2022/11/Order-Entry-Panel-1.png">Screenshot: panel</a><a href="https://www.interactivebrokers.com/campus/trading-lessons/arrival-price/">Arrival Price guide</a><a href="https://www.interactivebrokers.com/campus/wp-content/uploads/sites/2/2023/01/Arrival-Price-2.jpg">Screenshot: algo flyout</a></div></div>
+
+    <div class="pc"><h3>Trading Technologies <small>Pro futures</small></h3>
+      <dl><dt>Layout</dt><dd>Quantity number pad on the left, large qty / price steppers in the centre over a live inside market, account / type / TIF on the right, big Buy and Sell buttons at the bottom.</dd>
+      <dt>Modes</dt><dd>Floating (green border, closes on send), Linked (yellow, follows grid selection), Unlinked.</dd>
+      <dt>Price</dt><dd>Hover shows 3 levels of depth to click. "Payup" sets price as ticks or % from last, bid, ask, same side or opposite side.</dd>
+      <dt>Algos</dt><dd>Listed as order types; parameters in an embedded tabbed panel or fly-out. Saved templates and up to 50 custom preset buttons. Confirm can show all algo parameters expanded.</dd></dl>
+      <div class="src"><a href="https://library.tradingtechnologies.com/trade/basic-order-entry/order-ticket/description-order-ticket/order-ticket-overview/">Order Ticket overview</a><a href="https://cdn-ilepbon.nitrocdn.com/DMOhOHEiiSdmicmLrJXUAJgfgKLbzTYq/assets/images/optimized/rev-b26c6b8/library.tradingtechnologies.com/wp-content/uploads/2025/12/ot-order-entry-overview.png">Screenshot: ticket</a><a href="https://cdn-ilepbon.nitrocdn.com/DMOhOHEiiSdmicmLrJXUAJgfgKLbzTYq/assets/images/optimized/rev-b26c6b8/library.tradingtechnologies.com/wp-content/uploads/2025/12/tto-param-flyout-ot-1.png">Screenshot: algo fly-out</a><a href="https://cdn-ilepbon.nitrocdn.com/DMOhOHEiiSdmicmLrJXUAJgfgKLbzTYq/assets/images/optimized/rev-b26c6b8/library.tradingtechnologies.com/wp-content/uploads/2025/12/trade-confirm-iceberg-1.png">Screenshot: confirm</a></div></div>
+
+    <div class="pc"><h3>TradeStation <small>Retail / active</small></h3>
+      <dl><dt>Side</dt><dd>Separate Buy, Sell, Sell Short, Buy to Cover buttons; which appear depends on the current position.</dd>
+      <dt>Quantity</dt><dd>Shares / dollars toggle. A "P" button fills the position, with a % of position menu.</dd>
+      <dt>Price</dt><dd>Auto Price relative to the inside: join, improve, split, shave, take. Bid / Last / Ask buttons.</dd>
+      <dt>Distinct</dt><dd>A message box at the bottom for restrictions and alerts. A lock button to disable trading.</dd></dl>
+      <div class="src"><a href="https://help.tradestation.com/10_00/eng/TradeStationHelp/tb/trade_bar_buttons_fields.htm">Trade Bar fields</a><a href="https://help.tradestation.com/10_00/eng/TradeStationHelp/image/ob_order_bar.png">Screenshot: trade bar</a><a href="https://help.tradestation.com/10_00/eng/TradeStationHelp/tb/auto_price.htm">Auto Price</a></div></div>
+
+    <div class="pc"><h3>thinkorswim <small>Retail / active</small></h3>
+      <dl><dt>Layout</dt><dd>Order rows docked at the bottom of the screen, one per order or leg. The type dropdown swaps the row's fields (Stop limit shows LMT and STP cells).</dd>
+      <dt>Price</dt><dd>Tracks the mark until you lock it with a padlock icon.</dd>
+      <dt>Ladder</dt><dd>Hovering a level shows a bubble previewing side, qty and type; clicking above or below the market picks stop vs limit.</dd>
+      <dt>Caution</dt><dd>Invalid TIFs stay selectable and only fail on send.</dd></dl>
+      <div class="src"><a href="https://toslc.thinkorswim.com/center/howToTos/thinkManual/Trade/Order-Entry-Tools.html">Order entry tools</a><a href="https://toslc.thinkorswim.com/center/howToTos/thinkManual/Trade/Active-Trader/AT-Entering-Orders">Active Trader</a></div></div>
+
+    <div class="pc"><h3>Sterling Trader Pro <small>Pro equities</small></h3>
+      <dl><dt>Layout</dt><dd>Three rows of inputs (symbol, account, qty, price, TIF, destination, SHRT / SELL / BUY) above full-depth Level II.</dd>
+      <dt>Side</dt><dd>Optional side colouring: blue buy, red sell, purple short. Clicking the book highlights a side button; a Joins / Takes setting decides which.</dd>
+      <dt>Defaults</dt><dd>Position-aware: % of position to close, side that opens long or short, account from the position, qty from the last order.</dd>
+      <dt>Keyboard</dt><dd>Configurable tab order and where focus goes after send.</dd></dl>
+      <div class="src"><a href="https://portal.sterlingtradingtech.com/product-tutorials/sterling-trader-pro/level-2-order-entry-window">L2 order entry</a><a href="https://portal.sterlingtradingtech.com/assets/images/guides/pro-app/level-2-order-entry-window/order-entry.jpg">Screenshot: L2 window</a></div></div>
+
+    <div class="pc"><h3>SS&amp;C Eze EMS <small>Buy-side EMS</small></h3>
+      <dl><dt>Forms</dt><dd>Embedded in any window or as a pop-up. Users edit forms: drag controls, add or remove them, set tab order, save named forms.</dd>
+      <dt>Algos</dt><dd>Choosing a broker algo route opens a pop-up specific to that route. Saved strategy presets. Algo wheels as virtual routes.</dd>
+      <dt>Price</dt><dd>Market disables the price field. BBO, Mid and Pegged offered as types.</dd>
+      <dt>Analytics</dt><dd>Target %ADV, participation rate and duration VWAP in the blotter.</dd></dl>
+      <div class="src"><a href="https://portal.realtick.com/pdf/Eze%20EMS%20Quick%20Start%20Guide.pdf">Quick Start Guide (PDF, pp. 47–50, 93–99)</a></div></div>
+
+    <div class="pc"><h3>Bloomberg EMSX <small>Institutional · thin</small></h3>
+      <dl><dt>Model</dt><dd>Order vs route: an order is created, then routed to a broker with a strategy (DMA, VWAP, TWAP, and others).</dd>
+      <dt>Algos</dt><dd>Strategy fields are defined per broker and fetched from the server, which implies a form built from definitions.</dd>
+      <dt>Warnings</dt><dd>User-set thresholds: quantity, market value, %ADV, price tolerance, restricted short sells.</dd></dl>
+      <div class="src"><a href="https://emsx-api-doc.readthedocs.io/en/latest/programmable/emsxFeatures.html">EMSX features (API docs)</a></div></div>
+
+    <div class="pc"><h3>Saxo <small>Retail / pro</small></h3>
+      <dl><dt>Controls</dt><dd>Every field is a stepper that also opens a full list when clicked between the arrows.</dd>
+      <dt>Algos</dt><dd>Type → Advanced → Algo, then a strategy picker just below. The algo guide marks each parameter mandatory, optional or recommended: limit, duration, start / end, max participation, auction participation, "I would" price, urgency, display qty.</dd>
+      <dt>Defaults</dt><dd>Remembers the last duration per instrument. Default TIF moved from GTC to Day.</dd></dl>
+      <div class="src"><a href="https://www.home.saxo/-/media/documents/saxotraderpro/saxotraderpro-algoguide">Algo Order Guide (PDF)</a><a href="https://fxnewsgroup.com/wp-content/uploads/2022/05/saxotradergo-1024x539-978x400.jpg">Screenshot: SaxoTraderGO</a></div></div>
+
+    <div class="pc"><h3>Kraken Pro <small>Crypto</small></h3>
+      <dl><dt>Layout</dt><dd>Vertical: Buy / Sell segmented toggle beside the type dropdown, price, then quantity and total side by side.</dd>
+      <dt>Quantity</dt><dd>Quantity and total are linked both ways; a slider sets a % of available balance.</dd>
+      <dt>Options</dt><dd>Fee, post-only, TIF, reduce-only collapsed under "More options".</dd>
+      <dt>Safety</dt><dd>Optional 3-second lock after submit to stop double sends; optional reset of quantity after submit. Ctrl / Cmd+Enter submits.</dd></dl>
+      <div class="src"><a href="https://support.kraken.com/articles/360022627732">Interface guide</a><a href="https://assets-cms.kraken.com/images/51n36hrp/facade/8b62730af9828791792f8bab78566caff5c96077-758x1026.png">Screenshot: order form</a></div></div>
+
+    <div class="pc"><h3>Robinhood Legend <small>Retail desktop</small></h3>
+      <dl><dt>Seeding</dt><dd>The form takes side, type and price from where it opened. Clicking a bid means sell; an ask means buy.</dd>
+      <dt>Defaults</dt><dd>Documented: limit at the natural price (ask for buys, bid for sells), stop 1% beyond it, Day TIF.</dd>
+      <dt>Chart</dt><dd>Order pills on the chart can be dragged to amend.</dd>
+      <dt>Hotkeys</dt><dd>Shift+B / Shift+S market, Shift+Alt+B buy limit at ask, Shift+Alt+F flatten.</dd></dl>
+      <div class="src"><a href="https://robinhood.com/us/en/support/articles/legend-behaviors-and-settings">Behaviours and settings</a><a href="https://images.ctfassets.net/fomw95h5b4ty/3EEwX6XGMcuOb5BR6LmD6V/efd01c7815fa15f5f308875ca8e6de8b/trading_overview.gif">Animation: trading</a></div></div>
+
+    <div class="pc"><h3>Fidelity Active Trader Pro <small>Retail / active</small></h3>
+      <dl><dt>Side</dt><dd>An Action dropdown; the Type list changes with it. Sell Short shows shortable shares and a hard-to-borrow icon.</dd>
+      <dt>Validation</dt><dd>Required fields show bracketed placeholders; Preview appears only when they are complete.</dd>
+      <dt>Batch</dt><dd>A multi-trade ticket of rows; up to 20 submitted together.</dd></dl>
+      <div class="src"><a href="https://www.fidelity.com/trading/help/active-trader-pro/trade">Trade help</a></div></div>
+
+    <div class="pc"><h3>CQG <small>Pro futures</small></h3>
+      <dl><dt>Price</dt><dd>Click a price and the buttons adapt: below the market you get buy limit, sell stop and sell limit. Mouse wheel over a button scrolls its price.</dd>
+      <dt>Command line</dt><dd>Orders can be typed as one line: account, side, size, instrument, price, type, TIF.</dd></dl>
+      <div class="src"><a href="https://help.cqg.com/cqgic/18/Documents/placingordersonorderticket.htm">Order ticket help</a><a href="https://help.cqg.com/cqgic/18/ImagesExt/image1593_283.png">Screenshot: ticket</a></div></div>
+
+    <div class="pc"><h3>Infront Terminal <small>Pro</small></h3>
+      <dl><dt>Algos</dt><dd>Strategies and their parameters download from the algo server at login and render on a Strategy page. Definitions carry type (price, volume, time, list…), default, required, min / max and a hint. Errors turn the label red and show the limits.</dd></dl>
+      <div class="src"><a href="https://infront-professional-terminal.helpcenter.infront.co/en/infront-professional-terminal/8.7.200/algo-trading">Algo trading help</a><a href="https://fixspec.com/what-is-fixatdl/">Related: FIXatdl</a></div></div>
+
+    <div class="pc"><h3>Binance <small>Crypto</small></h3>
+      <dl><dt>Layout</dt><dd>Buy / Sell tabs, order type tabs, then stop, limit, amount, a % slider of funds and a computed total. Submit labelled with side and asset, then a pop-up confirm and a toast.</dd></dl>
+      <div class="src"><a href="https://support.binance.us/en/articles/9842912-how-to-use-the-stop-limit-function">Stop-limit help</a></div></div>
+  </div>
+</section>
+
+<!-- PATTERNS -->
+<section id="patterns">
+  <div class="head prose">
+    <h2>Common patterns, and where we stand</h2>
+    <p>What nearly every ticket does, checked against ours.</p>
+  </div>
+  <div class="patterns">
+    <div class="pat"><h3>Side is the loudest signal on the ticket</h3><p>Buy blue or green, sell red, short a third colour. At least the submit takes the colour; often the whole ticket does (IBKR background, Sterling, TT buttons).</p><span class="us part">Partial: 2px border</span></div>
+    <div class="pat"><h3>Opened pre-filled from where you clicked</h3><p>A bid, ask, depth level, position or chart price seeds price, quantity and often side. Bid vs ask can imply the side.</p><span class="us has">Have: prefill</span></div>
+    <div class="pat"><h3>Order type decides which fields exist</h3><p>Market hides or disables price; stop-limit shows two labelled prices; algos reveal a parameter area.</p><span class="us part">Partial: disables price</span></div>
+    <div class="pat"><h3>Live bid / ask next to price entry</h3><p>Often with sizes and a few levels of depth on hover; clicking a level sets the price.</p><span class="us part">Partial: small, no sizes</span></div>
+    <div class="pat"><h3>Tick-aware steppers, wheel and keys</h3><p>Typing plus steppers, mouse wheel in pro tools, preset quantity buttons or number pads.</p><span class="us has">Have: keys, steppers</span></div>
+    <div class="pat"><h3>TIF and routing filtered by what's valid</h3><p>Only list TIFs and options the instrument, route or algo accepts.</p><span class="us part">Partial: disabled, no reason</span></div>
+    <div class="pat"><h3>Relative price entry</h3><p>Bid / Mid / Ask one-clicks, join / improve / take, or an offset in ticks or % from a base.</p><span class="us part">Partial: Bid / Ask only</span></div>
+    <div class="pat"><h3>Quantity in other terms</h3><p>Notional or cash linked both ways with shares, % of position, % of balance or %ADV.</p><span class="us no">Missing</span></div>
+    <div class="pat"><h3>Position and shortability on the ticket</h3><p>Current position near quantity; shortable / hard-to-borrow when selling more than held.</p><span class="us no">Missing</span></div>
+    <div class="pat"><h3>Algo parameters from definitions, with presets</h3><p>Typed fields with defaults, required flags, ranges and hints; saved templates and one-click preset buttons.</p><span class="us no">Missing: hand-coded</span></div>
+    <div class="pat"><h3>Confirmation by threshold, with an opt-out</h3><p>Confirm above a quantity, value, %ADV or price-away limit, showing every algo parameter. Otherwise one click or a hotkey.</p><span class="us no">Missing: no confirm</span></div>
+    <div class="pat"><h3>Stage / hold / save as well as send</h3><p>Create the order without releasing it to market (IBKR Save, TT Hold and Stage, Eze staged tickets).</p><span class="us no">Missing</span></div>
+    <div class="pat"><h3>Double-send protection and post-send behaviour</h3><p>Brief lock after submit, optional quantity reset, configurable focus after send.</p><span class="us part">Partial: spinner only</span></div>
+  </div>
+
+  <h3>Where platforms differ</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Decision</th><th>Option A</th><th>Option B</th><th>Option C</th><th>Ours today</th></tr></thead>
+    <tbody>
+      <tr><td>Side control</td><td>Two action buttons that are the submit (TT, Sterling, TradeStation, CQG)</td><td>Toggle, then one side-coloured submit (IBKR, Kraken, Robinhood)</td><td>One button with a Flip (TT broker mode); Action dropdown (Fidelity)</td><td>B</td></tr>
+      <tr><td>Layout</td><td>Horizontal strip (IBKR, thinkorswim, TradeStation)</td><td>Compact grid (TT, Sterling, CQG)</td><td>Vertical form (Kraken, Saxo, Robinhood)</td><td>C, plus a strip</td></tr>
+      <tr><td>Order type selector</td><td>Dropdown (most)</td><td>Tabs / segments (Binance)</td><td>Preset buttons (TT, Eze)</td><td>Segments</td></tr>
+      <tr><td>Where algo params live</td><td>Flyout / drawer (IBKR, TT)</td><td>Inline under the strategy (Saxo) or tabbed panel (TT)</td><td>Separate pop-up or page (Eze, Infront)</td><td>Inline, above qty</td></tr>
+      <tr><td>Algo param source</td><td>Hand-built per strategy (IBKR, Saxo)</td><td>Server definitions (Infront, EMSX, FIXatdl)</td><td>Saved templates on top (TT, Eze)</td><td>A</td></tr>
+      <tr><td>Strategy vs order type</td><td>Algo is another order type (IBKR, TT, Saxo)</td><td>Strategy is separate from type and broker (EMSX, Eze)</td><td>–</td><td>B</td></tr>
+      <tr><td>Confirm</td><td>Always a modal (IBKR, Binance)</td><td>Preview → Place (Fidelity)</td><td>By threshold (TT, EMSX)</td><td>None</td></tr>
+      <tr><td>Ticket lifetime</td><td>Floating, closes on send (TT)</td><td>Linked, persistent (TT linked, docked panels)</td><td>Stage / hold instead of send</td><td>A (dialog) and B (panel)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Retail and institutional</h3>
+  <div class="issues">
+    <div class="issue"><h3>Pre-trade information</h3><p>Retail shows money: buying power, fee, total, margin. Institutional shows impact and controls: %ADV, participation, value thresholds, price tolerance, restricted lists. Ours shows notional and account limits, closer to institutional.</p></div>
+    <div class="issue"><h3>Strategies</h3><p>Retail folds algos into the order type list. Institutional separates broker or route from strategy, and strategies come with broker-defined parameters. Ours already treats strategy as separate from order type.</p></div>
+    <div class="issue"><h3>Customisation and safety</h3><p>Pro tools let users rearrange the ticket, set tab order and presets, and rely on thresholds and hotkeys. Retail fixes the layout, hides extras under "More options" and adds friction such as slide-to-confirm.</p></div>
+  </div>
+</section>
+
+<!-- DIRECTIONS -->
+<section id="next">
+  <div class="head prose">
+    <h2>Directions for the redesign</h2>
+    <p>Starting points to discuss, combining the issues above with what the research shows works. None of these are decided.</p>
+  </div>
+  <div class="issues">
+    <div class="issue"><span class="sev h">Structure</span><h3>Keep quantity and price fixed in place</h3><p>Put instrument, side, quantity and price in a stable core that never moves. Place strategy and its parameters below the core in their own block, so switching DMA → VWAP adds below rather than pushing the core down.</p></div>
+    <div class="issue"><span class="sev h">Side</span><h3>Make side unmistakable</h3><p>Either two action buttons (TT style) or a toggle that tints the header and submit. Add a short-sell colour once short selling exists. Put the limit and strategy in the submit label: "Buy 5,000 AAL.L @ 435.7 · VWAP".</p></div>
+    <div class="issue"><span class="sev h">Algos</span><h3>Describe strategies as data</h3><p>One definition per strategy (fields, types, units, defaults, ranges, allowed TIFs) rendered by one form. Gives consistent start / end handling, presets, and a natural path to broker strategies later. Show a one-line schedule preview: "≈ 110 shares / min, finishes 15:30".</p></div>
+    <div class="issue"><span class="sev m">Quantity</span><h3>Quantity, notional and %ADV as one control</h3><p>Linked quantity ↔ notional, with %ADV and current position shown alongside. Expose the <code>k</code> / <code>m</code> shortcuts in a hint.</p></div>
+    <div class="issue"><span class="sev m">Price</span><h3>A real quote block</h3><p>Larger bid / ask with sizes and spread, the side-relevant touch emphasised, Mid as a third button, and an optional offset in ticks from a base (join, improve, take).</p></div>
+    <div class="issue"><span class="sev m">Rules</span><h3>Filter and explain</h3><p>Remove invalid TIFs rather than disabling them, say why in one line ("Algo orders run Day or GTC"), and quietly fix a TIF that becomes invalid after a strategy change.</p></div>
+    <div class="issue"><span class="sev m">Workflow</span><h3>Threshold confirm and stage</h3><p>Confirm only above notional, %ADV or collar thresholds, listing every algo parameter. Consider "Stage" next to Send for OMS workflows.</p></div>
+    <div class="issue"><span class="sev l">Compact</span><h3>A true one-line strip</h3><p>For ladders and grid rows: side buttons, qty, price, strategy as a dropdown with parameters in a popover, submit. No quote strip, no preview line.</p></div>
+    <div class="issue"><span class="sev l">Account</span><h3>Account as context</h3><p>Show the account in the ticket header as a chip, set once, with position for that account nearby. Flag an empty account before submit rather than on it.</p></div>
+  </div>
+</section>
+
+
+</div>
+
+<script>
+(function () {
+  const INST = { ric: "AAL.L", bid: 435.7, ask: 435.9, last: 436.0, chg: -0.4, chgPct: -0.09, ccy: "GBX", usd: 0.0127 };
+  const fmt = (n, d = 1) => n.toLocaleString("en-GB", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const fmt2 = (n) => n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  const TIFS = ["DAY", "IOC", "FOK", "GTC"];
+  const tifOk = (ot, tif, st) => !(ot === "MARKET" && tif === "GTC") && !(st !== "DMA" && (tif === "IOC" || tif === "FOK"));
+
+  function tg(items, on, cls = "") {
+    return `<div class="tg ${cls}">${items.map(([v, l, extra]) => `<span class="${v === on ? "on" : ""} ${extra || ""}">${l}</span>`).join("")}</div>`;
+  }
+  function fld({ label, value, ph, r = true, dd = false, dis = false, err, step, cls = "" }) {
+    const inner = `<div class="inp ${r ? "r" : ""} ${dd ? "dd" : ""} ${value ? "" : "ph"}">${value ? esc(value) : esc(ph || "")}</div>`;
+    const body = step ? `<div class="step"><span class="sbtn">${step[0]}</span>${inner}<span class="sbtn">${step[1]}</span></div>` : inner;
+    return `<div class="fld ${dis ? "dis" : ""} ${err ? "err" : ""} ${cls}"><span class="lbl">${label}</span>${body}${err ? `<span class="help">${esc(err)}</span>` : ""}</div>`;
+  }
+  function quote(o) {
+    if (o.noInst) return `<div class="quote"><span class="q dim"><i>BID</i><b>–</b></span><span class="q dim"><i>ASK</i><b>–</b></span><span class="q"><i>Last</i><b>–</b></span><span class="q"><i>Chg</i><b>–</b></span></div>`;
+    const priced = o.ordType === "LIMIT";
+    return `<div class="quote">
+      <span class="q ${priced ? "" : "dim"}"><i>Bid</i><b>${fmt(INST.bid)}</b></span>
+      <span class="q ${priced ? "" : "dim"}"><i>Ask</i><b>${fmt(INST.ask)}</b></span>
+      <span class="q"><i>Last</i><b>${fmt(INST.last)}</b></span>
+      <span class="q"><i>Chg</i><b class="dn">▼ ${fmt(INST.chg)} (${fmt2(INST.chgPct)}%)</b></span>
+      ${o.phase ? `<span class="phase">${o.phase}</span>` : ""}
+    </div>`;
+  }
+  function algo(o) {
+    const e = o.errors || {};
+    if (o.strategy === "DMA") return "";
+    const f = [];
+    if (o.strategy === "POV") f.push(fld({ label: "Participation %", value: o.pct ?? "10", ph: "e.g. 10", err: e.pct }));
+    if (o.strategy === "VWAP") f.push(fld({ label: "End time", value: o.end ?? "", ph: "Close", err: e.end }));
+    else f.push(fld({ label: "Duration (min)", value: o.dur ?? "", ph: o.strategy === "POV" ? "To close" : "30", err: e.dur }));
+    return `<div class="row">${f.join("")}</div>`;
+  }
+
+  function ticket(opts) {
+    const o = Object.assign({ side: "BUY", ordType: "LIMIT", strategy: "DMA", tif: "DAY", qty: "5000", account: "ACC-US-01", picker: true, variant: "panel" }, opts);
+    const e = o.errors || {};
+    const buy = o.side === "BUY";
+    const priced = o.ordType === "LIMIT";
+    const price = o.price ?? (buy ? INST.bid : INST.ask);
+    const qn = Number(String(o.qty).replace(/,/g, "")) || 0;
+    const valPx = priced ? price : (buy ? INST.ask : INST.bid);
+    const notional = o.noInst || !qn ? null : qn * valPx;
+    const compact = o.variant === "compact";
+    const anno = (n, top) => (o.anno ? `<span class="anno" style="top:${top}px">${n}</span>` : "");
+
+    const inst = o.picker
+      ? `<div class="fld" style="flex:none${compact ? ";min-width:150px" : ""}"><span class="lbl">Instrument</span><div class="inp dd ${o.noInst ? "ph" : ""}" style="background:transparent">${o.noInst ? "Search instrument" : INST.ric}</div></div>`
+      : `<span class="ric">${INST.ric}</span>`;
+    const showQuote = !compact || !o.picker;
+
+    const tifLabel = { DAY: "Day", IOC: "IOC", FOK: "FOK", GTC: "GTC" }[o.tif];
+    const submitLbl = `${buy ? "Buy" : "Sell"}${o.qty ? " " + o.qty : ""}${o.noInst ? "" : " " + INST.ric}`;
+
+    let prev = `<div class="prev ${compact ? "full" : ""}"><span><i>Notional</i> ${notional == null ? "–" : `${fmt2(notional)} GBX <span class="usd">≈ ${fmt2(notional * INST.usd)} USD</span>`}</span>`;
+    if (o.warnings) prev += `<ul class="warn">${o.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>`;
+    prev += `</div>`;
+
+    let status = "";
+    if (o.status) status = `<div class="status ${o.status.rej ? "rej" : ""} ${compact ? "full" : ""}">${esc(o.status.text)}${o.status.oid ? ` <span class="oid">${o.status.oid}</span>` : ""}</div>`;
+    const blocked = o.blocked ? `<div class="blocked ${compact ? "full" : ""}">${esc(o.blocked)}</div>` : "";
+    const ferr = e.form ? `<div class="ferr">${esc(e.form)}</div>` : "";
+
+    const html = `
+      <div class="tk ${compact ? "compact" : ""}" data-side="${o.side}">
+        ${anno(1, 30)}${inst}
+        ${showQuote ? anno(2, 78) + quote(o) : ""}
+        <div class="row">${anno(3, 112)}
+          ${tg([["BUY", "Buy", "b"], ["SELL", "Sell", "s"]], o.side, "side")}
+          ${tg([["MARKET", "Market"], ["LIMIT", "Limit"]], o.ordType)}
+        </div>
+        <div class="row">${anno(4, 146)}${tg([["DMA", "DMA"], ["TWAP", "TWAP"], ["VWAP", "VWAP"], ["POV", "POV"]], o.strategy)}</div>
+        ${o.strategy !== "DMA" ? anno(5, 186) : ""}${algo(o)}
+        <div class="row">${o.anno ? anno(6, o.strategy === "DMA" ? 186 : 240) : ""}
+          ${fld({ label: "Quantity", value: o.qty, ph: "Lot 100", step: ["−", "+"], err: e.qty })}
+          ${fld({ label: priced ? "Limit price" : "Price", value: priced ? (o.priceText ?? fmt(price)) : "", ph: priced ? "" : "Market", dis: !priced, step: ["▼", "▲"], err: e.price })}
+        </div>
+        <div class="row">
+          ${fld({ label: "Time in force", value: tifLabel, r: false, dd: true, err: e.tif })}
+          ${fld({ label: "Account", value: o.account, ph: "Select account", r: false, dd: true, err: e.account })}
+        </div>
+        ${prev}${ferr}${status}${blocked}
+        <div class="acts">
+          <span class="btn">Reset</span>
+          <span class="btn go ${o.blocked ? "dis" : ""} ${o.pending ? "load" : ""}">${esc(submitLbl)}</span>
+        </div>
+      </div>`;
+    return html;
+  }
+
+  function tifTags(ordType, strategy) {
+    return `<div class="tags">${TIFS.map((t) => `<span class="tag ${tifOk(ordType, t, strategy) ? "" : "off"}">${t}</span>`).join("")}</div>`;
+  }
+
+  // Anatomy
+  document.getElementById("anatomyMock").innerHTML = ticket({ strategy: "TWAP", dur: "45", anno: true });
+
+  // Matrix
+  const MATRIX = [
+    ["LIMIT", "DMA", "Limit · DMA", "The default draft. Price starts at the passive touch (bid for a buy, ask for a sell)."],
+    ["MARKET", "DMA", "Market · DMA", "Price stepper disabled with a \"Market\" placeholder. Notional valued at the far touch. Bid / Ask buttons disabled."],
+    ["LIMIT", "TWAP", "Limit · TWAP", "Duration in minutes appears above quantity; empty means 30."],
+    ["MARKET", "TWAP", "Market · TWAP", "Day is the only valid TIF."],
+    ["LIMIT", "VWAP", "Limit · VWAP", "End time (HH:MM session time) replaces duration; empty means the close."],
+    ["MARKET", "VWAP", "Market · VWAP", "Day only. Slices follow the volume profile up to the end time."],
+    ["LIMIT", "POV", "Limit · POV", "Two fields: participation % (required, 1–50) and duration (empty runs to the close)."],
+    ["MARKET", "POV", "Market · POV", "Day only. The limit acts as a price cap on Limit · POV; here there is none."],
+  ];
+  let side = "BUY";
+  function renderMatrix() {
+    document.getElementById("matrixCanvas").innerHTML = MATRIX.map(([ot, st, title, note]) => `
+      <div class="card">
+        <div class="cap"><h3>${title}</h3><p>${note}</p>${tifTags(ot, st)}</div>
+        ${ticket({ side, ordType: ot, strategy: st, tif: "DAY", dur: st === "TWAP" ? "45" : st === "POV" ? "" : undefined, end: st === "VWAP" ? "15:30" : undefined })}
+      </div>`).join("");
+  }
+  const bBuy = document.getElementById("sideBuy"), bSell = document.getElementById("sideSell");
+  function setSide(s) {
+    side = s; bBuy.setAttribute("aria-pressed", s === "BUY"); bSell.setAttribute("aria-pressed", s === "SELL"); renderMatrix();
+  }
+  bBuy.addEventListener("click", () => setSide("BUY"));
+  bSell.addEventListener("click", () => setSide("SELL"));
+  renderMatrix();
+
+  // States
+  const STATES = [
+    ["Empty", "No instrument selected. Quote placeholders, notional dash, submit still enabled.", { noInst: true, qty: "", priceText: "" }],
+    ["Missing fields after submit", "Errors show once a field is touched or submit is attempted.", { qty: "", priceText: "", account: "", errors: { qty: "Enter a quantity", price: "Enter a limit price", account: "Select an account" } }],
+    ["Lot and tick errors", "Shared validateOrder rules from trading-schemas, mapped to fields.", { qty: "5050", priceText: "435.75", errors: { qty: "quantity 5050 is not a multiple of lot size 100", price: "price 435.75 is not on a valid tick" } }],
+    ["Algo parameter errors", "POV participation out of range, and a TIF made invalid by switching to an algo.", { strategy: "POV", pct: "75", tif: "IOC", errors: { pct: "Participation must be 1 to 50%", tif: "IOC is not valid for POV orders" } }],
+    ["VWAP end time format", "End time is free text checked against HH:MM.", { strategy: "VWAP", end: "3pm", errors: { end: "End time must be HH:MM" } }],
+    ["Pre-trade warnings", "Advisory: limit and collar warnings never block submission.", { qty: "250000", priceText: "490.0", price: 490, warnings: ["Notional exceeds the account limit of 1,000,000 USD", "Price is 12.4% from the reference price (collar ±10%)"] }],
+    ["Closing auction", "Phase shown in the quote strip when the market isn't continuous.", { phase: "CLOSING AUCTION" }],
+    ["Connection lost", "Submit disabled with the reason; F9 and Ctrl+Enter are blocked too.", { blocked: "Connection lost, reconnecting: orders cannot be sent" }],
+    ["Pending", "Submit shows a spinner while the RPC is in flight.", { pending: true, status: { text: "Sending order TKT-MHK2QZ-1A9F…" } }],
+    ["Accepted algo", "The schedule target is appended for working algo orders.", { strategy: "VWAP", end: "15:30", status: { text: "Accepted · VWAP target 1,250", oid: "O-112" } }],
+    ["Partially filled", "Status follows the order's parentOrders row.", { strategy: "TWAP", dur: "45", status: { text: "Partially filled 2,000 / 5,000 @ 435.8 · TWAP target 2,500", oid: "O-113" } }],
+    ["Filled", "", { ordType: "MARKET", status: { text: "Filled 5,000 @ 435.9", oid: "O-114" } }],
+    ["Rejected", "Server rejects show the reason; some map to a field (here price).", { priceText: "520.0", price: 520, errors: { price: "limit price 520 is outside the 10% collar" }, status: { rej: true, text: "Rejected: PRICE_OUTSIDE_COLLAR limit price 520 is outside the 10% collar" } }],
+  ];
+  document.getElementById("statesCanvas").innerHTML = STATES.map(([t, n, o]) => `
+    <div class="card"><div class="cap"><h3>${t}</h3>${n ? `<p>${n}</p>` : ""}</div>${ticket(o)}</div>`).join("");
+
+  // Layouts
+  document.getElementById("layoutCanvas").innerHTML = `
+    <div class="card"><div class="cap"><h3>Docked panel</h3><p><code>OrderTicketPanel</code>, 380px in a workspace. Receives <code>openOrderTicket()</code> prefills.</p></div>${ticket({ side: "SELL" })}</div>
+    <div class="card"><div class="cap"><h3>Dialog</h3><p><code>OrderTicketDialog</code>, title "New order", medium size.</p></div>
+      <div class="dlg"><div class="dh"><span>New order</span><span>✕</span></div>${ticket({ ordType: "MARKET" })}</div></div>`;
+  document.getElementById("compactMock").innerHTML = `<div style="min-width:1000px">${ticket({ variant: "compact", strategy: "POV", qty: "100" })}</div>`;
+  document.getElementById("compactMock2").innerHTML = `<div style="min-width:1000px">${ticket({ variant: "compact", picker: false, qty: "100", side: "SELL" })}</div>`;
+})();
+</script>
+
+</body></html>

@@ -1,0 +1,52 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Compact.dc.html": {
+      "h": 820,
+      "title": "Compact picker · variants and states",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Dropdown.dc.html": {
+      "h": 900,
+      "title": "Dropdown · states",
+      "w": 1440,
+      "x": 0,
+      "y": 940
+    },
+    "Main.dc.html": {
+      "h": 820,
+      "is_interactive": true,
+      "title": "Prototype · title bar picker (click a channel, type, pick)",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Row.dc.html": {
+      "h": 900,
+      "title": "Completion row · anatomy and states (2x)",
+      "w": 1440,
+      "x": 1520,
+      "y": 940
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-11-03T10:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {},
+  "order": [
+    "Main.dc.html",
+    "Compact.dc.html",
+    "Dropdown.dc.html",
+    "Row.dc.html"
+  ],
+  "pages": [],
+  "title": "Instrument Picker Designs"
+}

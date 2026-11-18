@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Empty watchlist and scope menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3B5B8C}a:hover{color:#1E3A63}
+button,input{font:inherit;color:inherit}
+.r{--app:#EEF0F3;--panel:#FFFFFF;--bar:#F6F7F9;--border:#D9DDE3;--rowline:#F0F2F4;--fg:#1F2329;--fg2:#4A525D;--fg3:#5B6470;--hover:#E9ECF0;--sel:#E8EEF6;--field-border:#C3CAD3;--field-bg:#FFFFFF;--label-bg:#E4E8ED;--placeholder:#8A929D;--accent:#3B5B8C;--focus:#3B5B8C;--primary:#2F5D9E;--primary-fg:#FFFFFF;--toggle-bg:#D5DFEC;--toggle-fg:#1E3A63;
+font-family:'Nunito Sans',system-ui,sans-serif;font-size:11px;color:var(--fg);background:var(--app);-webkit-font-smoothing:antialiased}
+.btn{height:24px;box-sizing:border-box;padding:0 12px;border-radius:3px;border:1px solid var(--field-border);background:var(--field-bg);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--hover)}
+.btn.pri{background:var(--primary);border-color:var(--primary);color:var(--primary-fg)}
+.kbd{font:inherit;font-size:10px;font-weight:400;min-width:14px;height:14px;padding:0 3px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--field-border);border-radius:3px;color:var(--fg2)}
+.btn.pri .kbd{border-color:rgba(255,255,255,.55);color:inherit}
+.mi{width:100%;height:24px;padding:0 8px;display:grid;grid-template-columns:14px 1fr auto;gap:6px;align-items:center;background:transparent;border:0;border-radius:3px;text-align:left;cursor:pointer;white-space:nowrap}
+.mi:hover,.mi.hi{background:var(--hover)}
+.grp{padding:6px 8px 2px 28px;font-size:10px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.04em}
+.sep{height:1px;background:var(--border);margin:3px 0}
+.th{height:24px;display:grid;grid-template-columns:40px 90px minmax(0,1fr) 70px 50px 90px 90px 90px 70px;gap:8px;align-items:center;padding:0 8px;border-bottom:1px solid var(--border);background:var(--bar);font-weight:700;color:var(--fg2)}
+.num{text-align:right}
+.ft-tab{height:24px;padding:0 10px;border:0;background:transparent;border-radius:0 0 3px 3px;cursor:pointer;color:var(--fg2)}
+.ft-tab.on{background:var(--panel);color:var(--fg);font-weight:800;box-shadow:inset 0 -1px 0 var(--border),inset 1px 0 0 var(--border),inset -1px 0 0 var(--border)}
+</style>
+</helmet>
+<div class="r" style="width: 100%; height: 800px; padding: 10px; box-sizing: border-box; display: flex">
+  <section aria-label="Instruments" style="flex: 1; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; position: relative">
+
+    <div style="height: 28px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 4px 0 4px; border-bottom: 1px solid var(--border)">
+      <button aria-haspopup="menu" aria-expanded="true" style="height: 24px; padding: 0 6px; display: flex; align-items: center; gap: 6px; background: var(--hover); border: 0; border-radius: 3px; cursor: pointer">
+        <span style="font-weight: 800; font-size: 12px">Tech basket</span>
+        <svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+      <span style="flex: 1"></span>
+      <button aria-label="Panel settings" style="width: 24px; height: 24px; border: 0; background: transparent; color: var(--fg3); border-radius: 3px">
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"></path></svg>
+      </button>
+    </div>
+
+    <div role="menu" aria-label="Instrument scope" style="position: absolute; left: 4px; top: 28px; width: 240px; z-index: 5; background: var(--panel); border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 6px 16px rgba(0,0,0,.18); padding: 3px">
+      <button class="mi" role="menuitemradio" aria-checked="false"><span></span><span>All instruments</span><span></span></button>
+      <div class="grp">Watchlists</div>
+      <button class="mi" role="menuitemradio" aria-checked="false"><span></span><span>Energy basket</span><span style="color: var(--fg3)">5</span></button>
+      <button class="mi" role="menuitemradio" aria-checked="true"><span aria-hidden="true" style="color: var(--accent); font-weight: 800">✓</span><span style="font-weight: 700">Tech basket</span><span style="color: var(--fg3)">0</span></button>
+      <div class="sep"></div>
+      <button class="mi hi" role="menuitem"><span></span><span>Edit Tech basket…</span><span class="kbd">E</span></button>
+      <button class="mi" role="menuitem"><span></span><span>Rename…</span><span class="kbd">F2</span></button>
+      <button class="mi" role="menuitem"><span></span><span>Delete Tech basket…</span><span></span></button>
+      <div class="sep"></div>
+      <button class="mi" role="menuitem"><span></span><span>New watchlist…</span><span class="kbd">N</span></button>
+    </div>
+
+    <div role="toolbar" aria-label="Filters" style="height: 28px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 6px; background: var(--bar); border-bottom: 1px solid var(--border); color: var(--fg3)">
+      <span style="width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; background: var(--toggle-bg); color: var(--toggle-fg)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 4h7M12 4h2M2 8h2M7 8h7M2 12h9"></path><circle cx="10.5" cy="4" r="1.5"></circle><circle cx="5.5" cy="8" r="1.5"></circle></svg></span>
+      <span style="height: 20px; width: 140px; box-sizing: border-box; display: inline-flex; align-items: center; padding: 0 6px; border: 1px solid var(--field-border); border-radius: 3px; background: var(--field-bg); color: var(--placeholder)">Search</span>
+    </div>
+
+    <div class="th"><span></span><span>RIC</span><span>Name</span><span>Exch</span><span>Ccy</span><span class="num">Bid</span><span class="num">Ask</span><span class="num">Last</span><span class="num">Chg %</span></div>
+
+    <div style="flex: 1; display: flex; align-items: center; justify-content: center">
+      <div style="width: 360px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center">
+        <svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="color: var(--fg3)"><path d="M4 6h10M4 12h10M4 18h6"></path><path d="M18 15v6M15 18h6"></path></svg>
+        <h3 style="margin: 0; font-size: 14px; font-weight: 800">Tech basket is empty</h3>
+        <p style="margin: 0; color: var(--fg2); line-height: 1.5">Find instruments by name, or add every match for a sector, type or exchange.</p>
+        <button class="btn pri" style="margin-top: 4px">Add instruments… <span class="kbd">E</span></button>
+        <p style="margin: 6px 0 0; color: var(--fg3); line-height: 1.5">You can also right-click any row in <a href="#">All instruments</a> › Add to watchlist.</p>
+      </div>
+    </div>
+
+    <div style="height: 26px; flex: none; display: flex; align-items: flex-start; gap: 2px; padding: 0 6px; border-top: 1px solid var(--border); background: var(--bar)">
+      <button class="ft-tab on">Watchlist</button>
+      <button class="ft-tab">Screening</button>
+      <button class="ft-tab" aria-label="New column set">+</button>
+      <span style="flex: 1"></span>
+      <span style="align-self: center; color: var(--fg3)">0 rows</span>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

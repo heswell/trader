@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Column picker with quick filters</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3B5B8C}a:hover{color:#1E3A63}
+button,input{font:inherit;color:inherit}
+.r{--app:#EEF0F3;--panel:#FFFFFF;--bar:#F6F7F9;--border:#D9DDE3;--rowline:#F0F2F4;--fg:#1F2329;--fg2:#4A525D;--fg3:#5B6470;--hover:#E9ECF0;--sel:#E8EEF6;--field-border:#C3CAD3;--field-bg:#FFFFFF;--label-bg:#E4E8ED;--placeholder:#8A929D;--set-border:#8FA6C8;--set-label-bg:#DCE5F1;--accent:#3B5B8C;--focus:#3B5B8C;--focus-ring:rgba(59,91,140,.15);--toggle-bg:#D5DFEC;--toggle-fg:#1E3A63;--primary:#2F5D9E;--primary-fg:#FFFFFF;--x:#8A929D;--strong:#2B3440;--up:#1E7F45;--down:#B3261E;--mod:#B8590F;
+font-family:'Nunito Sans',system-ui,sans-serif;font-size:11px;color:var(--fg);background:var(--app);-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums;text-align:right}
+.up{color:var(--up)}.down{color:var(--down)}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fb-bar{height:28px;box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:0 4px 0 6px;background:var(--bar);border-bottom:1px solid var(--border)}
+.fb-ico{width:20px;height:20px;flex:none;display:inline-flex;align-items:center;justify-content:center;color:var(--fg3);border:0;background:none;padding:0;border-radius:3px}
+.fb-ico.on{background:var(--toggle-bg);color:var(--toggle-fg)}
+.fb-box{height:20px;box-sizing:border-box;display:inline-flex;align-items:center;gap:4px;padding:0 6px;border:1px solid var(--field-border);border-radius:3px;background:var(--field-bg);width:140px;flex:none;color:var(--placeholder)}
+.fb-seg{height:20px;box-sizing:border-box;flex:none;display:inline-flex;align-items:stretch;border:1px solid var(--field-border);border-radius:3px;overflow:hidden;white-space:nowrap}
+.fb-sl{display:inline-flex;align-items:center;padding:0 6px;background:var(--label-bg);color:var(--fg2)}
+.fb-si{display:inline-flex;align-items:center;min-width:40px;padding:0 6px;background:var(--field-bg);color:var(--placeholder)}
+.th,.tr{height:24px;display:grid;grid-template-columns:80px minmax(0,1fr) 120px 86px 56px 70px 60px 80px;gap:8px;align-items:center;padding:0 8px;border-bottom:1px solid var(--rowline)}
+.th{background:var(--bar);font-weight:700;color:var(--fg2);border-bottom-color:var(--border)}
+.ft-tab{height:24px;padding:0 10px;border:0;background:transparent;border-radius:0 0 3px 3px;color:var(--fg2);display:inline-flex;align-items:center;gap:6px}
+.ft-tab.on{background:var(--panel);color:var(--fg);font-weight:800;box-shadow:inset 0 -1px 0 var(--border),inset 1px 0 0 var(--border),inset -1px 0 0 var(--border)}
+.mod{width:6px;height:6px;border-radius:50%;background:var(--mod)}
+.btn{height:24px;box-sizing:border-box;padding:0 12px;border-radius:3px;border:1px solid var(--field-border);background:var(--field-bg);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--hover)}
+.btn.pri{background:var(--primary);border-color:var(--primary);color:var(--primary-fg)}
+.btn:disabled{opacity:.5;cursor:default}
+.kbd{font:inherit;font-size:10px;font-weight:400;min-width:14px;height:14px;padding:0 3px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--field-border);border-radius:3px;color:var(--fg2)}
+.btn.pri .kbd{border-color:rgba(255,255,255,.55);color:inherit}
+.tab{height:30px;padding:0 12px;border:0;background:transparent;cursor:pointer;color:var(--fg2);font-weight:700;box-shadow:inset 0 -2px 0 transparent}
+.tab:hover{color:var(--fg)}
+.tab.on{color:var(--fg);box-shadow:inset 0 -2px 0 var(--accent)}
+.li{height:28px;display:grid;grid-template-columns:12px minmax(0,1fr) auto 20px;gap:8px;align-items:center;padding:0 6px 0 8px;border-radius:3px}
+.li:hover{background:var(--hover)}
+.av{height:26px;width:100%;display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:8px;align-items:center;padding:0 8px;border:0;border-radius:3px;background:transparent;text-align:left;cursor:pointer}
+.av:hover{background:var(--hover)}
+.tag{font-size:10px;padding:1px 5px;border-radius:2px;background:var(--label-bg);color:var(--fg2);white-space:nowrap}
+.tag.fo{background:transparent;box-shadow:inset 0 0 0 1px var(--set-border);color:var(--accent)}
+.x{width:18px;height:18px;border:0;background:none;padding:0;border-radius:3px;color:var(--fg3);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.x:hover{background:var(--hover);color:var(--strong)}
+.cb{width:12px;height:12px;border-radius:2px;border:1px solid var(--field-border);box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;background:var(--field-bg);color:#fff}
+.cb.on{background:var(--primary);border-color:var(--primary)}
+.cap{padding:8px 8px 4px;font-size:10px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.04em}
+</style>
+</helmet>
+<div class="r" style="width: 100%; height: 800px; padding: 10px; box-sizing: border-box; display: flex">
+  <section aria-label="Instruments" style="flex: 1; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; position: relative; min-width: 0">
+
+    <div style="height: 28px; flex: none; display: flex; align-items: center; padding: 0 10px; border-bottom: 1px solid var(--border); font-weight: 800; font-size: 12px">All instruments</div>
+
+    <div class="fb-bar" role="toolbar" aria-label="Filters">
+      <span class="fb-ico on"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 4h7M12 4h2M2 8h2M7 8h7M2 12h9"></path><circle cx="10.5" cy="4" r="1.5"></circle><circle cx="5.5" cy="8" r="1.5"></circle></svg></span>
+      <span class="fb-box">Search</span>
+      <sc-for list="{{barFields}}" as="b" hint-placeholder-count="4">
+        <span class="fb-seg"><span class="fb-sl">{{b.label}}</span><span class="fb-si">Any</span></span>
+      </sc-for>
+    </div>
+
+    <div class="th"><span>RIC</span><span>Name</span><span>Sector</span><span class="num">Mkt cap $bn</span><span class="num">P/E</span><span class="num">Div yld %</span><span class="num">ROE %</span><span class="num">Last</span></div>
+    <div style="flex: 1; min-height: 0; overflow: hidden">
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="15">
+        <div class="tr"><span style="font-weight: 700">{{r.ric}}</span><span class="ell">{{r.name}}</span><span class="ell">{{r.sector}}</span><span class="num">{{r.mcap}}</span><span class="num">{{r.pe}}</span><span class="num">{{r.dy}}</span><span class="num">{{r.roe}}</span><span class="num">{{r.last}}</span></div>
+      </sc-for>
+    </div>
+
+    <div role="dialog" aria-labelledby="cp-title" style="position: absolute; right: 8px; bottom: 32px; width: 340px; height: 520px; z-index: 5; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 10px 28px rgba(0,0,0,.22); overflow: hidden">
+      <div style="flex: none; display: flex; align-items: center; gap: 6px; padding: 10px 8px 0 12px">
+        <h2 id="cp-title" style="margin: 0; font-size: 12px; font-weight: 800; flex: 1">Column set · Screening</h2>
+        <sc-if value="{{dirty}}" hint-placeholder-val="{{ true }}"><span style="display: inline-flex; align-items: center; gap: 5px; color: var(--mod); font-weight: 700"><span class="mod"></span>Modified</span></sc-if>
+      </div>
+      <div role="tablist" aria-label="Edit" style="flex: none; display: flex; padding: 0 4px; border-bottom: 1px solid var(--border)">
+        <button class="{{tabCols}}" role="tab" aria-selected="{{onCols}}" onClick="{{showCols}}">Columns · {{colCount}}</button>
+        <button class="{{tabQuick}}" role="tab" aria-selected="{{onQuick}}" onClick="{{showQuick}}">Quick filters · {{quickCount}}</button>
+      </div>
+
+      <sc-if value="{{onQuick}}" hint-placeholder-val="{{ true }}">
+        <div style="flex: 1; min-height: 0; overflow: auto; padding: 4px">
+          <div class="cap">In the filter bar, in order</div>
+          <ol aria-label="Quick filters" style="list-style: none; margin: 0; padding: 0">
+            <sc-for list="{{chosen}}" as="c" hint-placeholder-count="4">
+              <li class="li">
+                <svg aria-hidden="true" width="8" height="12" viewBox="0 0 8 12" fill="currentColor" style="color: var(--x); cursor: grab"><circle cx="2" cy="2" r="1"></circle><circle cx="6" cy="2" r="1"></circle><circle cx="2" cy="6" r="1"></circle><circle cx="6" cy="6" r="1"></circle><circle cx="2" cy="10" r="1"></circle><circle cx="6" cy="10" r="1"></circle></svg>
+                <span style="font-weight: 700">{{c.label}}</span>
+                <span class="{{c.tagCls}}" title="{{c.tagTitle}}">{{c.tag}}</span>
+                <button class="x" aria-label="{{c.removeLabel}}" onClick="{{c.remove}}"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"></path></svg></button>
+              </li>
+            </sc-for>
+          </ol>
+          <div class="cap" style="margin-top: 6px">Add a quick filter</div>
+          <div style="padding: 0 4px 6px">
+            <div style="height: 24px; box-sizing: border-box; display: flex; align-items: center; gap: 6px; padding: 0 8px; border: 1px solid var(--field-border); border-radius: 3px; background: var(--field-bg); color: var(--placeholder)">
+              <svg aria-hidden="true" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"></circle><path d="M10.5 10.5L14 14"></path></svg>Find a field
+            </div>
+          </div>
+          <sc-for list="{{avail}}" as="a" hint-placeholder-count="6">
+            <button class="av" onClick="{{a.add}}">
+              <svg aria-hidden="true" width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color: var(--accent)"><path d="M8 3v10M3 8h10"></path></svg>
+              <span>{{a.label}}</span>
+              <span class="{{a.tagCls}}">{{a.tag}}</span>
+            </button>
+          </sc-for>
+          <p style="margin: 8px; color: var(--fg3); line-height: 1.5">Any filterable column of the table can be a quick filter, shown in this set or not. Applied values stay applied when you switch sets.</p>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{onCols}}" hint-placeholder-val="{{ false }}">
+        <div style="flex: 1; min-height: 0; overflow: auto; padding: 4px">
+          <div class="cap">Shown, in order</div>
+          <sc-for list="{{colList}}" as="c" hint-placeholder-count="8">
+            <button class="av" onClick="{{c.toggle}}">
+              <span class="{{c.cb}}"><sc-if value="{{c.on}}" hint-placeholder-val="{{ true }}"><svg aria-hidden="true" width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3L13 4.5"></path></svg></sc-if></span>
+              <span>{{c.label}}</span>
+              <span class="{{c.tagCls}}">{{c.tag}}</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <div style="flex: none; height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border-top: 1px solid var(--border); background: var(--bar)">
+        <button class="btn" style="padding: 0 8px">Save as new…</button>
+        <span style="flex: 1"></span>
+        <button class="btn" disabled="{{clean}}" onClick="{{revert}}">Revert</button>
+        <button class="btn pri" disabled="{{clean}}">Save <span class="kbd">Ctrl S</span></button>
+      </div>
+    </div>
+
+    <div style="height: 26px; flex: none; display: flex; align-items: flex-start; gap: 2px; padding: 0 6px; border-top: 1px solid var(--border); background: var(--bar)">
+      <span class="ft-tab">Watchlist</span>
+      <span class="ft-tab on">Screening<sc-if value="{{dirty}}" hint-placeholder-val="{{ true }}"><span class="mod" title="Modified"></span></sc-if></span>
+      <span class="ft-tab">+</span>
+      <span style="flex: 1"></span>
+      <span style="align-self: center; color: var(--fg3)">15 rows</span>
+      <span style="width: 24px; height: 20px; margin: 2px 0 0 8px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; background: var(--toggle-bg); color: var(--toggle-fg)"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="1"></rect><path d="M9 4v16M15 4v16"></path></svg></span>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+const FIELDS = [
+  { k: 'sector', label: 'Sector' }, { k: 'mcap', label: 'Mkt cap' }, { k: 'pe', label: 'P/E' }, { k: 'dy', label: 'Div yld' },
+  { k: 'roe', label: 'ROE' }, { k: 'exch', label: 'Exchange' }, { k: 'type', label: 'Type' }, { k: 'ccy', label: 'Currency' },
+  { k: 'eps', label: 'EPS' }, { k: 'chg', label: 'Chg %' }, { k: 'vol', label: 'Volume' }, { k: 'phase', label: 'Phase' }
+];
+const COLS = [
+  { k: 'ric', label: 'RIC' }, { k: 'name', label: 'Name' }, { k: 'sector', label: 'Sector' }, { k: 'mcap', label: 'Mkt cap $bn' },
+  { k: 'pe', label: 'P/E' }, { k: 'dy', label: 'Div yld %' }, { k: 'roe', label: 'ROE %' }, { k: 'last', label: 'Last' },
+  { k: 'exch', label: 'Exchange' }, { k: 'ccy', label: 'Currency' }, { k: 'eps', label: 'EPS' }, { k: 'chg', label: 'Chg %' }, { k: 'vol', label: 'Volume' }
+];
+const SAVED_COLS = ['ric', 'name', 'sector', 'mcap', 'pe', 'dy', 'roe', 'last'];
+const SAVED_QUICK = ['sector', 'mcap', 'pe', 'dy'];
+const ROWS = [
+  ['BP.L', 'BP plc', 'Energy', '78', '7.1', '4.9', '14.2', '468.20'], ['SHEL.L', 'Shell plc', 'Energy', '214', '11.8', '3.9', '12.6', '2,712.5'],
+  ['VOD.L', 'Vodafone Group', 'Communication', '19', '9.4', '7.6', '3.1', '71.36'], ['AZN.L', 'AstraZeneca', 'Health Care', '238', '31.5', '2.0', '18.9', '11,842'],
+  ['GSK.L', 'GSK plc', 'Health Care', '74', '13.2', '3.8', '41.0', '1,486.0'], ['HSBA.L', 'HSBC Holdings', 'Financials', '162', '7.9', '6.8', '13.4', '712.40'],
+  ['BARC.L', 'Barclays', 'Financials', '49', '8.6', '3.1', '8.2', '268.15'], ['ULVR.L', 'Unilever', 'Consumer Staples', '141', '19.8', '3.4', '33.0', '4,631'],
+  ['RIO.L', 'Rio Tinto', 'Materials', '104', '10.3', '5.9', '19.0', '5,213'], ['XOM.N', 'Exxon Mobil Corp', 'Energy', '498', '13.9', '3.4', '15.1', '112.36'],
+  ['CVX.N', 'Chevron Corp', 'Energy', '285', '15.7', '4.1', '11.3', '158.07'], ['AAPL.OQ', 'Apple Inc', 'Info Tech', '3,480', '34.6', '0.4', '147.0', '228.52'],
+  ['MSFT.OQ', 'Microsoft Corp', 'Info Tech', '3,200', '35.8', '0.7', '35.6', '431.10'], ['SAP.DE', 'SAP SE', 'Info Tech', '250', '46.0', '1.0', '12.0', '214.65'],
+  ['TTE.PA', 'TotalEnergies SE', 'Energy', '140', '8.1', '5.1', '16.9', '61.84']
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'quick', quick: ['sector', 'mcap', 'pe', 'dy', 'exch'], cols: [...SAVED_COLS] };
+  }
+  renderVals() {
+    const s = this.state;
+    const label = (k) => (FIELDS.find((f) => f.k === k) || {}).label;
+    const tagFor = (k) => s.cols.includes(k)
+      ? { tag: 'column', tagCls: 'tag', tagTitle: 'Also a column of this set' }
+      : { tag: 'filter only', tagCls: 'tag fo', tagTitle: 'Not a column of this set: filters without showing' };
+    const dirty = s.quick.join() !== SAVED_QUICK.join() || s.cols.join() !== SAVED_COLS.join();
+    return {
+      onQuick: s.tab === 'quick', onCols: s.tab === 'cols',
+      tabQuick: 'tab' + (s.tab === 'quick' ? ' on' : ''), tabCols: 'tab' + (s.tab === 'cols' ? ' on' : ''),
+      showQuick: () => this.setState({ tab: 'quick' }), showCols: () => this.setState({ tab: 'cols' }),
+      colCount: s.cols.length, quickCount: s.quick.length,
+      dirty, clean: !dirty,
+      revert: () => this.setState({ quick: [...SAVED_QUICK], cols: [...SAVED_COLS] }),
+      chosen: s.quick.map((k) => ({ label: label(k), ...tagFor(k), removeLabel: 'Remove ' + label(k), remove: () => this.setState({ quick: s.quick.filter((q) => q !== k) }) })),
+      avail: FIELDS.filter((f) => !s.quick.includes(f.k)).map((f) => ({ label: f.label, ...tagFor(f.k), add: () => this.setState({ quick: [...s.quick, f.k] }) })),
+      barFields: s.quick.map((k) => ({ label: label(k) })),
+      colList: COLS.map((c) => {
+        const on = s.cols.includes(c.k);
+        const q = s.quick.includes(c.k);
+        return { label: c.label, on, cb: on ? 'cb on' : 'cb', tag: q ? 'quick filter' : '', tagCls: q ? 'tag' : '',
+          toggle: () => this.setState({ cols: on ? s.cols.filter((x) => x !== c.k) : [...s.cols, c.k] }) };
+      }),
+      rows: ROWS.map((r) => ({ ric: r[0], name: r[1], sector: r[2], mcap: r[3], pe: r[4], dy: r[5], roe: r[6], last: r[7] }))
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cancel all confirmation</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3B5B8C}a:hover{color:#1E3A63}
+button{font:inherit;color:inherit}
+.g-root{
+  --app:#EEF0F3;--panel:#FFFFFF;--bar:#F6F7F9;--hdr:#E4E7EB;--border:#D9DDE3;--rowline:#EEF0F3;
+  --fg:#1F2329;--fg2:#4A525D;--fg3:#5B6470;--th:#3A424D;--hover:#E9ECF0;--sel:#E8EEF6;
+  --field-border:#C3CAD3;--field-bg:#FFFFFF;--accent:#3B5B8C;--focus:#3B5B8C;
+  --tg-on:#2B3440;--tg-on-fg:#FFFFFF;
+  --neg:#B3261E;--neg-border:#D98A84;--neg-solid:#C62828;--neg-press:#A51F1F;--buy:#1E7F45;--sell:#B3261E;
+  --st-new:#2670C8;--st-part:#B07800;--st-done:#6B737E;--red:#D6493D;
+  font-family:'Nunito Sans',system-ui,sans-serif;color:var(--fg);background:var(--app);-webkit-font-smoothing:antialiased}
+.g-num{font-variant-numeric:tabular-nums}
+.p{background:var(--panel);border:1px solid var(--border);display:flex;flex-direction:column;height:100%;box-sizing:border-box;overflow:hidden}
+.sh{height:32px;flex:0 0 32px;display:flex;align-items:stretch;background:var(--hdr);border-bottom:1px solid var(--border)}
+.tab{display:flex;align-items:center;padding:0 14px;font-size:12px;font-weight:600;color:var(--fg2);border:0;background:transparent;border-right:1px solid var(--border)}
+.tab.on{background:var(--panel);color:var(--fg);box-shadow:inset 0 2px 0 var(--accent);margin-bottom:-1px}
+.lk{align-self:center;margin-left:6px;height:24px;padding:0 6px;border:0;border-radius:3px;background:transparent;display:inline-flex;align-items:center;gap:4px;color:var(--fg3)}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:0 0 10px}
+.sh-end{margin-left:auto;display:flex;align-items:center;gap:2px;padding-right:6px}
+.ib{width:24px;height:24px;border:0;border-radius:3px;background:transparent;display:inline-flex;align-items:center;justify-content:center;color:var(--fg3)}
+.tb{height:40px;flex:0 0 40px;display:flex;align-items:center;gap:8px;padding:0 8px;border-bottom:1px solid var(--border);white-space:nowrap;box-sizing:border-box}
+.sp{flex:1}
+.tg{display:inline-flex;border:1px solid var(--field-border);border-radius:3px;overflow:hidden}
+.tg button{height:24px;padding:0 10px;border:0;border-right:1px solid var(--field-border);background:var(--field-bg);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--fg2)}
+.tg button:last-child{border-right:0}
+.tg button.on{background:var(--tg-on);color:var(--tg-on-fg)}
+.btn{height:26px;padding:0 10px;border-radius:3px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;display:inline-flex;align-items:center;gap:6px;cursor:pointer;box-sizing:border-box}
+.btn.neu{border:1px solid var(--field-border);background:var(--field-bg);color:var(--fg)}
+.btn.negb{border:1px solid var(--neg-border);background:var(--field-bg);color:var(--neg)}
+.btn.negs{border:1px solid var(--neg-solid);background:var(--neg-solid);color:#FFFFFF}
+.btn.press{background:var(--neg-press);border-color:var(--neg-press)}
+.btn.lg{height:32px;padding:0 14px}
+.btn.focus{outline:2px solid var(--focus);outline-offset:2px}
+.gh,.gr{display:grid;align-items:center;font-size:12px;grid-template-columns:150px 128px 52px 72px 76px 60px 80px 76px 1fr}
+.gh{height:28px;color:var(--th);font-weight:700;border-bottom:1px solid var(--border)}
+.gr{height:26px;border-bottom:1px solid var(--rowline)}
+.gh>span,.gr>span{padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.r{text-align:right}
+.st{display:inline-flex;align-items:center;gap:6px}
+.st .dot{width:8px;height:8px;flex-basis:8px}
+.buy{color:var(--buy);font-weight:700}
+.sell{color:var(--sell);font-weight:700}
+.scrim{position:absolute;inset:0;background:rgba(20,24,30,.38);display:flex;align-items:center;justify-content:center}
+.dlg{width:440px;background:var(--panel);border-radius:4px;box-shadow:0 12px 32px rgba(0,0,0,.25),0 2px 6px rgba(0,0,0,.12);border-top:3px solid var(--neg-solid);overflow:hidden}
+.dlg-h{display:flex;align-items:center;gap:10px;padding:18px 20px 6px}
+.dlg-h h2{margin:0;font-size:17px;font-weight:800}
+.dlg-h .x{margin-left:auto}
+.dlg-b{padding:4px 20px 0 50px;font-size:13px;line-height:1.5;color:var(--fg2)}
+.dlg-b p{margin:0 0 10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 4px}
+.chip{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--bar);border:1px solid var(--border);color:var(--fg2)}
+.dlg-f{display:flex;justify-content:flex-end;gap:8px;padding:18px 20px 20px}
+</style>
+</helmet>
+<div class="g-root" style="width:1040px;height:620px;padding:16px;box-sizing:border-box;position:relative">
+<div class="p">
+  <div class="sh">
+    <span class="tab on">Orders</span><span class="tab">Fills</span><span class="tab">Positions</span>
+    <span class="lk"><span class="dot" style="background:var(--red)"></span><svg width="8" height="12" viewBox="0 0 8 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M1.5 4a2.8 2.8 0 0 1 0 4M4 2a5.6 5.6 0 0 1 0 8"/></svg></span>
+    <div class="sh-end"><span class="ib"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" rx="1"/></svg></span><span class="ib"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7"/></svg></span></div>
+  </div>
+  <div class="tb">
+    <div class="tg"><button class="on" type="button" tabindex="-1">Working</button><button type="button" tabindex="-1">Filled</button><button type="button" tabindex="-1">Closed</button><button type="button" tabindex="-1">All</button></div>
+    <span class="sp"></span>
+    <button class="btn neu" type="button" tabindex="-1">Order book</button>
+    <button class="btn negb" type="button" tabindex="-1">Cancel selected (0)</button>
+    <button class="btn negs press" type="button" tabindex="-1">Cancel all</button>
+  </div>
+  <div class="gh"><span>Order</span><span>Status</span><span>Side</span><span>RIC</span><span>Type</span><span>Algo</span><span class="r">Qty</span><span class="r">Price</span><span></span></div>
+  <div class="gr g-num"><span>O-112</span><span class="st"><span class="dot" style="background:var(--st-part)"></span>Partially filled</span><span class="buy">BUY</span><span>BARC.L</span><span>LIMIT</span><span>TWAP</span><span class="r">50,000</span><span class="r">229.10</span><span></span></div>
+  <div class="gr g-num"><span>O-118</span><span class="st"><span class="dot" style="background:var(--st-new)"></span>New</span><span class="sell">SELL</span><span>VOD.L</span><span>LIMIT</span><span>DMA</span><span class="r">12,000</span><span class="r">72.36</span><span></span></div>
+  <div class="gr g-num"><span>O-121</span><span class="st"><span class="dot" style="background:var(--st-part)"></span>Partially filled</span><span class="buy">BUY</span><span>AAL.L</span><span>LIMIT</span><span>VWAP</span><span class="r">8,000</span><span class="r">438.50</span><span></span></div>
+  <div class="gr g-num"><span>O-124</span><span class="st"><span class="dot" style="background:var(--st-new)"></span>New</span><span class="buy">BUY</span><span>BP.L</span><span>STOP LMT</span><span>DMA</span><span class="r">5,000</span><span class="r">471.20</span><span></span></div>
+  <div class="gr g-num"><span>O-127</span><span class="st"><span class="dot" style="background:var(--st-part)"></span>Partially filled</span><span class="sell">SELL</span><span>HSBA.L</span><span>LIMIT</span><span>POV</span><span class="r">20,000</span><span class="r">648.90</span><span></span></div>
+  <div class="gr g-num"><span>O-129</span><span class="st"><span class="dot" style="background:var(--st-new)"></span>New</span><span class="buy">BUY</span><span>BARC.L</span><span>LIMIT</span><span>DMA</span><span class="r">3,000</span><span class="r">228.80</span><span></span></div>
+  <div class="gr g-num"><span>O-130</span><span class="st"><span class="dot" style="background:var(--st-new)"></span>New</span><span class="sell">SELL</span><span>AAL.L</span><span>LIMIT</span><span>DMA</span><span class="r">1,500</span><span class="r">439.40</span><span></span></div>
+</div>
+
+<div class="scrim">
+  <div class="dlg" role="alertdialog" aria-labelledby="ca-title" aria-describedby="ca-body">
+    <div class="dlg-h">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#C62828" stroke-width="1.8" aria-hidden="true"><path d="M10 2.5l8 14H2z" stroke-linejoin="round"/><path d="M10 8v4" stroke-linecap="round"/><circle cx="10" cy="14.6" r=".6" fill="#C62828"/></svg>
+      <h2 id="ca-title">Cancel all orders?</h2>
+      <button class="ib x" type="button" aria-label="Close"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7"/></svg></button>
+    </div>
+    <div class="dlg-b" id="ca-body">
+      <p>This sends a cancel for <strong style="color:var(--fg)">all 7 of your working orders</strong>, in every instrument, not only the rows in this view. Algo orders stop slicing.</p>
+      <div class="chips g-num"><span class="chip">BARC.L ×2</span><span class="chip">AAL.L ×2</span><span class="chip">VOD.L</span><span class="chip">BP.L</span><span class="chip">HSBA.L</span></div>
+    </div>
+    <div class="dlg-f">
+      <button class="btn neu lg focus" type="button">Keep orders</button>
+      <button class="btn negs lg" type="button">Cancel 7 orders</button>
+    </div>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1040,"height":620}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
