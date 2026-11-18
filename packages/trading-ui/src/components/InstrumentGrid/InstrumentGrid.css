@@ -153,6 +153,10 @@
 .tradingInstrumentGridFooter-columnSets {
   overflow-x: auto;
   scrollbar-width: none;
+  /* reach up over the footer's top border, so the selected tab (moved up
+     1px onto it) is not clipped by this scroller */
+  margin-top: -1px;
+  padding-top: 1px;
 }
 
 /* column-set tabs: text tabs, the active one underlined */
@@ -191,7 +195,13 @@
 }
 
 .tradingInstrumentGridFooter-tabSelected {
-  /* the grid's surface, so the active set reads as part of the table */
+  /* the grid's surface, so the active set reads as part of the table: moved
+     up over the footer's top border, with that border down its sides and
+     along its bottom, so the one line runs along the footer and round it */
+  z-index: 1;
+  transform: translateY(-1px);
+  border: 1px solid var(--salt-separable-primary-borderColor);
+  border-top: 0;
   background: var(--salt-container-primary-background);
   color: var(--salt-content-primary-foreground);
   font-weight: var(--salt-text-fontWeight-strong);
