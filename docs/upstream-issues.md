@@ -753,3 +753,15 @@ Found moving to @vuu-ui 4.0.0-alpha.30 (`docs/portal-integration.md`, "Panels pa
      `accent-strongest` for selected, a container tone for hover), as the instrument grid's dark design boards do.
      *Workaround in this repo:* the InstrumentGrid sets vuu's per-table hooks (`--vuuTableRow-background-selected`,
      `-bookend-background-selected`, `-background-highlighted`) under `[data-mode="dark"]`; menus are not patched.
+
+116. **Pinned rows (and other hooks) read the data provider from `@vuu-ui/vuu-utils`, not `@vuu-ui/core`.** (finos
+     `@vuu-ui/vuu-table` 5.0.0-alpha.8, `src/pinned-rows/usePinnedDataSource.js`; the same import is in
+     `vuu-table-extras` `useFreezeControl` / `useImportSchema`, `vuu-data-react` `useVuuMenuActions`, `vuu-datatable`
+     `useLinkedTableView` and `vuu-data-editing` `useEditableTable` / `useLookupValues` / `useLookupOptions`.) Core and
+     vuu-utils each have their own `DataContext`; trader's `TradingDataProvider` (remote mode) and the portal host
+     install only core's, so `useData()` from vuu-utils returns the `NullDataSourceConstructor` and the pinned data
+     source throws "no DataProvider has been installed". Local test data hides it: `@heswell/vuu-data-engine-local`
+     installs both providers. *Repro:* InstrumentGrid in the portal, or the showcase on "Remote server": link a row
+     with pinning on, and the grid fails to load. *Proposed:* import `useData` from `@vuu-ui/core` everywhere (vuu-utils
+     is being retired), in alpha.9. *Workaround in this repo:* none; waiting on the upstream fix.
+
