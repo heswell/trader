@@ -1,10 +1,12 @@
 import {
   createContext,
   type ReactNode,
+  type Ref,
   useCallback,
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import type { TradingOrderEvent } from "../../notifications/tradingOrderEvents";
@@ -13,7 +15,7 @@ import {
   OrderTicketDialog,
   type OrderTicketDialogProps,
 } from "./OrderTicketDialog";
-import type { OrderTicketPrefill } from "./useOrderTicket";
+import { focusTicketField, type OrderTicketPrefill } from "./useOrderTicket";
 
 export type OrderTicketTarget = (prefill: OrderTicketPrefill) => void;
 
@@ -158,23 +160,50 @@ export const useOrderTicketTarget = (enabled = true) => {
 export interface OrderTicketPanelProps extends OrderTicketProps {
   /** Receive openOrderTicket prefills (default true). */
   launcherTarget?: boolean;
+  ref?: Ref<HTMLDivElement>;
 }
 
 /**
  * The docked order ticket: a panel-variant OrderTicket that also receives
  * `openOrderTicket` prefills while mounted (instead of a dialog opening).
  * A `prefill` prop applies until the launcher sends one.
+ *
+ * A launch (Buy / Sell from a grid row, say) focuses and selects quantity,
+ * so the user can type the size straight away: keyboard first.
  */
 export const OrderTicketPanel = ({
   launcherTarget = true,
   prefill: prefillProp,
+  ref,
   ...props
 }: OrderTicketPanelProps) => {
   const launched = useOrderTicketTarget(launcherTarget);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const setRoot = useCallback(
+    (el: HTMLDivElement | null) => {
+      rootRef.current = el;
+      if (typeof ref === "function") ref(el);
+      else if (ref) ref.current = el;
+    },
+    [ref],
+  );
+  useEffect(() => {
+    if (!launched) return;
+    // next frame: the ticket applies the prefill in an effect of its own
+    const frame = requestAnimationFrame(() =>
+      focusTicketField(
+        rootRef.current?.querySelector<HTMLElement>(
+          '[data-order-ticket-field="quantity"]',
+        ),
+      ),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [launched]);
   return (
     <OrderTicket
       {...props}
       prefill={launched ?? prefillProp}
+      ref={setRoot}
       variant={props.variant ?? "panel"}
     />
   );

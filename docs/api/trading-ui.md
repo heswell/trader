@@ -4391,7 +4391,7 @@ Also accepts the standard HTML attributes.
 
 #### OrderTicketLauncherProvider
 
-*component* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L78)
+*component* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L80)
 
 Lets any component open the order ticket with a prefill
 (`useOrderTicketLauncher().openOrderTicket({ ric, side, price, quantity })`)
@@ -4408,17 +4408,21 @@ Props: `OrderTicketLauncherProviderProps`
 
 #### OrderTicketPanel
 
-*component* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L168)
+*component* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L174)
 
 The docked order ticket: a panel-variant OrderTicket that also receives
 `openOrderTicket` prefills while mounted (instead of a dialog opening).
 A `prefill` prop applies until the launcher sends one.
+
+A launch (Buy / Sell from a grid row, say) focuses and selects quantity,
+so the user can type the size straight away: keyboard first.
 
 Props: `OrderTicketPanelProps`
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `launcherTarget?` | `boolean` | `true` | Receive openOrderTicket prefills (default true). |
+| `ref?` | `Ref<HTMLDivElement>` |  |  |
 | `variant?` | `OrderTicketVariant` |  | "panel" (default): full form for a docked panel or dialog. "compact": a one-line strip for a grid row or ladder. (from `OrderTicketProps`) |
 | `showInstrumentPicker?` | `boolean` |  | Show the instrument picker (default true; false for a fixed ric). (from `OrderTicketProps`) |
 | `actions?` | `ReactNode` |  | Extra content in the actions row (e.g. a Close button). (from `OrderTicketProps`) |
@@ -4461,7 +4465,7 @@ useOrderTicket({ prefill, followSelection = true, linkGroup, publishSelection = 
 
 #### useOrderTicketLauncher
 
-*hook* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L134)
+*hook* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L136)
 
 Open the order ticket from anywhere (see OrderTicketLauncherProvider).
 
@@ -4471,7 +4475,7 @@ useOrderTicketLauncher(): OrderTicketLauncher
 
 #### useOrderTicketTarget
 
-*hook* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L148)
+*hook* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L150)
 
 Receive launcher prefills in a custom docked ticket; returns the latest
 prefill (a new object per openOrderTicket call).
@@ -5021,7 +5025,7 @@ it loads.
 
 #### OrderTicketLauncher
 
-*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L20)
+*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L22)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -5031,13 +5035,13 @@ it loads.
 
 #### OrderTicketLauncherProviderProps
 
-*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L62)
+*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L64)
 
 Props of [`OrderTicketLauncherProvider`](#orderticketlauncherprovider).
 
 #### OrderTicketPanelProps
 
-*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L158)
+*interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L160)
 
 Props of [`OrderTicketPanel`](#orderticketpanel).
 
@@ -5208,7 +5212,7 @@ type OrderTicketSubmission = | { state: "idle" }
 
 #### OrderTicketTarget
 
-*type* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L18)
+*type* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L20)
 
 ```ts
 type OrderTicketTarget = (prefill: OrderTicketPrefill) => void

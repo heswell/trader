@@ -65,6 +65,7 @@ Buy, Sell and Depth sit at the right edge of a row, in a narrow client-side colu
 
 - Keys on the focused row: **B** Buy, **S** Sell, **D** Depth.
 - The context menu has the same three items, labelled with their keys.
+- Buy / Sell through the launcher fill a docked order ticket and move focus to its quantity field; the new instrument and side replace anything typed but not sent.
 - Each one is shown only when its handler exists (`onBuy` / `onSell` / `onOpenDepth`, or Buy / Sell from an `OrderTicketLauncherProvider`). With none, there is no actions column.
 - Buy / Sell use the order ticket's side colours (`--trading-buy`, `--trading-sell`, over Salt's positive / negative bold actionable colours).
 
