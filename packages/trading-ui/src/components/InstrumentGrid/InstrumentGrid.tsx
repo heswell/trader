@@ -36,6 +36,7 @@ import type {
   TableRowSelectHandler,
 } from "@vuu-ui/vuu-table-types";
 import {
+  DataSourceProvider,
   AggregationType,
   filterAsQuery,
   getColumnsByName,
@@ -50,7 +51,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { tradingTableSchema } from "../../data/tradingTables";
@@ -369,7 +369,12 @@ const InstrumentGridInner = forwardRef<
     useState<readonly ColumnDescriptor[]>(initialVisible);
   useEffect(() => setVisibleColumns(initialVisible), [initialVisible]);
   const config = useMemo<TableConfig>(
-    () => ({ columns: [linkColumnDescriptor, ...visibleColumns] }),
+    () => ({
+      columns: [linkColumnDescriptor, ...visibleColumns],
+      // faint dividers and subtle stripes; colours in InstrumentGrid.css
+      rowSeparators: true,
+      zebraStripes: true,
+    }),
     [visibleColumns],
   );
   // the model is the picker's own state; rebuild only when the available
@@ -579,7 +584,7 @@ const InstrumentGridInner = forwardRef<
   const tableConfig = useMemo<TableConfig>(
     () =>
       hasRowActions
-        ? { columns: [...config.columns, actionsColumnDescriptor] }
+        ? { ...config, columns: [...config.columns, actionsColumnDescriptor] }
         : config,
     [config, hasRowActions],
   );
@@ -624,23 +629,6 @@ const InstrumentGridInner = forwardRef<
         : undefined,
     [channels.length, linkedRics, viewSettings.pinLinked],
   );
-  // From the footer: select and focus a linked row. Only offered while
-  // linked rows are pinned, as the Table cannot scroll to a row by key yet
-  // (ScrollingAPI.scrollToKey is a stub in vuu-ui 5.0.0-alpha.8 and alpha.9).
-  const tableRef = useRef<HTMLDivElement>(null);
-  const showLinkedRow = useCallback((ric: string) => {
-    const row = tableRef.current
-      ?.querySelector(`.tradingLinkCell-button[data-ric="${CSS.escape(ric)}"]`)
-      ?.closest(".vuuTableRow");
-    // a data cell: the link cell keeps its clicks from the table
-    const cell = row?.querySelector<HTMLElement>(
-      ".vuuTableCell:not(:has(.tradingLinkCell))",
-    );
-    if (cell) {
-      cell.click();
-      cell.focus();
-    }
-  }, []);
   const handleKeyDownCapture = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
       if (e.altKey || e.ctrlKey || e.metaKey || e.defaultPrevented) return;
@@ -791,28 +779,32 @@ const InstrumentGridInner = forwardRef<
         />
       ) : null}
       {showToolbar ? (
-        <FilterBar
-          QuickFilterProps={quickFilterProps}
-          // Hidden, not unmounted: it keeps its quick filter values, and
-          // its filters still apply.
-          className={cx(`${classBase}-filterBar`, {
-            [`${classBase}-filterBarHidden`]: !filterBarVisible,
-          })}
-          columnDescriptors={filterColumns}
-          // Search and the quick filters first, as in the design
-          defaultFilterMode="quick-filter"
-          defaultFilterState={storedFilterState}
-          onApplyFilter={setUserFilter}
-          onClearFilter={clearUserFilter}
-          onFilterStateChanged={onFilterStateChange}
-          variant="full-filters"
-          vuuTable={dataSource.table}
-        />
+        // The quick filters' typeahead (vuu-ui-controls useVuuTypeaheadInput)
+        // sends its unique-values RPC through the data source of vuu-utils'
+        // DataSourceProvider: without one there are no suggestions.
+        <DataSourceProvider dataSource={dataSource}>
+          <FilterBar
+            QuickFilterProps={quickFilterProps}
+            // Hidden, not unmounted: it keeps its quick filter values, and
+            // its filters still apply.
+            className={cx(`${classBase}-filterBar`, {
+              [`${classBase}-filterBarHidden`]: !filterBarVisible,
+            })}
+            columnDescriptors={filterColumns}
+            // Search and the quick filters first, as in the design
+            defaultFilterMode="quick-filter"
+            defaultFilterState={storedFilterState}
+            onApplyFilter={setUserFilter}
+            onClearFilter={clearUserFilter}
+            onFilterStateChanged={onFilterStateChange}
+            variant="full-filters"
+            vuuTable={dataSource.table}
+          />
+        </DataSourceProvider>
       ) : null}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: keys and double-click of the table's rows */}
       <div
         className={`${classBase}-table`}
-        ref={tableRef}
         onDoubleClick={handleDoubleClick}
         onKeyDownCapture={handleKeyDownCapture}
       >
@@ -839,8 +831,6 @@ const InstrumentGridInner = forwardRef<
           columnSetModel={columnSetModel}
           dataSource={dataSource}
           filtered={filterClauseCount(userFilter) > 0}
-          links={links}
-          onShowLinked={viewSettings.pinLinked ? showLinkedRow : undefined}
         />
       ) : null}
     </div>

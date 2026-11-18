@@ -77,13 +77,20 @@ Buy, Sell and Depth sit at the right edge of a row, in a narrow client-side colu
 
 ## Footer
 
-One 22px row under the table:
+One 22px row under the table (linked instruments show in the link column and the workspace ChannelPicker, so the footer does not repeat them):
 
-- **Column-set tabs** on the left, text tabs with the active one underlined (`--salt-navigable-indicator-active`): click, or Left / Right arrows on a focused tab, to show a set. "+" saves the columns in view as a new set, named in a prompt.
-- **Linked**: a channel dot and ric per channel that holds an instrument. While linked rows are pinned, clicking one selects and focuses its row. With pinning off they are labels only: vuu Table cannot scroll to a row by key yet (`ScrollingAPI.scrollToKey` is a stub, trader upstream issue 114).
+- **Column-set tabs** on the left, text tabs with the active one on the grid's surface (`--salt-container-primary-background`) and underlined (`--salt-navigable-indicator-active`): click, or Left / Right arrows on a focused tab, to show a set. "+" saves the columns in view as a new set, named in a prompt.
 - **Row count**: the rows in the body, "N rows", kept current from the data source's `resize` events. Under a filter-bar filter it is the filtered count, bold with a filter icon; the server sends no unfiltered total, so it is never "x of y". Pinned rows are not counted.
 - **Columns** on the right opens the vuu column picker.
 
+
+## Rows
+
+Faint row dividers (vuu's `rowSeparators`, at half the tertiary separator colour) and subtle zebra stripes (`zebraStripes`, Salt's secondary container colour). The row actions' fade follows the stripe.
+
+## Quick filter suggestions
+
+The quick filters' typeahead asks the server for a column's values (`getUniqueFieldValuesStartingWith`) through the data source of vuu-utils' `DataSourceProvider`; the grid wraps its FilterBar in one with its own data source. Matching is case sensitive, as the server's `startsWith` is (compare trader upstream issue 113): "M" suggests Materials, "m" nothing.
 
 ## Light and dark
 

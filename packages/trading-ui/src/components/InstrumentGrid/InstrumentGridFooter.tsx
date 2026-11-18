@@ -9,13 +9,7 @@ import {
   useTableColumnPicker,
 } from "@vuu-ui/vuu-table-extras";
 import cx from "clsx";
-import {
-  type CSSProperties,
-  type KeyboardEvent,
-  useEffect,
-  useState,
-} from "react";
-import type { GridChannelLinks } from "./linkColumn";
+import { type KeyboardEvent, useEffect, useState } from "react";
 
 const classBase = "tradingInstrumentGridFooter";
 
@@ -160,77 +154,27 @@ export interface InstrumentGridFooterProps {
   dataSource: DataSource;
   /** A user filter applies: the count is bold, with a filter icon. */
   filtered: boolean;
-  links: GridChannelLinks;
-  /**
-   * Go to the row of a linked instrument. Undefined when the grid cannot
-   * (linked rows not pinned): the instruments are then shown, not buttons.
-   */
-  onShowLinked?: (ric: string) => void;
 }
 
 /**
- * The grid's footer: column-set tabs, the instruments on a channel, the
- * row count and the column picker.
+ * The grid's footer: column-set tabs, the row count and the column picker.
  */
 export const InstrumentGridFooter = ({
   columnModel,
   columnSetModel,
   dataSource,
   filtered,
-  links,
-  onShowLinked,
 }: InstrumentGridFooterProps) => {
   const rowCount = useRowCount(dataSource);
   const { showColumnPicker } = useTableColumnPicker({
     columnModel,
     columnSetModel,
   });
-  const linked = links.channels.flatMap((channel) => {
-    const instrument = links.instrumentOf(channel.id);
-    return instrument ? [{ channel, ric: instrument.ric }] : [];
-  });
 
   return (
     <div className={classBase}>
       <ColumnSetTabs columnSetModel={columnSetModel} />
       <span className={`${classBase}-spacer`} />
-      {linked.length ? (
-        <span className={`${classBase}-linked`}>
-          <span className={`${classBase}-label`}>Linked</span>
-          {linked.map(({ channel, ric }) => {
-            const content = (
-              <>
-                <span aria-hidden className={`${classBase}-dot`} />
-                {ric}
-              </>
-            );
-            const style = { "--channel-color": channel.color } as CSSProperties;
-            const title = `${ric} is on the ${channel.label} channel`;
-            return onShowLinked ? (
-              <button
-                aria-label={`${title}: go to its row`}
-                className={`${classBase}-linkedItem`}
-                key={channel.id}
-                onClick={() => onShowLinked(ric)}
-                style={style}
-                title={title}
-                type="button"
-              >
-                {content}
-              </button>
-            ) : (
-              <span
-                className={`${classBase}-linkedItem`}
-                key={channel.id}
-                style={style}
-                title={title}
-              >
-                {content}
-              </span>
-            );
-          })}
-        </span>
-      ) : null}
       <span
         aria-live="polite"
         className={cx(`${classBase}-count`, {
