@@ -55,7 +55,7 @@
   cursor: pointer;
 }
 
-/* the order ticket's side colours (--trading-buy / --trading-sell) */
+/* Salt's bold positive / negative, or a host's --trading-buy / --trading-sell */
 .tradingRowActions-buy {
   background: var(
     --salt-actionable-positive-bold-background,
@@ -92,8 +92,13 @@
   box-shadow: inset 0 0 0 1px var(--salt-separable-primary-borderColor);
 }
 
+/* neutral, not the theme's coral subtle hover (as the nav, upstream 100) */
 .tradingRowActions-depth:hover {
-  background: var(--salt-actionable-subtle-background-hover);
+  background: linear-gradient(
+      var(--salt-navigable-background-hover),
+      var(--salt-navigable-background-hover)
+    )
+    var(--salt-container-primary-background);
 }
 
 .tradingRowActions-key {

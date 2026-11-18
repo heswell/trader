@@ -15,6 +15,12 @@ Showcase: `#instrument-grid`, `#instrument-grid-prices`, `#instrument-grid-futur
 | Roles | none in the component. Pass `launchOrderTicket={canTrade}` to hide Buy / Sell for view-only users (as the Watchlist feature does). |
 | Class base | `tradingInstrumentGrid`, cells `tradingInstrumentCell`, link cell `tradingLinkCell`; `data-direction`, `data-phase` |
 
+![Instrument grid, light](../screenshots/instrument-grid-light.png)
+![Instrument grid, dark](../screenshots/instrument-grid-dark.png)
+
+ADM.L linked to Red and pinned above the other rows; ABF.L selected, with its Buy / Sell / Depth. Regenerate with
+`bun ./scripts/docs/screenshots-instrument-grid.ts` while the showcase runs.
+
 ## InstrumentGrid
 
 A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns that do not exist are dropped).
@@ -78,6 +84,18 @@ One 24px row under the table:
 - **Row count**: the rows in the body, "N rows", kept current from the data source's `resize` events. Under a filter-bar filter it is the filtered count, bold with a filter icon; the server sends no unfiltered total, so it is never "x of y". Pinned rows are not counted.
 - **Columns** on the right opens the vuu column picker.
 
+
+## Light and dark
+
+Both themes use vuu-theme / Salt variables only; the dark design boards are in
+[docs/design/instrument-grid](../design/instrument-grid/README.md).
+
+- In dark mode the grid sets vuu's per-table row hooks (`--vuuTableRow-background-selected`,
+  `--vuuTableRow-bookend-background-selected`, `--vuuTableRow-background-highlighted`) to dark tones: vuu-theme's
+  dark selected and hover rows are light teal under white text (upstream issue 115). Menus, outside the grid, are not
+  patched.
+- Buy / Sell take Salt's bold positive / negative colours, or a host's `--trading-buy` / `--trading-sell`; Depth's
+  hover is neutral, not the theme's coral.
 ## Filter bar
 
 The vuu FilterBar sits on its own row and opens on the quick filters:

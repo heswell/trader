@@ -742,3 +742,14 @@ Found moving to @vuu-ui 4.0.0-alpha.30 (`docs/portal-integration.md`, "Panels pa
      *Proposed:* implement it (the server can return a row's index for a key, or the Table can select by key with
      `revealSelected`). *Workaround in this repo:* the InstrumentGrid footer's linked instruments go to their rows
      only while linked rows are pinned, so the rows are always rendered; otherwise they are labels.
+
+115. **Dark mode selects and highlights in light teal, under white text.** (finos `@vuu-ui/vuu-theme`
+     5.0.0-alpha.8, `css/next/palette/accent.css` and `css/next/characteristics/selectable.css`.) In
+     `[data-mode="dark"]` `--salt-palette-accent-weaker` is `teal-200` and `--salt-palette-accent-weakest` is
+     `teal-100`, and `--salt-selectable-background-selected` / `-hover` use them, while the dark foreground is white.
+     A selected Table row (`--vuu-table-row-background-selected`), a hovered row, and the highlighted item of every
+     Salt Menu are near-white with white text. *Repro:* showcase, Dark, Instrument grid: select a row, or open
+     Panel settings and arrow through the items. *Proposed:* dark tones in dark mode (for example
+     `accent-strongest` for selected, a container tone for hover), as the instrument grid's dark design boards do.
+     *Workaround in this repo:* the InstrumentGrid sets vuu's per-table hooks (`--vuuTableRow-background-selected`,
+     `-bookend-background-selected`, `-background-highlighted`) under `[data-mode="dark"]`; menus are not patched.

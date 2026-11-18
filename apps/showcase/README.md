@@ -14,6 +14,9 @@ bun run dev:trading-server      # optional: standalone EXCHANGE + OMS server for
   `http://localhost:5001` and `http://127.0.0.1:5001` in `vuu.auth.cors.allowedOrigins`. Override the targets with
   `TRADING_REMOTE_AUTH` and `TRADING_REMOTE_WS` (full URLs).
 
+The header's **Light / Dark** toggle switches the theme (remembered in the browser); `?mode=dark` or
+`?mode=light` in the URL overrides it, for screenshots.
+
 Open an example with `#<id>` (e.g. http://localhost:5001/#primitives-status). Each group links to its guide in
 [docs/components](../../docs/components/README.md), and the generated [API reference](../../docs/api/components.md)
 lists the showcase ids of every component.
