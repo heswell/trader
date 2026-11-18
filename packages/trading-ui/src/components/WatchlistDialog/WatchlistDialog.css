@@ -1,0 +1,201 @@
+.tradingWatchlistDialog {
+  --wlDialog-border: var(--salt-separable-tertiary-borderColor, #e5e7eb);
+  --wlDialog-muted: var(--salt-content-secondary-foreground, #606770);
+  --wlDialog-accent: var(--salt-accent-background, #2670a9);
+  width: min(920px, calc(100vw - 48px));
+}
+
+.tradingWatchlistDialog-keys {
+  display: contents;
+}
+
+.tradingWatchlistDialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--salt-spacing-200, 8px);
+  min-height: 0;
+}
+
+.tradingWatchlistDialog-name {
+  max-width: 420px;
+}
+
+.tradingWatchlistDialog-body {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--salt-spacing-300, 12px);
+  height: min(440px, 55vh);
+  min-height: 0;
+}
+
+.tradingWatchlistDialog-find,
+.tradingWatchlistDialog-picked {
+  display: flex;
+  flex-direction: column;
+  gap: var(--salt-spacing-100, 4px);
+  min-height: 0;
+  min-width: 0;
+}
+
+.tradingWatchlistDialog-picked {
+  border-left: 1px solid var(--wlDialog-border);
+  padding-left: var(--salt-spacing-300, 12px);
+}
+
+.tradingWatchlistDialog-facets {
+  border: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  gap: var(--salt-spacing-100, 4px);
+  margin: 0;
+  padding: 0;
+}
+
+.tradingWatchlistDialog-facets .tradingWatchlistDialog-facet {
+  min-width: 0;
+  width: auto;
+}
+
+.tradingWatchlistDialog-facetLabel {
+  color: var(--wlDialog-muted);
+  margin-right: var(--salt-spacing-50, 2px);
+}
+
+.tradingWatchlistDialog-facetSet {
+  --saltPillInput-borderColor: var(--wlDialog-accent);
+  font-weight: var(--salt-text-fontWeight-strong, 600);
+}
+
+.tradingWatchlistDialog-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.tradingWatchlistDialog-section,
+.tradingWatchlistDialog-pickedHeader {
+  align-items: center;
+  display: flex;
+  gap: var(--salt-spacing-100, 4px);
+  min-height: calc(var(--salt-size-base, 20px) + 4px);
+}
+
+.tradingWatchlistDialog-sectionLabel {
+  font-weight: var(--salt-text-fontWeight-strong, 600);
+}
+
+.tradingWatchlistDialog-count {
+  color: var(--wlDialog-muted);
+}
+
+.tradingWatchlistDialog-spacer {
+  flex: 1;
+}
+
+.tradingWatchlistDialog-results,
+.tradingWatchlistDialog-pickedList {
+  border: 1px solid var(--wlDialog-border);
+  border-radius: var(--salt-curve-100, 4px);
+  flex: 1;
+  list-style: none;
+  margin: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.tradingWatchlistDialog-row,
+.tradingWatchlistDialog-pickedRow {
+  align-items: center;
+  cursor: default;
+  display: grid;
+  gap: var(--salt-spacing-100, 6px);
+  height: 24px;
+  padding: 0 var(--salt-spacing-100, 6px);
+}
+
+.tradingWatchlistDialog-row {
+  grid-template-columns: 14px 88px minmax(0, 1fr) auto;
+}
+
+.tradingWatchlistDialog-pickedRow {
+  grid-template-columns: 88px minmax(0, 1fr) auto;
+}
+
+.tradingWatchlistDialog-row:hover {
+  background: var(--salt-selectable-background-hover, #f4f6f8);
+}
+
+.tradingWatchlistDialog-rowHighlighted {
+  background: var(--salt-selectable-background-hover, #eef2f6);
+  box-shadow: inset 2px 0 0 var(--wlDialog-accent);
+}
+
+.tradingWatchlistDialog-check {
+  align-items: center;
+  border: 1px solid var(--salt-selectable-borderColor, #9ba1a9);
+  border-radius: 3px;
+  display: inline-flex;
+  height: 12px;
+  justify-content: center;
+  width: 12px;
+}
+
+.tradingWatchlistDialog-check.checked {
+  background: var(--wlDialog-accent);
+  border-color: var(--wlDialog-accent);
+  color: var(--salt-content-bold-foreground, #fff);
+}
+
+.tradingWatchlistDialog-ric {
+  font-family: var(--salt-text-code-fontFamily, monospace);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tradingWatchlistDialog-row[aria-selected="true"] .tradingWatchlistDialog-ric {
+  font-weight: var(--salt-text-fontWeight-strong, 600);
+}
+
+.tradingWatchlistDialog-desc,
+.tradingWatchlistDialog-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tradingWatchlistDialog-meta {
+  color: var(--wlDialog-muted);
+  font-size: 0.92em;
+}
+
+.tradingWatchlistDialog mark {
+  background: color-mix(in srgb, var(--wlDialog-accent) 22%, transparent);
+  color: inherit;
+  border-radius: 2px;
+}
+
+.tradingWatchlistDialog-empty {
+  color: var(--wlDialog-muted);
+  padding: var(--salt-spacing-200, 8px);
+}
+
+.tradingWatchlistDialog-actions {
+  align-items: center;
+}
+
+.tradingWatchlistDialog-hints {
+  color: var(--wlDialog-muted);
+  flex: 1;
+  font-size: 0.92em;
+}
+
+.tradingWatchlistDialog-hints kbd {
+  border: 1px solid var(--wlDialog-border);
+  border-radius: 3px;
+  font-family: inherit;
+  padding: 0 3px;
+}

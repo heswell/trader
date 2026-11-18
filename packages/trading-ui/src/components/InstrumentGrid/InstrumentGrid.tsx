@@ -114,8 +114,8 @@ import {
   rowRicOf,
   useGridChannelLinks,
 } from "./linkColumn";
-import { NamePrompt } from "../NamePrompt";
-import { useWatchlists, watchlistNameError } from "./watchlists";
+import { WatchlistDialog } from "../WatchlistDialog";
+import { useWatchlists } from "./watchlists";
 import type { SparklineCellOptions } from "../Sparkline/Sparkline";
 import gridCss from "./InstrumentGrid.css";
 
@@ -755,20 +755,25 @@ const InstrumentGridInner = forwardRef<
     () => setNewWatchlist({ rics: selected ? [selected.ric] : [], show: true }),
     [selected],
   );
-  const confirmNewWatchlist = (name: string) => {
+  const saveNewWatchlist = ({
+    name,
+    rics,
+  }: {
+    name: string;
+    rics: string[];
+  }) => {
     if (!newWatchlist) return;
-    const id = watchlists.create(name, newWatchlist.rics);
+    const id = watchlists.create(name, rics);
     if (newWatchlist.show) setWatchlistId(id);
   };
   const watchlistPrompts = (
     <>
       {newWatchlist ? (
-        <NamePrompt
+        <WatchlistDialog
+          initialRics={newWatchlist.rics}
+          lists={watchlists.lists}
           onClose={() => setNewWatchlist(undefined)}
-          onConfirm={confirmNewWatchlist}
-          placeholder="e.g. Energy majors"
-          title="New watchlist"
-          validate={(name) => watchlistNameError(name, watchlists.lists)}
+          onSave={saveNewWatchlist}
         />
       ) : null}
       {deleting ? (

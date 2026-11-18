@@ -114,6 +114,26 @@ export const renameWatchlist = (
   ),
 });
 
+/**
+ * Replaces a watchlist's name and/or rics (as the watchlist dialog saves
+ * them). A blank name keeps the old one; rics are de-duplicated in order.
+ */
+export const updateWatchlist = (
+  state: WatchlistState,
+  id: string,
+  { name, rics }: { name?: string; rics?: readonly string[] },
+): WatchlistState => ({
+  lists: state.lists.map((l) =>
+    l.id === id
+      ? {
+          ...l,
+          name: name?.trim() || l.name,
+          rics: rics ? [...new Set(rics)] : l.rics,
+        }
+      : l,
+  ),
+});
+
 /** Adds a ric to a watchlist (no-op if already there). */
 export const addToWatchlist = (
   state: WatchlistState,
@@ -143,6 +163,7 @@ export interface UseWatchlistsResult {
   create: (name: string, rics?: string[]) => string;
   remove: (id: string) => void;
   rename: (id: string, name: string) => void;
+  update: (id: string, changes: { name?: string; rics?: string[] }) => void;
   add: (id: string, ric: string) => void;
   removeRic: (id: string, ric: string) => void;
 }
@@ -221,6 +242,11 @@ export const useWatchlists = (
     ),
     rename: useCallback(
       (id: string, name: string) => update((s) => renameWatchlist(s, id, name)),
+      [update],
+    ),
+    update: useCallback(
+      (id: string, changes: { name?: string; rics?: string[] }) =>
+        update((s) => updateWatchlist(s, id, changes)),
       [update],
     ),
     add: useCallback(
