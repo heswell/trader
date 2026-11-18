@@ -1,3 +1,4 @@
+import { Button, ToggleButton, ToggleButtonGroup } from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
 import { Table } from "@vuu-ui/vuu-table";
@@ -9,8 +10,10 @@ import cx from "clsx";
 import {
   forwardRef,
   type HTMLAttributes,
+  type SyntheticEvent,
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useState,
 } from "react";
@@ -50,6 +53,26 @@ registerFillsRenderers();
 const classBase = "tradingFillsBlotter";
 
 export type FillsGrouping = "none" | "ric" | "ric-side";
+
+const FILLS_GROUPINGS: readonly { id: FillsGrouping; label: string }[] = [
+  { id: "none", label: "None" },
+  { id: "ric", label: "RIC" },
+  { id: "ric-side", label: "RIC / side" },
+];
+
+const DownloadIcon = () => (
+  <svg
+    aria-hidden="true"
+    fill="none"
+    height={14}
+    stroke="currentColor"
+    strokeWidth={1.4}
+    viewBox="0 0 14 14"
+    width={14}
+  >
+    <path d="M7 2v7M4 6.5L7 9.5l3-3M2.5 12h9" />
+  </svg>
+);
 
 const COLUMNS = [
   "execId",
@@ -179,6 +202,7 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
       linkGroup: channel,
     });
     const [grouping, setGrouping] = useState<FillsGrouping>(defaultGrouping);
+    const groupByLabelId = useId();
     const filter = { filter: ric ? `ric = ${filterString(ric)}` : "" };
 
     const dataSource = useTradingDataSource("fills", {
@@ -262,25 +286,33 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
           {showLinkGroupSelector ? (
             <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
           ) : null}
-          <label>
-            Group by{" "}
-            <select
-              onChange={(e) => setGrouping(e.target.value as FillsGrouping)}
-              value={grouping}
-            >
-              <option value="none">None</option>
-              <option value="ric">RIC</option>
-              <option value="ric-side">RIC / side</option>
-            </select>
-          </label>
+          <span className={`${classBase}-label`} id={groupByLabelId}>
+            Group by
+          </span>
+          <ToggleButtonGroup
+            aria-labelledby={groupByLabelId}
+            className={`${classBase}-grouping`}
+            onChange={(e: SyntheticEvent<HTMLButtonElement>) =>
+              setGrouping(e.currentTarget.value as FillsGrouping)
+            }
+            value={grouping}
+          >
+            {FILLS_GROUPINGS.map(({ id, label }) => (
+              <ToggleButton key={id} value={id}>
+                {label}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
           <span className={`${classBase}-spacer`} />
-          <button
+          <Button
+            appearance="bordered"
             disabled={records.length === 0}
             onClick={exportCsv}
-            type="button"
+            sentiment="neutral"
           >
+            <DownloadIcon />
             Export CSV ({records.length})
-          </button>
+          </Button>
         </div>
         <FillsLinkContext.Provider value={link}>
           <div className={`${classBase}-table`}>

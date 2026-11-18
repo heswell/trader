@@ -1,4 +1,5 @@
 import { isStopOrdType, type OrdType, RpcName } from "@heswell/trading-schemas";
+import { Button, ToggleButton, ToggleButtonGroup } from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
 import {
@@ -14,6 +15,7 @@ import {
   createContext,
   forwardRef,
   type HTMLAttributes,
+  type SyntheticEvent,
   useCallback,
   useEffect,
   useContext,
@@ -71,6 +73,24 @@ registerTradingCellRenderers();
 registerOrderActionsRenderer();
 
 const classBase = "tradingOrderBlotter";
+
+/** Depth ladder: bids and asks stepping away from the touch. */
+const OrderBookIcon = () => (
+  <svg
+    aria-hidden="true"
+    fill="currentColor"
+    height={14}
+    viewBox="0 0 16 16"
+    width={14}
+  >
+    <rect height="2" rx="0.5" width="6" x="1" y="3" />
+    <rect height="2" rx="0.5" width="4" x="3" y="7" />
+    <rect height="2" rx="0.5" width="2" x="5" y="11" />
+    <rect height="2" rx="0.5" width="3" x="9" y="3" />
+    <rect height="2" rx="0.5" width="5" x="9" y="7" />
+    <rect height="2" rx="0.5" width="6" x="9" y="11" />
+  </svg>
+);
 const SOURCE = "OrderBlotter";
 
 export interface OrderBlotterProps
@@ -423,49 +443,62 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
         data-testid="trading-order-blotter"
         ref={ref}
       >
-        <div className={`${classBase}-toolbar`} role="tablist">
+        <div className={`${classBase}-toolbar`}>
           {showLinkGroupSelector ? (
             <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
           ) : null}
-          {ORDER_BLOTTER_TABS.map(({ id, label }) => (
-            <button
-              aria-selected={tab === id}
-              className={`${classBase}-tab`}
-              key={id}
-              onClick={() => setTab(id)}
-              role="tab"
-              type="button"
-            >
-              {label}
-            </button>
-          ))}
+          <ToggleButtonGroup
+            aria-label="Order status"
+            className={`${classBase}-status`}
+            onChange={(e: SyntheticEvent<HTMLButtonElement>) =>
+              setTab(e.currentTarget.value as OrderBlotterTab)
+            }
+            value={tab}
+          >
+            {ORDER_BLOTTER_TABS.map(({ id, label, description }) => (
+              <ToggleButton key={id} title={description} value={id}>
+                {label}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
           <span className={`${classBase}-spacer`} />
           {showOrderBook ? (
-            <button
+            <Button
+              appearance="bordered"
               aria-label="Show order book"
+              className={`${classBase}-orderBook`}
               onClick={openOrderBook}
+              sentiment="neutral"
               title="Depth and queue position of the selected order"
-              type="button"
             >
-              Order book
-            </button>
+              <OrderBookIcon />
+              <span className={`${classBase}-wideLabel`}>Order book</span>
+            </Button>
           ) : null}
           {readOnly ? null : (
             <>
-              <button
+              <Button
+                appearance="bordered"
+                aria-label={`Cancel selected (${cancellableSelected.length})`}
                 disabled={!connected || cancellableSelected.length === 0}
                 onClick={() => void cancelIds(cancellableSelected)}
-                type="button"
+                sentiment="negative"
               >
-                Cancel selected ({cancellableSelected.length})
-              </button>
-              <button
+                <span className={`${classBase}-wideLabel`}>
+                  Cancel selected ({cancellableSelected.length})
+                </span>
+                <span className={`${classBase}-narrowLabel`}>
+                  Cancel {cancellableSelected.length}
+                </span>
+              </Button>
+              <Button
+                appearance="solid"
                 disabled={!connected}
                 onClick={() => void cancelAll()}
-                type="button"
+                sentiment="negative"
               >
                 Cancel all
-              </button>
+              </Button>
             </>
           )}
         </div>

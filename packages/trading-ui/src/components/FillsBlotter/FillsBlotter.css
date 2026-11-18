@@ -14,10 +14,31 @@
   display: flex;
   flex: 0 0 auto;
   gap: var(--salt-spacing-100);
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.tradingFillsBlotter-toolbar > * {
+  flex-shrink: 0;
 }
 
 .tradingFillsBlotter-spacer {
-  flex: 1;
+  flex: 1 1 0;
+}
+
+.tradingFillsBlotter-label {
+  color: var(--salt-content-secondary-foreground);
+  font-size: var(--salt-text-label-fontSize);
+  font-weight: var(--salt-text-label-fontWeight-strong);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* Same toggle padding as the Orders status group. */
+.tradingFillsBlotter .tradingFillsBlotter-toolbar
+  .tradingFillsBlotter-grouping.saltToggleButtonGroup
+  .saltToggleButton {
+  padding-inline: var(--salt-spacing-250, calc(2.5 * var(--salt-spacing-100)));
 }
 
 .tradingFillsBlotter-table {

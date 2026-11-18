@@ -11,18 +11,43 @@
 
 .tradingOrderBlotter-toolbar {
   align-items: center;
+  container-type: inline-size;
   display: flex;
   flex: 0 0 auto;
   gap: var(--salt-spacing-100);
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.tradingOrderBlotter-toolbar > * {
+  flex-shrink: 0;
 }
 
 .tradingOrderBlotter-spacer {
-  flex: 1;
+  flex: 1 1 0;
 }
 
-.tradingOrderBlotter-tab[aria-selected="true"] {
-  font-weight: var(--salt-text-fontWeight-strong);
-  text-decoration: underline;
+.tradingOrderBlotter-narrowLabel {
+  display: none;
+}
+
+/* Tighter than vuu-theme's toggle padding (spacing-400), as in the design.
+   Out-ranks `.salt-theme.vuu-theme .saltToggleButtonGroup-horizontal .saltToggleButton`. */
+.tradingOrderBlotter .tradingOrderBlotter-toolbar
+  .tradingOrderBlotter-status.saltToggleButtonGroup
+  .saltToggleButton {
+  padding-inline: var(--salt-spacing-250, calc(2.5 * var(--salt-spacing-100)));
+}
+
+/* Narrow panels: Order book drops to its icon, Cancel selected to "Cancel N".
+   The aria-labels keep the full text. */
+@container (max-width: 700px) {
+  .tradingOrderBlotter-wideLabel {
+    display: none;
+  }
+  .tradingOrderBlotter-narrowLabel {
+    display: inline;
+  }
 }
 
 .tradingOrderBlotter-table {
