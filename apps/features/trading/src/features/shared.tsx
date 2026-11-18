@@ -59,14 +59,22 @@ const toolbarStyle: CSSProperties = {
 /** Style for a component that fills the rest of a FeatureFrame. */
 export const fillStyle: CSSProperties = { flex: 1, minHeight: 0 };
 
+const flushFrame: CSSProperties = { ...frame, padding: 0 };
+
 export const FeatureFrame = ({
   children,
+  flush = false,
   toolbar,
 }: {
   children: ReactNode;
+  /**
+   * No padding: for a component with its own edges (the InstrumentGrid's
+   * filter bar and footer), which would otherwise sit 4px in from the panel.
+   */
+  flush?: boolean;
   toolbar?: ReactNode;
 }) => (
-  <div style={frame}>
+  <div style={flush ? flushFrame : frame}>
     {toolbar ? <div style={toolbarStyle}>{toolbar}</div> : null}
     {children}
   </div>

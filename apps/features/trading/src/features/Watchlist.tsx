@@ -13,7 +13,7 @@ import {
 const Watchlist = () => {
   const { canTrade } = useEntitlements();
   return (
-    <FeatureFrame>
+    <FeatureFrame flush>
       <InstrumentGrid
         id="watchlist"
         launchOrderTicket={canTrade}
