@@ -48,6 +48,10 @@
   display: none;
 }
 
+.vuuTableRow-even .tradingRowActions-buttons {
+  --tradingRowActions-fade: var(--table-zebraColor);
+}
+
 .vuuTableRow[aria-selected="true"] .tradingRowActions-buttons {
   --tradingRowActions-fade: var(--vuu-table-row-background-selected);
 }

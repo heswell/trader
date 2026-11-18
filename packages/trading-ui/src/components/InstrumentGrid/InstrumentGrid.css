@@ -19,6 +19,17 @@
   );
 }
 
+/* rowSeparators / zebraStripes: vuu's tertiary separator is too strong for
+   a dividing line every row; half of it, and the stripe stays vuu's
+   secondary container */
+.tradingInstrumentGrid .vuuTable-rowLines {
+  --row-borderColor: color-mix(
+    in srgb,
+    var(--salt-separable-tertiary-borderColor) 50%,
+    transparent
+  );
+}
+
 .tradingInstrumentGrid-table {
   flex: 1 1 0;
   min-height: 0;
@@ -26,6 +37,9 @@
 
 .tradingInstrumentGrid-filterBar {
   flex: none;
+  /* vuu's default is the item height + 2 x 8px; 3px either side reads as
+     centred over the bar's bottom border */
+  --vuuFilterBar-height: 30px;
 }
 
 /* vuu-filters' own --vuu-svg-columns lost its quote escapes in the build, so
@@ -112,7 +126,7 @@
   width: 340px;
 }
 
-/* footer: column-set tabs, linked instruments, row count, column picker */
+/* footer: column-set tabs, row count, column picker */
 .tradingInstrumentGridFooter {
   flex: none;
   display: flex;
@@ -177,6 +191,8 @@
 }
 
 .tradingInstrumentGridFooter-tabSelected {
+  /* the grid's surface, so the active set reads as part of the table */
+  background: var(--salt-container-primary-background);
   color: var(--salt-content-primary-foreground);
   font-weight: var(--salt-text-fontWeight-strong);
 }
@@ -192,8 +208,7 @@
 }
 
 .tradingInstrumentGridFooter-tab:focus-visible,
-.tradingInstrumentGridFooter-newSet:focus-visible,
-.tradingInstrumentGridFooter-linkedItem:focus-visible {
+.tradingInstrumentGridFooter-newSet:focus-visible {
   outline: var(--salt-focused-outline);
   outline-offset: -2px;
 }
@@ -202,38 +217,10 @@
   flex: 1;
 }
 
-.tradingInstrumentGridFooter-linked,
 .tradingInstrumentGridFooter-count {
   display: flex;
   align-items: center;
   gap: var(--salt-spacing-75);
-}
-
-.tradingInstrumentGridFooter-linkedItem {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--salt-spacing-50);
-  padding: 0 var(--salt-spacing-50);
-  border: 0;
-  border-radius: var(--salt-palette-corner-weak, 2px);
-  background: transparent;
-  color: var(--salt-content-primary-foreground);
-  font: inherit;
-}
-
-button.tradingInstrumentGridFooter-linkedItem {
-  cursor: pointer;
-}
-
-button.tradingInstrumentGridFooter-linkedItem:hover {
-  background: var(--salt-actionable-subtle-background-hover);
-}
-
-.tradingInstrumentGridFooter-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--channel-color);
 }
 
 .tradingInstrumentGridFooter-count {
