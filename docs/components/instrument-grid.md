@@ -32,7 +32,7 @@ A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns 
 | Prop | Meaning |
 | --- | --- |
 | `dataSource?` / `table?` | Supply a data source, or bind `"instrumentPrices"` (default) / `"prices"`. |
-| `columns?` | Visible column names in order (default: ric, description, exchange, currency, bid, ask, last, change, changePct, phase, sparkline, volume, turnover). The "Columns" button opens the vuu column picker; the header menu gives sort / group / hide. |
+| `columns?` | Visible column names in order (default: ric, description, exchange, currency, bid, ask, last, change, changePct, phase, sparkline, volume, turnover). The "Columns" button opens the vuu column picker; the header menu gives sort / group / hide. Headers are Title Case labels (RIC, Mkt Cap $); a column with no preset gets its name in Title Case (`titleCaseColumnName`: "bidSize" → "Bid Size"). |
 | `simulatedOnly?` | Default false. True: only instruments quoted by the simulator (instrumentPrices). Unquoted instruments show empty price cells. |
 | `instrumentType?` | `EQUITY` / `FUTURE` / `INDEX` / `CONTINUATION`: only that type. Otherwise, when the data has an `instrumentType` column, type is a quick filter in the filter bar. |
 | `initialGroupBy?` | `exchange` / `sector` / `currency` / `instrumentType` / `underlying` (a stock or index with its futures); volume and turnover are summed in group rows. It sets the first grouping only: after that, group from the column header menu (the grid has no group-by control). |
@@ -47,7 +47,7 @@ A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns 
 ## Panel header
 
 - **Scope picker** (the title): All instruments or a watchlist, with its count. The same menu adds or removes the selected row's ric on the current watchlist, creates a watchlist (named in a prompt, then shown) and deletes the current one.
-- **Panel settings** (gear): Show filter bar (Ctrl+Shift+F anywhere in the grid), Show footer and Pin linked rows to the top. Saved per grid `id` under `trading.instrumentGrid.view`.
+- **Panel settings** (cog): Show filter bar (Ctrl+Shift+F anywhere in the grid), Show footer and Pin linked rows to the top. Saved per grid `id` under `trading.instrumentGrid.view`.
 - **Filter badge**: while the filter bar is hidden its filters still apply, and the header shows a badge with the clause count; clicking it shows the bar.
 
 In a `@vuu-ui/grid-layout` panel these go into the panel's own header: the scope picker as the title (at the start of the tab bar when the panel is stacked), the badge and gear at the end. Anywhere else the grid shows them in a header row of its own.
@@ -67,7 +67,7 @@ Design spec: [docs/design/instrument-grid](../design/instrument-grid/README.md).
 
 ## Row actions
 
-Buy, Sell and Depth sit at the right edge of a row, in a narrow client-side column (`actions`, pinned right, outside column sets and the column picker) whose buttons overflow leftwards over the last cells. They show on the selected row, on hover and on a focused row, and fade in over the cells below them.
+Buy, Sell and Depth sit at the right edge of a row, in a narrow client-side column (`actions`, pinned right, outside column sets and the column picker) whose buttons overflow leftwards over the last cells. They show on one row at a time: the hovered row, else the keyboard-highlighted row, else the selected (or focused) row. They fade in over the cells below them.
 
 - Keys on the focused row: **B** Buy, **S** Sell, **D** Depth.
 - The context menu has the same three items, labelled with their keys.
@@ -77,9 +77,9 @@ Buy, Sell and Depth sit at the right edge of a row, in a narrow client-side colu
 
 ## Footer
 
-One 24px row under the table:
+One 22px row under the table:
 
-- **Column-set tabs** on the left: click, or Left / Right arrows on a focused tab, to show a set. "+" saves the columns in view as a new set, named in a prompt.
+- **Column-set tabs** on the left, text tabs with the active one underlined (`--salt-navigable-indicator-active`): click, or Left / Right arrows on a focused tab, to show a set. "+" saves the columns in view as a new set, named in a prompt.
 - **Linked**: a channel dot and ric per channel that holds an instrument. While linked rows are pinned, clicking one selects and focuses its row. With pinning off they are labels only: vuu Table cannot scroll to a row by key yet (`ScrollingAPI.scrollToKey` is a stub, trader upstream issue 114).
 - **Row count**: the rows in the body, "N rows", kept current from the data source's `resize` events. Under a filter-bar filter it is the filtered count, bold with a filter icon; the server sends no unfiltered total, so it is never "x of y". Pinned rows are not counted.
 - **Columns** on the right opens the vuu column picker.

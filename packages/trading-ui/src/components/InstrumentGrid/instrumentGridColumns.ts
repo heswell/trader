@@ -24,147 +24,164 @@ const ratio = (decimals: number): ColumnDescriptor["type"] => ({
 
 /** Presets for the known columns of instrumentPrices / prices. */
 const presets: Record<string, ColumnDescriptor> = {
-  ric: { name: "ric", width: 90 },
-  description: { name: "description", width: 160 },
-  isin: { name: "isin", width: 110 },
-  exchange: { name: "exchange", width: 70 },
-  currency: { name: "currency", width: 60 },
-  sector: { name: "sector", width: 120 },
-  instrumentType: { name: "instrumentType", label: "type", width: 75 },
-  underlying: { name: "underlying", width: 90 },
-  contract: { name: "contract", width: 90 },
+  ric: { name: "ric", label: "RIC", width: 90 },
+  description: { name: "description", label: "Description", width: 160 },
+  isin: { name: "isin", label: "ISIN", width: 110 },
+  exchange: { name: "exchange", label: "Exchange", width: 85 },
+  currency: { name: "currency", label: "Ccy", width: 60 },
+  sector: { name: "sector", label: "Sector", width: 120 },
+  instrumentType: { name: "instrumentType", label: "Type", width: 75 },
+  underlying: { name: "underlying", label: "Underlying", width: 90 },
+  contract: { name: "contract", label: "Contract", width: 90 },
   expiry: {
     name: "expiry",
+    label: "Expiry",
     width: 95,
     type: renderer(TradingRenderer.Date),
   },
   contractMultiplier: {
     name: "contractMultiplier",
-    label: "multiplier",
+    label: "Multiplier",
     width: 80,
     ...right,
   },
   settlementPrice: {
     name: "settlementPrice",
-    label: "settlement",
+    label: "Settlement",
     width: 90,
     ...right,
     type: renderer(TradingRenderer.Price),
   },
   bid: {
     name: "bid",
+    label: "Bid",
     width: 95,
     ...right,
     type: renderer("trading.price-move"),
   },
   ask: {
     name: "ask",
+    label: "Ask",
     width: 95,
     ...right,
     type: renderer("trading.price-move"),
   },
   last: {
     name: "last",
+    label: "Last",
     width: 105,
     ...right,
     type: renderer("trading.price-move", { componentProps: { arrow: true } }),
   },
   bidSize: {
     name: "bidSize",
+    label: "Bid Size",
     width: 80,
     ...right,
     type: renderer("trading.quantity", { componentProps: { compact: true } }),
   },
   askSize: {
     name: "askSize",
+    label: "Ask Size",
     width: 80,
     ...right,
     type: renderer("trading.quantity", { componentProps: { compact: true } }),
   },
   lastSize: {
     name: "lastSize",
+    label: "Last Size",
     width: 80,
     ...right,
     type: renderer("trading.quantity"),
   },
   open: {
     name: "open",
+    label: "Open",
     width: 90,
     ...right,
     type: renderer(TradingRenderer.Price),
   },
   high: {
     name: "high",
+    label: "High",
     width: 90,
     ...right,
     type: renderer(TradingRenderer.Price),
   },
   low: {
     name: "low",
+    label: "Low",
     width: 90,
     ...right,
     type: renderer(TradingRenderer.Price),
   },
   close: {
     name: "close",
+    label: "Close",
     width: 90,
     ...right,
     type: renderer(TradingRenderer.Price),
   },
   vwap: {
     name: "vwap",
+    label: "VWAP",
     width: 90,
     ...right,
     type: renderer(TradingRenderer.Price),
   },
   change: {
     name: "change",
+    label: "Change",
     width: 100,
     ...right,
     type: renderer("trading.change"),
   },
   changePct: {
     name: "changePct",
-    label: "change %",
+    label: "Change %",
     width: 100,
     ...right,
     type: renderer("trading.change", { componentProps: { percent: true } }),
   },
   volume: {
     name: "volume",
+    label: "Volume",
     width: 95,
     ...right,
     type: renderer("trading.quantity", { componentProps: { compact: true } }),
   },
   turnover: {
     name: "turnover",
+    label: "Turnover",
     width: 105,
     ...right,
     type: renderer(TradingRenderer.Notional),
   },
-  tickSize: { name: "tickSize", width: 80, ...right },
-  lotSize: { name: "lotSize", width: 80, ...right },
+  tickSize: { name: "tickSize", label: "Tick Size", width: 80, ...right },
+  lotSize: { name: "lotSize", label: "Lot Size", width: 80, ...right },
   priceDecimals: {
     name: "priceDecimals",
-    label: "decimals",
+    label: "Decimals",
     width: 80,
     ...right,
   },
   refPrice: {
     name: "refPrice",
+    label: "Ref Price",
     width: 90,
     ...right,
     type: renderer(TradingRenderer.Price),
   },
   phase: {
     name: "phase",
+    label: "Phase",
     width: 110,
     type: renderer("trading.phase"),
   },
   // screening: fundamentals (instruments) and live ratios (prices)
   marketCapUsd: {
     name: "marketCapUsd",
-    label: "mkt cap $",
+    label: "Mkt Cap $",
     width: 90,
     ...right,
     type: renderer("trading.quantity", { componentProps: { compact: true } }),
@@ -173,30 +190,30 @@ const presets: Record<string, ColumnDescriptor> = {
   pb: { name: "pb", label: "P/B", width: 70, ...right, type: ratio(2) },
   dividendYield: {
     name: "dividendYield",
-    label: "yield %",
+    label: "Yield %",
     width: 75,
     ...right,
     type: ratio(2),
   },
   roe: { name: "roe", label: "ROE %", width: 75, ...right, type: ratio(1) },
-  eps: { name: "eps", width: 80, ...right, type: ratio(2) },
+  eps: { name: "eps", label: "EPS", width: 80, ...right, type: ratio(2) },
   bookValuePerShare: {
     name: "bookValuePerShare",
-    label: "book / share",
+    label: "Book / Share",
     width: 95,
     ...right,
     type: ratio(2),
   },
   dividendPerShare: {
     name: "dividendPerShare",
-    label: "div / share",
+    label: "Div / Share",
     width: 90,
     ...right,
     type: ratio(2),
   },
   sharesOutstanding: {
     name: "sharesOutstanding",
-    label: "shares",
+    label: "Shares",
     width: 90,
     ...right,
     type: renderer("trading.quantity", { componentProps: { compact: true } }),
@@ -249,6 +266,12 @@ export const SCREENING_SET_COLUMNS = [
   "volume",
 ];
 
+/** "bidSize" → "Bid Size": the header for a column with no preset. */
+export const titleCaseColumnName = (name: string) =>
+  name
+    .replace(/([a-z\d])([A-Z])/g, "$1 $2")
+    .replace(/^./, (c) => c.toUpperCase());
+
 /** Descriptor for a column of the grid; unknown columns get plain vuu defaults. */
 export const instrumentGridColumn = (
   name: string,
@@ -257,7 +280,7 @@ export const instrumentGridColumn = (
   name === SPARKLINE_COLUMN
     ? {
         name: SPARKLINE_COLUMN,
-        label: "trend",
+        label: "Trend",
         source: "client",
         sortable: false,
         resizeable: true,
@@ -274,7 +297,7 @@ export const instrumentGridColumn = (
           },
         },
       }
-    : (presets[name] ?? { name });
+    : (presets[name] ?? { name, label: titleCaseColumnName(name) });
 
 export interface InstrumentGridColumnOptions {
   /** Column names of the data source; columns not present are dropped. */

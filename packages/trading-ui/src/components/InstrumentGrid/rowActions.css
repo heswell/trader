@@ -36,6 +36,18 @@
   display: flex;
 }
 
+/* One row at a time: the hovered row, else the keyboard-highlighted row,
+   else the selected (or focused) row. */
+.tradingInstrumentGrid:has(.vuuTableRow:hover) .vuuTableRow:not(:hover)
+  .tradingRowActions-buttons,
+.tradingInstrumentGrid:not(:has(.vuuTableRow:hover)):has(
+    .vuuTableRow-highlighted
+  )
+  .vuuTableRow:not(.vuuTableRow-highlighted)
+  .tradingRowActions-buttons {
+  display: none;
+}
+
 .vuuTableRow[aria-selected="true"] .tradingRowActions-buttons {
   --tradingRowActions-fade: var(--vuu-table-row-background-selected);
 }

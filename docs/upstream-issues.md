@@ -772,3 +772,12 @@ Found moving to @vuu-ui 4.0.0-alpha.30 (`docs/portal-integration.md`, "Panels pa
      server see it. *Repro:* showcase (StrictMode), "Remote server", Instrument grid: link a row with pinning on.
      *Proposed:* skip the schema check (or defer `createDataRow`) while the status is `subscribing` or `enabling`.
      *Workaround in this repo:* none; the portal host does not render under StrictMode.
+
+118. **The quick filters' column picker icon is a filled square.** (finos `@vuu-ui/vuu-filters` 5.0.0-alpha.9,
+     `src/filter-bar/quick-filters/QuickFilters.css.js`.) `--vuu-svg-columns` is a double-quoted `url("data:…")`
+     whose inner quotes lost their backslashes in the CSS-in-JS build (`\"` in the JS string is a bare `"`), so the
+     url ends at `xmlns=`, the declaration is invalid and the icon's `mask-image` is `none`: the "Choose quick
+     filter columns" button shows its background colour as a square. *Repro:* showcase, Instrument grid: the
+     button at the right end of the filter bar. *Proposed:* single quotes around the url in the source CSS (as
+     vuu-icons does), or escape the escapes. *Workaround in this repo:* the InstrumentGrid redefines
+     `--vuu-icon-svg` for `.vuuQuickFilters [data-icon="columns"]` with a single-quoted url.
