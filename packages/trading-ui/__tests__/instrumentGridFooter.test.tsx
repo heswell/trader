@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, mock, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import {
   act,
   cleanup,
@@ -9,12 +9,10 @@ import {
 import type { DataSource } from "@vuu-ui/vuu-data-types";
 import { ColumnModel, ColumnSetModel } from "@vuu-ui/vuu-table-extras";
 import { EventEmitter } from "@vuu-ui/vuu-utils";
-import { DEFAULT_LINK_GROUPS } from "../src";
 import {
   formatRowCount,
   InstrumentGridFooter,
 } from "../src/components/InstrumentGrid/InstrumentGridFooter";
-import type { GridChannelLinks } from "../src/components/InstrumentGrid/linkColumn";
 
 afterEach(cleanup);
 
@@ -30,13 +28,7 @@ const columns = ["ric", "description", "bid", "ask", "pe"].map((name) => ({
   name,
 }));
 
-const renderFooter = (
-  props: {
-    filtered?: boolean;
-    onShowLinked?: (ric: string) => void;
-    held?: Record<string, string>;
-  } = {},
-) => {
+const renderFooter = (props: { filtered?: boolean } = {}) => {
   const dataSource = new FakeDataSource();
   const columnModel = new ColumnModel(columns, columns.slice(0, 3));
   const columnSetModel = new ColumnSetModel(columnModel, {
@@ -54,20 +46,12 @@ const renderFooter = (
       },
     ],
   });
-  const held = props.held ?? { red: "BP.L", blue: "VOD.L" };
-  const links = {
-    channels: DEFAULT_LINK_GROUPS,
-    instrumentOf: (channel: string) =>
-      held[channel] ? { ric: held[channel] } : undefined,
-  } as unknown as GridChannelLinks;
   render(
     <InstrumentGridFooter
       columnModel={columnModel}
       columnSetModel={columnSetModel}
       dataSource={dataSource as unknown as DataSource}
       filtered={props.filtered ?? false}
-      links={links}
-      onShowLinked={props.onShowLinked}
     />,
   );
   return { columnSetModel, dataSource };
@@ -108,25 +92,5 @@ describe("InstrumentGridFooter", () => {
       key: "ArrowRight",
     });
     expect(columnSetModel.activeColumnSet?.name).toBe("Prices");
-  });
-
-  test("lists linked instruments in channel order and goes to their rows", () => {
-    const onShowLinked = mock();
-    renderFooter({ onShowLinked });
-    const items = screen.getAllByRole("button", { name: /go to its row/ });
-    expect(items.map((item) => item.textContent)).toEqual(["BP.L", "VOD.L"]);
-    fireEvent.click(items[1]);
-    expect(onShowLinked).toHaveBeenCalledWith("VOD.L");
-  });
-
-  test("without onShowLinked the instruments are not buttons", () => {
-    renderFooter();
-    expect(screen.getByText("BP.L")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /go to its row/ })).toBeNull();
-  });
-
-  test("nothing linked, no Linked label", () => {
-    renderFooter({ held: {} });
-    expect(screen.queryByText("Linked")).toBeNull();
   });
 });
