@@ -735,7 +735,7 @@ Found moving to @vuu-ui 4.0.0-alpha.30 (`docs/portal-integration.md`, "Panels pa
      Search. *Workaround in this repo:* `withSearchCasings` (InstrumentGrid) widens the Search clause to the text's
      common casings (as typed, upper, lower, capitalised; upper only for ric) before the filter is sent.
 
-114. **Table `ScrollingAPI.scrollToKey` does nothing.** (finos `@vuu-ui/vuu-table` 5.0.0-alpha.8,
+114. **Table `ScrollingAPI.scrollToKey` does nothing.** (finos `@vuu-ui/vuu-table` 5.0.0-alpha.8, still in alpha.9,
      `src/useTableScroll.js`.) `scrollToKey(rowKey)` only logs `scrollToKey <key>`; `scrollToIndex` works, but a host
      knows a row's key, not its index under the current sort and filter. *Repro:* pass `scrollingApiRef` to a Table
      and call `scrollToKey` with the key of a row out of view: the console logs, the Table does not scroll.
@@ -754,14 +754,21 @@ Found moving to @vuu-ui 4.0.0-alpha.30 (`docs/portal-integration.md`, "Panels pa
      *Workaround in this repo:* the InstrumentGrid sets vuu's per-table hooks (`--vuuTableRow-background-selected`,
      `-bookend-background-selected`, `-background-highlighted`) under `[data-mode="dark"]`; menus are not patched.
 
-116. **Pinned rows (and other hooks) read the data provider from `@vuu-ui/vuu-utils`, not `@vuu-ui/core`.** (finos
-     `@vuu-ui/vuu-table` 5.0.0-alpha.8, `src/pinned-rows/usePinnedDataSource.js`; the same import is in
-     `vuu-table-extras` `useFreezeControl` / `useImportSchema`, `vuu-data-react` `useVuuMenuActions`, `vuu-datatable`
-     `useLinkedTableView` and `vuu-data-editing` `useEditableTable` / `useLookupValues` / `useLookupOptions`.) Core and
-     vuu-utils each have their own `DataContext`; trader's `TradingDataProvider` (remote mode) and the portal host
-     install only core's, so `useData()` from vuu-utils returns the `NullDataSourceConstructor` and the pinned data
-     source throws "no DataProvider has been installed". Local test data hides it: `@heswell/vuu-data-engine-local`
-     installs both providers. *Repro:* InstrumentGrid in the portal, or the showcase on "Remote server": link a row
-     with pinning on, and the grid fails to load. *Proposed:* import `useData` from `@vuu-ui/core` everywhere (vuu-utils
-     is being retired), in alpha.9. *Workaround in this repo:* none; waiting on the upstream fix.
+116. ~~**Pinned rows (and other hooks) read the data provider from `@vuu-ui/vuu-utils`, not `@vuu-ui/core`.**~~
+     *Resolved in @vuu-ui 5.0.0-alpha.9:* `usePinnedDataSource` and the other hooks import `useData` from
+     `@vuu-ui/core`, and no package outside vuu-utils reads vuu-utils' `DataContext`. Verified in the showcase on
+     "Remote server" (no StrictMode, see 117) and on local data: a linked row pins. Trader had no workaround. (Was:
+     alpha.8 `vuu-table/src/pinned-rows/usePinnedDataSource.js`, and the same import in `vuu-table-extras`,
+     `vuu-data-react`, `vuu-datatable` and `vuu-data-editing`. Core and vuu-utils each had their own `DataContext`, and
+     `TradingDataProvider` (remote) and the portal host install only core's, so the pinned data source threw "no
+     DataProvider has been installed"; local test data hid it, as `@heswell/vuu-data-engine-local` installs both.)
 
+117. **Under StrictMode, a Table with pinned rows on a remote data source throws "a resumed dataSource must have a
+     tableSchema".** (finos `@vuu-ui/vuu-table` 5.0.0-alpha.9, `src/table-data-source/useDataSource.js`, the effect
+     that binds the data source.) The effect throws when the data source has no `tableSchema` and its status is
+     anything but `initialising` / `unsubscribed`. The pinned rows' `VuuDataSource` is still `subscribing` (its schema
+     not back from the server) when StrictMode re-runs the effect, so it throws and the grid unmounts. Local data has
+     the schema at once, and without StrictMode the effect does not re-run, so only development builds on a remote
+     server see it. *Repro:* showcase (StrictMode), "Remote server", Instrument grid: link a row with pinning on.
+     *Proposed:* skip the schema check (or defer `createDataRow`) while the status is `subscribing` or `enabling`.
+     *Workaround in this repo:* none; the portal host does not render under StrictMode.
