@@ -360,7 +360,7 @@ export const WatchlistDialog = ({
                   spellCheck: false,
                 }}
                 bordered
-              inputRef={searchRef}
+                inputRef={searchRef}
                 placeholder="Search RIC or name…"
                 value={text}
               />
