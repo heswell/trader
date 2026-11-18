@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New watchlist, filtered (dark)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#9CC3F0}a:hover{color:#C4DCF7}
+button,input{font:inherit;color:inherit}
+.r{--app:#EEF0F3;--panel:#FFFFFF;--bar:#F6F7F9;--border:#D9DDE3;--rowline:#F0F2F4;--fg:#1F2329;--fg2:#4A525D;--fg3:#5B6470;--hover:#E9ECF0;--sel:#E8EEF6;--field-border:#C3CAD3;--field-bg:#FFFFFF;--label-bg:#E4E8ED;--placeholder:#8A929D;--set-border:#8FA6C8;--set-label-bg:#DCE5F1;--accent:#3B5B8C;--focus:#3B5B8C;--focus-ring:rgba(59,91,140,.15);--primary:#2F5D9E;--primary-fg:#FFFFFF;--strong:#2B3440;--up:#1E7F45;--down:#B3261E;--scrim:rgba(24,28,34,.40);--mark:#FCE8A6;
+font-family:'Nunito Sans',system-ui,sans-serif;font-size:11px;color:var(--fg);background:var(--app);-webkit-font-smoothing:antialiased}
+.r.dark{--app:#15171A;--panel:#1D2024;--bar:#191C20;--border:#2E3339;--rowline:#24282D;--fg:#E6E8EB;--fg2:#B8BEC6;--fg3:#A3A9B1;--hover:#2C323A;--sel:#243142;--field-border:#4A515A;--field-bg:#15171A;--label-bg:#2A2F36;--placeholder:#7D848D;--set-border:#5A7EA8;--set-label-bg:#24303E;--accent:#9CC3F0;--focus:#7FB2FF;--focus-ring:rgba(127,178,255,.2);--primary:#2F6FC0;--primary-fg:#FFFFFF;--strong:#E6E8EB;--up:#4FC27A;--down:#F0705F;--scrim:rgba(0,0,0,.55);--mark:#5C4A12}
+.num{font-variant-numeric:tabular-nums;text-align:right}
+.up{color:var(--up)}.down{color:var(--down)}
+mark{background:var(--mark);color:inherit;border-radius:2px;padding:0}
+.btn{height:24px;box-sizing:border-box;padding:0 12px;border-radius:3px;border:1px solid var(--field-border);background:var(--field-bg);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--hover)}
+.btn.pri{background:var(--primary);border-color:var(--primary);color:var(--primary-fg)}
+.btn.pri:hover{filter:brightness(1.1)}
+.btn.sm{height:20px;padding:0 8px;font-size:11px}
+.btn:disabled{opacity:.5;cursor:default}
+.kbd{font:inherit;font-size:10px;font-weight:400;min-width:14px;height:14px;padding:0 3px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--field-border);border-radius:3px;color:var(--fg2)}
+.btn.pri .kbd{border-color:rgba(255,255,255,.55);color:inherit}
+.fld{height:26px;box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:0 8px;border:1px solid var(--field-border);border-radius:3px;background:var(--field-bg)}
+.fld input{border:0;outline:none;background:transparent;flex:1;min-width:0;font-size:12px;padding:0;color:var(--fg)}
+.fld input::placeholder{color:var(--placeholder)}
+.fld.foc{border-color:var(--focus);box-shadow:0 0 0 2px var(--focus-ring)}
+.lbl{font-weight:700;color:var(--fg2)}
+.ico{width:24px;height:24px;border:0;background:none;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;color:var(--fg3);cursor:pointer;padding:0;flex:none}
+.ico:hover{background:var(--hover);color:var(--fg)}
+.flt{height:22px;box-sizing:border-box;display:inline-flex;align-items:stretch;border:1px solid var(--field-border);border-radius:3px;overflow:hidden;cursor:pointer;background:var(--field-bg);padding:0;font-size:11px}
+.flt .k{display:inline-flex;align-items:center;padding:0 6px;background:var(--label-bg);color:var(--fg2)}
+.flt .v{display:inline-flex;align-items:center;gap:5px;padding:0 6px;font-weight:700;min-width:32px}
+.flt:hover .v{background:var(--hover)}
+.flt.set{border-color:var(--set-border)}
+.flt.set .k{background:var(--set-label-bg);color:var(--accent);font-weight:700}
+.cb{width:12px;height:12px;border-radius:2px;border:1px solid var(--field-border);box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;background:var(--field-bg);flex:none;color:#fff}
+.cb.on{background:var(--primary);border-color:var(--primary)}
+.pr{height:30px;width:100%;box-sizing:border-box;display:grid;grid-template-columns:14px 74px minmax(0,1fr) 40px 96px 64px 56px;gap:8px;align-items:center;padding:0 12px;border:0;border-bottom:1px solid var(--rowline);background:transparent;text-align:left;cursor:pointer}
+.pr:hover{background:var(--hover)}
+.pr.hi{background:var(--sel)}
+.pr:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{font-size:9px;font-weight:800;padding:1px 4px;border-radius:2px;background:var(--label-bg);color:var(--fg2);justify-self:start}
+.menu{position:absolute;z-index:6;background:var(--panel);border:1px solid var(--border);border-radius:4px;box-shadow:0 6px 16px rgba(0,0,0,.35);padding:3px}
+.mi{width:100%;height:24px;padding:0 8px;display:grid;grid-template-columns:14px 1fr;gap:8px;align-items:center;background:transparent;border:0;border-radius:3px;text-align:left;cursor:pointer;white-space:nowrap}
+.mi:hover{background:var(--hover)}
+.sel-row{height:28px;display:grid;grid-template-columns:70px minmax(0,1fr) 20px;gap:6px;align-items:center;padding:0 6px 0 12px;border-bottom:1px solid var(--rowline)}
+.sel-row:hover{background:var(--hover)}
+.x{width:18px;height:18px;border:0;background:none;padding:0;border-radius:3px;color:var(--fg3);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.x:hover{background:var(--hover);color:var(--strong)}
+.bg-row{height:24px;display:grid;grid-template-columns:24px 90px minmax(0,1fr) 70px 50px 90px 70px;gap:8px;align-items:center;padding:0 8px;border-bottom:1px solid var(--rowline)}
+</style>
+</helmet>
+<div class="{{rootClass}}" style="width: 100%; height: 800px; position: relative; overflow: hidden">
+
+  <div aria-hidden="true" style="position: absolute; inset: 10px; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--border); border-radius: 4px; overflow: hidden">
+    <div style="height: 28px; display: flex; align-items: center; padding: 0 10px; border-bottom: 1px solid var(--border); font-weight: 800; font-size: 12px">All instruments</div>
+    <div class="bg-row" style="font-weight: 700; color: var(--fg2); background: var(--bar)"><span></span><span>RIC</span><span>Name</span><span>Exch</span><span>Ccy</span><span class="num">Last</span><span class="num">Chg %</span></div>
+    <sc-for list="{{bgRows}}" as="b" hint-placeholder-count="18">
+      <div class="bg-row"><span></span><span style="font-weight: 700">{{b.ric}}</span><span class="ell">{{b.name}}</span><span>{{b.exch}}</span><span>{{b.ccy}}</span><span class="num">{{b.last}}</span><span class="{{b.chgCls}}">{{b.chgTxt}}</span></div>
+    </sc-for>
+  </div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: var(--scrim)"></div>
+
+  <div role="dialog" aria-modal="true" aria-labelledby="wl-title" style="position: absolute; left: 50%; top: 56px; transform: translateX(-50%); width: 920px; height: 660px; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 16px 40px rgba(0,0,0,.45); overflow: hidden">
+
+    <div style="height: 44px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 16px; border-bottom: 1px solid var(--border)">
+      <h2 id="wl-title" style="margin: 0; font-size: 14px; font-weight: 800; flex: 1">{{title}}</h2>
+      <button class="ico" aria-label="Close">
+        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"></path></svg>
+      </button>
+    </div>
+
+    <div style="flex: none; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border)">
+      <label for="wl-name" class="lbl" style="width: 40px">Name</label>
+      <div class="{{nameCls}}" style="width: 320px">
+        <input id="wl-name" value="{{name}}" onChange="{{onName}}" onFocus="{{focusName}}" placeholder="e.g. Energy majors" autocomplete="off">
+      </div>
+    </div>
+
+    <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 270px">
+
+      <div style="display: flex; flex-direction: column; min-height: 0; position: relative">
+        <sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}">
+          <button aria-label="Close filter menu" onClick="{{closeMenu}}" style="position: absolute; inset: 0; z-index: 5; background: transparent; border: 0; cursor: default"></button>
+        </sc-if>
+        <div style="padding: 12px 12px 8px; display: flex; flex-direction: column; gap: 8px">
+          <div class="{{searchCls}}">
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color: var(--fg3)"><circle cx="7" cy="7" r="4.5"></circle><path d="M10.5 10.5L14 14"></path></svg>
+            <input role="combobox" aria-expanded="true" aria-controls="wl-results" aria-label="Search by RIC or name" placeholder="Search RIC or name…" value="{{q}}" onChange="{{onQ}}" onFocus="{{focusSearch}}" autocomplete="off" spellcheck="false">
+            <sc-if value="{{hasQ}}" hint-placeholder-val="{{ false }}">
+              <button class="x" aria-label="Clear search" onClick="{{clearQ}}"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"></path></svg></button>
+            </sc-if>
+          </div>
+          <div role="group" aria-label="Filters" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap">
+            <sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+              <span style="position: relative; display: inline-flex">
+                <button class="{{f.cls}}" aria-haspopup="listbox" aria-expanded="{{f.isOpen}}" onClick="{{f.toggleOpen}}" style="{{f.z}}">
+                  <span class="k">{{f.label}}</span>
+                  <span class="v">{{f.value}}<svg aria-hidden="true" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"></path></svg></span>
+                </button>
+                <sc-if value="{{f.isOpen}}" hint-placeholder-val="{{ false }}">
+                  <div class="menu" role="listbox" aria-multiselectable="true" aria-label="{{f.label}}" style="left: 0; top: 26px; min-width: 170px">
+                    <sc-for list="{{f.opts}}" as="o" hint-placeholder-count="4">
+                      <button class="mi" role="option" aria-selected="{{o.on}}" onClick="{{o.toggle}}">
+                        <span class="{{o.cb}}"><sc-if value="{{o.on}}" hint-placeholder-val="{{ false }}"><svg aria-hidden="true" width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3L13 4.5"></path></svg></sc-if></span>
+                        <span>{{o.label}}</span>
+                      </button>
+                    </sc-for>
+                    <div style="height: 1px; background: var(--border); margin: 3px 0"></div>
+                    <button class="mi" onClick="{{f.clear}}"><span></span><span style="color: var(--fg2)">Any {{f.lower}}</span></button>
+                  </div>
+                </sc-if>
+              </span>
+            </sc-for>
+            <sc-if value="{{anyFilter}}" hint-placeholder-val="{{ false }}">
+              <button class="btn sm" onClick="{{clearFilters}}" style="border-color: transparent; background: transparent; color: var(--accent)">Clear filters</button>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="height: 28px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--bar)">
+          <span style="font-weight: 700; color: var(--fg2)">{{sectionLabel}}</span>
+          <span style="color: var(--fg3)">{{countLabel}}</span>
+          <span style="flex: 1"></span>
+          <sc-if value="{{canAddAll}}" hint-placeholder-val="{{ false }}">
+            <button class="btn sm pri" onClick="{{addAll}}" title="Ctrl+A">{{addAllLabel}} <span class="kbd">Ctrl A</span></button>
+          </sc-if>
+          <sc-if value="{{allIn}}" hint-placeholder-val="{{ false }}">
+            <span style="color: var(--fg3)">All matches are in the list</span>
+          </sc-if>
+        </div>
+
+        <div id="wl-results" role="listbox" aria-multiselectable="true" aria-label="Instruments" style="flex: 1; min-height: 0; overflow: auto">
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+            <button class="{{r.cls}}" role="option" aria-selected="{{r.on}}" onClick="{{r.toggle}}">
+              <span class="{{r.cb}}"><sc-if value="{{r.on}}" hint-placeholder-val="{{ false }}"><svg aria-hidden="true" width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3L13 4.5"></path></svg></sc-if></span>
+              <span style="font-weight: 800" class="ell"><mark>{{r.ricM}}</mark>{{r.ricB}}</span>
+              <span class="ell" style="color: var(--fg2)">{{r.nameA}}<mark>{{r.nameM}}</mark>{{r.nameB}}</span>
+              <span class="badge">{{r.badge}}</span>
+              <span class="ell" style="color: var(--fg3)">{{r.sector}} · {{r.exch}}</span>
+              <span class="num">{{r.last}}</span>
+              <span class="{{r.chgCls}}">{{r.chgTxt}}</span>
+            </button>
+          </sc-for>
+          <sc-if value="{{noRows}}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 32px; text-align: center; color: var(--fg3)">No instruments match. Try fewer filters.</div>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; min-height: 0; border-left: 1px solid var(--border); background: var(--bar)">
+        <div style="height: 36px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid var(--border)">
+          <span style="font-weight: 800">In this watchlist</span>
+          <span style="color: var(--fg3)">{{pickedCount}}</span>
+          <span style="flex: 1"></span>
+          <sc-if value="{{hasPicked}}" hint-placeholder-val="{{ false }}">
+            <button class="btn sm" onClick="{{clearPicked}}" style="border-color: transparent; background: transparent; color: var(--accent)">Remove all</button>
+          </sc-if>
+        </div>
+        <ul aria-label="In this watchlist" style="list-style: none; margin: 0; padding: 0; flex: 1; min-height: 0; overflow: auto">
+          <sc-for list="{{picked}}" as="p" hint-placeholder-count="0">
+            <li class="sel-row">
+              <span style="font-weight: 800">{{p.ric}}</span>
+              <span class="ell" style="color: var(--fg2)">{{p.name}}</span>
+              <button class="x" aria-label="{{p.removeLabel}}" onClick="{{p.remove}}"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"></path></svg></button>
+            </li>
+          </sc-for>
+          <sc-if value="{{noPicked}}" hint-placeholder-val="{{ true }}">
+            <li style="padding: 48px 24px; text-align: center; color: var(--fg3); line-height: 1.5">Nothing yet. Pick instruments on the left, or filter and add every match.</li>
+          </sc-if>
+        </ul>
+        <div style="flex: none; padding: 8px 12px; border-top: 1px solid var(--border); color: var(--fg3); line-height: 1.5">Adding matches takes the instruments listed now. Ones listed later are not added.</div>
+      </div>
+    </div>
+
+    <div style="height: 48px; flex: none; display: flex; align-items: center; gap: 14px; padding: 0 12px 0 16px; border-top: 1px solid var(--border); background: var(--bar); color: var(--fg3)">
+      <span><span class="kbd">↓</span> open filter</span>
+      <span><span class="kbd">Space</span> tick value</span>
+      <span><span class="kbd">Esc</span> close menu</span>
+      <span style="flex: 1"></span>
+      <button class="btn">Cancel <span class="kbd">Esc</span></button>
+      <button class="btn pri" disabled="{{createDisabled}}">{{createLabel}} <span class="kbd">Ctrl ↵</span></button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":1280,"height":800}}'>
+const INSTRUMENTS = [
+  { ric: 'BP.L', name: 'BP plc', sector: 'Energy', type: 'Equity', exch: 'LSE', ccy: 'GBP', last: '468.20', chg: 0.84 },
+  { ric: 'SHEL.L', name: 'Shell plc', sector: 'Energy', type: 'Equity', exch: 'LSE', ccy: 'GBP', last: '2,712.50', chg: 0.41 },
+  { ric: 'XOM.N', name: 'Exxon Mobil Corp', sector: 'Energy', type: 'Equity', exch: 'NYSE', ccy: 'USD', last: '112.36', chg: -0.22 },
+  { ric: 'TTE.PA', name: 'TotalEnergies SE', sector: 'Energy', type: 'Equity', exch: 'Euronext', ccy: 'EUR', last: '61.84', chg: 0.35 },
+  { ric: 'CVX.N', name: 'Chevron Corp', sector: 'Energy', type: 'Equity', exch: 'NYSE', ccy: 'USD', last: '158.07', chg: -0.48 },
+  { ric: 'LCOc1', name: 'Brent Crude, continuation', sector: 'Energy', type: 'Future', exch: 'ICE', ccy: 'USD', last: '74.82', chg: 0.66, badge: 'CONT' },
+  { ric: 'CLZ6', name: 'WTI Crude Dec 26', sector: 'Energy', type: 'Future', exch: 'NYMEX', ccy: 'USD', last: '70.91', chg: 0.58, badge: 'FUT' },
+  { ric: 'VOD.L', name: 'Vodafone Group', sector: 'Communication', type: 'Equity', exch: 'LSE', ccy: 'GBP', last: '71.36', chg: -1.12 },
+  { ric: 'AZN.L', name: 'AstraZeneca', sector: 'Health Care', type: 'Equity', exch: 'LSE', ccy: 'GBP', last: '11,842', chg: 0.62 },
+  { ric: 'GSK.L', name: 'GSK plc', sector: 'Health Care', type: 'Equity', exch: 'LSE', ccy: 'GBP', last: '1,486.0', chg: -0.31 },
+  { ric: 'HSBA.L', name: 'HSBC Holdings', sector: 'Financials', type: 'Equity', exch: 'LSE', ccy: 'GBP', last: '712.40', chg: 0.95 },
+  { ric: 'BARC.L', name: 'Barclays', sector: 'Financials', type: 'Equity', exch: 'LSE', ccy: 'GBP', last: '268.15', chg: 1.40 },
+  { ric: 'AAPL.OQ', name: 'Apple Inc', sector: 'Info Tech', type: 'Equity', exch: 'NASDAQ', ccy: 'USD', last: '228.52', chg: 0.73 },
+  { ric: 'MSFT.OQ', name: 'Microsoft Corp', sector: 'Info Tech', type: 'Equity', exch: 'NASDAQ', ccy: 'USD', last: '431.10', chg: 0.18 },
+  { ric: 'NVDA.OQ', name: 'NVIDIA Corp', sector: 'Info Tech', type: 'Equity', exch: 'NASDAQ', ccy: 'USD', last: '142.88', chg: 2.31 },
+  { ric: 'SAP.DE', name: 'SAP SE', sector: 'Info Tech', type: 'Equity', exch: 'Xetra', ccy: 'EUR', last: '214.65', chg: -0.27 },
+  { ric: 'ASML.AS', name: 'ASML Holding', sector: 'Info Tech', type: 'Equity', exch: 'Euronext', ccy: 'EUR', last: '642.30', chg: 1.05 },
+  { ric: '.FTSE', name: 'FTSE 100 Index', sector: '—', type: 'Index', exch: 'LSE', ccy: 'GBP', last: '8,214.6', chg: 0.22, badge: 'IDX' }
+];
+const FILTERS = [
+  { key: 'sector', label: 'Sector', opts: ['Communication', 'Energy', 'Financials', 'Health Care', 'Info Tech'] },
+  { key: 'type', label: 'Type', opts: ['Equity', 'Future', 'Index'] },
+  { key: 'exch', label: 'Exchange', opts: ['Euronext', 'ICE', 'LSE', 'NASDAQ', 'NYMEX', 'NYSE', 'Xetra'] },
+  { key: 'ccy', label: 'Currency', opts: ['EUR', 'GBP', 'USD'] }
+];
+const pct = (c) => (c >= 0 ? '+' : '') + c.toFixed(2) + '%';
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { name: 'Energy majors', q: '', f: { sector: ['Energy'], type: ['Equity'] }, open: 'type', picked: [], focus: 'none', hi: 0 };
+  }
+  setF(key, vals) { this.setState({ f: { ...this.state.f, [key]: vals } }); }
+  toggleRic(ric) {
+    const s = this.state.picked;
+    this.setState({ picked: s.includes(ric) ? s.filter((r) => r !== ric) : [...s, ric] });
+  }
+  renderVals() {
+    const s = this.state;
+    const qt = s.q.trim();
+    const qU = qt.toUpperCase();
+    const qL = qt.toLowerCase();
+    const anyFilter = FILTERS.some((f) => (s.f[f.key] || []).length > 0);
+    const matches = INSTRUMENTS.filter((i) =>
+      (!qt || i.ric.toUpperCase().startsWith(qU) || i.name.toLowerCase().includes(qL)) &&
+      FILTERS.every((f) => !(s.f[f.key] || []).length || s.f[f.key].includes(i[f.key])));
+    const rows = matches.map((i, idx) => {
+      const on = s.picked.includes(i.ric);
+      const ricHit = qt && i.ric.toUpperCase().startsWith(qU);
+      const at = qt && !ricHit ? i.name.toLowerCase().indexOf(qL) : -1;
+      return {
+        ...i, on,
+        cls: 'pr' + (idx === s.hi ? ' hi' : ''),
+        cb: on ? 'cb on' : 'cb',
+        ricM: ricHit ? i.ric.slice(0, qt.length) : '',
+        ricB: ricHit ? i.ric.slice(qt.length) : i.ric,
+        nameA: at >= 0 ? i.name.slice(0, at) : i.name,
+        nameM: at >= 0 ? i.name.slice(at, at + qt.length) : '',
+        nameB: at >= 0 ? i.name.slice(at + qt.length) : '',
+        badge: i.badge || '',
+        chgCls: 'num ' + (i.chg >= 0 ? 'up' : 'down'),
+        chgTxt: pct(i.chg),
+        toggle: () => { this.toggleRic(i.ric); this.setState({ hi: idx }); }
+      };
+    });
+    const narrowed = !!qt || anyFilter;
+    const toAdd = rows.filter((r) => !r.on).length;
+    const filters = FILTERS.map((f) => {
+      const vals = s.f[f.key] || [];
+      const isOpen = s.open === f.key;
+      return {
+        label: f.label, lower: f.label.toLowerCase(), isOpen,
+        cls: 'flt' + (vals.length ? ' set' : ''),
+        z: isOpen ? 'position: relative; z-index: 6' : '',
+        value: vals.length === 0 ? 'Any' : vals.length === 1 ? vals[0] : vals[0] + ' +' + (vals.length - 1),
+        toggleOpen: () => this.setState({ open: isOpen ? null : f.key }),
+        clear: () => this.setState({ f: { ...s.f, [f.key]: [] }, open: null }),
+        opts: f.opts.map((o) => {
+          const on = vals.includes(o);
+          return { label: o, on, cb: on ? 'cb on' : 'cb', toggle: () => this.setF(f.key, on ? vals.filter((v) => v !== o) : [...vals, o]) };
+        })
+      };
+    });
+    const picked = s.picked.map((ric) => {
+      const i = INSTRUMENTS.find((x) => x.ric === ric) || { ric, name: '' };
+      return { ric, name: i.name, removeLabel: 'Remove ' + ric, remove: () => this.toggleRic(ric) };
+    });
+    const n = s.picked.length;
+    return {
+      rootClass: (this.props.dark ?? true) ? 'r dark' : 'r',
+      title: 'New watchlist',
+      name: s.name,
+      nameCls: 'fld' + (s.focus === 'name' ? ' foc' : ''),
+      searchCls: 'fld' + (s.focus === 'search' ? ' foc' : ''),
+      onName: (e) => this.setState({ name: e.target.value }),
+      focusName: () => this.setState({ focus: 'name' }),
+      focusSearch: () => this.setState({ focus: 'search', open: null }),
+      q: s.q, hasQ: !!qt,
+      onQ: (e) => this.setState({ q: e.target.value, hi: 0 }),
+      clearQ: () => this.setState({ q: '' }),
+      filters, anyFilter,
+      menuOpen: s.open !== null,
+      closeMenu: () => this.setState({ open: null }),
+      clearFilters: () => this.setState({ f: {} }),
+      sectionLabel: narrowed ? 'Matches' : 'All instruments',
+      countLabel: matches.length + (matches.length === 1 ? ' instrument' : ' instruments'),
+      canAddAll: narrowed && toAdd > 0,
+      allIn: narrowed && rows.length > 0 && toAdd === 0,
+      addAllLabel: 'Add ' + (toAdd === rows.length ? 'all ' : '') + toAdd + (toAdd === 1 ? ' match' : ' matches'),
+      addAll: () => this.setState({ picked: [...s.picked, ...rows.filter((r) => !r.on).map((r) => r.ric)] }),
+      rows, noRows: rows.length === 0,
+      picked, hasPicked: n > 0, noPicked: n === 0,
+      pickedCount: n + (n === 1 ? ' instrument' : ' instruments'),
+      clearPicked: () => this.setState({ picked: [] }),
+      createDisabled: !s.name.trim(),
+      createLabel: n ? 'Create with ' + n : 'Create watchlist',
+      bgRows: INSTRUMENTS.map((i) => ({ ...i, chgCls: 'num ' + (i.chg >= 0 ? 'up' : 'down'), chgTxt: pct(i.chg) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

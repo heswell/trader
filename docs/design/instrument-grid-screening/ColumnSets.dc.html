@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Column set switcher above the table</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.r{font-family:'Nunito Sans',system-ui,sans-serif;color:#1F2329;-webkit-font-smoothing:antialiased;font-size:12px}
+.app{height:40px;box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:0 16px;background:#fff;border-bottom:1px solid #D9DDE3}
+.logo{font-weight:800;font-size:14px;letter-spacing:.02em}
+.tab{height:40px;display:inline-flex;align-items:center;padding:0 12px;font-weight:600;color:#5B6470;box-sizing:border-box}
+.tab.on{color:#1F2329;border-bottom:2px solid #3B5B8C}
+.view{display:flex;flex-direction:column;background:#fff;border:1px solid #D9DDE3;border-radius:4px;overflow:hidden;min-width:0}
+.vh{height:32px;box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:0 8px 0 12px;border-bottom:1px solid #E6E9ED}
+.vt{font-weight:700;font-size:12px}
+.lg{width:8px;height:8px;border-radius:50%;background:#2F7FD1}
+.tb{height:38px;box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:0 8px}
+.dd{height:24px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:space-between;gap:8px;padding:0 6px 0 8px;border:1px solid #CDD3DB;border-radius:3px;background:#fff;font-size:12px;color:#1F2329;font-family:inherit;width:150px}
+.btn{height:24px;box-sizing:border-box;display:inline-flex;align-items:center;padding:0 12px;border:1px solid #CDD3DB;border-radius:3px;background:#fff;font:600 12px 'Nunito Sans',system-ui,sans-serif;color:#1F2329}
+.btn.buy{background:#1F7A45;border-color:#1F7A45;color:#fff}
+.btn.sell{background:#C42B2B;border-color:#C42B2B;color:#fff}
+.btn[disabled]{opacity:.45}
+.sp{flex:1 1 auto}
+.vsep{width:1px;height:18px;background:#D9DDE3;margin:0 4px}
+.cslbl{font-size:11px;font-weight:700;color:#5B6470}
+.seg{display:inline-flex;height:24px;box-sizing:border-box;border:1px solid #CDD3DB;border-radius:3px;overflow:hidden;background:#fff}
+.seg button{border:0;background:#fff;padding:0 12px;font:400 12px 'Nunito Sans',system-ui,sans-serif;color:#3A424D}
+.seg button+button{border-left:1px solid #CDD3DB}
+.seg button.on{background:#5A78A6;color:#fff;font-weight:700}
+.fb{height:32px;box-sizing:border-box;display:flex;align-items:center;gap:4px;padding:0 4px;background:#F6F7F9;border-top:1px solid #E6E9ED;border-bottom:1px solid #D9DDE3}
+.ico{width:24px;height:24px;flex:none;display:inline-flex;align-items:center;justify-content:center;color:#5B6470;border:0;background:none;padding:0;border-radius:3px;position:relative}
+.badge{position:absolute;top:-1px;right:-4px;min-width:12px;height:12px;box-sizing:border-box;padding:0 3px;border-radius:6px;background:#5A78A6;color:#fff;font:700 8px/12px 'Nunito Sans',system-ui,sans-serif;text-align:center;box-shadow:0 0 0 1.5px #F6F7F9}
+.pill{height:24px;box-sizing:border-box;flex:none;display:inline-flex;align-items:center;padding:0 10px;font:400 12px/22px 'Nunito Sans',system-ui,sans-serif;color:#5B6470;background:#fff;border:1px solid #CDD3DB;border-radius:3px;white-space:nowrap}
+.pill.on{background:#5A78A6;border-color:#5A78A6;color:#fff;font-weight:700}
+.th,.tr{display:grid;grid-template-columns:84px 200px 52px 44px 80px 80px 88px 72px 76px 104px 100px 80px 1fr;align-items:center}
+.th{height:28px;font-size:11px;font-weight:700;color:#3A424D;border-bottom:1px solid #D9DDE3;background:#fff}
+.th span,.tr span{padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr{height:24px;font-size:11px;border-bottom:1px solid #F0F2F4}
+.n{text-align:right;font-variant-numeric:tabular-nums}
+.up{color:#1F7A45}
+.dn{color:#C42B2B}
+.ric{font-weight:700}
+.ph{display:inline-flex;align-items:center;gap:6px}
+.dot{width:6px;height:6px;border-radius:50%;background:#2E8B57}
+.dot.pre{background:#C9821B}
+.dot.cl{background:#8A929D}
+.body{flex:1 1 auto;overflow:hidden}
+.ft{height:32px;box-sizing:border-box;display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;background:#F6F7F9;border-top:1px solid #D9DDE3;padding:0 8px 0 16px;font-size:10px}
+.stats{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.lb{color:#5B6470}
+.v{font-weight:700;color:#1F2329;font-variant-numeric:tabular-nums}
+.tray{grid-column:3;justify-self:end;display:flex;align-items:center;gap:4px}
+.ico20{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;border:0;background:none;border-radius:3px;color:#5B6470;padding:0}
+.ico20.act{background:#D5DFEC;color:#1E3A63}
+.cp{width:300px;flex:none;background:#fff;box-shadow:-4px 4px 4px rgba(0,0,0,.1);display:flex;flex-direction:column;padding:24px 8px 24px 18px;box-sizing:border-box;margin:-8px -8px -8px 0;position:relative}
+.cph{height:48px;flex:none;display:flex;align-items:center;justify-content:space-between}
+.cpt{font-size:20px;font-weight:700;margin:0}
+.setrow{display:flex;flex-direction:column;gap:4px;margin:4px 16px 12px 0;position:relative}
+.setlbl{font-size:11px;font-weight:700;color:#5B6470}
+.setctl{display:flex;gap:4px}
+.setdd{flex:1 1 auto;height:28px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 10px;border:1px solid #3B5B8C;border-radius:3px;background:#fff;font:700 12px 'Nunito Sans',system-ui,sans-serif;color:#1F2329;box-shadow:0 0 0 2px rgba(59,91,140,.15)}
+.more{width:28px;height:28px;box-sizing:border-box;flex:none;display:inline-flex;align-items:center;justify-content:center;border:1px solid #CDD3DB;border-radius:3px;background:#fff;color:#5B6470;padding:0}
+.menu{position:absolute;left:0;right:32px;top:52px;z-index:3;background:#fff;border:1px solid #D3D8DF;border-radius:4px;box-shadow:0 6px 16px rgba(20,30,45,.14);padding:4px 0;font-size:12px}
+.mi{height:28px;display:flex;align-items:center;gap:8px;padding:0 10px}
+.mi .ck{width:14px;display:inline-flex;color:#3B5B8C}
+.mi .cnt{margin-left:auto;color:#6B7380;font-size:11px}
+.mi.cur{font-weight:700}
+.mi.hov{background:#EDF0F4}
+.msep{height:1px;background:#EBEEF1;margin:4px 0}
+.mi.act{color:#1E3A63}
+.srch{height:28px;box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:0 12px;margin:0 16px 12px 0;border:1px solid #CDD3DB;border-radius:3px;background:#fff}
+.srch input{border:0;outline:0;font:12px 'Nunito Sans',system-ui,sans-serif;flex:1 1 auto;min-width:0;background:transparent}
+.sec{height:32px;display:flex;align-items:center;font-weight:700;font-size:12px;color:#3A424D;padding-right:16px}
+.opt{height:30px;box-sizing:border-box;display:flex;align-items:center;gap:8px;border-bottom:1px solid #EBEEF1;padding-right:16px;font-size:12px}
+.opt .grip{color:#9AA2AC;display:inline-flex}
+.list{flex:1 1 auto;overflow:hidden}
+</style>
+</helmet>
+<div class="r" style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; background: #EDF0F3">
+  <header class="app"><span class="logo">Trader</span><span class="tab on">Markets</span><span class="tab">Orders</span><span class="tab">Positions</span><span class="sp"></span><span style="color: #5B6470">XLON continuous · 10:42:18</span></header>
+  <div style="flex: 1 1 auto; display: flex; gap: 8px; padding: 8px; min-height: 0">
+    <section class="view" style="flex: 1 1 auto" aria-label="Instruments">
+      <div class="vh"><span class="lg" aria-hidden="true"></span><span class="vt">Instruments</span><span class="sp"></span><button class="ico" type="button" aria-label="View menu"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg></button></div>
+
+      <div class="tb" role="toolbar" aria-label="Instrument grid">
+        <button class="dd" type="button" aria-label="Watchlist">All instruments<svg width="8" height="8" viewBox="0 0 10 10" fill="#5B6470" aria-hidden="true"><path d="M1.5 3.5h7L5 7.5z"/></svg></button>
+        <button class="btn" type="button">Watchlists</button>
+        <button class="dd" type="button" aria-label="Instrument type" style="width: 120px">Equities<svg width="8" height="8" viewBox="0 0 10 10" fill="#5B6470" aria-hidden="true"><path d="M1.5 3.5h7L5 7.5z"/></svg></button>
+        <button class="dd" type="button" aria-label="Group by" style="width: 130px">No grouping<svg width="8" height="8" viewBox="0 0 10 10" fill="#5B6470" aria-hidden="true"><path d="M1.5 3.5h7L5 7.5z"/></svg></button>
+        <span class="vsep" aria-hidden="true"></span>
+        <span class="cslbl" id="colset-label">Columns</span>
+        <div class="seg" role="radiogroup" aria-labelledby="colset-label">
+          <button type="button" role="radio" aria-checked="true" class="on">Watchlist</button>
+          <button type="button" role="radio" aria-checked="false">Screening</button>        </div>
+        <span class="sp"></span>
+        <button class="btn buy" type="button" disabled>Buy</button>
+        <button class="btn sell" type="button" disabled>Sell</button>
+        <button class="btn" type="button" disabled>Depth</button>
+      </div>
+
+      <div class="fb" aria-label="Filters">
+        <button class="ico" type="button" aria-label="Show quick filters, 2 clauses applied" aria-pressed="false" style="margin-right: 2px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 4h7M13 4h1M2 8h2M8 8h6M2 12h9M15 12h-1"/><circle cx="11" cy="4" r="1.6"/><circle cx="6" cy="8" r="1.6"/><circle cx="12.5" cy="12" r="1.6"/></svg><span class="badge">2</span></button>
+        <span class="pill on">Value</span>
+        <span class="pill">High yield</span>
+        <span class="pill">Mega cap</span>
+        <span class="pill">Quality</span>
+        <button class="ico" type="button" aria-label="Add filter"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></button>
+      </div>
+
+      <div class="th" role="row">
+        <span>ric</span><span>description</span><span>exch</span><span>ccy</span><span class="n">bid</span><span class="n">ask</span><span class="n">last</span><span class="n">change</span><span class="n">change %</span><span>phase</span><span>trend</span><span class="n">volume</span><span></span>
+      </div>
+      <div class="body">
+        <sc-for list="{{rows}}" as="row" hint-placeholder-count="27">
+          <div class="tr" role="row">
+            <span class="ric">{{row.ric}}</span><span>{{row.d}}</span><span>{{row.x}}</span><span>{{row.c}}</span>
+            <span class="n">{{row.bid}}</span><span class="n">{{row.ask}}</span><span class="n">{{row.last}}</span>
+            <span class="{{row.chgCls}}">{{row.change}}</span><span class="{{row.chgCls}}">{{row.chg}}</span>
+            <span><span class="ph"><span class="{{row.dotCls}}"></span>{{row.phase}}</span></span>
+            <span style="display: flex; align-items: center"><svg width="84" height="16" viewBox="0 0 92 16" aria-hidden="true"><polyline points="{{row.spark}}" fill="none" stroke="{{row.sparkColor}}" stroke-width="1.2" stroke-linejoin="round"/></svg></span>
+            <span class="n">{{row.vol}}</span><span></span>
+          </div>
+        </sc-for>
+      </div>
+
+      <footer class="ft">
+        <div class="stats"><span class="lb">Row count</span><span class="v">1</span><span class="lb">-</span><span class="v">27</span><span class="lb">of</span><span class="v">44</span></div>
+        <div class="tray">
+          <button class="ico20" type="button" aria-label="Show column picker"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+        </div>
+      </footer>
+    </section>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const data = [
+      ["CMCSA.OQ","Comcast Corp","XNAS","USD","44.49","-1.78%","6.4M"],["TTD.OQ","Trade Desk Inc/The","XNAS","USD","77.76","+1.80%","0.5M"],
+      ["BAC.N","Bank of America Corp","XNYS","USD","27.69","+0.64%","3.1M"],["BRKb.N","Berkshire Hathaway Inc Cl B","XNYS","USD","353.35","-1.48%","3.8M"],
+      ["FANG.OQ","Diamondback Energy Inc","XNAS","USD","150.75","+0.04%","9.0M"],["JMAT.L","Johnson Matthey plc","XLON","GBX","2415","-1.22%","3.4M"],
+      ["UBSG.S","UBS Group AG","XSWX","CHF","26.44","-1.02%","6.6M"],["DBKGn.DE","Deutsche Bank AG","XETR","EUR","15.64","-1.41%","0.8M"],
+      ["1299.HK","Aia","XHKG","HKD","62.87","-1.53%","8.8M"],["INGA.AS","ING Groep NV","XAMS","EUR","15.61","-0.04%","2.3M"],
+      ["RBS.L","Royal Bank of Scotland Group plc","XLON","GBX","308.80","-1.47%","2.9M"],["3968.HK","Cm Bank","XHKG","HKD","32.51","-0.58%","9.2M"],
+      ["0939.HK","Ccb","XHKG","HKD","4.48","+1.26%","0.6M"],["PYPL.OQ","PayPal Holdings Inc","XNAS","USD","57.49","-0.70%","5.5M"],
+      ["SIRI.OQ","Sirius XM Holdings Inc","XNAS","USD","4.04","-0.16%","1.6M"],["CRDI.MI","UniCredit SpA","XMIL","EUR","36.73","-0.34%","0.6M"],
+      ["V.N","Visa Inc Class a Shares","XNYS","USD","234.12","+0.93%","5.0M"],["3988.HK","Bank Of China","XHKG","HKD","2.70","-1.60%","7.3M"],
+      ["JPM.N","Jpmorgan Chase & Co","XNYS","USD","146.09","-1.44%","2.2M"],["MUVGn.DE","Muenchener Rueck AG","XETR","EUR","450.89","-0.29%","0.6M"],
+      ["2899.HK","Zijin Mining","XHKG","HKD","12.17","+1.61%","4.2M"],["ENEI.MI","Enel SpA","XMIL","EUR","6.71","-1.24%","1.6M"],
+      ["ADYEN.AS","Adyen NV","XAMS","EUR","1387","-1.78%","6.5M"],["GLEN.L","Glencore plc","XLON","GBX","91.98","+1.63%","1.7M"],
+      ["AEP.OQ","American Electric Power Co Inc","XNAS","USD","79.64","+0.52%","5.9M"],["0011.HK","Hang Seng Bank","XHKG","HKD","99.25","+1.84%","3.4M"],
+      ["VRSK.OQ","Verisk Analytics Inc","XNAS","USD","243.05","+0.41%","6.0M"]
+    ];
+    let seed = 11;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    const phaseOf = (x) => x === "XHKG" ? ["CLOSED", "dot cl"] : (x === "XNAS" || x === "XNYS") ? ["PRE_OPEN", "dot pre"] : ["CONTINUOUS", "dot"];
+    const rows = data.map((d) => {
+      const last = parseFloat(d[4]);
+      const pct = parseFloat(d[5]);
+      const dp = last >= 1000 ? 0 : 2;
+      const tick = last >= 1000 ? 1 : last >= 100 ? 0.05 : 0.01;
+      const change = last - last / (1 + pct / 100);
+      const down = d[5].startsWith("-");
+      let y = 8; const pts = [];
+      for (let i = 0; i < 24; i++) { y += (rnd() - 0.5 + (down ? 0.12 : -0.12)) * 3; y = Math.max(2, Math.min(14, y)); pts.push((i * 4) + "," + y.toFixed(1)); }
+      const [phase, dotCls] = phaseOf(d[2]);
+      return {
+        ric: d[0], d: d[1], x: d[2], c: d[3], last: d[4], chg: d[5], vol: d[6],
+        bid: (last - tick).toFixed(dp), ask: (last + tick).toFixed(dp),
+        change: (change >= 0 ? "+" : "") + change.toFixed(dp), chgCls: "n " + (down ? "dn" : "up"),
+        spark: pts.join(" "), sparkColor: down ? "#C42B2B" : "#1F7A45", phase, dotCls
+      };
+    });
+    const inView = ["ric","description","exchange","currency","bid","ask","last","change","change %","phase","trend","volume","turnover"];
+    const available = ["mkt cap $","P/E","P/B","yield %"];
+    return { rows, inView, available };
+  }
+}
+</script>
+</body>
+</html>

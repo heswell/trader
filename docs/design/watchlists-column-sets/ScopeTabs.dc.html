@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Shared and scoped column set tabs</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3B5B8C}a:hover{color:#1E3A63}
+button,input{font:inherit;color:inherit}
+.r{--app:#EEF0F3;--panel:#FFFFFF;--bar:#F6F7F9;--border:#D9DDE3;--rowline:#F0F2F4;--fg:#1F2329;--fg2:#4A525D;--fg3:#5B6470;--hover:#E9ECF0;--sel:#E8EEF6;--field-border:#C3CAD3;--field-bg:#FFFFFF;--label-bg:#E4E8ED;--placeholder:#8A929D;--set-border:#8FA6C8;--set-label-bg:#DCE5F1;--accent:#3B5B8C;--focus:#3B5B8C;--toggle-bg:#D5DFEC;--toggle-fg:#1E3A63;--up:#1E7F45;--down:#B3261E;--toast:#2B3440;
+font-family:'Nunito Sans',system-ui,sans-serif;font-size:11px;color:var(--fg);background:var(--app);-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums;text-align:right}
+.up{color:var(--up)}.down{color:var(--down)}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.th,.tr{height:24px;display:grid;gap:8px;align-items:center;padding:0 8px;border-bottom:1px solid var(--rowline)}
+.th{background:var(--bar);font-weight:700;color:var(--fg2);border-bottom-color:var(--border)}
+.tr:hover{background:var(--hover)}
+.ft-tab{height:24px;padding:0 10px;border:0;background:transparent;border-radius:0 0 3px 3px;cursor:pointer;color:var(--fg2);display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.ft-tab:hover{background:var(--hover)}
+.ft-tab.on{background:var(--panel);color:var(--fg);font-weight:800;box-shadow:inset 0 -1px 0 var(--border),inset 1px 0 0 var(--border),inset -1px 0 0 var(--border)}
+.ft-tab.menu-on{outline:2px solid var(--focus);outline-offset:-2px}
+.menu{position:absolute;z-index:6;background:var(--panel);border:1px solid var(--border);border-radius:4px;box-shadow:0 6px 16px rgba(0,0,0,.2);padding:3px}
+.mi{width:100%;height:24px;padding:0 8px;display:grid;grid-template-columns:14px 1fr auto;gap:6px;align-items:center;background:transparent;border:0;border-radius:3px;text-align:left;cursor:pointer;white-space:nowrap}
+.mi:hover{background:var(--hover)}
+.grp{padding:6px 8px 2px 28px;font-size:10px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.04em}
+.sep{height:1px;background:var(--border);margin:3px 0}
+.kbd{font:inherit;font-size:10px;font-weight:400;min-width:14px;height:14px;padding:0 3px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--field-border);border-radius:3px;color:var(--fg2)}
+.toast{position:absolute;left:50%;bottom:40px;transform:translateX(-50%);z-index:7;background:var(--toast);color:#fff;border-radius:4px;padding:6px 12px;font-weight:700;box-shadow:0 6px 16px rgba(0,0,0,.2);animation:tin 2.4s ease-out forwards}
+@keyframes tin{0%{opacity:0;transform:translate(-50%,6px)}10%{opacity:1;transform:translate(-50%,0)}80%{opacity:1}100%{opacity:0}}
+</style>
+</helmet>
+<div class="r" style="width: 100%; height: 800px; padding: 10px; box-sizing: border-box; display: flex">
+  <section aria-label="Instruments" style="flex: 1; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; position: relative; min-width: 0">
+
+    <sc-if value="{{anyMenu}}" hint-placeholder-val="{{ true }}">
+      <button aria-label="Close menu" onClick="{{closeMenus}}" style="position: absolute; inset: 0; z-index: 5; background: transparent; border: 0; cursor: default"></button>
+    </sc-if>
+
+    <div style="height: 28px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 4px; border-bottom: 1px solid var(--border); position: relative">
+      <button aria-haspopup="menu" aria-expanded="{{scopeOpen}}" onClick="{{toggleScope}}" style="height: 24px; padding: 0 6px; display: flex; align-items: center; gap: 6px; background: transparent; border: 0; border-radius: 3px; cursor: pointer; position: relative; z-index: 6">
+        <span style="font-weight: 800; font-size: 12px">{{scopeName}}</span>
+        <svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+      <span style="color: var(--fg3)">Try switching scope: each one brings back its last column set</span>
+      <sc-if value="{{scopeOpen}}" hint-placeholder-val="{{ false }}">
+        <div class="menu" role="menu" aria-label="Instrument scope" style="left: 4px; top: 28px; width: 220px">
+          <sc-for list="{{scopes}}" as="sc" hint-placeholder-count="3">
+            <sc-if value="{{sc.group}}" hint-placeholder-val="{{ false }}"><div class="grp">Watchlists</div></sc-if>
+            <button class="mi" role="menuitemradio" aria-checked="{{sc.on}}" onClick="{{sc.pick}}"><span aria-hidden="true" style="color: var(--accent); font-weight: 800">{{sc.tick}}</span><span>{{sc.name}}</span><span style="color: var(--fg3)">{{sc.last}}</span></button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="height: 28px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 6px; background: var(--bar); border-bottom: 1px solid var(--border)">
+      <span style="width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; background: var(--toggle-bg); color: var(--toggle-fg)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 4h7M12 4h2M2 8h2M7 8h7M2 12h9"></path><circle cx="10.5" cy="4" r="1.5"></circle><circle cx="5.5" cy="8" r="1.5"></circle></svg></span>
+      <span style="height: 20px; width: 140px; box-sizing: border-box; display: inline-flex; align-items: center; padding: 0 6px; border: 1px solid var(--field-border); border-radius: 3px; background: var(--field-bg); color: var(--placeholder)">Search</span>
+      <sc-for list="{{quick}}" as="q" hint-placeholder-count="3">
+        <span style="height: 20px; box-sizing: border-box; display: inline-flex; border: 1px solid var(--field-border); border-radius: 3px; overflow: hidden"><span style="display: inline-flex; align-items: center; padding: 0 6px; background: var(--label-bg); color: var(--fg2)">{{q}}</span><span style="display: inline-flex; align-items: center; padding: 0 6px; min-width: 32px; color: var(--placeholder)">Any</span></span>
+      </sc-for>
+    </div>
+
+    <div class="th" style="{{gridStyle}}">
+      <sc-for list="{{cols}}" as="c" hint-placeholder-count="8"><span class="{{c.cls}}">{{c.label}}</span></sc-for>
+    </div>
+    <div style="flex: 1; min-height: 0; overflow: auto">
+      <sc-for list="{{rows}}" as="row" hint-placeholder-count="8">
+        <div class="tr" style="{{gridStyle}}">
+          <sc-for list="{{row.cells}}" as="cell" hint-placeholder-count="8"><span class="{{cell.cls}}">{{cell.text}}</span></sc-for>
+        </div>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}">
+      <div class="toast" role="status">{{toast}}</div>
+    </sc-if>
+
+    <div style="height: 26px; flex: none; display: flex; align-items: flex-start; gap: 2px; padding: 0 6px; border-top: 1px solid var(--border); background: var(--bar); position: relative">
+      <div role="tablist" aria-label="Column sets" style="display: flex; align-items: flex-start; gap: 2px">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+          <sc-if value="{{t.divider}}" hint-placeholder-val="{{ false }}">
+            <span aria-hidden="true" style="width: 1px; height: 14px; margin: 5px 4px 0; background: var(--field-border)"></span>
+          </sc-if>
+          <span style="position: relative; display: inline-flex">
+            <button class="{{t.cls}}" role="tab" aria-selected="{{t.on}}" aria-haspopup="menu" title="{{t.title}}" onClick="{{t.pick}}" onContextMenu="{{t.openMenu}}" style="{{t.z}}">
+              <sc-if value="{{t.scoped}}" hint-placeholder-val="{{ false }}">
+                <svg role="img" aria-label="Only in this watchlist" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent)"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+              </sc-if>
+              {{t.name}}
+            </button>
+            <sc-if value="{{t.menuOpen}}" hint-placeholder-val="{{ false }}">
+              <div class="menu" role="menu" aria-label="{{t.menuLabel}}" style="left: 0; bottom: 28px; width: 230px">
+                <button class="mi" role="menuitem"><span></span><span>Rename…</span><span class="kbd">F2</span></button>
+                <button class="mi" role="menuitem"><span></span><span>Duplicate…</span><span></span></button>
+                <div class="sep"></div>
+                <button class="mi" role="menuitemradio" aria-checked="{{t.shared}}" onClick="{{t.share}}"><span aria-hidden="true" style="color: var(--accent); font-weight: 800">{{t.tickShared}}</span><span>Share with all watchlists</span><span></span></button>
+                <button class="mi" role="menuitemradio" aria-checked="{{t.scoped}}" onClick="{{t.scope}}"><span aria-hidden="true" style="color: var(--accent); font-weight: 800">{{t.tickScoped}}</span><span>Only in {{scopeName}}</span><span></span></button>
+                <div class="sep"></div>
+                <button class="mi" role="menuitem"><span></span><span>Delete {{t.name}}…</span><span class="kbd">Del</span></button>
+              </div>
+            </sc-if>
+          </span>
+        </sc-for>
+      </div>
+      <button class="ft-tab" aria-label="New column set">+</button>
+      <span style="flex: 1"></span>
+      <span style="align-self: center; color: var(--fg3); margin-right: 8px">Right-click or Shift+F10 on a tab for its menu · {{rowCount}}</span>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+const D = [
+  { ric: 'BP.L', name: 'BP plc', exch: 'LSE', sector: 'Energy', bid: '468.10', ask: '468.30', last: '468.20', chg: 0.84, vol: '18.2M', mcap: 78, pe: 7.1, dy: 4.9, roe: 14.2 },
+  { ric: 'SHEL.L', name: 'Shell plc', exch: 'LSE', sector: 'Energy', bid: '2,712.0', ask: '2,713.0', last: '2,712.5', chg: 0.41, vol: '9.6M', mcap: 214, pe: 11.8, dy: 3.9, roe: 12.6 },
+  { ric: 'XOM.N', name: 'Exxon Mobil Corp', exch: 'NYSE', sector: 'Energy', bid: '112.34', ask: '112.38', last: '112.36', chg: -0.22, vol: '14.8M', mcap: 498, pe: 13.9, dy: 3.4, roe: 15.1 },
+  { ric: 'CVX.N', name: 'Chevron Corp', exch: 'NYSE', sector: 'Energy', bid: '158.05', ask: '158.09', last: '158.07', chg: -0.48, vol: '7.2M', mcap: 285, pe: 15.7, dy: 4.1, roe: 11.3 },
+  { ric: 'TTE.PA', name: 'TotalEnergies SE', exch: 'Euronext', sector: 'Energy', bid: '61.82', ask: '61.86', last: '61.84', chg: 0.35, vol: '5.5M', mcap: 140, pe: 8.1, dy: 5.1, roe: 16.9 },
+  { ric: 'VOD.L', name: 'Vodafone Group', exch: 'LSE', sector: 'Communication', bid: '71.30', ask: '71.40', last: '71.36', chg: -1.12, vol: '41.0M', mcap: 19, pe: 9.4, dy: 7.6, roe: 3.1 },
+  { ric: 'HSBA.L', name: 'HSBC Holdings', exch: 'LSE', sector: 'Financials', bid: '712.30', ask: '712.50', last: '712.40', chg: 0.95, vol: '22.7M', mcap: 162, pe: 7.9, dy: 6.8, roe: 13.4 },
+  { ric: 'AAPL.OQ', name: 'Apple Inc', exch: 'NASDAQ', sector: 'Info Tech', bid: '228.50', ask: '228.54', last: '228.52', chg: 0.73, vol: '52.1M', mcap: 3480, pe: 34.6, dy: 0.4, roe: 147 },
+  { ric: 'MSFT.OQ', name: 'Microsoft Corp', exch: 'NASDAQ', sector: 'Info Tech', bid: '431.06', ask: '431.14', last: '431.10', chg: 0.18, vol: '19.4M', mcap: 3200, pe: 35.8, dy: 0.7, roe: 35.6 },
+  { ric: 'NVDA.OQ', name: 'NVIDIA Corp', exch: 'NASDAQ', sector: 'Info Tech', bid: '142.86', ask: '142.90', last: '142.88', chg: 2.31, vol: '210M', mcap: 3510, pe: 52.0, dy: 0.0, roe: 115 },
+  { ric: 'SAP.DE', name: 'SAP SE', exch: 'Xetra', sector: 'Info Tech', bid: '214.60', ask: '214.70', last: '214.65', chg: -0.27, vol: '1.4M', mcap: 250, pe: 46.0, dy: 1.0, roe: 12.0 },
+  { ric: 'ASML.AS', name: 'ASML Holding', exch: 'Euronext', sector: 'Info Tech', bid: '642.20', ask: '642.40', last: '642.30', chg: 1.05, vol: '1.1M', mcap: 255, pe: 38.2, dy: 0.9, roe: 51.0 }
+];
+const pct = (c) => (c >= 0 ? '+' : '') + c.toFixed(2) + '%';
+const COL = {
+  ric: { label: 'RIC', w: '80px', v: (r) => r.ric, cls: () => '' },
+  name: { label: 'Name', w: 'minmax(0,1fr)', v: (r) => r.name, cls: () => 'ell' },
+  exch: { label: 'Exch', w: '70px', v: (r) => r.exch, cls: () => '' },
+  sector: { label: 'Sector', w: '110px', v: (r) => r.sector, cls: () => 'ell' },
+  bid: { label: 'Bid', w: '80px', v: (r) => r.bid, cls: () => 'num' },
+  ask: { label: 'Ask', w: '80px', v: (r) => r.ask, cls: () => 'num' },
+  last: { label: 'Last', w: '80px', v: (r) => r.last, cls: () => 'num' },
+  chg: { label: 'Chg %', w: '64px', v: (r) => pct(r.chg), cls: (r) => 'num ' + (r.chg >= 0 ? 'up' : 'down') },
+  vol: { label: 'Volume', w: '70px', v: (r) => r.vol, cls: () => 'num' },
+  mcap: { label: 'Mkt cap $bn', w: '86px', v: (r) => r.mcap.toLocaleString(), cls: () => 'num' },
+  pe: { label: 'P/E', w: '56px', v: (r) => r.pe.toFixed(1), cls: () => 'num' },
+  dy: { label: 'Div yld %', w: '70px', v: (r) => r.dy.toFixed(1), cls: () => 'num' },
+  roe: { label: 'ROE %', w: '60px', v: (r) => r.roe.toFixed(1), cls: () => 'num' }
+};
+const SCOPES = [
+  { id: 'all', name: 'All instruments', rics: null },
+  { id: 'energy', name: 'Energy basket', rics: ['BP.L', 'SHEL.L', 'XOM.N', 'CVX.N', 'TTE.PA'] },
+  { id: 'tech', name: 'Tech basket', rics: ['AAPL.OQ', 'MSFT.OQ', 'NVDA.OQ', 'SAP.DE', 'ASML.AS'] }
+];
+const SETS = {
+  Watchlist: { cols: ['ric', 'name', 'exch', 'bid', 'ask', 'last', 'chg', 'vol'], quick: ['Exchange', 'Sector', 'Type'] },
+  Screening: { cols: ['ric', 'name', 'sector', 'mcap', 'pe', 'dy', 'roe', 'last'], quick: ['Sector', 'Mkt cap', 'P/E', 'Div yld'] },
+  'Energy value': { cols: ['ric', 'name', 'pe', 'dy', 'mcap', 'last', 'chg'], quick: ['P/E', 'Div yld', 'Exchange'] },
+  Momentum: { cols: ['ric', 'name', 'last', 'chg', 'vol', 'pe'], quick: ['Chg %', 'Volume'] }
+};
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      scope: 'energy',
+      setScope: { Watchlist: null, Screening: null, 'Energy value': 'energy', Momentum: 'tech' },
+      last: { all: 'Watchlist', energy: 'Energy value', tech: 'Momentum' },
+      menu: 'Energy value', scopeOpen: false, toast: '', toastN: 0
+    };
+  }
+  visibleSets(scope, setScope) {
+    const names = Object.keys(SETS);
+    return [...names.filter((n) => setScope[n] === null), ...names.filter((n) => setScope[n] === scope)];
+  }
+  renderVals() {
+    const s = this.state;
+    const scope = SCOPES.find((x) => x.id === s.scope);
+    const visible = this.visibleSets(s.scope, s.setScope);
+    const active = visible.includes(s.last[s.scope]) ? s.last[s.scope] : visible[0];
+    const set = SETS[active];
+    const rows = D.filter((r) => !scope.rics || scope.rics.includes(r.ric));
+    const sharedCount = visible.filter((n) => s.setScope[n] === null).length;
+    const tabs = visible.map((n, i) => {
+      const scoped = s.setScope[n] !== null;
+      const on = n === active;
+      const menuOpen = s.menu === n;
+      return {
+        name: n, on, scoped, shared: !scoped, menuOpen,
+        divider: i === sharedCount && i > 0,
+        cls: 'ft-tab' + (on ? ' on' : '') + (menuOpen ? ' menu-on' : ''),
+        z: menuOpen ? 'position: relative; z-index: 6' : '',
+        title: scoped ? n + ': only in ' + scope.name : n + ': shared by all watchlists',
+        menuLabel: n + ' column set',
+        tickShared: scoped ? '' : '✓', tickScoped: scoped ? '✓' : '',
+        pick: () => this.setState({ last: { ...s.last, [s.scope]: n }, menu: null }),
+        openMenu: (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ menu: n, scopeOpen: false }); },
+        share: () => this.setState({ setScope: { ...s.setScope, [n]: null }, menu: null }),
+        scope: () => this.setState({ setScope: { ...s.setScope, [n]: s.scope }, menu: null })
+      };
+    });
+    return {
+      scopeName: scope.name,
+      scopeOpen: s.scopeOpen,
+      anyMenu: s.scopeOpen || s.menu !== null,
+      closeMenus: () => this.setState({ scopeOpen: false, menu: null }),
+      toggleScope: () => this.setState({ scopeOpen: !s.scopeOpen, menu: null }),
+      scopes: SCOPES.map((x, i) => {
+        const vis = this.visibleSets(x.id, s.setScope);
+        const lastSet = vis.includes(s.last[x.id]) ? s.last[x.id] : vis[0];
+        return {
+          name: x.name, on: x.id === s.scope, tick: x.id === s.scope ? '✓' : '', group: i === 1, last: lastSet,
+          pick: () => this.setState({ scope: x.id, scopeOpen: false, menu: null, toast: x.name + ' · ' + lastSet, toastN: s.toastN + 1 })
+        };
+      }),
+      hasToast: !!s.toast,
+      toast: s.toast,
+      tabs,
+      quick: set.quick,
+      gridStyle: 'grid-template-columns: ' + set.cols.map((c) => COL[c].w).join(' '),
+      cols: set.cols.map((c) => ({ label: COL[c].label, cls: COL[c].cls(D[0]).startsWith('num') ? 'num' : '' })),
+      rows: rows.map((r) => ({ cells: set.cols.map((c) => ({ text: COL[c].v(r), cls: COL[c].cls(r) })) })),
+      rowCount: rows.length + ' rows'
+    };
+  }
+}
+</script>
+</body>
+</html>

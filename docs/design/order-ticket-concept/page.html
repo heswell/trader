@@ -1,0 +1,1114 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Order Ticket Concept</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: prototype first (ticket + keyboard map side by side), then galleries of every variation rendered by the same code. */
+:root {
+  --bg: #eef0f4;
+  --paper: #ffffff;
+  --fg: #14171d;
+  --muted: #5f6675;
+  --faint: #9aa1ae;
+  --line: #e1e4ea;
+  --line-2: #cfd3dc;
+  --field: #f5f6f9;
+  --accent: #4655e0;
+  --accent-soft: #e9ebfd;
+  --buy: #0f9f6e;
+  --buy-soft: #e3f5ee;
+  --buy-ink: #087250;
+  --sell: #d93848;
+  --sell-soft: #fbe8ea;
+  --sell-ink: #ad1f2f;
+  --warn: #b26a00;
+  --warn-soft: #fff3dd;
+  --err: #d93848;
+  --shadow: 0 1px 2px rgba(20, 23, 29, 0.06), 0 8px 24px rgba(20, 23, 29, 0.08);
+  --f-ui: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-num: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1014; --paper: #171a20; --fg: #eceef2; --muted: #9ba2b0; --faint: #646b78; --line: #262a33; --line-2: #343945;
+    --field: #1f232b; --accent: #8d98ff; --accent-soft: #232846;
+    --buy: #23b985; --buy-soft: #0f2a21; --buy-ink: #4fd3a3; --sell: #f0545f; --sell-soft: #34161a; --sell-ink: #ff8a92;
+    --warn: #f0a640; --warn-soft: #2f230f; --err: #f0545f;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1014; --paper: #171a20; --fg: #eceef2; --muted: #9ba2b0; --faint: #646b78; --line: #262a33; --line-2: #343945;
+  --field: #1f232b; --accent: #8d98ff; --accent-soft: #232846;
+  --buy: #23b985; --buy-soft: #0f2a21; --buy-ink: #4fd3a3; --sell: #f0545f; --sell-soft: #34161a; --sell-ink: #ff8a92;
+  --warn: #f0a640; --warn-soft: #2f230f; --err: #f0545f;
+  --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 14px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 72px;
+}
+.wrap { max-width: 1220px; margin: 0 auto; }
+h1, h2, h3 { margin: 0; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.35rem; font-weight: 650; letter-spacing: -0.01em; }
+h3 { font-size: 0.98rem; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--accent); }
+code, kbd { font-family: var(--f-num); font-size: 0.82em; }
+code { background: var(--accent-soft); padding: 0.05em 0.35em; border-radius: 4px; }
+kbd { display: inline-block; min-width: 1.6em; text-align: center; padding: 0.05em 0.4em; border: 1px solid var(--line-2); border-bottom-width: 2px; border-radius: 5px; background: var(--paper); color: var(--fg); line-height: 1.4; }
+
+header.top { padding-block: 40px 8px; display: grid; gap: 12px; }
+.eyebrow { font-size: 0.74rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.lede { color: var(--muted); max-width: 72ch; font-size: 1.02rem; }
+nav.toc { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 0.88rem; }
+nav.toc a { text-decoration: none; }
+nav.toc a:hover { text-decoration: underline; }
+
+section { padding-block: 40px 0; display: grid; gap: 18px; }
+section > .head { display: grid; gap: 6px; max-width: 74ch; }
+section > .head p { color: var(--muted); }
+
+/* Prototype stage */
+.stage { display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: 32px; align-items: start; }
+.panel { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; gap: 14px; min-width: 0; }
+.panel h3 { font-size: 0.9rem; }
+.keys { display: grid; grid-template-columns: auto 1fr; gap: 7px 14px; font-size: 0.86rem; align-items: baseline; }
+.keys dt { white-space: nowrap; }
+.keys dd { margin: 0; color: var(--muted); }
+.keys .grp { grid-column: 1 / -1; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); font-weight: 600; padding-top: 6px; }
+.try { display: flex; flex-wrap: wrap; gap: 6px; }
+.try button { font: 500 0.8rem var(--f-num); border: 1px solid var(--line-2); background: var(--field); color: var(--fg); border-radius: 6px; padding: 4px 8px; cursor: pointer; }
+.try button:hover { border-color: var(--accent); }
+.opts { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.85rem; color: var(--muted); }
+.opts label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.log { font-family: var(--f-num); font-size: 0.76rem; color: var(--muted); max-height: 110px; overflow: auto; margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+
+/* Gallery */
+.switch { display: inline-flex; border: 1px solid var(--line-2); border-radius: 8px; overflow: hidden; background: var(--paper); }
+.switch button { font: inherit; font-size: 0.85rem; border: 0; background: transparent; color: var(--fg); padding: 6px 14px; cursor: pointer; }
+.switch button[aria-pressed="true"] { background: var(--fg); color: var(--bg); font-weight: 600; }
+.toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; color: var(--muted); font-size: 0.86rem; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 372px), 1fr)); gap: 26px 22px; }
+.card { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.card .cap { display: grid; gap: 3px; }
+.card .cap p { color: var(--muted); font-size: 0.84rem; }
+.inert-wrap { min-width: 0; }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+.note { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+.note p { color: var(--muted); font-size: 0.86rem; }
+.note .fix { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; background: var(--field); }
+tr:last-child td { border-bottom: 0; }
+pre.def { margin: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; overflow-x: auto; font: 0.78rem/1.55 var(--f-num); color: var(--fg); }
+
+/* ───────── Ticket ───────── */
+.nt {
+  --side: var(--buy); --side-soft: var(--buy-soft); --side-ink: var(--buy-ink);
+  position: relative; width: 100%; max-width: 400px; background: var(--paper); border-radius: 16px; box-shadow: var(--shadow);
+  border: 1px solid var(--line); overflow: hidden; font-family: var(--f-ui); color: var(--fg);
+}
+.nt[data-side="SELL"] { --side: var(--sell); --side-soft: var(--sell-soft); --side-ink: var(--sell-ink); }
+.nt-top { background: var(--side-soft); padding: 14px 16px 14px; display: grid; gap: 12px; transition: background 0.15s; }
+.nt-inst { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: start; }
+.nt-inst .box { position: relative; min-width: 0; }
+.nt input, .nt select { font: inherit; color: inherit; }
+.nt-inst input { width: 100%; border: 0; background: transparent; font-size: 1.15rem; font-weight: 650; padding: 2px 0; outline: none; letter-spacing: -0.01em; }
+.nt-inst input::placeholder { color: var(--faint); font-weight: 500; font-size: 0.95rem; }
+.nt-inst .sub { font-size: 0.78rem; color: var(--muted); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; min-height: 1.2em; }
+.nt-inst .box:focus-within { box-shadow: 0 2px 0 var(--accent); }
+.pill { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 6px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); }
+.chip { appearance: none; border: 1px solid color-mix(in srgb, var(--side) 25%, var(--line-2)); background: var(--paper); border-radius: 999px; padding: 3px 24px 3px 10px; font-size: 0.78rem; font-weight: 500; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 12px) 55%, calc(100% - 8px) 55%; background-size: 4px 4px; background-repeat: no-repeat; }
+.chip:focus-visible, .nt button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cmd { font-size: 0.76rem; color: var(--accent); display: flex; flex-wrap: wrap; gap: 4px; }
+.cmd span { background: var(--accent-soft); border-radius: 4px; padding: 0 5px; }
+
+.nt-side { display: grid; grid-template-columns: 1fr auto 1fr; align-items: stretch; background: var(--paper); border-radius: 12px; padding: 4px; gap: 4px; border: 1px solid color-mix(in srgb, var(--side) 18%, var(--line)); }
+.sbtn { appearance: none; border: 0; border-radius: 9px; background: transparent; padding: 7px 10px; display: grid; gap: 0; text-align: left; cursor: pointer; color: var(--fg); position: relative; }
+.sbtn.buy { text-align: right; }
+.sbtn .s1 { font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.sbtn .s2 { font-family: var(--f-num); font-size: 1.25rem; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.sbtn .s3 { font-family: var(--f-num); font-size: 0.72rem; color: var(--muted); }
+.sbtn.sell.on { background: var(--sell); color: #fff; }
+.sbtn.buy.on { background: var(--buy); color: #fff; }
+.sbtn.on .s1, .sbtn.on .s3 { color: rgba(255,255,255,0.82); }
+.sbtn:not(.on):hover { background: var(--field); }
+.spread { display: grid; place-content: center; text-align: center; padding: 0 4px; font-family: var(--f-num); font-size: 0.7rem; color: var(--muted); line-height: 1.3; }
+.spread b { color: var(--fg); font-weight: 600; font-size: 0.78rem; }
+
+.nt-body { padding: 14px 16px 4px; display: grid; gap: 14px; }
+.line { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.seg { display: inline-flex; background: var(--field); border-radius: 9px; padding: 3px; gap: 2px; }
+.seg button { appearance: none; border: 0; background: transparent; font: 500 0.82rem var(--f-ui); padding: 4px 12px; border-radius: 7px; cursor: pointer; color: var(--muted); position: relative; }
+.seg button.on { background: var(--paper); color: var(--fg); box-shadow: 0 1px 2px rgba(0,0,0,0.12); font-weight: 600; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.f { display: grid; gap: 4px; min-width: 0; position: relative; }
+.f > label, .f > .lab { font-size: 0.74rem; font-weight: 600; color: var(--muted); display: flex; justify-content: space-between; gap: 6px; }
+.f > label .u, .f > .lab .u { font-weight: 500; color: var(--faint); }
+.inp { display: flex; align-items: center; background: var(--field); border-radius: 7px; border: 1.5px solid transparent; height: 42px; padding: 0 10px; transition: border-color 0.1s; }
+.inp:focus-within { border-color: var(--accent); background: var(--paper); }
+.inp input { border: 0; background: transparent; outline: none; width: 100%; min-width: 0; font-family: var(--f-num); font-size: 1.02rem; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.inp input::placeholder { color: var(--faint); font-weight: 500; }
+.inp .pre { font-size: 0.74rem; color: var(--faint); white-space: nowrap; margin-right: 6px; font-family: var(--f-num); }
+.inp.ro { background: transparent; border: 1.5px dashed var(--line-2); justify-content: space-between; color: var(--muted); font-size: 0.86rem; }
+.inp.ro b { font-family: var(--f-num); color: var(--fg); font-weight: 600; }
+.f.err .inp { border-color: var(--err); }
+.f.err > label { color: var(--err); }
+.hint { font-size: 0.74rem; color: var(--muted); font-family: var(--f-num); min-height: 1.3em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hint.e { color: var(--err); font-family: var(--f-ui); white-space: normal; }
+.hint .res { color: var(--accent); font-weight: 600; }
+
+/* Execution */
+.ex { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 12px; }
+.combo { position: relative; }
+.combo .inp { height: 40px; }
+.combo .inp input { text-align: left; font-family: var(--f-ui); font-size: 0.92rem; }
+.combo .inp .caret { width: 7px; height: 7px; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: rotate(45deg) translateY(-2px); flex: none; margin-left: 8px; }
+.combo .desc { font-size: 0.74rem; color: var(--muted); }
+.lb { position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px; background: var(--paper); border: 1px solid var(--line-2); border-radius: 12px; box-shadow: var(--shadow); padding: 6px; z-index: 5; display: grid; gap: 1px; max-height: 280px; overflow: auto; }
+.lb .g { font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); font-weight: 600; padding: 6px 8px 2px; }
+.lb .o { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; padding: 6px 8px; border-radius: 8px; cursor: pointer; }
+.lb .o b { font-size: 0.86rem; font-weight: 600; }
+.lb .o span { font-size: 0.74rem; color: var(--muted); grid-column: 1; }
+.lb .o i { grid-column: 2; grid-row: 1 / span 2; align-self: center; font-style: normal; font-size: 0.64rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--faint); border: 1px dashed var(--line-2); border-radius: 4px; padding: 0 4px; }
+.lb .o.act { background: var(--accent-soft); }
+.lb .o.cur b::after { content: " ✓"; color: var(--accent); }
+.params { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
+.params .f.wide { grid-column: 1 / -1; }
+.params .inp { height: 38px; }
+.params .inp input { font-size: 0.95rem; }
+.params select.inpsel { width: 100%; height: 38px; border-radius: 7px; border: 1.5px solid transparent; background: var(--field); padding: 0 10px; font: 500 0.9rem var(--f-ui); color: var(--fg); }
+.params select.inpsel:focus { border-color: var(--accent); outline: none; }
+.quick { display: flex; gap: 4px; flex-wrap: wrap; }
+.quick button { appearance: none; border: 1px solid var(--line-2); background: var(--paper); border-radius: 6px; font: 500 0.72rem var(--f-num); padding: 1px 6px; color: var(--muted); cursor: pointer; }
+.quick button:hover { color: var(--fg); border-color: var(--accent); }
+.sched { display: flex; gap: 10px; align-items: center; background: var(--field); border-radius: 10px; padding: 8px 10px; font-size: 0.78rem; color: var(--muted); }
+.sched svg { flex: none; }
+.sched b { color: var(--fg); font-weight: 600; font-family: var(--f-num); }
+
+/* Footer */
+.nt-foot { padding: 10px 16px 16px; display: grid; gap: 10px; }
+.sum { display: grid; gap: 4px; font-size: 0.8rem; }
+.sum .r { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); }
+.sum .r b { color: var(--fg); font-family: var(--f-num); font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+.warn { display: grid; grid-template-columns: 16px 1fr; gap: 6px; background: var(--warn-soft); color: var(--warn); border-radius: 9px; padding: 7px 10px; font-size: 0.78rem; }
+.banner { display: grid; grid-template-columns: 16px 1fr; gap: 6px; background: var(--warn-soft); color: var(--warn); padding: 8px 16px; font-size: 0.8rem; font-weight: 500; }
+.ferr { color: var(--err); font-size: 0.8rem; }
+.go { appearance: none; border: 0; width: 100%; border-radius: 12px; background: var(--side); color: #fff; padding: 11px 14px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 10px; cursor: pointer; text-align: left; transition: filter 0.1s; }
+.go:hover { filter: brightness(1.05); }
+.go .g1 { font-size: 1rem; font-weight: 650; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.go .g2 { font-size: 0.76rem; opacity: 0.85; grid-column: 1; }
+.go .gk { grid-column: 2; grid-row: 1 / span 2; font-family: var(--f-num); font-size: 0.72rem; border: 1px solid rgba(255,255,255,0.45); border-radius: 6px; padding: 1px 6px; opacity: 0.9; }
+.go[disabled] { background: var(--line-2); color: var(--muted); cursor: not-allowed; }
+.go[disabled] .gk { border-color: var(--faint); }
+.go.busy .g1::before { content: ""; display: inline-block; width: 11px; height: 11px; border: 2px solid #fff; border-right-color: transparent; border-radius: 50%; margin-right: 8px; vertical-align: -1px; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .go.busy .g1::before { animation: none; } * { transition: none !important; } }
+.foot2 { display: flex; justify-content: space-between; align-items: center; font-size: 0.76rem; color: var(--muted); }
+.link { appearance: none; border: 0; background: none; color: var(--muted); font: inherit; cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
+
+/* Order status */
+.st { border-radius: 12px; border: 1px solid var(--line); padding: 10px 12px; display: grid; gap: 6px; font-size: 0.8rem; }
+.st .h { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.st .h b { font-weight: 600; }
+.st .h span { font-family: var(--f-num); color: var(--muted); font-size: 0.74rem; }
+.st .bar { height: 6px; border-radius: 3px; background: var(--field); position: relative; overflow: hidden; }
+.st .bar i { position: absolute; inset: 0 auto 0 0; background: var(--side); border-radius: 3px; }
+.st .bar u { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--fg); opacity: 0.5; }
+.st .m { display: flex; justify-content: space-between; color: var(--muted); font-family: var(--f-num); font-size: 0.74rem; }
+.st.rej { border-color: color-mix(in srgb, var(--err) 40%, var(--line)); background: color-mix(in srgb, var(--err) 6%, var(--paper)); }
+.st.rej .h b { color: var(--err); }
+.st.ok .h b { color: var(--side-ink); }
+
+/* Review overlay */
+.rev { position: absolute; inset: 0; background: color-mix(in srgb, var(--paper) 96%, transparent); backdrop-filter: blur(2px); display: grid; align-content: end; padding: 16px; z-index: 6; }
+.rev .rc { display: grid; gap: 10px; }
+.rev h4 { margin: 0; font-size: 1.05rem; }
+.rev .why { font-size: 0.78rem; color: var(--warn); }
+.rev dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 0.84rem; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 10px 0; }
+.rev dt { color: var(--muted); }
+.rev dd { margin: 0; text-align: right; font-family: var(--f-num); font-weight: 600; }
+.rev .btns { display: grid; grid-template-columns: auto 1fr; gap: 8px; }
+.rev .back { appearance: none; border: 1px solid var(--line-2); background: var(--paper); border-radius: 12px; padding: 0 14px; font: 500 0.9rem var(--f-ui); color: var(--fg); cursor: pointer; }
+
+/* Key hints and keyboard path */
+.k { display: none; position: absolute; top: -6px; right: -6px; font: 600 0.6rem/1 var(--f-num); background: var(--fg); color: var(--paper); border-radius: 4px; padding: 3px 4px; z-index: 4; pointer-events: none; white-space: nowrap; }
+.nt.keys-on .k { display: block; }
+.ts { display: none; position: absolute; left: -8px; top: -8px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: #fff; font: 600 0.62rem/18px var(--f-ui); text-align: center; z-index: 4; pointer-events: none; }
+.nt.path-on .ts { display: block; }
+.rel { position: relative; }
+
+/* Compact strip */
+.strip { --side: var(--buy); display: flex; align-items: stretch; gap: 6px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 6px; box-shadow: var(--shadow); font-family: var(--f-ui); min-width: 860px; position: relative; }
+.strip[data-side="SELL"] { --side: var(--sell); }
+.strip .ric { display: grid; align-content: center; padding: 0 8px; font-weight: 650; }
+.strip .ric span { font-size: 0.7rem; color: var(--muted); font-weight: 500; }
+.strip .sd { display: inline-flex; background: var(--field); border-radius: 9px; padding: 3px; gap: 2px; }
+.strip .sd span { padding: 0 10px; display: grid; place-items: center; border-radius: 7px; font-weight: 600; font-size: 0.8rem; color: var(--muted); }
+.strip .sd span.on.b { background: var(--buy); color: #fff; }
+.strip .sd span.on.s { background: var(--sell); color: #fff; }
+.strip .cf { display: grid; background: var(--field); border-radius: 6px; padding: 3px 10px; min-width: 96px; }
+.strip .cf i { font-style: normal; font-size: 0.64rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.strip .cf b { font-family: var(--f-num); font-weight: 600; text-align: right; }
+.strip .cf.ex b { font-family: var(--f-ui); text-align: left; }
+.strip .gob { margin-left: auto; background: var(--side); color: #fff; border-radius: 9px; padding: 0 14px; display: grid; place-items: center; font-weight: 650; white-space: nowrap; }
+.pop { position: absolute; top: calc(100% + 6px); background: var(--paper); border: 1px solid var(--line-2); border-radius: 12px; box-shadow: var(--shadow); padding: 12px; width: 290px; display: grid; gap: 10px; z-index: 3; }
+.stripbox { overflow-x: auto; padding: 4px 4px 4px; }
+.stripbox.tall { padding-bottom: 190px; }
+
+/* Dialog frame */
+.dlg { width: 100%; max-width: 432px; background: var(--bg); border-radius: 18px; padding: 10px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+.dlg .dh { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px 10px; font-weight: 600; }
+.dlg .dh span:last-child { color: var(--muted); font-size: 0.8rem; font-family: var(--f-num); }
+.dlg .nt { max-width: none; box-shadow: none; }
+
+@media (max-width: 820px) {
+  .stage { grid-template-columns: 1fr; }
+  h1 { font-size: 1.65rem; }
+}
+@media (max-width: 380px) {
+  .grid2 { grid-template-columns: 1fr; }
+  .params { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">trading-ui · OrderTicket · concept 1</div>
+  <h1>Order Ticket Concept</h1>
+  <p class="lede">A clean, keyboard-first redesign that covers every variation the current ticket supports: Buy / Sell, Market / Limit, DMA / TWAP / VWAP / POV, every TIF rule, the order lifecycle, and the panel, dialog and compact layouts. Strategies are defined as data, so new algos add an entry rather than new UI. Try the live ticket below with the keyboard. Companion to the <a href="https://claude.ai/artifact/DJyPP6tkJUnPJUMHPtkAWY">Order Ticket Review</a>.</p>
+  <nav class="toc" aria-label="Sections">
+    <a href="#try">Try it</a><a href="#ideas">What changed</a><a href="#matrix">Type × strategy</a><a href="#states">States</a><a href="#algos">Strategy definitions</a><a href="#layouts">Layouts</a><a href="#keymap">Keyboard</a>
+  </nav>
+</header>
+
+<section id="try">
+  <div class="head">
+    <h2>Try it</h2>
+    <p>Fully working with the keyboard. Hold <kbd>Alt</kbd> (<kbd>⌥</kbd>) to see shortcuts on the ticket. Prices, volumes and fills are simulated.</p>
+  </div>
+  <div class="stage">
+    <div id="live"></div>
+    <div style="display:grid;gap:16px;min-width:0">
+      <div class="panel">
+        <h3>Type an order in the instrument field, then press Enter</h3>
+        <p style="color:var(--muted);font-size:0.84rem">Entering the field (<kbd>/</kbd>, Tab or a click) selects the RIC, so you type straight over it. Leave the RIC out to keep the current instrument: <code>s 2k a twap 30m</code>.</p>
+        <div class="try" id="tryCmds">
+          <button type="button">b 5k aal.l b</button>
+          <button type="button">s 2000 vod.l a-1 twap 45m</button>
+          <button type="button">b $250k barc.l m vwap 15:30</button>
+          <button type="button">s 3% aal.l mkt pov 10%</button>
+          <button type="button">b 40k aal.l 470 dma</button>
+          <button type="button">s 2k a twap 30m</button>
+        </div>
+        <div class="opts">
+          <label><input type="checkbox" id="optKeys"> Always show shortcuts</label>
+          <label><input type="checkbox" id="optPath"> Show tab order</label>
+          <label><input type="checkbox" id="optOffline"> Simulate disconnect</label>
+        </div>
+        <ul class="log" id="log" aria-label="Order log"></ul>
+      </div>
+      <div class="panel">
+        <h3>Keys</h3>
+        <dl class="keys">
+          <div class="grp">Anywhere in the ticket</div>
+          <dt><kbd>⌥B</kbd> <kbd>⌥S</kbd></dt><dd>Buy / Sell</dd>
+          <dt><kbd>⌥L</kbd> <kbd>⌥M</kbd></dt><dd>Limit / Market</dd>
+          <dt><kbd>⌥E</kbd></dt><dd>Jump to execution strategy (type to filter)</dd>
+          <dt><kbd>⌥T</kbd></dt><dd>Next valid time in force</dd>
+          <dt><kbd>/</kbd></dt><dd>Instrument / order line (when not typing)</dd>
+          <dt><kbd>Ctrl ↵</kbd> <kbd>F9</kbd></dt><dd>Send (or Review when a threshold is hit)</dd>
+          <dt><kbd>Esc</kbd></dt><dd>Close review, close list, then reset</dd>
+          <div class="grp">In a field</div>
+          <dt><kbd>↵</kbd></dt><dd>Accept and move to the next field</dd>
+          <dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Lot, tick, 5 minutes or 1%; <kbd>⇧</kbd> ×10</dd>
+          <dt><code>5k</code> <code>1.5m</code></dt><dd>Shares</dd>
+          <dt><code>$250k</code> <code>3%</code></dt><dd>USD value / % of ADV, converted to shares</dd>
+          <dt><code>b</code> <code>a</code> <code>m</code> <code>b+2</code></dt><dd>Bid, ask, mid, bid + 2 ticks</dd>
+          <dt><code>45m</code> <code>1h</code> <code>1530</code></dt><dd>Durations and times</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ideas">
+  <div class="head"><h2>What changed, and why</h2><p>Each change answers an issue from the review or a pattern from the research.</p></div>
+  <div class="notes">
+    <div class="note"><span class="fix">Side is unmistakable</span><h3>Sell / Buy are the quote</h3><p>The two sides are big buttons carrying their touch price: Sell on the bid, Buy on the ask, spread and mid between. The whole header tints with the side, and so does Send.</p></div>
+    <div class="note"><span class="fix">Nothing moves</span><h3>A fixed core, execution below</h3><p>Instrument, side, quantity and price never change position. Strategy and its parameters live in their own section underneath, so picking VWAP adds below rather than pushing the core down.</p></div>
+    <div class="note"><span class="fix">Scales to new algos</span><h3>Strategies are data</h3><p>A type-to-filter picker replaces the four buttons, and each strategy's fields, units, defaults, ranges and TIFs come from a definition. A new algo is a new entry.</p></div>
+    <div class="note"><span class="fix">Keyboard first</span><h3>Short tab path, typed shorthand</h3><p>Tab visits instrument, quantity, price, strategy and its fields, then Send. Side and type are one keystroke from anywhere. The instrument field doubles as an order line.</p></div>
+    <div class="note"><span class="fix">Size in any terms</span><h3>Quantity understands value and ADV</h3><p>Type shares, a USD value or a % of ADV; the hint always shows the result in shares, value and %ADV, plus the current position.</p></div>
+    <div class="note"><span class="fix">Price relative to the quote</span><h3>Bid, ask, mid and ticks</h3><p><code>b+1</code> means one tick above the bid. The hint shows where the price sits against the touch. Market replaces the price field with an estimate instead of a disabled box.</p></div>
+    <div class="note"><span class="fix">Filter and explain</span><h3>Only valid TIFs, with a reason</h3><p>The TIF chip lists only what this type, strategy and phase allow. If a change makes the TIF invalid, it switches to Day and says so.</p></div>
+    <div class="note"><span class="fix">Algos you can read</span><h3>A schedule preview</h3><p>Each strategy says what it will do: slice rate and finish time for TWAP, the window for VWAP, expected duration for POV.</p></div>
+    <div class="note"><span class="fix">Confirm when it matters</span><h3>Review only above thresholds</h3><p>Normal orders send in one keystroke. Above the account's notional limit or outside the collar, Send becomes Review and lists every parameter; <kbd>↵</kbd> confirms.</p></div>
+  </div>
+</section>
+
+<section id="matrix">
+  <div class="head"><h2>Order type × strategy</h2><p>The eight core layouts. Note the core block stays put in every one.</p></div>
+  <div class="toolbar"><span>Side</span><div class="switch" role="group" aria-label="Side for the gallery"><button type="button" id="gBuy" aria-pressed="true">Buy</button><button type="button" id="gSell" aria-pressed="false">Sell</button></div></div>
+  <div class="gallery" id="gMatrix"></div>
+</section>
+
+<section id="states">
+  <div class="head"><h2>States</h2><p>Validation, warnings, market phase, connection, review, and the life of the order after Send.</p></div>
+  <div class="gallery" id="gStates"></div>
+</section>
+
+<section id="algos">
+  <div class="head"><h2>Strategy definitions</h2><p>One renderer, many strategies. The picker groups and filters them; the parameter block, validation, TIF list and schedule preview all read from the definition. The last four below are examples of strategies we might add, to show the form scaling. They are marked Example in the picker.</p></div>
+  <div class="gallery" id="gAlgos"></div>
+  <pre class="def" id="defSample"></pre>
+</section>
+
+<section id="layouts">
+  <div class="head"><h2>Layouts</h2><p>The same core in a dialog and in a one-line strip for ladders and grid rows. In the strip, strategy parameters open in a popover so the strip stays one line.</p></div>
+  <div class="gallery" id="gLayouts"></div>
+  <div class="card"><div class="cap"><h3>Compact strip</h3><p>Tab: quantity → price → strategy → Send. Side by <kbd>⌥B</kbd> / <kbd>⌥S</kbd>.</p></div><div class="stripbox" id="strip1"></div></div>
+  <div class="card"><div class="cap"><h3>Compact strip with an algo</h3><p>Focusing the strategy opens its parameters in a popover; <kbd>Esc</kbd> or <kbd>↵</kbd> closes it.</p></div><div class="stripbox tall" id="strip2"></div></div>
+</section>
+
+<section id="keymap">
+  <div class="head"><h2>Keyboard path</h2><p>The tab order for each kind of order. Fields that don't apply are not tab stops.</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Order</th><th>Tab stops</th><th>Fastest keyboard entry</th></tr></thead>
+    <tbody>
+      <tr><td>Limit · DMA</td><td>Instrument → Quantity → Price → Strategy → Send</td><td><code>b 5k aal.l b</code> <kbd>↵</kbd> <kbd>Ctrl ↵</kbd></td></tr>
+      <tr><td>Market · DMA</td><td>Instrument → Quantity → Strategy → Send</td><td><code>s 2000 aal.l mkt</code> <kbd>↵</kbd> <kbd>Ctrl ↵</kbd></td></tr>
+      <tr><td>Limit · TWAP</td><td>Instrument → Quantity → Price → Strategy → Duration → Send</td><td><code>b 20k aal.l m twap 45m</code></td></tr>
+      <tr><td>Limit · VWAP</td><td>Instrument → Quantity → Price → Strategy → End time → Send</td><td><code>b $250k aal.l b vwap 15:30</code></td></tr>
+      <tr><td>Limit · POV</td><td>Instrument → Quantity → Price → Strategy → Participation → Until → Send</td><td><code>s 3% aal.l a pov 10%</code></td></tr>
+      <tr><td>Any, then the next order</td><td>After Send, focus returns to Quantity with instrument, side and strategy kept</td><td>Type the next size, <kbd>Ctrl ↵</kbd></td></tr>
+    </tbody>
+  </table></div>
+  <p style="color:var(--muted);font-size:0.86rem;max-width:74ch">Account and TIF are chips in the header and the type row. They're reachable with Shift+Tab or <kbd>⌥T</kbd> but stay out of the forward path, because they rarely change per order.</p>
+</section>
+</div>
+
+<script>
+(function () {
+  /* ───────── Data ───────── */
+  const INSTR = {
+    "AAL.L": { ric: "AAL.L", name: "Anglo American", exch: "LSE", ccy: "GBX", usd: 0.0127, bid: 435.7, ask: 435.9, bsz: 2400, asz: 1800, tick: 0.1, dp: 1, lot: 100, adv: 3200000, pos: 12000 },
+    "VOD.L": { ric: "VOD.L", name: "Vodafone Group", exch: "LSE", ccy: "GBX", usd: 0.0127, bid: 72.18, ask: 72.2, bsz: 41000, asz: 38500, tick: 0.02, dp: 2, lot: 1, adv: 48000000, pos: 0 },
+    "BARC.L": { ric: "BARC.L", name: "Barclays", exch: "LSE", ccy: "GBX", usd: 0.0127, bid: 198.35, ask: 198.4, bsz: 15200, asz: 9900, tick: 0.05, dp: 2, lot: 1, adv: 31000000, pos: -25000 },
+  };
+  const ACCOUNTS = [{ id: "ACC-US-01", limit: 1000000 }, { id: "ACC-UK-02", limit: 5000000 }, { id: "ACC-ARB-03", limit: 250000 }];
+  const NOW = 14 * 60 + 2;          // session clock 14:02
+  const CLOSE = 16 * 60 + 30;       // LSE close 16:30
+  const COLLAR = 0.1;
+  const TIFS = ["DAY", "GTC", "IOC", "FOK"];
+  const TIF_LABEL = { DAY: "Day", GTC: "GTC", IOC: "IOC", FOK: "FOK" };
+
+  /* Strategy definitions: the only place strategy-specific UI lives. */
+  const STRATEGIES = [
+    { id: "DMA", name: "DMA", group: "Direct", desc: "Straight to the market, no slicing", tifs: ["DAY", "GTC", "IOC", "FOK"], params: [] },
+    { id: "TWAP", name: "TWAP", group: "Schedule", desc: "Even slices over a duration", tifs: ["DAY", "GTC"],
+      params: [{ key: "dur", label: "Duration", type: "duration", unit: "min", min: 1, max: 1440, placeholder: "30", quick: ["15m", "30m", "1h", "close"] }] },
+    { id: "VWAP", name: "VWAP", group: "Schedule", desc: "Follows the volume curve to an end time", tifs: ["DAY", "GTC"],
+      params: [{ key: "end", label: "End time", type: "time", placeholder: "Close", quick: ["15:00", "15:30", "16:00", "close"] }] },
+    { id: "POV", name: "POV", group: "Liquidity", desc: "A share of market volume", tifs: ["DAY", "GTC"],
+      params: [
+        { key: "pct", label: "Participation", type: "percent", unit: "%", min: 1, max: 50, required: true, placeholder: "10", quick: ["5%", "10%", "20%"] },
+        { key: "dur", label: "Until", type: "duration", unit: "min", min: 1, max: 1440, placeholder: "Close", quick: ["30m", "1h", "close"] },
+      ] },
+    // Examples of future strategies, to show the definition model scaling.
+    { id: "IS", name: "Implementation Shortfall", group: "Liquidity", example: true, desc: "Trades off impact against drift from arrival", tifs: ["DAY"],
+      params: [
+        { key: "urgency", label: "Urgency", type: "enum", options: ["Low", "Medium", "High"], default: "Medium" },
+        { key: "maxPct", label: "Max participation", type: "percent", unit: "%", min: 1, max: 50, placeholder: "25" },
+      ] },
+    { id: "CLOSE", name: "Target Close", group: "Close", example: true, desc: "Benchmarks to the closing auction price", tifs: ["DAY"],
+      params: [
+        { key: "auctionPct", label: "In auction", type: "percent", unit: "%", min: 0, max: 100, placeholder: "60" },
+        { key: "start", label: "Start", type: "time", placeholder: "15:30" },
+      ] },
+    { id: "ICEBERG", name: "Iceberg", group: "Direct", example: true, desc: "Shows only part of the order on the book", tifs: ["DAY", "GTC"],
+      params: [{ key: "display", label: "Display size", type: "quantity", unit: "sh", required: true, placeholder: "500", wide: true }] },
+    { id: "DARK", name: "Dark Seek", group: "Liquidity", example: true, desc: "Rests in dark pools, sweeps when it finds size", tifs: ["DAY"],
+      params: [
+        { key: "minFill", label: "Min fill", type: "quantity", unit: "sh", placeholder: "1,000" },
+        { key: "lit", label: "Lit fallback", type: "enum", options: ["Off", "Passive", "Aggressive"], default: "Off" },
+      ] },
+  ];
+  const SBY = Object.fromEntries(STRATEGIES.map((s) => [s.id, s]));
+  const GROUPS = ["Direct", "Schedule", "Liquidity", "Close"];
+  /* Strategies matching a filter, in display (grouped) order. */
+  const filterStrategies = (f) => { f = (f || "").toLowerCase();
+    return GROUPS.flatMap((gr) => STRATEGIES.filter((x) => x.group === gr && (!f || x.name.toLowerCase().includes(f) || x.id.toLowerCase().includes(f) || x.desc.toLowerCase().includes(f)))); };
+
+  /* ───────── Helpers ───────── */
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const g = (n, d = 0) => (n == null || !isFinite(n) ? "–" : n.toLocaleString("en-GB", { minimumFractionDigits: d, maximumFractionDigits: d }));
+  const px = (n, I) => (n == null || !isFinite(n) ? "–" : n.toFixed(I.dp));
+  const compactNum = (n) => { const a = Math.abs(n); return a >= 1e6 ? (n / 1e6).toFixed(a >= 1e7 ? 1 : 2) + "m" : a >= 1e3 ? (n / 1e3).toFixed(a >= 1e5 ? 0 : 1) + "k" : g(n); };
+  const hhmm = (m) => `${String(Math.floor(m / 60) % 24).padStart(2, "0")}:${String(Math.round(m % 60)).padStart(2, "0")}`;
+  const mins = (m) => (m >= 60 ? `${Math.floor(m / 60)}h ${Math.round(m % 60)}m` : `${Math.round(m)}m`);
+  const roundTick = (v, I) => Math.round(v / I.tick) * I.tick;
+  const mid = (I) => roundTick((I.bid + I.ask) / 2, I);
+  const isText = (el) => el && (el.tagName === "INPUT" && el.type !== "checkbox");
+
+  function parsePrice(text, I) {
+    const t = String(text ?? "").trim().toLowerCase();
+    if (!t) return { v: undefined };
+    const m = /^(b|bid|a|ask|m|mid)\s*([+-]\s*\d+)?$/.exec(t);
+    if (m) {
+      const base = m[1][0] === "b" ? I.bid : m[1][0] === "a" ? I.ask : mid(I);
+      const n = m[2] ? Number(m[2].replace(/\s/g, "")) : 0;
+      return { v: roundTick(base + n * I.tick, I), sh: true, label: `${m[1][0] === "b" ? "Bid" : m[1][0] === "a" ? "Ask" : "Mid"}${n ? (n > 0 ? " +" : " ") + n : ""}` };
+    }
+    const v = Number(t.replace(/,/g, ""));
+    return isFinite(v) && v > 0 ? { v } : { v: NaN };
+  }
+  function parseQty(text, I, refPx) {
+    const t = String(text ?? "").trim().toLowerCase().replace(/,/g, "");
+    if (!t) return { v: undefined };
+    let m = /^\$\s*([\d.]+)\s*([km]?)$/.exec(t);
+    if (m) {
+      const usd = Number(m[1]) * (m[2] === "k" ? 1e3 : m[2] === "m" ? 1e6 : 1);
+      if (!refPx) return { v: NaN };
+      return { v: Math.max(I.lot, Math.round(usd / (refPx * I.usd) / I.lot) * I.lot), sh: true, label: `$${compactNum(usd)}` };
+    }
+    m = /^([\d.]+)\s*%$/.exec(t);
+    if (m) return { v: Math.max(I.lot, Math.round((I.adv * Number(m[1])) / 100 / I.lot) * I.lot), sh: true, label: `${m[1]}% ADV` };
+    m = /^([\d.]+)\s*([km]?)$/.exec(t);
+    if (m) return { v: Math.round(Number(m[1]) * (m[2] === "k" ? 1e3 : m[2] === "m" ? 1e6 : 1)) };
+    return { v: NaN };
+  }
+  function parseDuration(text) {
+    const t = String(text ?? "").trim().toLowerCase();
+    if (!t) return { v: undefined };
+    if (t === "close") return { v: CLOSE - NOW, label: "to close" };
+    let m = /^(\d+(?:\.\d+)?)\s*h$/.exec(t); if (m) return { v: Math.round(Number(m[1]) * 60) };
+    m = /^(\d+)\s*(m|min)?$/.exec(t); if (m) return { v: Number(m[1]) };
+    m = /^(\d+)h\s*(\d+)m?$/.exec(t); if (m) return { v: Number(m[1]) * 60 + Number(m[2]) };
+    return { v: NaN };
+  }
+  function parseTime(text) {
+    const t = String(text ?? "").trim().toLowerCase();
+    if (!t) return { v: undefined };
+    if (t === "close") return { v: CLOSE };
+    const m = /^([01]?\d|2[0-3]):?([0-5]\d)$/.exec(t);
+    return m ? { v: Number(m[1]) * 60 + Number(m[2]) } : { v: NaN };
+  }
+  function parsePct(text) {
+    const t = String(text ?? "").trim().replace("%", "");
+    if (!t) return { v: undefined };
+    const v = Number(t); return isFinite(v) ? { v } : { v: NaN };
+  }
+  const PARSE = { duration: parseDuration, time: parseTime, percent: parsePct, quantity: (t) => parseQty(t, { lot: 1, adv: 0 }) };
+
+  const tifAllowed = (s, tif) => {
+    const def = SBY[s.strategy];
+    if (!def.tifs.includes(tif)) return false;
+    if (s.ordType === "MARKET" && tif === "GTC") return false;
+    if (s.phase && (tif === "IOC" || tif === "FOK")) return false;
+    return true;
+  };
+  const validTifs = (s) => TIFS.filter((t) => tifAllowed(s, t));
+
+  /* ───────── Model ───────── */
+  function blank(over) {
+    return Object.assign({ ric: "AAL.L", side: "BUY", ordType: "LIMIT", strategy: "DMA", tif: "DAY", account: "ACC-US-01", qty: "5,000", price: "435.7", params: {}, tried: false }, over || {});
+  }
+  function derive(s) {
+    const I = INSTR[s.ric];
+    const buy = s.side === "BUY";
+    const d = { I, buy, def: SBY[s.strategy], errors: {}, warnings: [] };
+    if (!I) { d.errors.ric = "Pick an instrument"; d.priced = s.ordType === "LIMIT"; d.q = { v: undefined }; d.p = { v: undefined }; d.pv = Object.fromEntries(d.def.params.map((p) => [p.key, { v: undefined }])); d.valid = false; return d; }
+    d.priced = s.ordType === "LIMIT";
+    d.p = d.priced ? parsePrice(s.price, I) : { v: buy ? I.ask : I.bid };
+    const refPx = d.priced && isFinite(d.p.v) ? d.p.v : buy ? I.ask : I.bid;
+    d.q = parseQty(s.qty, I, refPx);
+    d.valPx = refPx;
+    if (isFinite(d.q.v) && d.q.v > 0) {
+      d.notional = d.q.v * d.valPx;
+      d.usd = d.notional * I.usd;
+      d.advPct = (d.q.v / I.adv) * 100;
+    }
+    // validation
+    if (d.q.v === undefined) d.errors.qty = "Enter a quantity";
+    else if (!isFinite(d.q.v) || d.q.v <= 0) d.errors.qty = "Quantity must be a number";
+    else if (d.q.v % I.lot) d.errors.qty = `Must be a multiple of the ${g(I.lot)} lot`;
+    if (d.priced) {
+      if (d.p.v === undefined) d.errors.price = "Enter a limit price";
+      else if (!isFinite(d.p.v)) d.errors.price = "Price must be a number, or b / a / m";
+      else if (Math.abs(d.p.v / I.tick - Math.round(d.p.v / I.tick)) > 1e-6) d.errors.price = `Not on a ${I.tick} tick`;
+    }
+    d.pv = {};
+    for (const p of d.def.params) {
+      const raw = s.params[p.key];
+      const r = p.type === "enum" ? { v: raw ?? p.default } : PARSE[p.type](raw);
+      d.pv[p.key] = r;
+      if (r.v === undefined) { if (p.required) d.errors[p.key] = `Enter ${p.label.toLowerCase()}`; continue; }
+      if (p.type === "enum") continue;
+      if (!isFinite(r.v)) d.errors[p.key] = p.type === "time" ? "Use HH:MM, e.g. 15:30" : p.type === "duration" ? "Use minutes, 45m or 1h" : "Must be a number";
+      else if (p.type === "time" && r.v <= NOW) d.errors[p.key] = `Must be after ${hhmm(NOW)}`;
+      else if (p.min != null && (r.v < p.min || r.v > p.max)) d.errors[p.key] = `${p.min} to ${p.max}${p.unit === "%" ? "%" : " " + p.unit}`;
+    }
+    if (!s.account) d.errors.account = "Pick an account";
+    // warnings (advisory)
+    const acct = ACCOUNTS.find((a) => a.id === s.account);
+    if (acct && d.usd > acct.limit) d.warnings.push({ code: "limit", text: `Value ${fmtUsd(d.usd)} is over ${s.account}'s ${fmtUsd(acct.limit)} order limit` });
+    if (d.priced && isFinite(d.p.v)) {
+      const ref = mid(I); const dist = Math.abs(d.p.v - ref) / ref;
+      d.collar = dist;
+      if (dist > COLLAR) d.warnings.push({ code: "collar", text: `${(dist * 100).toFixed(1)}% from mid, outside the ±${COLLAR * 100}% collar` });
+    }
+    if (d.advPct > 20) d.warnings.push({ code: "adv", text: `${d.advPct.toFixed(0)}% of average daily volume` });
+    d.review = d.warnings.some((w) => w.code === "limit" || w.code === "collar");
+    d.valid = Object.keys(d.errors).length === 0;
+    return d;
+  }
+  const fmtUsd = (u) => "$" + compactNum(u);
+
+  function schedule(s, d) {
+    if (!d.I || !isFinite(d.q.v) || !d.q.v) return null;
+    const q = d.q.v;
+    switch (s.strategy) {
+      case "DMA": return null;
+      case "TWAP": { const m = d.pv.dur.v ?? 30; if (!isFinite(m)) return null; return { k: "even", text: `<b>≈ ${g(Math.round(q / m))}</b> sh / min, ${Math.ceil(m)} slices · ends <b>${hhmm(Math.min(NOW + m, CLOSE))}</b>`, end: Math.min(NOW + m, CLOSE) }; }
+      case "VWAP": { const e = d.pv.end.v ?? CLOSE; if (!isFinite(e) || e <= NOW) return null; return { k: "curve", text: `Follows the volume curve for <b>${mins(e - NOW)}</b> · ends <b>${hhmm(e)}</b>`, end: e }; }
+      case "POV": { const p = d.pv.pct.v; if (!isFinite(p) || !p) return { k: "pov", text: "Set a participation rate to see the pace" };
+        const perMin = (d.I.adv / 510) * (p / 100); const m = q / perMin; const cap = d.pv.dur.v; const stop = cap && isFinite(cap) ? NOW + cap : CLOSE;
+        const done = NOW + m; return { k: "pov", text: done <= stop ? `<b>≈ ${mins(m)}</b> at average volume · done ≈ <b>${hhmm(done)}</b>` : `Won't finish: ≈ <b>${g(Math.round(perMin * (stop - NOW)))}</b> sh by ${hhmm(stop)}`, end: Math.min(done, stop) }; }
+      case "IS": return { k: "curve", text: `Front-loaded · <b>${d.pv.urgency.v}</b> urgency, ≈ <b>${mins(d.pv.urgency.v === "High" ? 25 : d.pv.urgency.v === "Low" ? 140 : 70)}</b>` };
+      case "CLOSE": return { k: "close", text: `≈ <b>${d.pv.auctionPct.v ?? 60}%</b> in the closing auction at <b>16:35</b>` };
+      case "ICEBERG": return { k: "even", text: `Shows <b>${g(d.pv.display.v || 0)}</b> at a time, ≈ <b>${d.pv.display.v ? Math.ceil(q / d.pv.display.v) : "–"}</b> refills` };
+      case "DARK": return { k: "pov", text: `Rests dark · lit fallback <b>${d.pv.lit.v}</b>` };
+    }
+    return null;
+  }
+  const schedIcon = (k) => {
+    const bars = k === "even" ? [5, 5, 5, 5, 5, 5] : k === "curve" ? [7, 4, 3, 3, 5, 9] : k === "close" ? [1, 1, 1, 2, 3, 10] : [3, 6, 2, 7, 4, 5];
+    return `<svg width="30" height="14" viewBox="0 0 30 14" aria-hidden="true">${bars.map((h, i) => `<rect x="${i * 5}" y="${14 - h * 1.3}" width="3.5" height="${h * 1.3}" rx="1" fill="var(--side)" opacity="0.75"/>`).join("")}</svg>`;
+  };
+
+  /* ───────── Render ───────── */
+  const ICON_WARN = `<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 15 14H1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6v4M8 11.6v.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+
+  function render(s, ui) {
+    ui = ui || {};
+    const d = derive(s);
+    const I = d.I || INSTR["AAL.L"];
+    const show = (k) => (s.tried || s.touched?.[k]) && d.errors[k];
+    const K = (t) => `<span class="k">${t}</span>`;
+    const T = (n) => `<span class="ts">${n}</span>`;
+    let tab = 0; const nt = () => T(++tab);
+    const noInst = !d.I;
+
+    // Header: instrument / order line + account
+    const sub = noInst
+      ? `<span>Type a RIC, or a whole order: <code>b 5k aal.l b</code></span>`
+      : `<span>${esc(I.name)} · ${I.exch} · ${I.ccy}</span>${s.phase ? `<span class="pill">${esc(s.phase)}</span>` : ""}${I.pos ? `<span>· Position <b style="color:var(--fg);font-family:var(--f-num)">${I.pos > 0 ? "+" : ""}${g(I.pos)}</b></span>` : ""}`;
+    const cmd = ui.cmdPreview ? `<div class="cmd">${ui.cmdPreview.map((c) => `<span>${esc(c)}</span>`).join("")}</div>` : "";
+    const acctOpts = ACCOUNTS.map((a) => `<option ${a.id === s.account ? "selected" : ""}>${a.id}</option>`).join("");
+    const top = `
+      <div class="nt-top">
+        <div class="nt-inst">
+          <div class="box rel">${nt()}<input id="f-inst" aria-label="Instrument or order line" autocomplete="off" spellcheck="false" placeholder="Instrument or order…" value="${esc(ui.instText ?? (noInst ? "" : s.ric))}">${K("/")}<div class="sub">${sub}</div>${cmd}</div>
+          <select class="chip" id="f-acct" aria-label="Account" tabindex="-1">${s.account ? "" : `<option selected value="">Account…</option>`}${acctOpts}</select>
+        </div>
+        <div class="nt-side" role="radiogroup" aria-label="Side">
+          <button type="button" role="radio" aria-checked="${!d.buy}" class="sbtn sell ${!d.buy ? "on" : ""}" data-act="side" data-v="SELL" tabindex="-1">${K("⌥S")}<span class="s1">Sell</span><span class="s2">${noInst ? "–" : px(I.bid, I)}</span><span class="s3">${noInst ? "" : g(I.bsz)}</span></button>
+          <div class="spread">${noInst ? "" : `<span>spread</span><b>${(I.ask - I.bid).toFixed(I.dp)}</b><span>mid ${px(mid(I), I)}</span>`}</div>
+          <button type="button" role="radio" aria-checked="${d.buy}" class="sbtn buy ${d.buy ? "on" : ""}" data-act="side" data-v="BUY" tabindex="-1">${K("⌥B")}<span class="s1">Buy</span><span class="s2">${noInst ? "–" : px(I.ask, I)}</span><span class="s3">${noInst ? "" : g(I.asz)}</span></button>
+        </div>
+      </div>`;
+
+    // Core: type + TIF, quantity, price
+    const tifs = validTifs(s);
+    const tifOpts = tifs.map((t) => `<option value="${t}" ${t === s.tif ? "selected" : ""}>${TIF_LABEL[t]}</option>`).join("");
+    const tifNote = s.tifNote ? `<span style="font-size:0.74rem;color:var(--warn)">${esc(s.tifNote)}</span>` : "";
+    const qHint = show("qty") ? `<div class="hint e">${esc(d.errors.qty)}</div>`
+      : `<div class="hint">${d.q.sh ? `<span class="res">= ${g(d.q.v)}</span> · ` : ""}${d.usd ? `${fmtUsd(d.usd)} · ${d.advPct < 0.1 ? "<0.1" : d.advPct.toFixed(1)}% ADV` : `Lot ${g(I.lot)} · ADV ${compactNum(I.adv)}`}</div>`;
+    let priceField;
+    if (d.priced) {
+      let ph = "";
+      if (!show("price") && isFinite(d.p.v) && d.I) {
+        const touch = d.buy ? I.bid : I.ask; const ticks = Math.round((d.p.v - touch) / I.tick) * (d.buy ? 1 : -1);
+        const rel = ticks === 0 ? (d.buy ? "On the bid" : "On the ask") : d.p.v === (d.buy ? I.ask : I.bid) ? (d.buy ? "At the ask · crosses" : "At the bid · crosses") : `${Math.abs(ticks)} tick${Math.abs(ticks) > 1 ? "s" : ""} ${ticks > 0 ? "more aggressive" : "more passive"}`;
+        ph = `${d.p.sh ? `<span class="res">= ${px(d.p.v, I)}</span> · ` : ""}${rel}`;
+      }
+      priceField = `<div class="f rel ${show("price") ? "err" : ""}">${nt()}<label for="f-px">Limit price <span class="u">${I.ccy}</span></label><div class="inp"><input id="f-px" inputmode="decimal" autocomplete="off" value="${esc(s.price)}" placeholder="b / a / m"></div>${show("price") ? `<div class="hint e">${esc(d.errors.price)}</div>` : `<div class="hint">${ph || "&nbsp;"}</div>`}</div>`;
+    } else {
+      priceField = `<div class="f"><span class="lab">Price <span class="u">${I.ccy}</span></span><div class="inp ro"><span>Market</span><b>≈ ${px(d.valPx, I)}</b></div><div class="hint">${d.buy ? "Est. at the ask" : "Est. at the bid"} · no price limit</div></div>`;
+    }
+    const core = `
+      <div class="line">
+        <div class="seg" role="radiogroup" aria-label="Order type">
+          <button type="button" role="radio" aria-checked="${d.priced}" class="${d.priced ? "on" : ""}" data-act="type" data-v="LIMIT" tabindex="-1">${K("⌥L")}Limit</button>
+          <button type="button" role="radio" aria-checked="${!d.priced}" class="${!d.priced ? "on" : ""}" data-act="type" data-v="MARKET" tabindex="-1">${K("⌥M")}Market</button>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center" class="rel">${tifNote}<select class="chip" id="f-tif" aria-label="Time in force" tabindex="-1">${tifOpts}</select>${K("⌥T")}</div>
+      </div>
+      <div class="grid2">
+        <div class="f rel ${show("qty") ? "err" : ""}">${nt()}<label for="f-qty">Quantity <span class="u">shares</span></label><div class="inp"><input id="f-qty" inputmode="decimal" autocomplete="off" value="${esc(s.qty)}" placeholder="5k, $250k, 3%"></div>${qHint}</div>
+        ${priceField}
+      </div>`;
+
+    // Execution
+    const def = d.def;
+    const open = ui.listOpen;
+    let lb = "";
+    if (open) {
+      const list = filterStrategies(ui.filter);
+      const groups = [...new Set(list.map((x) => x.group))];
+      let idx = 0;
+      lb = `<div class="lb" role="listbox" id="lb">${list.length ? groups.map((gr) => `<div class="g">${gr}</div>` + list.filter((x) => x.group === gr).map((x) => { const i = idx++; return `<div class="o ${i === (ui.active || 0) ? "act" : ""} ${x.id === s.strategy ? "cur" : ""}" role="option" data-act="pick" data-v="${x.id}" aria-selected="${i === (ui.active || 0)}"><b>${esc(x.name)}</b><span>${esc(x.desc)}</span>${x.example ? "<i>Example</i>" : ""}</div>`; }).join("")).join("") : `<div class="g">No strategy matches "${esc(ui.filter)}"</div>`}</div>`;
+    }
+    const params = def.params.map((p) => {
+      const err = show(p.key);
+      if (p.type === "enum") {
+        return `<div class="f rel">${nt()}<label for="p-${p.key}">${p.label}</label><select class="inpsel" id="p-${p.key}" data-param="${p.key}">${p.options.map((o) => `<option ${o === (s.params[p.key] ?? p.default) ? "selected" : ""}>${o}</option>`).join("")}</select></div>`;
+      }
+      const r = d.pv[p.key];
+      const res = p.type === "time" && isFinite(r.v) && r.v !== undefined && !/:/.test(s.params[p.key] || "") ? `= ${hhmm(r.v)}` : p.type === "duration" && isFinite(r.v) && r.v !== undefined && /[hc]/.test(s.params[p.key] || "") ? `= ${r.v} min` : "";
+      return `<div class="f rel ${err ? "err" : ""} ${p.wide ? "wide" : ""}">${nt()}<label for="p-${p.key}">${p.label}${p.unit ? ` <span class="u">${p.unit}</span>` : ""}${p.required ? "" : ` <span class="u">optional</span>`}</label>
+        <div class="inp"><input id="p-${p.key}" data-param="${p.key}" autocomplete="off" value="${esc(s.params[p.key] ?? "")}" placeholder="${esc(p.placeholder || "")}"></div>
+        ${err ? `<div class="hint e">${esc(d.errors[p.key])}</div>` : p.quick ? `<div class="quick">${res ? `<span class="hint"><span class="res">${res}</span></span>` : ""}${p.quick.map((q) => `<button type="button" tabindex="-1" data-act="quick" data-k="${p.key}" data-v="${q}">${q}</button>`).join("")}</div>` : `<div class="hint">&nbsp;</div>`}</div>`;
+    }).join("");
+    const sch = schedule(s, d);
+    const ex = `
+      <div class="ex">
+        <div class="f combo rel">${nt()}<label for="f-strat">Execution ${K("⌥E")}</label>
+          <div class="inp"><input id="f-strat" role="combobox" aria-expanded="${!!open}" aria-controls="lb" autocomplete="off" spellcheck="false" value="${esc(open ? ui.filter ?? "" : def.name)}" placeholder="${esc(def.name)}"><span class="caret"></span></div>
+          ${lb}
+          <div class="desc">${esc(def.desc)}${!d.priced && def.id !== "DMA" ? " · no price limit" : d.priced && def.id !== "DMA" ? ` · limit ${isFinite(d.p.v) ? px(d.p.v, I) : "–"} caps every slice` : ""}</div>
+        </div>
+        ${def.params.length ? `<div class="params">${params}</div>` : ""}
+        ${sch ? `<div class="sched">${schedIcon(sch.k)}<span>${sch.text}</span></div>` : ""}
+      </div>`;
+
+    // Footer
+    const sumRows = d.I ? `<div class="sum"><div class="r"><span>Value</span><b>${d.notional ? `${g(d.notional, 0)} ${I.ccy} <span style="color:var(--muted);font-weight:500">≈ ${d.usd ? "$" + g(d.usd, 0) : "–"}</span>` : "–"}</b></div></div>` : "";
+    const warns = d.warnings.map((w) => `<div class="warn">${ICON_WARN}<span>${esc(w.text)}</span></div>`).join("");
+    let status = "";
+    const o = s.order;
+    if (o) {
+      if (o.state === "rejected") status = `<div class="st rej" role="alert"><div class="h"><b>Rejected</b><span>${esc(o.id)}</span></div><div>${esc(o.text)}</div></div>`;
+      else {
+        const pct = Math.min(100, (o.filled / o.qty) * 100); const tg = o.target != null ? Math.min(100, (o.target / o.qty) * 100) : null;
+        const label = o.state === "pending" ? "Sending…" : o.filled >= o.qty ? `Filled ${g(o.qty)} @ ${px(o.avg, I)}` : o.filled > 0 ? `${o.strategy !== "DMA" ? o.strategy + " working" : "Partially filled"} · ${g(o.filled)} / ${g(o.qty)}` : o.strategy !== "DMA" ? `${o.strategy} working` : "Accepted · on the book";
+        status = `<div class="st ${o.filled >= o.qty ? "ok" : ""}" role="status"><div class="h"><b>${label}</b><span>${esc(o.id)}</span></div>${o.state !== "pending" ? `<div class="bar"><i style="width:${pct}%"></i>${tg != null && o.filled < o.qty ? `<u style="left:${tg}%"></u>` : ""}</div><div class="m"><span>${o.filled ? `avg ${px(o.avg, I)}` : o.side === "BUY" ? "Buy" : "Sell"} ${o.filled < o.qty && tg != null ? `· target ${g(o.target)}` : ""}</span><span>${o.filled < o.qty && o.end ? `ends ${hhmm(o.end)}` : ""}</span></div>` : ""}</div>`;
+      }
+    }
+    const sideW = d.buy ? "Buy" : "Sell";
+    const qShow = isFinite(d.q.v) && d.q.v ? g(d.q.v) : "";
+    const g1 = `${sideW}${qShow ? " " + qShow : ""}${noInst ? "" : " " + I.ric}${d.priced ? (isFinite(d.p.v) && d.p.v ? ` @ ${px(d.p.v, I)}` : "") : " at market"}`;
+    const p1 = def.params[0];
+    const sumP = def.id === "DMA" ? "" : sch && sch.end ? ` · until ${hhmm(sch.end)}` : "";
+    const g2 = `${def.id === "DMA" ? "DMA" : def.name}${def.id === "POV" && isFinite(d.pv.pct?.v) ? ` ${d.pv.pct.v}%` : ""}${sumP} · ${TIF_LABEL[s.tif]} · ${s.account || "no account"}`;
+    const reviewMode = d.review && !s.order;
+    const disabled = !!s.offline;
+    const go = `<div class="rel">${nt()}<button type="button" class="go ${o && o.state === "pending" ? "busy" : ""}" id="f-go" data-act="send" ${disabled ? "disabled" : ""}><span class="g1">${disabled ? "Can't send while offline" : reviewMode ? "Review " + g1.charAt(0).toLowerCase() + g1.slice(1) : g1}</span><span class="g2">${disabled ? "Reconnecting to the trading server…" : esc(g2)}</span><span class="gk">${reviewMode ? "Ctrl ↵ review" : "Ctrl ↵"}</span></button></div>`;
+    const formErr = s.tried && !d.valid && d.errors.account ? `<div class="ferr">${esc(d.errors.account)}</div>` : "";
+    const foot = `<div class="nt-foot">${sumRows}${warns}${status}${formErr}${go}<div class="foot2"><span>${s.order && s.order.state !== "pending" ? "Next order: keep typing" : "&nbsp;"}</span><button type="button" class="link" data-act="reset" tabindex="-1">Reset <kbd>Esc</kbd></button></div></div>`;
+
+    // Review overlay
+    let rev = "";
+    if (s.reviewing) {
+      const rows = [["Side", sideW], ["Instrument", I.ric], ["Quantity", g(d.q.v)], ["Price", d.priced ? px(d.p.v, I) : "Market"], ["Value", `${fmtUsd(d.usd)}`], ["Execution", def.name]]
+        .concat(def.params.map((p) => [p.label, d.pv[p.key].v === undefined ? "Default" : p.type === "time" ? hhmm(d.pv[p.key].v) : p.type === "duration" ? `${d.pv[p.key].v} min` : p.type === "percent" ? `${d.pv[p.key].v}%` : String(d.pv[p.key].v)]))
+        .concat([["Time in force", TIF_LABEL[s.tif]], ["Account", s.account]]);
+      rev = `<div class="rev" role="dialog" aria-label="Review order"><div class="rc"><h4>Check this order</h4>${d.warnings.map((w) => `<div class="why">${ICON_WARN} ${esc(w.text)}</div>`).join("")}<dl>${rows.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl><div class="btns"><button type="button" class="back" data-act="back">Back <kbd>Esc</kbd></button><button type="button" class="go" id="f-confirm" data-act="confirm"><span class="g1">Confirm ${sideW.toLowerCase()}</span><span class="g2">${esc(g1)}</span><span class="gk">↵</span></button></div></div></div>`;
+    }
+
+    const banner = s.offline ? `<div class="banner">${ICON_WARN}<span>Connection lost. Reconnecting; orders can't be sent.</span></div>` : "";
+    return `<div class="nt ${ui.keys ? "keys-on" : ""} ${ui.path ? "path-on" : ""}" data-side="${s.side}" role="form" aria-label="Order ticket">${banner}${top}<div class="nt-body">${core}${ex}</div>${foot}${rev}</div>`;
+  }
+
+  /* ───────── Compact strip ───────── */
+  function strip(s, withPop) {
+    const d = derive(s); const I = d.I;
+    const def = d.def;
+    const pop = withPop ? `<div class="pop" style="left:${330}px"><div style="font-size:0.78rem;color:var(--muted)">${esc(def.name)} · ${esc(def.desc)}</div><div class="params">${def.params.map((p) => `<div class="f"><label>${p.label}${p.unit ? ` <span class="u">${p.unit}</span>` : ""}</label><div class="inp"><input value="${esc(s.params[p.key] ?? "")}" placeholder="${esc(p.placeholder)}" readonly tabindex="-1"></div></div>`).join("")}</div>${schedule(s, d) ? `<div class="sched">${schedIcon(schedule(s, d).k)}<span>${schedule(s, d).text}</span></div>` : ""}</div>` : "";
+    return `<div class="strip" data-side="${s.side}">
+      <div class="ric">${I.ric}<span>${px(I.bid, I)} / ${px(I.ask, I)}</span></div>
+      <div class="sd"><span class="b ${d.buy ? "on" : ""}">Buy</span><span class="s ${!d.buy ? "on" : ""}">Sell</span></div>
+      <div class="cf"><i>Qty</i><b>${g(d.q.v)}</b></div>
+      <div class="cf"><i>${d.priced ? "Limit" : "Price"}</i><b>${d.priced ? px(d.p.v, I) : "MKT"}</b></div>
+      <div class="cf ex" style="min-width:120px"><i>Execution</i><b>${esc(def.name)}${def.id === "POV" && s.params.pct ? " " + s.params.pct + "%" : ""} ▾</b></div>
+      <div class="cf ex" style="min-width:60px"><i>TIF</i><b>${TIF_LABEL[s.tif]}</b></div>
+      <div class="gob">${d.buy ? "Buy" : "Sell"} ${g(d.q.v)} ${d.priced ? "@ " + px(d.p.v, I) : "MKT"}</div>
+      ${pop}
+    </div>`;
+  }
+
+  /* ───────── Order line (command) parser ───────── */
+  function parseCommand(text) {
+    const toks = text.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const out = {}; const chips = [];
+    for (const t of toks) {
+      if (/^(b|buy)$/.test(t) && !out.side) { out.side = "BUY"; chips.push("Buy"); continue; }
+      if (/^(s|sell)$/.test(t) && !out.side) { out.side = "SELL"; chips.push("Sell"); continue; }
+      const ric = Object.keys(INSTR).find((r) => r.toLowerCase() === t || r.toLowerCase().split(".")[0] === t);
+      if (ric) { out.ric = ric; chips.push(ric); continue; }
+      const st = STRATEGIES.find((x) => x.id.toLowerCase() === t);
+      if (st) { out.strategy = st.id; chips.push(st.name); continue; }
+      if (/^(mkt|market)$/.test(t)) { out.ordType = "MARKET"; chips.push("Market"); continue; }
+      if (out.qty === undefined && /^(\$[\d.]+[km]?|[\d.,]+[km]?|[\d.]+%)$/.test(t) && !out.ric) { out.qty = t; chips.push("Qty " + t); continue; }
+      if (out.strategy && /^\d+(\.\d+)?%$/.test(t)) { out.pct = t.replace("%", ""); chips.push(t + " of volume"); continue; }
+      if (out.strategy && /^(\d+h|\d+m|\d+h\d+m?)$/.test(t)) { out.dur = t; chips.push("for " + t); continue; }
+      if (out.strategy && /^([01]?\d|2[0-3]):?[0-5]\d$/.test(t) && (t.includes(":") || t.length === 4)) { out.end = t; chips.push("until " + t); continue; }
+      if (out.price === undefined && out.ordType !== "MARKET" && /^((b|a|m)([+-]\d+)?|[\d.,]+)$/.test(t)) { out.price = t; out.ordType = "LIMIT"; chips.push("@ " + t); continue; }
+      chips.push("? " + t);
+    }
+    return { out, chips, multi: toks.length > 1 };
+  }
+
+  /* ───────── Live prototype ───────── */
+  const live = document.getElementById("live");
+  let S = blank({ qty: "", price: "" });
+  S.touched = {};
+  let UI = { keys: false, path: false, listOpen: false, filter: "", active: 0, instText: undefined, cmdPreview: null };
+  let keysHeld = false;
+  // The instrument field selects its text on entry, so typing replaces the RIC.
+  let instSelectAll = false, instJustFocused = false;
+  let redrawing = false; // true while draw() restores focus, so focusin isn't a fresh entry
+  let seq = 112;
+  const logEl = document.getElementById("log");
+  const log = (t) => { const li = document.createElement("li"); li.textContent = `${hhmm(NOW)} ${t}`; logEl.prepend(li); };
+
+  function draw(focusId, caret) {
+    const a = document.activeElement;
+    const fid = focusId ?? (a && live.contains(a) ? a.id : null);
+    const sel = caret ?? (a && isText(a) ? [a.selectionStart, a.selectionEnd] : null);
+    live.innerHTML = render(S, Object.assign({}, UI, { keys: UI.keys || keysHeld }));
+    if (fid) {
+      const el = document.getElementById(fid);
+      if (el) {
+        redrawing = true;
+        el.focus({ preventScroll: true });
+        redrawing = false;
+        if (fid === "f-inst" && instSelectAll) el.select();
+        else if (sel && isText(el) && caret !== false) { try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} }
+      }
+    }
+  }
+  function fixTif(silent) {
+    const ok = validTifs(S);
+    if (!ok.includes(S.tif)) { const old = S.tif; S.tif = ok[0]; S.tifNote = silent ? null : `${TIF_LABEL[old]} isn't valid here →`; }
+    else S.tifNote = null;
+  }
+  function set(patch, focusId) { Object.assign(S, patch); fixTif(); draw(focusId); }
+
+  function resolveField(id) {
+    const d = derive(S);
+    if (id === "f-px" && d.p && d.p.sh && isFinite(d.p.v)) S.price = px(d.p.v, d.I);
+    if (id === "f-qty" && d.q && isFinite(d.q.v) && d.q.v) S.qty = g(d.q.v);
+    if (id === "f-qty" || id === "f-px") S.touched[id === "f-qty" ? "qty" : "price"] = true;
+    if (id && id.startsWith("p-")) S.touched[id.slice(2)] = true;
+  }
+  function tabStops() {
+    return ["f-inst", "f-qty", "f-px", "f-strat", ...derive(S).def.params.map((p) => "p-" + p.key), "f-go"].filter((id) => document.getElementById(id));
+  }
+  function next(id) { const st = tabStops(); const i = st.indexOf(id); return st[Math.min(st.length - 1, i + 1)]; }
+
+  function send() {
+    const d = derive(S);
+    if (S.offline) return;
+    if (!d.valid) { S.tried = true; draw(); const first = ["qty", "price", ...d.def.params.map((p) => p.key)].find((k) => d.errors[k]); const id = first === "qty" ? "f-qty" : first === "price" ? "f-px" : first ? "p-" + first : null; if (id) document.getElementById(id)?.focus(); return; }
+    if (d.review && !S.reviewing) { S.reviewing = true; draw("f-confirm"); return; }
+    S.reviewing = false;
+    const id = "O-" + ++seq;
+    const sch = schedule(S, d);
+    const o = { id, state: "pending", qty: d.q.v, filled: 0, avg: 0, side: S.side, strategy: S.strategy, end: sch?.end, target: S.strategy === "DMA" ? null : 0 };
+    S.order = o;
+    log(`${S.side} ${g(d.q.v)} ${S.ric} ${d.priced ? "@ " + px(d.p.v, d.I) : "MKT"} ${S.strategy} ${S.tif} → ${id}`);
+    draw("f-qty");
+    const I = d.I; const fillPx = d.priced ? d.p.v : d.valPx;
+    setTimeout(() => {
+      if (S.order !== o) return;
+      if (d.priced && d.collar > COLLAR) { o.state = "rejected"; o.text = `Limit ${px(d.p.v, I)} is outside the ±10% collar (PRICE_OUTSIDE_COLLAR)`; log(`${id} rejected`); draw(); return; }
+      o.state = "working"; draw();
+      const crosses = !d.priced || (d.buy ? d.p.v >= I.ask : d.p.v <= I.bid);
+      const steps = S.strategy === "DMA" ? (crosses ? 1 : 3) : 10;
+      let i = 0;
+      const iv = setInterval(() => {
+        if (S.order !== o) return clearInterval(iv);
+        i++;
+        if (S.strategy !== "DMA") o.target = Math.min(o.qty, Math.round((o.qty * (i + 1)) / steps / I.lot) * I.lot);
+        if (S.strategy === "DMA" && !crosses && i < steps) { draw(); return; }
+        const add = S.strategy === "DMA" ? o.qty - o.filled : Math.min(o.qty - o.filled, Math.round((o.qty / steps) * (0.8 + Math.random() * 0.3) / I.lot) * I.lot || I.lot);
+        const fp = roundTick(fillPx + (Math.random() - 0.5) * I.tick * 2, I);
+        o.avg = (o.avg * o.filled + fp * add) / (o.filled + add); o.filled += add;
+        if (i >= steps) { o.filled = o.qty; }
+        if (o.filled >= o.qty) { clearInterval(iv); log(`${id} filled ${g(o.qty)} @ ${px(o.avg, I)}`); }
+        draw();
+      }, 450);
+    }, 500);
+    // keep instrument, side, strategy; clear size for the next order
+    S.qty = ""; S.touched = {}; S.tried = false;
+    draw("f-qty");
+  }
+
+  function reset() {
+    S = blank({ ric: S.ric, qty: "", price: "", account: S.account, offline: S.offline }); S.touched = {};
+    UI.listOpen = false; UI.instText = undefined; UI.cmdPreview = null; draw("f-qty");
+  }
+  function pickStrategy(id) {
+    UI.listOpen = false; UI.filter = "";
+    const keep = {};
+    if (id === S.strategy) keep.params = S.params; else keep.params = {};
+    Object.assign(S, { strategy: id }, keep); fixTif(); draw(); const def = SBY[id];
+    document.getElementById(def.params.length ? "p-" + def.params[0].key : "f-go")?.focus();
+  }
+  function applyCommand(text) {
+    const { out, multi } = parseCommand(text);
+    if (!multi && out.ric) { S.ric = out.ric; UI.instText = undefined; UI.cmdPreview = null; S.price = px(S.side === "BUY" ? INSTR[out.ric].bid : INSTR[out.ric].ask, INSTR[out.ric]); draw("f-qty", false); return; }
+    if (!out.ric && !multi) return;
+    if (out.ric) S.ric = out.ric;
+    if (out.side) S.side = out.side;
+    if (out.ordType) S.ordType = out.ordType;
+    if (out.qty !== undefined) S.qty = out.qty;
+    if (out.strategy) { S.strategy = out.strategy; S.params = {}; }
+    if (out.price !== undefined) S.price = out.price;
+    else if (S.ordType === "LIMIT" && !S.price) S.price = px(S.side === "BUY" ? INSTR[S.ric].bid : INSTR[S.ric].ask, INSTR[S.ric]);
+    if (out.pct) S.params.pct = out.pct;
+    if (out.dur) S.params.dur = out.dur;
+    if (out.end) S.params.end = out.end;
+    resolveField("f-px"); resolveField("f-qty");
+    fixTif();
+    UI.instText = undefined; UI.cmdPreview = null;
+    log(`order line: ${text}`);
+    draw("f-go", false);
+  }
+
+  live.addEventListener("input", (e) => {
+    const t = e.target;
+    if (t.id === "f-inst") {
+      instSelectAll = false;
+      UI.instText = t.value;
+      const pc = parseCommand(t.value);
+      UI.cmdPreview = pc.multi ? pc.chips : null;
+      draw();
+    } else if (t.id === "f-qty") { S.qty = t.value; draw(); }
+    else if (t.id === "f-px") { S.price = t.value; draw(); }
+    else if (t.id === "f-strat") { UI.listOpen = true; UI.filter = t.value; UI.active = 0; draw(); }
+    else if (t.dataset.param) { S.params[t.dataset.param] = t.value; draw(); }
+  });
+  live.addEventListener("change", (e) => {
+    const t = e.target;
+    if (t.id === "f-tif") { S.tif = t.value; S.tifNote = null; draw(); }
+    else if (t.id === "f-acct") { S.account = t.value; draw(); }
+    else if (t.tagName === "SELECT" && t.dataset.param) { S.params[t.dataset.param] = t.value; draw(); }
+  });
+  let lastField = "f-qty";
+  live.addEventListener("focusin", (e) => {
+    if (e.target.id && isText(e.target)) lastField = e.target.id;
+    if (e.target.id === "f-inst" && !redrawing) { instSelectAll = true; instJustFocused = true; e.target.select(); }
+    if (e.target.id === "f-strat" && !UI.listOpen) { UI.listOpen = true; UI.filter = ""; UI.active = Math.max(0, filterStrategies("").findIndex((x) => x.id === S.strategy)); draw("f-strat"); e.target.select?.(); }
+  });
+  live.addEventListener("focusout", (e) => {
+    const t = e.target;
+    setTimeout(() => {
+      const a = document.activeElement;
+      if (live.contains(a) && a === document.getElementById(t.id)) return;
+      if (t.id === "f-strat" && UI.listOpen && !(a && a.closest && a.closest(".lb"))) { UI.listOpen = false; UI.filter = ""; draw(a && live.contains(a) ? a.id : null); }
+      else if (t.id === "f-qty" || t.id === "f-px" || (t.id || "").startsWith("p-")) { resolveField(t.id); draw(a && live.contains(a) ? a.id : null, false); }
+      else if (t.id === "f-inst") { instSelectAll = false; instJustFocused = false; if (UI.instText !== undefined) { UI.instText = undefined; UI.cmdPreview = null; draw(a && live.contains(a) ? a.id : null); } }
+      else if (false) { UI.instText = undefined; UI.cmdPreview = null; draw(a && live.contains(a) ? a.id : null); }
+    }, 0);
+  });
+  // A click that focuses the field would otherwise drop the selection on mouseup.
+  live.addEventListener("mouseup", (e) => { if (e.target.id === "f-inst" && instJustFocused) { e.preventDefault(); instJustFocused = false; } });
+  live.addEventListener("keydown", (e) => { if (e.target.id === "f-inst" && /^(Arrow|Home|End)/.test(e.key)) instSelectAll = false; }, true);
+  live.addEventListener("mousedown", (e) => { if (e.target.closest(".lb, .sbtn, .seg button, .quick button")) e.preventDefault(); });
+  live.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const act = b.dataset.act;
+    // Buttons are redrawn on click; keep focus on the field the trader was in.
+    const back = () => { if (!live.contains(document.activeElement) || document.activeElement === document.body) document.getElementById(lastField)?.focus({ preventScroll: true }); };
+    setTimeout(back, 0);
+    if (act === "side") set({ side: b.dataset.v });
+    else if (act === "type") set({ ordType: b.dataset.v, price: b.dataset.v === "LIMIT" && !S.price ? px(S.side === "BUY" ? INSTR[S.ric].bid : INSTR[S.ric].ask, INSTR[S.ric]) : S.price });
+    else if (act === "pick") pickStrategy(b.dataset.v);
+    else if (act === "quick") { S.params[b.dataset.k] = b.dataset.v; draw("p-" + b.dataset.k); }
+    else if (act === "send") send();
+    else if (act === "confirm") send();
+    else if (act === "back") { S.reviewing = false; draw("f-go"); }
+    else if (act === "reset") reset();
+  });
+
+  function stepParam(p, dir) {
+    const cur = S.params[p.key];
+    if (p.type === "duration") { const r = parseDuration(cur); const v = isFinite(r.v) && r.v ? r.v : Number(p.placeholder) || 30; S.params[p.key] = String(Math.max(p.min, Math.min(p.max, v + dir * 5))); }
+    else if (p.type === "time") { const r = parseTime(cur); const v = isFinite(r.v) && r.v ? r.v : CLOSE; S.params[p.key] = hhmm(Math.min(CLOSE, Math.max(NOW + 5, v + dir * 5))); }
+    else if (p.type === "percent") { const r = parsePct(cur); const v = isFinite(r.v) && r.v !== undefined ? r.v : Number(p.placeholder) || 10; S.params[p.key] = String(Math.max(p.min, Math.min(p.max, v + Math.sign(dir) * Math.max(1, Math.abs(dir) / 5 | 0 || 1) * (Math.abs(dir) >= 10 ? 5 : 1)))); }
+    else if (p.type === "quantity") { const v = Number(String(cur || p.placeholder).replace(/,/g, "")) || 0; S.params[p.key] = String(Math.max(1, v + dir * 100)); }
+  }
+
+  // Listen on the document so shortcuts work wherever focus is on the page,
+  // except in the page's own controls outside the ticket.
+  document.addEventListener("keydown", (e) => {
+    let t = e.target;
+    if (!live.contains(t) && t !== document.body && t !== document.documentElement) {
+      if (isText(t) || t.tagName === "SELECT" || t.tagName === "TEXTAREA") return;
+      if (!e.altKey && !e.ctrlKey && !e.metaKey && e.key !== "F9" && e.key !== "Alt") return;
+    }
+    if (!live.contains(t)) {
+      // From elsewhere on the page only the global shortcuts apply.
+      const global = e.altKey || e.key === "Alt" || e.key === "F9" || ((e.ctrlKey || e.metaKey) && e.key === "Enter") || (e.key === "/" && !isText(t));
+      if (!global) return;
+      t = { id: "", dataset: {}, tagName: "BODY" };
+    }
+    if (e.key === "Alt") { if (!keysHeld) { keysHeld = true; draw(); } return; }
+    // Review overlay
+    if (S.reviewing) {
+      if (e.key === "Escape") { e.preventDefault(); S.reviewing = false; draw("f-go"); }
+      else if (e.key === "Enter") { e.preventDefault(); send(); }
+      return;
+    }
+    // Strategy list
+    if (t.id === "f-strat" && UI.listOpen) {
+      const list = filterStrategies(UI.filter);
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); UI.active = (UI.active + (e.key === "ArrowDown" ? 1 : -1) + list.length) % Math.max(1, list.length); draw(); return; }
+      if (e.key === "Enter" || (e.key === "Tab" && !e.shiftKey && UI.filter)) { if (list[UI.active]) { e.preventDefault(); pickStrategy(list[UI.active].id); } return; }
+      if (e.key === "Escape") { e.preventDefault(); UI.listOpen = false; UI.filter = ""; draw(); return; }
+    }
+    const mod = e.ctrlKey || e.metaKey;
+    if ((mod && e.key === "Enter") || e.key === "F9") { e.preventDefault(); resolveField(t.id); send(); return; }
+    if (e.altKey && !mod) {
+      const c = e.code;
+      if (c === "KeyB" || c === "KeyS") { e.preventDefault(); set({ side: c === "KeyB" ? "BUY" : "SELL" }); return; }
+      if (c === "KeyL" || c === "KeyM") { e.preventDefault(); set({ ordType: c === "KeyL" ? "LIMIT" : "MARKET", price: c === "KeyL" && !S.price ? px(S.side === "BUY" ? INSTR[S.ric].bid : INSTR[S.ric].ask, INSTR[S.ric]) : S.price }, c === "KeyM" && t.id === "f-px" ? "f-qty" : undefined); return; }
+      if (c === "KeyE") { e.preventDefault(); document.getElementById("f-strat")?.focus(); return; }
+      if (c === "KeyT") { e.preventDefault(); const v = validTifs(S); S.tif = v[(v.indexOf(S.tif) + 1) % v.length]; S.tifNote = null; draw(); return; }
+    }
+    if (e.key === "/" && !isText(t)) { e.preventDefault(); document.getElementById("f-inst")?.focus(); return; }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      if (UI.instText !== undefined) { UI.instText = undefined; UI.cmdPreview = null; draw(); return; }
+      reset(); return;
+    }
+    if (e.key === "Enter" && isText(t)) {
+      e.preventDefault();
+      if (t.id === "f-inst") { applyCommand(t.value); return; }
+      resolveField(t.id); draw(next(t.id), false); return;
+    }
+    if ((e.key === "ArrowUp" || e.key === "ArrowDown") && isText(t)) {
+      const dir = (e.key === "ArrowUp" ? 1 : -1) * (e.shiftKey ? 10 : 1);
+      const d = derive(S); const I = d.I; if (!I) return;
+      if (t.id === "f-qty") { e.preventDefault(); const v = isFinite(d.q.v) && d.q.v ? d.q.v : 0; S.qty = g(Math.max(I.lot, Math.round(v / I.lot) * I.lot + dir * I.lot)); draw(); }
+      else if (t.id === "f-px") { e.preventDefault(); const v = isFinite(d.p.v) && d.p.v ? d.p.v : d.buy ? I.bid : I.ask; S.price = px(roundTick(v + dir * I.tick, I), I); draw(); }
+      else if (t.dataset.param) { const p = d.def.params.find((x) => x.key === t.dataset.param); if (p && p.type !== "enum") { e.preventDefault(); stepParam(p, dir); draw(); } }
+      return;
+    }
+    // Plain B / S on non-text controls (side buttons, chips), like today's ticket
+    if (!isText(t) && !e.altKey && !mod && (e.key === "b" || e.key === "s") && t.tagName !== "SELECT") { e.preventDefault(); set({ side: e.key === "b" ? "BUY" : "SELL" }); }
+  });
+  document.addEventListener("keyup", (e) => { if (e.key === "Alt") { keysHeld = false; draw(); } });
+  window.addEventListener("blur", () => { if (keysHeld) { keysHeld = false; draw(); } });
+
+  document.getElementById("tryCmds").addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    S.order = null; S.reviewing = false;
+    UI.instText = b.textContent; UI.cmdPreview = parseCommand(b.textContent).chips;
+    draw("f-inst");
+    instSelectAll = false;
+    const el = document.getElementById("f-inst"); el.setSelectionRange(el.value.length, el.value.length);
+  });
+  document.getElementById("optKeys").addEventListener("change", (e) => { UI.keys = e.target.checked; draw(); });
+  document.getElementById("optPath").addEventListener("change", (e) => { UI.path = e.target.checked; draw(); });
+  document.getElementById("optOffline").addEventListener("change", (e) => { S.offline = e.target.checked; draw(); });
+  draw(null);
+
+  /* ───────── Galleries (inert renders of the same component) ───────── */
+  const card = (title, note, html) => `<div class="card"><div class="cap"><h3>${title}</h3>${note ? `<p>${note}</p>` : ""}</div><div class="inert-wrap" inert>${html}</div></div>`;
+  const noIds = (h) => h.replace(/ (id|for|aria-controls)="[^"]*"/g, "");
+  const R = (over, ui) => { const s = blank(over); s.touched = s.touched || {}; return noIds(render(s, ui)); };
+
+  const MATRIX = [
+    ["LIMIT", "DMA", "Limit · DMA", "The default. Price starts on your side's passive touch.", {}],
+    ["MARKET", "DMA", "Market · DMA", "Price becomes an estimate at the far touch; it isn't a tab stop.", {}],
+    ["LIMIT", "TWAP", "Limit · TWAP", "Duration with quick picks; the schedule shows slice rate and finish.", { dur: "45" }],
+    ["MARKET", "TWAP", "Market · TWAP", "Only Day is valid, so the TIF chip offers only Day.", { dur: "1h" }],
+    ["LIMIT", "VWAP", "Limit · VWAP", "End time; empty means the close.", { end: "15:30" }],
+    ["MARKET", "VWAP", "Market · VWAP", "", {}],
+    ["LIMIT", "POV", "Limit · POV", "Participation is required; Until is optional.", { pct: "10" }],
+    ["MARKET", "POV", "Market · POV", "If the pace can't finish by Until, the schedule says how much will trade.", { pct: "5", dur: "30" }, "20,000"],
+  ];
+  let gSide = "BUY";
+  function drawMatrix() {
+    document.getElementById("gMatrix").innerHTML = MATRIX.map(([ot, st, t, n, params, qty]) =>
+      card(t, n, R({ side: gSide, ordType: ot, strategy: st, price: gSide === "BUY" ? "435.7" : "435.9", params, tif: "DAY", ...(qty ? { qty } : {}) }))).join("");
+  }
+  const gB = document.getElementById("gBuy"), gS = document.getElementById("gSell");
+  gB.onclick = () => { gSide = "BUY"; gB.setAttribute("aria-pressed", "true"); gS.setAttribute("aria-pressed", "false"); drawMatrix(); };
+  gS.onclick = () => { gSide = "SELL"; gS.setAttribute("aria-pressed", "true"); gB.setAttribute("aria-pressed", "false"); drawMatrix(); };
+  drawMatrix();
+
+  const STATES = [
+    ["Empty", "No instrument yet. The field invites a RIC or a whole order line.", R({ ric: "", qty: "", price: "" })],
+    ["Typing an order line", "Each token is recognised as you type; Enter fills the ticket.", R({ ric: "", qty: "", price: "" }, { instText: "b 20k aal.l m vwap 15:30", cmdPreview: ["Buy", "Qty 20k", "AAL.L", "@ m", "VWAP", "until 15:30"] })],
+    ["Shorthand resolving", "Quantity as a USD value, price as bid + 1. Hints show the result.", R({ qty: "$250k", price: "b+1" })],
+    ["Missing fields", "After a send attempt. Errors sit under the field; focus jumps to the first.", R({ qty: "", price: "", account: "", tried: true })],
+    ["Lot and tick", "", R({ qty: "5,050", price: "435.75", tried: true })],
+    ["Algo parameter errors", "Participation out of range; the error replaces the quick picks.", R({ strategy: "POV", params: { pct: "75" }, tried: true })],
+    ["TIF corrected", "IOC was set, then TWAP chosen: the chip switches to Day and says why.", (() => { const s = blank({ strategy: "TWAP", tif: "DAY", params: { dur: "30" } }); s.tifNote = "IOC isn't valid here →"; return noIds(render(s)); })()],
+    ["Closing auction", "Phase pill in the header; IOC and FOK leave the TIF list.", R({ phase: "Closing auction" })],
+    ["Warnings → review", "Over the account limit and outside the collar, Send becomes Review.", R({ qty: "250,000", price: "490.0" })],
+    ["Review", "Every parameter, with the reasons. ↵ confirms, Esc goes back.", R({ qty: "250,000", price: "480.0", strategy: "VWAP", params: { end: "16:00" }, reviewing: true })],
+    ["Offline", "A banner, and Send says why it's disabled.", R({ offline: true })],
+    ["Sending", "", R({ qty: "", order: { id: "O-113", state: "pending", qty: 5000, filled: 0, avg: 0, side: "BUY", strategy: "DMA" } })],
+    ["Algo working", "Progress against the schedule target (tick mark). Ready for the next order.", R({ qty: "", strategy: "VWAP", params: { end: "15:30" }, order: { id: "O-114", state: "working", qty: 20000, filled: 7400, avg: 435.82, target: 8100, side: "BUY", strategy: "VWAP", end: 15 * 60 + 30 } })],
+    ["Filled", "", R({ side: "SELL", qty: "", price: "435.9", order: { id: "O-115", state: "working", qty: 5000, filled: 5000, avg: 435.9, side: "SELL", strategy: "DMA" } })],
+    ["Rejected", "The server's reason, in words.", R({ qty: "", price: "520.0", order: { id: "O-116", state: "rejected", text: "Limit 520.0 is outside the ±10% collar (PRICE_OUTSIDE_COLLAR)" } })],
+    ["Shortcut hints", "Hold ⌥ to see them; tab order badges on.", R({ strategy: "TWAP", params: { dur: "45" } }, { keys: true, path: true })],
+  ];
+  document.getElementById("gStates").innerHTML = STATES.map(([t, n, h]) => card(t, n, h)).join("");
+
+  document.getElementById("gAlgos").innerHTML = [
+    card("Strategy picker", "Grouped, filterable, with one-line descriptions. Type <code>vw</code> and press ↵.", R({ strategy: "VWAP", params: { end: "15:30" } }, { listOpen: true, filter: "", active: 3 })),
+    card("Filtered", "Matches names and descriptions: <code>close</code> finds Target Close.", R({}, { listOpen: true, filter: "close", active: 0 })),
+    card("Implementation Shortfall (example)", "An enum and an optional percent.", R({ strategy: "IS", tif: "DAY", params: { urgency: "High", maxPct: "20" } })),
+    card("Target Close (example)", "", R({ strategy: "CLOSE", tif: "DAY", params: { auctionPct: "70", start: "15:45" } })),
+    card("Iceberg (example)", "A single wide quantity parameter.", R({ strategy: "ICEBERG", params: { display: "500" } })),
+    card("Dark Seek (example)", "", R({ strategy: "DARK", tif: "DAY", params: { minFill: "1000", lit: "Passive" } })),
+  ].join("");
+  document.getElementById("defSample").textContent =
+`// A strategy definition. The ticket renders the parameter block, validates it,
+// filters TIFs and builds the schedule preview from this; no strategy-specific JSX.
+{
+  id: "POV", name: "POV", group: "Liquidity",
+  desc: "A share of market volume",
+  tifs: ["DAY", "GTC"],
+  params: [
+    { key: "pct", label: "Participation", type: "percent", unit: "%",
+      min: 1, max: 50, required: true, quick: ["5%", "10%", "20%"] },
+    { key: "dur", label: "Until", type: "duration", unit: "min",
+      min: 1, max: 1440, placeholder: "Close", quick: ["30m", "1h", "close"] },
+  ],
+}
+// Param types so far: duration, time, percent, quantity, enum.
+// The OMS could serve these (FIXatdl-style), so new algos need no client release.`;
+
+  document.getElementById("gLayouts").innerHTML = [
+    card("Docked panel", "Linked to the workspace selection; follows the instrument while the draft is clean.", R({ side: "SELL", price: "435.9" })),
+    card("Dialog", "From <code>openOrderTicket()</code>. Title carries the instrument; Esc steps back then closes.", `<div class="dlg"><div class="dh"><span>New order</span><span>Esc ✕</span></div>${R({ ordType: "MARKET", strategy: "TWAP", params: { dur: "30" } })}</div>`),
+  ].join("");
+  document.getElementById("strip1").innerHTML = strip(blank({ qty: "500" }));
+  document.getElementById("strip2").innerHTML = strip(blank({ qty: "20,000", side: "SELL", price: "435.9", strategy: "POV", params: { pct: "10", dur: "" } }), true);
+})();
+</script>
+
+</body></html>

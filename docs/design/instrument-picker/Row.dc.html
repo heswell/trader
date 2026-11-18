@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Completion row anatomy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#6D18BD}a:hover{color:#4E0F8A}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; padding: 48px 56px; display: flex; flex-direction: column; gap: 28px; font-family: 'Nunito Sans', system-ui, sans-serif; color: #15171A; background: #F4F5F7; font-variant-numeric: tabular-nums">
+
+  <section style="display: flex; flex-direction: column; gap: 12px">
+    <h2 style="margin: 0; font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #5B6068">Anatomy · 2x · custom Row for the vuu Table (no header, no cell borders, rowHeight 56)</h2>
+    <div style="background: #FFFFFF; border: 1px solid #DADDE2; border-radius: 16px; padding: 12px; width: 1304px; box-sizing: border-box">
+      <div style="zoom: 2; width: 640px">
+        <sc-for list="{{hero}}" as="r" hint-placeholder-count="1">
+          <div style="display: grid; grid-template-columns: 16px minmax(0, 1fr) 104px 84px 92px; column-gap: 14px; align-items: center; min-height: 54px; padding: 7px 12px; box-sizing: border-box; border-radius: 8px; background: {{r.bg}}; box-shadow: {{r.ring}}">
+            <span aria-hidden="true" style="display: flex; flex-direction: column; gap: 3px; align-items: center"><sc-for list="{{r.dots}}" as="d"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{d.color}}"></span></sc-for></span>
+            <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+              <span style="display: flex; align-items: center; gap: 8px"><span style="font-size: 15px; font-weight: 700">{{r.ricA}}<mark style="background: #EADCFB; color: #15171A; border-radius: 3px; padding: 0 1px">{{r.ricB}}</mark>{{r.ricC}}</span></span>
+              <span style="font-size: 12px; color: #5B6068; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.desc}} · XLON · GBp</span>
+            </span>
+            <span style="display: flex; flex-direction: column; gap: 5px">
+              <span style="position: relative; height: 4px; border-radius: 2px; background: #E6E8EC">
+                <span style="position: absolute; top: -3px; width: 2px; height: 10px; border-radius: 1px; background: #8A8F97; left: {{r.closePos}}"></span>
+                <span style="position: absolute; top: -2px; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: #15171A; left: {{r.lastPos}}"></span>
+              </span>
+              <span style="display: flex; justify-content: space-between; font-size: 11px; color: #5B6068"><span>{{r.low}}</span><span>{{r.high}}</span></span>
+            </span>
+            <span style="display: flex; flex-direction: column; gap: 2px; font-size: 12px; align-items: flex-end">
+              <span><span style="color: #5B6068">B </span><span style="font-weight: 600">{{r.bid}}</span></span>
+              <span><span style="color: #5B6068">A </span><span style="font-weight: 600">{{r.ask}}</span></span>
+            </span>
+            <span style="display: flex; flex-direction: column; gap: 2px; align-items: flex-end">
+              <span style="font-size: 16px; font-weight: 700; padding: 0 5px; margin-right: -5px; border-radius: 4px; background: {{r.flashBg}}">{{r.last}}</span>
+              <span style="display: flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 700; color: {{r.chgColor}}"><svg aria-hidden="true" width="8" height="8" viewBox="0 0 8 8"><path d="M4 1l3.5 5.5h-7z" fill="currentColor"></path></svg>{{r.chg}}</span>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <!-- field map, aligned to the 2x columns -->
+    <div style="width: 1304px; box-sizing: border-box; padding: 0 36px; display: grid; grid-template-columns: 32px minmax(0, 1fr) 208px 168px 184px; column-gap: 28px; font-size: 12px; line-height: 1.45; color: #3E434A">
+      <span style="border-top: 2px solid #15171A; padding-top: 6px; font-weight: 700">1</span>
+      <span style="border-top: 2px solid #15171A; padding-top: 6px"><b>2 · Identity</b><br>instruments.ric (match marked) · description · exchange · currency, phase badge when not Open</span>
+      <span style="border-top: 2px solid #15171A; padding-top: 6px"><b>3 · Day range</b><br>prices.low → high, tick = close, dot = last</span>
+      <span style="border-top: 2px solid #15171A; padding-top: 6px"><b>4 · Touch</b><br>prices.bid / ask</span>
+      <span style="border-top: 2px solid #15171A; padding-top: 6px"><b>5 · Last</b><br>prices.last (flashes on tick) · changePct</span>
+    </div>
+    <span style="font-size: 12px; color: #3E434A">1 · Channel dots: which channels already show this RIC (from the link bus, not the server).</span>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 12px">
+    <h2 style="margin: 0; font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #5B6068">Row states · 1x · target channel Green</h2>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 32px">
+      <sc-for list="{{states}}" as="r" hint-placeholder-count="8">
+        <div style="display: grid; grid-template-columns: 120px minmax(0, 1fr); align-items: center; gap: 14px">
+          <span style="font-size: 13px; font-weight: 800">{{r.title}}</span>
+          <div style="background: #FFFFFF; border-radius: 10px; padding: 4px">
+            <div style="display: grid; grid-template-columns: 16px minmax(0, 1fr) 104px 84px 92px; column-gap: 14px; align-items: center; min-height: 54px; padding: 7px 12px; box-sizing: border-box; border-radius: 8px; background: {{r.bg}}; box-shadow: {{r.ring}}">
+              <span aria-hidden="true" style="display: flex; flex-direction: column; gap: 3px; align-items: center"><sc-for list="{{r.dots}}" as="d"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{d.color}}"></span></sc-for></span>
+              <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+                <span style="display: flex; align-items: center; gap: 8px">
+                  <span style="font-size: 15px; font-weight: 700">{{r.ricC}}</span>
+                  <sc-if value="{{r.hasPhase}}" hint-placeholder-val="{{ false }}"><span style="font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: {{r.phaseBg}}; color: {{r.phaseInk}}">{{r.phase}}</span></sc-if>
+                </span>
+                <span style="font-size: 12px; color: #5B6068; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.desc}} · XLON · GBp</span>
+              </span>
+              <span style="display: flex; flex-direction: column; gap: 5px">
+                <span style="position: relative; height: 4px; border-radius: 2px; background: #E6E8EC">
+                  <span style="position: absolute; top: -3px; width: 2px; height: 10px; border-radius: 1px; background: #8A8F97; left: {{r.closePos}}"></span>
+                  <span style="position: absolute; top: -2px; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: #15171A; left: {{r.lastPos}}"></span>
+                </span>
+                <span style="display: flex; justify-content: space-between; font-size: 11px; color: #5B6068"><span>{{r.low}}</span><span>{{r.high}}</span></span>
+              </span>
+              <span style="display: flex; flex-direction: column; gap: 2px; font-size: 12px; align-items: flex-end">
+                <span><span style="color: #5B6068">B </span><span style="font-weight: 600">{{r.bid}}</span></span>
+                <span><span style="color: #5B6068">A </span><span style="font-weight: 600">{{r.ask}}</span></span>
+              </span>
+              <span style="display: flex; flex-direction: column; gap: 2px; align-items: flex-end">
+                <span style="font-size: 16px; font-weight: 700; padding: 0 5px; margin-right: -5px; border-radius: 4px; background: {{r.flashBg}}; opacity: {{r.opacity}}">{{r.last}}</span>
+                <span style="display: flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 700; color: {{r.chgColor}}">
+                  <sc-if value="{{r.up}}" hint-placeholder-val="{{ true }}"><svg aria-hidden="true" width="8" height="8" viewBox="0 0 8 8"><path d="M4 1l3.5 5.5h-7z" fill="currentColor"></path></svg></sc-if>
+                  <sc-if value="{{r.down}}" hint-placeholder-val="{{ false }}"><svg aria-hidden="true" width="8" height="8" viewBox="0 0 8 8"><path d="M4 7L.5 1.5h7z" fill="currentColor"></path></svg></sc-if>
+                  {{r.chg}}
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+var CH = { red: '#D9363E', green: '#1F9D55', blue: '#2B6FD6', yellow: '#D4A106' };
+var I = {
+  'BARC.L': ['Barclays', 229.1, 227.4, 226.6, 230.4, 1, 'Open'],
+  'BA.L': ['BAE Systems', 1312.5, 1298.0, 1294.0, 1318.0, 1, 'Open'],
+  'AAL.L': ['Anglo American', 438.1, 436.4, 434.9, 441.2, 1, 'Open'],
+  'VOD.L': ['Vodafone Group', 71.42, 71.88, 71.05, 72.31, 2, 'Open'],
+  'BATS.L': ['British American Tobacco', 2864.0, 2881.0, 2852.0, 2893.0, 1, 'Open'],
+  'BAB.L': ['Babcock International', 512.0, 509.5, 506.0, 515.5, 1, 'Auction'],
+  'BAG.L': ['A.G. Barr', 612.0, 612.0, 606.0, 619.0, 1, 'Halted'],
+  'HSBA.L': ['HSBC Holdings', 684.2, 680.0, 677.4, 686.9, 1, 'Open']
+};
+function row(ric, o) {
+  o = o || {};
+  var d = I[ric], dec = d[5], last = d[1], close = d[2], low = d[3], high = d[4], span = high - low;
+  var pct = (last - close) / close * 100, halted = d[6] === 'Halted';
+  var tickSz = Math.pow(10, -dec) * (dec === 2 ? 5 : 1);
+  var q = o.q || '';
+  return {
+    title: o.title || '', ricA: '', ricB: q, ricC: q ? ric.slice(q.length) : ric, desc: d[0],
+    dots: (o.dots || []).map(function (c) { return { color: CH[c] }; }),
+    hasPhase: d[6] !== 'Open', phase: d[6], phaseBg: halted ? '#FCE8E9' : '#FBF1D3', phaseInk: halted ? '#9E1E25' : '#7A5C00',
+    bg: o.hi ? '#EEF0F4' : o.current ? '#E3F4EA' : 'transparent',
+    ring: o.current ? 'inset 0 0 0 1px #1F9D55' : 'none',
+    low: low.toFixed(dec), high: high.toFixed(dec),
+    lastPos: ((last - low) / span * 100).toFixed(1) + '%', closePos: ((close - low) / span * 100).toFixed(1) + '%',
+    bid: halted ? '—' : (last - tickSz).toFixed(dec), ask: halted ? '—' : (last + tickSz).toFixed(dec),
+    last: last.toFixed(dec), opacity: halted ? '0.45' : '1',
+    flashBg: o.flash === 'up' ? '#D5F0E0' : o.flash === 'down' ? '#FADCDC' : 'transparent',
+    chg: (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%', up: pct > 0, down: pct < 0,
+    chgColor: pct > 0 ? '#12804A' : pct < 0 ? '#C62828' : '#5B6068'
+  };
+}
+class Component extends DCLogic {
+  renderVals() {
+    var hero = row('BARC.L', { q: 'BA', dots: ['red', 'green'] });
+    hero.ricA = ''; hero.ricB = 'BA'; hero.ricC = 'RC.L';
+    return {
+      hero: [hero],
+      states: [
+        row('BA.L', { title: 'Default' }),
+        row('BATS.L', { title: 'Highlighted', hi: true }),
+        row('BARC.L', { title: 'Current RIC', current: true, dots: ['green'] }),
+        row('AAL.L', { title: 'In other channels', dots: ['red', 'blue'] }),
+        row('HSBA.L', { title: 'Tick up', flash: 'up' }),
+        row('VOD.L', { title: 'Tick down', flash: 'down' }),
+        row('BAB.L', { title: 'Auction' }),
+        row('BAG.L', { title: 'Halted' })
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

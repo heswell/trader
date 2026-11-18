@@ -1,0 +1,24 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-16T09:00:00Z" },
+  "title": "Instrument grid screening",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 900, "title": "A · Saved screen applied, screening columns added" },
+    "Default.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 900, "title": "B · Default columns, footer at rest" },
+    "ColumnPicker.dc.html": { "x": 0, "y": 1320, "w": 1440, "h": 900, "title": "C · Column picker in the context panel" },
+    "QuickFilters.dc.html": { "x": 1520, "y": 1320, "w": 1440, "h": 900, "title": "D · Quick filters on the screening columns" },
+    "Footer.dc.html": { "x": 3040, "y": 0, "w": 960, "h": 900, "title": "E · Table footer at 2×: anatomy and states" },
+    "ColumnSets.dc.html": { "x": 0, "y": 2640, "w": 1440, "h": 900, "title": "F · Switching column set in the picker; the Value screen stays applied" },
+    "ColumnSetStates.dc.html": { "x": 1520, "y": 2640, "w": 960, "h": 900, "title": "G · Column set states in the picker" },
+    "NumberShorthand.dc.html": { "x": 2560, "y": 2640, "w": 960, "h": 900, "title": "H · Shorthand in numeric filters" }
+  },
+  "order": ["Main.dc.html", "Default.dc.html", "ColumnPicker.dc.html", "QuickFilters.dc.html", "Footer.dc.html", "ColumnSets.dc.html", "ColumnSetStates.dc.html", "NumberShorthand.dc.html"],
+  "notes": {
+    "heading": { "x": 0, "y": -300, "text": "Instrument grid: FilterBar and TableFooter", "kind": "title1", "maxW": 4000 },
+    "heading2": { "x": 0, "y": 1020, "text": "Choosing columns and quick screening", "kind": "title1", "maxW": 2960 },
+    "heading3": { "x": 0, "y": 2340, "text": "Column sets and number shorthand", "kind": "title1", "maxW": 3520 }
+  },
+  "designSystems": []
+}

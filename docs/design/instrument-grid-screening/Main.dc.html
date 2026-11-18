@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Instrument grid with a saved screen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.r{font-family:'Nunito Sans',system-ui,sans-serif;color:#1F2329;-webkit-font-smoothing:antialiased;font-size:12px}
+.app{height:40px;box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:0 16px;background:#fff;border-bottom:1px solid #D9DDE3}
+.logo{font-weight:800;font-size:14px;letter-spacing:.02em}
+.tab{height:40px;display:inline-flex;align-items:center;padding:0 12px;font-weight:600;color:#5B6470;box-sizing:border-box}
+.tab.on{color:#1F2329;border-bottom:2px solid #3B5B8C}
+.view{display:flex;flex-direction:column;background:#fff;border:1px solid #D9DDE3;border-radius:4px;overflow:hidden;min-width:0}
+.vh{height:32px;box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:0 8px 0 12px;border-bottom:1px solid #E6E9ED}
+.vt{font-weight:700;font-size:12px}
+.lg{width:8px;height:8px;border-radius:50%;background:#2F7FD1}
+.tb{height:38px;box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:0 8px}
+.dd{height:24px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:space-between;gap:8px;padding:0 6px 0 8px;border:1px solid #CDD3DB;border-radius:3px;background:#fff;font-size:12px;color:#1F2329;font-family:inherit;width:150px}
+.btn{height:24px;box-sizing:border-box;display:inline-flex;align-items:center;padding:0 12px;border:1px solid #CDD3DB;border-radius:3px;background:#fff;font:600 12px 'Nunito Sans',system-ui,sans-serif;color:#1F2329}
+.btn.buy{background:#1F7A45;border-color:#1F7A45;color:#fff}
+.btn.sell{background:#C42B2B;border-color:#C42B2B;color:#fff}
+.sp{flex:1 1 auto}
+.fb{height:32px;box-sizing:border-box;display:flex;align-items:center;gap:4px;padding:0 4px;background:#F6F7F9;border-top:1px solid #E6E9ED;border-bottom:1px solid #D9DDE3}
+.ico{width:24px;height:24px;flex:none;display:inline-flex;align-items:center;justify-content:center;color:#5B6470;border:0;background:none;padding:0;border-radius:3px;position:relative}
+.ico.on{background:#D5DFEC;color:#1E3A63}
+.badge{position:absolute;top:-1px;right:-4px;min-width:12px;height:12px;box-sizing:border-box;padding:0 3px;border-radius:6px;background:#5A78A6;color:#fff;font:700 8px/12px 'Nunito Sans',system-ui,sans-serif;text-align:center;box-shadow:0 0 0 1.5px #F6F7F9}
+.pill{height:24px;box-sizing:border-box;flex:none;display:inline-flex;align-items:center;padding:0 10px;font:700 12px/22px 'Nunito Sans',system-ui,sans-serif;color:#fff;background:#5A78A6;border:1px solid #5A78A6;border-radius:3px;white-space:nowrap}
+.pill.off{background:#fff;border-color:#CDD3DB;color:#5B6470;font-weight:400}
+.th,.tr{display:grid;grid-template-columns:84px 200px 56px 48px 84px 72px 96px 56px 56px 68px 64px 170px 104px 72px 1fr;align-items:center}
+.th{height:28px;font-size:11px;font-weight:700;color:#3A424D;border-bottom:1px solid #D9DDE3;background:#fff}
+.th span,.tr span{padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.th .new{color:#1E3A63}
+.tr{height:24px;font-size:11px;border-bottom:1px solid #F0F2F4}
+.tr.sel{background:#E3EAF4;box-shadow:inset 0 1px 0 #8FA6C8,inset 0 -1px 0 #8FA6C8}
+.n{text-align:right;font-variant-numeric:tabular-nums}
+.up{color:#1F7A45}
+.dn{color:#C42B2B}
+.mut{color:#8A929D}
+.ric{font-weight:700}
+.ph{display:inline-flex;align-items:center;gap:6px}
+.dot{width:6px;height:6px;border-radius:50%;background:#2E8B57}
+.dot.pre{background:#C9821B}
+.dot.cl{background:#8A929D}
+.sorted{display:inline-flex;align-items:center;gap:3px;justify-content:flex-end}
+.body{flex:1 1 auto;overflow:hidden}
+.ft{height:32px;box-sizing:border-box;display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;background:#F6F7F9;border-top:1px solid #D9DDE3;padding:0 8px 0 16px;font-size:10px}
+.stats{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.lb{color:#5B6470}
+.v{font-weight:700;color:#1F2329;font-variant-numeric:tabular-nums}
+.tray{grid-column:3;justify-self:end;display:flex;align-items:center;gap:4px}
+.ico20{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;border:0;background:none;border-radius:3px;color:#5B6470;padding:0}
+</style>
+</helmet>
+<div class="r" style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; background: #EDF0F3">
+  <header class="app"><span class="logo">Trader</span><span class="tab on">Markets</span><span class="tab">Orders</span><span class="tab">Positions</span><span class="sp"></span><span style="color: #5B6470">XLON continuous · 10:42:18</span></header>
+  <div style="flex: 1 1 auto; display: flex; gap: 8px; padding: 8px; min-height: 0">
+    <section class="view" style="flex: 1 1 auto" aria-label="Instruments">
+      <div class="vh"><span class="lg" aria-hidden="true"></span><span class="vt">Instruments</span><span class="sp"></span><button class="ico" type="button" aria-label="View menu"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg></button></div>
+
+      <div class="tb" role="toolbar" aria-label="Instrument grid">
+        <button class="dd" type="button" aria-label="Watchlist">All instruments<svg width="8" height="8" viewBox="0 0 10 10" fill="#5B6470" aria-hidden="true"><path d="M1.5 3.5h7L5 7.5z"/></svg></button>
+        <button class="btn" type="button">Watchlists</button>
+        <button class="dd" type="button" aria-label="Instrument type" style="width: 120px">Equities<svg width="8" height="8" viewBox="0 0 10 10" fill="#5B6470" aria-hidden="true"><path d="M1.5 3.5h7L5 7.5z"/></svg></button>
+        <button class="dd" type="button" aria-label="Group by" style="width: 130px">No grouping<svg width="8" height="8" viewBox="0 0 10 10" fill="#5B6470" aria-hidden="true"><path d="M1.5 3.5h7L5 7.5z"/></svg></button>
+        <span class="sp"></span>
+        <button class="btn buy" type="button">Buy</button>
+        <button class="btn sell" type="button">Sell</button>
+        <button class="btn" type="button">Depth</button>
+      </div>
+
+      <div class="fb" aria-label="Filters">
+        <button class="ico" type="button" aria-label="Show quick filters, 2 clauses applied" aria-pressed="false" style="margin-right: 2px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 4h7M13 4h1M2 8h2M8 8h6M2 12h9M15 12h-1"/><circle cx="11" cy="4" r="1.6"/><circle cx="6" cy="8" r="1.6"/><circle cx="12.5" cy="12" r="1.6"/></svg><span class="badge">2</span></button>
+        <span class="pill" aria-checked="true">Value</span>
+        <span class="pill off">High yield</span>
+        <span class="pill off">Mega cap</span>
+        <span class="pill off">Quality</span>
+        <button class="ico" type="button" aria-label="Add filter"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></button>
+      </div>
+
+      <div class="th" role="row">
+        <span>ric</span><span>description</span><span>exch</span><span>ccy</span><span class="n">last</span><span class="n">change %</span>
+        <span class="n new"><span class="sorted">mkt cap $<svg width="8" height="8" viewBox="0 0 10 10" fill="currentColor" aria-label="sorted descending" role="img"><path d="M1.5 3.5h7L5 7.5z"/></svg></span></span>
+        <span class="n new">P/E</span><span class="n new">P/B</span><span class="n new">yield %</span><span class="n new">ROE %</span>
+        <span>sector</span><span>phase</span><span class="n">volume</span><span></span>
+      </div>
+      <div class="body">
+        <sc-for list="{{rows}}" as="row" hint-placeholder-count="28">
+          <div class="{{row.cls}}" role="row">
+            <span class="ric">{{row.ric}}</span><span>{{row.d}}</span><span>{{row.x}}</span><span>{{row.c}}</span>
+            <span class="n">{{row.last}}</span><span class="{{row.chgCls}}">{{row.chg}}</span>
+            <span class="n">{{row.mc}}</span><span class="n">{{row.pe}}</span><span class="n">{{row.pb}}</span><span class="n">{{row.y}}</span><span class="n">{{row.roe}}</span>
+            <span>{{row.s}}</span>
+            <span><span class="ph"><span class="{{row.dotCls}}"></span>{{row.phase}}</span></span>
+            <span class="n">{{row.vol}}</span><span></span>
+          </div>
+        </sc-for>
+      </div>
+
+      <footer class="ft">
+        <div class="stats"><span class="lb">Row count</span><span class="v">1</span><span class="lb">-</span><span class="v">28</span><span class="lb">of</span><span class="v">44</span><span class="lb" style="margin-left: 8px">1 selected</span></div>
+        <div class="tray">
+          <button class="ico20" type="button" aria-label="Show column picker"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+        </div>
+      </footer>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const data = [
+      ["CMCSA.OQ","Comcast Corp","XNAS","USD","Communication Services","44.49","-1.78%","353.9bn","11.7","1.3","0.00%","11.1%","6.4M"],
+      ["TTD.OQ","Trade Desk Inc/The","XNAS","USD","Communication Services","77.76","+1.80%","205.6bn","11.5","1.4","1.27%","12.1%","0.5M"],
+      ["BAC.N","Bank of America Corp","XNYS","USD","Financials","27.69","+0.64%","157.5bn","6.0","0.6","0.00%","9.5%","3.1M"],
+      ["BRKb.N","Berkshire Hathaway Inc Cl B","XNYS","USD","Financials","353.35","-1.48%","135.4bn","5.7","0.4","7.82%","7.1%","3.8M"],
+      ["FANG.OQ","Diamondback Energy Inc","XNAS","USD","Energy","150.75","+0.04%","131.4bn","6.8","1.0","5.46%","15.3%","9.0M"],
+      ["JMAT.L","Johnson Matthey plc","XLON","GBX","Materials","2415","-1.22%","114.6bn","10.2","1.3","3.18%","12.9%","3.4M"],
+      ["UBSG.S","UBS Group AG","XSWX","CHF","Financials","26.44","-1.02%","114.6bn","10.4","1.3","4.71%","12.2%","6.6M"],
+      ["DBKGn.DE","Deutsche Bank AG","XETR","EUR","Financials","15.64","-1.41%","94.2bn","11.3","1.0","6.53%","8.8%","0.8M"],
+      ["1299.HK","Aia","XHKG","HKD","Financials","62.87","-1.53%","69.9bn","9.4","1.0","4.61%","11.0%","8.8M"],
+      ["INGA.AS","ING Groep NV","XAMS","EUR","Financials","15.61","-0.04%","64.7bn","9.2","1.0","0.00%","11.0%","2.3M"],
+      ["RBS.L","Royal Bank of Scotland Group plc","XLON","GBX","Financials","308.80","-1.47%","64.2bn","6.4","0.8","5.26%","12.6%","2.9M"],
+      ["3968.HK","Cm Bank","XHKG","HKD","Financials","32.51","-0.58%","62.3bn","8.0","0.9","8.54%","11.3%","9.2M"],
+      ["0939.HK","Ccb","XHKG","HKD","Financials","4.48","+1.26%","60.0bn","8.0","0.7","5.25%","8.1%","0.6M"],
+      ["PYPL.OQ","PayPal Holdings Inc","XNAS","USD","Financials","57.49","-0.70%","59.2bn","8.3","0.9","5.53%","10.8%","5.5M"],
+      ["SIRI.OQ","Sirius XM Holdings Inc","XNAS","USD","Communication Services","4.04","-0.16%","48.2bn","8.9","0.7","0.00%","8.1%","1.6M"],
+      ["CRDI.MI","UniCredit SpA","XMIL","EUR","Financials","36.73","-0.34%","47.2bn","10.9","1.1","3.33%","10.0%","0.6M"],
+      ["V.N","Visa Inc Class a Shares","XNYS","USD","Financials","234.12","+0.93%","43.7bn","8.2","0.7","3.03%","8.5%","5.0M"],
+      ["3988.HK","Bank Of China","XHKG","HKD","Financials","2.70","-1.60%","43.4bn","8.4","0.8","5.92%","9.3%","7.3M"],
+      ["JPM.N","Jpmorgan Chase & Co","XNYS","USD","Financials","146.09","-1.44%","39.2bn","6.6","0.3","4.10%","5.3%","2.2M"],
+      ["MUVGn.DE","Muenchener Rueck AG","XETR","EUR","Financials","450.89","-0.29%","33.5bn","9.1","1.0","5.05%","11.3%","0.6M"],
+      ["2899.HK","Zijin Mining","XHKG","HKD","Materials","12.17","+1.61%","31.6bn","7.9","0.8","0.00%","9.6%","4.2M"],
+      ["ENEI.MI","Enel SpA","XMIL","EUR","Utilities","6.71","-1.24%","29.0bn","8.2","1.0","8.96%","12.0%","1.6M"],
+      ["ADYEN.AS","Adyen NV","XAMS","EUR","Financials","1387","-1.78%","27.5bn","9.0","1.3","4.98%","14.2%","6.5M"],
+      ["GLEN.L","Glencore plc","XLON","GBX","Materials","91.98","+1.63%","26.6bn","8.1","1.0","3.88%","12.6%","1.7M"],
+      ["AEP.OQ","American Electric Power Co Inc","XNAS","USD","Utilities","79.64","+0.52%","26.1bn","11.0","1.0","1.68%","9.2%","5.9M"],
+      ["0011.HK","Hang Seng Bank","XHKG","HKD","Financials","99.25","+1.84%","24.9bn","5.6","0.4","4.70%","7.4%","3.4M"],
+      ["VRSK.OQ","Verisk Analytics Inc","XNAS","USD","Industrials","243.05","+0.41%","21.5bn","10.0","1.3","2.51%","12.8%","6.0M"],
+      ["0883.HK","Cnooc","XHKG","HKD","Energy","13.63","-1.08%","18.1bn","7.7","1.0","4.36%","13.1%","7.3M"]
+    ];
+    const phaseOf = (x) => x === "XHKG" ? ["CLOSED", "dot cl"] : (x === "XNAS" || x === "XNYS") ? ["PRE_OPEN", "dot pre"] : ["CONTINUOUS", "dot"];
+    const rows = data.map((d, i) => {
+      const [phase, dotCls] = phaseOf(d[2]);
+      return {
+        ric: d[0], d: d[1], x: d[2], c: d[3], s: d[4], last: d[5], chg: d[6], mc: d[7], pe: d[8], pb: d[9], y: d[10], roe: d[11], vol: d[12],
+        chgCls: "n " + (d[6].startsWith("-") ? "dn" : "up"),
+        cls: i === 10 ? "tr sel" : "tr",
+        phase, dotCls
+      };
+    });
+    return { rows };
+  }
+}
+</script>
+</body>
+</html>
