@@ -13,6 +13,7 @@ import {
   parseFilterState,
   SCREENING_COLUMNS,
   useStoredSetting,
+  titleCaseColumnName,
 } from "../src";
 
 describe("column sets settings", () => {
@@ -130,7 +131,15 @@ describe("screening columns", () => {
       expect(visible.some((c) => c.name === name)).toBe(false);
       expect(all.some((c) => c.name === name)).toBe(true);
     }
-    expect(all.find((c) => c.name === "marketCapUsd")?.label).toBe("mkt cap $");
+    expect(all.find((c) => c.name === "marketCapUsd")?.label).toBe("Mkt Cap $");
+    expect(all.find((c) => c.name === "ric")?.label).toBe("RIC");
+  });
+
+  test("a column with no preset is labelled in Title Case", () => {
+    expect(titleCaseColumnName("bidSize")).toBe("Bid Size");
+    expect(titleCaseColumnName("ric2Code")).toBe("Ric2 Code");
+    const { all } = instrumentGridColumns({ available: ["lastTradeTime"] });
+    expect(all[0].label).toBe("Last Trade Time");
   });
 });
 
