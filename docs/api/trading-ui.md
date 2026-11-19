@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 631 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 635 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -16,7 +16,7 @@ Imports: `@heswell/trading-ui`. 631 exports. Types are shown as written in the s
 - **feature-root**: [ensureLinkBusBroadcast](#ensurelinkbusbroadcast), [notificationLease](#notificationlease), [TradingFeatureRoot](#tradingfeatureroot), [TradingFeatureRootProps](#tradingfeaturerootprops), [useInTradingFeatureRoot](#useintradingfeatureroot)
 - **components/AccountSelector**: [AccountSelector](#accountselector), [AccountSelectorProps](#accountselectorprops), [useSelectedAccount](#useselectedaccount), [useTradingAccounts](#usetradingaccounts)
 - **components/ChannelPicker**: [CHANNEL_PICKER_SOURCE](#channel_picker_source), [ChannelPicker](#channelpicker), [ChannelPickerDensity](#channelpickerdensity), [ChannelPickerProps](#channelpickerprops)
-- **components/ChannelRowMarkers**: [CHANNEL_ROW_CLASS](#channel_row_class), [ChannelRics](#channelrics), [channelRowClassName](#channelrowclassname), [channelRowColorRules](#channelrowcolorrules), [ChannelRowMarkers](#channelrowmarkers), [useChannelRics](#usechannelrics), [useChannelRowMarkers](#usechannelrowmarkers)
+- **components/ChannelRowMarkers**: [CHANNEL_LINK_ACTION](#channel_link_action), [CHANNEL_ROW_CLASS](#channel_row_class), [channelLinkLabel](#channellinklabel), [channelLinkMenuItem](#channellinkmenuitem), [ChannelRics](#channelrics), [channelRowClassName](#channelrowclassname), [channelRowColorRules](#channelrowcolorrules), [ChannelRowMarkers](#channelrowmarkers), [handleChannelLinkAction](#handlechannellinkaction), [useChannelRics](#usechannelrics), [useChannelRowMarkers](#usechannelrowmarkers)
 - **components/ConnectionBanner**: [ConnectionBanner](#connectionbanner), [ConnectionBannerProps](#connectionbannerprops)
 - **components/ConnectionStatusIndicator**: [CONNECTION_STATE_LABELS](#connection_state_labels), [ConnectionStatusIndicator](#connectionstatusindicator), [ConnectionStatusIndicatorProps](#connectionstatusindicatorprops)
 - **components/DepthChartView**: [DepthChartView](#depthchartview), [DepthChartViewProps](#depthchartviewprops)
@@ -2993,6 +2993,28 @@ useChannelRowMarkers(config: TableConfig): ChannelRowMarkers
 
 ### Functions (components/ChannelRowMarkers)
 
+#### channelLinkLabel
+
+*function* · [components/ChannelRowMarkers/channelLinkMenu.ts](../../packages/trading-ui/src/components/ChannelRowMarkers/channelLinkMenu.ts#L12)
+
+The label of one channel in the "Link <ric> to" submenu.
+
+```ts
+channelLinkLabel(channel: { id: LinkGroupId; label: string }, ric: string, { byRic, selections }: Pick<ChannelRics, "byRic" | "selections">): string
+```
+
+#### channelLinkMenuItem
+
+*function* · [components/ChannelRowMarkers/channelLinkMenu.ts](../../packages/trading-ui/src/components/ChannelRowMarkers/channelLinkMenu.ts#L27)
+
+A secondary "Link <ric> to ▸" item: one entry per workspace channel,
+with the instrument it holds now. Choosing one links the instrument
+there (and off any other channel). Blotters publish only this way.
+
+```ts
+channelLinkMenuItem(instrument: SelectedInstrument, channelRics: Pick<ChannelRics, "byRic" | "channels" | "selections">, dividerBefore = false): ContextMenuItemDescriptor
+```
+
 #### channelRowClassName
 
 *function* · [components/ChannelRowMarkers/channelRowMarkers.tsx](../../packages/trading-ui/src/components/ChannelRowMarkers/channelRowMarkers.tsx#L16)
@@ -3013,7 +3035,27 @@ One rule per channel: the colour its marked rows show.
 channelRowColorRules(channels: readonly LinkGroupDefinition[]): string
 ```
 
+#### handleChannelLinkAction
+
+*function* · [components/ChannelRowMarkers/channelLinkMenu.ts](../../packages/trading-ui/src/components/ChannelRowMarkers/channelLinkMenu.ts#L44)
+
+Handle a channel-link menu action; false if `id` is not one.
+
+```ts
+handleChannelLinkAction(id: string, options: unknown, bus: InstrumentLinkBus, channels: ChannelRics["channels"], source: string): boolean
+```
+
 ### Constants (components/ChannelRowMarkers)
+
+#### CHANNEL_LINK_ACTION
+
+*const* · [components/ChannelRowMarkers/channelLinkMenu.ts](../../packages/trading-ui/src/components/ChannelRowMarkers/channelLinkMenu.ts#L9)
+
+Menu action id prefix: `trading-link-channel:<channel id>`.
+
+```ts
+const CHANNEL_LINK_ACTION: "trading-link-channel:"
+```
 
 #### CHANNEL_ROW_CLASS
 
@@ -3247,7 +3289,7 @@ Props of [`FillProgressBar`](#fillprogressbar).
 
 #### FillsBlotter
 
-*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L309)
+*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L351)
 
 Fills blotter on `fills` (the server already filters to the user's own
 fills): grouping by ric / ric+side with summed quantity and notional and
@@ -3270,7 +3312,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### FillsBlotterProps
 
-*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L144)
+*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L154)
 
 Props of [`FillsBlotter`](#fillsblotter).
 
@@ -3287,7 +3329,7 @@ Props of [`FillsBlotter`](#fillsblotter).
 
 #### FillsGrouping
 
-*type* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L48)
+*type* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L58)
 
 ```ts
 type FillsGrouping = "none" | "ric" | "ric-side"
@@ -4338,7 +4380,7 @@ Props of [`NamePrompt`](#nameprompt).
 
 #### OrderBlotter
 
-*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L672)
+*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L755)
 
 Order blotter on `parentOrders`: status badge, fill progress, tick-formatted
 avg price, filter tabs, per-row amend / cancel (enabled only for NEW,
@@ -4428,7 +4470,7 @@ const orderBlotterTableConfig: TableConfig
 
 #### OrderBlotterProps
 
-*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L96)
+*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L110)
 
 Props of [`OrderBlotter`](#orderblotter).
 
