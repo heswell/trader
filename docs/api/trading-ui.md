@@ -3148,7 +3148,7 @@ Props of [`FillProgressBar`](#fillprogressbar).
 
 #### FillsBlotter
 
-*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L306)
+*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L338)
 
 Fills blotter on `fills` (the server already filters to the user's own
 fills): grouping by ric / ric+side with summed quantity and notional and
@@ -3175,7 +3175,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### FillsBlotterProps
 
-*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L128)
+*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L151)
 
 Props of [`FillsBlotter`](#fillsblotter).
 
@@ -3192,7 +3192,7 @@ Props of [`FillsBlotter`](#fillsblotter).
 
 #### FillsGrouping
 
-*type* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L52)
+*type* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L55)
 
 ```ts
 type FillsGrouping = "none" | "ric" | "ric-side"
@@ -4174,7 +4174,7 @@ Props of [`NamePrompt`](#nameprompt).
 
 #### OrderBlotter
 
-*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L626)
+*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L659)
 
 Order blotter on `parentOrders`: status badge, fill progress, tick-formatted
 avg price, filter tabs, per-row amend / cancel (enabled only for NEW,
@@ -4206,7 +4206,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### orderBlotterTabFilter
 
-*function* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L22)
+*function* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L28)
 
 Client filterSpec for each tab. `all` is an empty filter.
 
@@ -4218,7 +4218,7 @@ orderBlotterTabFilter(tab: OrderBlotterTab): string
 
 #### CHILD_ORDER_COLUMNS
 
-*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L177)
+*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L183)
 
 ```ts
 const CHILD_ORDER_COLUMNS: readonly ["childOrderId", "parentOrderId", "exchangeOrderId", "ric", "side", "price", "quantity", "status", "cumQty", "avgPx", "lastUpdate", "rejectReason", "text"]
@@ -4226,7 +4226,7 @@ const CHILD_ORDER_COLUMNS: readonly ["childOrderId", "parentOrderId", "exchangeO
 
 #### childOrdersTableConfig
 
-*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L139)
+*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L145)
 
 ```ts
 const childOrdersTableConfig: TableConfig
@@ -4234,7 +4234,7 @@ const childOrdersTableConfig: TableConfig
 
 #### ORDER_BLOTTER_COLUMNS
 
-*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L40)
+*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L46)
 
 ```ts
 const ORDER_BLOTTER_COLUMNS: readonly ["orderId", "status", "side", "ric", "ordType", "strategy", "timeInForce", "quantity", "price", "stopPrice", "triggeredAt", "cumQty", "targetQty", "avgPx", "account", ... 5 more ..., "text"]
@@ -4245,7 +4245,7 @@ const ORDER_BLOTTER_COLUMNS: readonly ["orderId", "status", "side", "ric", "ordT
 *const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L8)
 
 ```ts
-const ORDER_BLOTTER_TABS: readonly { id: OrderBlotterTab; label: string; }[]
+const ORDER_BLOTTER_TABS: readonly { id: OrderBlotterTab; label: string; /** Tooltip, where the label alone does not say which statuses it shows. */ description?: string; }[]
 ```
 
 #### OrderBlotterContext
@@ -4258,7 +4258,7 @@ const OrderBlotterContext: Context<OrderRowActions | undefined>
 
 #### orderBlotterTableConfig
 
-*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L64)
+*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L70)
 
 ```ts
 const orderBlotterTableConfig: TableConfig
@@ -4268,7 +4268,7 @@ const orderBlotterTableConfig: TableConfig
 
 #### OrderBlotterProps
 
-*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L76)
+*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L96)
 
 Props of [`OrderBlotter`](#orderblotter).
 
