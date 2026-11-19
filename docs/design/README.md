@@ -24,7 +24,7 @@ boards are now history, the code is the source of truth), **Superseded**.
 | --- | --- | --- | --- | --- |
 | Instrument picker (title-bar ChannelPicker, search dropdown, completion row) | Built | [canvas](https://claude.ai/artifact/TFaxdKxftNLYz3Uj6Usa7h) | | [instrument-picker](instrument-picker/README.md) |
 | Instrument grid redesign (link column, pinned rows, panel header, footer, row actions, light/dark) | Built (stack #84 in review) | [canvas](https://claude.ai/artifact/YZNNasvzknSnRH3BEgBuE3) | [plan](https://claude.ai/artifact/WRKNzCxB7WhVXGHTDXfRj7) | [instrument-grid](instrument-grid/README.md) |
-| Watchlists and column sets (New Watchlist dialog, column sets carry quick filters) | Awaiting feedback | [canvas](https://claude.ai/artifact/4j7Zdx3DXQmqVEhJCP6tFa) | | [watchlists-column-sets](watchlists-column-sets/README.md) |
+| Watchlists and column sets (New Watchlist dialog, column sets carry quick filters, shared or scoped sets) | Built (stack #105 in review) | [canvas](https://claude.ai/artifact/4j7Zdx3DXQmqVEhJCP6tFa) | [plan](https://claude.ai/artifact/Lzx9JPCmxXS11kMibkLysx) | [watchlists-column-sets](watchlists-column-sets/README.md) |
 
 ## Screening and filters
 

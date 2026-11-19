@@ -85,10 +85,14 @@ One 22px row under the table (linked instruments show in the link column and the
 - **Row count**: the rows in the body, "N rows", kept current from the data source's `resize` events. Under a filter-bar filter it is the filtered count, bold with a filter icon; the server sends no unfiltered total, so it is never "x of y". Pinned rows are not counted.
 - **Columns** on the right opens a panel with two tabs: **Columns** (the vuu column picker) and **Quick filters**, the quick filter fields of the column set in view, in order, with Reset to default. A field can be a quick filter without being a column. Both tabs follow the set in view. (The tab sits beside vuu's picker rather than in it until vuu-ui's ColumnPicker takes extra tabs, upstream U2.)
 
+![A Banks-only column set (pinned, after the divider), with Exchange: XLON Also applied](../screenshots/instrument-grid-scoped-sets.png)
 
 ## Dialogs
 
 The grid never uses browser prompts. Naming (a new watchlist, a new column set) uses `NamePrompt`: a vuu `Prompt` (Salt Dialog) with one Salt Input, focused and selected on open. Enter or Create confirms; `validate` returns an error shown under the field, and while there is one Create is disabled. New watchlist opens `WatchlistDialog`: a name, a search by RIC or name, Sector / Type / Exchange / Currency filters (Salt multiselect dropdowns; options from vuu's `getUniqueFieldValues`, Type from the enum), the matches (up to 500, from `instruments`) and the picked list beside them. While a search or filter narrows the list, **Add N matches** adds every match not yet picked. Keys: ↑↓ move, Enter adds or removes, Alt+A adds matches, Ctrl+Enter saves. Deleting a watchlist asks in a warning `Prompt`, Cancel focused. Showcase: `#instrument-grid-dialogs`.
+
+![New watchlist, light](../screenshots/watchlist-dialog-light.png)
+![New watchlist, dark](../screenshots/watchlist-dialog-dark.png)
 
 ## Rows
 
