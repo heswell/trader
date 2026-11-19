@@ -70,6 +70,7 @@ export const CHAIN_INSTRUMENT_COLUMNS = [
   "ask",
   "last",
   "phase",
+  "timestamp",
 ];
 
 /** Columns of optionAnalytics the chain reads. */
@@ -110,14 +111,28 @@ const str = (value: unknown) =>
     : String(value);
 
 /**
+ * The exchange's time as the rows show it: the newest price timestamp. The
+ * exchange may run on its own clock (a replay, a test), and an option's
+ * last update at expiry is stamped at or after its expiry.
+ */
+const latestTimestamp = (rows: readonly TradingRow[]) => {
+  let latest = 0;
+  for (const row of rows) {
+    const t = num(row.timestamp);
+    if (t !== undefined && t > latest) latest = t;
+  }
+  return latest;
+};
+
+/**
  * The chain from instrumentPrices option rows and optionAnalytics rows
- * (joined on ric). Expired options (settled, or past expiry at `now`) are
- * left out.
+ * (joined on ric). Options expired at `now` (default: the newest price
+ * timestamp of the rows) are left out.
  */
 export const buildOptionChain = (
   instrumentRows: readonly TradingRow[],
   analyticsRows: readonly TradingRow[],
-  now = Date.now(),
+  now = latestTimestamp(instrumentRows),
 ): OptionChainData => {
   if (instrumentRows.length === 0) return EMPTY_CHAIN;
   const analytics = new Map(analyticsRows.map((row) => [String(row.ric), row]));

@@ -1337,9 +1337,14 @@ export const useOrderTicket = ({
   /** Why an option could not be picked (not listed, no chain). */
   const [optionNotice, setOptionNotice] = useState<string>();
   const isOption = instrument?.instrumentType === InstrumentType.Option;
+  // The chain stays subscribed while the next option's row loads (stepping
+  // strikes), and goes when the ticket moves to something else.
+  const optionUnderlyingRef = useRef<string | undefined>(undefined);
+  if (instrument) {
+    optionUnderlyingRef.current = isOption ? instrument.underlying : undefined;
+  }
   const chainUnderlying =
-    pendingOption?.spec.underlying ||
-    (isOption ? instrument?.underlying : undefined);
+    pendingOption?.spec.underlying || optionUnderlyingRef.current;
   const { chain, loaded: chainLoaded } = useOptionChain(chainUnderlying);
   /** The ticket's option in its chain (quote, implied vol, delta). */
   const chainOption = isOption ? chain.byRic.get(draft.ric ?? "") : undefined;

@@ -94,11 +94,11 @@
   text-align: center;
 }
 
-.tradingOptionChain-strike,
-.tradingOptionChain-strikeHeader {
+.tradingOptionChain-table .tradingOptionChain-strike,
+.tradingOptionChain-table .tradingOptionChain-strikeHeader {
   background: var(--salt-container-secondary-background);
   font-weight: var(--salt-text-fontWeight-strong);
-  text-align: center !important;
+  text-align: center;
 }
 
 /* quote-only strikes are dimmed: model prices, no orders */

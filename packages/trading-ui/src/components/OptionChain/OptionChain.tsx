@@ -230,7 +230,7 @@ export const OptionChain = forwardRef<HTMLDivElement, OptionChainProps>(
     const optionAt = (strike: ChainStrike | undefined, cell: CellIndex) =>
       CELLS[cell].right === "call" ? strike?.call : strike?.put;
 
-    const handleKeyDown = (event: KeyboardEvent<HTMLTableElement>) => {
+    const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
       if (event.altKey || event.ctrlKey || event.metaKey) return;
       const i = strikes.findIndex((s) => s.strike === focusStrike);
       const row = strikes[i];
@@ -311,7 +311,7 @@ export const OptionChain = forwardRef<HTMLDivElement, OptionChainProps>(
                 }
               : undefined
           }
-          role="gridcell"
+          onKeyDown={handleKeyDown}
           tabIndex={focused ? 0 : -1}
           title={
             option && !tradeable
@@ -405,9 +405,7 @@ export const OptionChain = forwardRef<HTMLDivElement, OptionChainProps>(
             <table
               aria-label={`${title} ${activeExpiry ? formatExpiry(activeExpiry) : ""} option chain`}
               className={`${classBase}-table`}
-              onKeyDown={handleKeyDown}
               ref={tableRef}
-              role="grid"
             >
               <thead>
                 <tr className={`${classBase}-rights`}>

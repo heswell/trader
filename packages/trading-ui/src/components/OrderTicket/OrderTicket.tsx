@@ -299,14 +299,14 @@ const OptionMeta = ({ ticket }: { ticket: OrderTicketState }) => {
   const { instrument, option, risk } = ticket;
   if (option.notice) {
     return (
-      <div className={`${classBase}-option`} data-notice role="status">
+      <div aria-live="polite" className={`${classBase}-option`} data-notice>
         {option.notice}
       </div>
     );
   }
   if (option.pending) {
     return (
-      <div className={`${classBase}-option`} role="status">
+      <div aria-live="polite" className={`${classBase}-option`}>
         Finding the option…
       </div>
     );
