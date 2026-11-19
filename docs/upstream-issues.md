@@ -780,3 +780,17 @@ Found moving to @vuu-ui 4.0.0-alpha.30 (`docs/portal-integration.md`, "Panels pa
      button at the right end of the filter bar. *Proposed:* single quotes around the url in the source CSS (as
      vuu-icons does), or escape the escapes. *Workaround in this repo:* the InstrumentGrid redefines
      `--vuu-icon-svg` for `.vuuQuickFilters [data-icon="columns"]` with a single-quoted url.
+
+## Found in the Orders & Fills redesign
+
+119. **A two-pane SplitPane stalls rendering of its subtree under happy-dom.** (finos `@vuu-ui/vuu-ui-controls`
+     5.0.0-alpha.9, `src/split-pane/useSplitPane.js`, the mount `useLayoutEffect` that measures both panes and calls
+     `setSplitterPosition`.) With vuu Tables in both panes, a component in the tree suspends on first render, and
+     the layout-effect state update leaves the root stuck: no later update commits (data source rows, clicks), while
+     the event loop keeps running. Without that `setSplitterPosition` call, or with one pane (no splitter), it
+     renders normally; the browser is unaffected. vuu-ui-controls also bundles its own `@salt-ds/core` 1.74.0 and
+     `@salt-ds/styles` 0.4.2 beside the app's 1.67.0 / 0.2.1. *Repro:* bun test with happy-dom: render
+     `OrderBlotter` (child orders shown) on local test data with a working order and wait for its row: it never
+     arrives. *Proposed:* compute the initial `aria-valuenow` lazily (from the panes' flex-basis, or on first focus)
+     instead of setting state on mount. *Workaround in this repo:* tests that need blotter data render
+     `OrderBlotter` with `showChildOrders={false}`.

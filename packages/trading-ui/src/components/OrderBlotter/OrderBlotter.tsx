@@ -9,6 +9,7 @@ import {
 } from "@vuu-ui/core";
 import type { DataSource } from "@vuu-ui/vuu-data-types";
 import { Table } from "@vuu-ui/vuu-table";
+import { SplitPane } from "@vuu-ui/vuu-ui-controls";
 import type { TableRowSelectHandler } from "@vuu-ui/vuu-table-types";
 import cx from "clsx";
 import {
@@ -502,20 +503,25 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
             </>
           )}
         </div>
-        <OrderBlotterContext.Provider value={readOnly ? undefined : actions}>
-          <div
-            {...staleProps}
-            className={cx(`${classBase}-table`, staleProps.className)}
-          >
-            <Table
-              config={orderBlotterTableConfig}
-              dataSource={dataSource}
-              onSelect={stableHandleSelect}
-              onSelectionChange={onSelectionChange}
-              selectionModel="extended"
-            />
-          </div>
-        </OrderBlotterContext.Provider>
+        <SplitPane className={`${classBase}-split`} direction="column">
+          <OrderBlotterContext.Provider value={readOnly ? undefined : actions}>
+            <div
+              {...staleProps}
+              className={cx(`${classBase}-table`, staleProps.className)}
+            >
+              <Table
+                config={orderBlotterTableConfig}
+                dataSource={dataSource}
+                onSelect={stableHandleSelect}
+                onSelectionChange={onSelectionChange}
+                selectionModel="extended"
+              />
+            </div>
+          </OrderBlotterContext.Provider>
+          {showChildOrders ? (
+            <ChildOrders parentOrderId={focusedOrderId} />
+          ) : null}
+        </SplitPane>
         {message ? (
           <div
             aria-live="polite"
@@ -525,9 +531,6 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
           >
             {message.text}
           </div>
-        ) : null}
-        {showChildOrders ? (
-          <ChildOrders parentOrderId={focusedOrderId} />
         ) : null}
         {amending ? (
           <AmendDialog

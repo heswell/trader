@@ -50,18 +50,34 @@
   }
 }
 
-.tradingOrderBlotter-table {
+/* Parent orders above, child orders below; the splitter sets both panes'
+   flex-basis in px, so the parent pane grows and the child pane keeps its size. */
+.tradingOrderBlotter-split {
   flex: 1 1 auto;
   min-height: 0;
 }
 
+.tradingOrderBlotter-table {
+  flex: 1 1 0;
+  min-height: 80px;
+}
+
 .tradingOrderBlotter-children {
-  flex: 0 0 160px;
+  display: flex;
+  flex: 0 0 220px;
+  flex-direction: column;
+  min-height: 60px;
+}
+
+.tradingOrderBlotter-children > .vuuTable {
+  flex: 1 1 auto;
   min-height: 0;
 }
 
 .tradingOrderBlotter-children-title {
+  flex: 0 0 auto;
   font-weight: var(--salt-text-fontWeight-strong);
+  padding: var(--salt-spacing-100) 0;
 }
 
 .tradingOrderBlotter-actions {
@@ -101,3 +117,4 @@
 .tradingOrderBlotter-message[data-error="true"] {
   color: var(--salt-status-error-foreground-informative);
 }
+
