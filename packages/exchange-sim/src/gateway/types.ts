@@ -145,4 +145,23 @@ export interface ExchangeGateway {
   getOrder(exchangeOrderId: string): ExecutionReport | undefined;
   /** Subscribe to instrument listings / expiries; returns an unsubscribe function. */
   onInstrumentEvent?(listener: (event: InstrumentEvent) => void): () => void;
+  /** A listed option's model Greeks now (undefined if not a live option). */
+  getOptionGreeks?(ric: string): OptionGreeksQuote | undefined;
+  /**
+   * The liquid (booked) strike nearest a quote-only option, of the same
+   * expiry and type; undefined if there is none or `ric` is not an option.
+   */
+  nearestLiquidOption?(ric: string): string | undefined;
+}
+
+/** An option's model Greeks, as the gateway reports them. */
+export interface OptionGreeksQuote {
+  /** dPremium / dForward. */
+  delta: number;
+  /** dDelta / dForward. */
+  gamma: number;
+  /** dPremium per unit of vol (1.00 = 100 vol points). */
+  vega: number;
+  /** The forward the option is priced on. */
+  forward: number;
 }

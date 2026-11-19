@@ -1,6 +1,9 @@
 import {
+  collarWidth,
   type CreateOrderRequest,
   EntryRiskCode,
+  InstrumentType,
+  isOutsideCollar,
   type InstrumentStatic,
   isStopOrdType,
   OrdType,
@@ -12,6 +15,7 @@ import {
   validateOrder,
   validateStopTrigger,
 } from "@heswell/trading-schemas";
+import type { OptionGreeksQuote } from "../engine/gateway";
 import type { Account } from "../reference/accounts";
 
 /** Instrument data the risk check needs (exchange-sim InstrumentDef satisfies it). */
@@ -39,6 +43,15 @@ export interface RiskContext {
   /** Leaves quantity of the account's working orders in this ric, by side. */
   workingBuyQty: number;
   workingSellQty: number;
+  /**
+   * USD delta of one unit bought (see deltaUsdPerUnit); absent = no delta
+   * check.
+   */
+  deltaUsdPerUnit?: number;
+  /** The account's net delta (USD) on the instrument's underlying now. */
+  underlyingDeltaUsd?: number;
+  /** A quote-only option: the nearest liquid strike, to point the user at. */
+  nearestLiquid?: string;
 }
 
 /** Order fields the risk check reads (a validated createOrder / amend projection). */
@@ -86,6 +99,24 @@ export const expectedPrice = (
   return touch && touch > 0 ? touch : referencePrice(instrument, market);
 };
 
+/**
+ * USD delta of one unit of quantity bought: an option's model delta x the
+ * forward x the multiplier (undefined without Greeks); anything else is
+ * delta one, the reference price x the multiplier.
+ */
+export const deltaUsdPerUnit = (
+  instrument: RiskInstrument,
+  market: RiskMarket | undefined,
+  greeks: OptionGreeksQuote | undefined,
+): number | undefined => {
+  if (instrument.instrumentType === InstrumentType.Option) {
+    return greeks
+      ? greeks.delta * greeks.forward * usdPerUnit(instrument)
+      : undefined;
+  }
+  return referencePrice(instrument, market) * usdPerUnit(instrument);
+};
+
 const fmtUsd = (n: number) => `${Math.round(n).toLocaleString("en-US")} USD`;
 
 /**
@@ -93,7 +124,8 @@ const fmtUsd = (n: number) => `${Math.round(n).toLocaleString("en-US")} USD`;
  * account known / enabled, instrument known, restricted list, static order
  * validation incl. trading phase (HALTED / CLOSED), stop not already
  * reached, maxOrderQty, maxOrderNotional, limit price collar (LIMIT only:
- * stops may legitimately sit far from the market), maxPositionNotional.
+ * stops may legitimately sit far from the market; wider for options, see
+ * collarWidth), maxPositionNotional, maxDeltaUsd.
  *
  * Notionals are converted to USD with usdPerUnit (currency x contract
  * multiplier); account
@@ -130,7 +162,7 @@ export const checkPreTradeRisk = (
     );
   }
   const invalid = validateOrder(order, instrument, ctx.phase);
-  if (invalid) return invalid;
+  if (invalid) return withNearestLiquid(invalid, instrument, ctx.nearestLiquid);
   if (isStopOrdType(order.ordType) && order.stopPrice) {
     const reached = validateStopTrigger(
       order.side,
@@ -143,6 +175,21 @@ export const checkPreTradeRisk = (
   return riskLimitBreaches(order, account, instrument, ctx)[0];
 };
 
+/**
+ * A quote-only option's reject, pointing at the nearest liquid strike
+ * (`nearest`) when there is one.
+ */
+export const withNearestLiquid = (
+  reject: OrderReject,
+  instrument: Pick<RiskInstrument, "liquid">,
+  nearest: string | undefined,
+): OrderReject =>
+  reject.reason === RejectReason.RestrictedInstrument &&
+  instrument.liquid === false &&
+  nearest
+    ? { ...reject, text: `${reject.text}, e.g. ${nearest}` }
+    : reject;
+
 /** A broken account limit or the collar (see riskLimitBreaches). */
 export interface RiskBreach extends OrderReject {
   code: EntryRiskCode;
@@ -150,9 +197,11 @@ export interface RiskBreach extends OrderReject {
 
 /**
  * The account limits and the collar an order breaks, in checkPreTradeRisk's
- * order: maxOrderQty, maxOrderNotional, the limit price collar (LIMIT only),
- * maxPositionNotional. The order ticket shows them all; createOrder rejects
- * on the first.
+ * order: maxOrderQty, maxOrderNotional (the premium for an option), the
+ * limit price collar (LIMIT only), maxPositionNotional, then maxDeltaUsd:
+ * the account's net delta on the underlying (a stock, its futures and
+ * options net), checked only when the order adds to it. The order ticket
+ * shows them all; createOrder rejects on the first.
  */
 export const riskLimitBreaches = (
   order: RiskOrder,
@@ -160,7 +209,13 @@ export const riskLimitBreaches = (
   instrument: RiskInstrument,
   ctx: Pick<
     RiskContext,
-    "market" | "collarPct" | "positionQty" | "workingBuyQty" | "workingSellQty"
+    | "market"
+    | "collarPct"
+    | "positionQty"
+    | "workingBuyQty"
+    | "workingSellQty"
+    | "deltaUsdPerUnit"
+    | "underlyingDeltaUsd"
   >,
 ): RiskBreach[] => {
   const breaches: RiskBreach[] = [];
@@ -182,11 +237,15 @@ export const riskLimitBreaches = (
   }
   if (order.ordType === OrdType.Limit && order.price) {
     const ref = referencePrice(instrument, ctx.market);
-    if (Math.abs(order.price / ref - 1) > ctx.collarPct + 1e-9) {
+    if (isOutsideCollar(instrument, order.price, ref, ctx.collarPct)) {
+      const width = collarWidth(instrument, ref, ctx.collarPct);
       breaches.push({
         code: EntryRiskCode.Collar,
         reason: RejectReason.PriceOutsideCollar,
-        text: `price ${order.price} is more than ${ctx.collarPct * 100}% from reference ${ref}`,
+        text:
+          instrument.instrumentType === InstrumentType.Option
+            ? `price ${order.price} is more than ${+width.toFixed(6)} from reference ${ref}`
+            : `price ${order.price} is more than ${ctx.collarPct * 100}% from reference ${ref}`,
       });
     }
   }
@@ -206,6 +265,20 @@ export const riskLimitBreaches = (
       reason: RejectReason.ExceedsMaxNotional,
       text: `projected position ${fmtUsd(positionUsd)} exceeds max ${fmtUsd(account.maxPositionNotional)}`,
     });
+  }
+  if (account.maxDeltaUsd > 0 && ctx.deltaUsdPerUnit !== undefined) {
+    const current = ctx.underlyingDeltaUsd ?? 0;
+    const delta = current + sign * order.quantity * ctx.deltaUsdPerUnit;
+    if (
+      Math.abs(delta) > Math.abs(current) &&
+      Math.abs(delta) > account.maxDeltaUsd
+    ) {
+      breaches.push({
+        code: EntryRiskCode.MaxDelta,
+        reason: RejectReason.ExceedsMaxDelta,
+        text: `net delta on ${instrument.underlying || instrument.ric} ${fmtUsd(delta)} exceeds max ${fmtUsd(account.maxDeltaUsd)}`,
+      });
+    }
   }
   return breaches;
 };

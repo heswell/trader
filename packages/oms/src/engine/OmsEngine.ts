@@ -46,12 +46,18 @@ import {
   applyFill,
   FLAT_POSITION,
   markPosition,
+  type PositionGreeks,
   type PositionMarks,
   type PositionState,
+  positionGreeks,
 } from "../domain/positionMath";
 import { type AccessScope, canSeeAccount } from "../permissions/access";
 import type { Account } from "../reference/accounts";
-import { checkPreTradeRisk, referencePrice } from "../risk/preTradeRisk";
+import {
+  checkPreTradeRisk,
+  deltaUsdPerUnit,
+  referencePrice,
+} from "../risk/preTradeRisk";
 import type { OmsGateway } from "./gateway";
 
 export interface OrderInfo {
@@ -182,7 +188,7 @@ export interface Fill {
   timestamp: number;
 }
 
-export interface Position extends PositionState, PositionMarks {
+export interface Position extends PositionState, PositionMarks, PositionGreeks {
   id: string;
   account: string;
   ric: string;
@@ -190,9 +196,9 @@ export interface Position extends PositionState, PositionMarks {
   /** Instrument static, denormalised so positions can group by it. */
   exchange: string;
   sector: string;
-  /** InstrumentType of the ric (EQUITY / FUTURE). */
+  /** InstrumentType of the ric (EQUITY / FUTURE / OPTION). */
   instrumentType: string;
-  /** Futures: ric of the underlying; a stock's own ric. */
+  /** Futures and options: ric of the underlying; a stock's own ric. */
   underlying: string;
   /** marketValue converted to USD with the instrument's usdPerPriceUnit. */
   marketValueUsd: number;
@@ -821,10 +827,12 @@ export class OmsEngine {
     }
     for (const position of state.positions) {
       const instrument = this.#gateway.getInstrument(position.ric);
+      const usd = this.#usdMarks(position);
       Object.assign(
         position,
         instrument ? this.#instrumentFields(instrument) : undefined,
-        this.#usdMarks(position),
+        usd,
+        this.#greeks(position, usd.marketValueUsd),
       );
       this.positions.set(position.id, position);
       this.#sink.position?.({ ...position });
@@ -1023,9 +1031,10 @@ export class OmsEngine {
   #riskContext(account: string, ric: string, excludeOrderId?: string) {
     const top = this.#gateway.getTopOfBook(ric);
     const working = this.#workingQty(account, ric, excludeOrderId);
+    const instrument = this.#gateway.getInstrument(ric);
     return {
       account: this.accounts.get(account),
-      instrument: this.#gateway.getInstrument(ric),
+      instrument,
       phase: top?.phase ?? this.#gateway.getPhase(ric) ?? TradingPhase.Closed,
       market: top,
       restricted: this.restricted,
@@ -1033,7 +1042,31 @@ export class OmsEngine {
       positionQty: this.getPosition(account, ric)?.quantity ?? 0,
       workingBuyQty: working.buy,
       workingSellQty: working.sell,
+      deltaUsdPerUnit: instrument
+        ? deltaUsdPerUnit(instrument, top, this.#gateway.getOptionGreeks?.(ric))
+        : undefined,
+      underlyingDeltaUsd: instrument
+        ? this.underlyingDeltaUsd(account, instrument.underlying || ric)
+        : 0,
+      nearestLiquid:
+        instrument?.liquid === false
+          ? this.#gateway.nearestLiquidOption?.(ric)
+          : undefined,
     };
+  }
+
+  /**
+   * The account's net delta (USD) on `underlying`: the deltaUsd of its
+   * positions in the stock (or index), its futures and its options.
+   */
+  underlyingDeltaUsd(account: string, underlying: string) {
+    let delta = 0;
+    for (const position of this.positions.values()) {
+      if (position.account === account && position.underlying === underlying) {
+        delta += position.deltaUsd ?? 0;
+      }
+    }
+    return delta;
   }
 
   // ---------------------------------------------------------------- requests
@@ -1565,20 +1598,27 @@ export class OmsEngine {
         instrument,
         this.#gateway.getTopOfBook(position.ric),
       );
-      if (px === position.markPx) continue;
+      // an option's Greeks move with its underlying, not only its price
+      const isOption = instrument.instrumentType === InstrumentType.Option;
+      if (px === position.markPx && !isOption) continue;
       const marks = markPosition(
         position,
         px,
         contractMultiplierOf(instrument),
       );
-      Object.assign(
-        position,
-        marks,
-        this.#usdMarks({ ...position, ...marks }),
-        {
-          lastUpdate: this.#clock(),
-        },
-      );
+      const usd = this.#usdMarks({ ...position, ...marks });
+      const greeks = this.#greeks(position, usd.marketValueUsd);
+      if (
+        px === position.markPx &&
+        greeks.delta === position.delta &&
+        greeks.gamma === position.gamma &&
+        greeks.vegaUsd === position.vegaUsd
+      ) {
+        continue;
+      }
+      Object.assign(position, marks, usd, greeks, {
+        lastUpdate: this.#clock(),
+      });
       this.#sink.position?.({ ...position });
       changed++;
     }
@@ -1599,6 +1639,25 @@ export class OmsEngine {
       marketValueUsd: Math.round(marketValue * usd * 100) / 100,
       totalPnlUsd: Math.round(totalPnl * usd * 100) / 100,
     };
+  }
+
+  /** A position's Greeks now (see positionGreeks). */
+  #greeks(
+    { ric, quantity }: Pick<Position, "ric" | "quantity">,
+    marketValueUsd: number,
+  ): PositionGreeks {
+    const instrument = this.#gateway.getInstrument(ric);
+    const option =
+      instrument?.instrumentType === InstrumentType.Option
+        ? { greeks: this.#gateway.getOptionGreeks?.(ric) }
+        : undefined;
+    return positionGreeks(
+      quantity,
+      contractMultiplierOf(instrument),
+      instrument?.usdPerPriceUnit ?? 1,
+      option,
+      marketValueUsd,
+    );
   }
 
   /** Instrument static denormalised onto a position. */
@@ -1626,6 +1685,7 @@ export class OmsEngine {
     );
     const markPx = existing?.markPx || fill.price;
     const marks = markPosition(state, markPx, multiplier);
+    const usd = this.#usdMarks({ ric: fill.ric, ...marks });
     const position: Position = {
       id,
       account: fill.account,
@@ -1634,7 +1694,11 @@ export class OmsEngine {
       ...this.#instrumentFields(instrument),
       ...state,
       ...marks,
-      ...this.#usdMarks({ ric: fill.ric, ...marks }),
+      ...usd,
+      ...this.#greeks(
+        { ric: fill.ric, quantity: state.quantity },
+        usd.marketValueUsd,
+      ),
       lastUpdate: fill.timestamp,
     };
     this.positions.set(id, position);

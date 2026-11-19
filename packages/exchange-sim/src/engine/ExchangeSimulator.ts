@@ -397,6 +397,8 @@ export class ExchangeSimulator {
       getBook: (ric) => this.#simulated.get(ric)?.book,
       getSessionSchedule: () => this.sessionSchedule,
       onTape: (listener) => this.onTape(listener),
+      optionValue: (ric) => this.optionValue(ric),
+      optionChain: (underlying) => this.optionChain(underlying),
       timers: this.timers,
     });
     this.session = new TradingSession(this.config);

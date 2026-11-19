@@ -1002,6 +1002,12 @@ export const accounts = defineTable({
     { name: "maxOrderQty", dataType: "long" },
     { name: "maxOrderNotional", dataType: "double" },
     { name: "maxPositionNotional", dataType: "double" },
+    {
+      name: "maxDeltaUsd",
+      dataType: "double",
+      description:
+        "Largest net delta (USD) per underlying: a stock, its futures and its options together.",
+    },
     { name: "enabled", dataType: "boolean" },
   ],
 });
@@ -1234,6 +1240,30 @@ export const positions = defineTable({
       name: "totalPnlUsd",
       dataType: "double",
       description: "totalPnl in USD (instrument usdPerPriceUnit).",
+    },
+    {
+      name: "delta",
+      dataType: "double",
+      description:
+        "Shares (or index units) equivalent: quantity x multiplier, times the option's delta for an option. Sums by underlying.",
+    },
+    {
+      name: "deltaUsd",
+      dataType: "double",
+      description:
+        "delta x the underlying's price, in USD: a stock's or future's marketValueUsd.",
+    },
+    {
+      name: "gamma",
+      dataType: "double",
+      description:
+        "Change in delta per one point of the underlying (options; 0 otherwise).",
+    },
+    {
+      name: "vegaUsd",
+      dataType: "double",
+      description:
+        "Change in market value (USD) per vol point (options; 0 otherwise).",
     },
     { name: "lastUpdate", dataType: "epochtimestamp" },
   ],

@@ -238,6 +238,8 @@ export const RejectReason = Object.freeze({
   InvalidLotSize: "INVALID_LOT_SIZE",
   ExceedsMaxQuantity: "EXCEEDS_MAX_QUANTITY",
   ExceedsMaxNotional: "EXCEEDS_MAX_NOTIONAL",
+  /** Net delta on the underlying would exceed the account's maxDeltaUsd. */
+  ExceedsMaxDelta: "EXCEEDS_MAX_DELTA",
   PriceOutsideCollar: "PRICE_OUTSIDE_COLLAR",
   RestrictedInstrument: "RESTRICTED_INSTRUMENT",
   InstrumentHalted: "INSTRUMENT_HALTED",

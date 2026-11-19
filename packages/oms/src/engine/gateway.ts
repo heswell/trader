@@ -6,6 +6,7 @@ import type {
   GatewayNewOrder,
   InstrumentEvent,
   MarketTrade,
+  OptionGreeksQuote,
   TopOfBook,
 } from "@heswell/exchange-sim";
 import {
@@ -34,7 +35,13 @@ export interface OmsGateway {
   onTrade?(listener: (trade: MarketTrade) => void): () => void;
   /** Futures listed / expired; absent = a fixed instrument list. */
   onInstrumentEvent?(listener: (event: InstrumentEvent) => void): () => void;
+  /** An option's model Greeks now; absent / undefined = no Greeks. */
+  getOptionGreeks?(ric: string): OptionGreeksQuote | undefined;
+  /** The liquid strike nearest a quote-only option (same expiry and type). */
+  nearestLiquidOption?(ric: string): string | undefined;
 }
+
+export type { OptionGreeksQuote };
 
 export type Scheduler = (fn: () => void, delayMs: number) => void;
 
@@ -111,6 +118,12 @@ export class DelayedGateway implements OmsGateway {
   }
   getSessionSchedule() {
     return this.inner.getSessionSchedule?.() ?? UNSCHEDULED;
+  }
+  getOptionGreeks(ric: string) {
+    return this.inner.getOptionGreeks?.(ric);
+  }
+  nearestLiquidOption(ric: string) {
+    return this.inner.nearestLiquidOption?.(ric);
   }
   onTrade(listener: (trade: MarketTrade) => void) {
     this.#tradeListeners.add(listener);

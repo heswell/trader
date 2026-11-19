@@ -74,3 +74,66 @@ export const markPosition = (
     totalPnl: position.realizedPnl + unrealizedPnl,
   };
 };
+
+/** A position's Greeks, in shares (or index units) and USD. */
+export interface PositionGreeks {
+  /** Shares equivalent: quantity x multiplier (x the option's delta). */
+  delta: number;
+  /** delta x the underlying's price, in USD. */
+  deltaUsd: number;
+  /** Change in delta per point of the underlying (options only). */
+  gamma: number;
+  /** Change in market value (USD) per vol point (options only). */
+  vegaUsd: number;
+}
+
+export const NO_GREEKS: PositionGreeks = Object.freeze({
+  delta: 0,
+  deltaUsd: 0,
+  gamma: 0,
+  vegaUsd: 0,
+});
+
+const round = (n: number, dp: number) => {
+  const f = 10 ** dp;
+  return Math.round(n * f) / f || 0;
+};
+
+/**
+ * Greeks of `quantity` contracts. An option's come from its model Greeks
+ * (Black-76 on the forward, so delta x forward is the spot dollar delta);
+ * none is all 0 (an expired option). Anything else is delta one: its
+ * delta is the quantity x multiplier and its deltaUsd the market value.
+ */
+export const positionGreeks = (
+  quantity: number,
+  multiplier: number,
+  usdPerPriceUnit: number,
+  option:
+    | {
+        greeks:
+          | { delta: number; gamma: number; vega: number; forward: number }
+          | undefined;
+      }
+    | undefined,
+  marketValueUsd: number,
+): PositionGreeks => {
+  const units = quantity * multiplier;
+  if (!option) {
+    return {
+      delta: round(units, 2),
+      deltaUsd: marketValueUsd,
+      gamma: 0,
+      vegaUsd: 0,
+    };
+  }
+  const { greeks } = option;
+  if (!greeks || quantity === 0) return NO_GREEKS;
+  const delta = units * greeks.delta;
+  return {
+    delta: round(delta, 2),
+    deltaUsd: round(delta * greeks.forward * usdPerPriceUnit, 2),
+    gamma: round(units * greeks.gamma, 4),
+    vegaUsd: round((units * greeks.vega * usdPerPriceUnit) / 100, 2),
+  };
+};

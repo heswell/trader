@@ -13,7 +13,7 @@ import {
   Side,
   type TimeInForce as TIF,
 } from "./enums";
-import { isOnTick, isValidLot, tickScheduleOf } from "./ticks";
+import { isOnTick, isValidLot, tickScheduleOf, tickSizeAt } from "./ticks";
 
 /** Instrument static needed for order validation (subset of InstrumentRow). */
 export interface InstrumentStatic {
@@ -355,3 +355,48 @@ export const validateAmend = (
     return validateStopLimitPrices(original.side, price, stopPrice);
   }
 };
+
+/**
+ * Options: the least price collar, as a fraction of the reference price.
+ * A premium moves several times as much as its underlying (and a cheap
+ * wing many times), so the equity collar would refuse ordinary orders.
+ */
+export const OPTION_COLLAR_PCT = 0.5;
+/** Options: the collar is never narrower than this many ticks. */
+export const OPTION_COLLAR_TICKS = 10;
+
+/**
+ * Widest distance a limit price may sit from the reference price: `ref`
+ * × collarPct, and for an option at least OPTION_COLLAR_PCT of it and
+ * OPTION_COLLAR_TICKS ticks.
+ */
+export const collarWidth = (
+  instrument: Pick<
+    InstrumentStatic,
+    "instrumentType" | "tickSize" | "tickBands"
+  >,
+  ref: number,
+  collarPct: number,
+) => {
+  if (instrument.instrumentType !== InstrumentType.Option) {
+    return ref * collarPct;
+  }
+  const tick = tickSizeAt(tickScheduleOf(instrument), ref);
+  return Math.max(
+    ref * Math.max(collarPct, OPTION_COLLAR_PCT),
+    tick * OPTION_COLLAR_TICKS,
+  );
+};
+
+/** True when a limit `price` is outside the collar around `ref`. */
+export const isOutsideCollar = (
+  instrument: Pick<
+    InstrumentStatic,
+    "instrumentType" | "tickSize" | "tickBands"
+  >,
+  price: number,
+  ref: number,
+  collarPct: number,
+) =>
+  ref > 0 &&
+  Math.abs(price - ref) > collarWidth(instrument, ref, collarPct) + 1e-9;
