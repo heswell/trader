@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 625 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 631 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -26,6 +26,7 @@ Imports: `@heswell/trading-ui`. 625 exports. Types are shown as written in the s
 - **components/InstrumentGrid**: [addToWatchlist](#addtowatchlist), [buildInstrumentGridFilter](#buildinstrumentgridfilter), [cellUnchanged](#cellunchanged), [ChangeCell](#changecell), [COLUMN_SETS_SETTINGS_KEY](#column_sets_settings_key), [createWatchlist](#createwatchlist), [DEFAULT_INSTRUMENT_GRID_COLUMNS](#default_instrument_grid_columns), [DEFAULT_VIEW_SETTINGS](#default_view_settings), [defaultColumnSets](#defaultcolumnsets), [deleteWatchlist](#deletewatchlist), [EMPTY_WATCHLISTS](#empty_watchlists), [FILTERS_SETTINGS_KEY](#filters_settings_key), [GridChannelLinks](#gridchannellinks), [GridChannelLinksProvider](#gridchannellinksprovider), [gridSettingsKey](#gridsettingskey), [GridViewSettings](#gridviewsettings), [GROUPABLE_COLUMNS](#groupable_columns), [INSTRUMENT_GRID_LINK_SOURCE](#instrument_grid_link_source), [InstrumentAction](#instrumentaction), [InstrumentGrid](#instrumentgrid), [instrumentGridColumn](#instrumentgridcolumn), [InstrumentGridColumnOptions](#instrumentgridcolumnoptions), [instrumentGridColumns](#instrumentgridcolumns), [InstrumentGridFilterParts](#instrumentgridfilterparts), [InstrumentGridProps](#instrumentgridprops), [InstrumentRow](#instrumentrow), [isInLinkCell](#isinlinkcell), [LINK_COLUMN](#link_column), [linkColumnDescriptor](#linkcolumndescriptor), [parseColumnSets](#parsecolumnsets), [parseFilterState](#parsefilterstate), [parseViewSettings](#parseviewsettings), [parseWatchlists](#parsewatchlists), [PhaseCell](#phasecell), [phaseLabel](#phaselabel), [priceFormatOf](#priceformatof), [PriceMoveCell](#pricemovecell), [QuantityCell](#quantitycell), [quickFilterExpression](#quickfilterexpression), [registerInstrumentGridRenderers](#registerinstrumentgridrenderers), [registerLinkCellRenderer](#registerlinkcellrenderer), [removeFromWatchlist](#removefromwatchlist), [renameWatchlist](#renamewatchlist), [rowRicOf](#rowricof), [SCREENING_COLUMNS](#screening_columns), [SCREENING_SET_COLUMNS](#screening_set_columns), [SPARKLINE_COLUMN](#sparkline_column), [StoredSetting](#storedsetting), [titleCaseColumnName](#titlecasecolumnname), [toInstrument](#toinstrument), [updateWatchlist](#updatewatchlist), [useGridChannelLinks](#usegridchannellinks), [useStoredSetting](#usestoredsetting), [useWatchlists](#usewatchlists), [UseWatchlistsResult](#usewatchlistsresult), [VIEW_SETTINGS_KEY](#view_settings_key), [Watchlist](#watchlist), [watchlistFilterExpression](#watchlistfilterexpression), [watchlistNameError](#watchlistnameerror), [WATCHLISTS_SETTINGS_KEY](#watchlists_settings_key), [WatchlistState](#watchliststate), [withSearchCasings](#withsearchcasings)
 - **components/InstrumentLookup**: [InstrumentLookup](#instrumentlookup), [InstrumentLookupProvider](#instrumentlookupprovider), [useInstrumentLookup](#useinstrumentlookup)
 - **components/InstrumentPicker**: [INSTRUMENT_PICKER_SOURCE](#instrument_picker_source), [InstrumentPicker](#instrumentpicker), [InstrumentPickerProps](#instrumentpickerprops), [instrumentSearchFilter](#instrumentsearchfilter), [toSelectedInstrument](#toselectedinstrument)
+- **components/LinkedInstrumentsFooter**: [LinkedInstrument](#linkedinstrument), [linkedInstruments](#linkedinstruments), [LinkedInstrumentsFooter](#linkedinstrumentsfooter), [LinkedInstrumentsFooterProps](#linkedinstrumentsfooterprops), [useLinkedRicFilter](#uselinkedricfilter)
 - **components/LinkGroupSelector**: [LinkGroupMenuButton](#linkgroupmenubutton), [LinkGroupSelector](#linkgroupselector), [LinkGroupSelectorProps](#linkgroupselectorprops), [LinkGroupSwatch](#linkgroupswatch), [PanelLinkGroupSelector](#panellinkgroupselector)
 - **components/MarketDepth**: [MarketDepth](#marketdepth), [MarketDepthLevelClick](#marketdepthlevelclick), [MarketDepthProps](#marketdepthprops)
 - **components/NamePrompt**: [NamePrompt](#nameprompt), [NamePromptProps](#namepromptprops)
@@ -51,7 +52,7 @@ Imports: `@heswell/trading-ui`. 625 exports. Types are shown as written in the s
 - **components/TradeTape**: [sizePercentile](#sizepercentile), [TradeTape](#tradetape), [TradeTapeProps](#tradetapeprops)
 - **components/TradingCellRenderers**: [registerTradingCellRenderers](#registertradingcellrenderers), [TradingRenderer](#tradingrenderer)
 - **components/WatchlistDialog**: [addRics](#addrics), [facetSummary](#facetsummary), [facetValueLabel](#facetvaluelabel), [INSTRUMENT_TYPE_OPTIONS](#instrument_type_options), [isNarrowed](#isnarrowed), [PICKER_FACETS](#picker_facets), [PICKER_ROW_LIMIT](#picker_row_limit), [PickerFacet](#pickerfacet), [PickerFacetValues](#pickerfacetvalues), [pickerFilter](#pickerfilter), [toggleRic](#toggleric), [WatchlistDialog](#watchlistdialog), [WatchlistDialogProps](#watchlistdialogprops)
-- **utils**: [createLocalSettingsStorage](#createlocalsettingsstorage), [createMemorySettingsStorage](#creatememorysettingsstorage), [CsvColumn](#csvcolumn), [directionColour](#directioncolour), [DONE_STATUSES](#done_statuses), [downloadCsv](#downloadcsv), [filterString](#filterstring), [formatNotional](#formatnotional), [formatPercent](#formatpercent), [formatPrice](#formatprice), [formatQuantity](#formatquantity), [formatTime](#formattime), [instrumentTickSchedule](#instrumenttickschedule), [isInactivePhase](#isinactivephase), [isOrderAmendable](#isorderamendable), [isOrderCancellable](#isordercancellable), [orderStatusCategory](#orderstatuscategory), [OrderStatusCategory](#orderstatuscategory-1), [orderStatusColour](#orderstatuscolour), [orderStatusIcon](#orderstatusicon), [orderStatusLabel](#orderstatuslabel), [priceDecimals](#pricedecimals), [PriceFormat](#priceformat), [rowsToCsv](#rowstocsv), [sideColour](#sidecolour), [stopTriggerState](#stoptriggerstate), [TimeFormat](#timeformat), [TradingColour](#tradingcolour), [tradingPhaseColour](#tradingphasecolour), [tradingPhaseText](#tradingphasetext), [UserSettingsProvider](#usersettingsprovider), [UserSettingsProviderProps](#usersettingsproviderprops), [UserSettingsStorage](#usersettingsstorage), [useUserSettingsStorage](#useusersettingsstorage), [WORKING_STATUSES](#working_statuses)
+- **utils**: [andFilters](#andfilters), [createLocalSettingsStorage](#createlocalsettingsstorage), [createMemorySettingsStorage](#creatememorysettingsstorage), [CsvColumn](#csvcolumn), [directionColour](#directioncolour), [DONE_STATUSES](#done_statuses), [downloadCsv](#downloadcsv), [filterString](#filterstring), [formatNotional](#formatnotional), [formatPercent](#formatpercent), [formatPrice](#formatprice), [formatQuantity](#formatquantity), [formatTime](#formattime), [instrumentTickSchedule](#instrumenttickschedule), [isInactivePhase](#isinactivephase), [isOrderAmendable](#isorderamendable), [isOrderCancellable](#isordercancellable), [orderStatusCategory](#orderstatuscategory), [OrderStatusCategory](#orderstatuscategory-1), [orderStatusColour](#orderstatuscolour), [orderStatusIcon](#orderstatusicon), [orderStatusLabel](#orderstatuslabel), [priceDecimals](#pricedecimals), [PriceFormat](#priceformat), [rowsToCsv](#rowstocsv), [sideColour](#sidecolour), [stopTriggerState](#stoptriggerstate), [TimeFormat](#timeformat), [TradingColour](#tradingcolour), [tradingPhaseColour](#tradingphasecolour), [tradingPhaseText](#tradingphasetext), [UserSettingsProvider](#usersettingsprovider), [UserSettingsProviderProps](#usersettingsproviderprops), [UserSettingsStorage](#usersettingsstorage), [useUserSettingsStorage](#useusersettingsstorage), [WORKING_STATUSES](#working_statuses)
 - **domain**: [allowedTimesInForce](#allowedtimesinforce), [isAlgoStrategy](#isalgostrategy), [isStrategyAllowed](#isstrategyallowed), [isTimeInForceAllowed](#istimeinforceallowed), [nonStopOrdType](#nonstopordtype), [ORD_TYPE_LABEL](#ord_type_label), [ORDER_TICKET_TIFS](#order_ticket_tifs)
 - **export**: [canStreamToFile](#canstreamtofile), [CellTextFormatter](#celltextformatter), [CellTextFormatters](#celltextformatters), [columnLabel](#columnlabel), [csvField](#csvfield), [csvFormatter](#csvformatter), [CsvFormatterOptions](#csvformatteroptions), [EXPORT_VIEWPORT_RPC](#export_viewport_rpc), [ExportColumn](#exportcolumn), [exportColumns](#exportcolumns), [ExportColumnsOptions](#exportcolumnsoptions), [ExportDataRow](#exportdatarow), [ExportProgress](#exportprogress), [ExportResult](#exportresult), [ExportSink](#exportsink), [ExportTicket](#exportticket), [ExportViewportOptions](#exportviewportoptions), [exportViewportToCsv](#exportviewporttocsv), [isLocalEngineDataSource](#islocalenginedatasource), [localExportRows](#localexportrows), [LocalExportRows](#localexportrows-1), [memoryDownloadSink](#memorydownloadsink), [ndjsonRows](#ndjsonrows), [pickExportSink](#pickexportsink), [requestViewportExport](#requestviewportexport), [tradingTextFormatters](#tradingtextformatters)
 
@@ -3246,7 +3247,7 @@ Props of [`FillProgressBar`](#fillprogressbar).
 
 #### FillsBlotter
 
-*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L294)
+*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L309)
 
 Fills blotter on `fills` (the server already filters to the user's own
 fills): grouping by ric / ric+side with summed quantity and notional and
@@ -3269,7 +3270,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### FillsBlotterProps
 
-*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L139)
+*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L144)
 
 Props of [`FillsBlotter`](#fillsblotter).
 
@@ -3286,7 +3287,7 @@ Props of [`FillsBlotter`](#fillsblotter).
 
 #### FillsGrouping
 
-*type* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L43)
+*type* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L48)
 
 ```ts
 type FillsGrouping = "none" | "ric" | "ric-side"
@@ -4089,6 +4090,75 @@ const INSTRUMENT_PICKER_SOURCE: "InstrumentPicker"
 
 Props of [`InstrumentPicker`](#instrumentpicker).
 
+## components/LinkedInstrumentsFooter
+
+### Components (components/LinkedInstrumentsFooter)
+
+#### LinkedInstrumentsFooter
+
+*component* · [components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx](../../packages/trading-ui/src/components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx#L61)
+
+The instruments on the workspace channels, as chips under a blotter
+("Linked"). A chip filters the rows to its instrument; pressed again,
+all rows. The active channel's chip has a ring. Display only: the chips
+never change a channel.
+
+Props: `LinkedInstrumentsFooterProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `activeChannel` | `LinkGroupId` |  |  |
+| `filterRic?` | `string` |  | The ric the rows are filtered to, if a chip is pressed. |
+| `instruments` | `readonly LinkedInstrument[]` |  |  |
+| `onFilterRic` | `(ric: string \| undefined) => void` |  |  |
+| `summary?` | `string` |  | Shown at the end, e.g. "7 orders". |
+
+Also accepts the standard HTML attributes.
+
+### Hooks (components/LinkedInstrumentsFooter)
+
+#### useLinkedRicFilter
+
+*hook* · [components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx](../../packages/trading-ui/src/components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx#L36)
+
+A blotter's chip filter: the ric of the pressed chip, cleared when that
+ric leaves the channels.
+
+```ts
+useLinkedRicFilter(linkedRics: readonly string[]): readonly [string | undefined, Dispatch<SetStateAction<string | undefined>>]
+```
+
+### Functions (components/LinkedInstrumentsFooter)
+
+#### linkedInstruments
+
+*function* · [components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx](../../packages/trading-ui/src/components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx#L21)
+
+The instruments on a channel, in channel order.
+
+```ts
+linkedInstruments({ channels, selections, byRic, }: Pick<ChannelRics, "byRic" | "channels" | "selections">): LinkedInstrument[]
+```
+
+### Interfaces (components/LinkedInstrumentsFooter)
+
+#### LinkedInstrument
+
+*interface* · [components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx](../../packages/trading-ui/src/components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx#L15)
+
+A linked instrument: the ric and the channel holding it.
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `ric` | `string` |  |  |
+| `channel` | `LinkGroupDefinition` |  |  |
+
+#### LinkedInstrumentsFooterProps
+
+*interface* · [components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx](../../packages/trading-ui/src/components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx#L44)
+
+Props of [`LinkedInstrumentsFooter`](#linkedinstrumentsfooter).
+
 ## components/LinkGroupSelector
 
 ### Components (components/LinkGroupSelector)
@@ -4268,7 +4338,7 @@ Props of [`NamePrompt`](#nameprompt).
 
 #### OrderBlotter
 
-*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L654)
+*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L672)
 
 Order blotter on `parentOrders`: status badge, fill progress, tick-formatted
 avg price, filter tabs, per-row amend / cancel (enabled only for NEW,
@@ -4358,7 +4428,7 @@ const orderBlotterTableConfig: TableConfig
 
 #### OrderBlotterProps
 
-*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L91)
+*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L96)
 
 Props of [`OrderBlotter`](#orderblotter).
 
@@ -7281,6 +7351,17 @@ useUserSettingsStorage(): UserSettingsStorage
 ```
 
 ### Functions (utils)
+
+#### andFilters
+
+*function* · [utils/filters.ts](../../packages/trading-ui/src/utils/filters.ts#L9)
+
+Join simple vuu filter clauses (no `or`) with `and`, skipping empty ones
+("" if none).
+
+```ts
+andFilters(...clauses: readonly string[]): string
+```
 
 #### createLocalSettingsStorage
 
