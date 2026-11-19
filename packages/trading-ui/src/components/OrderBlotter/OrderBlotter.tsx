@@ -8,6 +8,12 @@ import {
   useContextPanel,
 } from "@vuu-ui/core";
 import type { DataSource } from "@vuu-ui/vuu-data-types";
+import { ContextMenuProvider } from "@vuu-ui/vuu-context-menu";
+import type {
+  ContextMenuItemDescriptor,
+  MenuActionHandler,
+  MenuBuilder,
+} from "@vuu-ui/vuu-context-menu";
 import { Table } from "@vuu-ui/vuu-table";
 import { SplitPane } from "@vuu-ui/vuu-ui-controls";
 import type { TableRowSelectHandler } from "@vuu-ui/vuu-table-types";
@@ -33,6 +39,7 @@ import {
 import type { TradingConnectionState } from "../../connection/useTradingConnectionStatus";
 import { sendTradingRpc, TradingRpcError } from "../../data/tradingRpc";
 import { useDataSourceRows } from "../../data/useDataSourceRows";
+import { useInstrumentLinkBus } from "../../instrument-context/InstrumentContext";
 import { andFilters, filterString } from "../../utils/filters";
 import { useTableSelectedKeys } from "../../data/useTableSelectedKeys";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
@@ -40,8 +47,15 @@ import { useTradingNotifications } from "../../notifications/TradingNotification
 import { rpcRejectEvent } from "../../notifications/tradingOrderEvents";
 import { isOrderAmendable, isOrderCancellable } from "../../utils/orderStatus";
 import { useStableCallback } from "../../hooks/useStableCallback";
-import { InstrumentLookupProvider } from "../InstrumentLookup";
-import { useChannelRowMarkers } from "../ChannelRowMarkers";
+import {
+  InstrumentLookupProvider,
+  useInstrumentLookup,
+} from "../InstrumentLookup";
+import {
+  channelLinkMenuItem,
+  handleChannelLinkAction,
+  useChannelRowMarkers,
+} from "../ChannelRowMarkers";
 import {
   LinkedInstrumentsFooter,
   linkedInstruments,
@@ -389,6 +403,70 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
     );
     const stableHandleSelect = useStableCallback(handleSelect);
 
+    // --- row context menu (client side): order actions, then "Link <ric> to"
+    const bus = useInstrumentLinkBus();
+    const lookup = useInstrumentLookup();
+    const menuBuilder = useCallback<MenuBuilder>(
+      (location, options) => {
+        if (location !== "grid") return [];
+        const dataRow = (options as { dataRow?: Record<string, unknown> })
+          .dataRow;
+        if (!dataRow?.orderId || !dataRow.ric) return [];
+        const orderId = String(dataRow.orderId);
+        const ric = String(dataRow.ric);
+        const status = String(dataRow.status);
+        const items: ContextMenuItemDescriptor[] = [];
+        if (!readOnly && isOrderAmendable(status))
+          items.push({
+            id: "order-amend",
+            label: "Amend…",
+            options: { orderId },
+          });
+        if (!readOnly && isOrderCancellable(status))
+          items.push({
+            id: "order-cancel",
+            label: "Cancel order",
+            options: { orderId },
+          });
+        if (showOrderBook)
+          items.push({
+            id: "order-book",
+            label: "Order book",
+            options: { orderId },
+          });
+        items.push(
+          channelLinkMenuItem(
+            lookup.get(ric) ?? { ric },
+            markers,
+            items.length > 0,
+          ),
+        );
+        return items;
+      },
+      [lookup, markers, readOnly, showOrderBook],
+    );
+    const menuActionHandler = useCallback<MenuActionHandler>(
+      (id, options) => {
+        const orderId = (options as { orderId?: string } | undefined)?.orderId;
+        if (id === "order-amend" && orderId) actions.amend(orderId);
+        else if (id === "order-cancel" && orderId) actions.cancel(orderId);
+        else if (id === "order-book" && orderId) {
+          setFocusedOrderId(orderId);
+          onFocusedOrderChange(orderId);
+          openOrderBook();
+        } else
+          return handleChannelLinkAction(
+            id,
+            options,
+            bus,
+            markers.channels,
+            SOURCE,
+          );
+        return true;
+      },
+      [actions, bus, markers.channels, onFocusedOrderChange, openOrderBook],
+    );
+
     const amendTarget = amending
       ? records.find((r) => r.orderId === amending)
       : undefined;
@@ -501,14 +579,19 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
               {...staleProps}
               className={cx(`${classBase}-table`, staleProps.className)}
             >
-              <Table
-                config={markers.tableConfig}
-                rowSelectionBorder
-                dataSource={dataSource}
-                onSelect={stableHandleSelect}
-                onSelectionChange={onSelectionChange}
-                selectionModel="extended"
-              />
+              <ContextMenuProvider
+                menuActionHandler={menuActionHandler}
+                menuBuilder={menuBuilder}
+              >
+                <Table
+                  config={markers.tableConfig}
+                  rowSelectionBorder
+                  dataSource={dataSource}
+                  onSelect={stableHandleSelect}
+                  onSelectionChange={onSelectionChange}
+                  selectionModel="extended"
+                />
+              </ContextMenuProvider>
             </div>
           </OrderBlotterContext.Provider>
           {showChildOrders ? (

@@ -1,6 +1,8 @@
 import { Button, ToggleButton, ToggleButtonGroup } from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
+import { ContextMenuProvider } from "@vuu-ui/vuu-context-menu";
+import type { MenuActionHandler, MenuBuilder } from "@vuu-ui/vuu-context-menu";
 import { Table } from "@vuu-ui/vuu-table";
 import type { TableConfig } from "@vuu-ui/vuu-table-types";
 import cx from "clsx";
@@ -15,9 +17,14 @@ import {
   useState,
 } from "react";
 import { useDataSourceRows } from "../../data/useDataSourceRows";
+import { useInstrumentLinkBus } from "../../instrument-context/InstrumentContext";
 import { andFilters, filterString } from "../../utils/filters";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
-import { useChannelRowMarkers } from "../ChannelRowMarkers";
+import {
+  channelLinkMenuItem,
+  handleChannelLinkAction,
+  useChannelRowMarkers,
+} from "../ChannelRowMarkers";
 import {
   LinkedInstrumentsFooter,
   linkedInstruments,
@@ -26,7 +33,10 @@ import {
 import { useStaleData } from "../StaleIndicator/useStaleData";
 import { type CsvColumn, downloadCsv, rowsToCsv } from "../../utils/csv";
 import { formatTime } from "../../utils/time";
-import { InstrumentLookupProvider } from "../InstrumentLookup";
+import {
+  InstrumentLookupProvider,
+  useInstrumentLookup,
+} from "../InstrumentLookup";
 import {
   registerTradingCellRenderers,
   TradingRenderer,
@@ -183,6 +193,33 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
     const groupByLabelId = useId();
     const markers = useChannelRowMarkers(tableConfig);
     const [filterRic, setFilterRic] = useLinkedRicFilter(markers.linkedRics);
+    const bus = useInstrumentLinkBus();
+    const lookup = useInstrumentLookup();
+    // row context menu: "Link <ric> to" (fill rows only, not group rows)
+    const menuBuilder = useCallback<MenuBuilder>(
+      (location, options) => {
+        if (location !== "grid") return [];
+        const dataRow = (options as { dataRow?: Record<string, unknown> })
+          .dataRow;
+        if (!dataRow || dataRow.isLeaf === false || !dataRow.ric) return [];
+        const rowRic = String(dataRow.ric);
+        return [
+          channelLinkMenuItem(lookup.get(rowRic) ?? { ric: rowRic }, markers),
+        ];
+      },
+      [lookup, markers],
+    );
+    const menuActionHandler = useCallback<MenuActionHandler>(
+      (id, options) =>
+        handleChannelLinkAction(
+          id,
+          options,
+          bus,
+          markers.channels,
+          "FillsBlotter",
+        ),
+      [bus, markers.channels],
+    );
     const filter = { filter: andFilters(ricFilter(ric), ricFilter(filterRic)) };
 
     const dataSource = useTradingDataSource("fills", {
@@ -280,12 +317,17 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
         </div>
         <FillsLinkContext.Provider value={link}>
           <div className={`${classBase}-table`}>
-            <Table
-              config={markers.tableConfig}
-              rowSelectionBorder
-              dataSource={dataSource}
-              selectionModel="single"
-            />
+            <ContextMenuProvider
+              menuActionHandler={menuActionHandler}
+              menuBuilder={menuBuilder}
+            >
+              <Table
+                config={markers.tableConfig}
+                rowSelectionBorder
+                dataSource={dataSource}
+                selectionModel="single"
+              />
+            </ContextMenuProvider>
           </div>
         </FillsLinkContext.Provider>
         <LinkedInstrumentsFooter
