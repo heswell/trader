@@ -36,20 +36,11 @@ import { useDataSourceRows } from "../../data/useDataSourceRows";
 import { filterString } from "../../utils/filters";
 import { useTableSelectedKeys } from "../../data/useTableSelectedKeys";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
-import { useSelectedInstrument } from "../../instrument-context/InstrumentContext";
-import {
-  type LinkGroupProps,
-  useComponentLinkGroup,
-} from "../../instrument-context/useComponentLinkGroup";
 import { useTradingNotifications } from "../../notifications/TradingNotificationsProvider";
 import { rpcRejectEvent } from "../../notifications/tradingOrderEvents";
 import { isOrderAmendable, isOrderCancellable } from "../../utils/orderStatus";
 import { useStableCallback } from "../../hooks/useStableCallback";
-import {
-  InstrumentLookupProvider,
-  useInstrumentLookup,
-} from "../InstrumentLookup";
-import { LinkGroupSelector } from "../LinkGroupSelector";
+import { InstrumentLookupProvider } from "../InstrumentLookup";
 import { OrderBookView } from "../OrderBookView";
 import { useStaleData } from "../StaleIndicator/useStaleData";
 import { registerTradingCellRenderers } from "../TradingCellRenderers";
@@ -97,14 +88,17 @@ const OrderBookIcon = () => (
 const SOURCE = "OrderBlotter";
 
 export interface OrderBlotterProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect" | "onError">,
-    LinkGroupProps {
+  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect" | "onError"> {
   /** Initial filter tab. Default "working". */
   defaultTab?: OrderBlotterTab;
   /** Show the child (street) orders of the selected order. Default true. */
   showChildOrders?: boolean;
-  /** Called when an order row is selected (undefined on deselect). */
-  onOrderSelect?: (orderId: string | undefined) => void;
+  /**
+   * Called when an order row is selected, with the order's ric (undefined on
+   * deselect). Selection stays local: the blotter publishes nothing to a
+   * link channel.
+   */
+  onOrderSelect?: (orderId: string | undefined, ric?: string) => void;
   /** Called with RPC failures (also shown in the status line). */
   onError?: (error: TradingRpcError) => void;
   /**
@@ -216,15 +210,11 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
   function OrderBlotterInner(
     {
       className,
-      defaultLinkGroup,
       defaultTab = "working",
-      linkGroup: linkGroupProp,
       notify: notifyEnabled = true,
       onError,
-      onLinkGroupChange,
       onOrderSelect,
       readOnly = false,
-      showLinkGroupSelector = false,
       showChildOrders = true,
       showOrderBook = true,
       useEditSession = false,
@@ -238,16 +228,6 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
       testId: "trading-order-blotter",
       css: orderBlotterCss,
       window: targetWindow,
-    });
-    const lookup = useInstrumentLookup();
-    const { linkGroup, channel, setLinkGroup } = useComponentLinkGroup({
-      defaultLinkGroup,
-      linkGroup: linkGroupProp,
-      onLinkGroupChange,
-      persistKey: htmlAttributes.id ? `${SOURCE}:${htmlAttributes.id}` : SOURCE,
-    });
-    const { setSelectedInstrument } = useSelectedInstrument({
-      linkGroup: channel,
     });
     const notifications = useTradingNotifications();
     const [tab, setTab] = useState<OrderBlotterTab>(defaultTab);
@@ -382,14 +362,12 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
           onOrderSelect?.(undefined);
           return;
         }
-        const ric = String(row.ric);
         const orderId = String(row.orderId);
         setFocusedOrderId(orderId);
         onFocusedOrderChange(orderId);
-        onOrderSelect?.(orderId);
-        setSelectedInstrument(lookup.get(ric) ?? { ric }, SOURCE);
+        onOrderSelect?.(orderId, String(row.ric));
       },
-      [lookup, onFocusedOrderChange, onOrderSelect, setSelectedInstrument],
+      [onFocusedOrderChange, onOrderSelect],
     );
     const showContextPanel = useContextPanel();
     const openOrderBook = useCallback(
@@ -444,14 +422,10 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
         {...htmlAttributes}
         className={cx(classBase, className)}
         data-connection-state={connectionState}
-        data-link-group={linkGroup}
         data-testid="trading-order-blotter"
         ref={ref}
       >
         <div className={`${classBase}-toolbar`}>
-          {showLinkGroupSelector ? (
-            <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
-          ) : null}
           <ToggleButtonGroup
             aria-label="Order status"
             className={`${classBase}-status`}

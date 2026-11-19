@@ -94,4 +94,19 @@ describe("blotter layout", () => {
     expect(split?.children.length).toBe(1);
     expect(container.querySelector(".vuuSplitPane-splitter")).toBeNull();
   });
+
+  test("neither blotter owns a link group", () => {
+    render(
+      <>
+        <OrderBlotter />
+        <FillsBlotter />
+      </>,
+      { wrapper: Wrapper },
+    );
+    for (const id of ["trading-order-blotter", "trading-fills-blotter"]) {
+      const blotter = screen.getByTestId(id);
+      expect(blotter.hasAttribute("data-link-group")).toBe(false);
+      expect(blotter.querySelector(".tradingLinkGroupSelector")).toBeNull();
+    }
+  });
 });

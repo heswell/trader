@@ -2,10 +2,7 @@ import { Button, ToggleButton, ToggleButtonGroup } from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
 import { Table } from "@vuu-ui/vuu-table";
-import type {
-  TableConfig,
-  TableRowSelectHandler,
-} from "@vuu-ui/vuu-table-types";
+import type { TableConfig } from "@vuu-ui/vuu-table-types";
 import cx from "clsx";
 import {
   forwardRef,
@@ -20,20 +17,10 @@ import {
 import { useDataSourceRows } from "../../data/useDataSourceRows";
 import { filterString } from "../../utils/filters";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
-import { useSelectedInstrument } from "../../instrument-context/InstrumentContext";
-import {
-  type LinkGroupProps,
-  useComponentLinkGroup,
-} from "../../instrument-context/useComponentLinkGroup";
-import { LinkGroupSelector } from "../LinkGroupSelector";
 import { useStaleData } from "../StaleIndicator/useStaleData";
 import { type CsvColumn, downloadCsv, rowsToCsv } from "../../utils/csv";
 import { formatTime } from "../../utils/time";
-import { useStableCallback } from "../../hooks/useStableCallback";
-import {
-  InstrumentLookupProvider,
-  useInstrumentLookup,
-} from "../InstrumentLookup";
+import { InstrumentLookupProvider } from "../InstrumentLookup";
 import {
   registerTradingCellRenderers,
   TradingRenderer,
@@ -149,8 +136,7 @@ const CSV_COLUMNS: CsvColumn[] = [
 ];
 
 export interface FillsBlotterProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect">,
-    LinkGroupProps {
+  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect"> {
   /** Initial grouping. Default "none". */
   defaultGrouping?: FillsGrouping;
   /** Restrict to one instrument. */
@@ -171,10 +157,6 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
       className,
       csvFileName = "fills.csv",
       defaultGrouping = "none",
-      defaultLinkGroup,
-      linkGroup: linkGroupProp,
-      onLinkGroupChange,
-      showLinkGroupSelector = false,
       highlightOrderId,
       onOrderSelect,
       ric,
@@ -188,18 +170,6 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
       testId: "trading-fills-blotter",
       css: fillsBlotterCss,
       window: targetWindow,
-    });
-    const lookup = useInstrumentLookup();
-    const { linkGroup, channel, setLinkGroup } = useComponentLinkGroup({
-      defaultLinkGroup,
-      linkGroup: linkGroupProp,
-      onLinkGroupChange,
-      persistKey: htmlAttributes.id
-        ? `FillsBlotter:${htmlAttributes.id}`
-        : "FillsBlotter",
-    });
-    const { setSelectedInstrument } = useSelectedInstrument({
-      linkGroup: channel,
     });
     const [grouping, setGrouping] = useState<FillsGrouping>(defaultGrouping);
     const groupByLabelId = useId();
@@ -251,19 +221,6 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
             ];
     }, [grouping, dataSource]);
 
-    const handleSelect = useCallback<TableRowSelectHandler>(
-      (row) => {
-        if (row?.isLeaf && typeof row.ric === "string") {
-          setSelectedInstrument(
-            lookup.get(row.ric) ?? { ric: row.ric },
-            "FillsBlotter",
-          );
-        }
-      },
-      [lookup, setSelectedInstrument],
-    );
-    const stableHandleSelect = useStableCallback(handleSelect);
-
     const link = useMemo(
       () => ({ onOrderSelect, highlightOrderId }),
       [onOrderSelect, highlightOrderId],
@@ -278,14 +235,10 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
         {...htmlAttributes}
         {...staleProps}
         className={cx(classBase, className, staleProps.className)}
-        data-link-group={linkGroup}
         data-testid="trading-fills-blotter"
         ref={ref}
       >
         <div className={`${classBase}-toolbar`}>
-          {showLinkGroupSelector ? (
-            <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
-          ) : null}
           <span className={`${classBase}-label`} id={groupByLabelId}>
             Group by
           </span>
@@ -319,7 +272,6 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
             <Table
               config={tableConfig}
               dataSource={dataSource}
-              onSelect={stableHandleSelect}
               selectionModel="single"
             />
           </div>

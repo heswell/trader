@@ -4,7 +4,6 @@ import {
   OrderBookView,
   PositionsView,
   TradeTape,
-  useSelectedInstrument,
 } from "@heswell/trading-ui";
 import { useState } from "react";
 
@@ -57,14 +56,18 @@ export const PositionsViewExample = () => (
 
 const TAPE_RICS = ["0005.HK", "ADM.L", "AIR.PA", "ROG.S", "TSLA.OQ"];
 
-/** Tape follows the picked ric, or the instrument selected in the blotter. */
+/** Tape follows the picked ric, or the ric of the order selected in the blotter. */
 export const TradeTapeExample = () => {
-  const { selectedInstrument } = useSelectedInstrument();
   const [ric, setRic] = useState(TAPE_RICS[0]);
+  const [orderRic, setOrderRic] = useState<string>();
   return (
     <div style={{ display: "flex", gap: 16, ...fill }}>
       <div style={{ flex: 1, minHeight: 0 }}>
-        <OrderBlotter defaultTab="all" showChildOrders={false} />
+        <OrderBlotter
+          defaultTab="all"
+          onOrderSelect={(_orderId, selected) => setOrderRic(selected)}
+          showChildOrders={false}
+        />
       </div>
       <div
         style={{
@@ -80,13 +83,11 @@ export const TradeTapeExample = () => {
             {TAPE_RICS.map((r) => (
               <option key={r}>{r}</option>
             ))}
-            <option value="">
-              (selected: {selectedInstrument?.ric ?? "none"})
-            </option>
+            <option value="">(selected order: {orderRic ?? "none"})</option>
           </select>
         </label>
         <div style={{ flex: 1, minHeight: 0 }}>
-          <TradeTape ric={ric || undefined} />
+          <TradeTape ric={ric || orderRic} />
         </div>
       </div>
     </div>

@@ -1,19 +1,9 @@
 import { FillsBlotter } from "@heswell/trading-ui";
-import {
-  FeatureFrame,
-  fillStyle,
-  withFeatureRoot,
-  type LinkedFeatureProps,
-} from "./shared";
+import { FeatureFrame, fillStyle, withFeatureRoot } from "./shared";
 
-const Fills = ({ defaultLinkGroup = "red" }: LinkedFeatureProps) => (
+const Fills = () => (
   <FeatureFrame>
-    <FillsBlotter
-      defaultLinkGroup={defaultLinkGroup}
-      id="fills"
-      showLinkGroupSelector
-      style={fillStyle}
-    />
+    <FillsBlotter id="fills" style={fillStyle} />
   </FeatureFrame>
 );
 

@@ -82,7 +82,7 @@ export const examples: ShowcaseExample[] = [
     group: "Workspace",
     title: "Trader workspace (linked)",
     description:
-      "vuu-layout workspace with two instrument link groups: red follows the grid (ticket, depth, orders, fills), green follows the picker and positions (ladder, tape). Change a View's group with its swatch; the choice is saved with the layout.",
+      "vuu-layout workspace with two instrument link groups: red follows the grid (ticket, depth), green follows the picker and positions (ladder, tape). Orders and fills have no link group. Change a View's group with its swatch; the choice is saved with the layout.",
     Component: TraderWorkspace,
   },
   {
