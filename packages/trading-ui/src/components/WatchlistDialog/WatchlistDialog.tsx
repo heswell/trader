@@ -577,7 +577,7 @@ export const WatchlistDialog = ({
             <kbd>↑↓</kbd> move <kbd>↵</kbd> add / remove <kbd>Alt A</kbd> add
             matches
           </span>
-          <Button appearance="solid" onClick={onClose} sentiment="neutral">
+          <Button appearance="bordered" onClick={onClose} sentiment="neutral">
             Cancel
           </Button>
           <Button

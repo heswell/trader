@@ -1,4 +1,11 @@
 .tradingWatchlistDialog {
+  /* vuu-theme's selectable hover is a light tint in dark mode too */
+  --wlDialog-hover: color-mix(in srgb, var(--wlDialog-accent) 8%, transparent);
+  --wlDialog-highlight: color-mix(
+    in srgb,
+    var(--wlDialog-accent) 16%,
+    transparent
+  );
   --wlDialog-border: var(--salt-separable-tertiary-borderColor, #e5e7eb);
   --wlDialog-muted: var(--salt-content-secondary-foreground, #606770);
   --wlDialog-accent: var(--salt-accent-background, #2670a9);
@@ -125,11 +132,11 @@
 }
 
 .tradingWatchlistDialog-row:hover {
-  background: var(--salt-selectable-background-hover, #f4f6f8);
+  background: var(--wlDialog-hover);
 }
 
 .tradingWatchlistDialog-rowHighlighted {
-  background: var(--salt-selectable-background-hover, #eef2f6);
+  background: var(--wlDialog-highlight);
   box-shadow: inset 2px 0 0 var(--wlDialog-accent);
 }
 
