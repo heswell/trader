@@ -55,6 +55,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { tradingTableSchema } from "../../data/tradingTables";
@@ -84,6 +85,18 @@ import {
   useStoredSetting,
   VIEW_SETTINGS_KEY,
 } from "./gridSettings";
+import { AlsoApplied } from "./AlsoApplied";
+import {
+  alsoAppliedFilters,
+  andFilters,
+  COLUMN_SET_META_SETTINGS_KEY,
+  type ColumnSetMetaState,
+  parseColumnSetMeta,
+  quickFilterClauses,
+  quickFilterColumnsFor,
+  reconcileColumnSetMeta,
+  updateQuickFilterValues,
+} from "./columnSetMeta";
 import {
   instrumentGridColumns,
   SCREENING_SET_COLUMNS,
@@ -192,6 +205,9 @@ interface InstrumentGridInnerProps extends InstrumentGridProps {
   /** Column sets as persisted, undefined if none have been saved. */
   storedColumnSets?: ColumnSetsState;
   onColumnSetsChange: (state: ColumnSetsState) => void;
+  /** Quick filter fields per column set, as persisted. */
+  storedColumnSetMeta?: ColumnSetMetaState;
+  onColumnSetMetaChange: (meta: ColumnSetMetaState) => void;
   /** FilterBar filters as persisted. */
   storedFilterState?: FilterState;
   onFilterStateChange: (state: FilterState) => void;
@@ -217,6 +233,14 @@ const ContextPanelBridge = ({ children }: { children: ReactNode }) => {
       {children}
     </ControlsContextPanelProvider>
   );
+};
+
+/** Quick filter fields of the default column sets (see defaultColumnSets). */
+const DEFAULT_COLUMN_SET_META: ColumnSetMetaState = {
+  Watchlist: { quickFilterColumns: ["exchange", "sector", "instrumentType"] },
+  Screening: {
+    quickFilterColumns: ["sector", "marketCapUsd", "pe", "dividendYield"],
+  },
 };
 
 const DEFAULT_QUICK_FILTER_COLUMNS = [
@@ -260,6 +284,11 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
       gridSettingsKey(FILTERS_SETTINGS_KEY, id),
       parseFilterState,
     );
+    const columnSetMeta = useStoredSetting(
+      storage,
+      gridSettingsKey(COLUMN_SET_META_SETTINGS_KEY, id),
+      parseColumnSetMeta,
+    );
     const viewSettings = useStoredSetting(
       storage,
       gridSettingsKey(VIEW_SETTINGS_KEY, id),
@@ -272,13 +301,18 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
         <ContextPanelProvider>
           <SlotContextPanelProvider>
             <ContextPanelBridge>
-              {columnSets.loaded && filters.loaded && viewSettings.loaded ? (
+              {columnSets.loaded &&
+              columnSetMeta.loaded &&
+              filters.loaded &&
+              viewSettings.loaded ? (
                 <InstrumentGridInner
                   {...props}
+                  onColumnSetMetaChange={columnSetMeta.save}
                   onColumnSetsChange={columnSets.save}
                   onFilterStateChange={filters.save}
                   onViewSettingsChange={viewSettings.save}
                   ref={ref}
+                  storedColumnSetMeta={columnSetMeta.value}
                   storedColumnSets={columnSets.value}
                   storedFilterState={filters.value}
                   storedViewSettings={viewSettings.value}
@@ -312,6 +346,7 @@ const InstrumentGridInner = forwardRef<
     instrumentType,
     launchOrderTicket = true,
     onBuy: onBuyProp,
+    onColumnSetMetaChange,
     onColumnSetsChange,
     onFilterStateChange,
     onOpenDepth,
@@ -321,6 +356,7 @@ const InstrumentGridInner = forwardRef<
     showToolbar = true,
     simulatedOnly = false,
     sparkline,
+    storedColumnSetMeta,
     storedColumnSets,
     storedFilterState,
     storedViewSettings,
@@ -396,9 +432,48 @@ const InstrumentGridInner = forwardRef<
     columnModel.addListener("change", handler);
     return () => columnModel.removeListener("change", handler);
   }, [columnModel]);
+  // --- quick filter fields per column set, in a side record (vuu's
+  // ColumnSet has no room for them): switching sets switches both.
+  // Sets saved before sets carried quick filters fall back to the defaults.
+  const [columnSetMeta, setColumnSetMeta] = useState<ColumnSetMetaState>(
+    () =>
+      storedColumnSetMeta ??
+      (storedColumnSets ? {} : { ...DEFAULT_COLUMN_SET_META }),
+  );
+  const columnSetMetaRef = useRef(columnSetMeta);
+  const updateColumnSetMeta = useCallback(
+    (fn: (meta: ColumnSetMetaState) => ColumnSetMetaState) => {
+      const next = fn(columnSetMetaRef.current);
+      if (next === columnSetMetaRef.current) return;
+      columnSetMetaRef.current = next;
+      setColumnSetMeta(next);
+      onColumnSetMetaChange(next);
+    },
+    [onColumnSetMetaChange],
+  );
+  const [activeColumnSet, setActiveColumnSet] = useState(
+    initialColumnSets.activeColumnSet,
+  );
+  const columnSetsRef = useRef(initialColumnSets);
+  /** The quick filter fields in view (read by change handlers). */
+  const quickColumnsRef = useRef<readonly string[]>([]);
   const handleColumnSetsChange = useCallback<ColumnSetsChangeHandler>(
-    (state) => onColumnSetsChange(state),
-    [onColumnSetsChange],
+    (state, reason) => {
+      const previous = columnSetsRef.current;
+      columnSetsRef.current = state;
+      setActiveColumnSet(state.activeColumnSet);
+      updateColumnSetMeta((meta) =>
+        reconcileColumnSetMeta(
+          meta,
+          previous,
+          state,
+          reason,
+          quickColumnsRef.current,
+        ),
+      );
+      onColumnSetsChange(state);
+    },
+    [onColumnSetsChange, updateColumnSetMeta],
   );
   const columnSetModel = useColumnSetModel({
     columnModel,
@@ -437,18 +512,126 @@ const InstrumentGridInner = forwardRef<
   );
   const hasTypes = available.includes("instrumentType");
   const fixedType = hasTypes ? instrumentType : undefined;
+  const quickFilterAllowed = useCallback(
+    (c: string) =>
+      available.includes(c) && !(c === "instrumentType" && fixedType),
+    [available, fixedType],
+  );
+  const defaultQuickFilterColumns = useMemo(
+    () => DEFAULT_QUICK_FILTER_COLUMNS.filter(quickFilterAllowed),
+    [quickFilterAllowed],
+  );
+  // With no column set in view, the fields are the grid's own.
+  const [looseQuickColumns, setLooseQuickColumns] = useState<string[]>();
+  const quickFilterColumns = useMemo(
+    () =>
+      (activeColumnSet
+        ? quickFilterColumnsFor(
+            columnSetMeta,
+            activeColumnSet,
+            defaultQuickFilterColumns,
+          )
+        : (looseQuickColumns ?? defaultQuickFilterColumns)
+      ).filter(quickFilterAllowed),
+    [
+      activeColumnSet,
+      columnSetMeta,
+      defaultQuickFilterColumns,
+      looseQuickColumns,
+      quickFilterAllowed,
+    ],
+  );
+  quickColumnsRef.current = quickFilterColumns;
+  const changeQuickFilterColumns = useCallback(
+    (columns: string[]) => {
+      const active = columnSetsRef.current.activeColumnSet;
+      if (active)
+        updateColumnSetMeta((meta) => ({
+          ...meta,
+          [active]: { ...meta[active], quickFilterColumns: columns },
+        }));
+      else setLooseQuickColumns(columns);
+    },
+    [updateColumnSetMeta],
+  );
+  // The latest value of each quick filter field, kept while its field is
+  // out of view; those apply as "Also applied" (vuu keeps them but applies
+  // only the fields in view).
+  const [quickValues, setQuickValues] = useState<Record<string, Filter>>({});
+  // FilterBar applies its saved (custom) filter AND the quick filters as
+  // one: with a saved filter active the quick part is the second.
+  const customActiveRef = useRef(
+    (storedFilterState?.activeIndices.length ?? 0) > 0,
+  );
+  const handleFilterStateChange = useCallback(
+    (state: FilterState) => {
+      customActiveRef.current = state.activeIndices.length > 0;
+      onFilterStateChange(state);
+    },
+    [onFilterStateChange],
+  );
+  const trackQuickValues = useCallback(
+    (applied: Filter | undefined) => {
+      const quickFilter = !customActiveRef.current
+        ? applied
+        : applied && "filters" in applied && applied.op === "and"
+          ? applied.filters.length === 2
+            ? applied.filters[1]
+            : undefined
+          : undefined;
+      setQuickValues((values) =>
+        updateQuickFilterValues(
+          values,
+          quickFilterClauses(quickFilter, searchColumns),
+          quickColumnsRef.current,
+        ),
+      );
+    },
+    [searchColumns],
+  );
+  const alsoApplied = useMemo(
+    () => alsoAppliedFilters(quickValues, quickFilterColumns),
+    [quickValues, quickFilterColumns],
+  );
+  const clearAlsoApplied = useCallback(
+    (column: string) => setQuickValues(({ [column]: _, ...rest }) => rest),
+    [],
+  );
   const quickFilterProps = useMemo(
     () => ({
       allowFind: searchColumns.length > 0,
-      defaultQuickFilterColumns: DEFAULT_QUICK_FILTER_COLUMNS.filter(
-        (c) => available.includes(c) && !(c === "instrumentType" && fixedType),
-      ),
+      defaultQuickFilterColumns,
+      onChangeQuickFilterColumns: changeQuickFilterColumns,
+      quickFilterColumns,
       showFind: searchColumns,
     }),
-    [available, fixedType, searchColumns],
+    [
+      changeQuickFilterColumns,
+      defaultQuickFilterColumns,
+      quickFilterColumns,
+      searchColumns,
+    ],
   );
-  const [userFilter, setUserFilter] = useState<Filter>();
-  const clearUserFilter = useCallback(() => setUserFilter(undefined), []);
+  const [barFilter, setBarFilter] = useState<Filter>();
+  const setUserFilter = useCallback(
+    (applied: Filter) => {
+      setBarFilter(applied);
+      trackQuickValues(applied);
+    },
+    [trackQuickValues],
+  );
+  const clearUserFilter = useCallback(() => {
+    setBarFilter(undefined);
+    trackQuickValues(undefined);
+  }, [trackQuickValues]);
+  const userFilter = useMemo(
+    () =>
+      andFilters(
+        barFilter,
+        alsoApplied.map(({ filter }) => filter),
+      ),
+    [barFilter, alsoApplied],
+  );
   const userFilterQuery = useMemo(
     () =>
       userFilter
@@ -544,9 +727,22 @@ const InstrumentGridInner = forwardRef<
       ) {
         e.preventDefault();
         setShowFilterBar(!viewSettings.filterBar);
+      } else if (
+        e.altKey &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.shiftKey &&
+        /^Digit[1-9]$/.test(e.code)
+      ) {
+        // Alt+1..9: the nth column set (its columns and quick filters)
+        const set = columnSetModel.columnSets[Number(e.code.slice(5)) - 1];
+        if (set) {
+          e.preventDefault();
+          columnSetModel.setActiveColumnSet(set.name);
+        }
       }
     },
-    [showToolbar, setShowFilterBar, viewSettings.filterBar],
+    [columnSetModel, showToolbar, setShowFilterBar, viewSettings.filterBar],
   );
 
   // --- Buy / Sell default to the order ticket launcher
@@ -873,11 +1069,18 @@ const InstrumentGridInner = forwardRef<
             defaultFilterState={storedFilterState}
             onApplyFilter={setUserFilter}
             onClearFilter={clearUserFilter}
-            onFilterStateChanged={onFilterStateChange}
+            onFilterStateChanged={handleFilterStateChange}
             variant="full-filters"
             vuuTable={dataSource.table}
           />
         </DataSourceProvider>
+      ) : null}
+      {showToolbar && filterBarVisible && alsoApplied.length ? (
+        <AlsoApplied
+          columns={filterColumns}
+          filters={alsoApplied}
+          onClear={clearAlsoApplied}
+        />
       ) : null}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: keys and double-click of the table's rows */}
       <div

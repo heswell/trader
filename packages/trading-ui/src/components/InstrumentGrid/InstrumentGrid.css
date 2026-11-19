@@ -272,3 +272,42 @@
   padding-inline: var(--salt-spacing-75);
   text-transform: none;
 }
+
+/* Quick filter values on fields the column set in view doesn't show. */
+.tradingInstrumentGrid-alsoApplied {
+  align-items: center;
+  border: 0;
+  border-bottom: 1px solid var(--salt-separable-tertiary-borderColor);
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: var(--salt-spacing-100);
+  margin: 0;
+  padding: 2px var(--salt-spacing-100);
+}
+
+.tradingInstrumentGrid-alsoAppliedLabel {
+  color: var(--salt-content-secondary-foreground);
+  float: left;
+  font-size: var(--salt-text-label-fontSize);
+  padding: 0;
+}
+
+.tradingInstrumentGrid-chip {
+  align-items: center;
+  background: var(--salt-container-secondary-background);
+  border: 1px solid var(--salt-separable-secondary-borderColor);
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: var(--salt-text-label-fontSize);
+  gap: 2px;
+  height: calc(var(--salt-size-base) - 2px);
+  padding-left: var(--salt-spacing-100);
+}
+
+.tradingInstrumentGrid-chipClear {
+  --saltButton-height: calc(var(--salt-size-base) - 4px);
+  --saltButton-minWidth: calc(var(--salt-size-base) - 4px);
+  --saltButton-padding: 0;
+  border-radius: 999px;
+}

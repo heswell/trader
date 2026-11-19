@@ -99,7 +99,7 @@ const ColumnSetTabs = ({
           onKeyDown={handleKeyDown}
           role="tablist"
         >
-          {columnSets.map(({ name }) => {
+          {columnSets.map(({ name }, index) => {
             const selected = name === activeColumnSet;
             return (
               <button
@@ -115,6 +115,7 @@ const ColumnSetTabs = ({
                     ? 0
                     : -1
                 }
+                title={index < 9 ? `${name} (Alt+${index + 1})` : name}
                 type="button"
                 value={name}
               >

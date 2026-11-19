@@ -80,7 +80,7 @@ Buy, Sell and Depth sit at the right edge of a row, in a narrow client-side colu
 
 One 22px row under the table (linked instruments show in the link column and the workspace ChannelPicker, so the footer does not repeat them):
 
-- **Column-set tabs** on the left, text tabs; the active one is on the grid's surface (`--salt-container-primary-background`), moved up 1px over the footer's top border with that border down its sides and along its bottom, so the line runs along the footer and round the tab (no indicator bar); other tabs show a neutral underline on hover: click, or Left / Right arrows on a focused tab, to show a set. "+" saves the columns in view as a new set, named in a `NamePrompt` (see [Dialogs](#dialogs)).
+- **Column-set tabs** on the left, text tabs; the active one is on the grid's surface (`--salt-container-primary-background`), moved up 1px over the footer's top border with that border down its sides and along its bottom, so the line runs along the footer and round the tab (no indicator bar); other tabs show a neutral underline on hover: click, Left / Right arrows on a focused tab, or Alt+1…9 anywhere in the grid, to show a set (its columns and its quick filters). "+" saves the columns in view as a new set, named in a `NamePrompt` (see [Dialogs](#dialogs)).
 - **Row count**: the rows in the body, "N rows", kept current from the data source's `resize` events. Under a filter-bar filter it is the filtered count, bold with a filter icon; the server sends no unfiltered total, so it is never "x of y". Pinned rows are not counted.
 - **Columns** on the right opens the vuu column picker.
 
@@ -113,7 +113,8 @@ Both themes use vuu-theme / Salt variables only; the dark design boards are in
 The vuu FilterBar sits on its own row and opens on the quick filters:
 
 - **Search** comes first: free text over ric and description (ric only on `prices`). vuu's `contains` is case sensitive, so the grid widens the Search clause to the common casings of the text (`withSearchCasings`, trader upstream issue 113): "bp" finds BP.L.
-- **Quick filters**: exchange, sector, type, market cap, P/E and yield by default, where the data has them; the column chooser changes them. Type is left out when `instrumentType` is set.
+- **Quick filters** belong to the column set: each set has its own fields, and switching sets switches both. The default sets: Watchlist has exchange, sector and type; Screening has sector, market cap, P/E and yield. With no set in view, or for a set saved before sets carried quick filters, the fields are exchange, sector, type, market cap, P/E and yield. The column chooser changes the fields of the set in view. Fields are kept where the data has them; Type is left out when `instrumentType` is set. The fields per set persist per grid `id` beside the column sets (`trading.instrumentGrid.columnSetMeta`: vuu's `ColumnSet` has no room for them).
+- **Also applied**: a value on a field the set in view doesn't show still applies, as a chip under the filter bar with a clear button. Back on a set that shows the field, the value is in its control again. Until vuu-ui has controlled quick filter values (upstream U1), clearing a chip clears it from the grid's filter only: the field's control still holds the value, and applies it again on a set that shows it.
 - **Saved filters**: the toggle switches to the saved filter pills. Its badge counts the applied clauses. Saved filters persist per grid `id` (`trading.instrumentGrid.filters`).
 
 Pure helpers are exported too: `buildInstrumentGridFilter`, `withSearchCasings`, `instrumentGridColumns`, watchlist functions and `useWatchlists`.
