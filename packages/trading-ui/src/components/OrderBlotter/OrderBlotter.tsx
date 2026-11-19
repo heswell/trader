@@ -68,7 +68,9 @@ import {
   registerOrderActionsRenderer,
 } from "./OrderBlotterContext";
 
+import { CancelAllPrompt } from "./CancelAllPrompt";
 import orderBlotterCss from "./OrderBlotter.css";
+import { useWorkingOrderSummary } from "./useWorkingOrderSummary";
 
 registerTradingCellRenderers();
 registerOrderActionsRenderer();
@@ -252,6 +254,8 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
     const [message, setMessage] = useState<{ text: string; error: boolean }>();
     const [amending, setAmending] = useState<string>();
     const [focusedOrderId, setFocusedOrderId] = useState<string>();
+    const [confirmingCancelAll, setConfirmingCancelAll] = useState(false);
+    const workingOrders = useWorkingOrderSummary();
 
     const { connectionState, staleProps } = useStaleData();
     const connected = connectionState === "connected";
@@ -494,8 +498,8 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
               </Button>
               <Button
                 appearance="solid"
-                disabled={!connected}
-                onClick={() => void cancelAll()}
+                disabled={!connected || workingOrders.count === 0}
+                onClick={() => setConfirmingCancelAll(true)}
                 sentiment="negative"
               >
                 Cancel all
@@ -531,6 +535,16 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
           >
             {message.text}
           </div>
+        ) : null}
+        {confirmingCancelAll ? (
+          <CancelAllPrompt
+            onCancel={() => setConfirmingCancelAll(false)}
+            onConfirm={() => {
+              setConfirmingCancelAll(false);
+              void cancelAll();
+            }}
+            summary={workingOrders}
+          />
         ) : null}
         {amending ? (
           <AmendDialog
