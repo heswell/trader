@@ -157,7 +157,7 @@ export class MarketDataPublisher {
   /** Last theoretical quote + phase per quote-only option ric. */
   readonly #quotes = new Map<
     string,
-    { bid: number | undefined; ask: number; phase: string }
+    { bid: number | undefined; ask: number | undefined; phase: string }
   >();
   readonly #prices: RowLayout<typeof pricesDef>;
   readonly #depth: RowLayout<typeof depthDef>;
@@ -518,13 +518,13 @@ export class MarketDataPublisher {
 
   /**
    * A quote-only option's prices row: a theoretical bid / ask (no sizes, no
-   * trades), close at the listing price. Only written when the quote or
-   * the phase changes.
+   * trades; neither once it has expired), close at the listing price. Only
+   * written when the quote or the phase changes.
    */
   publishQuote(
     instrument: InstrumentDef,
     bid: number | undefined,
-    ask: number,
+    ask: number | undefined,
     phase: string,
     now: number,
   ) {
@@ -536,7 +536,7 @@ export class MarketDataPublisher {
     const row = this.#prices.row();
     row[idx.ric] = instrument.ric;
     row[idx.bid] = bid ?? null;
-    row[idx.ask] = ask;
+    row[idx.ask] = ask ?? null;
     row[idx.close] = instrument.refPrice;
     row[idx.phase] = phase;
     row[idx.timestamp] = now;

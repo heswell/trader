@@ -8,6 +8,7 @@ import {
   activityAt,
   BotType,
   ExecType,
+  intrinsicValue,
   OrdType,
   PutCall,
   RejectReason,
@@ -49,7 +50,14 @@ import {
   toFutureDef,
   withFutures,
 } from "../reference/futures";
-import { isOption, listOptions, optionRic } from "../reference/options";
+import {
+  isOption,
+  listOptions,
+  monthlyExpiries,
+  optionRic,
+  strikeGrid,
+  toOptionDef,
+} from "../reference/options";
 import {
   indexLevel,
   isIndex,
@@ -197,7 +205,10 @@ interface ChainOption {
 interface OptionChain {
   underlying: string;
   pricer: OptionPricer;
+  /** Live (unexpired) options. */
   options: ChainOption[];
+  /** Live expiries, nearest first. */
+  expiries: number[];
   /** Expiries whose nearest strikes get books, nearest first. */
   bookExpiries: number[];
   /** Strikes listed in those expiries, ascending. */
@@ -528,38 +539,171 @@ export class ExchangeSimulator {
         underlying: ric,
         pricer,
         options: [],
+        expiries: [],
         bookExpiries: [],
         strikes: [],
         centre: Number.NaN,
         books: 0,
         capped: false,
       };
-      for (const def of options) {
-        const terms = def.underlying === ric ? optionTerms(def) : undefined;
-        if (!terms) continue;
-        const schedule = tickScheduleOf(def);
-        const price = pricer.price(terms, now);
-        this.#replaceDef(def, {
-          ...def,
-          refPrice: Math.max(def.tickSize, roundToTick(price, schedule)),
-          liquid: false,
-        });
-        chain.options.push({ ric: def.ric, terms, schedule });
-      }
-      const expiries = [
-        ...new Set(chain.options.map((o) => o.terms.expiry ?? 0)),
-      ].sort((a, b) => a - b);
-      chain.bookExpiries = expiries.slice(0, config.optionsBookExpiries);
-      chain.strikes = [
-        ...new Set(
-          chain.options
-            .filter((o) => chain.bookExpiries.includes(o.terms.expiry ?? 0))
-            .map((o) => o.terms.strike),
-        ),
-      ].sort((a, b) => a - b);
+      this.#addChainOptions(
+        chain,
+        options.filter((o) => o.underlying === ric),
+        now,
+      );
       this.#chains.set(ric, chain);
       this.#recentreChain(chain, now, false);
     }
+  }
+
+  /**
+   * Add listed options to a chain, priced off its spot now: the reference
+   * price becomes the model value and the option starts quote-only.
+   * Already-listed defs are replaced, new ones listed (and published).
+   */
+  #addChainOptions(
+    chain: OptionChain,
+    defs: readonly InstrumentDef[],
+    now: number,
+  ) {
+    for (const def of defs) {
+      const terms = optionTerms(def);
+      if (!terms) continue;
+      const schedule = tickScheduleOf(def);
+      const price = chain.pricer.price(terms, now);
+      const priced: InstrumentDef = {
+        ...def,
+        refPrice: Math.max(def.tickSize, roundToTick(price, schedule)),
+        liquid: false,
+      };
+      if (this.#listed.get(def.ric) === def) this.#replaceDef(def, priced);
+      else {
+        this.#listed.set(priced.ric, priced);
+        this.#universe.push(priced);
+        this.#publisher?.addInstrument(priced, true);
+      }
+      chain.options.push({ ric: def.ric, terms, schedule });
+    }
+    chain.expiries = [
+      ...new Set(chain.options.map((o) => o.terms.expiry ?? 0)),
+    ].sort((a, b) => a - b);
+    chain.bookExpiries = chain.expiries.slice(
+      0,
+      this.config.optionsBookExpiries,
+    );
+    chain.strikes = [
+      ...new Set(
+        chain.options
+          .filter((o) => chain.bookExpiries.includes(o.terms.expiry ?? 0))
+          .map((o) => o.terms.strike),
+      ),
+    ].sort((a, b) => a - b);
+    chain.centre = Number.NaN;
+  }
+
+  /** Expire every option expiry whose last trading time has passed. */
+  #expireDueOptions(now: number) {
+    for (const chain of this.#chains.values())
+      while (chain.expiries.length > 0 && chain.expiries[0] <= now)
+        this.expireOptions(chain.underlying, now);
+  }
+
+  /**
+   * Expire the front expiry of an underlying's options now, all strikes at
+   * once: each settles in cash at intrinsic value against the underlying's
+   * fair value or index level (on tick; 0 out of the money). Liquid books
+   * close for good and their resting orders expire; every option gets an
+   * EXPIRED event (the OMS settles positions). Then the next monthly
+   * expiry is listed and the new front month's nearest strikes get books.
+   * Called by step() at the expiry time. Returns the settlement prices.
+   */
+  expireOptions(
+    underlying: string,
+    now = this.clock(),
+  ): ReadonlyMap<string, number> {
+    const chain = this.#chains.get(underlying);
+    if (!chain || chain.expiries.length === 0) {
+      throw new ExchangeAdminError(
+        RejectReason.UnknownInstrument,
+        `${underlying} has no listed options`,
+      );
+    }
+    const expiry = chain.expiries[0];
+    const spot = chain.pricer.spot.price();
+    const settlements = new Map<string, number>();
+    for (const { ric, terms, schedule } of chain.options) {
+      if (terms.expiry !== expiry) continue;
+      const def = this.#listed.get(ric) as InstrumentDef;
+      const settlementPrice = roundToTick(
+        intrinsicValue(terms.putCall, spot, terms.strike),
+        schedule,
+      );
+      const sim = this.#simulated.get(ric);
+      if (sim) {
+        const { book } = sim;
+        book.settlementPrice = settlementPrice;
+        book.phase = TradingPhase.Closed;
+        book.haltReason = "expired";
+        book.dirty = true;
+        for (const bot of sim.bots) bot.pull();
+        this.gateway.expireAllOrders(ric, `${ric} expired`);
+        chain.books--;
+      } else {
+        this.#publisher?.publishQuote(
+          def,
+          undefined,
+          undefined,
+          TradingPhase.Closed,
+          now,
+        );
+      }
+      this.#replaceDef(def, { ...def, settlementPrice });
+      this.#optionAnalytics?.remove(ric);
+      settlements.set(ric, settlementPrice);
+      this.gateway.emitInstrumentEvent({
+        type: "EXPIRED",
+        ric,
+        settlementPrice,
+        timestamp: now,
+      });
+    }
+    chain.options = chain.options.filter((o) => o.terms.expiry !== expiry);
+    chain.expiries = chain.expiries.filter((e) => e !== expiry);
+    chain.capped = false;
+    this.#listNextExpiries(chain, now);
+    this.#recentreChain(chain, now, true);
+    return settlements;
+  }
+
+  /**
+   * List monthly expiries after the last one listed until the chain has
+   * optionsExpiries again: strikes around spot now, quote-only.
+   */
+  #listNextExpiries(chain: OptionChain, now: number) {
+    const { config } = this;
+    const underlying = this.#listed.get(chain.underlying);
+    const defs: InstrumentDef[] = [];
+    let latest = Math.max(now, ...chain.expiries);
+    let count = chain.expiries.length;
+    if (underlying) {
+      const spot = chain.pricer.spot.listPrice();
+      const listFrom = { ...underlying, refPrice: spot };
+      while (count < config.optionsExpiries) {
+        const [expiry] = monthlyExpiries(latest, 1, this.#expiryTime);
+        for (const strike of strikeGrid(spot, config.optionsStrikes)) {
+          for (const putCall of [PutCall.Call, PutCall.Put]) {
+            const def = toOptionDef(listFrom, putCall, strike, expiry, now, {
+              carryRate: config.futuresCarryRate,
+            });
+            // ten years on the ric comes round again: keep the old listing
+            if (!this.#listed.has(def.ric)) defs.push(def);
+          }
+        }
+        latest = expiry;
+        count++;
+      }
+    }
+    this.#addChainOptions(chain, defs, now);
   }
 
   /** Swap a listed def for an updated one (republished once attached). */
@@ -1221,6 +1365,7 @@ export class ExchangeSimulator {
     this.#control?.step(now);
     this.#scenarios?.step(now);
     if (this.#liveFutures.length > 0) this.#expireDueFutures(now);
+    if (this.#chains.size > 0) this.#expireDueOptions(now);
     for (const chain of this.#chains.values())
       this.#recentreChain(chain, now, true);
     const dt = Math.min(Math.max(elapsed, 0), config.maxStepMs) / 1000;

@@ -38,6 +38,11 @@ export class OptionAnalyticsPublisher {
     return this.intervalMs > 0 && now >= this.#next;
   }
 
+  /** Drop an option's row (it has expired). */
+  remove(ric: string) {
+    if (this.table.rowIndexAtKey(ric) >= 0) this.table.delete(ric);
+  }
+
   publish(rows: Iterable<OptionAnalytics>, now: number) {
     this.#next = now + this.intervalMs;
     const { idx } = this.#layout;

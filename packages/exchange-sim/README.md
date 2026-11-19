@@ -138,6 +138,13 @@ nothing visible changed.
   - **Re-centring.** When spot moves to another strike, the new nearest strikes get books at runtime (`liquid`
     becomes true, a `LISTED` instrument event goes out); books are never removed. At `optionsMaxBooks` (20) per
     underlying no more are added and an `optionsMaxBooks` simEvent records it.
+  - **Expiry.** At the front expiry's time (`sessionClose` on the third Friday) every strike of that month expires
+    at once and settles in cash at intrinsic value against the underlying's fair value or index level (on tick; 0
+    out of the money). Liquid books close for good (`CLOSED`, `haltReason` "expired") and their resting orders
+    expire; quote-only rows lose their bid / ask; each option's `settlementPrice` is published and an `EXPIRED`
+    instrument event goes out, on which the OMS settles positions with a SETTLEMENT fill. The next monthly expiry
+    is then listed (strikes around spot now, quote-only) and the new front month's nearest strikes get books.
+    `expireOptions(underlying)` does the same on demand. Expired options are not restored after a restart.
 - **Continuations.** Each underlying with futures gets continuation rics `c1..cN` (root + `c` + position: `AZNc1`
   is the front month, `AZNc2` the next; `STECHc1`). A continuation copies its contract's static data (instrument type
   `CONTINUATION`, `contract` names the contract) and has no book: its `prices` row mirrors the contract's on every
