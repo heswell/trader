@@ -46,7 +46,8 @@ A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns 
 
 ## Panel header
 
-- **Scope picker** (the title): All instruments or a watchlist, with its count. The same menu adds or removes the selected row's ric on the current watchlist, creates a watchlist (named in a prompt, then shown) and deletes the current one.
+- **Scope picker** (the title): All instruments or a watchlist, with its count. The same menu adds or removes the selected row's ric on the current watchlist and, on a watchlist, has **Edit instruments…** (E: the `WatchlistDialog` on that list), **Rename…** (F2: a `NamePrompt`) and **Delete…** (a warning prompt; the grid falls back to All instruments). **New watchlist…** (N) opens the `WatchlistDialog`, seeded with the selected row, and shows the new list. The letters act while the menu is open. The row menu's New watchlist… opens the same dialog seeded with that row, and stays on the current scope.
+- **Empty watchlist**: the body says so and offers **Add instruments…**, which opens the dialog on the list.
 - **Panel settings** (cog): Show filter bar (Ctrl+Shift+F anywhere in the grid), Show footer and Pin linked rows to the top. Saved per grid `id` under `trading.instrumentGrid.view`.
 - **Filter badge**: while the filter bar is hidden its filters still apply, and the header shows a badge with the clause count; clicking it shows the bar.
 
@@ -79,10 +80,19 @@ Buy, Sell and Depth sit at the right edge of a row, in a narrow client-side colu
 
 One 22px row under the table (linked instruments show in the link column and the workspace ChannelPicker, so the footer does not repeat them):
 
-- **Column-set tabs** on the left, text tabs; the active one is on the grid's surface (`--salt-container-primary-background`), moved up 1px over the footer's top border with that border down its sides and along its bottom, so the line runs along the footer and round the tab (no indicator bar); other tabs show a neutral underline on hover: click, or Left / Right arrows on a focused tab, to show a set. "+" saves the columns in view as a new set, named in a prompt.
+- **Column-set tabs** on the left, text tabs; the active one is on the grid's surface (`--salt-container-primary-background`), moved up 1px over the footer's top border with that border down its sides and along its bottom, so the line runs along the footer and round the tab (no indicator bar); other tabs show a neutral underline on hover: click, Left / Right arrows on a focused tab, or Alt+1…9 anywhere in the grid, to show a set (its columns and its quick filters). "+" saves the columns in view as a new set, named in a `NamePrompt` (see [Dialogs](#dialogs)), with **Available in**: All watchlists, or only the scope in view.
+- **Shared or scoped sets**: a column set is shared by every scope (All instruments and each watchlist) or only in one. A scope shows the shared sets, then a divider and its own, each with a pin; Alt+1…9 count the tabs in that order. Each scope remembers the set last shown there and shows it again on coming back (`trading.instrumentGrid.lastColumnSet`); the scope is kept in the set's meta. A tab's menu (right-click, Shift+F10 or the menu key) has **Rename…**, **Duplicate** (columns, quick filters and scope), **Share with all watchlists** / **Only in <scope>**, and **Delete…** (a warning prompt). Deleting a watchlist offers to keep its own sets, shared with all watchlists (checked by default), or delete them.
 - **Row count**: the rows in the body, "N rows", kept current from the data source's `resize` events. Under a filter-bar filter it is the filtered count, bold with a filter icon; the server sends no unfiltered total, so it is never "x of y". Pinned rows are not counted.
-- **Columns** on the right opens the vuu column picker.
+- **Columns** on the right opens a panel with two tabs: **Columns** (the vuu column picker) and **Quick filters**, the quick filter fields of the column set in view, in order, with Reset to default. A field can be a quick filter without being a column. Both tabs follow the set in view. (The tab sits beside vuu's picker rather than in it until vuu-ui's ColumnPicker takes extra tabs, upstream U2.)
 
+![A Banks-only column set (pinned, after the divider), with Exchange: XLON Also applied](../screenshots/instrument-grid-scoped-sets.png)
+
+## Dialogs
+
+The grid never uses browser prompts. Naming (a new watchlist, a new column set) uses `NamePrompt`: a vuu `Prompt` (Salt Dialog) with one Salt Input, focused and selected on open. Enter or Create confirms; `validate` returns an error shown under the field, and while there is one Create is disabled. New watchlist opens `WatchlistDialog`: a name, a search by RIC or name, Sector / Type / Exchange / Currency filters (Salt multiselect dropdowns; options from vuu's `getUniqueFieldValues`, Type from the enum), the matches (up to 500, from `instruments`) and the picked list beside them. While a search or filter narrows the list, **Add N matches** adds every match not yet picked. Keys: ↑↓ move, Enter adds or removes, Alt+A adds matches, Ctrl+Enter saves. Deleting a watchlist asks in a warning `Prompt`, Cancel focused. Showcase: `#instrument-grid-dialogs`.
+
+![New watchlist, light](../screenshots/watchlist-dialog-light.png)
+![New watchlist, dark](../screenshots/watchlist-dialog-dark.png)
 
 ## Rows
 
@@ -108,7 +118,8 @@ Both themes use vuu-theme / Salt variables only; the dark design boards are in
 The vuu FilterBar sits on its own row and opens on the quick filters:
 
 - **Search** comes first: free text over ric and description (ric only on `prices`). vuu's `contains` is case sensitive, so the grid widens the Search clause to the common casings of the text (`withSearchCasings`, trader upstream issue 113): "bp" finds BP.L.
-- **Quick filters**: exchange, sector, type, market cap, P/E and yield by default, where the data has them; the column chooser changes them. Type is left out when `instrumentType` is set.
+- **Quick filters** belong to the column set: each set has its own fields, and switching sets switches both. The default sets: Watchlist has exchange, sector and type; Screening has sector, market cap, P/E and yield. With no set in view, or for a set saved before sets carried quick filters, the fields are exchange, sector, type, market cap, P/E and yield. The column chooser changes the fields of the set in view. Fields are kept where the data has them; Type is left out when `instrumentType` is set. The fields per set persist per grid `id` beside the column sets (`trading.instrumentGrid.columnSetMeta`: vuu's `ColumnSet` has no room for them).
+- **Also applied**: a value on a field the set in view doesn't show still applies, as a chip under the filter bar with a clear button. Back on a set that shows the field, the value is in its control again. Until vuu-ui has controlled quick filter values (upstream U1), clearing a chip clears it from the grid's filter only: the field's control still holds the value, and applies it again on a set that shows it.
 - **Saved filters**: the toggle switches to the saved filter pills. Its badge counts the applied clauses. Saved filters persist per grid `id` (`trading.instrumentGrid.filters`).
 
 Pure helpers are exported too: `buildInstrumentGridFilter`, `withSearchCasings`, `instrumentGridColumns`, watchlist functions and `useWatchlists`.

@@ -49,6 +49,8 @@ export * from "./components/AccountSelector";
 export * from "./components/ConnectionBanner";
 export * from "./components/ConnectionStatusIndicator";
 export * from "./components/InstrumentPicker";
+export * from "./components/NamePrompt";
+export * from "./components/WatchlistDialog";
 export * from "./components/ChannelPicker";
 export * from "./components/LinkGroupSelector";
 export * from "./components/OrderTicket";

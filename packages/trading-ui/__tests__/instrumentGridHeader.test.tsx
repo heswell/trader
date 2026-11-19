@@ -37,7 +37,9 @@ const renderHeader = (props: Partial<InstrumentGridHeaderProps> = {}) => {
   const handlers = {
     onAddToWatchlist: mock(),
     onDeleteWatchlist: mock(),
+    onEditWatchlist: mock(),
     onNewWatchlist: mock(),
+    onRenameWatchlist: mock(),
     onPinLinkedChange: mock(),
     onRemoveFromWatchlist: mock(),
     onScopeChange: mock(),
@@ -75,6 +77,59 @@ describe("InstrumentGridHeader", () => {
       await screen.findByRole("menuitemradio", { name: /All instruments/ }),
     );
     expect(h.onScopeChange).toHaveBeenCalledWith(ALL_INSTRUMENTS);
+  });
+
+  test("the scope menu edits, renames, deletes and creates", async () => {
+    const h = renderHeader({ scope: "w1" });
+    const open = () =>
+      fireEvent.click(
+        screen.getByRole("button", { name: "Instruments: Banks" }),
+      );
+    open();
+    fireEvent.click(
+      await screen.findByRole("menuitem", { name: /Edit instruments/ }),
+    );
+    expect(h.onEditWatchlist).toHaveBeenCalledWith("w1");
+    open();
+    fireEvent.click(await screen.findByRole("menuitem", { name: /Rename/ }));
+    expect(h.onRenameWatchlist).toHaveBeenCalledWith("w1");
+    open();
+    fireEvent.click(
+      await screen.findByRole("menuitem", { name: /Delete Banks/ }),
+    );
+    expect(h.onDeleteWatchlist).toHaveBeenCalledWith("w1");
+    open();
+    fireEvent.click(
+      await screen.findByRole("menuitem", { name: /New watchlist/ }),
+    );
+    expect(h.onNewWatchlist).toHaveBeenCalledTimes(1);
+  });
+
+  test("E, F2 and N act from the open scope menu", async () => {
+    const h = renderHeader({ scope: "w1" });
+    const open = async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Instruments: Banks" }),
+      );
+      return (await screen.findByRole("menuitem", { name: /Rename/ }))
+        .parentElement as HTMLElement;
+    };
+    fireEvent.keyDown(await open(), { key: "e" });
+    expect(h.onEditWatchlist).toHaveBeenCalledWith("w1");
+    fireEvent.keyDown(await open(), { key: "F2" });
+    expect(h.onRenameWatchlist).toHaveBeenCalledWith("w1");
+    fireEvent.keyDown(await open(), { key: "n" });
+    expect(h.onNewWatchlist).toHaveBeenCalledTimes(1);
+  });
+
+  test("All instruments offers only New watchlist", async () => {
+    renderHeader();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Instruments: All instruments" }),
+    );
+    await screen.findByRole("menuitem", { name: /New watchlist/ });
+    expect(screen.queryByRole("menuitem", { name: /Rename/ })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: /Edit/ })).toBeNull();
   });
 
   test("the gear toggles the filter bar and footer", async () => {

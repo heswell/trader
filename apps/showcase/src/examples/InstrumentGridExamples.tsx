@@ -1,6 +1,11 @@
 import { InstrumentType } from "@heswell/trading-schemas";
-import { InstrumentGrid, type SelectedInstrument } from "@heswell/trading-ui";
-import { Text } from "@salt-ds/core";
+import {
+  InstrumentGrid,
+  NamePrompt,
+  type SelectedInstrument,
+  WatchlistDialog,
+} from "@heswell/trading-ui";
+import { Button, Text } from "@salt-ds/core";
 import { useCallback, useState } from "react";
 import { ShowcaseContextPanel } from "./shared/ShowcaseContextPanel";
 
@@ -123,5 +128,46 @@ export const InstrumentGridFutures = () => {
         onSell={action("Sell")}
       />
     </Layout>
+  );
+};
+
+/** The grid's Salt dialogs on their own: New column set, New watchlist. */
+export const InstrumentGridDialogs = () => {
+  const [open, setOpen] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const [log, setLog] = useState("Open a dialog");
+  return (
+    <ShowcaseContextPanel>
+      <div style={{ display: "flex", gap: 8 }}>
+        <Button onClick={() => setOpen(true)}>New column set…</Button>
+        <Button onClick={() => setPicking(true)}>New watchlist…</Button>
+      </div>
+      {picking ? (
+        <WatchlistDialog
+          initialRics={["VOD.L"]}
+          lists={[{ id: "energy", name: "Energy", rics: [] }]}
+          onClose={() => setPicking(false)}
+          onSave={({ name, rics }) =>
+            setLog(`Created ${name} with ${rics.length} instruments`)
+          }
+        />
+      ) : null}
+      {open ? (
+        <NamePrompt
+          onClose={() => setOpen(false)}
+          onConfirm={(name) => setLog(`Created ${name}`)}
+          placeholder="e.g. Screening"
+          title="New column set"
+          validate={(name) =>
+            name.toLowerCase() === "prices"
+              ? `A column set called ${name} already exists`
+              : undefined
+          }
+        />
+      ) : null}
+      <Text role="status" aria-live="polite" style={{ marginTop: 8 }}>
+        {log}
+      </Text>
+    </ShowcaseContextPanel>
   );
 };

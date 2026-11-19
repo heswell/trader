@@ -7,6 +7,7 @@ import {
 } from "./BlotterExamples";
 import {
   InstrumentGridContinuations,
+  InstrumentGridDialogs,
   InstrumentGridExamples,
   InstrumentGridFutures,
   InstrumentGridPrices,
@@ -113,7 +114,7 @@ export const examples: ShowcaseExample[] = [
     group: "InstrumentGrid",
     title: "Instrument grid",
     description:
-      "The redesigned grid. Header: the title picks All instruments or a watchlist; the gear shows or hides the filter bar (Ctrl+Shift+F) and footer. Filter bar: Search and quick filters. Link column: link a row to a channel (or press 1-4); linked rows pin to the top. Row actions: Buy / Sell / Depth on hover or the selected row (B / S / D). Footer: column-set tabs, linked instruments, row count. Try it in Dark too.",
+      "The redesigned grid. Header: the title picks All instruments or a watchlist; the gear shows or hides the filter bar (Ctrl+Shift+F) and footer. Filter bar: Search and quick filters. Link column: link a row to a channel (or press 1-4); linked rows pin to the top. Row actions: Buy / Sell / Depth on hover or the selected row (B / S / D). Watchlists: New watchlist… opens a picker with Sector / Type / Exchange / Currency filters and Add matches; the scope menu edits (E), renames (F2) and deletes a list. Footer: column-set tabs (Alt+1…9; each set has its own quick filters, shared or only in the watchlist in view; right-click a tab for its menu), row count, Columns (with a Quick filters tab). Try it in Dark too.",
     Component: InstrumentGridExamples,
   },
   {
@@ -147,6 +148,14 @@ export const examples: ShowcaseExample[] = [
     description:
       "Open with ?active=200 (local mode) to tick 200 instruments with sparklines.",
     Component: InstrumentGridTicking200,
+  },
+  {
+    id: "instrument-grid-dialogs",
+    group: "InstrumentGrid",
+    title: "Dialogs",
+    description:
+      "The grid's Salt dialogs on their own (no browser prompts). New column set: a name, checked against the sets there are (try prices); Enter creates. New watchlist: a name (Energy is taken), then search and filter instruments; Enter picks the highlighted row, Alt+A adds every match, Ctrl+Enter creates.",
+    Component: InstrumentGridDialogs,
   },
   {
     id: "side-label-variants",

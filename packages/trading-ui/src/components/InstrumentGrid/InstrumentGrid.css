@@ -33,6 +33,29 @@
 .tradingInstrumentGrid-table {
   flex: 1 1 0;
   min-height: 0;
+  position: relative;
+}
+
+/* An empty watchlist: a call to action over the (empty) table body. */
+.tradingInstrumentGrid-emptyList {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--salt-spacing-100);
+  inset: calc(var(--salt-size-base) + 8px) 0 0;
+  justify-content: center;
+  padding: var(--salt-spacing-300);
+  position: absolute;
+  text-align: center;
+}
+
+.tradingInstrumentGrid-emptyTitle {
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+.tradingInstrumentGrid-emptyText {
+  color: var(--salt-content-secondary-foreground);
+  max-width: 320px;
 }
 
 .tradingInstrumentGrid-filterBar {
@@ -248,4 +271,111 @@
   height: 18px;
   padding-inline: var(--salt-spacing-75);
   text-transform: none;
+}
+
+/* Quick filter values on fields the column set in view doesn't show. */
+.tradingInstrumentGrid-alsoApplied {
+  align-items: center;
+  border: 0;
+  border-bottom: 1px solid var(--salt-separable-tertiary-borderColor);
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: var(--salt-spacing-100);
+  margin: 0;
+  padding: 2px var(--salt-spacing-100);
+}
+
+.tradingInstrumentGrid-alsoAppliedLabel {
+  color: var(--salt-content-secondary-foreground);
+  float: left;
+  font-size: var(--salt-text-label-fontSize);
+  padding: 0;
+}
+
+.tradingInstrumentGrid-chip {
+  align-items: center;
+  background: var(--salt-container-secondary-background);
+  border: 1px solid var(--salt-separable-secondary-borderColor);
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: var(--salt-text-label-fontSize);
+  gap: 2px;
+  height: calc(var(--salt-size-base) - 2px);
+  padding-left: var(--salt-spacing-100);
+}
+
+.tradingInstrumentGrid-chipClear {
+  --saltButton-height: calc(var(--salt-size-base) - 4px);
+  --saltButton-minWidth: calc(var(--salt-size-base) - 4px);
+  --saltButton-padding: 0;
+  border-radius: 999px;
+}
+
+/* The Columns panel (context panel): Columns | Quick filters tabs. */
+.tradingGridColumnsPanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.tradingGridColumnsPanel-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--salt-spacing-100);
+  min-height: 0;
+  padding-top: var(--salt-spacing-100);
+}
+
+.tradingGridColumnsPanel-panel > .vuuColumnPicker,
+.tradingGridColumnsPanel-quickFilters {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tradingGridColumnsPanel-quickFilters > .vuuItemPicker {
+  flex: 1;
+  min-height: 0;
+}
+
+.tradingGridColumnsPanel-note {
+  color: var(--salt-content-secondary-foreground);
+}
+
+.tradingGridColumnsPanel-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Column sets only in this scope: after a divider, with a pin. */
+.tradingInstrumentGridFooter-tabDivider {
+  align-self: center;
+  background: var(--salt-separable-secondary-borderColor);
+  flex: none;
+  height: 12px;
+  margin: 0 var(--salt-spacing-100);
+  width: 1px;
+}
+
+.tradingInstrumentGridFooter-tabScoped {
+  align-items: center;
+  display: inline-flex;
+  gap: 3px;
+}
+
+.tradingInstrumentGridFooter-pin {
+  color: var(--salt-content-secondary-foreground);
+  flex: none;
+}
+
+.tradingInstrumentGridFooter-availableIn {
+  margin-top: var(--salt-spacing-200);
+}
+
+.tradingInstrumentGrid-promptText {
+  margin: 0 0 var(--salt-spacing-200);
 }

@@ -12,6 +12,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { InstrumentGrid, TradingDataProvider } from "../src";
+import type { UserSettingsStorage } from "../src/utils/userSettingsStorage";
 
 const gridId = "quick-filters-test";
 
@@ -51,6 +52,55 @@ describe("InstrumentGrid quick filters", () => {
         expect(options).toContain("XLON");
       },
       { timeout: 3000 },
+    );
+  });
+
+  test("each column set has its own quick filter fields (Alt+n switches)", async () => {
+    const items = new Map<string, string>();
+    const storage: UserSettingsStorage = {
+      getItem: (key) => items.get(key) ?? null,
+      removeItem: (key) => {
+        items.delete(key);
+      },
+      setItem: (key, value) => {
+        items.set(key, value);
+      },
+    };
+    const { container } = render(
+      <TradingDataProvider localServer={localServer} mode="local">
+        <InstrumentGrid id={gridId} watchlistStorage={storage} />
+      </TradingDataProvider>,
+    );
+    const fields = () =>
+      [
+        ...container.querySelectorAll<HTMLElement>(".vuuQuickFilters-filter"),
+      ].map((el) => el.dataset.field);
+    await waitFor(() =>
+      expect(fields()).toEqual(["exchange", "sector", "instrumentType"]),
+    );
+    const grid = container.querySelector(".tradingInstrumentGrid") as Element;
+    fireEvent.keyDown(grid, { altKey: true, code: "Digit2", key: "2" });
+    await waitFor(() =>
+      expect(fields()).toEqual([
+        "sector",
+        "marketCapUsd",
+        "pe",
+        "dividendYield",
+      ]),
+    );
+    // the default sets' quick filters are saved with the sets
+    const metaKey = [...items.keys()].find((k) => k.includes("columnSetMeta"));
+    expect(JSON.parse(items.get(metaKey as string) ?? "{}")).toEqual({
+      Screening: {
+        quickFilterColumns: ["sector", "marketCapUsd", "pe", "dividendYield"],
+      },
+      Watchlist: {
+        quickFilterColumns: ["exchange", "sector", "instrumentType"],
+      },
+    });
+    fireEvent.keyDown(grid, { altKey: true, code: "Digit1", key: "1" });
+    await waitFor(() =>
+      expect(fields()).toEqual(["exchange", "sector", "instrumentType"]),
     );
   });
 });

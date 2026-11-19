@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 601 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 618 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -22,11 +22,12 @@ Imports: `@heswell/trading-ui`. 601 exports. Types are shown as written in the s
 - **components/ExposureTreemap**: [ExposureMeasure](#exposuremeasure), [ExposureTreemap](#exposuretreemap), [ExposureTreemapProps](#exposuretreemapprops)
 - **components/FillProgressBar**: [FillProgressBar](#fillprogressbar), [FillProgressBarProps](#fillprogressbarprops)
 - **components/FillsBlotter**: [FillsBlotter](#fillsblotter), [FillsBlotterProps](#fillsblotterprops), [FillsGrouping](#fillsgrouping), [FillsLinkContext](#fillslinkcontext)
-- **components/InstrumentGrid**: [addToWatchlist](#addtowatchlist), [buildInstrumentGridFilter](#buildinstrumentgridfilter), [cellUnchanged](#cellunchanged), [ChangeCell](#changecell), [COLUMN_SETS_SETTINGS_KEY](#column_sets_settings_key), [createWatchlist](#createwatchlist), [DEFAULT_INSTRUMENT_GRID_COLUMNS](#default_instrument_grid_columns), [DEFAULT_VIEW_SETTINGS](#default_view_settings), [defaultColumnSets](#defaultcolumnsets), [deleteWatchlist](#deletewatchlist), [EMPTY_WATCHLISTS](#empty_watchlists), [FILTERS_SETTINGS_KEY](#filters_settings_key), [GridChannelLinks](#gridchannellinks), [GridChannelLinksProvider](#gridchannellinksprovider), [gridSettingsKey](#gridsettingskey), [GridViewSettings](#gridviewsettings), [GROUPABLE_COLUMNS](#groupable_columns), [INSTRUMENT_GRID_LINK_SOURCE](#instrument_grid_link_source), [InstrumentAction](#instrumentaction), [InstrumentGrid](#instrumentgrid), [instrumentGridColumn](#instrumentgridcolumn), [InstrumentGridColumnOptions](#instrumentgridcolumnoptions), [instrumentGridColumns](#instrumentgridcolumns), [InstrumentGridFilterParts](#instrumentgridfilterparts), [InstrumentGridProps](#instrumentgridprops), [InstrumentRow](#instrumentrow), [isInLinkCell](#isinlinkcell), [LINK_COLUMN](#link_column), [linkColumnDescriptor](#linkcolumndescriptor), [parseColumnSets](#parsecolumnsets), [parseFilterState](#parsefilterstate), [parseViewSettings](#parseviewsettings), [parseWatchlists](#parsewatchlists), [PhaseCell](#phasecell), [phaseLabel](#phaselabel), [priceFormatOf](#priceformatof), [PriceMoveCell](#pricemovecell), [QuantityCell](#quantitycell), [quickFilterExpression](#quickfilterexpression), [registerInstrumentGridRenderers](#registerinstrumentgridrenderers), [registerLinkCellRenderer](#registerlinkcellrenderer), [removeFromWatchlist](#removefromwatchlist), [renameWatchlist](#renamewatchlist), [rowRicOf](#rowricof), [SCREENING_COLUMNS](#screening_columns), [SCREENING_SET_COLUMNS](#screening_set_columns), [SPARKLINE_COLUMN](#sparkline_column), [StoredSetting](#storedsetting), [titleCaseColumnName](#titlecasecolumnname), [toInstrument](#toinstrument), [useGridChannelLinks](#usegridchannellinks), [useStoredSetting](#usestoredsetting), [useWatchlists](#usewatchlists), [UseWatchlistsResult](#usewatchlistsresult), [VIEW_SETTINGS_KEY](#view_settings_key), [Watchlist](#watchlist), [watchlistFilterExpression](#watchlistfilterexpression), [WATCHLISTS_SETTINGS_KEY](#watchlists_settings_key), [WatchlistState](#watchliststate), [withSearchCasings](#withsearchcasings)
+- **components/InstrumentGrid**: [addToWatchlist](#addtowatchlist), [buildInstrumentGridFilter](#buildinstrumentgridfilter), [cellUnchanged](#cellunchanged), [ChangeCell](#changecell), [COLUMN_SETS_SETTINGS_KEY](#column_sets_settings_key), [createWatchlist](#createwatchlist), [DEFAULT_INSTRUMENT_GRID_COLUMNS](#default_instrument_grid_columns), [DEFAULT_VIEW_SETTINGS](#default_view_settings), [defaultColumnSets](#defaultcolumnsets), [deleteWatchlist](#deletewatchlist), [EMPTY_WATCHLISTS](#empty_watchlists), [FILTERS_SETTINGS_KEY](#filters_settings_key), [GridChannelLinks](#gridchannellinks), [GridChannelLinksProvider](#gridchannellinksprovider), [gridSettingsKey](#gridsettingskey), [GridViewSettings](#gridviewsettings), [GROUPABLE_COLUMNS](#groupable_columns), [INSTRUMENT_GRID_LINK_SOURCE](#instrument_grid_link_source), [InstrumentAction](#instrumentaction), [InstrumentGrid](#instrumentgrid), [instrumentGridColumn](#instrumentgridcolumn), [InstrumentGridColumnOptions](#instrumentgridcolumnoptions), [instrumentGridColumns](#instrumentgridcolumns), [InstrumentGridFilterParts](#instrumentgridfilterparts), [InstrumentGridProps](#instrumentgridprops), [InstrumentRow](#instrumentrow), [isInLinkCell](#isinlinkcell), [LINK_COLUMN](#link_column), [linkColumnDescriptor](#linkcolumndescriptor), [parseColumnSets](#parsecolumnsets), [parseFilterState](#parsefilterstate), [parseViewSettings](#parseviewsettings), [parseWatchlists](#parsewatchlists), [PhaseCell](#phasecell), [phaseLabel](#phaselabel), [priceFormatOf](#priceformatof), [PriceMoveCell](#pricemovecell), [QuantityCell](#quantitycell), [quickFilterExpression](#quickfilterexpression), [registerInstrumentGridRenderers](#registerinstrumentgridrenderers), [registerLinkCellRenderer](#registerlinkcellrenderer), [removeFromWatchlist](#removefromwatchlist), [renameWatchlist](#renamewatchlist), [rowRicOf](#rowricof), [SCREENING_COLUMNS](#screening_columns), [SCREENING_SET_COLUMNS](#screening_set_columns), [SPARKLINE_COLUMN](#sparkline_column), [StoredSetting](#storedsetting), [titleCaseColumnName](#titlecasecolumnname), [toInstrument](#toinstrument), [updateWatchlist](#updatewatchlist), [useGridChannelLinks](#usegridchannellinks), [useStoredSetting](#usestoredsetting), [useWatchlists](#usewatchlists), [UseWatchlistsResult](#usewatchlistsresult), [VIEW_SETTINGS_KEY](#view_settings_key), [Watchlist](#watchlist), [watchlistFilterExpression](#watchlistfilterexpression), [watchlistNameError](#watchlistnameerror), [WATCHLISTS_SETTINGS_KEY](#watchlists_settings_key), [WatchlistState](#watchliststate), [withSearchCasings](#withsearchcasings)
 - **components/InstrumentLookup**: [InstrumentLookup](#instrumentlookup), [InstrumentLookupProvider](#instrumentlookupprovider), [useInstrumentLookup](#useinstrumentlookup)
 - **components/InstrumentPicker**: [INSTRUMENT_PICKER_SOURCE](#instrument_picker_source), [InstrumentPicker](#instrumentpicker), [InstrumentPickerProps](#instrumentpickerprops), [instrumentSearchFilter](#instrumentsearchfilter), [toSelectedInstrument](#toselectedinstrument)
 - **components/LinkGroupSelector**: [LinkGroupMenuButton](#linkgroupmenubutton), [LinkGroupSelector](#linkgroupselector), [LinkGroupSelectorProps](#linkgroupselectorprops), [LinkGroupSwatch](#linkgroupswatch), [PanelLinkGroupSelector](#panellinkgroupselector)
 - **components/MarketDepth**: [MarketDepth](#marketdepth), [MarketDepthLevelClick](#marketdepthlevelclick), [MarketDepthProps](#marketdepthprops)
+- **components/NamePrompt**: [NamePrompt](#nameprompt), [NamePromptProps](#namepromptprops)
 - **components/OrderBlotter**: [CHILD_ORDER_COLUMNS](#child_order_columns), [childOrdersTableConfig](#childorderstableconfig), [ORDER_BLOTTER_COLUMNS](#order_blotter_columns), [ORDER_BLOTTER_TABS](#order_blotter_tabs), [OrderBlotter](#orderblotter), [OrderBlotterContext](#orderblottercontext), [OrderBlotterProps](#orderblotterprops), [OrderBlotterTab](#orderblottertab), [orderBlotterTabFilter](#orderblottertabfilter), [orderBlotterTableConfig](#orderblottertableconfig), [OrderRowActions](#orderrowactions)
 - **components/OrderBookView**: [BookLevelRef](#booklevelref), [OrderBookView](#orderbookview), [OrderBookViewProps](#orderbookviewprops), [orderTypeLabel](#ordertypelabel)
 - **components/OrderStatusBadge**: [OrderStatusBadge](#orderstatusbadge), [OrderStatusBadgeProps](#orderstatusbadgeprops)
@@ -48,6 +49,7 @@ Imports: `@heswell/trading-ui`. 601 exports. Types are shown as written in the s
 - **components/TimeSeriesChart**: [BUCKET_COLUMNS](#bucket_columns), [BucketRow](#bucketrow), [bucketsToPoints](#bucketstopoints), [formatTimeSeriesStats](#formattimeseriesstats), [needsWindow](#needswindow), [OVERSCAN](#overscan), [planRange](#planrange), [planWindow](#planwindow), [SeriesPoints](#seriespoints), [TimeSeriesChart](#timeserieschart), [TimeSeriesChartProps](#timeserieschartprops), [TimeSeriesStats](#timeseriesstats), [ViewState](#viewstate), [WindowPlan](#windowplan)
 - **components/TradeTape**: [sizePercentile](#sizepercentile), [TradeTape](#tradetape), [TradeTapeProps](#tradetapeprops)
 - **components/TradingCellRenderers**: [registerTradingCellRenderers](#registertradingcellrenderers), [TradingRenderer](#tradingrenderer)
+- **components/WatchlistDialog**: [addRics](#addrics), [facetSummary](#facetsummary), [facetValueLabel](#facetvaluelabel), [INSTRUMENT_TYPE_OPTIONS](#instrument_type_options), [isNarrowed](#isnarrowed), [PICKER_FACETS](#picker_facets), [PICKER_ROW_LIMIT](#picker_row_limit), [PickerFacet](#pickerfacet), [PickerFacetValues](#pickerfacetvalues), [pickerFilter](#pickerfilter), [toggleRic](#toggleric), [WatchlistDialog](#watchlistdialog), [WatchlistDialogProps](#watchlistdialogprops)
 - **utils**: [createLocalSettingsStorage](#createlocalsettingsstorage), [createMemorySettingsStorage](#creatememorysettingsstorage), [CsvColumn](#csvcolumn), [directionColour](#directioncolour), [DONE_STATUSES](#done_statuses), [downloadCsv](#downloadcsv), [filterString](#filterstring), [formatNotional](#formatnotional), [formatPercent](#formatpercent), [formatPrice](#formatprice), [formatQuantity](#formatquantity), [formatTime](#formattime), [instrumentTickSchedule](#instrumenttickschedule), [isInactivePhase](#isinactivephase), [isOrderAmendable](#isorderamendable), [isOrderCancellable](#isordercancellable), [orderStatusCategory](#orderstatuscategory), [OrderStatusCategory](#orderstatuscategory-1), [orderStatusColour](#orderstatuscolour), [orderStatusIcon](#orderstatusicon), [orderStatusLabel](#orderstatuslabel), [priceDecimals](#pricedecimals), [PriceFormat](#priceformat), [rowsToCsv](#rowstocsv), [sideColour](#sidecolour), [stopTriggerState](#stoptriggerstate), [TimeFormat](#timeformat), [TradingColour](#tradingcolour), [tradingPhaseColour](#tradingphasecolour), [tradingPhaseText](#tradingphasetext), [UserSettingsProvider](#usersettingsprovider), [UserSettingsProviderProps](#usersettingsproviderprops), [UserSettingsStorage](#usersettingsstorage), [useUserSettingsStorage](#useusersettingsstorage), [WORKING_STATUSES](#working_statuses)
 - **domain**: [allowedTimesInForce](#allowedtimesinforce), [isAlgoStrategy](#isalgostrategy), [isStrategyAllowed](#isstrategyallowed), [isTimeInForceAllowed](#istimeinforceallowed), [nonStopOrdType](#nonstopordtype), [ORD_TYPE_LABEL](#ord_type_label), [ORDER_TICKET_TIFS](#order_ticket_tifs)
 - **export**: [canStreamToFile](#canstreamtofile), [CellTextFormatter](#celltextformatter), [CellTextFormatters](#celltextformatters), [columnLabel](#columnlabel), [csvField](#csvfield), [csvFormatter](#csvformatter), [CsvFormatterOptions](#csvformatteroptions), [EXPORT_VIEWPORT_RPC](#export_viewport_rpc), [ExportColumn](#exportcolumn), [exportColumns](#exportcolumns), [ExportColumnsOptions](#exportcolumnsoptions), [ExportDataRow](#exportdatarow), [ExportProgress](#exportprogress), [ExportResult](#exportresult), [ExportSink](#exportsink), [ExportTicket](#exportticket), [ExportViewportOptions](#exportviewportoptions), [exportViewportToCsv](#exportviewporttocsv), [isLocalEngineDataSource](#islocalenginedatasource), [localExportRows](#localexportrows), [LocalExportRows](#localexportrows-1), [memoryDownloadSink](#memorydownloadsink), [ndjsonRows](#ndjsonrows), [pickExportSink](#pickexportsink), [requestViewportExport](#requestviewportexport), [tradingTextFormatters](#tradingtextformatters)
@@ -3214,7 +3216,7 @@ Also accepts the props of `TableCellProps (@vuu-ui/vuu-table-types)`, `TableCell
 
 #### InstrumentGrid
 
-*component* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L242)
+*component* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L291)
 
 Instrument grid: a preset over the vuu Table bound to instrumentPrices
 (or prices). Price-move and change renderers, formatting per instrument,
@@ -3314,7 +3316,7 @@ useStoredSetting<T>(storage: UserSettingsStorage, key: string, parse: (json: str
 
 #### useWatchlists
 
-*hook* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L138)
+*hook* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L176)
 
 Named client-side lists of rics, persisted through a `UserSettingsStorage`
 (the nearest `UserSettingsProvider`, localStorage by default).
@@ -3328,7 +3330,7 @@ useWatchlists(storage?: UserSettingsStorage, settingsKey = WATCHLISTS_SETTINGS_K
 
 #### addToWatchlist
 
-*function* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L101)
+*function* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L138)
 
 Adds a ric to a watchlist (no-op if already there).
 
@@ -3359,7 +3361,7 @@ cellUnchanged(prev: TableCellRendererProps, next: TableCellRendererProps): boole
 
 #### createWatchlist
 
-*function* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L66)
+*function* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L83)
 
 Adds a watchlist named `name` (with optional initial rics); returns the new
 state and the new list's id.
@@ -3380,7 +3382,7 @@ defaultColumnSets(watchlistColumns: readonly string[], screeningColumns: readonl
 
 #### deleteWatchlist
 
-*function* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L84)
+*function* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L101)
 
 Removes a watchlist.
 
@@ -3462,7 +3464,7 @@ parseViewSettings(json: string | null | undefined): GridViewSettings | undefined
 
 #### parseWatchlists
 
-*function* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L36)
+*function* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L53)
 
 Defensive parse: persisted settings can come from any version / host.
 
@@ -3523,7 +3525,7 @@ registerLinkCellRenderer(): void
 
 #### removeFromWatchlist
 
-*function* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L112)
+*function* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L149)
 
 Removes a ric from a watchlist.
 
@@ -3533,7 +3535,7 @@ removeFromWatchlist(state: WatchlistState, id: string, ric: string): WatchlistSt
 
 #### renameWatchlist
 
-*function* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L90)
+*function* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L107)
 
 Renames a watchlist (a blank name keeps the old one).
 
@@ -3572,6 +3574,17 @@ The instrument of a grid row, with the static fields the row has (a
 toInstrument(row: InstrumentRow): SelectedInstrument
 ```
 
+#### updateWatchlist
+
+*function* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L121)
+
+Replaces a watchlist's name and/or rics (as the watchlist dialog saves
+them). A blank name keeps the old one; rics are de-duplicated in order.
+
+```ts
+updateWatchlist(state: WatchlistState, id: string, { name, rics }: { name?: string; rics?: readonly string[] }): WatchlistState
+```
+
 #### watchlistFilterExpression
 
 *function* · [components/InstrumentGrid/instrumentGridFilter.ts](../../packages/trading-ui/src/components/InstrumentGrid/instrumentGridFilter.ts#L95)
@@ -3580,6 +3593,17 @@ Filter for a watchlist: its rics (an empty list matches nothing).
 
 ```ts
 watchlistFilterExpression(rics: readonly string[]): string
+```
+
+#### watchlistNameError
+
+*function* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L39)
+
+Why `name` can't name a new watchlist, or undefined if it can. Names are
+compared trimmed and ignoring case; `currentId` is the list being renamed.
+
+```ts
+watchlistNameError(name: string, lists: readonly Watchlist[], currentId?: string): string | undefined
 ```
 
 #### withSearchCasings
@@ -3791,7 +3815,7 @@ View settings from the panel settings (gear) menu and the link column header.
 
 #### InstrumentGridProps
 
-*interface* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L127)
+*interface* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L162)
 
 Props of [`InstrumentGrid`](#instrumentgrid).
 
@@ -3807,7 +3831,7 @@ Props of [`InstrumentGrid`](#instrumentgrid).
 
 #### UseWatchlistsResult
 
-*interface* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L122)
+*interface* · [components/InstrumentGrid/watchlists.ts](../../packages/trading-ui/src/components/InstrumentGrid/watchlists.ts#L159)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -3816,6 +3840,7 @@ Props of [`InstrumentGrid`](#instrumentgrid).
 | `create` | `(name: string, rics?: string[]) => string` |  |  |
 | `remove` | `(id: string) => void` |  |  |
 | `rename` | `(id: string, name: string) => void` |  |  |
+| `update` | `(id: string, changes: { name?: string; rics?: string[] }) => void` |  |  |
 | `add` | `(id: string, ric: string) => void` |  |  |
 | `removeRic` | `(id: string, ric: string) => void` |  |  |
 
@@ -3841,7 +3866,7 @@ Props of [`InstrumentGrid`](#instrumentgrid).
 
 #### InstrumentAction
 
-*type* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L125)
+*type* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L160)
 
 ```ts
 type InstrumentAction = (instrument: SelectedInstrument) => void
@@ -4108,6 +4133,41 @@ Also accepts the standard HTML attributes and `ref`.
 
 Props of [`MarketDepth`](#marketdepth).
 
+## components/NamePrompt
+
+### Components (components/NamePrompt)
+
+#### NamePrompt
+
+*component* · [components/NamePrompt/NamePrompt.tsx](../../packages/trading-ui/src/components/NamePrompt/NamePrompt.tsx#L45)
+
+A vuu Prompt (Salt Dialog) asking for a name: the grid's replacement for
+window.prompt. Enter confirms a valid name, Esc cancels.
+
+Props: `NamePromptProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `children?` | `ReactNode` |  | More fields, under the name (e.g. where a new item is available). |
+| `confirmLabel?` | `string` | `"Create"` | Confirm button label, e.g. "Create". |
+| `initialName?` | `string` | `""` | Starting value, e.g. the current name when renaming. |
+| `label?` | `string` | `"Name"` | Field label. |
+| `maxLength?` | `number` | `40` |  |
+| `onClose` | `() => void` |  |  |
+| `onConfirm` | `(name: string) => void` |  | Called with the trimmed name; the prompt then closes. |
+| `open?` | `boolean` | `true` |  |
+| `placeholder?` | `string` |  |  |
+| `title` | `string` |  |  |
+| `validate?` | `(name: string) => string \| undefined` |  | The error for a trimmed, non-empty name, or undefined when it is valid. A blank name only disables the confirm button. |
+
+### Interfaces (components/NamePrompt)
+
+#### NamePromptProps
+
+*interface* · [components/NamePrompt/NamePrompt.tsx](../../packages/trading-ui/src/components/NamePrompt/NamePrompt.tsx#L18)
+
+Props of [`NamePrompt`](#nameprompt).
+
 ## components/OrderBlotter
 
 ### Components (components/OrderBlotter)
@@ -4348,11 +4408,11 @@ Props: `OrderTicketProps`
 | `variant?` | `OrderTicketVariant` | `"panel"` | "panel" (default): full form for a docked panel or dialog. "compact": a one-line strip for a grid row or ladder. |
 | `showInstrumentPicker?` | `boolean` | `true` | Show the instrument picker (default true; false for a fixed ric). |
 | `actions?` | `ReactNode` |  | Extra content in the actions row (e.g. a Close button). |
+| `onClose?` | `() => void` |  | Called on Escape with nothing to reset (close the dialog / panel). (from `UseOrderTicketProps`) |
 | `prefill?` | `OrderTicketPrefill` |  | (from `UseOrderTicketProps`) |
 | `followSelection?` | `boolean` |  | Follow the selected instrument (useSelectedInstrument). Default true. (from `UseOrderTicketProps`) |
 | `publishSelection?` | `boolean` |  | Publish instruments picked in the ticket as the selection. Default true. (from `UseOrderTicketProps`) |
 | `onOrderEvent?` | `(event: TradingOrderEvent) => void` |  | Called for each order event of orders sent from this ticket. (from `UseOrderTicketProps`) |
-| `onClose?` | `() => void` |  | Called on Escape with nothing to reset (close the dialog / panel). (from `UseOrderTicketProps`) |
 | `notify?` | `boolean` |  | Report events to the TradingNotificationsProvider. Default true. (from `UseOrderTicketProps`) |
 | `rememberAccount?` | `boolean` |  | Remember the last account used (localStorage). Default true. (from `UseOrderTicketProps`) |
 | `clOrdIdPrefix?` | `string` |  | clOrdId prefix (default "TKT"). (from `UseOrderTicketProps`) |
@@ -4436,11 +4496,11 @@ Props: `OrderTicketPanelProps`
 | `variant?` | `OrderTicketVariant` |  | "panel" (default): full form for a docked panel or dialog. "compact": a one-line strip for a grid row or ladder. (from `OrderTicketProps`) |
 | `showInstrumentPicker?` | `boolean` |  | Show the instrument picker (default true; false for a fixed ric). (from `OrderTicketProps`) |
 | `actions?` | `ReactNode` |  | Extra content in the actions row (e.g. a Close button). (from `OrderTicketProps`) |
+| `onClose?` | `() => void` |  | Called on Escape with nothing to reset (close the dialog / panel). (from `UseOrderTicketProps`) |
 | `prefill?` | `OrderTicketPrefill` |  | (from `UseOrderTicketProps`) |
 | `followSelection?` | `boolean` |  | Follow the selected instrument (useSelectedInstrument). Default true. (from `UseOrderTicketProps`) |
 | `publishSelection?` | `boolean` |  | Publish instruments picked in the ticket as the selection. Default true. (from `UseOrderTicketProps`) |
 | `onOrderEvent?` | `(event: TradingOrderEvent) => void` |  | Called for each order event of orders sent from this ticket. (from `UseOrderTicketProps`) |
-| `onClose?` | `() => void` |  | Called on Escape with nothing to reset (close the dialog / panel). (from `UseOrderTicketProps`) |
 | `notify?` | `boolean` |  | Report events to the TradingNotificationsProvider. Default true. (from `UseOrderTicketProps`) |
 | `rememberAccount?` | `boolean` |  | Remember the last account used (localStorage). Default true. (from `UseOrderTicketProps`) |
 | `clOrdIdPrefix?` | `string` |  | clOrdId prefix (default "TKT"). (from `UseOrderTicketProps`) |
@@ -6948,6 +7008,157 @@ have run; the components that use them call it.
 
 ```ts
 const TradingRenderer: Readonly<{ readonly OrderStatus: "trading.order-status"; readonly Side: "trading.side"; readonly FillProgress: "trading.fill-progress"; readonly Price: "trading.price"; readonly Pnl: "trading.pnl"; ... 5 more ...; readonly StopTrigger: "trading.stop-trigger"; }>
+```
+
+## components/WatchlistDialog
+
+### Components (components/WatchlistDialog)
+
+#### WatchlistDialog
+
+*component* · [components/WatchlistDialog/WatchlistDialog.tsx](../../packages/trading-ui/src/components/WatchlistDialog/WatchlistDialog.tsx#L174)
+
+New / Edit watchlist: a name, then instruments picked from a searchable,
+filterable list of `instruments` (Sector, Type, Exchange, Currency). Add
+matches takes every instrument the search and filters list now.
+
+Keys: ↑↓ move, Enter adds or removes the highlighted instrument, Alt+A
+adds all matches, Ctrl+Enter saves, Esc cancels.
+
+Props: `WatchlistDialogProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `editing?` | `Watchlist` |  | The list being edited; undefined for a new list. |
+| `initialRics?` | `readonly string[]` | `[]` | Rics a new list starts with (e.g. the grid's selected row). |
+| `lists` | `readonly Watchlist[]` |  | Every watchlist, to refuse a duplicate name. |
+| `onClose` | `() => void` |  |  |
+| `onSave` | `(changes: { name: string; rics: string[] }) => void` |  | Create or save: the trimmed name and the rics, in order. |
+| `open?` | `boolean` | `true` |  |
+
+### Functions (components/WatchlistDialog)
+
+#### addRics
+
+*function* · [components/WatchlistDialog/watchlistPicker.ts](../../packages/trading-ui/src/components/WatchlistDialog/watchlistPicker.ts#L68)
+
+`picked` plus each of `rics` not already in it, in order.
+
+```ts
+addRics(picked: readonly string[], rics: readonly string[]): string[]
+```
+
+#### facetSummary
+
+*function* · [components/WatchlistDialog/watchlistPicker.ts](../../packages/trading-ui/src/components/WatchlistDialog/watchlistPicker.ts#L60)
+
+"Any", "Energy", "Energy +2".
+
+```ts
+facetSummary(facet: PickerFacet, values: readonly string[]): string
+```
+
+#### facetValueLabel
+
+*function* · [components/WatchlistDialog/watchlistPicker.ts](../../packages/trading-ui/src/components/WatchlistDialog/watchlistPicker.ts#L22)
+
+EQUITY → Equity.
+
+```ts
+facetValueLabel(facet: PickerFacet, value: string): string
+```
+
+#### isNarrowed
+
+*function* · [components/WatchlistDialog/watchlistPicker.ts](../../packages/trading-ui/src/components/WatchlistDialog/watchlistPicker.ts#L34)
+
+True when a search or a facet narrows the list (Add matches is offered).
+
+```ts
+isNarrowed(query: string, facets: PickerFacetValues): boolean
+```
+
+#### pickerFilter
+
+*function* · [components/WatchlistDialog/watchlistPicker.ts](../../packages/trading-ui/src/components/WatchlistDialog/watchlistPicker.ts#L42)
+
+The picker's vuu filter over `instruments`: the text search (ric and
+description, in the casings the grid's quick filter tries) AND each
+facet's `in [...]`. "" when nothing narrows the list.
+
+```ts
+pickerFilter(query: string, facets: PickerFacetValues): string
+```
+
+#### toggleRic
+
+*function* · [components/WatchlistDialog/watchlistPicker.ts](../../packages/trading-ui/src/components/WatchlistDialog/watchlistPicker.ts#L74)
+
+Adds `ric`, or removes it if it is already picked.
+
+```ts
+toggleRic(picked: readonly string[], ric: string): string[]
+```
+
+### Constants (components/WatchlistDialog)
+
+#### INSTRUMENT_TYPE_OPTIONS
+
+*const* · [components/WatchlistDialog/watchlistPicker.ts](../../packages/trading-ui/src/components/WatchlistDialog/watchlistPicker.ts#L19)
+
+Instrument types are an enum, so their options need no lookup.
+
+```ts
+const INSTRUMENT_TYPE_OPTIONS: readonly string[]
+```
+
+#### PICKER_FACETS
+
+*const* · [components/WatchlistDialog/watchlistPicker.ts](../../packages/trading-ui/src/components/WatchlistDialog/watchlistPicker.ts#L6)
+
+`instruments` columns the picker filters on, in the order shown.
+
+```ts
+const PICKER_FACETS: readonly [{ readonly column: "sector"; readonly label: "Sector"; }, { readonly column: "instrumentType"; readonly label: "Type"; }, { readonly column: "exchange"; readonly label: "Exchange"; }, { ...; }]
+```
+
+#### PICKER_ROW_LIMIT
+
+*const* · [components/WatchlistDialog/watchlistPicker.ts](../../packages/trading-ui/src/components/WatchlistDialog/watchlistPicker.ts#L31)
+
+Most matches the picker lists, and so the most Add matches adds at once:
+the whole demo universe, and a `ric in [...]` filter that stays small.
+
+```ts
+const PICKER_ROW_LIMIT: 500
+```
+
+### Interfaces (components/WatchlistDialog)
+
+#### WatchlistDialogProps
+
+*interface* · [components/WatchlistDialog/WatchlistDialog.tsx](../../packages/trading-ui/src/components/WatchlistDialog/WatchlistDialog.tsx#L61)
+
+Props of [`WatchlistDialog`](#watchlistdialog).
+
+### Types (components/WatchlistDialog)
+
+#### PickerFacet
+
+*type* · [components/WatchlistDialog/watchlistPicker.ts](../../packages/trading-ui/src/components/WatchlistDialog/watchlistPicker.ts#L13)
+
+```ts
+type PickerFacet = (typeof PICKER_FACETS)[number]["column"]
+```
+
+#### PickerFacetValues
+
+*type* · [components/WatchlistDialog/watchlistPicker.ts](../../packages/trading-ui/src/components/WatchlistDialog/watchlistPicker.ts#L16)
+
+Selected values per facet; a missing or empty list = any value.
+
+```ts
+type PickerFacetValues = Partial<Record<PickerFacet, string[]>>
 ```
 
 ## utils

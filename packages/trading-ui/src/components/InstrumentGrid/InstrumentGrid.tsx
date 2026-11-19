@@ -3,6 +3,7 @@ import {
   Side,
   type TradingSchemaName,
 } from "@heswell/trading-schemas";
+import { Button, Checkbox } from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
 import {
@@ -11,7 +12,10 @@ import {
   useContextPanel,
   useHideContextPanel,
 } from "@vuu-ui/core";
-import { ContextPanelProvider as ControlsContextPanelProvider } from "@vuu-ui/vuu-ui-controls";
+import {
+  ContextPanelProvider as ControlsContextPanelProvider,
+  Prompt,
+} from "@vuu-ui/vuu-ui-controls";
 import type { DataSource } from "@vuu-ui/vuu-data-types";
 import { ContextMenuProvider } from "@vuu-ui/vuu-context-menu";
 import type {
@@ -27,6 +31,7 @@ import {
   type ColumnSetsState,
   getActiveColumnSetColumns,
   useColumnSetModel,
+  useColumnSetsState,
 } from "@vuu-ui/vuu-table-extras";
 import { Table } from "@vuu-ui/vuu-table";
 import type {
@@ -51,6 +56,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { tradingTableSchema } from "../../data/tradingTables";
@@ -80,6 +86,30 @@ import {
   useStoredSetting,
   VIEW_SETTINGS_KEY,
 } from "./gridSettings";
+import { AlsoApplied } from "./AlsoApplied";
+import {
+  alsoAppliedFilters,
+  andFilters,
+  COLUMN_SET_META_SETTINGS_KEY,
+  type ColumnSetMetaState,
+  parseColumnSetMeta,
+  quickFilterClauses,
+  quickFilterColumnsFor,
+  reconcileColumnSetMeta,
+  updateQuickFilterValues,
+} from "./columnSetMeta";
+import {
+  columnSetForScope,
+  columnSetsInScope,
+  columnSetsOnlyIn,
+  copyName,
+  followColumnSets,
+  LAST_COLUMN_SET_SETTINGS_KEY,
+  type LastColumnSetState,
+  parseLastColumnSet,
+  setColumnSetScope,
+  tabOrder,
+} from "./columnSetScope";
 import {
   instrumentGridColumns,
   SCREENING_SET_COLUMNS,
@@ -89,7 +119,10 @@ import {
   buildInstrumentGridFilter,
   withSearchCasings,
 } from "./instrumentGridFilter";
-import { InstrumentGridFooter } from "./InstrumentGridFooter";
+import {
+  type ColumnSetScopeProps,
+  InstrumentGridFooter,
+} from "./InstrumentGridFooter";
 import {
   actionsColumnDescriptor,
   type RowActionHandlers,
@@ -111,7 +144,9 @@ import {
   rowRicOf,
   useGridChannelLinks,
 } from "./linkColumn";
-import { useWatchlists } from "./watchlists";
+import { NamePrompt } from "../NamePrompt";
+import { WatchlistDialog } from "../WatchlistDialog";
+import { useWatchlists, watchlistNameError } from "./watchlists";
 import type { SparklineCellOptions } from "../Sparkline/Sparkline";
 import gridCss from "./InstrumentGrid.css";
 
@@ -186,6 +221,12 @@ interface InstrumentGridInnerProps extends InstrumentGridProps {
   /** Column sets as persisted, undefined if none have been saved. */
   storedColumnSets?: ColumnSetsState;
   onColumnSetsChange: (state: ColumnSetsState) => void;
+  /** Quick filter fields per column set, as persisted. */
+  storedColumnSetMeta?: ColumnSetMetaState;
+  onColumnSetMetaChange: (meta: ColumnSetMetaState) => void;
+  /** The column set last shown in each scope, as persisted. */
+  storedLastColumnSet?: LastColumnSetState;
+  onLastColumnSetChange: (state: LastColumnSetState) => void;
   /** FilterBar filters as persisted. */
   storedFilterState?: FilterState;
   onFilterStateChange: (state: FilterState) => void;
@@ -211,6 +252,14 @@ const ContextPanelBridge = ({ children }: { children: ReactNode }) => {
       {children}
     </ControlsContextPanelProvider>
   );
+};
+
+/** Quick filter fields of the default column sets (see defaultColumnSets). */
+const DEFAULT_COLUMN_SET_META: ColumnSetMetaState = {
+  Watchlist: { quickFilterColumns: ["exchange", "sector", "instrumentType"] },
+  Screening: {
+    quickFilterColumns: ["sector", "marketCapUsd", "pe", "dividendYield"],
+  },
 };
 
 const DEFAULT_QUICK_FILTER_COLUMNS = [
@@ -254,6 +303,16 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
       gridSettingsKey(FILTERS_SETTINGS_KEY, id),
       parseFilterState,
     );
+    const columnSetMeta = useStoredSetting(
+      storage,
+      gridSettingsKey(COLUMN_SET_META_SETTINGS_KEY, id),
+      parseColumnSetMeta,
+    );
+    const lastColumnSet = useStoredSetting(
+      storage,
+      gridSettingsKey(LAST_COLUMN_SET_SETTINGS_KEY, id),
+      parseLastColumnSet,
+    );
     const viewSettings = useStoredSetting(
       storage,
       gridSettingsKey(VIEW_SETTINGS_KEY, id),
@@ -266,13 +325,21 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
         <ContextPanelProvider>
           <SlotContextPanelProvider>
             <ContextPanelBridge>
-              {columnSets.loaded && filters.loaded && viewSettings.loaded ? (
+              {columnSets.loaded &&
+              columnSetMeta.loaded &&
+              lastColumnSet.loaded &&
+              filters.loaded &&
+              viewSettings.loaded ? (
                 <InstrumentGridInner
                   {...props}
+                  onColumnSetMetaChange={columnSetMeta.save}
+                  onLastColumnSetChange={lastColumnSet.save}
                   onColumnSetsChange={columnSets.save}
                   onFilterStateChange={filters.save}
                   onViewSettingsChange={viewSettings.save}
                   ref={ref}
+                  storedColumnSetMeta={columnSetMeta.value}
+                  storedLastColumnSet={lastColumnSet.value}
                   storedColumnSets={columnSets.value}
                   storedFilterState={filters.value}
                   storedViewSettings={viewSettings.value}
@@ -306,6 +373,8 @@ const InstrumentGridInner = forwardRef<
     instrumentType,
     launchOrderTicket = true,
     onBuy: onBuyProp,
+    onColumnSetMetaChange,
+    onLastColumnSetChange,
     onColumnSetsChange,
     onFilterStateChange,
     onOpenDepth,
@@ -315,6 +384,8 @@ const InstrumentGridInner = forwardRef<
     showToolbar = true,
     simulatedOnly = false,
     sparkline,
+    storedColumnSetMeta,
+    storedLastColumnSet,
     storedColumnSets,
     storedFilterState,
     storedViewSettings,
@@ -390,9 +461,70 @@ const InstrumentGridInner = forwardRef<
     columnModel.addListener("change", handler);
     return () => columnModel.removeListener("change", handler);
   }, [columnModel]);
+  // --- quick filter fields per column set, in a side record (vuu's
+  // ColumnSet has no room for them): switching sets switches both.
+  // Sets saved before sets carried quick filters fall back to the defaults.
+  const [columnSetMeta, setColumnSetMeta] = useState<ColumnSetMetaState>(
+    () =>
+      storedColumnSetMeta ??
+      (storedColumnSets ? {} : { ...DEFAULT_COLUMN_SET_META }),
+  );
+  const columnSetMetaRef = useRef(columnSetMeta);
+  // The default sets' meta is saved with the sets' first save, so the two
+  // stay together.
+  const metaSaved = useRef(storedColumnSetMeta !== undefined);
+  const updateColumnSetMeta = useCallback(
+    (fn: (meta: ColumnSetMetaState) => ColumnSetMetaState) => {
+      const next = fn(columnSetMetaRef.current);
+      if (next === columnSetMetaRef.current && metaSaved.current) return;
+      metaSaved.current = true;
+      columnSetMetaRef.current = next;
+      setColumnSetMeta(next);
+      onColumnSetMetaChange(next);
+    },
+    [onColumnSetMetaChange],
+  );
+  const [activeColumnSet, setActiveColumnSet] = useState(
+    initialColumnSets.activeColumnSet,
+  );
+  const columnSetsRef = useRef(initialColumnSets);
+  /** The quick filter fields in view (read by change handlers). */
+  const quickColumnsRef = useRef<readonly string[]>([]);
+  /** The scope in view: ALL_INSTRUMENTS or a watchlist id. */
+  const scopeRef = useRef(ALL_INSTRUMENTS);
+  // The set last shown in each scope, shown again on coming back.
+  const lastColumnSetRef = useRef<LastColumnSetState>(
+    storedLastColumnSet ?? {},
+  );
+  const updateLastColumnSet = useCallback(
+    (fn: (state: LastColumnSetState) => LastColumnSetState) => {
+      const next = fn(lastColumnSetRef.current);
+      if (next === lastColumnSetRef.current) return;
+      lastColumnSetRef.current = next;
+      onLastColumnSetChange(next);
+    },
+    [onLastColumnSetChange],
+  );
   const handleColumnSetsChange = useCallback<ColumnSetsChangeHandler>(
-    (state) => onColumnSetsChange(state),
-    [onColumnSetsChange],
+    (state, reason) => {
+      const previous = columnSetsRef.current;
+      columnSetsRef.current = state;
+      setActiveColumnSet(state.activeColumnSet);
+      updateLastColumnSet((last) =>
+        followColumnSets(last, previous, state, scopeRef.current),
+      );
+      updateColumnSetMeta((meta) =>
+        reconcileColumnSetMeta(
+          meta,
+          previous,
+          state,
+          reason,
+          quickColumnsRef.current,
+        ),
+      );
+      onColumnSetsChange(state);
+    },
+    [onColumnSetsChange, updateColumnSetMeta, updateLastColumnSet],
   );
   const columnSetModel = useColumnSetModel({
     columnModel,
@@ -431,18 +563,133 @@ const InstrumentGridInner = forwardRef<
   );
   const hasTypes = available.includes("instrumentType");
   const fixedType = hasTypes ? instrumentType : undefined;
+  const quickFilterAllowed = useCallback(
+    (c: string) =>
+      available.includes(c) && !(c === "instrumentType" && fixedType),
+    [available, fixedType],
+  );
+  const defaultQuickFilterColumns = useMemo(
+    () => DEFAULT_QUICK_FILTER_COLUMNS.filter(quickFilterAllowed),
+    [quickFilterAllowed],
+  );
+  // With no column set in view, the fields are the grid's own.
+  const [looseQuickColumns, setLooseQuickColumns] = useState<string[]>();
+  const quickFilterColumns = useMemo(
+    () =>
+      (activeColumnSet
+        ? quickFilterColumnsFor(
+            columnSetMeta,
+            activeColumnSet,
+            defaultQuickFilterColumns,
+          )
+        : (looseQuickColumns ?? defaultQuickFilterColumns)
+      ).filter(quickFilterAllowed),
+    [
+      activeColumnSet,
+      columnSetMeta,
+      defaultQuickFilterColumns,
+      looseQuickColumns,
+      quickFilterAllowed,
+    ],
+  );
+  quickColumnsRef.current = quickFilterColumns;
+  const quickFilterItems = useMemo(
+    () =>
+      filterColumns
+        .filter(({ name }) => quickFilterAllowed(name))
+        .map(({ label, name }) => ({ label: label ?? name, name })),
+    [filterColumns, quickFilterAllowed],
+  );
+  const changeQuickFilterColumns = useCallback(
+    (columns: string[]) => {
+      const active = columnSetsRef.current.activeColumnSet;
+      if (active)
+        updateColumnSetMeta((meta) => ({
+          ...meta,
+          [active]: { ...meta[active], quickFilterColumns: columns },
+        }));
+      else setLooseQuickColumns(columns);
+    },
+    [updateColumnSetMeta],
+  );
+  // The latest value of each quick filter field, kept while its field is
+  // out of view; those apply as "Also applied" (vuu keeps them but applies
+  // only the fields in view).
+  const [quickValues, setQuickValues] = useState<Record<string, Filter>>({});
+  // FilterBar applies its saved (custom) filter AND the quick filters as
+  // one: with a saved filter active the quick part is the second.
+  const customActiveRef = useRef(
+    (storedFilterState?.activeIndices.length ?? 0) > 0,
+  );
+  const handleFilterStateChange = useCallback(
+    (state: FilterState) => {
+      customActiveRef.current = state.activeIndices.length > 0;
+      onFilterStateChange(state);
+    },
+    [onFilterStateChange],
+  );
+  const trackQuickValues = useCallback(
+    (applied: Filter | undefined) => {
+      const quickFilter = !customActiveRef.current
+        ? applied
+        : applied && "filters" in applied && applied.op === "and"
+          ? applied.filters.length === 2
+            ? applied.filters[1]
+            : undefined
+          : undefined;
+      setQuickValues((values) =>
+        updateQuickFilterValues(
+          values,
+          quickFilterClauses(quickFilter, searchColumns),
+          quickColumnsRef.current,
+        ),
+      );
+    },
+    [searchColumns],
+  );
+  const alsoApplied = useMemo(
+    () => alsoAppliedFilters(quickValues, quickFilterColumns),
+    [quickValues, quickFilterColumns],
+  );
+  const clearAlsoApplied = useCallback(
+    (column: string) => setQuickValues(({ [column]: _, ...rest }) => rest),
+    [],
+  );
   const quickFilterProps = useMemo(
     () => ({
       allowFind: searchColumns.length > 0,
-      defaultQuickFilterColumns: DEFAULT_QUICK_FILTER_COLUMNS.filter(
-        (c) => available.includes(c) && !(c === "instrumentType" && fixedType),
-      ),
+      defaultQuickFilterColumns,
+      onChangeQuickFilterColumns: changeQuickFilterColumns,
+      quickFilterColumns,
       showFind: searchColumns,
     }),
-    [available, fixedType, searchColumns],
+    [
+      changeQuickFilterColumns,
+      defaultQuickFilterColumns,
+      quickFilterColumns,
+      searchColumns,
+    ],
   );
-  const [userFilter, setUserFilter] = useState<Filter>();
-  const clearUserFilter = useCallback(() => setUserFilter(undefined), []);
+  const [barFilter, setBarFilter] = useState<Filter>();
+  const setUserFilter = useCallback(
+    (applied: Filter) => {
+      setBarFilter(applied);
+      trackQuickValues(applied);
+    },
+    [trackQuickValues],
+  );
+  const clearUserFilter = useCallback(() => {
+    setBarFilter(undefined);
+    trackQuickValues(undefined);
+  }, [trackQuickValues]);
+  const userFilter = useMemo(
+    () =>
+      andFilters(
+        barFilter,
+        alsoApplied.map(({ filter }) => filter),
+      ),
+    [barFilter, alsoApplied],
+  );
   const userFilterQuery = useMemo(
     () =>
       userFilter
@@ -484,6 +731,69 @@ const InstrumentGridInner = forwardRef<
       setWatchlistId(ALL_INSTRUMENTS);
     }
   }, [watchlistId, watchlist, watchlists.loaded]);
+
+  // --- column sets per scope: shared ones, then the scope's own
+  scopeRef.current = watchlistId;
+  const { columnSets: allColumnSets } = useColumnSetsState(columnSetModel);
+  const scopedSets = useMemo(
+    () => columnSetsInScope(allColumnSets, columnSetMeta, watchlistId),
+    [allColumnSets, columnSetMeta, watchlistId],
+  );
+  const tabsRef = useRef<string[]>([]);
+  tabsRef.current = tabOrder(scopedSets);
+  // On entering a scope, show the set last shown there.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: on a change of scope only
+  useEffect(() => {
+    const name = columnSetForScope(
+      scopedSets,
+      lastColumnSetRef.current,
+      watchlistId,
+      columnSetModel.activeColumnSet?.name,
+    );
+    if (name && name !== columnSetModel.activeColumnSet?.name)
+      columnSetModel.setActiveColumnSet(name);
+  }, [watchlistId]);
+  const scopeLabel = watchlist?.name ?? "All instruments";
+  const columnSetScope = useMemo<ColumnSetScopeProps>(
+    () => ({
+      label: scopeLabel,
+      sets: scopedSets,
+      onCreate: (name, onlyHere) => {
+        columnSetModel.saveAs(name);
+        if (onlyHere)
+          updateColumnSetMeta((meta) =>
+            setColumnSetScope(meta, name, scopeRef.current),
+          );
+      },
+      onDelete: (name) => {
+        const wasActive = columnSetModel.activeColumnSet?.name === name;
+        columnSetModel.delete(name);
+        const next = wasActive
+          ? tabsRef.current.find((n) => n !== name)
+          : undefined;
+        if (next) columnSetModel.setActiveColumnSet(next);
+      },
+      onDuplicate: (name) => {
+        const copy = copyName(
+          name,
+          columnSetModel.columnSets.map((set) => set.name),
+        );
+        columnSetModel.setActiveColumnSet(name);
+        columnSetModel.saveAs(copy);
+        // the copy has the source's quick filters and scope
+        updateColumnSetMeta((meta) => ({ ...meta, [copy]: { ...meta[name] } }));
+      },
+      onShare: (name, onlyHere) =>
+        updateColumnSetMeta((meta) =>
+          setColumnSetScope(
+            meta,
+            name,
+            onlyHere ? scopeRef.current : undefined,
+          ),
+        ),
+    }),
+    [columnSetModel, scopeLabel, scopedSets, updateColumnSetMeta],
+  );
 
   // --- grouping is done from the column menus; volume and turnover are
   // summed in group rows. initialGroupBy only sets the first grouping.
@@ -538,9 +848,22 @@ const InstrumentGridInner = forwardRef<
       ) {
         e.preventDefault();
         setShowFilterBar(!viewSettings.filterBar);
+      } else if (
+        e.altKey &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.shiftKey &&
+        /^Digit[1-9]$/.test(e.code)
+      ) {
+        // Alt+1..9: the nth column set tab (its columns and quick filters)
+        const name = tabsRef.current[Number(e.code.slice(5)) - 1];
+        if (name) {
+          e.preventDefault();
+          columnSetModel.setActiveColumnSet(name);
+        }
       }
     },
-    [showToolbar, setShowFilterBar, viewSettings.filterBar],
+    [columnSetModel, showToolbar, setShowFilterBar, viewSettings.filterBar],
   );
 
   // --- Buy / Sell default to the order ticket launcher
@@ -730,21 +1053,117 @@ const InstrumentGridInner = forwardRef<
       else if (id === "sell") onSell?.(instrument);
       else if (id === "depth") onOpenDepth?.(instrument);
       else if (id === "watchlist-new") {
-        const name = targetWindow?.prompt("Watchlist name");
-        if (name) watchlists.create(name, [instrument.ric]);
+        setNewWatchlist({ rics: [instrument.ric], show: false });
       } else if (id.startsWith("watchlist-add:")) {
         watchlists.add(id.slice("watchlist-add:".length), instrument.ric);
       } else return false;
       return true;
     },
-    [onBuy, onSell, onOpenDepth, watchlists, targetWindow],
+    [onBuy, onSell, onOpenDepth, watchlists],
   );
 
-  const createWatchlist = useCallback(() => {
-    const name = targetWindow?.prompt("Watchlist name");
-    if (!name?.trim()) return;
-    setWatchlistId(watchlists.create(name, selected ? [selected.ric] : []));
-  }, [targetWindow, watchlists, selected]);
+  // --- watchlist prompts: name a new list, confirm a delete
+  /** A new list's first rics, and whether to show it once created. */
+  const [newWatchlist, setNewWatchlist] = useState<{
+    rics: string[];
+    show: boolean;
+  }>();
+  const [deletingId, setDeletingId] = useState<string>();
+  const deleting = watchlists.lists.find((l) => l.id === deletingId);
+  const deletingSets = deleting
+    ? columnSetsOnlyIn(columnSetMeta, deleting.id)
+    : [];
+  const [keepDeletedSets, setKeepDeletedSets] = useState(true);
+  const [editingId, setEditingId] = useState<string>();
+  const editing = watchlists.lists.find((l) => l.id === editingId);
+  const [renamingId, setRenamingId] = useState<string>();
+  const renaming = watchlists.lists.find((l) => l.id === renamingId);
+  const createWatchlist = useCallback(
+    () => setNewWatchlist({ rics: selected ? [selected.ric] : [], show: true }),
+    [selected],
+  );
+  const saveNewWatchlist = ({
+    name,
+    rics,
+  }: {
+    name: string;
+    rics: string[];
+  }) => {
+    if (!newWatchlist) return;
+    const id = watchlists.create(name, rics);
+    if (newWatchlist.show) setWatchlistId(id);
+  };
+  const watchlistPrompts = (
+    <>
+      {newWatchlist ? (
+        <WatchlistDialog
+          initialRics={newWatchlist.rics}
+          lists={watchlists.lists}
+          onClose={() => setNewWatchlist(undefined)}
+          onSave={saveNewWatchlist}
+        />
+      ) : null}
+      {editing ? (
+        <WatchlistDialog
+          editing={editing}
+          lists={watchlists.lists}
+          onClose={() => setEditingId(undefined)}
+          onSave={(changes) => watchlists.update(editing.id, changes)}
+        />
+      ) : null}
+      {renaming ? (
+        <NamePrompt
+          confirmLabel="Rename"
+          initialName={renaming.name}
+          onClose={() => setRenamingId(undefined)}
+          onConfirm={(name) => watchlists.rename(renaming.id, name)}
+          title={`Rename ${renaming.name}`}
+          validate={(name) =>
+            watchlistNameError(name, watchlists.lists, renaming.id)
+          }
+        />
+      ) : null}
+      {deleting ? (
+        <Prompt
+          confirmButtonLabel="Delete"
+          disableAccent
+          initialFocusedItem="cancel"
+          onClose={() => setDeletingId(undefined)}
+          onConfirm={() => {
+            const sets = columnSetsOnlyIn(columnSetMeta, deleting.id);
+            if (keepDeletedSets)
+              updateColumnSetMeta((meta) =>
+                sets.reduce(
+                  (m, name) => setColumnSetScope(m, name, undefined),
+                  meta,
+                ),
+              );
+            else for (const name of sets) columnSetModel.delete(name);
+            updateLastColumnSet(({ [deleting.id]: _, ...rest }) => rest);
+            watchlists.remove(deleting.id);
+          }}
+          open
+          status="warning"
+          title={`Delete ${deleting.name}?`}
+        >
+          <p className={`${classBase}-promptText`}>
+            {`The watchlist and its ${deleting.rics.length} ${
+              deleting.rics.length === 1 ? "instrument" : "instruments"
+            } are removed. This can't be undone.`}
+          </p>
+          {deletingSets.length ? (
+            <Checkbox
+              checked={keepDeletedSets}
+              label={`Keep its column ${
+                deletingSets.length === 1 ? "set" : "sets"
+              } (${deletingSets.join(", ")}), shared with all watchlists`}
+              onChange={(e) => setKeepDeletedSets(e.target.checked)}
+            />
+          ) : null}
+        </Prompt>
+      ) : null}
+    </>
+  );
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: Ctrl+Shift+F shortcut for the grid
@@ -763,8 +1182,13 @@ const InstrumentGridInner = forwardRef<
         <InstrumentGridHeader
           filterCount={filterClauseCount(userFilter)}
           onAddToWatchlist={watchlists.add}
-          onDeleteWatchlist={watchlists.remove}
+          onDeleteWatchlist={(id) => {
+            setKeepDeletedSets(true);
+            setDeletingId(id);
+          }}
+          onEditWatchlist={setEditingId}
           onNewWatchlist={createWatchlist}
+          onRenameWatchlist={setRenamingId}
           onRemoveFromWatchlist={watchlists.removeRic}
           onScopeChange={setWatchlistId}
           onShowFilterBarChange={setShowFilterBar}
@@ -796,11 +1220,18 @@ const InstrumentGridInner = forwardRef<
             defaultFilterState={storedFilterState}
             onApplyFilter={setUserFilter}
             onClearFilter={clearUserFilter}
-            onFilterStateChanged={onFilterStateChange}
+            onFilterStateChanged={handleFilterStateChange}
             variant="full-filters"
             vuuTable={dataSource.table}
           />
         </DataSourceProvider>
+      ) : null}
+      {showToolbar && filterBarVisible && alsoApplied.length ? (
+        <AlsoApplied
+          columns={filterColumns}
+          filters={alsoApplied}
+          onClear={clearAlsoApplied}
+        />
       ) : null}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: keys and double-click of the table's rows */}
       <div
@@ -824,6 +1255,26 @@ const InstrumentGridInner = forwardRef<
             </RowActionsProvider>
           </ContextMenuProvider>
         </GridChannelLinksProvider>
+        {watchlist && watchlist.rics.length === 0 ? (
+          <section
+            aria-label="Empty watchlist"
+            className={`${classBase}-emptyList`}
+          >
+            <span className={`${classBase}-emptyTitle`}>
+              {`${watchlist.name} is empty`}
+            </span>
+            <span className={`${classBase}-emptyText`}>
+              Pick instruments, or filter by sector or type and add every match.
+            </span>
+            <Button
+              appearance="solid"
+              onClick={() => setEditingId(watchlist.id)}
+              sentiment="accented"
+            >
+              Add instruments…
+            </Button>
+          </section>
+        ) : null}
       </div>
       {footerVisible ? (
         <InstrumentGridFooter
@@ -831,8 +1282,20 @@ const InstrumentGridInner = forwardRef<
           columnSetModel={columnSetModel}
           dataSource={dataSource}
           filtered={filterClauseCount(userFilter) > 0}
+          scope={showToolbar ? columnSetScope : undefined}
+          quickFilters={
+            showToolbar
+              ? {
+                  defaultQuickFilterColumns,
+                  getQuickFilterColumns: () => [...quickColumnsRef.current],
+                  onChangeQuickFilterColumns: changeQuickFilterColumns,
+                  quickFilterItems,
+                }
+              : undefined
+          }
         />
       ) : null}
+      {watchlistPrompts}
     </div>
   );
 });
