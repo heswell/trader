@@ -3148,7 +3148,7 @@ Props of [`FillProgressBar`](#fillprogressbar).
 
 #### FillsBlotter
 
-*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L338)
+*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L290)
 
 Fills blotter on `fills` (the server already filters to the user's own
 fills): grouping by ric / ric+side with summed quantity and notional and
@@ -3164,10 +3164,6 @@ Props: `FillsBlotterProps`
 | `onOrderSelect?` | `(orderId: string) => void` |  | Called when the order link of a fill is clicked. |
 | `highlightOrderId?` | `string` |  | Order to highlight (e.g. the order selected in an OrderBlotter). |
 | `csvFileName?` | `string` | `"fills.csv"` | CSV file name. Default "fills.csv". |
-| `linkGroup?` | `LinkGroupId` |  | Link group (channel) to join: e.g. "red", "green", or "unlinked". The initial group when the user can change it (`showLinkGroupSelector`); a later change of the prop is applied too. Default: the saved group, then `defaultLinkGroup`, then the inherited group. (from `LinkGroupProps`) |
-| `defaultLinkGroup?` | `LinkGroupId` |  | Group used when there is no `linkGroup` prop and nothing saved. (from `LinkGroupProps`) |
-| `onLinkGroupChange?` | `(linkGroup: LinkGroupId) => void` |  | The user picked another group in the selector. (from `LinkGroupProps`) |
-| `showLinkGroupSelector?` | `boolean` | `false` | Show a LinkGroupSelector in the component header / toolbar. (from `LinkGroupProps`) |
 
 Also accepts the standard HTML attributes and `ref`.
 
@@ -3175,7 +3171,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### FillsBlotterProps
 
-*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L151)
+*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L138)
 
 Props of [`FillsBlotter`](#fillsblotter).
 
@@ -3192,7 +3188,7 @@ Props of [`FillsBlotter`](#fillsblotter).
 
 #### FillsGrouping
 
-*type* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L55)
+*type* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L42)
 
 ```ts
 type FillsGrouping = "none" | "ric" | "ric-side"
@@ -4174,7 +4170,7 @@ Props of [`NamePrompt`](#nameprompt).
 
 #### OrderBlotter
 
-*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L676)
+*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L650)
 
 Order blotter on `parentOrders`: status badge, fill progress, tick-formatted
 avg price, filter tabs, per-row amend / cancel (enabled only for NEW,
@@ -4189,16 +4185,12 @@ Props: `OrderBlotterProps`
 | --- | --- | --- | --- |
 | `defaultTab?` | `OrderBlotterTab` | `"working"` | Initial filter tab. Default "working". |
 | `showChildOrders?` | `boolean` | `true` | Show the child (street) orders of the selected order. Default true. |
-| `onOrderSelect?` | `(orderId: string \| undefined) => void` |  | Called when an order row is selected (undefined on deselect). |
+| `onOrderSelect?` | `(orderId: string \| undefined, ric?: string) => void` |  | Called when an order row is selected, with the order's ric (undefined on deselect). Selection stays local: the blotter publishes nothing to a link channel. |
 | `onError?` | `(error: TradingRpcError) => void` |  | Called with RPC failures (also shown in the status line). |
 | `notify?` | `boolean` | `true` | Report failed cancel / amend requests to the TradingNotificationsProvider, if there is one. Default true. |
 | `useEditSession?` | `boolean` | `false` | Amend through the server edit session instead of the amendOrder RPC: opening the amend dialog begins the session (snapshotting the order), Amend applies editCell + endEditSession, Close discards it. If the order changed in between the save is refused as stale. Default false. |
 | `readOnly?` | `boolean` | `false` | Hide amend / cancel controls, e.g. for users without trading-execute (the OMS rejects their requests anyway). Default false. |
 | `showOrderBook?` | `boolean` | `true` | Offer the Order book button: the selected order's L2 depth and L3 queue position, in the shell's context panel (a dialog outside a portal shell). The panel follows the selection. Default true. |
-| `linkGroup?` | `LinkGroupId` |  | Link group (channel) to join: e.g. "red", "green", or "unlinked". The initial group when the user can change it (`showLinkGroupSelector`); a later change of the prop is applied too. Default: the saved group, then `defaultLinkGroup`, then the inherited group. (from `LinkGroupProps`) |
-| `defaultLinkGroup?` | `LinkGroupId` |  | Group used when there is no `linkGroup` prop and nothing saved. (from `LinkGroupProps`) |
-| `onLinkGroupChange?` | `(linkGroup: LinkGroupId) => void` |  | The user picked another group in the selector. (from `LinkGroupProps`) |
-| `showLinkGroupSelector?` | `boolean` | `false` | Show a LinkGroupSelector in the component header / toolbar. (from `LinkGroupProps`) |
 
 Also accepts the standard HTML attributes and `ref`.
 
@@ -4268,7 +4260,7 @@ const orderBlotterTableConfig: TableConfig
 
 #### OrderBlotterProps
 
-*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L99)
+*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L90)
 
 Props of [`OrderBlotter`](#orderblotter).
 
