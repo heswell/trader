@@ -4174,7 +4174,7 @@ Props of [`NamePrompt`](#nameprompt).
 
 #### OrderBlotter
 
-*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L662)
+*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L676)
 
 Order blotter on `parentOrders`: status badge, fill progress, tick-formatted
 avg price, filter tabs, per-row amend / cancel (enabled only for NEW,
@@ -4268,7 +4268,7 @@ const orderBlotterTableConfig: TableConfig
 
 #### OrderBlotterProps
 
-*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L97)
+*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L99)
 
 Props of [`OrderBlotter`](#orderblotter).
 
