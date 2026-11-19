@@ -7,9 +7,14 @@ import {
   useColumnSetsState,
   useTableColumnPicker,
 } from "@vuu-ui/vuu-table-extras";
+import { useContextPanel, useHideContextPanel } from "@vuu-ui/vuu-ui-controls";
 import cx from "clsx";
-import { type KeyboardEvent, useEffect, useState } from "react";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { NamePrompt } from "../NamePrompt";
+import {
+  GridColumnsPanel,
+  type GridColumnsPanelProps,
+} from "./GridColumnsPanel";
 
 const classBase = "tradingInstrumentGridFooter";
 
@@ -155,6 +160,11 @@ export interface InstrumentGridFooterProps {
   dataSource: DataSource;
   /** A user filter applies: the count is bold, with a filter icon. */
   filtered: boolean;
+  /**
+   * The quick filters of the column set in view: Columns then opens a
+   * panel with a Quick filters tab beside the column picker.
+   */
+  quickFilters?: Omit<GridColumnsPanelProps, "columnModel" | "columnSetModel">;
 }
 
 /**
@@ -165,12 +175,44 @@ export const InstrumentGridFooter = ({
   columnSetModel,
   dataSource,
   filtered,
+  quickFilters,
 }: InstrumentGridFooterProps) => {
   const rowCount = useRowCount(dataSource);
   const { showColumnPicker } = useTableColumnPicker({
     columnModel,
     columnSetModel,
   });
+  const showContextPanel = useContextPanel();
+  const hideContextPanel = useHideContextPanel();
+  const showingPanel = useRef(false);
+  const quickFiltersRef = useRef(quickFilters);
+  quickFiltersRef.current = quickFilters;
+  useEffect(
+    () => () => {
+      if (showingPanel.current) hideContextPanel?.();
+    },
+    [hideContextPanel],
+  );
+  const showColumns = () => {
+    const props = quickFiltersRef.current;
+    if (!props) return showColumnPicker();
+    showingPanel.current = true;
+    showContextPanel(
+      <GridColumnsPanel
+        {...props}
+        // the panel is not re-rendered by the footer: read the latest
+        getQuickFilterColumns={() =>
+          quickFiltersRef.current?.getQuickFilterColumns() ?? []
+        }
+        onChangeQuickFilterColumns={(columns) =>
+          quickFiltersRef.current?.onChangeQuickFilterColumns(columns)
+        }
+        columnModel={columnModel}
+        columnSetModel={columnSetModel}
+      />,
+      "Columns",
+    );
+  };
 
   return (
     <div className={classBase}>
@@ -188,7 +230,7 @@ export const InstrumentGridFooter = ({
       <Button
         appearance="transparent"
         className={`${classBase}-columns`}
-        onClick={() => showColumnPicker()}
+        onClick={showColumns}
       >
         <ColumnsIcon />
         Columns

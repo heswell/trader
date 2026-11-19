@@ -82,7 +82,7 @@ One 22px row under the table (linked instruments show in the link column and the
 
 - **Column-set tabs** on the left, text tabs; the active one is on the grid's surface (`--salt-container-primary-background`), moved up 1px over the footer's top border with that border down its sides and along its bottom, so the line runs along the footer and round the tab (no indicator bar); other tabs show a neutral underline on hover: click, Left / Right arrows on a focused tab, or Alt+1…9 anywhere in the grid, to show a set (its columns and its quick filters). "+" saves the columns in view as a new set, named in a `NamePrompt` (see [Dialogs](#dialogs)).
 - **Row count**: the rows in the body, "N rows", kept current from the data source's `resize` events. Under a filter-bar filter it is the filtered count, bold with a filter icon; the server sends no unfiltered total, so it is never "x of y". Pinned rows are not counted.
-- **Columns** on the right opens the vuu column picker.
+- **Columns** on the right opens a panel with two tabs: **Columns** (the vuu column picker) and **Quick filters**, the quick filter fields of the column set in view, in order, with Reset to default. A field can be a quick filter without being a column. Both tabs follow the set in view. (The tab sits beside vuu's picker rather than in it until vuu-ui's ColumnPicker takes extra tabs, upstream U2.)
 
 
 ## Dialogs

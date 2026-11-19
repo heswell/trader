@@ -546,6 +546,13 @@ const InstrumentGridInner = forwardRef<
     ],
   );
   quickColumnsRef.current = quickFilterColumns;
+  const quickFilterItems = useMemo(
+    () =>
+      filterColumns
+        .filter(({ name }) => quickFilterAllowed(name))
+        .map(({ label, name }) => ({ label: label ?? name, name })),
+    [filterColumns, quickFilterAllowed],
+  );
   const changeQuickFilterColumns = useCallback(
     (columns: string[]) => {
       const active = columnSetsRef.current.activeColumnSet;
@@ -1135,6 +1142,16 @@ const InstrumentGridInner = forwardRef<
           columnSetModel={columnSetModel}
           dataSource={dataSource}
           filtered={filterClauseCount(userFilter) > 0}
+          quickFilters={
+            showToolbar
+              ? {
+                  defaultQuickFilterColumns,
+                  getQuickFilterColumns: () => [...quickColumnsRef.current],
+                  onChangeQuickFilterColumns: changeQuickFilterColumns,
+                  quickFilterItems,
+                }
+              : undefined
+          }
         />
       ) : null}
       {watchlistPrompts}
