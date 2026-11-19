@@ -145,6 +145,8 @@ nothing visible changed.
     instrument event goes out, on which the OMS settles positions with a SETTLEMENT fill. The next monthly expiry
     is then listed (strikes around spot now, quote-only) and the new front month's nearest strikes get books.
     `expireOptions(underlying)` does the same on demand. Expired options are not restored after a restart.
+  - **Gateway.** `getOptionGreeks(ric)` returns an option's model delta, gamma, vega and forward (the OMS's position
+    Greeks and delta limit), and `nearestLiquidOption(ric)` the liquid strike nearest a quote-only one.
 - **Continuations.** Each underlying with futures gets continuation rics `c1..cN` (root + `c` + position: `AZNc1`
   is the front month, `AZNc2` the next; `STECHc1`). A continuation copies its contract's static data (instrument type
   `CONTINUATION`, `contract` names the contract) and has no book: its `prices` row mirrors the contract's on every

@@ -41,6 +41,11 @@ import {
 } from "./LinkingExamples";
 import { MarketDepthExamples } from "./MarketDepthExamples";
 import {
+  OptionChainTicket,
+  OptionInstrumentGrid,
+  OptionPositions,
+} from "./OptionExamples";
+import {
   MillionTradesExportExample,
   TradesExportExample,
 } from "./ExportExamples";
@@ -135,6 +140,14 @@ export const examples: ShowcaseExample[] = [
     Component: InstrumentGridFutures,
   },
   {
+    id: "instrument-grid-options",
+    group: "InstrumentGrid",
+    title: "Options",
+    description:
+      "Every listed option (AAPL.OQ and the STECH index in local mode) with the Options column set: an OPT type badge, call / put, strike, expiry and Book (true for a liquid strike), grouped by underlying.",
+    Component: OptionInstrumentGrid,
+  },
+  {
     id: "instrument-grid-continuations",
     group: "InstrumentGrid",
     title: "Continuations",
@@ -163,6 +176,22 @@ export const examples: ShowcaseExample[] = [
     group: "SideLabel",
     title: "Variants",
     Component: SideLabelExamples,
+  },
+  {
+    id: "option-chain-ticket",
+    group: "OptionChain",
+    title: "Chain and ticket",
+    description:
+      "Strikes down the middle, calls left and puts right with bid, ask, implied vol and delta; one expiry per tab (PgUp / PgDn). Liquid strikes have a book: Enter or a click on a bid sells, on an ask buys, in the docked ticket. Quote-only strikes are dimmed; the ticket refuses them and points at the nearest liquid strike.",
+    Component: OptionChainTicket,
+  },
+  {
+    id: "option-chain-positions",
+    group: "OptionChain",
+    title: "Positions with Greeks",
+    description:
+      "Trade from the chain, then see delta (shares and USD), gamma and vega by underlying: a stock, its futures and its options net.",
+    Component: OptionPositions,
   },
   {
     id: "order-blotter",

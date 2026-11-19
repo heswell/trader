@@ -142,6 +142,8 @@ vuu `Table` column as `type: { name: "number", renderer: { name, componentProps 
 | `trading.change` | `ChangeCell` | `percent?` | Sign + arrow + colour. |
 | `trading.quantity` | `QuantityCell` | `compact?` | Grouped or compact (1.2M) quantity. |
 | `trading.phase` | `PhaseCell` | | Dot + label; HALTED / CLOSED styled. |
+| `trading.instrument-type` | `InstrumentTypeCell` | | Short type badge: EQ, FUT, IDX, CONT, OPT (accented). The Type column's default. |
+| `trading.put-call` | `PutCallCell` | | An option's right as Call / Put. See [options.md](options.md#instrument-grid). |
 | `trading.sparkline` | `SparklineCell` | `valueColumn`, `length`, `bucketMs` | See below. |
 
 Prices are formatted with the row's `priceDecimals` / `tickSize` / `tickBands` when those columns are in the

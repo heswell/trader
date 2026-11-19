@@ -51,11 +51,11 @@ ModuleFactory.withNameSpace(EXCHANGE_MODULE)
 
 | Table | Key | Columns |
 |---|---|---|
-| `accounts` | `account` | name, desk, owner, currency, maxOrderQty, maxOrderNotional, maxPositionNotional, enabled |
+| `accounts` | `account` | name, desk, owner, currency, maxOrderQty, maxOrderNotional, maxPositionNotional, maxDeltaUsd (net delta per underlying), enabled |
 | `parentOrders` | `orderId` | clOrdId?, trader, *order columns*, version, notional, arrivalPrice, slippageBps, timeToFirstFill, timeToComplete, strategy, algoStart, algoEnd, participationPct, targetQty |
 | `childOrders` | `childOrderId` | parentOrderId, exchangeOrderId?, *order columns* |
 | `fills` | `execId` | orderId (parent), childOrderId, tradeId, account, trader, ric, side, quantity, price, notional (includes contractMultiplier), currency, liquidity (ADDED \| REMOVED \| AUCTION \| SETTLEMENT), timestamp |
-| `positions` | `id` = `account\|ric` | account, ric, quantity (net), boughtQty, soldQty, avgCost, markPx, marketValue, realizedPnl, unrealizedPnl, totalPnl (value and P&L include contractMultiplier), currency, exchange, sector, instrumentType, underlying, marketValueUsd, totalPnlUsd, lastUpdate |
+| `positions` | `id` = `account\|ric` | account, ric, quantity (net), boughtQty, soldQty, avgCost, markPx, marketValue, realizedPnl, unrealizedPnl, totalPnl (value and P&L include contractMultiplier), currency, exchange, sector, instrumentType, underlying, marketValueUsd, totalPnlUsd, delta (shares equivalent), deltaUsd, gamma, vegaUsd (per vol point), lastUpdate |
 | `pnlHistory` | `id` = `account\|ric\|time` (`pnlHistoryKey`) | account, ric, time, quantity, avgCost, markPx, marketValue, realizedPnl, unrealizedPnl, totalPnl, grossExposure, netExposure, totalPnlUsd, marketValueUsd, currency |
 | `accountPnlHistory` | `id` = `account\|time` (`accountPnlHistoryKey`) | account, time, positions, realizedPnl, unrealizedPnl, totalPnl, grossExposure, netExposure (USD) |
 
@@ -101,7 +101,7 @@ Values are the strings stored in table columns and sent in RPC params.
 
 ## Option math
 
-`black76(inputs)` prices a European option on a forward and returns price, delta, gamma, vega (per 1.00 of vol) and theta (per year); Greeks are with respect to the forward. `black76Price`, `impliedVol(price, inputs)` (Newton, falling back to bisection; undefined outside the no-arbitrage bounds), `intrinsicValue`, `normCdf` and `normPdf` complete it. The exchange simulator, the OMS and the UI share these functions.
+`black76(inputs)` prices a European option on a forward and returns price, delta, gamma, vega (per 1.00 of vol) and theta (per year); Greeks are with respect to the forward. `black76Price`, `impliedVol(price, inputs)` (Newton, falling back to bisection; undefined outside the no-arbitrage bounds), `intrinsicValue`, `normCdf` and `normPdf` complete it. The exchange simulator, the OMS and the UI share these functions. `collarWidth(instrument, ref, collarPct)` / `isOutsideCollar` give the limit price collar: `ref` × collarPct, and for an option at least `OPTION_COLLAR_PCT` (50%) of the reference and `OPTION_COLLAR_TICKS` (10) ticks.
 
 ## Order status transitions
 
