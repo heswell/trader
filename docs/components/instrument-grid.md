@@ -46,7 +46,7 @@ A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns 
 
 ## Panel header
 
-- **Scope picker** (the title): All instruments or a watchlist, with its count. The same menu adds or removes the selected row's ric on the current watchlist, creates a watchlist (named in a prompt, then shown) and deletes the current one.
+- **Scope picker** (the title): All instruments or a watchlist, with its count. The same menu adds or removes the selected row's ric on the current watchlist, creates a watchlist (in the `WatchlistDialog`, then shown) and deletes the current one.
 - **Panel settings** (cog): Show filter bar (Ctrl+Shift+F anywhere in the grid), Show footer and Pin linked rows to the top. Saved per grid `id` under `trading.instrumentGrid.view`.
 - **Filter badge**: while the filter bar is hidden its filters still apply, and the header shows a badge with the clause count; clicking it shows the bar.
 
@@ -86,7 +86,7 @@ One 22px row under the table (linked instruments show in the link column and the
 
 ## Dialogs
 
-The grid never uses browser prompts. Naming (a new watchlist, a new column set) uses `NamePrompt`: a vuu `Prompt` (Salt Dialog) with one Salt Input, focused and selected on open. Enter or Create confirms; `validate` returns an error shown under the field, and while there is one Create is disabled. Deleting a watchlist asks in a warning `Prompt`, Cancel focused. Showcase: `#instrument-grid-dialogs`.
+The grid never uses browser prompts. Naming (a new watchlist, a new column set) uses `NamePrompt`: a vuu `Prompt` (Salt Dialog) with one Salt Input, focused and selected on open. Enter or Create confirms; `validate` returns an error shown under the field, and while there is one Create is disabled. New watchlist opens `WatchlistDialog`: a name, a search by RIC or name, Sector / Type / Exchange / Currency filters (Salt multiselect dropdowns; options from vuu's `getUniqueFieldValues`, Type from the enum), the matches (up to 500, from `instruments`) and the picked list beside them. While a search or filter narrows the list, **Add N matches** adds every match not yet picked. Keys: ↑↓ move, Enter adds or removes, Alt+A adds matches, Ctrl+Enter saves. Deleting a watchlist asks in a warning `Prompt`, Cancel focused. Showcase: `#instrument-grid-dialogs`.
 
 ## Rows
 

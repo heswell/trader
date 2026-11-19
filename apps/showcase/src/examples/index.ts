@@ -154,7 +154,7 @@ export const examples: ShowcaseExample[] = [
     group: "InstrumentGrid",
     title: "Dialogs",
     description:
-      "The grid's Salt dialogs on their own (no browser prompts). New column set: a name, checked against the sets there are (try prices); Enter creates.",
+      "The grid's Salt dialogs on their own (no browser prompts). New column set: a name, checked against the sets there are (try prices); Enter creates. New watchlist: a name (Energy is taken), then search and filter instruments; Enter picks the highlighted row, Alt+A adds every match, Ctrl+Enter creates.",
     Component: InstrumentGridDialogs,
   },
   {

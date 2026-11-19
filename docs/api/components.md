@@ -28,7 +28,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [FillProgressBar](trading-ui.md#fillprogressbar) | `components/FillProgressBar` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
 | [FillsBlotter](trading-ui.md#fillsblotter) | `components/FillsBlotter` | `fills` |  | InstrumentLookup, LinkGroupSelector, StaleIndicator, TradingCellRenderers | `fills-blotter`, `trader-workspace` | [guide](../components/blotters.md) |
 | [InstrumentContextProvider](trading-ui.md#instrumentcontextprovider) | `instrument-context` |  |  | InstrumentLookup | `linking-providers` | [guide](../components/selection-and-linking.md#how-linking-works) |
-| [InstrumentGrid](trading-ui.md#instrumentgrid) | `components/InstrumentGrid` | `instrumentPrices` |  | ChannelPicker, InstrumentLookup, NamePrompt, OrderTicket, Sparkline, StaleIndicator, TradingCellRenderers | `chart-workspace`, `depth-chart`, `hosting-feature-root`, `hosting-user-settings`, `instrument-grid`, `instrument-grid-200`, `instrument-grid-continuations`, `instrument-grid-futures`, `instrument-grid-prices`, `market-depth-selected`, `price-chart`, `price-ladder-live`, `spread-chart`, `time-series-chart`, `trader-workspace` | [guide](../components/instrument-grid.md#instrumentgrid) |
+| [InstrumentGrid](trading-ui.md#instrumentgrid) | `components/InstrumentGrid` | `instrumentPrices` |  | ChannelPicker, InstrumentLookup, NamePrompt, OrderTicket, Sparkline, StaleIndicator, TradingCellRenderers, WatchlistDialog | `chart-workspace`, `depth-chart`, `hosting-feature-root`, `hosting-user-settings`, `instrument-grid`, `instrument-grid-200`, `instrument-grid-continuations`, `instrument-grid-futures`, `instrument-grid-prices`, `market-depth-selected`, `price-chart`, `price-ladder-live`, `spread-chart`, `time-series-chart`, `trader-workspace` | [guide](../components/instrument-grid.md#instrumentgrid) |
 | [InstrumentLookupProvider](trading-ui.md#instrumentlookupprovider) | `components/InstrumentLookup` | `instruments` |  |  | `million-trades-export-csv`, `selectors`, `trades-export-csv` | [guide](../components/selection-and-linking.md) |
 | [InstrumentPicker](trading-ui.md#instrumentpicker) | `components/InstrumentPicker` | `instruments` |  | LinkGroupSelector | `chart-workspace`, `depth-chart`, `linking-providers`, `market-depth-selected`, `panel-link-group`, `price-chart`, `price-ladder-live`, `selectors`, `spread-chart`, `time-series-chart`, `trader-workspace` | [guide](../components/selection-and-linking.md) |
 | [LinkGroupMenuButton](trading-ui.md#linkgroupmenubutton) | `components/LinkGroupSelector` |  |  |  | `panel-link-group` | [guide](../components/selection-and-linking.md) |
@@ -78,6 +78,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [TradingFeatureRoot](trading-ui.md#tradingfeatureroot) | `feature-root` |  |  | ConnectionBanner, OrderTicket | `hosting-feature-root` | [guide](../components/hosting.md#tradingfeatureroot) |
 | [TradingNotificationsProvider](trading-ui.md#tradingnotificationsprovider) | `notifications` | `fills`, `parentOrders` |  | InstrumentLookup | *host* | [guide](../components/notifications-and-connection.md) |
 | [UserSettingsProvider](trading-ui.md#usersettingsprovider) | `utils` |  |  |  | `hosting-user-settings` | [guide](../components/hosting.md#usersettingsprovider) |
+| [WatchlistDialog](trading-ui.md#watchlistdialog) | `components/WatchlistDialog` | `instruments` |  | InstrumentGrid | `instrument-grid-dialogs` | [guide](../components/instrument-grid.md#dialogs) |
 | [WorkspaceChannelProvider](trading-ui.md#workspacechannelprovider) | `instrument-context` |  |  |  | `channel-picker-fit`, `channel-picker-workspace` | [guide](../components/selection-and-linking.md#workspace-channel-picker) |
 
 ## CSS hooks
@@ -119,6 +120,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | `components/TimeSeriesChart` | `tradingTimeSeriesChart` |  | `data-link-group` |
 | `components/TradeTape` | `tradingTradeTape` | `--trading-buy` | `data-aggressor`, `data-large`, `data-link-group`, `data-testid` |
 | `components/TradingCellRenderers` |  |  | `data-liquidity`, `data-position`, `data-stop-trigger` |
+| `components/WatchlistDialog` | `tradingWatchlistDialog` |  | `data-index` |
 
 ## Providers and data folders
 

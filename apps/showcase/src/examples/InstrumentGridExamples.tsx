@@ -3,6 +3,7 @@ import {
   InstrumentGrid,
   NamePrompt,
   type SelectedInstrument,
+  WatchlistDialog,
 } from "@heswell/trading-ui";
 import { Button, Text } from "@salt-ds/core";
 import { useCallback, useState } from "react";
@@ -130,15 +131,27 @@ export const InstrumentGridFutures = () => {
   );
 };
 
-/** The grid's Salt dialogs on their own: name a new list or column set. */
+/** The grid's Salt dialogs on their own: New column set, New watchlist. */
 export const InstrumentGridDialogs = () => {
   const [open, setOpen] = useState(false);
+  const [picking, setPicking] = useState(false);
   const [log, setLog] = useState("Open a dialog");
   return (
     <ShowcaseContextPanel>
       <div style={{ display: "flex", gap: 8 }}>
         <Button onClick={() => setOpen(true)}>New column set…</Button>
+        <Button onClick={() => setPicking(true)}>New watchlist…</Button>
       </div>
+      {picking ? (
+        <WatchlistDialog
+          initialRics={["VOD.L"]}
+          lists={[{ id: "energy", name: "Energy", rics: [] }]}
+          onClose={() => setPicking(false)}
+          onSave={({ name, rics }) =>
+            setLog(`Created ${name} with ${rics.length} instruments`)
+          }
+        />
+      ) : null}
       {open ? (
         <NamePrompt
           onClose={() => setOpen(false)}
