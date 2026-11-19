@@ -498,7 +498,8 @@ const QuantityField = ({
   const { draft, update, errors, instrument, risk, resolveShorthand } = ticket;
   const lot = instrument?.lotSize;
   const unit =
-    instrument?.instrumentType === InstrumentType.Future
+    instrument?.instrumentType === InstrumentType.Future ||
+    instrument?.instrumentType === InstrumentType.Option
       ? "contracts"
       : "shares";
   const hint =

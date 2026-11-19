@@ -122,9 +122,15 @@
   border-top: var(--salt-size-border) solid var(--salt-accent-borderColor);
 }
 
+/* the linked option's row: the grid's selected-row colour, legible in dark */
 .tradingOptionChain-row[aria-selected="true"] th,
 .tradingOptionChain-row[aria-selected="true"] td {
-  background: var(--salt-selectable-background-selected);
+  background: color-mix(
+    in srgb,
+    var(--salt-palette-accent-strongest, var(--salt-accent-background)) 28%,
+    var(--salt-container-primary-background)
+  );
+  color: var(--salt-content-primary-foreground);
 }
 
 .tradingOptionChain-quote {

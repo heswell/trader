@@ -28,6 +28,7 @@ const UnderlyingButtons = ({
       <Button
         appearance={u === value ? "solid" : "bordered"}
         key={u}
+        sentiment="accented"
         onClick={() => onChange(u)}
       >
         {u}
