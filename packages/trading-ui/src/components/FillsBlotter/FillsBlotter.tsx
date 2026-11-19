@@ -17,6 +17,7 @@ import {
 import { useDataSourceRows } from "../../data/useDataSourceRows";
 import { filterString } from "../../utils/filters";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
+import { useChannelRowMarkers } from "../ChannelRowMarkers";
 import { useStaleData } from "../StaleIndicator/useStaleData";
 import { type CsvColumn, downloadCsv, rowsToCsv } from "../../utils/csv";
 import { formatTime } from "../../utils/time";
@@ -173,6 +174,7 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
     });
     const [grouping, setGrouping] = useState<FillsGrouping>(defaultGrouping);
     const groupByLabelId = useId();
+    const markers = useChannelRowMarkers(tableConfig);
     const filter = { filter: ric ? `ric = ${filterString(ric)}` : "" };
 
     const dataSource = useTradingDataSource("fills", {
@@ -238,6 +240,7 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
         data-testid="trading-fills-blotter"
         ref={ref}
       >
+        {markers.colorStyle}
         <div className={`${classBase}-toolbar`}>
           <span className={`${classBase}-label`} id={groupByLabelId}>
             Group by
@@ -270,7 +273,8 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
         <FillsLinkContext.Provider value={link}>
           <div className={`${classBase}-table`}>
             <Table
-              config={tableConfig}
+              config={markers.tableConfig}
+              rowSelectionBorder
               dataSource={dataSource}
               selectionModel="single"
             />

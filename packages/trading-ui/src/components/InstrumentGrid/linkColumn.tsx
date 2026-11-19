@@ -23,15 +23,12 @@ import {
   linkInstrument,
 } from "../../instrument-context/channelLinks";
 import { useInstrumentLinkBus } from "../../instrument-context/InstrumentContext";
-import {
-  DEFAULT_LINK_GROUP,
-  DEFAULT_LINK_GROUPS,
-  type LinkGroupDefinition,
-  type LinkGroupId,
+import type {
+  LinkGroupDefinition,
+  LinkGroupId,
 } from "../../instrument-context/linkGroups";
 import type { SelectedInstrument } from "../../instrument-context/selectedInstrument";
-import { useOptionalWorkspaceChannel } from "../../instrument-context/workspaceChannel";
-import { useChannelSelections } from "../ChannelPicker/useChannelSelections";
+import { useChannelRics } from "../ChannelRowMarkers/useChannelRics";
 import { type InstrumentRow, toInstrument } from "./instrumentRow";
 import linkCss from "./linkColumn.css";
 
@@ -97,28 +94,11 @@ export const GridChannelLinksProvider = GridChannelLinksContext.Provider;
  * (WorkspaceChannelProvider), else the default channels with red active.
  */
 export const useGridChannelLinks = (): GridChannelLinks => {
-  const workspace = useOptionalWorkspaceChannel();
-  const channels = workspace?.channels ?? DEFAULT_LINK_GROUPS;
-  const activeChannel = workspace?.activeChannel ?? DEFAULT_LINK_GROUP;
+  const { activeChannel, byRic, channels, linkedRics, selections } =
+    useChannelRics();
   const bus = useInstrumentLinkBus();
-  const selections = useChannelSelections(channels);
   const [menuRic, setMenuRic] = useState<string>();
   const instruments = useRef(new Map<string, SelectedInstrument>());
-
-  const byRic = useMemo(() => {
-    const map = new Map<string, LinkGroupDefinition>();
-    for (const channel of channels) {
-      const ric = selections.get(channel.id)?.ric;
-      if (ric && !map.has(ric)) map.set(ric, channel);
-    }
-    return map;
-  }, [channels, selections]);
-  const linkedRicsJson = JSON.stringify([...byRic.keys()]);
-  // stable while the set of linked rics is unchanged
-  const linkedRics = useMemo<readonly string[]>(
-    () => JSON.parse(linkedRicsJson),
-    [linkedRicsJson],
-  );
 
   const link = useCallback(
     (instrument: SelectedInstrument, channel: LinkGroupId) => {

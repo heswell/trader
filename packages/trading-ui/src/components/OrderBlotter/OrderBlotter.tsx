@@ -41,6 +41,7 @@ import { rpcRejectEvent } from "../../notifications/tradingOrderEvents";
 import { isOrderAmendable, isOrderCancellable } from "../../utils/orderStatus";
 import { useStableCallback } from "../../hooks/useStableCallback";
 import { InstrumentLookupProvider } from "../InstrumentLookup";
+import { useChannelRowMarkers } from "../ChannelRowMarkers";
 import { OrderBookView } from "../OrderBookView";
 import { useStaleData } from "../StaleIndicator/useStaleData";
 import { registerTradingCellRenderers } from "../TradingCellRenderers";
@@ -236,6 +237,7 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
     const [focusedOrderId, setFocusedOrderId] = useState<string>();
     const [confirmingCancelAll, setConfirmingCancelAll] = useState(false);
     const workingOrders = useWorkingOrderSummary();
+    const markers = useChannelRowMarkers(orderBlotterTableConfig);
 
     const { connectionState, staleProps } = useStaleData();
     const connected = connectionState === "connected";
@@ -425,6 +427,7 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
         data-testid="trading-order-blotter"
         ref={ref}
       >
+        {markers.colorStyle}
         <div className={`${classBase}-toolbar`}>
           <ToggleButtonGroup
             aria-label="Order status"
@@ -488,7 +491,8 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
               className={cx(`${classBase}-table`, staleProps.className)}
             >
               <Table
-                config={orderBlotterTableConfig}
+                config={markers.tableConfig}
+                rowSelectionBorder
                 dataSource={dataSource}
                 onSelect={stableHandleSelect}
                 onSelectionChange={onSelectionChange}
