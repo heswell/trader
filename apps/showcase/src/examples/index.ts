@@ -1,5 +1,6 @@
 import {
   FillsBlotterExample,
+  LinkedInstrumentsFooterExample,
   OrderBlotterExample,
   OrderBookViewExample,
   PositionsViewExample,
@@ -182,6 +183,14 @@ export const examples: ShowcaseExample[] = [
     group: "FillsBlotter",
     title: "Fills with grouping, VWAP and CSV export",
     Component: FillsBlotterExample,
+  },
+  {
+    id: "linked-instruments-footer",
+    group: "LinkedInstrumentsFooter",
+    title: "Linked chips filter a blotter",
+    description:
+      "The footer of the Orders and Fills blotters: one chip per instrument on a channel. Press a chip to filter to it, press again for all rows. Below: no instrument on a channel.",
+    Component: LinkedInstrumentsFooterExample,
   },
   {
     id: "simulator-monitor",
