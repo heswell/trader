@@ -13,7 +13,8 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   ExposureTreemap: "docs/components/charts.md#exposuretreemap",
   FillProgressBar: "docs/components/primitives.md",
   FillsBlotter: "docs/components/blotters.md",
-  LinkedInstrumentsFooter: "docs/components/blotters.md",
+  LinkedInstrumentsFooter:
+    "docs/components/blotters.md#channels-in-the-orders-and-fills-blotters",
   BotDetail: "docs/components/simulator.md",
   BotFillsTape: "docs/components/simulator.md",
   SimInstrumentChart: "docs/components/simulator.md",

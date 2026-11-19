@@ -5,6 +5,9 @@ Reference: [OrderBlotter](../api/trading-ui.md#orderblotter), [FillsBlotter](../
 
 Showcase: `#order-blotter`, `#fills-blotter`, `#trade-tape`, `#positions-view`, all four in `#trader-workspace`.
 
+![Orders blotter, light: PHG.AS linked to Red](../screenshots/orders-blotter-light.png)
+![Fills blotter, dark](../screenshots/fills-blotter-dark.png)
+
 | Component | Tables | RPCs | Roles |
 | --- | --- | --- | --- |
 | `OrderBlotter` | `parentOrders`, `childOrders` (selected order) | `cancelOrder`, `cancelAll`, `amendOrder`, or a `parentOrders` edit session with `useEditSession` | `readOnly` hides amend / cancel; pass `readOnly={!canTrade}` for users without `trading-execute` |
@@ -19,6 +22,23 @@ All four wrap themselves in `InstrumentLookupProvider` (one `instruments` subscr
 `TradeTape` and `PositionsView` take `LinkGroupProps` (`linkGroup`, `defaultLinkGroup`, `showLinkGroupSelector`,
 `onLinkGroupChange`); the tape follows its group. `OrderBlotter` and `FillsBlotter` have no link group: row
 selection stays local and publishes nothing, as channels are driven from the watchlist / instrument grid.
+
+## Channels in the Orders and Fills blotters
+
+The two blotters show the workspace channels without following one:
+
+- **Row markers.** A row whose RIC is on a channel shows a 4px marker in that channel's colour at its left end
+  (the vuu Table row bookend). A selected row shows vuu's normal bordered selection instead. Use
+  `useChannelRowMarkers(tableConfig)` to do the same in another table: it returns a stable `tableConfig` with a
+  row class generator, plus a `colorStyle` element to render beside the table.
+- **Linked footer.** `LinkedInstrumentsFooter` lists one chip per instrument on a channel. Pressing a chip
+  filters the blotter to that RIC (pressed chips show ×); pressing it again, or the RIC leaving its channel,
+  clears the filter. The footer also shows the row count (`12 orders`, `3 fills`).
+- **Link from a row.** The only way to publish from a blotter is the row context menu's **Link <RIC> to ▸**,
+  which lists each channel with what it holds now (`Red · VOD.L`, `Green · BARC.L ✓`, `Blue · empty`).
+  Choosing one moves the RIC there (an instrument is on one channel at most). Orders rows also offer
+  **Amend…**, **Cancel order** and **Order book** where they apply; Fills group rows have no menu. The menu
+  helpers are exported as `channelLinkMenuItem` and `handleChannelLinkAction`.
 
 | Component | Props |
 | --- | --- |
@@ -74,8 +94,10 @@ reopened.
 
 ## CSS hooks
 
-Class bases `tradingOrderBlotter`, `tradingFillsBlotter`, `tradingTradeTape`, `tradingPositionsView`. Useful
-attributes: `data-link-group`, `data-testid`, `data-connection-state` / `data-error` (OrderBlotter),
+Class bases `tradingOrderBlotter`, `tradingFillsBlotter`, `tradingTradeTape`, `tradingPositionsView`,
+`tradingLinkedFooter` (chips: `-chip`, with `data-active` when pressed). Rows on a channel carry
+`tradingChannelRow tradingChannelRow-<channel id>`, which sets `--tradingChannelRow-color`. Useful
+attributes: `data-link-group` (TradeTape, PositionsView), `data-testid`, `data-connection-state` / `data-error` (OrderBlotter),
 `data-aggressor` / `data-large` (TradeTape), `data-currency` (PositionsView). The full list is in the
 [catalogue](../api/components.md#css-hooks).
 

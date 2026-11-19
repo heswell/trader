@@ -31,7 +31,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [InstrumentGrid](trading-ui.md#instrumentgrid) | `components/InstrumentGrid` | `instrumentPrices` |  | ChannelRowMarkers, InstrumentLookup, NamePrompt, OrderTicket, Sparkline, StaleIndicator, TradingCellRenderers, WatchlistDialog | `chart-workspace`, `depth-chart`, `hosting-feature-root`, `hosting-user-settings`, `instrument-grid`, `instrument-grid-200`, `instrument-grid-continuations`, `instrument-grid-futures`, `instrument-grid-prices`, `market-depth-selected`, `price-chart`, `price-ladder-live`, `spread-chart`, `time-series-chart`, `trader-workspace` | [guide](../components/instrument-grid.md#instrumentgrid) |
 | [InstrumentLookupProvider](trading-ui.md#instrumentlookupprovider) | `components/InstrumentLookup` | `instruments` |  |  | `million-trades-export-csv`, `selectors`, `trades-export-csv` | [guide](../components/selection-and-linking.md) |
 | [InstrumentPicker](trading-ui.md#instrumentpicker) | `components/InstrumentPicker` | `instruments` |  | LinkGroupSelector | `chart-workspace`, `depth-chart`, `linking-providers`, `market-depth-selected`, `panel-link-group`, `price-chart`, `price-ladder-live`, `selectors`, `spread-chart`, `time-series-chart`, `trader-workspace` | [guide](../components/selection-and-linking.md) |
-| [LinkedInstrumentsFooter](trading-ui.md#linkedinstrumentsfooter) | `components/LinkedInstrumentsFooter` |  |  | ChannelRowMarkers | `linked-instruments-footer` | [guide](../components/blotters.md) |
+| [LinkedInstrumentsFooter](trading-ui.md#linkedinstrumentsfooter) | `components/LinkedInstrumentsFooter` |  |  | ChannelRowMarkers | `linked-instruments-footer` | [guide](../components/blotters.md#channels-in-the-orders-and-fills-blotters) |
 | [LinkGroupMenuButton](trading-ui.md#linkgroupmenubutton) | `components/LinkGroupSelector` |  |  |  | `panel-link-group` | [guide](../components/selection-and-linking.md) |
 | [LinkGroupProvider](trading-ui.md#linkgroupprovider) | `instrument-context` |  |  | InstrumentLookup | `linking-providers` | [guide](../components/selection-and-linking.md#how-linking-works) |
 | [LinkGroupSelector](trading-ui.md#linkgroupselector) | `components/LinkGroupSelector` |  |  |  | `linking-providers`, `selectors` | [guide](../components/selection-and-linking.md) |
@@ -143,7 +143,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | FillsBlotter | `fills-blotter` | [guide](../components/blotters.md) |
 | Hosting | `hosting-connection-override`, `hosting-feature-root`, `hosting-user-settings` | [guide](../components/hosting.md) |
 | InstrumentGrid | `instrument-grid`, `instrument-grid-200`, `instrument-grid-continuations`, `instrument-grid-dialogs`, `instrument-grid-futures`, `instrument-grid-prices` | [guide](../components/instrument-grid.md#instrumentgrid) |
-| LinkedInstrumentsFooter | `linked-instruments-footer` | [guide](../components/blotters.md) |
+| LinkedInstrumentsFooter | `linked-instruments-footer` | [guide](../components/blotters.md#channels-in-the-orders-and-fills-blotters) |
 | Linking | `linking-providers` | [guide](../components/selection-and-linking.md) |
 | MarketDepth | `market-depth-selected` | [guide](../components/market-depth-and-ladder.md#marketdepth) |
 | Notifications | `notifications-connection`, `notifications-settings` | [guide](../components/notifications-and-connection.md) |
