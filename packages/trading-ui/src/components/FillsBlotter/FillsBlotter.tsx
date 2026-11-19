@@ -15,9 +15,14 @@ import {
   useState,
 } from "react";
 import { useDataSourceRows } from "../../data/useDataSourceRows";
-import { filterString } from "../../utils/filters";
+import { andFilters, filterString } from "../../utils/filters";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
 import { useChannelRowMarkers } from "../ChannelRowMarkers";
+import {
+  LinkedInstrumentsFooter,
+  linkedInstruments,
+  useLinkedRicFilter,
+} from "../LinkedInstrumentsFooter";
 import { useStaleData } from "../StaleIndicator/useStaleData";
 import { type CsvColumn, downloadCsv, rowsToCsv } from "../../utils/csv";
 import { formatTime } from "../../utils/time";
@@ -152,6 +157,8 @@ export interface FillsBlotterProps
 
 const MAX_EXPORT_ROWS = 5_000;
 
+const ricFilter = (ric?: string) => (ric ? `ric = ${filterString(ric)}` : "");
+
 const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
   function FillsBlotterInner(
     {
@@ -175,7 +182,8 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
     const [grouping, setGrouping] = useState<FillsGrouping>(defaultGrouping);
     const groupByLabelId = useId();
     const markers = useChannelRowMarkers(tableConfig);
-    const filter = { filter: ric ? `ric = ${filterString(ric)}` : "" };
+    const [filterRic, setFilterRic] = useLinkedRicFilter(markers.linkedRics);
+    const filter = { filter: andFilters(ricFilter(ric), ricFilter(filterRic)) };
 
     const dataSource = useTradingDataSource("fills", {
       columns: COLUMNS,
@@ -188,15 +196,15 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
       filterSpec: filter,
       sort: { sortDefs: [{ column: "timestamp", sortType: "D" }] },
     });
-    const { rows: records } = useDataSourceRows(mirror, {
+    const { rows: records, size: rowCount } = useDataSourceRows(mirror, {
       rowCount: MAX_EXPORT_ROWS,
     });
 
     useEffect(() => {
-      const f = { filter: ric ? `ric = ${filterString(ric)}` : "" };
+      const f = { filter: andFilters(ricFilter(ric), ricFilter(filterRic)) };
       dataSource.filter = f;
       mirror.filter = f;
-    }, [ric, dataSource, mirror]);
+    }, [ric, filterRic, dataSource, mirror]);
 
     useEffect(() => {
       const sync = (config: typeof dataSource.config) => {
@@ -280,6 +288,13 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
             />
           </div>
         </FillsLinkContext.Provider>
+        <LinkedInstrumentsFooter
+          activeChannel={markers.activeChannel}
+          filterRic={filterRic}
+          instruments={linkedInstruments(markers)}
+          onFilterRic={setFilterRic}
+          summary={`${rowCount} ${rowCount === 1 ? "fill" : "fills"}`}
+        />
       </div>
     );
   },

@@ -33,7 +33,7 @@ import {
 import type { TradingConnectionState } from "../../connection/useTradingConnectionStatus";
 import { sendTradingRpc, TradingRpcError } from "../../data/tradingRpc";
 import { useDataSourceRows } from "../../data/useDataSourceRows";
-import { filterString } from "../../utils/filters";
+import { andFilters, filterString } from "../../utils/filters";
 import { useTableSelectedKeys } from "../../data/useTableSelectedKeys";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
 import { useTradingNotifications } from "../../notifications/TradingNotificationsProvider";
@@ -42,6 +42,11 @@ import { isOrderAmendable, isOrderCancellable } from "../../utils/orderStatus";
 import { useStableCallback } from "../../hooks/useStableCallback";
 import { InstrumentLookupProvider } from "../InstrumentLookup";
 import { useChannelRowMarkers } from "../ChannelRowMarkers";
+import {
+  LinkedInstrumentsFooter,
+  linkedInstruments,
+  useLinkedRicFilter,
+} from "../LinkedInstrumentsFooter";
 import { OrderBookView } from "../OrderBookView";
 import { useStaleData } from "../StaleIndicator/useStaleData";
 import { registerTradingCellRenderers } from "../TradingCellRenderers";
@@ -238,6 +243,7 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
     const [confirmingCancelAll, setConfirmingCancelAll] = useState(false);
     const workingOrders = useWorkingOrderSummary();
     const markers = useChannelRowMarkers(orderBlotterTableConfig);
+    const [filterRic, setFilterRic] = useLinkedRicFilter(markers.linkedRics);
 
     const { connectionState, staleProps } = useStaleData();
     const connected = connectionState === "connected";
@@ -260,7 +266,9 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
       ],
       filterSpec: { filter: orderBlotterTabFilter(defaultTab) },
     });
-    const { rows: records } = useDataSourceRows(mirror, { rowCount: 500 });
+    const { rows: records, size: rowCount } = useDataSourceRows(mirror, {
+      rowCount: 500,
+    });
     const orderedKeys = useMemo(() => records.map((r) => r.$key), [records]);
     const { selectedKeys, onSelectionChange, clear } =
       useTableSelectedKeys(orderedKeys);
@@ -272,11 +280,14 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
     byKeyRef.current = byKey;
 
     useEffect(() => {
-      const filter = orderBlotterTabFilter(tab);
+      const filter = andFilters(
+        orderBlotterTabFilter(tab),
+        filterRic ? `ric = ${filterString(filterRic)}` : "",
+      );
       dataSource.filter = { filter };
       mirror.filter = { filter };
       clear();
-    }, [tab, dataSource, mirror, clear]);
+    }, [tab, filterRic, dataSource, mirror, clear]);
 
     const fail = useCallback(
       (err: unknown, orderId?: string) => {
@@ -514,6 +525,13 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
             {message.text}
           </div>
         ) : null}
+        <LinkedInstrumentsFooter
+          activeChannel={markers.activeChannel}
+          filterRic={filterRic}
+          instruments={linkedInstruments(markers)}
+          onFilterRic={setFilterRic}
+          summary={`${rowCount} ${rowCount === 1 ? "order" : "orders"}`}
+        />
         {confirmingCancelAll ? (
           <CancelAllPrompt
             onCancel={() => setConfirmingCancelAll(false)}

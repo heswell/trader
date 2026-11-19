@@ -1,0 +1,90 @@
+.tradingLinkedFooter {
+  align-items: center;
+  background: var(--salt-container-secondary-background);
+  border-top: var(--salt-size-border) solid
+    var(--salt-separable-primary-borderColor);
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--salt-spacing-200);
+  min-height: 30px;
+  overflow: hidden;
+  padding: 0 var(--salt-spacing-250, 10px);
+  white-space: nowrap;
+}
+
+.tradingLinkedFooter-label {
+  color: var(--salt-content-secondary-foreground);
+  font-size: var(--salt-text-label-fontSize);
+  font-weight: var(--salt-text-label-fontWeight-strong);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.tradingLinkedFooter-empty,
+.tradingLinkedFooter-summary {
+  color: var(--salt-content-secondary-foreground);
+  font-size: var(--salt-text-label-fontSize);
+  font-variant-numeric: tabular-nums;
+}
+
+.tradingLinkedFooter-spacer {
+  flex: 1 1 0;
+}
+
+.tradingLinkedFooter-chip {
+  align-items: center;
+  background: var(--salt-container-primary-background);
+  border: var(--salt-size-border) solid
+    var(--salt-separable-primary-borderColor);
+  border-radius: 10px;
+  color: var(--salt-content-primary-foreground);
+  cursor: pointer;
+  display: inline-flex;
+  flex-shrink: 0;
+  font: inherit;
+  font-size: var(--salt-text-label-fontSize);
+  font-weight: var(--salt-text-fontWeight-strong);
+  gap: 6px;
+  height: 20px;
+  padding: 0 var(--salt-spacing-200);
+}
+
+.tradingLinkedFooter-chip:hover {
+  background: var(--salt-selectable-background-hover);
+}
+
+.tradingLinkedFooter-chip:focus-visible {
+  outline: var(--salt-focused-outlineWidth) var(--salt-focused-outlineStyle)
+    var(--salt-focused-outlineColor);
+  outline-offset: 1px;
+}
+
+.tradingLinkedFooter-chip[aria-pressed="true"] {
+  background: var(--salt-selectable-background-selected);
+  border-color: var(--salt-selectable-borderColor-selected);
+}
+
+.tradingLinkedFooter-dot {
+  --dot-ring-gap: var(--salt-container-primary-background);
+  background: var(--tradingLinkedFooter-color);
+  border-radius: 50%;
+  flex: 0 0 8px;
+  height: 8px;
+  width: 8px;
+}
+
+.tradingLinkedFooter-chip[aria-pressed="true"] .tradingLinkedFooter-dot {
+  --dot-ring-gap: var(--salt-selectable-background-selected);
+}
+
+/* the active channel's chip: a ring around its dot */
+.tradingLinkedFooter-chip[data-active] .tradingLinkedFooter-dot {
+  box-shadow:
+    0 0 0 1.5px var(--dot-ring-gap),
+    0 0 0 3px var(--tradingLinkedFooter-color);
+}
+
+.tradingLinkedFooter-clear {
+  color: var(--salt-content-secondary-foreground);
+}
