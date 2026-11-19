@@ -16,6 +16,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { applyGrouping } from "../../data/applyGrouping";
 import { useDataSourceRows } from "../../data/useDataSourceRows";
 import { useInstrumentLinkBus } from "../../instrument-context/InstrumentContext";
 import { andFilters, filterString } from "../../utils/filters";
@@ -253,19 +254,20 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
     }, [dataSource, mirror]);
 
     useEffect(() => {
-      dataSource.groupBy =
+      applyGrouping(
+        dataSource,
         grouping === "none"
           ? []
           : grouping === "ric"
             ? ["ric"]
-            : ["ric", "side"];
-      dataSource.aggregations =
+            : ["ric", "side"],
         grouping === "none"
           ? []
           : [
               { column: "quantity", aggType: 1 },
               { column: "notional", aggType: 1 },
-            ];
+            ],
+      );
     }, [grouping, dataSource]);
 
     const link = useMemo(

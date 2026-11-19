@@ -794,3 +794,13 @@ Found moving to @vuu-ui 4.0.0-alpha.30 (`docs/portal-integration.md`, "Panels pa
      arrives. *Proposed:* compute the initial `aria-valuenow` lazily (from the panes' flex-basis, or on first focus)
      instead of setting state on mount. *Workaround in this repo:* tests that need blotter data render
      `OrderBlotter` with `showChildOrders={false}`.
+
+120. **engine-local never confirms a config change, so a vuu Table cannot ungroup.** (heswell
+     `@heswell/vuu-data-engine-local` 4.3.0, `EngineDataSource` `set config`, which emits
+     `config` with `confirmed` undefined.) vuu's Table (`useTableModel` `updateTableConfig`) removes its group
+     column only when an empty `groupBy` arrives with `confirmed` true; the remote `VuuDataSource` sends that when
+     the server acks. On local test data, switching a grouped table back to no grouping leaves an empty group column
+     with the group chips, and the grouped columns (ric, side, ...) do not come back. *Repro:* showcase, local test
+     data, Fills blotter: Group by RIC / side, then None. *Proposed:* engine-local applies config synchronously, so
+     emit `config` with `confirmed: true`. *Workaround in this repo:* `applyGrouping` (`src/data/applyGrouping.ts`,
+     used by FillsBlotter, PositionsView and BotsGrid) emits a confirmed `config` after an ungroup.

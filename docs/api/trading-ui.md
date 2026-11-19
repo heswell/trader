@@ -3289,7 +3289,7 @@ Props of [`FillProgressBar`](#fillprogressbar).
 
 #### FillsBlotter
 
-*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L351)
+*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L353)
 
 Fills blotter on `fills` (the server already filters to the user's own
 fills): grouping by ric / ric+side with summed quantity and notional and
@@ -3312,7 +3312,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### FillsBlotterProps
 
-*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L154)
+*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L155)
 
 Props of [`FillsBlotter`](#fillsblotter).
 
@@ -3329,7 +3329,7 @@ Props of [`FillsBlotter`](#fillsblotter).
 
 #### FillsGrouping
 
-*type* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L58)
+*type* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L59)
 
 ```ts
 type FillsGrouping = "none" | "ric" | "ric-side"
@@ -5564,7 +5564,7 @@ Props of [`PnlValue`](#pnlvalue).
 
 #### PositionsView
 
-*component* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L388)
+*component* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L392)
 
 Positions on `positionPrices` with ticking realised / unrealised / total
 P&L, grouping (currency then sector – the default – account or ric) with summed
@@ -5589,7 +5589,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### totalsByCurrency
 
-*function* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L188)
+*function* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L189)
 
 Sum position rows per currency (never across currencies).
 
@@ -5601,7 +5601,7 @@ totalsByCurrency(rows: readonly Record<string, unknown>[]): CurrencyTotals[]
 
 #### POSITIONS_GROUP_BY
 
-*const* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L57)
+*const* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L58)
 
 The positionPrices `groupBy` for each PositionsView grouping.
 
@@ -5613,7 +5613,7 @@ const POSITIONS_GROUP_BY: Record<PositionsGrouping, string[]>
 
 #### CurrencyTotals
 
-*interface* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L178)
+*interface* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L179)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -5626,7 +5626,7 @@ const POSITIONS_GROUP_BY: Record<PositionsGrouping, string[]>
 
 #### PositionsViewProps
 
-*interface* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L69)
+*interface* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L70)
 
 Props of [`PositionsView`](#positionsview).
 
@@ -5634,7 +5634,7 @@ Props of [`PositionsView`](#positionsview).
 
 #### PositionsGrouping
 
-*type* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L49)
+*type* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L50)
 
 `none`: one row per account|ric. Grouped modes always group by currency
 first so aggregated amounts are never summed across currencies.
@@ -6447,7 +6447,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### BotsGrid
 
-*component* · [components/SimulatorGrids/BotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotsGrid.tsx#L234)
+*component* · [components/SimulatorGrids/BotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotsGrid.tsx#L237)
 
 The simulator's bots from `bots` (sim-admin only): position, average
 price, realised / unrealised P&L in USD, order and fill counts, resting
@@ -6528,7 +6528,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### BOTS_GROUP_BY
 
-*const* · [components/SimulatorGrids/BotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotsGrid.tsx#L21)
+*const* · [components/SimulatorGrids/BotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotsGrid.tsx#L22)
 
 Groupings offered by the BotsGrid toolbar.
 
@@ -6562,7 +6562,7 @@ Props of [`BotFillsTape`](#botfillstape).
 
 #### BotsGridProps
 
-*interface* · [components/SimulatorGrids/BotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotsGrid.tsx#L131)
+*interface* · [components/SimulatorGrids/BotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotsGrid.tsx#L132)
 
 Props of [`BotsGrid`](#botsgrid).
 
@@ -6588,7 +6588,7 @@ Props of [`SimBooksGrid`](#simbooksgrid).
 
 #### BotsGrouping
 
-*type* · [components/SimulatorGrids/BotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotsGrid.tsx#L28)
+*type* · [components/SimulatorGrids/BotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotsGrid.tsx#L29)
 
 ```ts
 type BotsGrouping = keyof typeof BOTS_GROUP_BY

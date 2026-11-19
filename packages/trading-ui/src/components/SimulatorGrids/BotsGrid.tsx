@@ -2,6 +2,7 @@ import { Table } from "@vuu-ui/vuu-table";
 import type { TableConfig } from "@vuu-ui/vuu-table-types";
 import cx from "clsx";
 import { forwardRef, type HTMLAttributes, useEffect, useState } from "react";
+import { applyGrouping } from "../../data/applyGrouping";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
 import { useFollowedInstrument } from "../../hooks/useMarketData";
 import type { LinkGroupProps } from "../../instrument-context/useComponentLinkGroup";
@@ -180,11 +181,13 @@ const Inner = forwardRef<HTMLDivElement, BotsGridProps>(function BotsGridInner(
   }, [ric, dataSource]);
 
   useEffect(() => {
-    dataSource.groupBy = [...BOTS_GROUP_BY[grouping]];
-    dataSource.aggregations =
+    applyGrouping(
+      dataSource,
+      [...BOTS_GROUP_BY[grouping]],
       grouping === "none"
         ? []
-        : SUMMED.map((column) => ({ column, aggType: 1 }));
+        : SUMMED.map((column) => ({ column, aggType: 1 })),
+    );
   }, [grouping, dataSource]);
 
   return (
