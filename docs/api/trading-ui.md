@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 618 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 625 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -16,6 +16,7 @@ Imports: `@heswell/trading-ui`. 618 exports. Types are shown as written in the s
 - **feature-root**: [ensureLinkBusBroadcast](#ensurelinkbusbroadcast), [notificationLease](#notificationlease), [TradingFeatureRoot](#tradingfeatureroot), [TradingFeatureRootProps](#tradingfeaturerootprops), [useInTradingFeatureRoot](#useintradingfeatureroot)
 - **components/AccountSelector**: [AccountSelector](#accountselector), [AccountSelectorProps](#accountselectorprops), [useSelectedAccount](#useselectedaccount), [useTradingAccounts](#usetradingaccounts)
 - **components/ChannelPicker**: [CHANNEL_PICKER_SOURCE](#channel_picker_source), [ChannelPicker](#channelpicker), [ChannelPickerDensity](#channelpickerdensity), [ChannelPickerProps](#channelpickerprops)
+- **components/ChannelRowMarkers**: [CHANNEL_ROW_CLASS](#channel_row_class), [ChannelRics](#channelrics), [channelRowClassName](#channelrowclassname), [channelRowColorRules](#channelrowcolorrules), [ChannelRowMarkers](#channelrowmarkers), [useChannelRics](#usechannelrics), [useChannelRowMarkers](#usechannelrowmarkers)
 - **components/ConnectionBanner**: [ConnectionBanner](#connectionbanner), [ConnectionBannerProps](#connectionbannerprops)
 - **components/ConnectionStatusIndicator**: [CONNECTION_STATE_LABELS](#connection_state_labels), [ConnectionStatusIndicator](#connectionstatusindicator), [ConnectionStatusIndicatorProps](#connectionstatusindicatorprops)
 - **components/DepthChartView**: [DepthChartView](#depthchartview), [DepthChartViewProps](#depthchartviewprops)
@@ -2956,6 +2957,103 @@ ric; the others are dots).
 type ChannelPickerDensity = "full" | "compact" | "dots"
 ```
 
+## components/ChannelRowMarkers
+
+### Hooks (components/ChannelRowMarkers)
+
+#### useChannelRics
+
+*hook* · [components/ChannelRowMarkers/useChannelRics.ts](../../packages/trading-ui/src/components/ChannelRowMarkers/useChannelRics.ts#L33)
+
+Which ric each workspace channel holds, read-only. Uses the workspace
+channels (WorkspaceChannelProvider), else the default channels with red
+active. Shared by the instrument grid's link column and the blotters'
+channel markers.
+
+```ts
+useChannelRics(): ChannelRics
+```
+
+#### useChannelRowMarkers
+
+*hook* · [components/ChannelRowMarkers/channelRowMarkers.tsx](../../packages/trading-ui/src/components/ChannelRowMarkers/channelRowMarkers.tsx#L46)
+
+Display-only channel markers for a blotter: a row whose `ric` is on a
+workspace channel shows the Table's left row bookend in that channel's
+colour (hidden while the row is selected, which shows the normal
+selection instead). Rows read the channels through a ref, so the
+returned config stays stable (a new config would reset the Table's
+columns): a channel change re-renders the caller, and so the Table,
+which recomputes each row's class.
+
+```ts
+useChannelRowMarkers(config: TableConfig): ChannelRowMarkers
+```
+
+### Functions (components/ChannelRowMarkers)
+
+#### channelRowClassName
+
+*function* · [components/ChannelRowMarkers/channelRowMarkers.tsx](../../packages/trading-ui/src/components/ChannelRowMarkers/channelRowMarkers.tsx#L16)
+
+The marker classes of a row whose ric is on `channel`.
+
+```ts
+channelRowClassName(channel: LinkGroupDefinition): string
+```
+
+#### channelRowColorRules
+
+*function* · [components/ChannelRowMarkers/channelRowMarkers.tsx](../../packages/trading-ui/src/components/ChannelRowMarkers/channelRowMarkers.tsx#L20)
+
+One rule per channel: the colour its marked rows show.
+
+```ts
+channelRowColorRules(channels: readonly LinkGroupDefinition[]): string
+```
+
+### Constants (components/ChannelRowMarkers)
+
+#### CHANNEL_ROW_CLASS
+
+*const* · [components/ChannelRowMarkers/channelRowMarkers.tsx](../../packages/trading-ui/src/components/ChannelRowMarkers/channelRowMarkers.tsx#L11)
+
+Class on a row whose ric is on a channel, plus `-<channel id>`.
+
+```ts
+const CHANNEL_ROW_CLASS: "tradingChannelRow"
+```
+
+### Interfaces (components/ChannelRowMarkers)
+
+#### ChannelRics
+
+*interface* · [components/ChannelRowMarkers/useChannelRics.ts](../../packages/trading-ui/src/components/ChannelRowMarkers/useChannelRics.ts#L14)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `channels` | `readonly LinkGroupDefinition[]` |  | The workspace channels, in picker order. |
+| `activeChannel` | `LinkGroupId` |  | The workspace's active channel. |
+| `selections` | `ChannelSelections` |  | The instrument each channel holds now. |
+| `byRic` | `ReadonlyMap<string, LinkGroupDefinition>` |  | The channel holding each ric (one channel per ric, the first wins). |
+| `linkedRics` | `readonly string[]` |  | Rics on a channel, in channel order. Stable while the set is unchanged. |
+
+#### ChannelRowMarkers
+
+*interface* · [components/ChannelRowMarkers/channelRowMarkers.tsx](../../packages/trading-ui/src/components/ChannelRowMarkers/channelRowMarkers.tsx#L30)
+
+Extends `ChannelRics`.
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `tableConfig` | `TableConfig` |  | `config` plus this instance's row-class generator. Stable. |
+| `colorStyle` | `ReactElement` |  | Render once inside the component: the channel colours. |
+| `channels` | `readonly LinkGroupDefinition[]` |  | The workspace channels, in picker order. (from `ChannelRics`) |
+| `activeChannel` | `LinkGroupId` |  | The workspace's active channel. (from `ChannelRics`) |
+| `selections` | `ChannelSelections` |  | The instrument each channel holds now. (from `ChannelRics`) |
+| `byRic` | `ReadonlyMap<string, LinkGroupDefinition>` |  | The channel holding each ric (one channel per ric, the first wins). (from `ChannelRics`) |
+| `linkedRics` | `readonly string[]` |  | Rics on a channel, in channel order. Stable while the set is unchanged. (from `ChannelRics`) |
+
 ## components/ConnectionBanner
 
 ### Components (components/ConnectionBanner)
@@ -3148,7 +3246,7 @@ Props of [`FillProgressBar`](#fillprogressbar).
 
 #### FillsBlotter
 
-*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L290)
+*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L294)
 
 Fills blotter on `fills` (the server already filters to the user's own
 fills): grouping by ric / ric+side with summed quantity and notional and
@@ -3171,7 +3269,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### FillsBlotterProps
 
-*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L138)
+*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L139)
 
 Props of [`FillsBlotter`](#fillsblotter).
 
@@ -3188,7 +3286,7 @@ Props of [`FillsBlotter`](#fillsblotter).
 
 #### FillsGrouping
 
-*type* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L42)
+*type* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L43)
 
 ```ts
 type FillsGrouping = "none" | "ric" | "ric-side"
@@ -3289,7 +3387,7 @@ Also accepts the props of `TableCellProps (@vuu-ui/vuu-table-types)`, `TableCell
 
 #### useGridChannelLinks
 
-*hook* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L99)
+*hook* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L96)
 
 Channel links for the grid: which channel holds each ric, and actions
 that link with one channel per instrument. Uses the workspace channels
@@ -3420,7 +3518,7 @@ instrumentGridColumns({ available, sparkline, visible = DEFAULT_INSTRUMENT_GRID_
 
 #### isInLinkCell
 
-*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L194)
+*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L174)
 
 Whether `target` is inside a link cell.
 
@@ -3511,7 +3609,7 @@ registerInstrumentGridRenderers(): void
 
 #### registerLinkCellRenderer
 
-*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L404)
+*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L384)
 
 Register the link cell and header renderers with vuu (idempotent).
 
@@ -3541,7 +3639,7 @@ renameWatchlist(state: WatchlistState, id: string, name: string): WatchlistState
 
 #### rowRicOf
 
-*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L185)
+*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L165)
 
 The ric of the grid row containing `target` (from its link cell).
 
@@ -3661,7 +3759,7 @@ const FILTERS_SETTINGS_KEY: "trading.instrumentGrid.filters"
 
 #### GridChannelLinksProvider
 
-*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L92)
+*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L89)
 
 ```ts
 const GridChannelLinksProvider: Provider<GridChannelLinks | undefined>
@@ -3679,7 +3777,7 @@ const GROUPABLE_COLUMNS: readonly ["exchange", "sector", "currency", "instrument
 
 #### INSTRUMENT_GRID_LINK_SOURCE
 
-*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L46)
+*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L43)
 
 Selection source of the grid's link publishes.
 
@@ -3689,7 +3787,7 @@ const INSTRUMENT_GRID_LINK_SOURCE: "InstrumentGrid"
 
 #### LINK_COLUMN
 
-*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L41)
+*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L38)
 
 Name of the grid's client-side link column.
 
@@ -3699,7 +3797,7 @@ const LINK_COLUMN: "link"
 
 #### linkColumnDescriptor
 
-*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L49)
+*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L46)
 
 The link column: always first, not in column sets or the column picker.
 
@@ -3755,7 +3853,7 @@ const WATCHLISTS_SETTINGS_KEY: "trading.watchlists"
 
 #### GridChannelLinks
 
-*interface* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L61)
+*interface* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L58)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -4170,7 +4268,7 @@ Props of [`NamePrompt`](#nameprompt).
 
 #### OrderBlotter
 
-*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L650)
+*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L654)
 
 Order blotter on `parentOrders`: status badge, fill progress, tick-formatted
 avg price, filter tabs, per-row amend / cancel (enabled only for NEW,
@@ -4260,7 +4358,7 @@ const orderBlotterTableConfig: TableConfig
 
 #### OrderBlotterProps
 
-*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L90)
+*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L91)
 
 Props of [`OrderBlotter`](#orderblotter).
 
