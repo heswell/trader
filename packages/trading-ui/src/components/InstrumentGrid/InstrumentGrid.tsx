@@ -3,6 +3,7 @@ import {
   Side,
   type TradingSchemaName,
 } from "@heswell/trading-schemas";
+import { Button } from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
 import {
@@ -114,8 +115,9 @@ import {
   rowRicOf,
   useGridChannelLinks,
 } from "./linkColumn";
+import { NamePrompt } from "../NamePrompt";
 import { WatchlistDialog } from "../WatchlistDialog";
-import { useWatchlists } from "./watchlists";
+import { useWatchlists, watchlistNameError } from "./watchlists";
 import type { SparklineCellOptions } from "../Sparkline/Sparkline";
 import gridCss from "./InstrumentGrid.css";
 
@@ -751,6 +753,10 @@ const InstrumentGridInner = forwardRef<
   }>();
   const [deletingId, setDeletingId] = useState<string>();
   const deleting = watchlists.lists.find((l) => l.id === deletingId);
+  const [editingId, setEditingId] = useState<string>();
+  const editing = watchlists.lists.find((l) => l.id === editingId);
+  const [renamingId, setRenamingId] = useState<string>();
+  const renaming = watchlists.lists.find((l) => l.id === renamingId);
   const createWatchlist = useCallback(
     () => setNewWatchlist({ rics: selected ? [selected.ric] : [], show: true }),
     [selected],
@@ -774,6 +780,26 @@ const InstrumentGridInner = forwardRef<
           lists={watchlists.lists}
           onClose={() => setNewWatchlist(undefined)}
           onSave={saveNewWatchlist}
+        />
+      ) : null}
+      {editing ? (
+        <WatchlistDialog
+          editing={editing}
+          lists={watchlists.lists}
+          onClose={() => setEditingId(undefined)}
+          onSave={(changes) => watchlists.update(editing.id, changes)}
+        />
+      ) : null}
+      {renaming ? (
+        <NamePrompt
+          confirmLabel="Rename"
+          initialName={renaming.name}
+          onClose={() => setRenamingId(undefined)}
+          onConfirm={(name) => watchlists.rename(renaming.id, name)}
+          title={`Rename ${renaming.name}`}
+          validate={(name) =>
+            watchlistNameError(name, watchlists.lists, renaming.id)
+          }
         />
       ) : null}
       {deleting ? (
@@ -813,7 +839,9 @@ const InstrumentGridInner = forwardRef<
           filterCount={filterClauseCount(userFilter)}
           onAddToWatchlist={watchlists.add}
           onDeleteWatchlist={setDeletingId}
+          onEditWatchlist={setEditingId}
           onNewWatchlist={createWatchlist}
+          onRenameWatchlist={setRenamingId}
           onRemoveFromWatchlist={watchlists.removeRic}
           onScopeChange={setWatchlistId}
           onShowFilterBarChange={setShowFilterBar}
@@ -873,6 +901,26 @@ const InstrumentGridInner = forwardRef<
             </RowActionsProvider>
           </ContextMenuProvider>
         </GridChannelLinksProvider>
+        {watchlist && watchlist.rics.length === 0 ? (
+          <section
+            aria-label="Empty watchlist"
+            className={`${classBase}-emptyList`}
+          >
+            <span className={`${classBase}-emptyTitle`}>
+              {`${watchlist.name} is empty`}
+            </span>
+            <span className={`${classBase}-emptyText`}>
+              Pick instruments, or filter by sector or type and add every match.
+            </span>
+            <Button
+              appearance="solid"
+              onClick={() => setEditingId(watchlist.id)}
+              sentiment="accented"
+            >
+              Add instruments…
+            </Button>
+          </section>
+        ) : null}
       </div>
       {footerVisible ? (
         <InstrumentGridFooter

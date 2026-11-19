@@ -46,7 +46,8 @@ A preset over the vuu `Table` bound to `instrumentPrices` (or `prices`: columns 
 
 ## Panel header
 
-- **Scope picker** (the title): All instruments or a watchlist, with its count. The same menu adds or removes the selected row's ric on the current watchlist, creates a watchlist (in the `WatchlistDialog`, then shown) and deletes the current one.
+- **Scope picker** (the title): All instruments or a watchlist, with its count. The same menu adds or removes the selected row's ric on the current watchlist and, on a watchlist, has **Edit instruments…** (E: the `WatchlistDialog` on that list), **Rename…** (F2: a `NamePrompt`) and **Delete…** (a warning prompt; the grid falls back to All instruments). **New watchlist…** (N) opens the `WatchlistDialog`, seeded with the selected row, and shows the new list. The letters act while the menu is open. The row menu's New watchlist… opens the same dialog seeded with that row, and stays on the current scope.
+- **Empty watchlist**: the body says so and offers **Add instruments…**, which opens the dialog on the list.
 - **Panel settings** (cog): Show filter bar (Ctrl+Shift+F anywhere in the grid), Show footer and Pin linked rows to the top. Saved per grid `id` under `trading.instrumentGrid.view`.
 - **Filter badge**: while the filter bar is hidden its filters still apply, and the header shows a badge with the clause count; clicking it shows the bar.
 

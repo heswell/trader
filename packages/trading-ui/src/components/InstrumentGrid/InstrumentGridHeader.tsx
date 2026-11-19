@@ -11,7 +11,7 @@ import {
   useGridLayoutItem,
 } from "@vuu-ui/grid-layout";
 import cx from "clsx";
-import type { ReactNode } from "react";
+import { type KeyboardEvent, type ReactNode, useState } from "react";
 import type { Watchlist } from "./watchlists";
 
 const classBase = "tradingInstrumentGridHeader";
@@ -81,6 +81,9 @@ export interface InstrumentGridHeaderProps {
   onAddToWatchlist: (id: string, ric: string) => void;
   onRemoveFromWatchlist: (id: string, ric: string) => void;
   onDeleteWatchlist: (id: string) => void;
+  /** Opens the watchlist dialog on a list (its name and instruments). */
+  onEditWatchlist: (id: string) => void;
+  onRenameWatchlist: (id: string) => void;
   showFilterBar: boolean;
   onShowFilterBarChange: (show: boolean) => void;
   /** Undefined when the grid offers no footer (showFooter={false}). */
@@ -95,12 +98,15 @@ export interface InstrumentGridHeaderProps {
 
 /**
  * The scope picker: the panel title, a menu of All instruments and the
- * watchlists, plus actions on the current watchlist.
+ * watchlists, plus actions on the current watchlist. In the open menu,
+ * E edits the current list, F2 renames it and N makes a new one.
  */
 const ScopePicker = ({
   onAddToWatchlist,
   onDeleteWatchlist,
+  onEditWatchlist,
   onNewWatchlist,
+  onRenameWatchlist,
   onRemoveFromWatchlist,
   onScopeChange,
   scope,
@@ -111,8 +117,33 @@ const ScopePicker = ({
   const label = watchlist?.name ?? "All instruments";
   const inList =
     watchlist && selectedRic && watchlist.rics.includes(selectedRic);
+  const [open, setOpen] = useState(false);
+  const run = (action: () => void) => {
+    setOpen(false);
+    action();
+  };
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const key = e.key.toLowerCase();
+    const action =
+      key === "n"
+        ? onNewWatchlist
+        : watchlist && key === "e"
+          ? () => onEditWatchlist(watchlist.id)
+          : watchlist && e.key === "F2"
+            ? () => onRenameWatchlist(watchlist.id)
+            : undefined;
+    if (action) {
+      e.preventDefault();
+      e.stopPropagation();
+      run(action);
+    }
+  };
+  const key = (text: string) => (
+    <kbd className={`${classBase}-key`}>{text}</kbd>
+  );
   return (
-    <Menu placement="bottom-start">
+    <Menu onOpenChange={setOpen} open={open} placement="bottom-start">
       <MenuTrigger>
         <Button
           aria-label={`Instruments: ${label}`}
@@ -123,7 +154,7 @@ const ScopePicker = ({
           <ChevronDown />
         </Button>
       </MenuTrigger>
-      <MenuPanel className={`${classBase}-menu`}>
+      <MenuPanel className={`${classBase}-menu`} onKeyDown={handleKeyDown}>
         <MenuGroup>
           <MenuItem
             aria-checked={scope === ALL_INSTRUMENTS}
@@ -168,12 +199,35 @@ const ScopePicker = ({
               </MenuItem>
             )
           ) : null}
-          <MenuItem onClick={onNewWatchlist}>New watchlist…</MenuItem>
           {watchlist ? (
-            <MenuItem onClick={() => onDeleteWatchlist(watchlist.id)}>
-              {`Delete ${watchlist.name}`}
-            </MenuItem>
+            <>
+              <MenuItem
+                onClick={() => run(() => onEditWatchlist(watchlist.id))}
+              >
+                <span className={`${classBase}-itemLabel`}>
+                  Edit instruments…
+                </span>
+                {key("E")}
+              </MenuItem>
+              <MenuItem
+                onClick={() => run(() => onRenameWatchlist(watchlist.id))}
+              >
+                <span className={`${classBase}-itemLabel`}>Rename…</span>
+                {key("F2")}
+              </MenuItem>
+              <MenuItem
+                onClick={() => run(() => onDeleteWatchlist(watchlist.id))}
+              >
+                <span className={`${classBase}-itemLabel`}>
+                  {`Delete ${watchlist.name}…`}
+                </span>
+              </MenuItem>
+            </>
           ) : null}
+          <MenuItem onClick={() => run(onNewWatchlist)}>
+            <span className={`${classBase}-itemLabel`}>New watchlist…</span>
+            {key("N")}
+          </MenuItem>
         </MenuGroup>
       </MenuPanel>
     </Menu>

@@ -3216,7 +3216,7 @@ Also accepts the props of `TableCellProps (@vuu-ui/vuu-table-types)`, `TableCell
 
 #### InstrumentGrid
 
-*component* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L246)
+*component* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L248)
 
 Instrument grid: a preset over the vuu Table bound to instrumentPrices
 (or prices). Price-move and change renderers, formatting per instrument,
@@ -3815,7 +3815,7 @@ View settings from the panel settings (gear) menu and the link column header.
 
 #### InstrumentGridProps
 
-*interface* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L131)
+*interface* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L133)
 
 Props of [`InstrumentGrid`](#instrumentgrid).
 
@@ -3866,7 +3866,7 @@ Props of [`InstrumentGrid`](#instrumentgrid).
 
 #### InstrumentAction
 
-*type* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L129)
+*type* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L131)
 
 ```ts
 type InstrumentAction = (instrument: SelectedInstrument) => void
