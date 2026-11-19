@@ -30,7 +30,26 @@ const presets: Record<string, ColumnDescriptor> = {
   exchange: { name: "exchange", label: "Exchange", width: 85 },
   currency: { name: "currency", label: "Ccy", width: 60 },
   sector: { name: "sector", label: "Sector", width: 120 },
-  instrumentType: { name: "instrumentType", label: "Type", width: 75 },
+  instrumentType: {
+    name: "instrumentType",
+    label: "Type",
+    width: 60,
+    type: { name: "string", renderer: { name: "trading.instrument-type" } },
+  },
+  putCall: {
+    name: "putCall",
+    label: "C/P",
+    width: 55,
+    type: { name: "string", renderer: { name: "trading.put-call" } },
+  },
+  strike: {
+    name: "strike",
+    label: "Strike",
+    width: 80,
+    ...right,
+    type: renderer(TradingRenderer.Price),
+  },
+  liquid: { name: "liquid", label: "Book", width: 60 },
   underlying: { name: "underlying", label: "Underlying", width: 90 },
   contract: { name: "contract", label: "Contract", width: 90 },
   expiry: {
@@ -264,6 +283,24 @@ export const SCREENING_SET_COLUMNS = [
   "dividendYield",
   "roe",
   "volume",
+];
+
+/**
+ * The Options column set, offered when the data source lists options
+ * (has a strike column). Filter on Type = OPTION to show only them.
+ */
+export const OPTIONS_SET_COLUMNS = [
+  "ric",
+  "instrumentType",
+  "underlying",
+  "putCall",
+  "strike",
+  "expiry",
+  "liquid",
+  "bid",
+  "ask",
+  "last",
+  "phase",
 ];
 
 /** "bidSize" → "Bid Size": the header for a column with no preset. */

@@ -262,6 +262,63 @@ export const PhaseCell = memo(function PhaseCell({
   );
 }, cellUnchanged);
 
+/** Short badge text per instrument type (instruments.instrumentType). */
+export const INSTRUMENT_TYPE_BADGES: Readonly<Record<string, string>> =
+  Object.freeze({
+    EQUITY: "EQ",
+    FUTURE: "FUT",
+    INDEX: "IDX",
+    CONTINUATION: "CONT",
+    OPTION: "OPT",
+  });
+
+/**
+ * `trading.instrument-type`: the instrument type as a short badge (EQ, FUT,
+ * IDX, CONT, OPT) with `data-type`, the full type as its title.
+ */
+export const InstrumentTypeCell = memo(function InstrumentTypeCell({
+  column,
+  dataRow,
+}: TableCellRendererProps) {
+  useCellCss();
+  const type = cellValue(dataRow, column);
+  if (isGroupRow(dataRow) || typeof type !== "string" || !type) {
+    return <div className={cx(classBase, `${classBase}-type`)} />;
+  }
+  return (
+    <div className={cx(classBase, `${classBase}-type`)}>
+      <span
+        className={`${classBase}-typeBadge`}
+        data-type={type}
+        title={type.toLowerCase()}
+      >
+        {INSTRUMENT_TYPE_BADGES[type] ?? type}
+      </span>
+    </div>
+  );
+}, cellUnchanged);
+
+/**
+ * `trading.put-call`: an option's right as Call / Put (`data-put-call`);
+ * empty for anything that is not an option.
+ */
+export const PutCallCell = memo(function PutCallCell({
+  column,
+  dataRow,
+}: TableCellRendererProps) {
+  useCellCss();
+  const value = cellValue(dataRow, column);
+  const label = value === "CALL" ? "Call" : value === "PUT" ? "Put" : "";
+  return (
+    <div
+      className={cx(classBase, `${classBase}-putCall`)}
+      data-put-call={label ? value : undefined}
+    >
+      {label}
+    </div>
+  );
+}, cellUnchanged);
+
 // ------------------------------------------------------ registration
 
 let registered = false;
@@ -293,6 +350,19 @@ export const registerInstrumentGridRenderers = () => {
   });
   registerComponent("trading.phase", PhaseCell, "cell-renderer", {
     ...options("Trading phase", "Trading phase badge"),
+    serverDataType: ["string"],
+  });
+  registerComponent(
+    "trading.instrument-type",
+    InstrumentTypeCell,
+    "cell-renderer",
+    {
+      ...options("Instrument type", "Short instrument type badge (OPT, FUT…)"),
+      serverDataType: ["string"],
+    },
+  );
+  registerComponent("trading.put-call", PutCallCell, "cell-renderer", {
+    ...options("Call / put", "An option's right"),
     serverDataType: ["string"],
   });
 };

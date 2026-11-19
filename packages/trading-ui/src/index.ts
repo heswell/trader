@@ -55,6 +55,7 @@ export * from "./components/ChannelPicker";
 export * from "./components/ChannelRowMarkers";
 export * from "./components/LinkedInstrumentsFooter";
 export * from "./components/LinkGroupSelector";
+export * from "./components/OptionChain";
 export * from "./components/OrderTicket";
 export * from "./components/SideLabel";
 export * from "./data/editSessionAmend";

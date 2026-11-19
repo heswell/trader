@@ -6,6 +6,7 @@ import {
   EntryMessageLevel,
   entryReviewMessages,
   hasEntryErrors,
+  InstrumentType,
   isPricedOrdType,
   isStopOrdType,
   OrdStatus,
@@ -36,6 +37,17 @@ import { filterString } from "../../utils/filters";
 import type { LinkGroupId } from "../../instrument-context/linkGroups";
 import type { TradingRow } from "../../data/useDataSourceRows";
 import { useTradingRows } from "../../data/useTradingRows";
+import {
+  type ChainOption,
+  formatOptionSpec,
+  nearestLiquid,
+  type OptionSpec,
+  otherRight,
+  resolveOptionSpec,
+  stepExpiry,
+  stepStrike,
+} from "../OptionChain/optionChainModel";
+import { useOptionChain } from "../OptionChain/useOptionChain";
 import {
   type SelectedInstrument,
   useSelectedInstrument,
@@ -167,6 +179,11 @@ const INSTRUMENT_PRICE_COLUMNS = [
   "contract",
   "contractMultiplier",
   "refPrice",
+  "underlying",
+  "putCall",
+  "strike",
+  "expiry",
+  "liquid",
   "bid",
   "ask",
   "bidSize",
@@ -1311,14 +1328,100 @@ export const useOrderTicket = ({
     [commitFields, instrument, riskOptions, setDraft, usdPerPriceUnit],
   );
 
+  // ------------------------------------------------------------ options
+  /** An option typed in an order line, waiting for its chain to load. */
+  const [pendingOption, setPendingOption] = useState<{
+    spec: OptionSpec;
+    change: Partial<OrderDraft>;
+  }>();
+  /** Why an option could not be picked (not listed, no chain). */
+  const [optionNotice, setOptionNotice] = useState<string>();
+  const isOption = instrument?.instrumentType === InstrumentType.Option;
+  const chainUnderlying =
+    pendingOption?.spec.underlying ||
+    (isOption ? instrument?.underlying : undefined);
+  const { chain, loaded: chainLoaded } = useOptionChain(chainUnderlying);
+  /** The ticket's option in its chain (quote, implied vol, delta). */
+  const chainOption = isOption ? chain.byRic.get(draft.ric ?? "") : undefined;
+
+  /** Change to another option of the chain (strikes, expiries, right). */
+  const selectOption = useCallback(
+    (option: ChainOption | undefined) => {
+      if (!option || option.ric === draftRef.current.ric) return;
+      setOptionNotice(undefined);
+      selectInstrument(option.instrument);
+    },
+    [selectInstrument],
+  );
+  const stepOption = useCallback(
+    (by: "strike" | "expiry" | "right", steps = 1) => {
+      const ric = draftRef.current.ric;
+      if (!ric || !chain.byRic.has(ric)) return false;
+      selectOption(
+        by === "strike"
+          ? stepStrike(chain, ric, steps)
+          : by === "expiry"
+            ? stepExpiry(chain, ric, steps)
+            : otherRight(chain, ric),
+      );
+      return true;
+    },
+    [chain, selectOption],
+  );
+
+  // resolve a typed option once its chain has loaded
+  useEffect(() => {
+    if (!pendingOption || !chainLoaded) return;
+    const { spec, change } = pendingOption;
+    const matches = chain.underlyings.some(
+      (u) => u === spec.underlying || u.startsWith(`${spec.underlying}.`),
+    );
+    if (chain.underlyings.length > 0 && !matches) return; // the old chain
+    setPendingOption(undefined);
+    const option = resolveOptionSpec(chain, spec);
+    if (!option) {
+      setOptionNotice(`No ${formatOptionSpec(spec)} is listed`);
+      return;
+    }
+    setOptionNotice(undefined);
+    if (publishSelection) {
+      setSelectedInstrument(option.instrument, ORDER_TICKET_SELECTION_SOURCE);
+    }
+    apply({ ...change, ric: option.ric }, true);
+  }, [
+    apply,
+    chain,
+    chainLoaded,
+    pendingOption,
+    publishSelection,
+    setSelectedInstrument,
+  ]);
+
   /**
    * Apply an order typed as one line in the instrument field (see
    * parseOrderLine). Fills the ticket; it does not send. Without a ric the
-   * current instrument is kept.
+   * current instrument is kept. An option (`aapl 200c`) is looked up in
+   * its chain first.
    */
   const applyOrderLine = useCallback(
     (text: string) => {
-      const { change } = parseOrderLine(text);
+      const { change, option } = parseOrderLine(text);
+      if (option) {
+        const current = instrumentRef.current;
+        const underlying =
+          option.underlying ||
+          (current?.instrumentType === InstrumentType.Option
+            ? current?.underlying
+            : current?.ric) ||
+          "";
+        if (!underlying) {
+          setOptionNotice("Type the underlying, e.g. AAPL 200c");
+          return false;
+        }
+        setOptionNotice(undefined);
+        setPendingOption({ spec: { ...option, underlying }, change });
+        return true;
+      }
       if (Object.keys(change).length === 0) return false;
       if (change.ric && change.ric !== draftRef.current.ric) {
         if (change.price === undefined) change.price = "";
@@ -1506,6 +1609,17 @@ export const useOrderTicket = ({
           event.preventDefault();
           fn();
         };
+        // options: Alt+↑ / ↓ strikes, with Shift expiries; Alt+C call / put
+        if (code === "ArrowUp" || code === "ArrowDown") {
+          const steps = code === "ArrowUp" ? 1 : -1;
+          if (stepOption(event.shiftKey ? "expiry" : "strike", steps))
+            event.preventDefault();
+          return;
+        }
+        if (code === "KeyC" && stepOption("right")) {
+          event.preventDefault();
+          return;
+        }
         if (code === "KeyB") return act(() => update({ side: "BUY" }));
         if (code === "KeyS") return act(() => update({ side: "SELL" }));
         if (code === "KeyL")
@@ -1597,6 +1711,7 @@ export const useOrderTicket = ({
       resolveShorthand,
       reviewing,
       setAlgoParam,
+      stepOption,
       submit,
       update,
     ],
@@ -1613,6 +1728,23 @@ export const useOrderTicket = ({
     setAlgoParam,
     resolveShorthand,
     applyOrderLine,
+    /**
+     * Options: the ticket's option in its chain (quote, implied vol,
+     * delta), the nearest liquid strike to a quote-only one, why a typed
+     * option was not found, and stepping through the chain (strikes,
+     * expiries, call / put).
+     */
+    option: {
+      current: chainOption,
+      nearestLiquid:
+        chainOption && !chainOption.liquid
+          ? nearestLiquid(chain, chainOption.ric)
+          : undefined,
+      pending: pendingOption !== undefined,
+      notice: optionNotice,
+      select: selectOption,
+      step: stepOption,
+    },
     /** Why the TIF was just changed, if it was. */
     tifNotice,
     /** Why the order type or strategy was just changed (stops are DMA only). */

@@ -776,6 +776,11 @@ export class OrderEntryService {
       priceDecimals: extra?.priceDecimals ?? 0,
       contractMultiplier: instrument?.contractMultiplier ?? 1,
       refPrice: instrument?.refPrice ?? 0,
+      underlying: instrument?.underlying ?? "",
+      putCall: instrument?.putCall ?? "",
+      strike: instrument?.strike ?? 0,
+      expiry: instrument?.expiry ?? 0,
+      liquid: instrument?.liquid ?? true,
     };
   }
 

@@ -1323,6 +1323,19 @@ export const orderEntry = defineTable({
     { name: "priceDecimals", dataType: "int" },
     { name: "contractMultiplier", dataType: "double" },
     { name: "refPrice", dataType: "double" },
+    { name: "underlying", dataType: "string" },
+    { name: "putCall", dataType: "string", description: "PutCall (options)." },
+    {
+      name: "strike",
+      dataType: "double",
+      description: "Options, 0 otherwise.",
+    },
+    { name: "expiry", dataType: "epochtimestamp" },
+    {
+      name: "liquid",
+      dataType: "boolean",
+      description: "Options: false for a quote-only strike.",
+    },
     // the last order sent from this row
     { name: "clOrdId", dataType: "string" },
     { name: "orderId", dataType: "string" },

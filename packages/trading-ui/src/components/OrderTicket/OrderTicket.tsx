@@ -3,6 +3,7 @@ import {
   AlgoStrategy,
   algoStrategyDefinition,
   InstrumentType,
+  PutCall,
   isPricedOrdType,
   isStopOrdType,
   OrdStatus,
@@ -49,6 +50,7 @@ import {
   formatQuantity,
 } from "../../utils/formatting";
 import { FillProgressBar } from "../FillProgressBar";
+import { formatExpiry } from "../OptionChain/optionChainModel";
 import { InstrumentPicker } from "../InstrumentPicker";
 import { PanelLinkGroupSelector } from "../LinkGroupSelector";
 import { StaleIndicator } from "../StaleIndicator";
@@ -284,6 +286,81 @@ const InstrumentMeta = ({ ticket }: { ticket: OrderTicketState }) => {
         </span>
       ) : null}
       <StaleIndicator />
+    </div>
+  );
+};
+
+/**
+ * An option's terms, implied vol, delta and premium; for a quote-only
+ * strike, why it can't be traded and the nearest liquid one. Also says
+ * when a typed option (`aapl 200c`) is being looked up or isn't listed.
+ */
+const OptionMeta = ({ ticket }: { ticket: OrderTicketState }) => {
+  const { instrument, option, risk } = ticket;
+  if (option.notice) {
+    return (
+      <div className={`${classBase}-option`} data-notice role="status">
+        {option.notice}
+      </div>
+    );
+  }
+  if (option.pending) {
+    return (
+      <div className={`${classBase}-option`} role="status">
+        Finding the option…
+      </div>
+    );
+  }
+  if (instrument?.instrumentType !== InstrumentType.Option) return null;
+  const current = option.current;
+  const right = instrument.putCall === PutCall.Put ? "Put" : "Call";
+  const nearest = option.nearestLiquid;
+  return (
+    <div
+      className={`${classBase}-option`}
+      data-liquid={instrument.liquid === false ? undefined : ""}
+    >
+      <span className={`${classBase}-optionTerms`} data-field="optionTerms">
+        <b>
+          {right} {instrument.strike}
+        </b>
+        {instrument.expiry ? ` · ${formatExpiry(instrument.expiry)}` : ""}
+        {instrument.underlying ? ` · on ${instrument.underlying}` : ""}
+      </span>
+      {current?.impliedVol !== undefined ? (
+        <span className={`${classBase}-metaItem`} data-field="impliedVol">
+          IV <b>{(current.impliedVol * 100).toFixed(1)}%</b>
+        </span>
+      ) : null}
+      {current?.delta !== undefined ? (
+        <span className={`${classBase}-metaItem`} data-field="delta">
+          Δ <b>{current.delta.toFixed(2)}</b>
+        </span>
+      ) : null}
+      {risk.notional !== undefined ? (
+        <span className={`${classBase}-metaItem`} data-field="premium">
+          Premium{" "}
+          <b>{formatNotional(risk.notional, { currency: risk.currency })}</b>
+        </span>
+      ) : null}
+      {instrument.liquid === false ? (
+        <span className={`${classBase}-quoteOnly`} role="alert">
+          Quote only: no book, no orders.
+          {nearest ? (
+            <button
+              className={`${classBase}-nearestLiquid`}
+              onClick={() => option.select(nearest)}
+              type="button"
+            >
+              Trade the {nearest.strike} {right.toLowerCase()}
+            </button>
+          ) : null}
+        </span>
+      ) : null}
+      <span aria-hidden className={`${classBase}-optionKeys`}>
+        <kbd>Alt ↑↓</kbd> strike <kbd>Alt ⇧↑↓</kbd> expiry <kbd>Alt C</kbd> call
+        / put
+      </span>
     </div>
   );
 };
@@ -1436,6 +1513,7 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
                 </div>
               </div>
               <InstrumentMeta ticket={ticket} />
+              <OptionMeta ticket={ticket} />
               {lineText ? <OrderLinePreview text={lineText} /> : null}
               <Quote ticket={ticket} />
             </div>

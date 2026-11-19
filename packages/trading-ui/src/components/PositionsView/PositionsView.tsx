@@ -60,7 +60,10 @@ export const POSITIONS_GROUP_BY: Record<PositionsGrouping, string[]> = {
   sector: ["currency", "sector"],
   account: ["currency", "account"],
   ric: ["currency", "ric"],
-  /** A stock and its futures together (underlying is the ric for a stock). */
+  /**
+   * A stock with its futures and options (underlying is the ric for a
+   * stock), so their deltas net.
+   */
   underlying: ["currency", "underlying"],
 };
 
@@ -84,6 +87,8 @@ const renderer = (name: string) => ({
 });
 const pnl = renderer(TradingRenderer.Pnl);
 const notional = renderer(TradingRenderer.Notional);
+/** Already in USD, whatever the row's currency. */
+const usd = { name: "number" as const, formatting: { decimals: 0 } };
 
 const COLUMNS = [
   "id",
@@ -101,6 +106,10 @@ const COLUMNS = [
   "realizedPnl",
   "unrealizedPnl",
   "totalPnl",
+  "delta",
+  "deltaUsd",
+  "gamma",
+  "vegaUsd",
   "bid",
   "ask",
   "last",
@@ -162,6 +171,34 @@ const tableConfig: TableConfig = {
       align: "right",
       type: pnl,
     },
+    {
+      name: "delta",
+      label: "Delta",
+      width: 100,
+      align: "right",
+      type: { name: "number", formatting: { decimals: 0 } },
+    },
+    {
+      name: "deltaUsd",
+      label: "Delta USD",
+      width: 120,
+      align: "right",
+      type: usd,
+    },
+    {
+      name: "gamma",
+      label: "Gamma",
+      width: 90,
+      align: "right",
+      type: { name: "number", formatting: { decimals: 2 } },
+    },
+    {
+      name: "vegaUsd",
+      label: "Vega USD",
+      width: 110,
+      align: "right",
+      type: usd,
+    },
     { name: "exchange", hidden: true },
     { name: "instrumentType", label: "Type", hidden: true },
     { name: "underlying", label: "Underlying", hidden: true },
@@ -174,7 +211,19 @@ const tableConfig: TableConfig = {
 };
 
 const SUM = 1 as const;
-const SUMMED = ["marketValue", "realizedPnl", "unrealizedPnl", "totalPnl"];
+const SUMMED = [
+  "marketValue",
+  "realizedPnl",
+  "unrealizedPnl",
+  "totalPnl",
+  "delta",
+  "deltaUsd",
+  "gamma",
+  "vegaUsd",
+];
+
+/** The amounts the per-currency totals add up. */
+const TOTALLED = ["marketValue", "realizedPnl", "unrealizedPnl", "totalPnl"];
 
 export interface CurrencyTotals {
   currency: string;
@@ -264,7 +313,7 @@ const Inner = forwardRef<HTMLDivElement, PositionsViewProps>(
       aggregations: aggregationsFor(defaultGrouping),
     });
     const totalsSource = useTradingDataSource("positionPrices", {
-      columns: ["currency", ...SUMMED],
+      columns: ["currency", ...TOTALLED],
       filterSpec: filter,
     });
     const { rows: records } = useDataSourceRows(totalsSource, {
@@ -385,8 +434,10 @@ const Inner = forwardRef<HTMLDivElement, PositionsViewProps>(
 
 /**
  * Positions on `positionPrices` with ticking realised / unrealised / total
- * P&L, grouping (currency then sector – the default – account or ric) with summed
- * aggregations, and per-currency totals. Selecting a row sets the selected
+ * P&L and Greeks (delta in shares and USD, gamma, vega in USD), grouping
+ * (currency then sector – the default – account, ric or underlying, which
+ * nets a stock's futures and options with it) with summed aggregations, and
+ * per-currency totals. Selecting a row sets the selected
  * instrument.
  */
 export const PositionsView = forwardRef<HTMLDivElement, PositionsViewProps>(
