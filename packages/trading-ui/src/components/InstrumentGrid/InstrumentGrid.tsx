@@ -3,7 +3,7 @@ import {
   Side,
   type TradingSchemaName,
 } from "@heswell/trading-schemas";
-import { Button } from "@salt-ds/core";
+import { Button, Checkbox } from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
 import {
@@ -31,6 +31,7 @@ import {
   type ColumnSetsState,
   getActiveColumnSetColumns,
   useColumnSetModel,
+  useColumnSetsState,
 } from "@vuu-ui/vuu-table-extras";
 import { Table } from "@vuu-ui/vuu-table";
 import type {
@@ -98,6 +99,18 @@ import {
   updateQuickFilterValues,
 } from "./columnSetMeta";
 import {
+  columnSetForScope,
+  columnSetsInScope,
+  columnSetsOnlyIn,
+  copyName,
+  followColumnSets,
+  LAST_COLUMN_SET_SETTINGS_KEY,
+  type LastColumnSetState,
+  parseLastColumnSet,
+  setColumnSetScope,
+  tabOrder,
+} from "./columnSetScope";
+import {
   instrumentGridColumns,
   SCREENING_SET_COLUMNS,
   SPARKLINE_COLUMN,
@@ -106,7 +119,10 @@ import {
   buildInstrumentGridFilter,
   withSearchCasings,
 } from "./instrumentGridFilter";
-import { InstrumentGridFooter } from "./InstrumentGridFooter";
+import {
+  type ColumnSetScopeProps,
+  InstrumentGridFooter,
+} from "./InstrumentGridFooter";
 import {
   actionsColumnDescriptor,
   type RowActionHandlers,
@@ -208,6 +224,9 @@ interface InstrumentGridInnerProps extends InstrumentGridProps {
   /** Quick filter fields per column set, as persisted. */
   storedColumnSetMeta?: ColumnSetMetaState;
   onColumnSetMetaChange: (meta: ColumnSetMetaState) => void;
+  /** The column set last shown in each scope, as persisted. */
+  storedLastColumnSet?: LastColumnSetState;
+  onLastColumnSetChange: (state: LastColumnSetState) => void;
   /** FilterBar filters as persisted. */
   storedFilterState?: FilterState;
   onFilterStateChange: (state: FilterState) => void;
@@ -289,6 +308,11 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
       gridSettingsKey(COLUMN_SET_META_SETTINGS_KEY, id),
       parseColumnSetMeta,
     );
+    const lastColumnSet = useStoredSetting(
+      storage,
+      gridSettingsKey(LAST_COLUMN_SET_SETTINGS_KEY, id),
+      parseLastColumnSet,
+    );
     const viewSettings = useStoredSetting(
       storage,
       gridSettingsKey(VIEW_SETTINGS_KEY, id),
@@ -303,16 +327,19 @@ export const InstrumentGrid = forwardRef<HTMLDivElement, InstrumentGridProps>(
             <ContextPanelBridge>
               {columnSets.loaded &&
               columnSetMeta.loaded &&
+              lastColumnSet.loaded &&
               filters.loaded &&
               viewSettings.loaded ? (
                 <InstrumentGridInner
                   {...props}
                   onColumnSetMetaChange={columnSetMeta.save}
+                  onLastColumnSetChange={lastColumnSet.save}
                   onColumnSetsChange={columnSets.save}
                   onFilterStateChange={filters.save}
                   onViewSettingsChange={viewSettings.save}
                   ref={ref}
                   storedColumnSetMeta={columnSetMeta.value}
+                  storedLastColumnSet={lastColumnSet.value}
                   storedColumnSets={columnSets.value}
                   storedFilterState={filters.value}
                   storedViewSettings={viewSettings.value}
@@ -347,6 +374,7 @@ const InstrumentGridInner = forwardRef<
     launchOrderTicket = true,
     onBuy: onBuyProp,
     onColumnSetMetaChange,
+    onLastColumnSetChange,
     onColumnSetsChange,
     onFilterStateChange,
     onOpenDepth,
@@ -357,6 +385,7 @@ const InstrumentGridInner = forwardRef<
     simulatedOnly = false,
     sparkline,
     storedColumnSetMeta,
+    storedLastColumnSet,
     storedColumnSets,
     storedFilterState,
     storedViewSettings,
@@ -461,11 +490,29 @@ const InstrumentGridInner = forwardRef<
   const columnSetsRef = useRef(initialColumnSets);
   /** The quick filter fields in view (read by change handlers). */
   const quickColumnsRef = useRef<readonly string[]>([]);
+  /** The scope in view: ALL_INSTRUMENTS or a watchlist id. */
+  const scopeRef = useRef(ALL_INSTRUMENTS);
+  // The set last shown in each scope, shown again on coming back.
+  const lastColumnSetRef = useRef<LastColumnSetState>(
+    storedLastColumnSet ?? {},
+  );
+  const updateLastColumnSet = useCallback(
+    (fn: (state: LastColumnSetState) => LastColumnSetState) => {
+      const next = fn(lastColumnSetRef.current);
+      if (next === lastColumnSetRef.current) return;
+      lastColumnSetRef.current = next;
+      onLastColumnSetChange(next);
+    },
+    [onLastColumnSetChange],
+  );
   const handleColumnSetsChange = useCallback<ColumnSetsChangeHandler>(
     (state, reason) => {
       const previous = columnSetsRef.current;
       columnSetsRef.current = state;
       setActiveColumnSet(state.activeColumnSet);
+      updateLastColumnSet((last) =>
+        followColumnSets(last, previous, state, scopeRef.current),
+      );
       updateColumnSetMeta((meta) =>
         reconcileColumnSetMeta(
           meta,
@@ -477,7 +524,7 @@ const InstrumentGridInner = forwardRef<
       );
       onColumnSetsChange(state);
     },
-    [onColumnSetsChange, updateColumnSetMeta],
+    [onColumnSetsChange, updateColumnSetMeta, updateLastColumnSet],
   );
   const columnSetModel = useColumnSetModel({
     columnModel,
@@ -685,6 +732,69 @@ const InstrumentGridInner = forwardRef<
     }
   }, [watchlistId, watchlist, watchlists.loaded]);
 
+  // --- column sets per scope: shared ones, then the scope's own
+  scopeRef.current = watchlistId;
+  const { columnSets: allColumnSets } = useColumnSetsState(columnSetModel);
+  const scopedSets = useMemo(
+    () => columnSetsInScope(allColumnSets, columnSetMeta, watchlistId),
+    [allColumnSets, columnSetMeta, watchlistId],
+  );
+  const tabsRef = useRef<string[]>([]);
+  tabsRef.current = tabOrder(scopedSets);
+  // On entering a scope, show the set last shown there.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: on a change of scope only
+  useEffect(() => {
+    const name = columnSetForScope(
+      scopedSets,
+      lastColumnSetRef.current,
+      watchlistId,
+      columnSetModel.activeColumnSet?.name,
+    );
+    if (name && name !== columnSetModel.activeColumnSet?.name)
+      columnSetModel.setActiveColumnSet(name);
+  }, [watchlistId]);
+  const scopeLabel = watchlist?.name ?? "All instruments";
+  const columnSetScope = useMemo<ColumnSetScopeProps>(
+    () => ({
+      label: scopeLabel,
+      sets: scopedSets,
+      onCreate: (name, onlyHere) => {
+        columnSetModel.saveAs(name);
+        if (onlyHere)
+          updateColumnSetMeta((meta) =>
+            setColumnSetScope(meta, name, scopeRef.current),
+          );
+      },
+      onDelete: (name) => {
+        const wasActive = columnSetModel.activeColumnSet?.name === name;
+        columnSetModel.delete(name);
+        const next = wasActive
+          ? tabsRef.current.find((n) => n !== name)
+          : undefined;
+        if (next) columnSetModel.setActiveColumnSet(next);
+      },
+      onDuplicate: (name) => {
+        const copy = copyName(
+          name,
+          columnSetModel.columnSets.map((set) => set.name),
+        );
+        columnSetModel.setActiveColumnSet(name);
+        columnSetModel.saveAs(copy);
+        // the copy has the source's quick filters and scope
+        updateColumnSetMeta((meta) => ({ ...meta, [copy]: { ...meta[name] } }));
+      },
+      onShare: (name, onlyHere) =>
+        updateColumnSetMeta((meta) =>
+          setColumnSetScope(
+            meta,
+            name,
+            onlyHere ? scopeRef.current : undefined,
+          ),
+        ),
+    }),
+    [columnSetModel, scopeLabel, scopedSets, updateColumnSetMeta],
+  );
+
   // --- grouping is done from the column menus; volume and turnover are
   // summed in group rows. initialGroupBy only sets the first grouping.
   useEffect(() => {
@@ -745,11 +855,11 @@ const InstrumentGridInner = forwardRef<
         !e.shiftKey &&
         /^Digit[1-9]$/.test(e.code)
       ) {
-        // Alt+1..9: the nth column set (its columns and quick filters)
-        const set = columnSetModel.columnSets[Number(e.code.slice(5)) - 1];
-        if (set) {
+        // Alt+1..9: the nth column set tab (its columns and quick filters)
+        const name = tabsRef.current[Number(e.code.slice(5)) - 1];
+        if (name) {
           e.preventDefault();
-          columnSetModel.setActiveColumnSet(set.name);
+          columnSetModel.setActiveColumnSet(name);
         }
       }
     },
@@ -960,6 +1070,10 @@ const InstrumentGridInner = forwardRef<
   }>();
   const [deletingId, setDeletingId] = useState<string>();
   const deleting = watchlists.lists.find((l) => l.id === deletingId);
+  const deletingSets = deleting
+    ? columnSetsOnlyIn(columnSetMeta, deleting.id)
+    : [];
+  const [keepDeletedSets, setKeepDeletedSets] = useState(true);
   const [editingId, setEditingId] = useState<string>();
   const editing = watchlists.lists.find((l) => l.id === editingId);
   const [renamingId, setRenamingId] = useState<string>();
@@ -1015,14 +1129,37 @@ const InstrumentGridInner = forwardRef<
           disableAccent
           initialFocusedItem="cancel"
           onClose={() => setDeletingId(undefined)}
-          onConfirm={() => watchlists.remove(deleting.id)}
+          onConfirm={() => {
+            const sets = columnSetsOnlyIn(columnSetMeta, deleting.id);
+            if (keepDeletedSets)
+              updateColumnSetMeta((meta) =>
+                sets.reduce(
+                  (m, name) => setColumnSetScope(m, name, undefined),
+                  meta,
+                ),
+              );
+            else for (const name of sets) columnSetModel.delete(name);
+            updateLastColumnSet(({ [deleting.id]: _, ...rest }) => rest);
+            watchlists.remove(deleting.id);
+          }}
           open
           status="warning"
           title={`Delete ${deleting.name}?`}
         >
-          {`The watchlist and its ${deleting.rics.length} ${
-            deleting.rics.length === 1 ? "instrument" : "instruments"
-          } are removed. This can't be undone.`}
+          <p className={`${classBase}-promptText`}>
+            {`The watchlist and its ${deleting.rics.length} ${
+              deleting.rics.length === 1 ? "instrument" : "instruments"
+            } are removed. This can't be undone.`}
+          </p>
+          {deletingSets.length ? (
+            <Checkbox
+              checked={keepDeletedSets}
+              label={`Keep its column ${
+                deletingSets.length === 1 ? "set" : "sets"
+              } (${deletingSets.join(", ")}), shared with all watchlists`}
+              onChange={(e) => setKeepDeletedSets(e.target.checked)}
+            />
+          ) : null}
         </Prompt>
       ) : null}
     </>
@@ -1045,7 +1182,10 @@ const InstrumentGridInner = forwardRef<
         <InstrumentGridHeader
           filterCount={filterClauseCount(userFilter)}
           onAddToWatchlist={watchlists.add}
-          onDeleteWatchlist={setDeletingId}
+          onDeleteWatchlist={(id) => {
+            setKeepDeletedSets(true);
+            setDeletingId(id);
+          }}
           onEditWatchlist={setEditingId}
           onNewWatchlist={createWatchlist}
           onRenameWatchlist={setRenamingId}
@@ -1142,6 +1282,7 @@ const InstrumentGridInner = forwardRef<
           columnSetModel={columnSetModel}
           dataSource={dataSource}
           filtered={filterClauseCount(userFilter) > 0}
+          scope={showToolbar ? columnSetScope : undefined}
           quickFilters={
             showToolbar
               ? {

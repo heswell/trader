@@ -3216,7 +3216,7 @@ Also accepts the props of `TableCellProps (@vuu-ui/vuu-table-types)`, `TableCell
 
 #### InstrumentGrid
 
-*component* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L272)
+*component* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L291)
 
 Instrument grid: a preset over the vuu Table bound to instrumentPrices
 (or prices). Price-move and change renderers, formatting per instrument,
@@ -3815,7 +3815,7 @@ View settings from the panel settings (gear) menu and the link column header.
 
 #### InstrumentGridProps
 
-*interface* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L146)
+*interface* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L162)
 
 Props of [`InstrumentGrid`](#instrumentgrid).
 
@@ -3866,7 +3866,7 @@ Props of [`InstrumentGrid`](#instrumentgrid).
 
 #### InstrumentAction
 
-*type* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L144)
+*type* · [components/InstrumentGrid/InstrumentGrid.tsx](../../packages/trading-ui/src/components/InstrumentGrid/InstrumentGrid.tsx#L160)
 
 ```ts
 type InstrumentAction = (instrument: SelectedInstrument) => void
@@ -4139,7 +4139,7 @@ Props of [`MarketDepth`](#marketdepth).
 
 #### NamePrompt
 
-*component* · [components/NamePrompt/NamePrompt.tsx](../../packages/trading-ui/src/components/NamePrompt/NamePrompt.tsx#L37)
+*component* · [components/NamePrompt/NamePrompt.tsx](../../packages/trading-ui/src/components/NamePrompt/NamePrompt.tsx#L45)
 
 A vuu Prompt (Salt Dialog) asking for a name: the grid's replacement for
 window.prompt. Enter confirms a valid name, Esc cancels.
@@ -4148,6 +4148,7 @@ Props: `NamePromptProps`
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
+| `children?` | `ReactNode` |  | More fields, under the name (e.g. where a new item is available). |
 | `confirmLabel?` | `string` | `"Create"` | Confirm button label, e.g. "Create". |
 | `initialName?` | `string` | `""` | Starting value, e.g. the current name when renaming. |
 | `label?` | `string` | `"Name"` | Field label. |
@@ -4163,7 +4164,7 @@ Props: `NamePromptProps`
 
 #### NamePromptProps
 
-*interface* · [components/NamePrompt/NamePrompt.tsx](../../packages/trading-ui/src/components/NamePrompt/NamePrompt.tsx#L12)
+*interface* · [components/NamePrompt/NamePrompt.tsx](../../packages/trading-ui/src/components/NamePrompt/NamePrompt.tsx#L18)
 
 Props of [`NamePrompt`](#nameprompt).
 

@@ -11,6 +11,11 @@ import type { ColumnDescriptor } from "@vuu-ui/vuu-table-types";
  */
 export interface ColumnSetMeta {
   quickFilterColumns?: string[];
+  /**
+   * The one scope (ALL_INSTRUMENTS or a watchlist id) the set is in;
+   * undefined = shared by every scope.
+   */
+  scope?: string;
 }
 
 /** Meta by column set name. */
@@ -33,10 +38,14 @@ export const parseColumnSetMeta = (
       return undefined;
     const meta: ColumnSetMetaState = {};
     for (const [name, value] of Object.entries(parsed)) {
-      const columns = (value as ColumnSetMeta | null)?.quickFilterColumns;
-      meta[name] = isStringArray(columns)
-        ? { quickFilterColumns: [...new Set(columns)] }
-        : {};
+      const { quickFilterColumns: columns, scope } =
+        (value as ColumnSetMeta | null) ?? {};
+      meta[name] = {
+        ...(isStringArray(columns)
+          ? { quickFilterColumns: [...new Set(columns)] }
+          : {}),
+        ...(typeof scope === "string" ? { scope } : {}),
+      };
     }
     return meta;
   } catch {

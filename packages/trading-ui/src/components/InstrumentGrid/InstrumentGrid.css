@@ -350,3 +350,32 @@
   display: flex;
   justify-content: flex-end;
 }
+
+/* Column sets only in this scope: after a divider, with a pin. */
+.tradingInstrumentGridFooter-tabDivider {
+  align-self: center;
+  background: var(--salt-separable-secondary-borderColor);
+  flex: none;
+  height: 12px;
+  margin: 0 var(--salt-spacing-100);
+  width: 1px;
+}
+
+.tradingInstrumentGridFooter-tabScoped {
+  align-items: center;
+  display: inline-flex;
+  gap: 3px;
+}
+
+.tradingInstrumentGridFooter-pin {
+  color: var(--salt-content-secondary-foreground);
+  flex: none;
+}
+
+.tradingInstrumentGridFooter-availableIn {
+  margin-top: var(--salt-spacing-200);
+}
+
+.tradingInstrumentGrid-promptText {
+  margin: 0 0 var(--salt-spacing-200);
+}

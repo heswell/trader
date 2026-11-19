@@ -5,11 +5,19 @@ import {
   Input,
 } from "@salt-ds/core";
 import { Prompt } from "@vuu-ui/vuu-ui-controls";
-import { type KeyboardEvent, useEffect, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 const classBase = "tradingNamePrompt";
 
 export interface NamePromptProps {
+  /** More fields, under the name (e.g. where a new item is available). */
+  children?: ReactNode;
   /** Confirm button label, e.g. "Create". */
   confirmLabel?: string;
   /** Starting value, e.g. the current name when renaming. */
@@ -35,6 +43,7 @@ export interface NamePromptProps {
  * window.prompt. Enter confirms a valid name, Esc cancels.
  */
 export const NamePrompt = ({
+  children,
   confirmLabel = "Create",
   initialName = "",
   label = "Name",
@@ -98,6 +107,7 @@ export const NamePrompt = ({
         />
         {error ? <FormFieldHelperText>{error}</FormFieldHelperText> : null}
       </FormField>
+      {children}
     </Prompt>
   );
 };

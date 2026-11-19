@@ -49,11 +49,12 @@ const lists = (items: Map<string, string>) =>
     rics: string[];
   }[];
 
-const renderGrid = () => {
+const renderGrid = (more: Record<string, string> = {}) => {
   const { items, storage } = memoryStorage({
     "trading.watchlists": JSON.stringify({
       lists: [{ id: "empty", name: "Empty", rics: [] }],
     }),
+    ...more,
   });
   render(
     <TradingDataProvider localServer={localServer} mode="local">
@@ -110,5 +111,59 @@ describe("InstrumentGrid watchlists", () => {
     fireEvent.keyDown(input, { key: "Enter" });
     await screen.findByRole("button", { name: "Instruments: Energy" });
     expect(lists(items)[0].name).toBe("Energy");
+  });
+
+  test("deleting a watchlist keeps its column sets as shared, or deletes them", async () => {
+    for (const keep of [true, false]) {
+      const items = renderGrid({
+        [`trading.instrumentGrid.columnSets:${gridId}`]: JSON.stringify({
+          activeColumnSet: "Mine",
+          columnSets: [
+            { name: "Mine", columns: ["ric", "bid"], savedColumns: ["ric"] },
+            { name: "Theirs", columns: ["ric"], savedColumns: ["ric"] },
+          ],
+        }),
+        [`trading.instrumentGrid.columnSetMeta:${gridId}`]: JSON.stringify({
+          Theirs: { scope: "empty" },
+        }),
+      });
+      await screen.findByRole("tab", { name: "Mine" });
+      expect(screen.queryByRole("tab", { name: "Theirs" })).toBeNull();
+      await openScopeMenu("All instruments");
+      fireEvent.click(
+        await screen.findByRole("menuitemradio", { name: /Empty/ }),
+      );
+      await screen.findByRole("tab", { name: "Theirs" });
+      await openScopeMenu("Empty");
+      fireEvent.click(
+        await screen.findByRole("menuitem", { name: /Delete Empty/ }),
+      );
+      const checkbox = await screen.findByRole("checkbox", {
+        name: /Keep its column set \(Theirs\)/,
+      });
+      if (!keep) fireEvent.click(checkbox);
+      act(() => screen.getByRole("button", { name: "Delete" }).click());
+      await screen.findByRole("button", {
+        name: "Instruments: All instruments",
+      });
+      if (keep) {
+        await screen.findByRole("tab", { name: "Theirs" });
+        expect(
+          JSON.parse(
+            items.get(`trading.instrumentGrid.columnSetMeta:${gridId}`) ?? "",
+          ).Theirs,
+        ).toEqual({});
+      } else {
+        await waitFor(() =>
+          expect(screen.queryByRole("tab", { name: "Theirs" })).toBeNull(),
+        );
+        expect(
+          JSON.parse(
+            items.get(`trading.instrumentGrid.columnSets:${gridId}`) ?? "",
+          ).columnSets.map(({ name }: { name: string }) => name),
+        ).toEqual(["Mine"]);
+      }
+      cleanup();
+    }
   });
 });
