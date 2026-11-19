@@ -441,10 +441,14 @@ const InstrumentGridInner = forwardRef<
       (storedColumnSets ? {} : { ...DEFAULT_COLUMN_SET_META }),
   );
   const columnSetMetaRef = useRef(columnSetMeta);
+  // The default sets' meta is saved with the sets' first save, so the two
+  // stay together.
+  const metaSaved = useRef(storedColumnSetMeta !== undefined);
   const updateColumnSetMeta = useCallback(
     (fn: (meta: ColumnSetMetaState) => ColumnSetMetaState) => {
       const next = fn(columnSetMetaRef.current);
-      if (next === columnSetMetaRef.current) return;
+      if (next === columnSetMetaRef.current && metaSaved.current) return;
+      metaSaved.current = true;
       columnSetMetaRef.current = next;
       setColumnSetMeta(next);
       onColumnSetMetaChange(next);

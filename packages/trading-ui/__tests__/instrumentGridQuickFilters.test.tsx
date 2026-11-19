@@ -88,8 +88,16 @@ describe("InstrumentGrid quick filters", () => {
         "dividendYield",
       ]),
     );
+    // the default sets' quick filters are saved with the sets
     const metaKey = [...items.keys()].find((k) => k.includes("columnSetMeta"));
-    expect(metaKey).toBeUndefined(); // the defaults are not saved until changed
+    expect(JSON.parse(items.get(metaKey as string) ?? "{}")).toEqual({
+      Screening: {
+        quickFilterColumns: ["sector", "marketCapUsd", "pe", "dividendYield"],
+      },
+      Watchlist: {
+        quickFilterColumns: ["exchange", "sector", "instrumentType"],
+      },
+    });
     fireEvent.keyDown(grid, { altKey: true, code: "Digit1", key: "1" });
     await waitFor(() =>
       expect(fields()).toEqual(["exchange", "sector", "instrumentType"]),
