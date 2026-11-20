@@ -117,4 +117,3 @@
 .tradingOrderBlotter-message[data-error="true"] {
   color: var(--salt-status-error-foreground-informative);
 }
-
