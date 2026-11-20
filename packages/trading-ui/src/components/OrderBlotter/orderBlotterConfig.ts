@@ -8,10 +8,16 @@ export type OrderBlotterTab = "working" | "filled" | "closed" | "all";
 export const ORDER_BLOTTER_TABS: readonly {
   id: OrderBlotterTab;
   label: string;
+  /** Tooltip, where the label alone does not say which statuses it shows. */
+  description?: string;
 }[] = [
   { id: "working", label: "Working" },
   { id: "filled", label: "Filled" },
-  { id: "closed", label: "Cancelled / Rejected" },
+  {
+    id: "closed",
+    label: "Closed",
+    description: "Cancelled, rejected or expired",
+  },
   { id: "all", label: "All" },
 ];
 

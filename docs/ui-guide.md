@@ -172,7 +172,7 @@ engines and is a devDependency of trading-ui, for tests only.
 Components follow and publish the selected instrument through **link groups** (channels), like the coloured link
 groups of Bloomberg / Eikon. They never talk to each other directly. Each component instance joins one group:
 `red`, `green`, `blue`, `yellow` (`DEFAULT_LINK_GROUPS`) or `unlinked` (a private selection). Selecting a ric in a
-source (grid, blotters, positions, picker) publishes it to the group; followers in the group (ticket, depth,
+source (grid, positions, picker) publishes it to the group (the Orders and Fills blotters do not: their selection stays local); followers in the group (ticket, depth,
 ladder, tape, grid highlight) follow it. Visual links are a different thing: they are one-way parent→child server
 filters between Tables, and stay as they are. Link groups sit beside them.
 
@@ -224,7 +224,7 @@ const { selectedInstrument, selectionSource, setSelectedInstrument, linkGroup } 
   `usePersistedState()` under `trading.linkGroup.<persistKey>`. The order of precedence is: `linkGroup` prop, then
   saved, then `defaultLinkGroup`, then inherited.
 - **Panels added at runtime.** A module added from the portal Panels palette gets no props, so it starts on its
-  feature's own default group (red for the grid, blotters, ticket, depth and charts; green for the ladder, tape and
+  feature's own default group (red for the grid, ticket, depth and charts; green for the ladder, tape and
   positions) and saves the user's change per item as above. Ladder and Tape show their own instrument picker by
   default (`showInstrumentPicker`, default `true`), so a lone Ladder or Tape can choose an instrument; a workspace
   document that wants a follower sets `showInstrumentPicker: false` (the Trader Tape). See

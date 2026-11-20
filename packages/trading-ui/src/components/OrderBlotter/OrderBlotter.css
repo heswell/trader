@@ -11,32 +11,73 @@
 
 .tradingOrderBlotter-toolbar {
   align-items: center;
+  container-type: inline-size;
   display: flex;
   flex: 0 0 auto;
   gap: var(--salt-spacing-100);
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.tradingOrderBlotter-toolbar > * {
+  flex-shrink: 0;
 }
 
 .tradingOrderBlotter-spacer {
-  flex: 1;
+  flex: 1 1 0;
 }
 
-.tradingOrderBlotter-tab[aria-selected="true"] {
-  font-weight: var(--salt-text-fontWeight-strong);
-  text-decoration: underline;
+.tradingOrderBlotter-narrowLabel {
+  display: none;
 }
 
-.tradingOrderBlotter-table {
+/* Tighter than vuu-theme's toggle padding (spacing-400), as in the design.
+   Out-ranks `.salt-theme.vuu-theme .saltToggleButtonGroup-horizontal .saltToggleButton`. */
+.tradingOrderBlotter .tradingOrderBlotter-toolbar
+  .tradingOrderBlotter-status.saltToggleButtonGroup
+  .saltToggleButton {
+  padding-inline: var(--salt-spacing-250, calc(2.5 * var(--salt-spacing-100)));
+}
+
+/* Narrow panels: Order book drops to its icon, Cancel selected to "Cancel N".
+   The aria-labels keep the full text. */
+@container (max-width: 700px) {
+  .tradingOrderBlotter-wideLabel {
+    display: none;
+  }
+  .tradingOrderBlotter-narrowLabel {
+    display: inline;
+  }
+}
+
+/* Parent orders above, child orders below; the splitter sets both panes'
+   flex-basis in px, so the parent pane grows and the child pane keeps its size. */
+.tradingOrderBlotter-split {
   flex: 1 1 auto;
   min-height: 0;
 }
 
+.tradingOrderBlotter-table {
+  flex: 1 1 0;
+  min-height: 80px;
+}
+
 .tradingOrderBlotter-children {
-  flex: 0 0 160px;
+  display: flex;
+  flex: 0 0 220px;
+  flex-direction: column;
+  min-height: 60px;
+}
+
+.tradingOrderBlotter-children > .vuuTable {
+  flex: 1 1 auto;
   min-height: 0;
 }
 
 .tradingOrderBlotter-children-title {
+  flex: 0 0 auto;
   font-weight: var(--salt-text-fontWeight-strong);
+  padding: var(--salt-spacing-100) 0;
 }
 
 .tradingOrderBlotter-actions {
@@ -75,4 +116,33 @@
 
 .tradingOrderBlotter-message[data-error="true"] {
   color: var(--salt-status-error-foreground-informative);
+}
+
+.tradingCancelAllPrompt {
+  max-width: 440px;
+}
+
+.tradingCancelAllPrompt-text {
+  margin: 0 0 var(--salt-spacing-200);
+}
+
+.tradingCancelAllPrompt-rics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--salt-spacing-100);
+  list-style: none;
+  margin: 0;
+  max-height: 120px;
+  overflow: auto;
+  padding: 0;
+}
+
+.tradingCancelAllPrompt-ric {
+  background: var(--salt-container-secondary-background);
+  border: var(--salt-size-border) solid
+    var(--salt-separable-tertiary-borderColor);
+  border-radius: var(--salt-palette-corner-weak, 3px);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--salt-text-fontWeight-strong);
+  padding: 0 var(--salt-spacing-150);
 }

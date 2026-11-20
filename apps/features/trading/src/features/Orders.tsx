@@ -4,18 +4,15 @@ import {
   fillStyle,
   useEntitlements,
   withFeatureRoot,
-  type LinkedFeatureProps,
 } from "./shared";
 
-const Orders = ({ defaultLinkGroup = "red" }: LinkedFeatureProps) => {
+const Orders = () => {
   const { canTrade } = useEntitlements();
   return (
     <FeatureFrame>
       <OrderBlotter
-        defaultLinkGroup={defaultLinkGroup}
         id="orders"
         readOnly={!canTrade}
-        showLinkGroupSelector
         style={fillStyle}
         useEditSession
       />

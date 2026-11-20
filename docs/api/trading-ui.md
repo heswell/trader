@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 618 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 635 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -16,6 +16,7 @@ Imports: `@heswell/trading-ui`. 618 exports. Types are shown as written in the s
 - **feature-root**: [ensureLinkBusBroadcast](#ensurelinkbusbroadcast), [notificationLease](#notificationlease), [TradingFeatureRoot](#tradingfeatureroot), [TradingFeatureRootProps](#tradingfeaturerootprops), [useInTradingFeatureRoot](#useintradingfeatureroot)
 - **components/AccountSelector**: [AccountSelector](#accountselector), [AccountSelectorProps](#accountselectorprops), [useSelectedAccount](#useselectedaccount), [useTradingAccounts](#usetradingaccounts)
 - **components/ChannelPicker**: [CHANNEL_PICKER_SOURCE](#channel_picker_source), [ChannelPicker](#channelpicker), [ChannelPickerDensity](#channelpickerdensity), [ChannelPickerProps](#channelpickerprops)
+- **components/ChannelRowMarkers**: [CHANNEL_LINK_ACTION](#channel_link_action), [CHANNEL_ROW_CLASS](#channel_row_class), [channelLinkLabel](#channellinklabel), [channelLinkMenuItem](#channellinkmenuitem), [ChannelRics](#channelrics), [channelRowClassName](#channelrowclassname), [channelRowColorRules](#channelrowcolorrules), [ChannelRowMarkers](#channelrowmarkers), [handleChannelLinkAction](#handlechannellinkaction), [useChannelRics](#usechannelrics), [useChannelRowMarkers](#usechannelrowmarkers)
 - **components/ConnectionBanner**: [ConnectionBanner](#connectionbanner), [ConnectionBannerProps](#connectionbannerprops)
 - **components/ConnectionStatusIndicator**: [CONNECTION_STATE_LABELS](#connection_state_labels), [ConnectionStatusIndicator](#connectionstatusindicator), [ConnectionStatusIndicatorProps](#connectionstatusindicatorprops)
 - **components/DepthChartView**: [DepthChartView](#depthchartview), [DepthChartViewProps](#depthchartviewprops)
@@ -25,6 +26,7 @@ Imports: `@heswell/trading-ui`. 618 exports. Types are shown as written in the s
 - **components/InstrumentGrid**: [addToWatchlist](#addtowatchlist), [buildInstrumentGridFilter](#buildinstrumentgridfilter), [cellUnchanged](#cellunchanged), [ChangeCell](#changecell), [COLUMN_SETS_SETTINGS_KEY](#column_sets_settings_key), [createWatchlist](#createwatchlist), [DEFAULT_INSTRUMENT_GRID_COLUMNS](#default_instrument_grid_columns), [DEFAULT_VIEW_SETTINGS](#default_view_settings), [defaultColumnSets](#defaultcolumnsets), [deleteWatchlist](#deletewatchlist), [EMPTY_WATCHLISTS](#empty_watchlists), [FILTERS_SETTINGS_KEY](#filters_settings_key), [GridChannelLinks](#gridchannellinks), [GridChannelLinksProvider](#gridchannellinksprovider), [gridSettingsKey](#gridsettingskey), [GridViewSettings](#gridviewsettings), [GROUPABLE_COLUMNS](#groupable_columns), [INSTRUMENT_GRID_LINK_SOURCE](#instrument_grid_link_source), [InstrumentAction](#instrumentaction), [InstrumentGrid](#instrumentgrid), [instrumentGridColumn](#instrumentgridcolumn), [InstrumentGridColumnOptions](#instrumentgridcolumnoptions), [instrumentGridColumns](#instrumentgridcolumns), [InstrumentGridFilterParts](#instrumentgridfilterparts), [InstrumentGridProps](#instrumentgridprops), [InstrumentRow](#instrumentrow), [isInLinkCell](#isinlinkcell), [LINK_COLUMN](#link_column), [linkColumnDescriptor](#linkcolumndescriptor), [parseColumnSets](#parsecolumnsets), [parseFilterState](#parsefilterstate), [parseViewSettings](#parseviewsettings), [parseWatchlists](#parsewatchlists), [PhaseCell](#phasecell), [phaseLabel](#phaselabel), [priceFormatOf](#priceformatof), [PriceMoveCell](#pricemovecell), [QuantityCell](#quantitycell), [quickFilterExpression](#quickfilterexpression), [registerInstrumentGridRenderers](#registerinstrumentgridrenderers), [registerLinkCellRenderer](#registerlinkcellrenderer), [removeFromWatchlist](#removefromwatchlist), [renameWatchlist](#renamewatchlist), [rowRicOf](#rowricof), [SCREENING_COLUMNS](#screening_columns), [SCREENING_SET_COLUMNS](#screening_set_columns), [SPARKLINE_COLUMN](#sparkline_column), [StoredSetting](#storedsetting), [titleCaseColumnName](#titlecasecolumnname), [toInstrument](#toinstrument), [updateWatchlist](#updatewatchlist), [useGridChannelLinks](#usegridchannellinks), [useStoredSetting](#usestoredsetting), [useWatchlists](#usewatchlists), [UseWatchlistsResult](#usewatchlistsresult), [VIEW_SETTINGS_KEY](#view_settings_key), [Watchlist](#watchlist), [watchlistFilterExpression](#watchlistfilterexpression), [watchlistNameError](#watchlistnameerror), [WATCHLISTS_SETTINGS_KEY](#watchlists_settings_key), [WatchlistState](#watchliststate), [withSearchCasings](#withsearchcasings)
 - **components/InstrumentLookup**: [InstrumentLookup](#instrumentlookup), [InstrumentLookupProvider](#instrumentlookupprovider), [useInstrumentLookup](#useinstrumentlookup)
 - **components/InstrumentPicker**: [INSTRUMENT_PICKER_SOURCE](#instrument_picker_source), [InstrumentPicker](#instrumentpicker), [InstrumentPickerProps](#instrumentpickerprops), [instrumentSearchFilter](#instrumentsearchfilter), [toSelectedInstrument](#toselectedinstrument)
+- **components/LinkedInstrumentsFooter**: [LinkedInstrument](#linkedinstrument), [linkedInstruments](#linkedinstruments), [LinkedInstrumentsFooter](#linkedinstrumentsfooter), [LinkedInstrumentsFooterProps](#linkedinstrumentsfooterprops), [useLinkedRicFilter](#uselinkedricfilter)
 - **components/LinkGroupSelector**: [LinkGroupMenuButton](#linkgroupmenubutton), [LinkGroupSelector](#linkgroupselector), [LinkGroupSelectorProps](#linkgroupselectorprops), [LinkGroupSwatch](#linkgroupswatch), [PanelLinkGroupSelector](#panellinkgroupselector)
 - **components/MarketDepth**: [MarketDepth](#marketdepth), [MarketDepthLevelClick](#marketdepthlevelclick), [MarketDepthProps](#marketdepthprops)
 - **components/NamePrompt**: [NamePrompt](#nameprompt), [NamePromptProps](#namepromptprops)
@@ -50,7 +52,7 @@ Imports: `@heswell/trading-ui`. 618 exports. Types are shown as written in the s
 - **components/TradeTape**: [sizePercentile](#sizepercentile), [TradeTape](#tradetape), [TradeTapeProps](#tradetapeprops)
 - **components/TradingCellRenderers**: [registerTradingCellRenderers](#registertradingcellrenderers), [TradingRenderer](#tradingrenderer)
 - **components/WatchlistDialog**: [addRics](#addrics), [facetSummary](#facetsummary), [facetValueLabel](#facetvaluelabel), [INSTRUMENT_TYPE_OPTIONS](#instrument_type_options), [isNarrowed](#isnarrowed), [PICKER_FACETS](#picker_facets), [PICKER_ROW_LIMIT](#picker_row_limit), [PickerFacet](#pickerfacet), [PickerFacetValues](#pickerfacetvalues), [pickerFilter](#pickerfilter), [toggleRic](#toggleric), [WatchlistDialog](#watchlistdialog), [WatchlistDialogProps](#watchlistdialogprops)
-- **utils**: [createLocalSettingsStorage](#createlocalsettingsstorage), [createMemorySettingsStorage](#creatememorysettingsstorage), [CsvColumn](#csvcolumn), [directionColour](#directioncolour), [DONE_STATUSES](#done_statuses), [downloadCsv](#downloadcsv), [filterString](#filterstring), [formatNotional](#formatnotional), [formatPercent](#formatpercent), [formatPrice](#formatprice), [formatQuantity](#formatquantity), [formatTime](#formattime), [instrumentTickSchedule](#instrumenttickschedule), [isInactivePhase](#isinactivephase), [isOrderAmendable](#isorderamendable), [isOrderCancellable](#isordercancellable), [orderStatusCategory](#orderstatuscategory), [OrderStatusCategory](#orderstatuscategory-1), [orderStatusColour](#orderstatuscolour), [orderStatusIcon](#orderstatusicon), [orderStatusLabel](#orderstatuslabel), [priceDecimals](#pricedecimals), [PriceFormat](#priceformat), [rowsToCsv](#rowstocsv), [sideColour](#sidecolour), [stopTriggerState](#stoptriggerstate), [TimeFormat](#timeformat), [TradingColour](#tradingcolour), [tradingPhaseColour](#tradingphasecolour), [tradingPhaseText](#tradingphasetext), [UserSettingsProvider](#usersettingsprovider), [UserSettingsProviderProps](#usersettingsproviderprops), [UserSettingsStorage](#usersettingsstorage), [useUserSettingsStorage](#useusersettingsstorage), [WORKING_STATUSES](#working_statuses)
+- **utils**: [andFilters](#andfilters), [createLocalSettingsStorage](#createlocalsettingsstorage), [createMemorySettingsStorage](#creatememorysettingsstorage), [CsvColumn](#csvcolumn), [directionColour](#directioncolour), [DONE_STATUSES](#done_statuses), [downloadCsv](#downloadcsv), [filterString](#filterstring), [formatNotional](#formatnotional), [formatPercent](#formatpercent), [formatPrice](#formatprice), [formatQuantity](#formatquantity), [formatTime](#formattime), [instrumentTickSchedule](#instrumenttickschedule), [isInactivePhase](#isinactivephase), [isOrderAmendable](#isorderamendable), [isOrderCancellable](#isordercancellable), [orderStatusCategory](#orderstatuscategory), [OrderStatusCategory](#orderstatuscategory-1), [orderStatusColour](#orderstatuscolour), [orderStatusIcon](#orderstatusicon), [orderStatusLabel](#orderstatuslabel), [priceDecimals](#pricedecimals), [PriceFormat](#priceformat), [rowsToCsv](#rowstocsv), [sideColour](#sidecolour), [stopTriggerState](#stoptriggerstate), [TimeFormat](#timeformat), [TradingColour](#tradingcolour), [tradingPhaseColour](#tradingphasecolour), [tradingPhaseText](#tradingphasetext), [UserSettingsProvider](#usersettingsprovider), [UserSettingsProviderProps](#usersettingsproviderprops), [UserSettingsStorage](#usersettingsstorage), [useUserSettingsStorage](#useusersettingsstorage), [WORKING_STATUSES](#working_statuses)
 - **domain**: [allowedTimesInForce](#allowedtimesinforce), [isAlgoStrategy](#isalgostrategy), [isStrategyAllowed](#isstrategyallowed), [isTimeInForceAllowed](#istimeinforceallowed), [nonStopOrdType](#nonstopordtype), [ORD_TYPE_LABEL](#ord_type_label), [ORDER_TICKET_TIFS](#order_ticket_tifs)
 - **export**: [canStreamToFile](#canstreamtofile), [CellTextFormatter](#celltextformatter), [CellTextFormatters](#celltextformatters), [columnLabel](#columnlabel), [csvField](#csvfield), [csvFormatter](#csvformatter), [CsvFormatterOptions](#csvformatteroptions), [EXPORT_VIEWPORT_RPC](#export_viewport_rpc), [ExportColumn](#exportcolumn), [exportColumns](#exportcolumns), [ExportColumnsOptions](#exportcolumnsoptions), [ExportDataRow](#exportdatarow), [ExportProgress](#exportprogress), [ExportResult](#exportresult), [ExportSink](#exportsink), [ExportTicket](#exportticket), [ExportViewportOptions](#exportviewportoptions), [exportViewportToCsv](#exportviewporttocsv), [isLocalEngineDataSource](#islocalenginedatasource), [localExportRows](#localexportrows), [LocalExportRows](#localexportrows-1), [memoryDownloadSink](#memorydownloadsink), [ndjsonRows](#ndjsonrows), [pickExportSink](#pickexportsink), [requestViewportExport](#requestviewportexport), [tradingTextFormatters](#tradingtextformatters)
 
@@ -2956,6 +2958,145 @@ ric; the others are dots).
 type ChannelPickerDensity = "full" | "compact" | "dots"
 ```
 
+## components/ChannelRowMarkers
+
+### Hooks (components/ChannelRowMarkers)
+
+#### useChannelRics
+
+*hook* · [components/ChannelRowMarkers/useChannelRics.ts](../../packages/trading-ui/src/components/ChannelRowMarkers/useChannelRics.ts#L33)
+
+Which ric each workspace channel holds, read-only. Uses the workspace
+channels (WorkspaceChannelProvider), else the default channels with red
+active. Shared by the instrument grid's link column and the blotters'
+channel markers.
+
+```ts
+useChannelRics(): ChannelRics
+```
+
+#### useChannelRowMarkers
+
+*hook* · [components/ChannelRowMarkers/channelRowMarkers.tsx](../../packages/trading-ui/src/components/ChannelRowMarkers/channelRowMarkers.tsx#L46)
+
+Display-only channel markers for a blotter: a row whose `ric` is on a
+workspace channel shows the Table's left row bookend in that channel's
+colour (hidden while the row is selected, which shows the normal
+selection instead). Rows read the channels through a ref, so the
+returned config stays stable (a new config would reset the Table's
+columns): a channel change re-renders the caller, and so the Table,
+which recomputes each row's class.
+
+```ts
+useChannelRowMarkers(config: TableConfig): ChannelRowMarkers
+```
+
+### Functions (components/ChannelRowMarkers)
+
+#### channelLinkLabel
+
+*function* · [components/ChannelRowMarkers/channelLinkMenu.ts](../../packages/trading-ui/src/components/ChannelRowMarkers/channelLinkMenu.ts#L12)
+
+The label of one channel in the "Link <ric> to" submenu.
+
+```ts
+channelLinkLabel(channel: { id: LinkGroupId; label: string }, ric: string, { byRic, selections }: Pick<ChannelRics, "byRic" | "selections">): string
+```
+
+#### channelLinkMenuItem
+
+*function* · [components/ChannelRowMarkers/channelLinkMenu.ts](../../packages/trading-ui/src/components/ChannelRowMarkers/channelLinkMenu.ts#L27)
+
+A secondary "Link <ric> to ▸" item: one entry per workspace channel,
+with the instrument it holds now. Choosing one links the instrument
+there (and off any other channel). Blotters publish only this way.
+
+```ts
+channelLinkMenuItem(instrument: SelectedInstrument, channelRics: Pick<ChannelRics, "byRic" | "channels" | "selections">, dividerBefore = false): ContextMenuItemDescriptor
+```
+
+#### channelRowClassName
+
+*function* · [components/ChannelRowMarkers/channelRowMarkers.tsx](../../packages/trading-ui/src/components/ChannelRowMarkers/channelRowMarkers.tsx#L16)
+
+The marker classes of a row whose ric is on `channel`.
+
+```ts
+channelRowClassName(channel: LinkGroupDefinition): string
+```
+
+#### channelRowColorRules
+
+*function* · [components/ChannelRowMarkers/channelRowMarkers.tsx](../../packages/trading-ui/src/components/ChannelRowMarkers/channelRowMarkers.tsx#L20)
+
+One rule per channel: the colour its marked rows show.
+
+```ts
+channelRowColorRules(channels: readonly LinkGroupDefinition[]): string
+```
+
+#### handleChannelLinkAction
+
+*function* · [components/ChannelRowMarkers/channelLinkMenu.ts](../../packages/trading-ui/src/components/ChannelRowMarkers/channelLinkMenu.ts#L44)
+
+Handle a channel-link menu action; false if `id` is not one.
+
+```ts
+handleChannelLinkAction(id: string, options: unknown, bus: InstrumentLinkBus, channels: ChannelRics["channels"], source: string): boolean
+```
+
+### Constants (components/ChannelRowMarkers)
+
+#### CHANNEL_LINK_ACTION
+
+*const* · [components/ChannelRowMarkers/channelLinkMenu.ts](../../packages/trading-ui/src/components/ChannelRowMarkers/channelLinkMenu.ts#L9)
+
+Menu action id prefix: `trading-link-channel:<channel id>`.
+
+```ts
+const CHANNEL_LINK_ACTION: "trading-link-channel:"
+```
+
+#### CHANNEL_ROW_CLASS
+
+*const* · [components/ChannelRowMarkers/channelRowMarkers.tsx](../../packages/trading-ui/src/components/ChannelRowMarkers/channelRowMarkers.tsx#L11)
+
+Class on a row whose ric is on a channel, plus `-<channel id>`.
+
+```ts
+const CHANNEL_ROW_CLASS: "tradingChannelRow"
+```
+
+### Interfaces (components/ChannelRowMarkers)
+
+#### ChannelRics
+
+*interface* · [components/ChannelRowMarkers/useChannelRics.ts](../../packages/trading-ui/src/components/ChannelRowMarkers/useChannelRics.ts#L14)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `channels` | `readonly LinkGroupDefinition[]` |  | The workspace channels, in picker order. |
+| `activeChannel` | `LinkGroupId` |  | The workspace's active channel. |
+| `selections` | `ChannelSelections` |  | The instrument each channel holds now. |
+| `byRic` | `ReadonlyMap<string, LinkGroupDefinition>` |  | The channel holding each ric (one channel per ric, the first wins). |
+| `linkedRics` | `readonly string[]` |  | Rics on a channel, in channel order. Stable while the set is unchanged. |
+
+#### ChannelRowMarkers
+
+*interface* · [components/ChannelRowMarkers/channelRowMarkers.tsx](../../packages/trading-ui/src/components/ChannelRowMarkers/channelRowMarkers.tsx#L30)
+
+Extends `ChannelRics`.
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `tableConfig` | `TableConfig` |  | `config` plus this instance's row-class generator. Stable. |
+| `colorStyle` | `ReactElement` |  | Render once inside the component: the channel colours. |
+| `channels` | `readonly LinkGroupDefinition[]` |  | The workspace channels, in picker order. (from `ChannelRics`) |
+| `activeChannel` | `LinkGroupId` |  | The workspace's active channel. (from `ChannelRics`) |
+| `selections` | `ChannelSelections` |  | The instrument each channel holds now. (from `ChannelRics`) |
+| `byRic` | `ReadonlyMap<string, LinkGroupDefinition>` |  | The channel holding each ric (one channel per ric, the first wins). (from `ChannelRics`) |
+| `linkedRics` | `readonly string[]` |  | Rics on a channel, in channel order. Stable while the set is unchanged. (from `ChannelRics`) |
+
 ## components/ConnectionBanner
 
 ### Components (components/ConnectionBanner)
@@ -3148,7 +3289,7 @@ Props of [`FillProgressBar`](#fillprogressbar).
 
 #### FillsBlotter
 
-*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L306)
+*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L353)
 
 Fills blotter on `fills` (the server already filters to the user's own
 fills): grouping by ric / ric+side with summed quantity and notional and
@@ -3164,10 +3305,6 @@ Props: `FillsBlotterProps`
 | `onOrderSelect?` | `(orderId: string) => void` |  | Called when the order link of a fill is clicked. |
 | `highlightOrderId?` | `string` |  | Order to highlight (e.g. the order selected in an OrderBlotter). |
 | `csvFileName?` | `string` | `"fills.csv"` | CSV file name. Default "fills.csv". |
-| `linkGroup?` | `LinkGroupId` |  | Link group (channel) to join: e.g. "red", "green", or "unlinked". The initial group when the user can change it (`showLinkGroupSelector`); a later change of the prop is applied too. Default: the saved group, then `defaultLinkGroup`, then the inherited group. (from `LinkGroupProps`) |
-| `defaultLinkGroup?` | `LinkGroupId` |  | Group used when there is no `linkGroup` prop and nothing saved. (from `LinkGroupProps`) |
-| `onLinkGroupChange?` | `(linkGroup: LinkGroupId) => void` |  | The user picked another group in the selector. (from `LinkGroupProps`) |
-| `showLinkGroupSelector?` | `boolean` | `false` | Show a LinkGroupSelector in the component header / toolbar. (from `LinkGroupProps`) |
 
 Also accepts the standard HTML attributes and `ref`.
 
@@ -3175,7 +3312,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### FillsBlotterProps
 
-*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L128)
+*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L155)
 
 Props of [`FillsBlotter`](#fillsblotter).
 
@@ -3192,7 +3329,7 @@ Props of [`FillsBlotter`](#fillsblotter).
 
 #### FillsGrouping
 
-*type* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L52)
+*type* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L59)
 
 ```ts
 type FillsGrouping = "none" | "ric" | "ric-side"
@@ -3293,7 +3430,7 @@ Also accepts the props of `TableCellProps (@vuu-ui/vuu-table-types)`, `TableCell
 
 #### useGridChannelLinks
 
-*hook* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L99)
+*hook* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L96)
 
 Channel links for the grid: which channel holds each ric, and actions
 that link with one channel per instrument. Uses the workspace channels
@@ -3424,7 +3561,7 @@ instrumentGridColumns({ available, sparkline, visible = DEFAULT_INSTRUMENT_GRID_
 
 #### isInLinkCell
 
-*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L194)
+*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L174)
 
 Whether `target` is inside a link cell.
 
@@ -3515,7 +3652,7 @@ registerInstrumentGridRenderers(): void
 
 #### registerLinkCellRenderer
 
-*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L404)
+*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L384)
 
 Register the link cell and header renderers with vuu (idempotent).
 
@@ -3545,7 +3682,7 @@ renameWatchlist(state: WatchlistState, id: string, name: string): WatchlistState
 
 #### rowRicOf
 
-*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L185)
+*function* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L165)
 
 The ric of the grid row containing `target` (from its link cell).
 
@@ -3665,7 +3802,7 @@ const FILTERS_SETTINGS_KEY: "trading.instrumentGrid.filters"
 
 #### GridChannelLinksProvider
 
-*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L92)
+*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L89)
 
 ```ts
 const GridChannelLinksProvider: Provider<GridChannelLinks | undefined>
@@ -3683,7 +3820,7 @@ const GROUPABLE_COLUMNS: readonly ["exchange", "sector", "currency", "instrument
 
 #### INSTRUMENT_GRID_LINK_SOURCE
 
-*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L46)
+*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L43)
 
 Selection source of the grid's link publishes.
 
@@ -3693,7 +3830,7 @@ const INSTRUMENT_GRID_LINK_SOURCE: "InstrumentGrid"
 
 #### LINK_COLUMN
 
-*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L41)
+*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L38)
 
 Name of the grid's client-side link column.
 
@@ -3703,7 +3840,7 @@ const LINK_COLUMN: "link"
 
 #### linkColumnDescriptor
 
-*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L49)
+*const* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L46)
 
 The link column: always first, not in column sets or the column picker.
 
@@ -3759,7 +3896,7 @@ const WATCHLISTS_SETTINGS_KEY: "trading.watchlists"
 
 #### GridChannelLinks
 
-*interface* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L61)
+*interface* · [components/InstrumentGrid/linkColumn.tsx](../../packages/trading-ui/src/components/InstrumentGrid/linkColumn.tsx#L58)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -3995,6 +4132,75 @@ const INSTRUMENT_PICKER_SOURCE: "InstrumentPicker"
 
 Props of [`InstrumentPicker`](#instrumentpicker).
 
+## components/LinkedInstrumentsFooter
+
+### Components (components/LinkedInstrumentsFooter)
+
+#### LinkedInstrumentsFooter
+
+*component* · [components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx](../../packages/trading-ui/src/components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx#L61)
+
+The instruments on the workspace channels, as chips under a blotter
+("Linked"). A chip filters the rows to its instrument; pressed again,
+all rows. The active channel's chip has a ring. Display only: the chips
+never change a channel.
+
+Props: `LinkedInstrumentsFooterProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `activeChannel` | `LinkGroupId` |  |  |
+| `filterRic?` | `string` |  | The ric the rows are filtered to, if a chip is pressed. |
+| `instruments` | `readonly LinkedInstrument[]` |  |  |
+| `onFilterRic` | `(ric: string \| undefined) => void` |  |  |
+| `summary?` | `string` |  | Shown at the end, e.g. "7 orders". |
+
+Also accepts the standard HTML attributes.
+
+### Hooks (components/LinkedInstrumentsFooter)
+
+#### useLinkedRicFilter
+
+*hook* · [components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx](../../packages/trading-ui/src/components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx#L36)
+
+A blotter's chip filter: the ric of the pressed chip, cleared when that
+ric leaves the channels.
+
+```ts
+useLinkedRicFilter(linkedRics: readonly string[]): readonly [string | undefined, Dispatch<SetStateAction<string | undefined>>]
+```
+
+### Functions (components/LinkedInstrumentsFooter)
+
+#### linkedInstruments
+
+*function* · [components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx](../../packages/trading-ui/src/components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx#L21)
+
+The instruments on a channel, in channel order.
+
+```ts
+linkedInstruments({ channels, selections, byRic, }: Pick<ChannelRics, "byRic" | "channels" | "selections">): LinkedInstrument[]
+```
+
+### Interfaces (components/LinkedInstrumentsFooter)
+
+#### LinkedInstrument
+
+*interface* · [components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx](../../packages/trading-ui/src/components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx#L15)
+
+A linked instrument: the ric and the channel holding it.
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `ric` | `string` |  |  |
+| `channel` | `LinkGroupDefinition` |  |  |
+
+#### LinkedInstrumentsFooterProps
+
+*interface* · [components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx](../../packages/trading-ui/src/components/LinkedInstrumentsFooter/LinkedInstrumentsFooter.tsx#L44)
+
+Props of [`LinkedInstrumentsFooter`](#linkedinstrumentsfooter).
+
 ## components/LinkGroupSelector
 
 ### Components (components/LinkGroupSelector)
@@ -4174,7 +4380,7 @@ Props of [`NamePrompt`](#nameprompt).
 
 #### OrderBlotter
 
-*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L626)
+*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L755)
 
 Order blotter on `parentOrders`: status badge, fill progress, tick-formatted
 avg price, filter tabs, per-row amend / cancel (enabled only for NEW,
@@ -4189,16 +4395,12 @@ Props: `OrderBlotterProps`
 | --- | --- | --- | --- |
 | `defaultTab?` | `OrderBlotterTab` | `"working"` | Initial filter tab. Default "working". |
 | `showChildOrders?` | `boolean` | `true` | Show the child (street) orders of the selected order. Default true. |
-| `onOrderSelect?` | `(orderId: string \| undefined) => void` |  | Called when an order row is selected (undefined on deselect). |
+| `onOrderSelect?` | `(orderId: string \| undefined, ric?: string) => void` |  | Called when an order row is selected, with the order's ric (undefined on deselect). Selection stays local: the blotter publishes nothing to a link channel. |
 | `onError?` | `(error: TradingRpcError) => void` |  | Called with RPC failures (also shown in the status line). |
 | `notify?` | `boolean` | `true` | Report failed cancel / amend requests to the TradingNotificationsProvider, if there is one. Default true. |
 | `useEditSession?` | `boolean` | `false` | Amend through the server edit session instead of the amendOrder RPC: opening the amend dialog begins the session (snapshotting the order), Amend applies editCell + endEditSession, Close discards it. If the order changed in between the save is refused as stale. Default false. |
 | `readOnly?` | `boolean` | `false` | Hide amend / cancel controls, e.g. for users without trading-execute (the OMS rejects their requests anyway). Default false. |
 | `showOrderBook?` | `boolean` | `true` | Offer the Order book button: the selected order's L2 depth and L3 queue position, in the shell's context panel (a dialog outside a portal shell). The panel follows the selection. Default true. |
-| `linkGroup?` | `LinkGroupId` |  | Link group (channel) to join: e.g. "red", "green", or "unlinked". The initial group when the user can change it (`showLinkGroupSelector`); a later change of the prop is applied too. Default: the saved group, then `defaultLinkGroup`, then the inherited group. (from `LinkGroupProps`) |
-| `defaultLinkGroup?` | `LinkGroupId` |  | Group used when there is no `linkGroup` prop and nothing saved. (from `LinkGroupProps`) |
-| `onLinkGroupChange?` | `(linkGroup: LinkGroupId) => void` |  | The user picked another group in the selector. (from `LinkGroupProps`) |
-| `showLinkGroupSelector?` | `boolean` | `false` | Show a LinkGroupSelector in the component header / toolbar. (from `LinkGroupProps`) |
 
 Also accepts the standard HTML attributes and `ref`.
 
@@ -4206,7 +4408,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### orderBlotterTabFilter
 
-*function* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L22)
+*function* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L28)
 
 Client filterSpec for each tab. `all` is an empty filter.
 
@@ -4218,7 +4420,7 @@ orderBlotterTabFilter(tab: OrderBlotterTab): string
 
 #### CHILD_ORDER_COLUMNS
 
-*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L177)
+*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L183)
 
 ```ts
 const CHILD_ORDER_COLUMNS: readonly ["childOrderId", "parentOrderId", "exchangeOrderId", "ric", "side", "price", "quantity", "status", "cumQty", "avgPx", "lastUpdate", "rejectReason", "text"]
@@ -4226,7 +4428,7 @@ const CHILD_ORDER_COLUMNS: readonly ["childOrderId", "parentOrderId", "exchangeO
 
 #### childOrdersTableConfig
 
-*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L139)
+*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L145)
 
 ```ts
 const childOrdersTableConfig: TableConfig
@@ -4234,7 +4436,7 @@ const childOrdersTableConfig: TableConfig
 
 #### ORDER_BLOTTER_COLUMNS
 
-*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L40)
+*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L46)
 
 ```ts
 const ORDER_BLOTTER_COLUMNS: readonly ["orderId", "status", "side", "ric", "ordType", "strategy", "timeInForce", "quantity", "price", "stopPrice", "triggeredAt", "cumQty", "targetQty", "avgPx", "account", ... 5 more ..., "text"]
@@ -4245,7 +4447,7 @@ const ORDER_BLOTTER_COLUMNS: readonly ["orderId", "status", "side", "ric", "ordT
 *const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L8)
 
 ```ts
-const ORDER_BLOTTER_TABS: readonly { id: OrderBlotterTab; label: string; }[]
+const ORDER_BLOTTER_TABS: readonly { id: OrderBlotterTab; label: string; /** Tooltip, where the label alone does not say which statuses it shows. */ description?: string; }[]
 ```
 
 #### OrderBlotterContext
@@ -4258,7 +4460,7 @@ const OrderBlotterContext: Context<OrderRowActions | undefined>
 
 #### orderBlotterTableConfig
 
-*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L64)
+*const* · [components/OrderBlotter/orderBlotterConfig.ts](../../packages/trading-ui/src/components/OrderBlotter/orderBlotterConfig.ts#L70)
 
 ```ts
 const orderBlotterTableConfig: TableConfig
@@ -4268,7 +4470,7 @@ const orderBlotterTableConfig: TableConfig
 
 #### OrderBlotterProps
 
-*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L76)
+*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L110)
 
 Props of [`OrderBlotter`](#orderblotter).
 
@@ -5362,7 +5564,7 @@ Props of [`PnlValue`](#pnlvalue).
 
 #### PositionsView
 
-*component* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L388)
+*component* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L392)
 
 Positions on `positionPrices` with ticking realised / unrealised / total
 P&L, grouping (currency then sector – the default – account or ric) with summed
@@ -5387,7 +5589,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### totalsByCurrency
 
-*function* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L188)
+*function* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L189)
 
 Sum position rows per currency (never across currencies).
 
@@ -5399,7 +5601,7 @@ totalsByCurrency(rows: readonly Record<string, unknown>[]): CurrencyTotals[]
 
 #### POSITIONS_GROUP_BY
 
-*const* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L57)
+*const* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L58)
 
 The positionPrices `groupBy` for each PositionsView grouping.
 
@@ -5411,7 +5613,7 @@ const POSITIONS_GROUP_BY: Record<PositionsGrouping, string[]>
 
 #### CurrencyTotals
 
-*interface* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L178)
+*interface* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L179)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -5424,7 +5626,7 @@ const POSITIONS_GROUP_BY: Record<PositionsGrouping, string[]>
 
 #### PositionsViewProps
 
-*interface* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L69)
+*interface* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L70)
 
 Props of [`PositionsView`](#positionsview).
 
@@ -5432,7 +5634,7 @@ Props of [`PositionsView`](#positionsview).
 
 #### PositionsGrouping
 
-*type* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L49)
+*type* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L50)
 
 `none`: one row per account|ric. Grouped modes always group by currency
 first so aggregated amounts are never summed across currencies.
@@ -6245,7 +6447,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### BotsGrid
 
-*component* · [components/SimulatorGrids/BotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotsGrid.tsx#L234)
+*component* · [components/SimulatorGrids/BotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotsGrid.tsx#L237)
 
 The simulator's bots from `bots` (sim-admin only): position, average
 price, realised / unrealised P&L in USD, order and fill counts, resting
@@ -6326,7 +6528,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### BOTS_GROUP_BY
 
-*const* · [components/SimulatorGrids/BotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotsGrid.tsx#L21)
+*const* · [components/SimulatorGrids/BotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotsGrid.tsx#L22)
 
 Groupings offered by the BotsGrid toolbar.
 
@@ -6360,7 +6562,7 @@ Props of [`BotFillsTape`](#botfillstape).
 
 #### BotsGridProps
 
-*interface* · [components/SimulatorGrids/BotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotsGrid.tsx#L131)
+*interface* · [components/SimulatorGrids/BotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotsGrid.tsx#L132)
 
 Props of [`BotsGrid`](#botsgrid).
 
@@ -6386,7 +6588,7 @@ Props of [`SimBooksGrid`](#simbooksgrid).
 
 #### BotsGrouping
 
-*type* · [components/SimulatorGrids/BotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotsGrid.tsx#L28)
+*type* · [components/SimulatorGrids/BotsGrid.tsx](../../packages/trading-ui/src/components/SimulatorGrids/BotsGrid.tsx#L29)
 
 ```ts
 type BotsGrouping = keyof typeof BOTS_GROUP_BY
@@ -7191,6 +7393,17 @@ useUserSettingsStorage(): UserSettingsStorage
 ```
 
 ### Functions (utils)
+
+#### andFilters
+
+*function* · [utils/filters.ts](../../packages/trading-ui/src/utils/filters.ts#L9)
+
+Join simple vuu filter clauses (no `or`) with `and`, skipping empty ones
+("" if none).
+
+```ts
+andFilters(...clauses: readonly string[]): string
+```
 
 #### createLocalSettingsStorage
 

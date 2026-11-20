@@ -1,0 +1,11 @@
+/* A row whose ric is on a channel: the left row bookend (vuu hides it
+   unless the row is selected) shows in the channel colour. A selected row
+   keeps vuu's normal selection, never a solid end bar. */
+.tradingChannelRow:not(
+    [aria-selected="true"]
+  ) > .vuuSelectionDecorator.vuuStickyLeft
+  > .vuuTableRowBookend {
+  background-color: var(--tradingChannelRow-color);
+  border: none;
+  display: block;
+}

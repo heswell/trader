@@ -145,18 +145,10 @@ export const TraderWorkspace = () => {
                 active={0}
               >
                 <View id={ID.orders} title="Orders">
-                  <OrderBlotter
-                    defaultLinkGroup="red"
-                    showLinkGroupSelector
-                    style={content}
-                  />
+                  <OrderBlotter style={content} />
                 </View>
                 <View id={ID.fills} title="Fills">
-                  <FillsBlotter
-                    defaultLinkGroup="red"
-                    showLinkGroupSelector
-                    style={content}
-                  />
+                  <FillsBlotter style={content} />
                 </View>
                 <View id={ID.positions} title="Positions">
                   <PositionsView

@@ -14,6 +14,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { applyGrouping } from "../../data/applyGrouping";
 import { useDataSourceRows } from "../../data/useDataSourceRows";
 import { filterString } from "../../utils/filters";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
@@ -278,8 +279,11 @@ const Inner = forwardRef<HTMLDivElement, PositionsViewProps>(
     }, [account, dataSource, totalsSource]);
 
     useEffect(() => {
-      dataSource.groupBy = POSITIONS_GROUP_BY[grouping];
-      dataSource.aggregations = aggregationsFor(grouping);
+      applyGrouping(
+        dataSource,
+        POSITIONS_GROUP_BY[grouping],
+        aggregationsFor(grouping),
+      );
     }, [grouping, dataSource]);
 
     const handleSelect = useCallback<TableRowSelectHandler>(

@@ -1,32 +1,39 @@
+import { Button, ToggleButton, ToggleButtonGroup } from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
+import { ContextMenuProvider } from "@vuu-ui/vuu-context-menu";
+import type { MenuActionHandler, MenuBuilder } from "@vuu-ui/vuu-context-menu";
 import { Table } from "@vuu-ui/vuu-table";
-import type {
-  TableConfig,
-  TableRowSelectHandler,
-} from "@vuu-ui/vuu-table-types";
+import type { TableConfig } from "@vuu-ui/vuu-table-types";
 import cx from "clsx";
 import {
   forwardRef,
   type HTMLAttributes,
+  type SyntheticEvent,
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useState,
 } from "react";
+import { applyGrouping } from "../../data/applyGrouping";
 import { useDataSourceRows } from "../../data/useDataSourceRows";
-import { filterString } from "../../utils/filters";
+import { useInstrumentLinkBus } from "../../instrument-context/InstrumentContext";
+import { andFilters, filterString } from "../../utils/filters";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
-import { useSelectedInstrument } from "../../instrument-context/InstrumentContext";
 import {
-  type LinkGroupProps,
-  useComponentLinkGroup,
-} from "../../instrument-context/useComponentLinkGroup";
-import { LinkGroupSelector } from "../LinkGroupSelector";
+  channelLinkMenuItem,
+  handleChannelLinkAction,
+  useChannelRowMarkers,
+} from "../ChannelRowMarkers";
+import {
+  LinkedInstrumentsFooter,
+  linkedInstruments,
+  useLinkedRicFilter,
+} from "../LinkedInstrumentsFooter";
 import { useStaleData } from "../StaleIndicator/useStaleData";
 import { type CsvColumn, downloadCsv, rowsToCsv } from "../../utils/csv";
 import { formatTime } from "../../utils/time";
-import { useStableCallback } from "../../hooks/useStableCallback";
 import {
   InstrumentLookupProvider,
   useInstrumentLookup,
@@ -50,6 +57,26 @@ registerFillsRenderers();
 const classBase = "tradingFillsBlotter";
 
 export type FillsGrouping = "none" | "ric" | "ric-side";
+
+const FILLS_GROUPINGS: readonly { id: FillsGrouping; label: string }[] = [
+  { id: "none", label: "None" },
+  { id: "ric", label: "RIC" },
+  { id: "ric-side", label: "RIC / side" },
+];
+
+const DownloadIcon = () => (
+  <svg
+    aria-hidden="true"
+    fill="none"
+    height={14}
+    stroke="currentColor"
+    strokeWidth={1.4}
+    viewBox="0 0 14 14"
+    width={14}
+  >
+    <path d="M7 2v7M4 6.5L7 9.5l3-3M2.5 12h9" />
+  </svg>
+);
 
 const COLUMNS = [
   "execId",
@@ -126,8 +153,7 @@ const CSV_COLUMNS: CsvColumn[] = [
 ];
 
 export interface FillsBlotterProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect">,
-    LinkGroupProps {
+  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect"> {
   /** Initial grouping. Default "none". */
   defaultGrouping?: FillsGrouping;
   /** Restrict to one instrument. */
@@ -142,16 +168,14 @@ export interface FillsBlotterProps
 
 const MAX_EXPORT_ROWS = 5_000;
 
+const ricFilter = (ric?: string) => (ric ? `ric = ${filterString(ric)}` : "");
+
 const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
   function FillsBlotterInner(
     {
       className,
       csvFileName = "fills.csv",
       defaultGrouping = "none",
-      defaultLinkGroup,
-      linkGroup: linkGroupProp,
-      onLinkGroupChange,
-      showLinkGroupSelector = false,
       highlightOrderId,
       onOrderSelect,
       ric,
@@ -166,20 +190,38 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
       css: fillsBlotterCss,
       window: targetWindow,
     });
-    const lookup = useInstrumentLookup();
-    const { linkGroup, channel, setLinkGroup } = useComponentLinkGroup({
-      defaultLinkGroup,
-      linkGroup: linkGroupProp,
-      onLinkGroupChange,
-      persistKey: htmlAttributes.id
-        ? `FillsBlotter:${htmlAttributes.id}`
-        : "FillsBlotter",
-    });
-    const { setSelectedInstrument } = useSelectedInstrument({
-      linkGroup: channel,
-    });
     const [grouping, setGrouping] = useState<FillsGrouping>(defaultGrouping);
-    const filter = { filter: ric ? `ric = ${filterString(ric)}` : "" };
+    const groupByLabelId = useId();
+    const markers = useChannelRowMarkers(tableConfig);
+    const [filterRic, setFilterRic] = useLinkedRicFilter(markers.linkedRics);
+    const bus = useInstrumentLinkBus();
+    const lookup = useInstrumentLookup();
+    // row context menu: "Link <ric> to" (fill rows only, not group rows)
+    const menuBuilder = useCallback<MenuBuilder>(
+      (location, options) => {
+        if (location !== "grid") return [];
+        const dataRow = (options as { dataRow?: Record<string, unknown> })
+          .dataRow;
+        if (!dataRow || dataRow.isLeaf === false || !dataRow.ric) return [];
+        const rowRic = String(dataRow.ric);
+        return [
+          channelLinkMenuItem(lookup.get(rowRic) ?? { ric: rowRic }, markers),
+        ];
+      },
+      [lookup, markers],
+    );
+    const menuActionHandler = useCallback<MenuActionHandler>(
+      (id, options) =>
+        handleChannelLinkAction(
+          id,
+          options,
+          bus,
+          markers.channels,
+          "FillsBlotter",
+        ),
+      [bus, markers.channels],
+    );
+    const filter = { filter: andFilters(ricFilter(ric), ricFilter(filterRic)) };
 
     const dataSource = useTradingDataSource("fills", {
       columns: COLUMNS,
@@ -192,15 +234,15 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
       filterSpec: filter,
       sort: { sortDefs: [{ column: "timestamp", sortType: "D" }] },
     });
-    const { rows: records } = useDataSourceRows(mirror, {
+    const { rows: records, size: rowCount } = useDataSourceRows(mirror, {
       rowCount: MAX_EXPORT_ROWS,
     });
 
     useEffect(() => {
-      const f = { filter: ric ? `ric = ${filterString(ric)}` : "" };
+      const f = { filter: andFilters(ricFilter(ric), ricFilter(filterRic)) };
       dataSource.filter = f;
       mirror.filter = f;
-    }, [ric, dataSource, mirror]);
+    }, [ric, filterRic, dataSource, mirror]);
 
     useEffect(() => {
       const sync = (config: typeof dataSource.config) => {
@@ -212,33 +254,21 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
     }, [dataSource, mirror]);
 
     useEffect(() => {
-      dataSource.groupBy =
+      applyGrouping(
+        dataSource,
         grouping === "none"
           ? []
           : grouping === "ric"
             ? ["ric"]
-            : ["ric", "side"];
-      dataSource.aggregations =
+            : ["ric", "side"],
         grouping === "none"
           ? []
           : [
               { column: "quantity", aggType: 1 },
               { column: "notional", aggType: 1 },
-            ];
+            ],
+      );
     }, [grouping, dataSource]);
-
-    const handleSelect = useCallback<TableRowSelectHandler>(
-      (row) => {
-        if (row?.isLeaf && typeof row.ric === "string") {
-          setSelectedInstrument(
-            lookup.get(row.ric) ?? { ric: row.ric },
-            "FillsBlotter",
-          );
-        }
-      },
-      [lookup, setSelectedInstrument],
-    );
-    const stableHandleSelect = useStableCallback(handleSelect);
 
     const link = useMemo(
       () => ({ onOrderSelect, highlightOrderId }),
@@ -254,44 +284,61 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
         {...htmlAttributes}
         {...staleProps}
         className={cx(classBase, className, staleProps.className)}
-        data-link-group={linkGroup}
         data-testid="trading-fills-blotter"
         ref={ref}
       >
+        {markers.colorStyle}
         <div className={`${classBase}-toolbar`}>
-          {showLinkGroupSelector ? (
-            <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
-          ) : null}
-          <label>
-            Group by{" "}
-            <select
-              onChange={(e) => setGrouping(e.target.value as FillsGrouping)}
-              value={grouping}
-            >
-              <option value="none">None</option>
-              <option value="ric">RIC</option>
-              <option value="ric-side">RIC / side</option>
-            </select>
-          </label>
+          <span className={`${classBase}-label`} id={groupByLabelId}>
+            Group by
+          </span>
+          <ToggleButtonGroup
+            aria-labelledby={groupByLabelId}
+            className={`${classBase}-grouping`}
+            onChange={(e: SyntheticEvent<HTMLButtonElement>) =>
+              setGrouping(e.currentTarget.value as FillsGrouping)
+            }
+            value={grouping}
+          >
+            {FILLS_GROUPINGS.map(({ id, label }) => (
+              <ToggleButton key={id} value={id}>
+                {label}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
           <span className={`${classBase}-spacer`} />
-          <button
+          <Button
+            appearance="bordered"
             disabled={records.length === 0}
             onClick={exportCsv}
-            type="button"
+            sentiment="neutral"
           >
+            <DownloadIcon />
             Export CSV ({records.length})
-          </button>
+          </Button>
         </div>
         <FillsLinkContext.Provider value={link}>
           <div className={`${classBase}-table`}>
-            <Table
-              config={tableConfig}
-              dataSource={dataSource}
-              onSelect={stableHandleSelect}
-              selectionModel="single"
-            />
+            <ContextMenuProvider
+              menuActionHandler={menuActionHandler}
+              menuBuilder={menuBuilder}
+            >
+              <Table
+                config={markers.tableConfig}
+                rowSelectionBorder
+                dataSource={dataSource}
+                selectionModel="single"
+              />
+            </ContextMenuProvider>
           </div>
         </FillsLinkContext.Provider>
+        <LinkedInstrumentsFooter
+          activeChannel={markers.activeChannel}
+          filterRic={filterRic}
+          instruments={linkedInstruments(markers)}
+          onFilterRic={setFilterRic}
+          summary={`${rowCount} ${rowCount === 1 ? "fill" : "fills"}`}
+        />
       </div>
     );
   },

@@ -1,4 +1,5 @@
 import { isStopOrdType, type OrdType, RpcName } from "@heswell/trading-schemas";
+import { Button, ToggleButton, ToggleButtonGroup } from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
 import {
@@ -7,13 +8,21 @@ import {
   useContextPanel,
 } from "@vuu-ui/core";
 import type { DataSource } from "@vuu-ui/vuu-data-types";
+import { ContextMenuProvider } from "@vuu-ui/vuu-context-menu";
+import type {
+  ContextMenuItemDescriptor,
+  MenuActionHandler,
+  MenuBuilder,
+} from "@vuu-ui/vuu-context-menu";
 import { Table } from "@vuu-ui/vuu-table";
+import { SplitPane } from "@vuu-ui/vuu-ui-controls";
 import type { TableRowSelectHandler } from "@vuu-ui/vuu-table-types";
 import cx from "clsx";
 import {
   createContext,
   forwardRef,
   type HTMLAttributes,
+  type SyntheticEvent,
   useCallback,
   useEffect,
   useContext,
@@ -30,14 +39,10 @@ import {
 import type { TradingConnectionState } from "../../connection/useTradingConnectionStatus";
 import { sendTradingRpc, TradingRpcError } from "../../data/tradingRpc";
 import { useDataSourceRows } from "../../data/useDataSourceRows";
-import { filterString } from "../../utils/filters";
+import { useInstrumentLinkBus } from "../../instrument-context/InstrumentContext";
+import { andFilters, filterString } from "../../utils/filters";
 import { useTableSelectedKeys } from "../../data/useTableSelectedKeys";
 import { useTradingDataSource } from "../../data/useTradingDataSource";
-import { useSelectedInstrument } from "../../instrument-context/InstrumentContext";
-import {
-  type LinkGroupProps,
-  useComponentLinkGroup,
-} from "../../instrument-context/useComponentLinkGroup";
 import { useTradingNotifications } from "../../notifications/TradingNotificationsProvider";
 import { rpcRejectEvent } from "../../notifications/tradingOrderEvents";
 import { isOrderAmendable, isOrderCancellable } from "../../utils/orderStatus";
@@ -46,7 +51,16 @@ import {
   InstrumentLookupProvider,
   useInstrumentLookup,
 } from "../InstrumentLookup";
-import { LinkGroupSelector } from "../LinkGroupSelector";
+import {
+  channelLinkMenuItem,
+  handleChannelLinkAction,
+  useChannelRowMarkers,
+} from "../ChannelRowMarkers";
+import {
+  LinkedInstrumentsFooter,
+  linkedInstruments,
+  useLinkedRicFilter,
+} from "../LinkedInstrumentsFooter";
 import { OrderBookView } from "../OrderBookView";
 import { useStaleData } from "../StaleIndicator/useStaleData";
 import { registerTradingCellRenderers } from "../TradingCellRenderers";
@@ -65,23 +79,46 @@ import {
   registerOrderActionsRenderer,
 } from "./OrderBlotterContext";
 
+import { CancelAllPrompt } from "./CancelAllPrompt";
 import orderBlotterCss from "./OrderBlotter.css";
+import { useWorkingOrderSummary } from "./useWorkingOrderSummary";
 
 registerTradingCellRenderers();
 registerOrderActionsRenderer();
 
 const classBase = "tradingOrderBlotter";
+
+/** Depth ladder: bids and asks stepping away from the touch. */
+const OrderBookIcon = () => (
+  <svg
+    aria-hidden="true"
+    fill="currentColor"
+    height={14}
+    viewBox="0 0 16 16"
+    width={14}
+  >
+    <rect height="2" rx="0.5" width="6" x="1" y="3" />
+    <rect height="2" rx="0.5" width="4" x="3" y="7" />
+    <rect height="2" rx="0.5" width="2" x="5" y="11" />
+    <rect height="2" rx="0.5" width="3" x="9" y="3" />
+    <rect height="2" rx="0.5" width="5" x="9" y="7" />
+    <rect height="2" rx="0.5" width="6" x="9" y="11" />
+  </svg>
+);
 const SOURCE = "OrderBlotter";
 
 export interface OrderBlotterProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect" | "onError">,
-    LinkGroupProps {
+  extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect" | "onError"> {
   /** Initial filter tab. Default "working". */
   defaultTab?: OrderBlotterTab;
   /** Show the child (street) orders of the selected order. Default true. */
   showChildOrders?: boolean;
-  /** Called when an order row is selected (undefined on deselect). */
-  onOrderSelect?: (orderId: string | undefined) => void;
+  /**
+   * Called when an order row is selected, with the order's ric (undefined on
+   * deselect). Selection stays local: the blotter publishes nothing to a
+   * link channel.
+   */
+  onOrderSelect?: (orderId: string | undefined, ric?: string) => void;
   /** Called with RPC failures (also shown in the status line). */
   onError?: (error: TradingRpcError) => void;
   /**
@@ -193,15 +230,11 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
   function OrderBlotterInner(
     {
       className,
-      defaultLinkGroup,
       defaultTab = "working",
-      linkGroup: linkGroupProp,
       notify: notifyEnabled = true,
       onError,
-      onLinkGroupChange,
       onOrderSelect,
       readOnly = false,
-      showLinkGroupSelector = false,
       showChildOrders = true,
       showOrderBook = true,
       useEditSession = false,
@@ -216,21 +249,15 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
       css: orderBlotterCss,
       window: targetWindow,
     });
-    const lookup = useInstrumentLookup();
-    const { linkGroup, channel, setLinkGroup } = useComponentLinkGroup({
-      defaultLinkGroup,
-      linkGroup: linkGroupProp,
-      onLinkGroupChange,
-      persistKey: htmlAttributes.id ? `${SOURCE}:${htmlAttributes.id}` : SOURCE,
-    });
-    const { setSelectedInstrument } = useSelectedInstrument({
-      linkGroup: channel,
-    });
     const notifications = useTradingNotifications();
     const [tab, setTab] = useState<OrderBlotterTab>(defaultTab);
     const [message, setMessage] = useState<{ text: string; error: boolean }>();
     const [amending, setAmending] = useState<string>();
     const [focusedOrderId, setFocusedOrderId] = useState<string>();
+    const [confirmingCancelAll, setConfirmingCancelAll] = useState(false);
+    const workingOrders = useWorkingOrderSummary();
+    const markers = useChannelRowMarkers(orderBlotterTableConfig);
+    const [filterRic, setFilterRic] = useLinkedRicFilter(markers.linkedRics);
 
     const { connectionState, staleProps } = useStaleData();
     const connected = connectionState === "connected";
@@ -253,7 +280,9 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
       ],
       filterSpec: { filter: orderBlotterTabFilter(defaultTab) },
     });
-    const { rows: records } = useDataSourceRows(mirror, { rowCount: 500 });
+    const { rows: records, size: rowCount } = useDataSourceRows(mirror, {
+      rowCount: 500,
+    });
     const orderedKeys = useMemo(() => records.map((r) => r.$key), [records]);
     const { selectedKeys, onSelectionChange, clear } =
       useTableSelectedKeys(orderedKeys);
@@ -265,11 +294,14 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
     byKeyRef.current = byKey;
 
     useEffect(() => {
-      const filter = orderBlotterTabFilter(tab);
+      const filter = andFilters(
+        orderBlotterTabFilter(tab),
+        filterRic ? `ric = ${filterString(filterRic)}` : "",
+      );
       dataSource.filter = { filter };
       mirror.filter = { filter };
       clear();
-    }, [tab, dataSource, mirror, clear]);
+    }, [tab, filterRic, dataSource, mirror, clear]);
 
     const fail = useCallback(
       (err: unknown, orderId?: string) => {
@@ -357,14 +389,12 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
           onOrderSelect?.(undefined);
           return;
         }
-        const ric = String(row.ric);
         const orderId = String(row.orderId);
         setFocusedOrderId(orderId);
         onFocusedOrderChange(orderId);
-        onOrderSelect?.(orderId);
-        setSelectedInstrument(lookup.get(ric) ?? { ric }, SOURCE);
+        onOrderSelect?.(orderId, String(row.ric));
       },
-      [lookup, onFocusedOrderChange, onOrderSelect, setSelectedInstrument],
+      [onFocusedOrderChange, onOrderSelect],
     );
     const showContextPanel = useContextPanel();
     const openOrderBook = useCallback(
@@ -372,6 +402,70 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
       [showContextPanel],
     );
     const stableHandleSelect = useStableCallback(handleSelect);
+
+    // --- row context menu (client side): order actions, then "Link <ric> to"
+    const bus = useInstrumentLinkBus();
+    const lookup = useInstrumentLookup();
+    const menuBuilder = useCallback<MenuBuilder>(
+      (location, options) => {
+        if (location !== "grid") return [];
+        const dataRow = (options as { dataRow?: Record<string, unknown> })
+          .dataRow;
+        if (!dataRow?.orderId || !dataRow.ric) return [];
+        const orderId = String(dataRow.orderId);
+        const ric = String(dataRow.ric);
+        const status = String(dataRow.status);
+        const items: ContextMenuItemDescriptor[] = [];
+        if (!readOnly && isOrderAmendable(status))
+          items.push({
+            id: "order-amend",
+            label: "Amend…",
+            options: { orderId },
+          });
+        if (!readOnly && isOrderCancellable(status))
+          items.push({
+            id: "order-cancel",
+            label: "Cancel order",
+            options: { orderId },
+          });
+        if (showOrderBook)
+          items.push({
+            id: "order-book",
+            label: "Order book",
+            options: { orderId },
+          });
+        items.push(
+          channelLinkMenuItem(
+            lookup.get(ric) ?? { ric },
+            markers,
+            items.length > 0,
+          ),
+        );
+        return items;
+      },
+      [lookup, markers, readOnly, showOrderBook],
+    );
+    const menuActionHandler = useCallback<MenuActionHandler>(
+      (id, options) => {
+        const orderId = (options as { orderId?: string } | undefined)?.orderId;
+        if (id === "order-amend" && orderId) actions.amend(orderId);
+        else if (id === "order-cancel" && orderId) actions.cancel(orderId);
+        else if (id === "order-book" && orderId) {
+          setFocusedOrderId(orderId);
+          onFocusedOrderChange(orderId);
+          openOrderBook();
+        } else
+          return handleChannelLinkAction(
+            id,
+            options,
+            bus,
+            markers.channels,
+            SOURCE,
+          );
+        return true;
+      },
+      [actions, bus, markers.channels, onFocusedOrderChange, openOrderBook],
+    );
 
     const amendTarget = amending
       ? records.find((r) => r.orderId === amending)
@@ -419,70 +513,91 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
         {...htmlAttributes}
         className={cx(classBase, className)}
         data-connection-state={connectionState}
-        data-link-group={linkGroup}
         data-testid="trading-order-blotter"
         ref={ref}
       >
-        <div className={`${classBase}-toolbar`} role="tablist">
-          {showLinkGroupSelector ? (
-            <LinkGroupSelector value={linkGroup} onChange={setLinkGroup} />
-          ) : null}
-          {ORDER_BLOTTER_TABS.map(({ id, label }) => (
-            <button
-              aria-selected={tab === id}
-              className={`${classBase}-tab`}
-              key={id}
-              onClick={() => setTab(id)}
-              role="tab"
-              type="button"
-            >
-              {label}
-            </button>
-          ))}
+        {markers.colorStyle}
+        <div className={`${classBase}-toolbar`}>
+          <ToggleButtonGroup
+            aria-label="Order status"
+            className={`${classBase}-status`}
+            onChange={(e: SyntheticEvent<HTMLButtonElement>) =>
+              setTab(e.currentTarget.value as OrderBlotterTab)
+            }
+            value={tab}
+          >
+            {ORDER_BLOTTER_TABS.map(({ id, label, description }) => (
+              <ToggleButton key={id} title={description} value={id}>
+                {label}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
           <span className={`${classBase}-spacer`} />
           {showOrderBook ? (
-            <button
+            <Button
+              appearance="bordered"
               aria-label="Show order book"
+              className={`${classBase}-orderBook`}
               onClick={openOrderBook}
+              sentiment="neutral"
               title="Depth and queue position of the selected order"
-              type="button"
             >
-              Order book
-            </button>
+              <OrderBookIcon />
+              <span className={`${classBase}-wideLabel`}>Order book</span>
+            </Button>
           ) : null}
           {readOnly ? null : (
             <>
-              <button
+              <Button
+                appearance="bordered"
+                aria-label={`Cancel selected (${cancellableSelected.length})`}
                 disabled={!connected || cancellableSelected.length === 0}
                 onClick={() => void cancelIds(cancellableSelected)}
-                type="button"
+                sentiment="negative"
               >
-                Cancel selected ({cancellableSelected.length})
-              </button>
-              <button
-                disabled={!connected}
-                onClick={() => void cancelAll()}
-                type="button"
+                <span className={`${classBase}-wideLabel`}>
+                  Cancel selected ({cancellableSelected.length})
+                </span>
+                <span className={`${classBase}-narrowLabel`}>
+                  Cancel {cancellableSelected.length}
+                </span>
+              </Button>
+              <Button
+                appearance="solid"
+                disabled={!connected || workingOrders.count === 0}
+                onClick={() => setConfirmingCancelAll(true)}
+                sentiment="negative"
               >
                 Cancel all
-              </button>
+              </Button>
             </>
           )}
         </div>
-        <OrderBlotterContext.Provider value={readOnly ? undefined : actions}>
-          <div
-            {...staleProps}
-            className={cx(`${classBase}-table`, staleProps.className)}
-          >
-            <Table
-              config={orderBlotterTableConfig}
-              dataSource={dataSource}
-              onSelect={stableHandleSelect}
-              onSelectionChange={onSelectionChange}
-              selectionModel="extended"
-            />
-          </div>
-        </OrderBlotterContext.Provider>
+        <SplitPane className={`${classBase}-split`} direction="column">
+          <OrderBlotterContext.Provider value={readOnly ? undefined : actions}>
+            <div
+              {...staleProps}
+              className={cx(`${classBase}-table`, staleProps.className)}
+            >
+              <ContextMenuProvider
+                menuActionHandler={menuActionHandler}
+                menuBuilder={menuBuilder}
+              >
+                <Table
+                  config={markers.tableConfig}
+                  rowSelectionBorder
+                  dataSource={dataSource}
+                  onSelect={stableHandleSelect}
+                  onSelectionChange={onSelectionChange}
+                  selectionModel="extended"
+                />
+              </ContextMenuProvider>
+            </div>
+          </OrderBlotterContext.Provider>
+          {showChildOrders ? (
+            <ChildOrders parentOrderId={focusedOrderId} />
+          ) : null}
+        </SplitPane>
         {message ? (
           <div
             aria-live="polite"
@@ -493,8 +608,22 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
             {message.text}
           </div>
         ) : null}
-        {showChildOrders ? (
-          <ChildOrders parentOrderId={focusedOrderId} />
+        <LinkedInstrumentsFooter
+          activeChannel={markers.activeChannel}
+          filterRic={filterRic}
+          instruments={linkedInstruments(markers)}
+          onFilterRic={setFilterRic}
+          summary={`${rowCount} ${rowCount === 1 ? "order" : "orders"}`}
+        />
+        {confirmingCancelAll ? (
+          <CancelAllPrompt
+            onCancel={() => setConfirmingCancelAll(false)}
+            onConfirm={() => {
+              setConfirmingCancelAll(false);
+              void cancelAll();
+            }}
+            summary={workingOrders}
+          />
         ) : null}
         {amending ? (
           <AmendDialog

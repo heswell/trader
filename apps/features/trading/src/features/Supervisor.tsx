@@ -28,12 +28,10 @@ const Supervisor = () => {
             title="All orders"
           >
             <OrderBlotter
-              defaultLinkGroup="red"
               defaultTab="all"
               id="sv-orders-blotter"
               readOnly={!canTrade}
               showChildOrders
-              showLinkGroupSelector
               style={content}
             />
           </View>

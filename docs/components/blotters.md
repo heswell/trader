@@ -5,6 +5,9 @@ Reference: [OrderBlotter](../api/trading-ui.md#orderblotter), [FillsBlotter](../
 
 Showcase: `#order-blotter`, `#fills-blotter`, `#trade-tape`, `#positions-view`, all four in `#trader-workspace`.
 
+![Orders blotter, light: PHG.AS linked to Red](../screenshots/orders-blotter-light.png)
+![Fills blotter, dark](../screenshots/fills-blotter-dark.png)
+
 | Component | Tables | RPCs | Roles |
 | --- | --- | --- | --- |
 | `OrderBlotter` | `parentOrders`, `childOrders` (selected order) | `cancelOrder`, `cancelAll`, `amendOrder`, or a `parentOrders` edit session with `useEditSession` | `readOnly` hides amend / cancel; pass `readOnly={!canTrade}` for users without `trading-execute` |
@@ -15,20 +18,38 @@ Showcase: `#order-blotter`, `#fills-blotter`, `#trade-tape`, `#positions-view`, 
 Rows are filtered by the OMS per user (see [permissions](README.md#permissions)), so a supervisor sees every
 account on their desks with the same component.
 
-All four wrap themselves in `InstrumentLookupProvider` (one `instruments` subscription, reused if nested) and
-publish the selected instrument to their link group (`LinkGroupProps`: `linkGroup`, `defaultLinkGroup`,
-`showLinkGroupSelector`, `onLinkGroupChange`). The tape follows its group.
+All four wrap themselves in `InstrumentLookupProvider` (one `instruments` subscription, reused if nested).
+`TradeTape` and `PositionsView` take `LinkGroupProps` (`linkGroup`, `defaultLinkGroup`, `showLinkGroupSelector`,
+`onLinkGroupChange`); the tape follows its group. `OrderBlotter` and `FillsBlotter` have no link group: row
+selection stays local and publishes nothing, as channels are driven from the watchlist / instrument grid.
+
+## Channels in the Orders and Fills blotters
+
+The two blotters show the workspace channels without following one:
+
+- **Row markers.** A row whose RIC is on a channel shows a 4px marker in that channel's colour at its left end
+  (the vuu Table row bookend). A selected row shows vuu's normal bordered selection instead. Use
+  `useChannelRowMarkers(tableConfig)` to do the same in another table: it returns a stable `tableConfig` with a
+  row class generator, plus a `colorStyle` element to render beside the table.
+- **Linked footer.** `LinkedInstrumentsFooter` lists one chip per instrument on a channel. Pressing a chip
+  filters the blotter to that RIC (pressed chips show ×); pressing it again, or the RIC leaving its channel,
+  clears the filter. The footer also shows the row count (`12 orders`, `3 fills`).
+- **Link from a row.** The only way to publish from a blotter is the row context menu's **Link <RIC> to ▸**,
+  which lists each channel with what it holds now (`Red · VOD.L`, `Green · BARC.L ✓`, `Blue · empty`).
+  Choosing one moves the RIC there (an instrument is on one channel at most). Orders rows also offer
+  **Amend…**, **Cancel order** and **Order book** where they apply; Fills group rows have no menu. The menu
+  helpers are exported as `channelLinkMenuItem` and `handleChannelLinkAction`.
 
 | Component | Props |
 | --- | --- |
-| `OrderBlotter` | `defaultTab` (`working` \| `filled` \| `closed` \| `all`), `showChildOrders` (default true), `onOrderSelect(orderId?)`, `onError(TradingRpcError)`, `notify` (default true: failed amend / cancel requests also go to `useTradingNotifications()` when a provider is mounted), `readOnly` (default false: hide the amend / cancel controls), `useEditSession` (amend through the server edit session instead of `amendOrder`: the dialog begins the session when it opens, Amend saves it, Close discards it, and an order that changed meanwhile is refused as stale). Tabs filter client side on `status`. Amend / cancel icons are enabled only for NEW, PARTIALLY_FILLED, REPLACED. Multi-select (ctrl / shift click) + **Cancel selected** sends `cancelOrder` per order; **Cancel all** sends `cancelAll`. Amend opens a dialog (quantity, price for priced orders, and stop price for a STOP / STOP_LIMIT that hasn't triggered; only a changed stop price is sent, as `stopPrice` in `amendOrder` or a `stopPrice` editCell in the edit session). Stop orders show their **Stop** price (blank for other types) and **Triggered**: "Waiting" until the stop triggers, then the trigger time (`triggeredAt`). Child orders of the selected order show in a panel below (a vuu LinkedTableView / tree does not span tables, still the case in alpha.21). Rejected rows show `rejectReason: text` as a tooltip on the status. **Order book** (`showOrderBook`, default true) opens the selected order's book in the shell's context panel, or in a dialog outside a portal shell; the panel follows the selection (see [Order book panel](#order-book-panel)). |
+| `OrderBlotter` | `defaultTab` (`working` \| `filled` \| `closed` \| `all`), `showChildOrders` (default true), `onOrderSelect(orderId?, ric?)`, `onError(TradingRpcError)`, `notify` (default true: failed amend / cancel requests also go to `useTradingNotifications()` when a provider is mounted), `readOnly` (default false: hide the amend / cancel controls), `useEditSession` (amend through the server edit session instead of `amendOrder`: the dialog begins the session when it opens, Amend saves it, Close discards it, and an order that changed meanwhile is refused as stale). Tabs filter client side on `status`. Amend / cancel icons are enabled only for NEW, PARTIALLY_FILLED, REPLACED. Multi-select (ctrl / shift click) + **Cancel selected** sends `cancelOrder` per order; **Cancel all** asks first (a prompt with the count of the user's working orders, in every instrument, and a per-RIC list; focus starts on **Keep orders**), then sends `cancelAll`. Amend opens a dialog (quantity, price for priced orders, and stop price for a STOP / STOP_LIMIT that hasn't triggered; only a changed stop price is sent, as `stopPrice` in `amendOrder` or a `stopPrice` editCell in the edit session). Stop orders show their **Stop** price (blank for other types) and **Triggered**: "Waiting" until the stop triggers, then the trigger time (`triggeredAt`). Child orders of the selected order show in a pane below, in a `SplitPane` the user can drag (a vuu LinkedTableView / tree does not span tables, still the case in alpha.21). Rejected rows show `rejectReason: text` as a tooltip on the status. **Order book** (`showOrderBook`, default true) opens the selected order's book in the shell's context panel, or in a dialog outside a portal shell; the panel follows the selection (see [Order book panel](#order-book-panel)). |
 | `FillsBlotter` | `defaultGrouping` (`none` \| `ric` \| `ric-side`), `ric`, `onOrderSelect(orderId)` (order link), `highlightOrderId`, `csvFileName`. Group rows show summed quantity / notional and VWAP (`sum(notional) / sum(quantity)`, computed in the renderer – vuu has no VWAP aggregation). **Export CSV** writes the current filter and sort, ungrouped, up to 5,000 rows. |
 | `TradeTape` | `ric` (default: selected instrument), `maxRows` (100), `largeSizeThreshold` (absolute) or `largeSizePercentile` (90), `utc`. Newest first (`seq` descending), one render per animation frame, aggressor shown as ▲ Buy / ▼ Sell plus colour. |
 | `PositionsView` | `defaultGrouping` (`sector` (default) \| `none` \| `account` \| `ric` \| `underlying`, which puts a stock or index with its futures; groups are always by currency first), `account`, `showTotals`. Realised / unrealised / total P&L tick via `positionPrices`. `sector` and `exchange` come from instrument static (the OMS copies them onto `positions`). The totals table is **per currency** (never mixed; GBX is pence). |
 
 ```tsx
 const { canTrade } = useEntitlements(); // your app's role check
-<OrderBlotter defaultLinkGroup="red" readOnly={!canTrade} showLinkGroupSelector useEditSession />
+<OrderBlotter readOnly={!canTrade} useEditSession />
 <FillsBlotter defaultGrouping="ric" onOrderSelect={setOrderId} />
 <PositionsView defaultGrouping="account" />
 ```
@@ -73,8 +94,10 @@ reopened.
 
 ## CSS hooks
 
-Class bases `tradingOrderBlotter`, `tradingFillsBlotter`, `tradingTradeTape`, `tradingPositionsView`. Useful
-attributes: `data-link-group`, `data-testid`, `data-connection-state` / `data-error` (OrderBlotter),
+Class bases `tradingOrderBlotter`, `tradingFillsBlotter`, `tradingTradeTape`, `tradingPositionsView`,
+`tradingLinkedFooter` (chips: `-chip`, with `data-active` when pressed). Rows on a channel carry
+`tradingChannelRow tradingChannelRow-<channel id>`, which sets `--tradingChannelRow-color`. Useful
+attributes: `data-link-group` (TradeTape, PositionsView), `data-testid`, `data-connection-state` / `data-error` (OrderBlotter),
 `data-aggressor` / `data-large` (TradeTape), `data-currency` (PositionsView). The full list is in the
 [catalogue](../api/components.md#css-hooks).
 
