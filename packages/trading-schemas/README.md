@@ -39,22 +39,23 @@ ModuleFactory.withNameSpace(EXCHANGE_MODULE)
 
 | Table | Key | Columns |
 |---|---|---|
-| `instruments` | `ric` | description, isin?, currency, exchange (MIC), sector?, instrumentType (EQUITY \| FUTURE \| INDEX \| CONTINUATION), underlying? (a future's stock or index), contract? (the contract a continuation such as AZNc1 points at), expiry?, settlementPrice? (expired futures), contractMultiplier, tickSize, tickBands?, lotSize, priceDecimals, refPrice, simulated |
+| `instruments` | `ric` | description, isin?, currency, exchange (MIC), sector?, instrumentType (EQUITY \| FUTURE \| INDEX \| CONTINUATION \| OPTION), underlying? (a future's or option's stock or index), contract? (the contract a continuation such as AZNc1 points at), putCall?, strike?, liquid? (options: has a book), expiry?, settlementPrice? (expired futures), contractMultiplier, tickSize, tickBands?, lotSize, priceDecimals, refPrice, simulated |
 | `prices` | `ric` | bid, ask, bidSize, askSize, last, lastSize, open, high, low, close (prev), volume, turnover, vwap, change, changePct, phase (`TradingPhase`), seq, timestamp |
 | `depth` | `id` = `ric\|side\|level` | ric, side, level (0 = best), price, size, cumSize, orderCount, ownSize?, seq |
 | `trades` | `tradeId` | ric, price, size, aggressorSide, timestamp, seq |
 | `bars` | `id` = `ric\|interval\|start` (`barKey`) | ric, interval (`1s`, `1m`, ...; `parseBarInterval`), start, end, open, high, low, close, volume, turnover, vwap, trades, closed, backfilled |
+| `optionAnalytics` | `ric` | underlying, forward, theo, modelVol, impliedVol (from the mid), baseVol (impliedVol / √timeScale), delta, gamma, vega (per vol point), theta (per day), timestamp |
 | `bookSamples` | `id` = `ric\|time` (`bookSampleKey`) | ric, time, bid, ask, mid, spreadBps, bidSize, askSize, bidDepth, askDepth (top 5), imbalance, bidPx0..4, bidSz0..4, askPx0..4, askSz0..4 |
 
 ### `OMS` module
 
 | Table | Key | Columns |
 |---|---|---|
-| `accounts` | `account` | name, desk, owner, currency, maxOrderQty, maxOrderNotional, maxPositionNotional, enabled |
+| `accounts` | `account` | name, desk, owner, currency, maxOrderQty, maxOrderNotional, maxPositionNotional, maxDeltaUsd (net delta per underlying), enabled |
 | `parentOrders` | `orderId` | clOrdId?, trader, *order columns*, version, notional, arrivalPrice, slippageBps, timeToFirstFill, timeToComplete, strategy, algoStart, algoEnd, participationPct, targetQty |
 | `childOrders` | `childOrderId` | parentOrderId, exchangeOrderId?, *order columns* |
 | `fills` | `execId` | orderId (parent), childOrderId, tradeId, account, trader, ric, side, quantity, price, notional (includes contractMultiplier), currency, liquidity (ADDED \| REMOVED \| AUCTION \| SETTLEMENT), timestamp |
-| `positions` | `id` = `account\|ric` | account, ric, quantity (net), boughtQty, soldQty, avgCost, markPx, marketValue, realizedPnl, unrealizedPnl, totalPnl (value and P&L include contractMultiplier), currency, exchange, sector, instrumentType, underlying, marketValueUsd, totalPnlUsd, lastUpdate |
+| `positions` | `id` = `account\|ric` | account, ric, quantity (net), boughtQty, soldQty, avgCost, markPx, marketValue, realizedPnl, unrealizedPnl, totalPnl (value and P&L include contractMultiplier), currency, exchange, sector, instrumentType, underlying, marketValueUsd, totalPnlUsd, delta (shares equivalent), deltaUsd, gamma, vegaUsd (per vol point), lastUpdate |
 | `pnlHistory` | `id` = `account\|ric\|time` (`pnlHistoryKey`) | account, ric, time, quantity, avgCost, markPx, marketValue, realizedPnl, unrealizedPnl, totalPnl, grossExposure, netExposure, totalPnlUsd, marketValueUsd, currency |
 | `accountPnlHistory` | `id` = `account\|time` (`accountPnlHistoryKey`) | account, time, positions, realizedPnl, unrealizedPnl, totalPnl, grossExposure, netExposure (USD) |
 
@@ -92,9 +93,15 @@ Values are the strings stored in table columns and sent in RPC params.
 | `OrdStatus` | PENDING_NEW, NEW, PARTIALLY_FILLED, FILLED, PENDING_CANCEL, CANCELLED, PENDING_REPLACE, REPLACED, REJECTED, EXPIRED |
 | `ExecType` | PENDING_NEW, NEW, TRADE, PENDING_CANCEL, CANCELLED, PENDING_REPLACE, REPLACED, REJECTED, EXPIRED |
 | `TradingPhase` | CLOSED, PRE_OPEN, OPENING_AUCTION, CONTINUOUS, CLOSING_AUCTION, POST_CLOSE, HALTED |
-| `Liquidity` | ADDED, REMOVED, AUCTION |
+| `Liquidity` | ADDED, REMOVED, AUCTION, SETTLEMENT |
+| `InstrumentType` | EQUITY, FUTURE, INDEX, CONTINUATION, OPTION |
+| `PutCall` | CALL, PUT |
 | `BotType` | MARKET_MAKER, TAKER, ALL |
 | `RejectReason` | INVALID_REQUEST, UNKNOWN_INSTRUMENT, UNKNOWN_ACCOUNT, ACCOUNT_DISABLED, UNKNOWN_ORDER, DUPLICATE_CLORDID, UNSUPPORTED_ORD_TYPE, UNSUPPORTED_TIF, MISSING_PRICE, MISSING_STOP_PRICE, INVALID_STOP_PRICE, INVALID_PRICE, INVALID_TICK_SIZE, INVALID_QUANTITY, INVALID_LOT_SIZE, EXCEEDS_MAX_QUANTITY, EXCEEDS_MAX_NOTIONAL, PRICE_OUTSIDE_COLLAR, RESTRICTED_INSTRUMENT, INSTRUMENT_HALTED, MARKET_CLOSED, NO_LIQUIDITY, FOK_NOT_FILLABLE, TOO_LATE_TO_AMEND, TOO_LATE_TO_CANCEL, ORDER_PENDING, PERMISSION_DENIED, INTERNAL_ERROR |
+
+## Option math
+
+`black76(inputs)` prices a European option on a forward and returns price, delta, gamma, vega (per 1.00 of vol) and theta (per year); Greeks are with respect to the forward. `black76Price`, `impliedVol(price, inputs)` (Newton, falling back to bisection; undefined outside the no-arbitrage bounds), `intrinsicValue`, `normCdf` and `normPdf` complete it. The exchange simulator, the OMS and the UI share these functions. `collarWidth(instrument, ref, collarPct)` / `isOutsideCollar` give the limit price collar: `ref` × collarPct, and for an option at least `OPTION_COLLAR_PCT` (50%) of the reference and `OPTION_COLLAR_TICKS` (10) ticks.
 
 ## Order status transitions
 

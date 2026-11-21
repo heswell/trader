@@ -33,6 +33,7 @@ import type {
   GatewayRequestType,
   InstrumentEvent,
   MarketTrade,
+  OptionGreeksQuote,
   TopOfBook,
 } from "./types";
 
@@ -45,6 +46,10 @@ export interface GatewayVenue {
   getBook(ric: string): InstrumentBook | undefined;
   getSessionSchedule?(): SessionSchedule;
   onTape?(listener: (trade: MarketTrade) => void): () => void;
+  /** A listed option's model value and Greeks now. */
+  optionValue?(ric: string): OptionGreeksQuote | undefined;
+  /** The options listed on `underlying`. */
+  optionChain?(underlying: string): readonly InstrumentDef[];
   /** Where the submit / amend / cancel timers go (default: untimed). */
   timers?: TimerRegistry;
 }
@@ -193,6 +198,42 @@ export class SimExchangeGateway implements ExchangeGateway, FillSink {
 
   isSimulated(ric: string) {
     return this.venue.getBook(ric) !== undefined;
+  }
+
+  getOptionGreeks(ric: string): OptionGreeksQuote | undefined {
+    const value = this.venue.optionValue?.(ric);
+    return value
+      ? {
+          delta: value.delta,
+          gamma: value.gamma,
+          vega: value.vega,
+          forward: value.forward,
+        }
+      : undefined;
+  }
+
+  nearestLiquidOption(ric: string): string | undefined {
+    const def = this.venue.getInstrument(ric);
+    if (def?.strike === undefined || !def.underlying) return undefined;
+    let nearest: InstrumentDef | undefined;
+    for (const option of this.venue.optionChain?.(def.underlying) ?? []) {
+      if (
+        !option.liquid ||
+        option.expiry !== def.expiry ||
+        option.putCall !== def.putCall ||
+        option.strike === undefined
+      ) {
+        continue;
+      }
+      if (
+        !nearest ||
+        Math.abs(option.strike - def.strike) <
+          Math.abs((nearest.strike ?? 0) - def.strike)
+      ) {
+        nearest = option;
+      }
+    }
+    return nearest?.ric;
   }
 
   getPhase(ric: string) {

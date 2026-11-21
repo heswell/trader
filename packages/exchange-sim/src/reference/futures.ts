@@ -11,7 +11,7 @@ const YEAR_MS = 365 * DAY_MS;
 
 /** Futures month codes, January..December. */
 const MONTH_CODES = "FGHJKMNQUVXZ";
-const MONTH_NAMES = [
+export const MONTH_NAMES = [
   "Jan",
   "Feb",
   "Mar",
@@ -51,6 +51,15 @@ const INDEX_FUTURE_TICK = 0.1;
 const isIndexDef = (instrument: InstrumentDef) =>
   instrument.instrumentType === InstrumentType.Index;
 
+/**
+ * Contract multiplier of a derivative on `underlying`: shares per contract
+ * by currency for a stock, currency per point for an index.
+ */
+export const contractMultiplierFor = (underlying: InstrumentDef) =>
+  (isIndexDef(underlying) ? INDEX_MULTIPLIER : MULTIPLIER)[
+    underlying.currency
+  ] ?? DEFAULT_MULTIPLIER;
+
 export interface FuturesOptions {
   /** Contracts listed per underlying (front, next, ...). */
   contracts: number;
@@ -73,7 +82,8 @@ export const thirdFriday = (year: number, month: number, minuteOfDay = 0) => {
   return Date.UTC(year, month, day) + minuteOfDay * 60_000;
 };
 
-const minuteOfDay = (time: string) => {
+/** Minutes after midnight of an "HH:MM" UTC time. */
+export const minuteOfDay = (time: string) => {
   const match = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
   if (!match) throw Error(`futures: bad expiry time '${time}' (HH:MM)`);
   return Number(match[1]) * 60 + Number(match[2]);
@@ -107,7 +117,7 @@ export const quarterlyExpiries = (
 };
 
 /** Root of a ric: the part before the venue suffix (AZN.L -> AZN). */
-const rootOf = (ric: string) => ric.split(".")[0];
+export const rootOf = (ric: string) => ric.split(".")[0];
 
 /** Futures ric: root + month code + last digit of the year, e.g. AZNZ6. */
 export const futureRic = (underlying: string, expiry: number) => {
@@ -153,9 +163,7 @@ export const toFutureDef = (
     instrumentType: InstrumentType.Future,
     underlying: underlying.ric,
     expiry,
-    contractMultiplier:
-      (index ? INDEX_MULTIPLIER : MULTIPLIER)[underlying.currency] ??
-      DEFAULT_MULTIPLIER,
+    contractMultiplier: contractMultiplierFor(underlying),
     tickSize,
     tickBands: "",
     lotSize: 1,

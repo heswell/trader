@@ -29,6 +29,8 @@ export const EntryRiskCode = Object.freeze({
   MaxOrderQty: "maxOrderQty",
   MaxOrderNotional: "maxOrderNotional",
   MaxPositionNotional: "maxPositionNotional",
+  /** The account's net delta on the underlying (USD) over maxDeltaUsd. */
+  MaxDelta: "maxDeltaUsd",
   Collar: "collar",
   NoPrice: "noPrice",
 } as const);
@@ -144,6 +146,7 @@ const FIELD_FOR_REASON: Readonly<Record<string, string>> = Object.freeze({
   [EntryRiskCode.MaxOrderQty]: "quantity",
   [EntryRiskCode.MaxOrderNotional]: "quantity",
   [EntryRiskCode.MaxPositionNotional]: "quantity",
+  [EntryRiskCode.MaxDelta]: "quantity",
   [EntryRiskCode.Collar]: "price",
 });
 

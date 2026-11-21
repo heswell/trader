@@ -126,8 +126,11 @@ export const parseFilterState = (
 export const defaultColumnSets = (
   watchlistColumns: readonly string[],
   screeningColumns: readonly string[],
+  optionColumns: readonly string[] = [],
 ): ColumnSetsState => {
-  if (screeningColumns.length === 0) return NO_COLUMN_SETS;
+  if (screeningColumns.length === 0 && optionColumns.length === 0) {
+    return NO_COLUMN_SETS;
+  }
   const set = (name: string, columns: readonly string[]): ColumnSet => ({
     name,
     columns: [...columns],
@@ -137,7 +140,8 @@ export const defaultColumnSets = (
     activeColumnSet: "Watchlist",
     columnSets: [
       set("Watchlist", watchlistColumns),
-      set("Screening", screeningColumns),
+      ...(screeningColumns.length ? [set("Screening", screeningColumns)] : []),
+      ...(optionColumns.length ? [set("Options", optionColumns)] : []),
     ],
   };
 };

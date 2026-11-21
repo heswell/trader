@@ -100,6 +100,7 @@ export const EXCHANGE_TABLE_NAMES: readonly ExchangeTableName[] = [
   "scenarioRuns",
   "simSession",
   "timeSeriesBuckets",
+  "optionAnalytics",
   "instrumentPrices",
 ];
 export const OMS_TABLE_NAMES: readonly OmsLocalTableName[] = [
@@ -138,6 +139,9 @@ export const LOCAL_EXCHANGE_DEFAULTS: Partial<ExchangeSimConfig> = {
   // futures (front and next quarter) on two stocks and the synthetic US
   // tech index (which brings its constituents' books)
   futures: "AAPL.OQ,VOD.L,STECH",
+  // option chains on a stock and the index: 20 liquid books, the rest
+  // quote-only
+  options: "AAPL.OQ,STECH",
 };
 
 export interface TradingTestDataOptions {
@@ -307,6 +311,7 @@ export const createTradingTestData = ({
   const scenarioRuns = tableFor(exchangeTables.scenarioRuns);
   const simSession = tableFor(exchangeTables.simSession);
   const timeSeriesBuckets = tableFor(exchangeTables.timeSeriesBuckets);
+  const optionAnalytics = tableFor(exchangeTables.optionAnalytics);
   const omsTableMap = forEachTable(
     Object.keys(omsTables) as OmsTableName[],
     (name) => tableFor(omsTables[name]),
@@ -348,6 +353,7 @@ export const createTradingTestData = ({
     scenarioRuns: scenarioRuns.engineTable,
     simSession: simSession.engineTable,
     timeSeriesBuckets: timeSeriesBuckets.engineTable,
+    optionAnalytics: optionAnalytics.engineTable,
   });
   for (const name of Object.keys(omsTableMap) as OmsTableName[]) {
     omsService.tables.attach(name, omsTableMap[name].engineTable);
@@ -432,6 +438,7 @@ export const createTradingTestData = ({
     scenarioRuns,
     simSession,
     timeSeriesBuckets,
+    optionAnalytics,
     instrumentPrices: instrumentPricesJoin,
   };
   const exchangeSchemas = forEachTable(

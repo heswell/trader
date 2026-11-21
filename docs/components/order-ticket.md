@@ -145,7 +145,11 @@ From top to bottom:
   (`limit`) is optional: any other price is the limit (`b 1k vod.l 101 stp 100.5`).
   Chips under the field show how each word was read. Enter fills the ticket and moves to the send
   button; it does not send. Without an instrument the current one is kept. Text with a space is an order line;
-  text without one is a search.
+  text without one is a search. Options: a strike word picks an option, `b 10 aapl 200c jan @ 3.5`
+  ([options.md](options.md#the-option-ticket)).
+- **Options.** On an option the ticket shows its terms, implied vol, delta and premium, points a quote-only strike at
+  the nearest liquid one, and steps the chain with `Alt+↑` / `Alt+↓` (strikes), `Alt+Shift+↑` / `↓` (expiries) and
+  `Alt+C` (call / put). See [options.md](options.md#the-option-ticket).
 - **Validation.**
   - Client side, `validateDraft` uses `validateOrder` and `validateRpcParams("createOrder")` from
     trading-schemas, which cover lot size, tick (tick-band aware), price required and price > 0. Strategy

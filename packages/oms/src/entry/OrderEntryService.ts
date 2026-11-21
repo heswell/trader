@@ -43,6 +43,7 @@ import {
   referencePrice,
   type RiskInstrument,
   riskLimitBreaches,
+  withNearestLiquid,
 } from "../risk/preTradeRisk";
 
 /** The editable fields of an orderEntry row (numbers are 0 when empty). */
@@ -563,13 +564,14 @@ export class OrderEntryService {
             )
           : undefined);
       if (invalid) {
-        messages.push(
-          error(
-            entryFieldForCode(invalid.reason),
-            invalid.reason,
-            invalid.text,
-          ),
+        const { reason, text } = withNearestLiquid(
+          invalid,
+          instrument,
+          instrument.liquid === false
+            ? this.#gateway.nearestLiquidOption?.(draft.ric)
+            : undefined,
         );
+        messages.push(error(entryFieldForCode(reason), reason, text));
       } else if (account?.enabled && !has("account")) {
         const ctx = this.#engine.riskContext(draft.account, draft.ric);
         for (const breach of riskLimitBreaches(
@@ -774,6 +776,11 @@ export class OrderEntryService {
       priceDecimals: extra?.priceDecimals ?? 0,
       contractMultiplier: instrument?.contractMultiplier ?? 1,
       refPrice: instrument?.refPrice ?? 0,
+      underlying: instrument?.underlying ?? "",
+      putCall: instrument?.putCall ?? "",
+      strike: instrument?.strike ?? 0,
+      expiry: instrument?.expiry ?? 0,
+      liquid: instrument?.liquid ?? true,
     };
   }
 

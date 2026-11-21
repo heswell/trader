@@ -42,7 +42,11 @@ EXCHANGE must be registered first.
 
 - `accounts` is seeded with 3 desks, 5 traders and 7 accounts, plus the Sim clients desk (`SIM-CLIENTS`, owner
   `simclient`): `clientAccounts` accounts `CLIENT-01…` with $2m order and $25m position limits, for the client bots.
-  - Each account has `maxOrderQty`, `maxOrderNotional` and `maxPositionNotional`.
+  - Each account has `maxOrderQty`, `maxOrderNotional`, `maxPositionNotional` and `maxDeltaUsd` (seeded equal to
+    `maxPositionNotional`; 0 = no delta limit).
+- Positions carry Greeks: `delta` (quantity × multiplier, × the option's delta for an option), `deltaUsd`, `gamma`
+  and `vegaUsd` (per vol point), from the gateway's `getOptionGreeks` (the sim's model Greeks) and recomputed on every
+  mark to market. A stock or future is delta one: its `deltaUsd` is its market value.
   - `ACC-ASIA-03` is disabled.
   - Owners are `alice` (ACC-US-01), `bob` (ACC-US-02), `carol` (ACC-EU-01), `dave` (ACC-EU-02) and `erin` (ACC-ASIA-01..03).
   - `sam` is a supervisor with no accounts.
@@ -229,8 +233,12 @@ Risk checks run in this order, and the first failure wins. Each returns a `Rejec
 | Stop already reached by the market (STOP / STOP_LIMIT) | `INVALID_STOP_PRICE` |
 | `quantity > maxOrderQty` | `EXCEEDS_MAX_QUANTITY` |
 | Order notional (USD) > `maxOrderNotional` | `EXCEEDS_MAX_NOTIONAL` |
-| LIMIT price outside ±`collarPct` of reference (last, else mid, else refPrice) | `PRICE_OUTSIDE_COLLAR` |
+| LIMIT price outside ±`collarPct` of reference (last, else mid, else refPrice); for options at least 50% and 10 ticks (`collarWidth`) | `PRICE_OUTSIDE_COLLAR` |
 | Projected position notional > `maxPositionNotional` (only when the order increases exposure) | `EXCEEDS_MAX_NOTIONAL`. The text says "projected position". There is no dedicated code. |
+| Net delta (USD) on the underlying > `maxDeltaUsd` (only when the order adds to it): the `deltaUsd` of the account's positions in the stock or index, its futures and its options, plus the order's (an option's model delta × forward × multiplier) | `EXCEEDS_MAX_DELTA` |
+
+A quote-only option (`liquid` false) is rejected by `validateOrder` (`RESTRICTED_INSTRUMENT`); the text names the
+nearest liquid strike of the same expiry and right (gateway `nearestLiquidOption`).
 
 - Account limits are in **USD**. Notional is converted with the instrument's `usdPerPriceUnit` (for example GBX
   prices are in pence). Table `notional` columns stay in instrument currency.

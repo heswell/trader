@@ -103,6 +103,34 @@ export const futuresRosterFor = (
   { kind: INFORMED.kind, count: 1, params: { alwaysOn: true } },
 ];
 
+/** Noise takers on each liquid option (fewer than on a stock). */
+export const OPTION_TAKERS = 2;
+
+/**
+ * A liquid option's roster: `mmPerInstrument` market makers quoting at
+ * least `halfSpreadTicks` (the vega-based minimum width; each maker one
+ * tick wider than the last), a couple of noise takers, and an always-on
+ * informed bot that trades the book back towards the model price when it
+ * drifts more than `thresholdBps` away.
+ */
+export const optionsRosterFor = (
+  config: ExchangeSimConfig,
+  halfSpreadTicks: number,
+  thresholdBps: number,
+): Roster => [
+  ...Array.from({ length: config.mmPerInstrument }, (_, i) => ({
+    kind: MARKET_MAKER.kind,
+    count: 1,
+    params: { levels: config.mmLevels, halfSpreadTicks: halfSpreadTicks + i },
+  })),
+  { kind: NOISE_TAKER.kind, count: OPTION_TAKERS },
+  {
+    kind: INFORMED.kind,
+    count: 1,
+    params: { alwaysOn: true, thresholdBps },
+  },
+];
+
 export { hashString };
 
 /** One bot: the n-th of its kind on the instrument. */
@@ -151,11 +179,15 @@ export const createBots = (
   baseQty: number,
 ): Bot[] => {
   const bots: Bot[] = [];
+  // numbered per kind across entries, so two entries of a kind don't clash
+  const counts = new Map<BotKind, number>();
   for (const { kind, count, params } of roster) {
     const def = botKindDef(kind);
     if (!def) throw Error(`unknown bot kind ${kind}`);
-    for (let n = 1; n <= count; n++)
+    const first = counts.get(kind) ?? 0;
+    for (let n = first + 1; n <= first + count; n++)
       bots.push(createBot(def, n, book, rng, baseQty, params));
+    counts.set(kind, first + count);
   }
   return sortBots(bots);
 };

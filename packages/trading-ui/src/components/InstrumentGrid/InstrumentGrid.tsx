@@ -112,6 +112,7 @@ import {
 } from "./columnSetScope";
 import {
   instrumentGridColumns,
+  OPTIONS_SET_COLUMNS,
   SCREENING_SET_COLUMNS,
   SPARKLINE_COLUMN,
 } from "./instrumentGridColumns";
@@ -429,6 +430,9 @@ const InstrumentGridInner = forwardRef<
         visible.map(({ name }) => name),
         available.includes("marketCapUsd")
           ? SCREENING_SET_COLUMNS.filter((name) => available.includes(name))
+          : [],
+        available.includes("strike")
+          ? OPTIONS_SET_COLUMNS.filter((name) => available.includes(name))
           : [],
       ),
   );

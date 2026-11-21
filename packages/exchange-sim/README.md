@@ -50,6 +50,7 @@ serverConfig.withModule(ExchangeModule(sim));   // starts ticking once its table
 | `instrumentPrices` | `ric` | A join of instruments and prices. |
 | `bars` | `ric\|interval\|start` | OHLCV candles per instrument and `barIntervals` interval (`1s`, `1m`, `5m`), built from trades. The current bar updates in place on each flush; `barHistory` closed bars are kept per series (oldest deleted). Intervals are exchange-clock (wall) time; intervals with no trades are gaps. `barBackfill` seeds synthetic history at startup. |
 | `timeSeriesBuckets` | `subId\|field\|bucket` | M4 buckets (first / min / max / last and their times) of each time-series subscription, opened and moved by `setTimeSeriesWindow`, closed by `closeTimeSeries` or after a 60 s lease. A client filters a viewport on its `subId`. See docs/timeseries-downsampling.md. |
+| `optionAnalytics` | `ric` | Every `optionAnalyticsIntervalMs`, each listed option's model value (`theo`) and Greeks: Black-76 on the forward at the surface vol. `impliedVol` is the vol implied by the book's mid (a liquid strike) or the theoretical quote's; vols are as priced on the sim's clock and `baseVol` divides by √`timeScale`. Vega is per vol point, theta per calendar day. |
 | `bookSamples` | `ric\|time` | Every `bookSampleIntervalMs`, a snapshot of each book's published top 5 levels: bid/ask/mid, spreadBps, touch sizes, top-5 cumulative depth, imbalance. `bookSampleHistory` samples per instrument. |
 
 See [docs/charting-data.md](../../docs/charting-data.md) for the chart data semantics.
@@ -113,6 +114,39 @@ nothing visible changed.
   `S × exp(futuresCarryRate × τ)`, times a basis that mean-reverts (sd `futuresBasisBps`, half-life
   `futuresBasisHalfLifeSec`); impact on a future goes into that basis. The roster is the equity one
   plus an always-on informed bot that trades the future back towards fair.
+- **Options** (off by default). `options` lists equity rics or
+  synthetic indices. Each gets European options on the next `optionsExpiries` (2) monthly expiries (third Friday at
+  `sessionClose`), calls and puts on `optionsStrikes` (10) strikes each side of at-the-money. Strikes step by a 1 / 2 /
+  2.5 / 5 number near 2.5% of spot (`AAPL.OQ` at 175: 5). Rics are the root, the strike, a month letter (calls A–L,
+  puts M–X) and the year digit: `AAPL200L6` is the Dec 2026 200 call, `AAPL200X6` the put; a decimal point in the
+  strike is written `D`. The contract has the futures multiplier (100 shares, 1000 for GBX; per point on an index), a
+  premium tick of 0.01 (0.5 GBX, 0.05 index points). Stock underlyings get a book; an index prices off its level.
+  - **Pricing.** Every option is priced with Black-76 on spot carried to expiry (`futuresCarryRate`), at a vol
+    surface around the underlying's own volatility (an index's basket vol): `atm + (optionsSkew × k + optionsSmile ×
+    k²) / 100` vol points with `k = ln(K/F)` (flat beyond ±1), the same for every expiry. The vol is scaled by
+    √`timeScale` so options price the moves the sim actually makes before expiry. Reference prices are the model
+    values at startup.
+  - **Liquid strikes.** The nearest `optionsBookStrikes` (2) strikes each side in the first `optionsBookExpiries`
+    (1) expiries get a book: 10 per underlying. The book's fair value is the model price; its noise (sd
+    `optionsVolNoiseBps` of vol, half-life `optionsVolHalfLifeSec`) and trade impact shift the option's vol, not its
+    premium, and the price band follows the premium. The roster is `mmPerInstrument` market makers quoting at least
+    `optionsMinWidthVolPts` (1) vol point wide (by vega), two noise takers at a quarter of `takerRate`, and an
+    always-on informed bot that trades the book back to the model.
+  - **Quote-only strikes.** The rest have no book: each flush writes a theoretical bid / ask to `prices` (the model
+    price ± the same vega width, at least two ticks each side; no bid when it would be zero), and `validateOrder`
+    rejects orders as `RESTRICTED_INSTRUMENT`.
+  - **Re-centring.** When spot moves to another strike, the new nearest strikes get books at runtime (`liquid`
+    becomes true, a `LISTED` instrument event goes out); books are never removed. At `optionsMaxBooks` (20) per
+    underlying no more are added and an `optionsMaxBooks` simEvent records it.
+  - **Expiry.** At the front expiry's time (`sessionClose` on the third Friday) every strike of that month expires
+    at once and settles in cash at intrinsic value against the underlying's fair value or index level (on tick; 0
+    out of the money). Liquid books close for good (`CLOSED`, `haltReason` "expired") and their resting orders
+    expire; quote-only rows lose their bid / ask; each option's `settlementPrice` is published and an `EXPIRED`
+    instrument event goes out, on which the OMS settles positions with a SETTLEMENT fill. The next monthly expiry
+    is then listed (strikes around spot now, quote-only) and the new front month's nearest strikes get books.
+    `expireOptions(underlying)` does the same on demand. Expired options are not restored after a restart.
+  - **Gateway.** `getOptionGreeks(ric)` returns an option's model delta, gamma, vega and forward (the OMS's position
+    Greeks and delta limit), and `nearestLiquidOption(ric)` the liquid strike nearest a quote-only one.
 - **Continuations.** Each underlying with futures gets continuation rics `c1..cN` (root + `c` + position: `AZNc1`
   is the front month, `AZNc2` the next; `STECHc1`). A continuation copies its contract's static data (instrument type
   `CONTINUATION`, `contract` names the contract) and has no book: its `prices` row mirrors the contract's on every
@@ -217,6 +251,18 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | `indices` | `""` | Comma-separated synthetic indices to publish (`STECH`, `SUK`); their constituents get books. |
 | `futures` | `""` | Comma-separated equity rics or synthetic indices to list futures on (each future and its underlying, or the index's constituents, get a book). |
 | `futuresContracts` | 2 | Quarterly contracts listed per underlying. |
+| `options` | `""` | Comma-separated equity rics or synthetic indices to list options on. |
+| `optionsExpiries` | 2 | Monthly option expiries listed per underlying. |
+| `optionsStrikes` | 10 | Strikes listed each side of at-the-money. |
+| `optionsBookStrikes` | 2 | Strikes each side of at-the-money that are liquid (get a book). |
+| `optionsBookExpiries` | 1 | Nearest expiries whose liquid strikes get a book. |
+| `optionsMaxBooks` | 20 | Most option books per underlying (re-centring stops adding books). |
+| `optionsSkew` | -20 | Put skew of the vol surface: vol points per unit of `ln(K/F)`. |
+| `optionsSmile` | 50 | Smile of the vol surface: vol points per unit of `ln(K/F)` squared. |
+| `optionsVolNoiseBps` | 200 | Standard deviation of a liquid option's vol noise around the surface (bps of vol). |
+| `optionsVolHalfLifeSec` | 60 | Half-life of that noise and of trade impact on an option (wall-clock s). |
+| `optionsMinWidthVolPts` | 1 | Narrowest option quote, in vol points (market makers and quote-only strikes). |
+| `optionAnalyticsIntervalMs` | 500 | Interval of the `optionAnalytics` table (ms); 0 disables. |
 | `futuresCarryRate` | 0.03 | Annual carry of futures fair value over spot. |
 | `futuresBasisBps` | 3 | Standard deviation of the futures basis noise (bps). |
 | `futuresBasisHalfLifeSec` | 60 | Half-life of the basis noise and of impact on a future (wall-clock s). |

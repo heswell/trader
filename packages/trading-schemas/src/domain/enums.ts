@@ -73,9 +73,22 @@ export const InstrumentType = Object.freeze({
    * takes no orders.
    */
   Continuation: "CONTINUATION",
+  /**
+   * A European option on a stock or an index, cash settled at intrinsic
+   * value. Only liquid strikes have a book; the rest are quote-only.
+   */
+  Option: "OPTION",
 } as const);
 export type InstrumentType = ValueOf<typeof InstrumentType>;
 export const INSTRUMENT_TYPES = values(InstrumentType);
+
+/** Option right (instruments.putCall). */
+export const PutCall = Object.freeze({
+  Call: "CALL",
+  Put: "PUT",
+} as const);
+export type PutCall = ValueOf<typeof PutCall>;
+export const PUT_CALL_VALUES = values(PutCall);
 
 /** FIX OrdStatus (tag 39) subset. */
 export const OrdStatus = Object.freeze({
@@ -225,6 +238,8 @@ export const RejectReason = Object.freeze({
   InvalidLotSize: "INVALID_LOT_SIZE",
   ExceedsMaxQuantity: "EXCEEDS_MAX_QUANTITY",
   ExceedsMaxNotional: "EXCEEDS_MAX_NOTIONAL",
+  /** Net delta on the underlying would exceed the account's maxDeltaUsd. */
+  ExceedsMaxDelta: "EXCEEDS_MAX_DELTA",
   PriceOutsideCollar: "PRICE_OUTSIDE_COLLAR",
   RestrictedInstrument: "RESTRICTED_INSTRUMENT",
   InstrumentHalted: "INSTRUMENT_HALTED",

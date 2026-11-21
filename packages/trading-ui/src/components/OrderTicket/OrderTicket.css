@@ -250,6 +250,46 @@
   font-family: var(--tradingOrderTicket-mono);
 }
 
+/* options: terms, implied vol, delta, premium; quote-only pointer */
+.tradingOrderTicket-option {
+  align-items: baseline;
+  color: var(--tradingOrderTicket-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  gap: 1px 8px;
+}
+.tradingOrderTicket-option b {
+  color: var(--tradingOrderTicket-fg);
+  font-family: var(--tradingOrderTicket-mono);
+}
+.tradingOrderTicket-option[data-notice] {
+  color: var(--tradingOrderTicket-warn);
+}
+.tradingOrderTicket-quoteOnly {
+  align-items: baseline;
+  color: var(--tradingOrderTicket-err);
+  display: inline-flex;
+  flex-basis: 100%;
+  gap: 6px;
+}
+.tradingOrderTicket-nearestLiquid {
+  background: none;
+  border: none;
+  color: var(--tradingOrderTicket-accent);
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-decoration: underline;
+}
+.tradingOrderTicket-optionKeys {
+  margin-left: auto;
+}
+.tradingOrderTicket-optionKeys kbd {
+  font-family: var(--tradingOrderTicket-mono);
+  font-size: 10px;
+}
+
 .tradingOrderTicket-description {
   flex-basis: 100%;
   overflow: hidden;

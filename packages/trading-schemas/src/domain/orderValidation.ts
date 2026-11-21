@@ -1,6 +1,7 @@
 import {
   InstrumentType,
   OrdType,
+  type PutCall,
   RejectReason,
   SUPPORTED_ORD_TYPES,
   TimeInForce,
@@ -12,7 +13,7 @@ import {
   Side,
   type TimeInForce as TIF,
 } from "./enums";
-import { isOnTick, isValidLot, tickScheduleOf } from "./ticks";
+import { isOnTick, isValidLot, tickScheduleOf, tickSizeAt } from "./ticks";
 
 /** Instrument static needed for order validation (subset of InstrumentRow). */
 export interface InstrumentStatic {
@@ -27,13 +28,22 @@ export interface InstrumentStatic {
   /** EQUITY when absent. */
   instrumentType?: InstrumentType;
   /**
-   * Futures and continuations: ric of the underlying instrument (an equity
+   * Futures, continuations and options: ric of the underlying instrument (an equity
    * or an index).
    */
   underlying?: string;
   /** Continuation: ric of the contract it currently points at. */
   contract?: string;
-  /** Futures: last trading time (epoch ms). */
+  /** Options: CALL or PUT. */
+  putCall?: PutCall;
+  /** Options: strike, in the price currency. */
+  strike?: number;
+  /**
+   * Options: true when the strike has an order book. A quote-only strike
+   * (false) shows model prices and takes no orders.
+   */
+  liquid?: boolean;
+  /** Futures and options: last trading time (epoch ms). */
   expiry?: number;
   /** Futures: final settlement price, set once the contract has expired. */
   settlementPrice?: number;
@@ -214,6 +224,15 @@ export const validateOrder = (
       `${instrument.ric} is a continuation: trade ${instrument.contract || "the contract"}`,
     );
   }
+  if (
+    instrument.instrumentType === InstrumentType.Option &&
+    instrument.liquid === false
+  ) {
+    return reject(
+      RejectReason.RestrictedInstrument,
+      `${instrument.ric} is quote-only: trade a liquid strike`,
+    );
+  }
   if (phase === TradingPhase.Halted) {
     return reject(RejectReason.InstrumentHalted, `${instrument.ric} is halted`);
   }
@@ -336,3 +355,48 @@ export const validateAmend = (
     return validateStopLimitPrices(original.side, price, stopPrice);
   }
 };
+
+/**
+ * Options: the least price collar, as a fraction of the reference price.
+ * A premium moves several times as much as its underlying (and a cheap
+ * wing many times), so the equity collar would refuse ordinary orders.
+ */
+export const OPTION_COLLAR_PCT = 0.5;
+/** Options: the collar is never narrower than this many ticks. */
+export const OPTION_COLLAR_TICKS = 10;
+
+/**
+ * Widest distance a limit price may sit from the reference price: `ref`
+ * × collarPct, and for an option at least OPTION_COLLAR_PCT of it and
+ * OPTION_COLLAR_TICKS ticks.
+ */
+export const collarWidth = (
+  instrument: Pick<
+    InstrumentStatic,
+    "instrumentType" | "tickSize" | "tickBands"
+  >,
+  ref: number,
+  collarPct: number,
+) => {
+  if (instrument.instrumentType !== InstrumentType.Option) {
+    return ref * collarPct;
+  }
+  const tick = tickSizeAt(tickScheduleOf(instrument), ref);
+  return Math.max(
+    ref * Math.max(collarPct, OPTION_COLLAR_PCT),
+    tick * OPTION_COLLAR_TICKS,
+  );
+};
+
+/** True when a limit `price` is outside the collar around `ref`. */
+export const isOutsideCollar = (
+  instrument: Pick<
+    InstrumentStatic,
+    "instrumentType" | "tickSize" | "tickBands"
+  >,
+  price: number,
+  ref: number,
+  collarPct: number,
+) =>
+  ref > 0 &&
+  Math.abs(price - ref) > collarWidth(instrument, ref, collarPct) + 1e-9;

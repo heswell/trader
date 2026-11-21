@@ -8,12 +8,16 @@ import {
   activityAt,
   BotType,
   ExecType,
+  intrinsicValue,
   OrdType,
+  PutCall,
   RejectReason,
   roundToLot,
   roundToTick,
   tickSizeAt,
   type SessionSchedule,
+  type TickSchedule,
+  tickScheduleOf,
   TradingPhase,
   VOLUME_PROFILES,
   type VolumeProfileName,
@@ -47,6 +51,14 @@ import {
   withFutures,
 } from "../reference/futures";
 import {
+  isOption,
+  listOptions,
+  monthlyExpiries,
+  optionRic,
+  strikeGrid,
+  toOptionDef,
+} from "../reference/options";
+import {
   indexLevel,
   isIndex,
   isIndexRic,
@@ -61,6 +73,17 @@ import {
 import { type Timer, TimerRegistry } from "@heswell/trading-metrics";
 import { ControlPublisher } from "../publish/ControlPublisher";
 import { SimAdminPublisher } from "../publish/SimAdminPublisher";
+import {
+  type OptionAnalytics,
+  OptionAnalyticsPublisher,
+} from "../publish/OptionAnalyticsPublisher";
+import {
+  OptionPricer,
+  type OptionTerms,
+  optionTerms,
+  premiumVolatility,
+  type Spot,
+} from "./OptionPricer";
 import { type Clock, systemClock } from "../util/clock";
 import { Random } from "../util/random";
 import { generateBackfillBars } from "./barBackfill";
@@ -84,6 +107,7 @@ import {
   parseExtraBots,
   futuresRosterFor,
   hashString,
+  optionsRosterFor,
   rosterFor,
   sortBots,
 } from "./bots/roster";
@@ -170,13 +194,38 @@ interface IndexState {
   refs: number[];
 }
 
-/** What a future anchors on: a stock's fair value or an index level. */
-interface Spot {
-  price(): number;
-  /** Price to list the next contract from (on tick for a stock). */
-  listPrice(): number;
-  volatility: number;
+/** One option of a chain, with what pricing it needs. */
+interface ChainOption {
+  ric: string;
+  terms: OptionTerms;
+  schedule: TickSchedule;
 }
+
+/** The listed options on one underlying and its liquid core. */
+interface OptionChain {
+  underlying: string;
+  pricer: OptionPricer;
+  /** Live (unexpired) options. */
+  options: ChainOption[];
+  /** Live expiries, nearest first. */
+  expiries: number[];
+  /** Expiries whose nearest strikes get books, nearest first. */
+  bookExpiries: number[];
+  /** Strikes listed in those expiries, ascending. */
+  strikes: number[];
+  /** Strike nearest spot when books were last checked (NaN before). */
+  centre: number;
+  books: number;
+  /** optionsMaxBooks was hit (recorded once). */
+  capped: boolean;
+}
+
+/** An option book's band: premiums move far more than stocks in a session. */
+const OPTION_BAND_PCT = 0.5;
+/** Share of the stock taker rate each liquid option gets. */
+const OPTION_TAKER_SHARE = 0.25;
+/** Lowest informed-bot threshold on an option, bps of premium. */
+const OPTION_INFORMED_BPS = 20;
 
 export interface SessionStatus {
   /** Current market-wide phase (halted books keep HALTED on top of this). */
@@ -203,6 +252,9 @@ export class ExchangeSimulator {
   readonly #liveFutures: SimulatedInstrument[] = [];
   /** Listed synthetic indices, by ric. */
   readonly #indices = new Map<string, IndexState>();
+  /** Option chains, by underlying ric. */
+  readonly #chains = new Map<string, OptionChain>();
+  #optionAnalytics: OptionAnalyticsPublisher | undefined;
   /** Futures last-trading time of day, "HH:MM" UTC. */
   readonly #expiryTime: string;
   readonly gateway: SimExchangeGateway;
@@ -262,9 +314,11 @@ export class ExchangeSimulator {
     this.clock = clock;
     this.#expiryTime = this.config.sessionClose || "16:30";
     const futureUnderlyings = splitList(this.config.futures);
+    const optionUnderlyings = splitList(this.config.options);
     const indices = listIndices(universe, [
       ...splitList(this.config.indices),
       ...futureUnderlyings.filter(isIndexRic),
+      ...optionUnderlyings.filter(isIndexRic),
     ]);
     const futures = listFutures(
       [...universe, ...indices],
@@ -276,13 +330,32 @@ export class ExchangeSimulator {
         expiryTime: this.#expiryTime,
       },
     );
-    this.#universe = [...universe, ...indices, ...futures];
+    const options = listOptions(
+      [...universe, ...indices],
+      optionUnderlyings,
+      clock(),
+      {
+        expiries: this.config.optionsExpiries,
+        strikes: this.config.optionsStrikes,
+        bookStrikes: this.config.optionsBookStrikes,
+        bookExpiries: this.config.optionsBookExpiries,
+        carryRate: this.config.futuresCarryRate,
+        expiryTime: this.#expiryTime,
+        vol:
+          this.config.defaultVolatility > 0
+            ? this.config.defaultVolatility
+            : undefined,
+      },
+    );
+    this.#universe = [...universe, ...indices, ...futures, ...options];
     for (const instrument of this.#universe)
       this.#listed.set(instrument.ric, instrument);
 
     // listed futures always get a book (with their underlyings), indices
     // their constituents' books; the rest of the selection is equities only
-    const derived = new Set([...indices, ...futures].map((i) => i.ric));
+    const derived = new Set(
+      [...indices, ...futures, ...options].map((i) => i.ric),
+    );
     const rics = splitList(this.config.instruments);
     const equityRics = rics.filter((ric) => !derived.has(ric));
     const active = withFutures(
@@ -300,11 +373,22 @@ export class ExchangeSimulator {
       futures,
       this.#universe,
     );
+    // option underlyings that are stocks get a book (an index's constituents
+    // already have one); the options themselves are listed only
+    const activeRics = new Set(active.map((i) => i.ric));
+    for (const ric of new Set(options.map((o) => o.underlying ?? ""))) {
+      const stock = universe.find((i) => i.ric === ric);
+      if (stock && !isIndex(stock) && !activeRics.has(ric)) {
+        active.push(stock);
+        activeRics.add(ric);
+      }
+    }
     const rng = new Random(this.config.seed);
     for (const [i, instrument] of active.entries()) {
       this.#addInstrument(instrument, rng.fork(i));
     }
     for (const index of indices) this.#indexState(index.ric);
+    this.#listOptionChains(options);
     for (const ric of new Set(futures.map((f) => f.underlying ?? "")))
       this.#relistContinuations(ric);
     this.gateway = new SimExchangeGateway({
@@ -313,6 +397,8 @@ export class ExchangeSimulator {
       getBook: (ric) => this.#simulated.get(ric)?.book,
       getSessionSchedule: () => this.sessionSchedule,
       onTape: (listener) => this.onTape(listener),
+      optionValue: (ric) => this.optionValue(ric),
+      optionChain: (underlying) => this.optionChain(underlying),
       timers: this.timers,
     });
     this.session = new TradingSession(this.config);
@@ -329,16 +415,28 @@ export class ExchangeSimulator {
     const underlying = isFuture(instrument)
       ? this.#spotOf(instrument.underlying ?? "")
       : undefined;
+    const pricer = isOption(instrument)
+      ? this.#chains.get(instrument.underlying ?? "")?.pricer
+      : undefined;
+    const terms = pricer ? optionTerms(instrument) : undefined;
+    const option =
+      pricer && terms
+        ? { pricer, terms, value: pricer.value(terms, this.clock()) }
+        : undefined;
     const drawn =
       config.defaultVolatility > 0
         ? config.defaultVolatility
         : rng.uniform(0.2, 0.5);
-    // a future is as volatile as its underlying
-    const volatility = underlying?.volatility ?? drawn;
+    // a future is as volatile as its underlying, an option's premium more
+    const volatility = option
+      ? premiumVolatility(option.value, option.pricer.spot.volatility)
+      : (underlying?.volatility ?? drawn);
     const book = new InstrumentBook(
       instrument,
       volatility,
-      config.priceBandPct,
+      option
+        ? Math.max(config.priceBandPct, OPTION_BAND_PCT)
+        : config.priceBandPct,
       this.clock,
       (b, trade) => this.#onTrade(b, trade),
     );
@@ -372,14 +470,28 @@ export class ExchangeSimulator {
         halfLifeSec: futuresBasisHalfLifeSec,
       };
     }
-    const bots = createBots(
-      underlying
-        ? futuresRosterFor(config, this.#extraBots, instrument.sector)
-        : rosterFor(config, this.#extraBots, instrument.sector),
-      book,
-      botRng,
-      baseQty,
-    );
+    let roster = underlying
+      ? futuresRosterFor(config, this.#extraBots, instrument.sector)
+      : rosterFor(config, this.#extraBots, instrument.sector);
+    if (option) {
+      // the premium follows the model; noise and impact go into its vol
+      const { pricer: p, terms: t } = option;
+      const withBasis = (basis: number) => p.price(t, this.clock(), basis);
+      book.model.anchor = {
+        price: () => withBasis(0),
+        withBasis,
+        basisBps: config.optionsVolNoiseBps,
+        halfLifeSec: config.optionsVolHalfLifeSec,
+        trackBand: true,
+      };
+      const tickBps = (instrument.tickSize / instrument.refPrice) * 1e4;
+      roster = optionsRosterFor(
+        config,
+        p.halfWidthTicks(option.value, book.schedule),
+        Math.max(OPTION_INFORMED_BPS, Math.ceil(tickBps * 1.5)),
+      );
+    }
+    const bots = createBots(roster, book, botRng, baseQty);
     this.#simulated.set(instrument.ric, {
       book,
       bots,
@@ -394,7 +506,9 @@ export class ExchangeSimulator {
       baseQty,
       modelRng: rng.fork(300),
       mmRate: config.mmRate,
-      takerRate: config.takerRate,
+      takerRate: option
+        ? config.takerRate * OPTION_TAKER_SHARE
+        : config.takerRate,
       activity: 1,
       noise: { rng: rng.fork(400), day: undefined, level: 0, wander: 0 },
     });
@@ -403,6 +517,341 @@ export class ExchangeSimulator {
       this.#liveFutures.push(
         this.#simulated.get(instrument.ric) as SimulatedInstrument,
       );
+  }
+
+  /**
+   * Price each underlying's listed options off its spot (the reference
+   * prices become model values at the surface vol), then book the liquid
+   * core: the nearest optionsBookStrikes each side in the front
+   * optionsBookExpiries expiries.
+   */
+  #listOptionChains(options: readonly InstrumentDef[]) {
+    const { config } = this;
+    const now = this.clock();
+    for (const ric of new Set(options.map((o) => o.underlying ?? ""))) {
+      const spot = this.#spotOf(ric);
+      if (!spot) continue;
+      const pricer = new OptionPricer(ric, spot, {
+        surface: { skew: config.optionsSkew, smile: config.optionsSmile },
+        carryRate: config.futuresCarryRate,
+        volScale: Math.sqrt(config.timeScale),
+        minWidthVolPts: config.optionsMinWidthVolPts,
+      });
+      const chain: OptionChain = {
+        underlying: ric,
+        pricer,
+        options: [],
+        expiries: [],
+        bookExpiries: [],
+        strikes: [],
+        centre: Number.NaN,
+        books: 0,
+        capped: false,
+      };
+      this.#addChainOptions(
+        chain,
+        options.filter((o) => o.underlying === ric),
+        now,
+      );
+      this.#chains.set(ric, chain);
+      this.#recentreChain(chain, now, false);
+    }
+  }
+
+  /**
+   * Add listed options to a chain, priced off its spot now: the reference
+   * price becomes the model value and the option starts quote-only.
+   * Already-listed defs are replaced, new ones listed (and published).
+   */
+  #addChainOptions(
+    chain: OptionChain,
+    defs: readonly InstrumentDef[],
+    now: number,
+  ) {
+    for (const def of defs) {
+      const terms = optionTerms(def);
+      if (!terms) continue;
+      const schedule = tickScheduleOf(def);
+      const price = chain.pricer.price(terms, now);
+      const priced: InstrumentDef = {
+        ...def,
+        refPrice: Math.max(def.tickSize, roundToTick(price, schedule)),
+        liquid: false,
+      };
+      if (this.#listed.get(def.ric) === def) this.#replaceDef(def, priced);
+      else {
+        this.#listed.set(priced.ric, priced);
+        this.#universe.push(priced);
+        this.#publisher?.addInstrument(priced, true);
+      }
+      chain.options.push({ ric: def.ric, terms, schedule });
+    }
+    chain.expiries = [
+      ...new Set(chain.options.map((o) => o.terms.expiry ?? 0)),
+    ].sort((a, b) => a - b);
+    chain.bookExpiries = chain.expiries.slice(
+      0,
+      this.config.optionsBookExpiries,
+    );
+    chain.strikes = [
+      ...new Set(
+        chain.options
+          .filter((o) => chain.bookExpiries.includes(o.terms.expiry ?? 0))
+          .map((o) => o.terms.strike),
+      ),
+    ].sort((a, b) => a - b);
+    chain.centre = Number.NaN;
+  }
+
+  /** Expire every option expiry whose last trading time has passed. */
+  #expireDueOptions(now: number) {
+    for (const chain of this.#chains.values())
+      while (chain.expiries.length > 0 && chain.expiries[0] <= now)
+        this.expireOptions(chain.underlying, now);
+  }
+
+  /**
+   * Expire the front expiry of an underlying's options now, all strikes at
+   * once: each settles in cash at intrinsic value against the underlying's
+   * fair value or index level (on tick; 0 out of the money). Liquid books
+   * close for good and their resting orders expire; every option gets an
+   * EXPIRED event (the OMS settles positions). Then the next monthly
+   * expiry is listed and the new front month's nearest strikes get books.
+   * Called by step() at the expiry time. Returns the settlement prices.
+   */
+  expireOptions(
+    underlying: string,
+    now = this.clock(),
+  ): ReadonlyMap<string, number> {
+    const chain = this.#chains.get(underlying);
+    if (!chain || chain.expiries.length === 0) {
+      throw new ExchangeAdminError(
+        RejectReason.UnknownInstrument,
+        `${underlying} has no listed options`,
+      );
+    }
+    const expiry = chain.expiries[0];
+    const spot = chain.pricer.spot.price();
+    const settlements = new Map<string, number>();
+    for (const { ric, terms, schedule } of chain.options) {
+      if (terms.expiry !== expiry) continue;
+      const def = this.#listed.get(ric) as InstrumentDef;
+      const settlementPrice = roundToTick(
+        intrinsicValue(terms.putCall, spot, terms.strike),
+        schedule,
+      );
+      const sim = this.#simulated.get(ric);
+      if (sim) {
+        const { book } = sim;
+        book.settlementPrice = settlementPrice;
+        book.phase = TradingPhase.Closed;
+        book.haltReason = "expired";
+        book.dirty = true;
+        for (const bot of sim.bots) bot.pull();
+        this.gateway.expireAllOrders(ric, `${ric} expired`);
+        chain.books--;
+      } else {
+        this.#publisher?.publishQuote(
+          def,
+          undefined,
+          undefined,
+          TradingPhase.Closed,
+          now,
+        );
+      }
+      this.#replaceDef(def, { ...def, settlementPrice });
+      this.#optionAnalytics?.remove(ric);
+      settlements.set(ric, settlementPrice);
+      this.gateway.emitInstrumentEvent({
+        type: "EXPIRED",
+        ric,
+        settlementPrice,
+        timestamp: now,
+      });
+    }
+    chain.options = chain.options.filter((o) => o.terms.expiry !== expiry);
+    chain.expiries = chain.expiries.filter((e) => e !== expiry);
+    chain.capped = false;
+    this.#listNextExpiries(chain, now);
+    this.#recentreChain(chain, now, true);
+    return settlements;
+  }
+
+  /**
+   * List monthly expiries after the last one listed until the chain has
+   * optionsExpiries again: strikes around spot now, quote-only.
+   */
+  #listNextExpiries(chain: OptionChain, now: number) {
+    const { config } = this;
+    const underlying = this.#listed.get(chain.underlying);
+    const defs: InstrumentDef[] = [];
+    let latest = Math.max(now, ...chain.expiries);
+    let count = chain.expiries.length;
+    if (underlying) {
+      const spot = chain.pricer.spot.listPrice();
+      const listFrom = { ...underlying, refPrice: spot };
+      while (count < config.optionsExpiries) {
+        const [expiry] = monthlyExpiries(latest, 1, this.#expiryTime);
+        for (const strike of strikeGrid(spot, config.optionsStrikes)) {
+          for (const putCall of [PutCall.Call, PutCall.Put]) {
+            const def = toOptionDef(listFrom, putCall, strike, expiry, now, {
+              carryRate: config.futuresCarryRate,
+            });
+            // ten years on the ric comes round again: keep the old listing
+            if (!this.#listed.has(def.ric)) defs.push(def);
+          }
+        }
+        latest = expiry;
+        count++;
+      }
+    }
+    this.#addChainOptions(chain, defs, now);
+  }
+
+  /** Swap a listed def for an updated one (republished once attached). */
+  #replaceDef(prev: InstrumentDef, next: InstrumentDef) {
+    this.#listed.set(next.ric, next);
+    const i = this.#universe.indexOf(prev);
+    if (i >= 0) this.#universe[i] = next;
+    else this.#universe.push(next);
+    this.#publisher?.updateInstrument(next, true);
+  }
+
+  /**
+   * Book the options nearest spot when it has moved to another strike:
+   * the nearest optionsBookStrikes each side, calls and puts, in each
+   * book expiry. Books are never removed; at optionsMaxBooks per
+   * underlying no more are added and a simEvent records it once.
+   */
+  #recentreChain(chain: OptionChain, now: number, runtime: boolean) {
+    const { strikes } = chain;
+    if (strikes.length === 0) return;
+    const spot = chain.pricer.spot.listPrice();
+    let centre = 0;
+    for (let i = 1; i < strikes.length; i++)
+      if (Math.abs(strikes[i] - spot) < Math.abs(strikes[centre] - spot))
+        centre = i;
+    if (strikes[centre] === chain.centre) return;
+    chain.centre = strikes[centre];
+    const { optionsBookStrikes, optionsMaxBooks } = this.config;
+    const wanted = strikes.slice(
+      Math.max(0, centre - optionsBookStrikes),
+      centre + optionsBookStrikes + 1,
+    );
+    for (const expiry of chain.bookExpiries) {
+      if (expiry <= now) continue;
+      for (const strike of wanted) {
+        for (const putCall of [PutCall.Call, PutCall.Put]) {
+          const ric = optionRic(chain.underlying, putCall, strike, expiry);
+          const def = this.#listed.get(ric);
+          if (!def || this.#simulated.has(ric)) continue;
+          if (chain.books >= optionsMaxBooks) {
+            if (!chain.capped && runtime)
+              this.control.record(
+                "optionsMaxBooks",
+                chain.underlying,
+                { books: chain.books, spot, unbooked: ric },
+                { user: "options" },
+              );
+            chain.capped = true;
+            return;
+          }
+          this.#addOptionBook(chain, def, now, runtime);
+        }
+      }
+    }
+  }
+
+  /** Give a quote-only option a book and its bots; it is liquid from now on. */
+  #addOptionBook(
+    chain: OptionChain,
+    def: InstrumentDef,
+    now: number,
+    runtime: boolean,
+  ) {
+    const liquid: InstrumentDef = { ...def, liquid: true };
+    this.#replaceDef(def, liquid);
+    this.#addInstrument(
+      liquid,
+      new Random(this.config.seed).fork(hashString(def.ric)),
+    );
+    chain.books++;
+    if (!runtime) return;
+    const sim = this.#simulated.get(def.ric) as SimulatedInstrument;
+    sim.book.phase = this.#marketPhase;
+    this.#publisher?.dropQuote(def.ric);
+    this.#publisher?.l3?.attach([sim.book]);
+    this.#simAdmin?.loadBotParams([sim]);
+    this.#simAdmin?.botsChanged(sim);
+    this.gateway.emitInstrumentEvent({
+      type: "LISTED",
+      ric: def.ric,
+      timestamp: now,
+    });
+  }
+
+  /** The option chain on `underlying`, if one is listed. */
+  optionChain(underlying: string): readonly InstrumentDef[] {
+    const chain = this.#chains.get(underlying);
+    if (!chain) return [];
+    return chain.options
+      .map((o) => this.#listed.get(o.ric))
+      .filter((def): def is InstrumentDef => def !== undefined);
+  }
+
+  /** Model value and Greeks of a listed option now (undefined otherwise). */
+  optionValue(ric: string, now = this.clock()) {
+    const def = this.#listed.get(ric);
+    const chain = def && this.#chains.get(def.underlying ?? "");
+    const terms = def && optionTerms(def);
+    return chain && terms ? chain.pricer.value(terms, now) : undefined;
+  }
+
+  /**
+   * Quote-only options' theoretical quotes on `prices` (each flush), and
+   * the optionAnalytics rows for every option when due.
+   */
+  #publishOptions(now: number) {
+    const publisher = this.#publisher;
+    const analytics = this.#optionAnalytics;
+    const due = analytics?.due(now) === true;
+    if (!publisher && !due) return;
+    const rows: OptionAnalytics[] = [];
+    for (const chain of this.#chains.values()) {
+      const { pricer } = chain;
+      for (const { ric, terms, schedule } of chain.options) {
+        if ((terms.expiry ?? 0) <= now) continue;
+        const value = pricer.value(terms, now);
+        let mid: number | undefined;
+        const book = this.#simulated.get(ric)?.book;
+        if (book) {
+          const { bid, ask } = book.topOfBook();
+          if (bid > 0 && ask > 0) mid = (bid + ask) / 2;
+        } else {
+          const quote = pricer.quote(value, schedule);
+          const def = this.#listed.get(ric) as InstrumentDef;
+          publisher?.publishQuote(
+            def,
+            quote.bid,
+            quote.ask,
+            this.#marketPhase,
+            now,
+          );
+          if (quote.bid !== undefined) mid = (quote.bid + quote.ask) / 2;
+        }
+        if (due)
+          rows.push({
+            ric,
+            underlying: chain.underlying,
+            value,
+            impliedVol:
+              mid === undefined
+                ? undefined
+                : pricer.impliedVol(terms, value, mid),
+          });
+      }
+    }
+    if (due) analytics?.publish(rows, now);
   }
 
   /** A listed index, once its constituents have books (cached). */
@@ -715,7 +1164,7 @@ export class ExchangeSimulator {
         return (
           this.isSimulated(ric) ||
           this.#indices.has(ric) ||
-          (def !== undefined && isContinuation(def))
+          (def !== undefined && (isContinuation(def) || isOption(def)))
         );
       },
     );
@@ -758,6 +1207,16 @@ export class ExchangeSimulator {
     }
     if (config.barBackfill && publisher.bars) this.#backfillBars(publisher);
     const store = this.timeSeries;
+    if (
+      tables.optionAnalytics &&
+      config.optionAnalyticsIntervalMs > 0 &&
+      this.#chains.size > 0
+    )
+      this.#optionAnalytics = new OptionAnalyticsPublisher(
+        tables.optionAnalytics,
+        config.optionAnalyticsIntervalMs,
+        Math.sqrt(config.timeScale),
+      );
     if (tables.timeSeriesBuckets && store)
       this.#timeSeriesBuckets = new TimeSeriesBucketPublisher(
         tables.timeSeriesBuckets,
@@ -908,6 +1367,9 @@ export class ExchangeSimulator {
     this.#control?.step(now);
     this.#scenarios?.step(now);
     if (this.#liveFutures.length > 0) this.#expireDueFutures(now);
+    if (this.#chains.size > 0) this.#expireDueOptions(now);
+    for (const chain of this.#chains.values())
+      this.#recentreChain(chain, now, true);
     const dt = Math.min(Math.max(elapsed, 0), config.maxStepMs) / 1000;
     if (dt === 0) return;
     const modelDt = dt * config.timeScale;
@@ -1042,6 +1504,7 @@ export class ExchangeSimulator {
           this.#marketPhase,
           now,
         );
+    if (this.#chains.size > 0) this.#publishOptions(now);
     if (this.#simAdmin?.flush(this.#simulated.values(), now))
       this.#controlPublisher?.publishSession(now);
     timer.stop(t0);

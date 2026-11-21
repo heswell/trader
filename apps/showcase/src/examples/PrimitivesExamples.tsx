@@ -75,6 +75,18 @@ const cellRenderersConfig: TableConfig = {
   columns: [
     { name: "ric", width: 90 },
     {
+      name: "instrumentType",
+      label: "Type",
+      width: 60,
+      type: { name: "string", renderer: { name: "trading.instrument-type" } },
+    },
+    {
+      name: "putCall",
+      label: "C/P",
+      width: 55,
+      type: { name: "string", renderer: { name: "trading.put-call" } },
+    },
+    {
       name: "bid",
       ...right,
       type: { name: "number", renderer: { name: "trading.price-move" } },
@@ -140,11 +152,16 @@ const cellRenderersConfig: TableConfig = {
   ],
 };
 
-/** trading.price-move / change / quantity / phase / sparkline in a vuu Table. */
+/**
+ * trading.instrument-type / put-call / price-move / change / quantity /
+ * phase / sparkline in a vuu Table.
+ */
 export const CellRenderersExample = () => {
   const dataSource = useTradingDataSource("instrumentPrices", {
     columns: [
       "ric",
+      "instrumentType",
+      "putCall",
       "bid",
       "last",
       "change",

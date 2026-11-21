@@ -1,0 +1,185 @@
+.tradingOptionChain {
+  background: var(--salt-container-primary-background);
+  color: var(--salt-content-primary-foreground);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--salt-text-fontFamily);
+  font-size: var(--salt-text-fontSize);
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+
+.tradingOptionChain-header {
+  align-items: center;
+  border-bottom: var(--salt-size-border) solid
+    var(--salt-separable-tertiary-borderColor);
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: var(--salt-spacing-100);
+  padding: var(--salt-spacing-50) var(--salt-spacing-100);
+}
+
+.tradingOptionChain-title {
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+.tradingOptionChain-forward {
+  color: var(--salt-content-secondary-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.tradingOptionChain-expiries {
+  display: flex;
+  gap: var(--salt-spacing-25, 2px);
+  margin-left: auto;
+}
+
+.tradingOptionChain-expiry {
+  background: transparent;
+  border: var(--salt-size-border) solid transparent;
+  border-radius: var(--salt-palette-corner-weak, 2px);
+  color: var(--salt-content-secondary-foreground);
+  cursor: pointer;
+  font: inherit;
+  padding: 0 var(--salt-spacing-100);
+}
+.tradingOptionChain-expiry:hover {
+  color: var(--salt-content-primary-foreground);
+}
+.tradingOptionChain-expiry[aria-selected="true"] {
+  border-color: var(--salt-accent-borderColor);
+  color: var(--salt-content-primary-foreground);
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+.tradingOptionChain-expiry:focus-visible {
+  outline: var(--salt-focused-outline);
+}
+
+.tradingOptionChain-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.tradingOptionChain-table {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  width: 100%;
+}
+
+.tradingOptionChain-table th,
+.tradingOptionChain-table td {
+  height: var(--salt-size-base, 24px);
+  padding: 0 var(--salt-spacing-100);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tradingOptionChain-table thead th {
+  background: var(--salt-container-primary-background);
+  color: var(--salt-content-secondary-foreground);
+  font-weight: var(--salt-text-fontWeight-strong);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.tradingOptionChain-table thead tr:nth-child(2) th {
+  border-bottom: var(--salt-size-border) solid
+    var(--salt-separable-secondary-borderColor);
+  top: var(--salt-size-base, 24px);
+}
+.tradingOptionChain-rights th {
+  text-align: center;
+}
+
+.tradingOptionChain-table .tradingOptionChain-strike,
+.tradingOptionChain-table .tradingOptionChain-strikeHeader {
+  background: var(--salt-container-secondary-background);
+  font-weight: var(--salt-text-fontWeight-strong);
+  text-align: center;
+}
+
+/* quote-only strikes are dimmed: model prices, no orders */
+.tradingOptionChain-row {
+  color: var(--salt-content-secondary-foreground);
+}
+.tradingOptionChain-row[data-liquid] {
+  color: var(--salt-content-primary-foreground);
+}
+.tradingOptionChain-row[data-liquid] .tradingOptionChain-strike {
+  box-shadow: inset 3px 0 var(--salt-accent-borderColor);
+}
+
+/* in the money: shaded */
+.tradingOptionChain-row [data-itm] {
+  background: var(--salt-container-secondary-background);
+}
+
+.tradingOptionChain-row[data-atm] th,
+.tradingOptionChain-row[data-atm] td {
+  border-top: var(--salt-size-border) solid var(--salt-accent-borderColor);
+}
+
+/* the linked option's row: the grid's selected-row colour, legible in dark */
+.tradingOptionChain-row[aria-selected="true"] th,
+.tradingOptionChain-row[aria-selected="true"] td {
+  background: color-mix(
+    in srgb,
+    var(--salt-palette-accent-strongest, var(--salt-accent-background)) 28%,
+    var(--salt-container-primary-background)
+  );
+  color: var(--salt-content-primary-foreground);
+}
+
+.tradingOptionChain-quote {
+  cursor: default;
+}
+.tradingOptionChain-quote[data-tradeable] {
+  cursor: pointer;
+}
+.tradingOptionChain-quote[data-tradeable].tradingOptionChain-bid:hover {
+  color: var(--trading-sell, var(--salt-status-error-foreground-informative));
+}
+.tradingOptionChain-quote[data-tradeable].tradingOptionChain-ask:hover {
+  color: var(--trading-buy, var(--salt-status-info-foreground-informative));
+}
+.tradingOptionChain-quote:focus-visible {
+  outline: var(--salt-focused-outline);
+  outline-offset: -2px;
+}
+
+.tradingOptionChain-empty {
+  color: var(--salt-content-secondary-foreground);
+  padding: var(--salt-spacing-200);
+}
+
+.tradingOptionChain-footer {
+  align-items: center;
+  border-top: var(--salt-size-border) solid
+    var(--salt-separable-tertiary-borderColor);
+  color: var(--salt-content-secondary-foreground);
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--salt-spacing-200);
+  padding: var(--salt-spacing-50) var(--salt-spacing-100);
+}
+.tradingOptionChain-legend::before {
+  background: var(--salt-separable-secondary-borderColor);
+  content: "";
+  display: inline-block;
+  height: 10px;
+  margin-right: var(--salt-spacing-50);
+  vertical-align: middle;
+  width: 3px;
+}
+.tradingOptionChain-legend[data-liquid] {
+  color: var(--salt-content-primary-foreground);
+}
+.tradingOptionChain-legend[data-liquid]::before {
+  background: var(--salt-accent-borderColor);
+}
+.tradingOptionChain-keys {
+  margin-left: auto;
+}

@@ -19,6 +19,7 @@ or on in-browser data (see [hosting.md](hosting.md) and [getting-started.md](../
 | [hosting.md](hosting.md) | `TradingDataProvider`, `TradingFeatureRoot`, `OrderTicketLauncherProvider`, `UserSettingsProvider`, `TradingConnectionStateOverride` | `#hosting-*` |
 | [instrument-grid.md](instrument-grid.md) | `InstrumentGrid`, `Sparkline` / `SparklineCell`, `PriceMoveCell`, `ChangeCell`, `QuantityCell`, `PhaseCell` | `#instrument-grid*`, `#primitives-cell-renderers` |
 | [blotters.md](blotters.md) | `OrderBlotter`, `FillsBlotter`, `TradeTape`, `PositionsView` | `#order-blotter`, `#fills-blotter`, `#trade-tape`, `#positions-view` |
+| [options.md](options.md) | `OptionChain`, `useOptionChain`, the option ticket, Greeks in positions, `InstrumentTypeCell`, `PutCallCell` | `#option-chain-*`, `#instrument-grid-options` |
 | [order-ticket.md](order-ticket.md) | `OrderTicket`, `OrderTicketDialog`, `OrderTicketPanel`, `OrderTicketLauncherProvider` | `#order-ticket-*` |
 | [market-depth-and-ladder.md](market-depth-and-ladder.md) | `MarketDepth`, `PriceLadder`, `PriceLadderView` and the depth hooks | `#market-depth-selected`, `#price-ladder-*` |
 | [notifications-and-connection.md](notifications-and-connection.md) | `TradingNotificationsProvider`, `ConnectionBanner`, `ConnectionStatusIndicator`, `StaleIndicator` | `#notifications-*`, `#hosting-connection-override` |

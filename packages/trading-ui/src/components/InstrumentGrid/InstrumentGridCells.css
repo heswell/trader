@@ -171,3 +171,27 @@
     var(--salt-status-error-foreground-informative)
   );
 }
+
+/* instrument type badge */
+.tradingInstrumentCell-type {
+  justify-content: flex-start;
+}
+.tradingInstrumentCell-typeBadge {
+  padding: 0 var(--salt-spacing-50, 4px);
+  border: var(--salt-size-border, 1px) solid
+    var(--salt-separable-secondary-borderColor);
+  border-radius: var(--salt-palette-corner-weak, 2px);
+  font-size: var(--salt-text-label-fontSize, 11px);
+  line-height: var(--salt-text-label-lineHeight, 16px);
+  color: var(--salt-content-secondary-foreground);
+}
+.tradingInstrumentCell-typeBadge[data-type="OPTION"] {
+  color: var(--salt-content-accent-foreground, var(--salt-accent-foreground));
+  border-color: var(--salt-accent-borderColor);
+  font-weight: var(--salt-text-fontWeight-strong);
+}
+
+/* option right */
+.tradingInstrumentCell-putCall[data-put-call="PUT"] {
+  color: var(--salt-content-secondary-foreground);
+}

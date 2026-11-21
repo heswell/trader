@@ -1,4 +1,5 @@
 import {
+  collarWidth,
   contractMultiplierOf,
   type AlgoParamDefinition,
   ALGO_STRATEGY_DEFINITIONS,
@@ -12,6 +13,7 @@ import {
   isStopOrdType,
   isStrategyAllowed,
   OrdType,
+  PutCall,
   RejectReason,
   SUPPORTED_ORD_TYPES,
   Side,
@@ -26,6 +28,11 @@ import {
   validateStopTrigger,
 } from "@heswell/trading-schemas";
 import { priceDecimals } from "../../utils/formatting";
+import {
+  type OptionSpec,
+  parseMonthWord,
+  parseStrikeWord,
+} from "../OptionChain/optionChainModel";
 
 /**
  * Instrument data the ticket works with: static (instruments) plus the live
@@ -42,12 +49,22 @@ export interface OrderTicketInstrument {
   lotSize?: number;
   priceDecimals?: number;
   /**
-   * EQUITY | FUTURE | INDEX | CONTINUATION (absent = equity); an index or a
-   * continuation is not tradeable.
+   * EQUITY | FUTURE | INDEX | CONTINUATION | OPTION (absent = equity); an
+   * index or a continuation is not tradeable, nor a quote-only option.
    */
   instrumentType?: string;
   /** Continuation: the contract it points at (the one to trade). */
   contract?: string;
+  /** Futures and options: the underlying's ric. */
+  underlying?: string;
+  /** Options: CALL or PUT. */
+  putCall?: string;
+  /** Options: the strike. */
+  strike?: number;
+  /** Futures and options: expiry (epoch ms). */
+  expiry?: number;
+  /** Options: false for a quote-only strike (no book, takes no orders). */
+  liquid?: boolean;
   /** Value per unit of quantity per unit of price (futures); 1 when absent. */
   contractMultiplier?: number;
   refPrice?: number;
@@ -782,10 +799,20 @@ export const previewRisk = (
   }
   if (validLimit !== undefined && reference !== undefined) {
     preview.collarDistance = Math.abs(validLimit - reference) / reference;
-    if (preview.collarDistance > collarPct) {
+    // wider for an option (see collarWidth), as the OMS applies it
+    const width = collarWidth(
+      {
+        instrumentType: instrument?.instrumentType as InstrumentType,
+        tickSize: instrument?.tickSize ?? 0,
+        tickBands: instrument?.tickBands,
+      },
+      reference,
+      collarPct,
+    );
+    if (Math.abs(validLimit - reference) > width + 1e-9) {
       warnings.push({
         code: "collar",
-        text: `Price is ${(preview.collarDistance * 100).toFixed(1)}% from the reference price (collar ±${(collarPct * 100).toFixed(0)}%)`,
+        text: `Price is ${(preview.collarDistance * 100).toFixed(1)}% from the reference price (collar ±${((width / reference) * 100).toFixed(0)}%)`,
       });
     }
   }
@@ -863,6 +890,12 @@ export interface OrderLine {
   change: Partial<OrderDraft>;
   /** One entry per word: a label, or `unknown` for words not understood. */
   words: { text: string; label?: string }[];
+  /**
+   * An option typed as underlying + strike word (`aapl 200c`, `aapl.oq
+   * 200p jan`): resolved against the listed chain to set the ric. An empty
+   * underlying means the ticket's current one (`b 5 200c`).
+   */
+  option?: OptionSpec;
 }
 
 const QTY_WORD = /^(\$[\d,.]+[km]?|[\d,]*\.?\d+[km]?)$/i;
@@ -876,6 +909,11 @@ const PRICE_WORD = /^((b|bid|a|ask|m|mid)([+-]\d+)?|[\d,]*\.?\d+)$/i;
  * `15:30`, `10%`). Words may come in any order after the side, except that
  * quantity comes before price. Missing parts are left as they are.
  *
+ * Options: a strike word (`200c`, `102.5p`) makes the order for an option
+ * on the line's instrument (a ric, or a bare root such as `aapl`) or else
+ * the ticket's; a month word after it (`jan`, `jan27`) picks a later
+ * expiry, e.g. `b 10 aapl 200c jan @ 3.5`.
+ *
  * Stops: `stop` (or `stp`) takes the next price as the stop price; with a
  * limit price as well the order is a STOP_LIMIT, e.g. `s 200 vod.l stop
  * 99.5` (STOP) and `s 200 vod.l stop 99.5 lmt 99.4` (STOP_LIMIT). `lmt`
@@ -888,6 +926,9 @@ export const parseOrderLine = (text: string): OrderLine => {
   const words: OrderLine["words"] = [];
   let definition: AlgoStrategyDefinition | undefined;
   let stop = false;
+  let option: OptionSpec | undefined;
+  /** Word index of a bare word that may be the option's underlying. */
+  let bareWord: number | undefined;
   /** The previous word was `stop` / `lmt`: the next price is for it. */
   let expect: "stop" | "limit" | undefined;
   for (const [i, token] of tokens.entries()) {
@@ -939,6 +980,22 @@ export const parseOrderLine = (text: string): OrderLine => {
       word("Market");
       continue;
     }
+    const strikeWord = option ? undefined : parseStrikeWord(t);
+    if (strikeWord) {
+      option = { underlying: "", ...strikeWord };
+      word(
+        `${strikeWord.strike} ${strikeWord.putCall === PutCall.Call ? "Call" : "Put"}`,
+      );
+      continue;
+    }
+    const month =
+      option && option.month === undefined ? parseMonthWord(t) : undefined;
+    if (option && month) {
+      option.month = month.month;
+      if (month.year !== undefined) option.year = month.year;
+      word(token.charAt(0).toUpperCase() + token.slice(1).toLowerCase());
+      continue;
+    }
     if (definition) {
       // A word with a unit goes to the parameter of that type (`10%`,
       // `45m`, `15:30`). After the strategy, a bare number is the next
@@ -985,7 +1042,26 @@ export const parseOrderLine = (text: string): OrderLine => {
       word(change.ric);
       continue;
     }
+    if (bareWord === undefined && /^[a-z][a-z0-9]*$/i.test(t)) {
+      bareWord = words.length;
+    }
     word(undefined);
+  }
+  if (option) {
+    // the option's underlying: the line's ric, else a bare root (`aapl`)
+    if (change.ric !== undefined) {
+      option.underlying = change.ric;
+      delete change.ric;
+    } else if (bareWord !== undefined) {
+      const w = words[bareWord];
+      if (w) {
+        option.underlying = w.text.toUpperCase();
+        w.label = option.underlying;
+      }
+    }
+    // a new option: its own prices, not the last instrument's
+    if (change.price === undefined) change.price = "";
+    if (change.stopPrice === undefined) change.stopPrice = "";
   }
   if (stop) {
     change.ordType =
@@ -994,7 +1070,7 @@ export const parseOrderLine = (text: string): OrderLine => {
     change.ordType = OrdType.Limit;
   }
   if (change.strategy) change.algoParams = algoParams;
-  return { change, words };
+  return option ? { change, words, option } : { change, words };
 };
 
 /** Whether text in the instrument field is an order line, not a search. */

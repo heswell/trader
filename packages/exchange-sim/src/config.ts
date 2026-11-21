@@ -26,6 +26,37 @@ export interface ExchangeSimConfig {
    * Empty = no futures.
    */
   futures: string;
+  /**
+   * Comma separated rics to list European options on (monthly expiries):
+   * equities or synthetic indices (listed as if named in `indices`). Each
+   * stock underlying (an index's constituents) gets a live book. Empty = none.
+   */
+  options: string;
+  /** Monthly option expiries listed per underlying. */
+  optionsExpiries: number;
+  /** Option strikes listed each side of at-the-money. */
+  optionsStrikes: number;
+  /** Strikes each side of at-the-money that are liquid (get a book). */
+  optionsBookStrikes: number;
+  /** Nearest expiries whose liquid strikes get a book. */
+  optionsBookExpiries: number;
+  /** Most option books per underlying (re-centring stops adding books). */
+  optionsMaxBooks: number;
+  /**
+   * Put skew of the vol surface: vol points per unit of log-moneyness
+   * ln(K/F) (negative = puts richer).
+   */
+  optionsSkew: number;
+  /** Smile of the vol surface: vol points per unit of log-moneyness squared. */
+  optionsSmile: number;
+  /** Standard deviation of a liquid option's vol noise around the surface, bps of vol. */
+  optionsVolNoiseBps: number;
+  /** Half-life of the vol noise (and of impact on an option), wall-clock seconds. */
+  optionsVolHalfLifeSec: number;
+  /** Narrowest option quote (market makers and quote-only strikes), vol points wide. */
+  optionsMinWidthVolPts: number;
+  /** Interval of the optionAnalytics table (ms; 0 = not published). */
+  optionAnalyticsIntervalMs: number;
   /** Contracts listed per underlying: front month, next, ... */
   futuresContracts: number;
   /** Annual carry rate of the futures fair value over spot (e.g. 0.03 = 3%). */
@@ -186,6 +217,18 @@ export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
   indices: "",
   futures: "",
   futuresContracts: 2,
+  options: "",
+  optionsExpiries: 2,
+  optionsStrikes: 10,
+  optionsBookStrikes: 2,
+  optionsBookExpiries: 1,
+  optionsMaxBooks: 20,
+  optionsSkew: -20,
+  optionsSmile: 50,
+  optionsVolNoiseBps: 200,
+  optionsVolHalfLifeSec: 60,
+  optionsMinWidthVolPts: 1,
+  optionAnalyticsIntervalMs: 500,
   futuresCarryRate: 0.03,
   futuresBasisBps: 3,
   futuresBasisHalfLifeSec: 60,
@@ -329,6 +372,32 @@ export const validateConfig = (config: ExchangeSimConfig) => {
     !(Number.isInteger(config.futuresContracts) && config.futuresContracts > 0)
   ) {
     throw Error("exchangeSim.futuresContracts must be a positive integer");
+  }
+  for (const key of [
+    "optionsExpiries",
+    "optionsStrikes",
+    "optionsBookStrikes",
+    "optionsBookExpiries",
+    "optionsMaxBooks",
+  ] as const) {
+    if (!(Number.isInteger(config[key]) && config[key] >= 0))
+      throw Error(`exchangeSim.${key} must be a non-negative integer`);
+  }
+  if (config.optionsBookStrikes > config.optionsStrikes)
+    throw Error("exchangeSim.optionsBookStrikes must be <= optionsStrikes");
+  if (config.optionsBookExpiries > config.optionsExpiries)
+    throw Error("exchangeSim.optionsBookExpiries must be <= optionsExpiries");
+  for (const key of ["optionsSkew", "optionsSmile"] as const) {
+    if (!Number.isFinite(config[key]))
+      throw Error(`exchangeSim.${key} must be a number`);
+  }
+  for (const key of [
+    "optionsVolNoiseBps",
+    "optionsVolHalfLifeSec",
+    "optionsMinWidthVolPts",
+    "optionAnalyticsIntervalMs",
+  ] as const) {
+    if (!(config[key] >= 0)) throw Error(`exchangeSim.${key} must be >= 0`);
   }
   if (!Number.isFinite(config.futuresCarryRate)) {
     throw Error("exchangeSim.futuresCarryRate must be a number");

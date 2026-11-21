@@ -64,14 +64,15 @@ export const instruments = defineTable({
     {
       name: "instrumentType",
       dataType: "string",
-      description: "InstrumentType: EQUITY | FUTURE | INDEX | CONTINUATION.",
+      description:
+        "InstrumentType: EQUITY | FUTURE | INDEX | CONTINUATION | OPTION.",
     },
     {
       name: "underlying",
       dataType: "string",
       optional: true,
       description:
-        "Futures and continuations: ric of the underlying instrument (an equity or an index).",
+        "Futures, continuations and options: ric of the underlying instrument (an equity or an index).",
     },
     {
       name: "contract",
@@ -81,10 +82,29 @@ export const instruments = defineTable({
         "Continuation (AZNc1): ric of the contract it points at, repointed at each roll.",
     },
     {
+      name: "putCall",
+      dataType: "string",
+      optional: true,
+      description: "Options: PutCall, CALL | PUT.",
+    },
+    {
+      name: "strike",
+      dataType: "double",
+      optional: true,
+      description: "Options: strike, in the price currency.",
+    },
+    {
+      name: "liquid",
+      dataType: "boolean",
+      optional: true,
+      description:
+        "Options: true if the strike has an order book; false = quote-only (model prices, no orders).",
+    },
+    {
       name: "expiry",
       dataType: "epochtimestamp",
       optional: true,
-      description: "Futures: last trading time.",
+      description: "Futures and options: last trading time.",
     },
     {
       name: "settlementPrice",
@@ -411,6 +431,63 @@ export const timeSeriesBuckets = defineTable({
     { name: "max", dataType: "double" },
     { name: "lastT", dataType: "epochtimestamp" },
     { name: "last", dataType: "double" },
+  ],
+});
+
+export const optionAnalytics = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "optionAnalytics",
+  keyField: "ric",
+  description:
+    "Model value and Greeks of every listed option (Black-76 on the vol surface), published every exchangeSim.optionAnalyticsIntervalMs. Vols are as priced on the sim's clock: the underlying's volatility scaled by the square root of timeScale.",
+  columns: [
+    { name: "ric", dataType: "string" },
+    { name: "underlying", dataType: "string" },
+    {
+      name: "forward",
+      dataType: "double",
+      description:
+        "The underlying's fair value (or index level) carried to expiry.",
+    },
+    {
+      name: "theo",
+      dataType: "double",
+      description: "Model premium at the surface vol.",
+    },
+    {
+      name: "modelVol",
+      dataType: "double",
+      description: "Surface vol at the strike, as priced (0.25 = 25%).",
+    },
+    {
+      name: "impliedVol",
+      dataType: "double",
+      description:
+        "Vol implied by the mid: the book's for a liquid strike, the theoretical quote's otherwise (null when there is no two-sided price).",
+    },
+    {
+      name: "baseVol",
+      dataType: "double",
+      description:
+        "impliedVol divided by the square root of timeScale: comparable with the underlying's annual volatility.",
+    },
+    { name: "delta", dataType: "double", description: "dPremium / dForward." },
+    { name: "gamma", dataType: "double", description: "dDelta / dForward." },
+    {
+      name: "vega",
+      dataType: "double",
+      description: "Premium change per vol point (0.01 of vol).",
+    },
+    {
+      name: "theta",
+      dataType: "double",
+      description: "Premium change per calendar day (negative as time passes).",
+    },
+    { name: "timestamp", dataType: "epochtimestamp" },
+  ],
+  links: [
+    { fromColumn: "ric", toTable: "instruments", toColumn: "ric" },
+    { fromColumn: "ric", toTable: "prices", toColumn: "ric" },
   ],
 });
 
@@ -925,6 +1002,12 @@ export const accounts = defineTable({
     { name: "maxOrderQty", dataType: "long" },
     { name: "maxOrderNotional", dataType: "double" },
     { name: "maxPositionNotional", dataType: "double" },
+    {
+      name: "maxDeltaUsd",
+      dataType: "double",
+      description:
+        "Largest net delta (USD) per underlying: a stock, its futures and its options together.",
+    },
     { name: "enabled", dataType: "boolean" },
   ],
 });
@@ -1158,6 +1241,30 @@ export const positions = defineTable({
       dataType: "double",
       description: "totalPnl in USD (instrument usdPerPriceUnit).",
     },
+    {
+      name: "delta",
+      dataType: "double",
+      description:
+        "Shares (or index units) equivalent: quantity x multiplier, times the option's delta for an option. Sums by underlying.",
+    },
+    {
+      name: "deltaUsd",
+      dataType: "double",
+      description:
+        "delta x the underlying's price, in USD: a stock's or future's marketValueUsd.",
+    },
+    {
+      name: "gamma",
+      dataType: "double",
+      description:
+        "Change in delta per one point of the underlying (options; 0 otherwise).",
+    },
+    {
+      name: "vegaUsd",
+      dataType: "double",
+      description:
+        "Change in market value (USD) per vol point (options; 0 otherwise).",
+    },
     { name: "lastUpdate", dataType: "epochtimestamp" },
   ],
   links: [{ fromColumn: "account", toTable: "accounts", toColumn: "account" }],
@@ -1216,6 +1323,19 @@ export const orderEntry = defineTable({
     { name: "priceDecimals", dataType: "int" },
     { name: "contractMultiplier", dataType: "double" },
     { name: "refPrice", dataType: "double" },
+    { name: "underlying", dataType: "string" },
+    { name: "putCall", dataType: "string", description: "PutCall (options)." },
+    {
+      name: "strike",
+      dataType: "double",
+      description: "Options, 0 otherwise.",
+    },
+    { name: "expiry", dataType: "epochtimestamp" },
+    {
+      name: "liquid",
+      dataType: "boolean",
+      description: "Options: false for a quote-only strike.",
+    },
     // the last order sent from this row
     { name: "clOrdId", dataType: "string" },
     { name: "orderId", dataType: "string" },
@@ -1472,6 +1592,7 @@ export const exchangeTables = {
   scenarioRuns,
   simSession,
   timeSeriesBuckets,
+  optionAnalytics,
 } as const;
 export const omsTables = {
   accounts,
@@ -1508,6 +1629,7 @@ export type OrderEntryRow = RowOf<typeof orderEntry>;
 export type BarRow = RowOf<typeof bars>;
 export type BookSampleRow = RowOf<typeof bookSamples>;
 export type TimeSeriesBucketRow = RowOf<typeof timeSeriesBuckets>;
+export type OptionAnalyticsRow = RowOf<typeof optionAnalytics>;
 export type BookOrderRow = RowOf<typeof bookOrders>;
 export type BookEventRow = RowOf<typeof bookEvents>;
 export type SimBookRow = RowOf<typeof simBooks>;

@@ -9,6 +9,11 @@ export interface Account {
   maxOrderQty: number;
   maxOrderNotional: number;
   maxPositionNotional: number;
+  /**
+   * Largest net delta (USD) on one underlying: a stock, its futures and its
+   * options together. 0 or absent = no limit (accounts saved before it).
+   */
+  maxDeltaUsd: number;
   enabled: boolean;
 }
 
@@ -30,6 +35,7 @@ const account = (
   maxOrderQty,
   maxOrderNotional,
   maxPositionNotional,
+  maxDeltaUsd: maxPositionNotional,
   enabled,
 });
 

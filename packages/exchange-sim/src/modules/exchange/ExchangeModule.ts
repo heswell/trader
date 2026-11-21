@@ -46,6 +46,7 @@ const TABLE_NAMES: readonly TableName[] = [
   "scenarioRuns",
   "simSession",
   "timeSeriesBuckets",
+  "optionAnalytics",
 ];
 
 /** Tables only sim-admin users see rows of (see simAdminAccess.ts). */
@@ -182,6 +183,7 @@ export const ExchangeModule = (
       provider("timeSeriesBuckets"),
       serviceFactory,
     )
+    .addTable(defs.optionAnalytics, provider("optionAnalytics"), serviceFactory)
     .addJoinTable(toServerJoinFactory(instrumentPrices), serviceFactory)
     .asModule();
 };
