@@ -378,6 +378,11 @@ Red follows the instruments grid, green follows the ladder's picker. Every panel
   closing a panel, changing a link group) saves a personal copy with the same id ("Your
   copy" in the nav and header). Selecting a stack tab is view state: it is saved but is not an edit. **Reset to default** in the header (only on a copy) restores the system document,
   optionally saving the copy as a new workspace first.
+- **Maximize.** Every panel and stack header has Maximize: the panel fills the workspace and the others are hidden
+  until Restore (or Esc). The host turns this on with `workspaces.maximizable: true` (`WORKSPACES` in `App.tsx`,
+  @vuu-ui 5.0.0-alpha.14). Maximize is view state: it is not saved and does not make a personal copy, and adding
+  or removing a panel restores the grid. A module can refuse with `useGridLayoutItemMaximizable(false)` from
+  `@vuu-ui/grid-layout`; none does today.
 - **New workspace** (nav entry or +) creates an empty named workspace (renamed and deleted from its nav menu). It
   opens with the Panels palette and Trader's empty-workspace content (PortalShell `workspaces.emptyContent`): the
   core drop zone with "Drag a module from the Panels palette, or click one to add it." and an **Open Panels
