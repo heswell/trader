@@ -411,14 +411,25 @@ pinned open.
 - **Row actions** (core `useOpenPanel()` / `usePortalDragSource()`):
   - **click** follows the click rule: no panel → add; one panel → replace it; more → a prompt *Replace
     <focused>* (R) / *Open as new tab* (T), Esc to cancel (`workspace-palette-prompt.png`);
-  - **drag** places the panel exactly. A drop compass over the panel under the pointer shows the target: north,
-    south, east or west splits the panel on that side; the centre stacks the new panel with it as a tab (alpha.30
-    changed this from replacing). On a panel already in a stack the centre is disabled: drop on a tab header to add
-    a tab there. Since alpha.31 the gap around the centre tile is part of the centre, on compact (narrow panel)
-    and regular compasses alike, so a drop there stacks rather than splitting (trader upstream issue 110); on a
-    stacked panel it is disabled with the centre. The ghost and the hint bar show the target too, and Esc cancels. Dragging never prompts and never
-    replaces (`workspace-palette-compass.png`, `workspace-palette-drag.png`). To replace a panel, click a module
-    (one panel) or answer R at the click prompt (several panels);
+  - **drag** places the panel exactly. Since @vuu-ui 5.0 there is no drop compass: where the pointer is in the
+    panel under it picks the target, and a translucent blue overlay shows the result before the drop. A hint bar
+    reads "Drop on a panel edge to split, centre to replace, header to add a tab", and Esc cancels.
+    - **Edge** (the panel is cut along its diagonals into north, east, south and west): splits the panel on that
+      side, and the overlay covers that half. Over a stacked panel the edges split the whole stack.
+    - **Centre** (the middle fifth of the panel's width and height): **replaces** the panel, so the overlay covers
+      all of it. Over a stacked panel it replaces that tab only. This is the opposite of the alpha.30–31 compass,
+      whose centre stacked.
+    - **Header** (a panel's title bar or a stack's tab bar, tinted red): adds the new panel as a tab, making a
+      stack if there wasn't one.
+    - **No workspace-edge docking.** `@vuu-ui/grid-layout` has dock zones (`GridDockZones`: drop on a strip
+      along the workspace's outer edge to dock a panel across its full width or height). They are behind the
+      `dockable` prop, which defaults to false, and core's `PortalWorkspace` renders `GridLayout` without it
+      and has no option to pass it (5.0.0-alpha.12, the latest published), so a palette panel can only split,
+      replace or stack. To make a full-height column, drop on a panel's edge while that column's side has
+      only one panel (e.g. Ladder on the east edge of Watchlist, then Orders on Watchlist's south edge).
+
+    Dragging never prompts. To stack, drop on a header; to replace, drop on the centre, click a module (one panel)
+    or answer R at the click prompt (several panels);
   - **+** adds the panel beside the focused one (or into empty space), never prompting.
 - **Link groups of added panels.** A palette panel is the module's `portalModuleTemplate()` with no props, so it
   joins the module's own default group: red for Watchlist, Orders, Executions, Order ticket, Market depth, Chart,
@@ -500,10 +511,14 @@ stack.
 - **Roles:** dave's and sam's palettes have no Order ticket or Price ladder (`workspace-palette-dave.png`); sam's
   has no Desk overview.
 - **Not available upstream (then):** the design's drop compass (trader upstream issue 108) and hiding the Tables
-  tab (107); both came in alpha.30, below.
+  tab (107); both came in alpha.30, below. The compass was removed again in @vuu-ui 5.0 (see
+  [Panels palette](#panels-palette)).
 - `bun run e2e:persistence`, `bun run e2e:resilience` and `bun run e2e:palette` pass.
 
 ### Compass gap and nav footer (alpha.31)
+
+@vuu-ui 5.0 removed the compass, so the compass checks below and in `alpha.30` are history; the screenshots they
+name show the old compass.
 
 Verified with @vuu-ui 4.0.0-alpha.31, `@vuu-ui/portal-build` 0.4.0, vuu-portal 2.3.0, module-admin 2.3.0 and
 headless Chrome (1600×1000) on `bun run e2e:palette`'s own stack, plus a full-stack run as alice, dave and sam.
