@@ -24,7 +24,7 @@ import type {
   MenuBuilder,
 } from "@vuu-ui/vuu-context-menu";
 import type { Filter, FilterState } from "@vuu-ui/vuu-filter-types";
-import { FilterBar } from "@vuu-ui/vuu-filters";
+import { FilterBar, type QuickFilterValues } from "@vuu-ui/vuu-filters";
 import {
   ColumnModel,
   type ColumnSetsChangeHandler,
@@ -88,15 +88,12 @@ import {
 } from "./gridSettings";
 import { AlsoApplied } from "./AlsoApplied";
 import {
-  alsoAppliedFilters,
-  andFilters,
+  alsoAppliedValues,
   COLUMN_SET_META_SETTINGS_KEY,
   type ColumnSetMetaState,
   parseColumnSetMeta,
-  quickFilterClauses,
   quickFilterColumnsFor,
   reconcileColumnSetMeta,
-  updateQuickFilterValues,
 } from "./columnSetMeta";
 import {
   columnSetForScope,
@@ -616,84 +613,42 @@ const InstrumentGridInner = forwardRef<
     },
     [updateColumnSetMeta],
   );
-  // The latest value of each quick filter field, kept while its field is
-  // out of view; those apply as "Also applied" (vuu keeps them but applies
-  // only the fields in view).
-  const [quickValues, setQuickValues] = useState<Record<string, Filter>>({});
-  // FilterBar applies its saved (custom) filter AND the quick filters as
-  // one: with a saved filter active the quick part is the second.
-  const customActiveRef = useRef(
-    (storedFilterState?.activeIndices.length ?? 0) > 0,
-  );
-  const handleFilterStateChange = useCallback(
-    (state: FilterState) => {
-      customActiveRef.current = state.activeIndices.length > 0;
-      onFilterStateChange(state);
-    },
-    [onFilterStateChange],
-  );
-  const trackQuickValues = useCallback(
-    (applied: Filter | undefined) => {
-      const quickFilter = !customActiveRef.current
-        ? applied
-        : applied && "filters" in applied && applied.op === "and"
-          ? applied.filters.length === 2
-            ? applied.filters[1]
-            : undefined
-          : undefined;
-      setQuickValues((values) =>
-        updateQuickFilterValues(
-          values,
-          quickFilterClauses(quickFilter, searchColumns),
-          quickColumnsRef.current,
-        ),
-      );
-    },
-    [searchColumns],
+  // The quick filter values, held here so a column set keeps the values of
+  // fields it doesn't show: vuu applies those too (applyHiddenValues) and
+  // the grid shows them as "Also applied".
+  const [quickFilterValues, setQuickFilterValues] = useState<QuickFilterValues>(
+    {},
   );
   const alsoApplied = useMemo(
-    () => alsoAppliedFilters(quickValues, quickFilterColumns),
-    [quickValues, quickFilterColumns],
+    () => alsoAppliedValues(quickFilterValues, quickFilterColumns),
+    [quickFilterValues, quickFilterColumns],
   );
   const clearAlsoApplied = useCallback(
-    (column: string) => setQuickValues(({ [column]: _, ...rest }) => rest),
+    (column: string) =>
+      setQuickFilterValues(({ [column]: _, ...rest }) => rest),
     [],
   );
   const quickFilterProps = useMemo(
     () => ({
       allowFind: searchColumns.length > 0,
+      applyHiddenValues: true,
       defaultQuickFilterColumns,
       onChangeQuickFilterColumns: changeQuickFilterColumns,
+      onQuickFilterValuesChange: setQuickFilterValues,
       quickFilterColumns,
+      quickFilterValues,
       showFind: searchColumns,
     }),
     [
       changeQuickFilterColumns,
       defaultQuickFilterColumns,
       quickFilterColumns,
+      quickFilterValues,
       searchColumns,
     ],
   );
-  const [barFilter, setBarFilter] = useState<Filter>();
-  const setUserFilter = useCallback(
-    (applied: Filter) => {
-      setBarFilter(applied);
-      trackQuickValues(applied);
-    },
-    [trackQuickValues],
-  );
-  const clearUserFilter = useCallback(() => {
-    setBarFilter(undefined);
-    trackQuickValues(undefined);
-  }, [trackQuickValues]);
-  const userFilter = useMemo(
-    () =>
-      andFilters(
-        barFilter,
-        alsoApplied.map(({ filter }) => filter),
-      ),
-    [barFilter, alsoApplied],
-  );
+  const [userFilter, setUserFilter] = useState<Filter>();
+  const clearUserFilter = useCallback(() => setUserFilter(undefined), []);
   const userFilterQuery = useMemo(
     () =>
       userFilter
@@ -1224,7 +1179,7 @@ const InstrumentGridInner = forwardRef<
             defaultFilterState={storedFilterState}
             onApplyFilter={setUserFilter}
             onClearFilter={clearUserFilter}
-            onFilterStateChanged={handleFilterStateChange}
+            onFilterStateChanged={onFilterStateChange}
             variant="full-filters"
             vuuTable={dataSource.table}
           />
@@ -1233,8 +1188,8 @@ const InstrumentGridInner = forwardRef<
       {showToolbar && filterBarVisible && alsoApplied.length ? (
         <AlsoApplied
           columns={filterColumns}
-          filters={alsoApplied}
           onClear={clearAlsoApplied}
+          values={alsoApplied}
         />
       ) : null}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: keys and double-click of the table's rows */}

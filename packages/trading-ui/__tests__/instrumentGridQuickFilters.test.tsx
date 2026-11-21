@@ -103,4 +103,43 @@ describe("InstrumentGrid quick filters", () => {
       expect(fields()).toEqual(["exchange", "sector", "instrumentType"]),
     );
   });
+
+  test("a value on a field the set doesn't show is Also applied, and clears", async () => {
+    const { container } = render(
+      <TradingDataProvider localServer={localServer} mode="local">
+        <InstrumentGrid id={gridId} />
+      </TradingDataProvider>,
+    );
+    const exchangeInput = () =>
+      container.querySelector<HTMLInputElement>(
+        '.vuuQuickFilters-filter[data-field="exchange"] input',
+      );
+    const input = await waitFor(() => {
+      const el = exchangeInput();
+      if (!el) throw Error("no exchange quick filter");
+      return el;
+    });
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "X" } });
+    const option = await waitFor(
+      () => screen.getByRole("option", { name: "XLON" }),
+      { timeout: 3000 },
+    );
+    fireEvent.click(option);
+    const grid = container.querySelector(".tradingInstrumentGrid") as Element;
+    // Screening doesn't show exchange: its value is Also applied
+    fireEvent.keyDown(grid, { altKey: true, code: "Digit2", key: "2" });
+    const clear = await waitFor(() =>
+      screen.getByRole("button", { name: "Clear Exchange: XLON" }),
+    );
+    fireEvent.click(clear);
+    await waitFor(() =>
+      expect(
+        container.querySelector(".tradingInstrumentGrid-alsoApplied"),
+      ).toBeNull(),
+    );
+    // back to Watchlist: the cleared value stays clear
+    fireEvent.keyDown(grid, { altKey: true, code: "Digit1", key: "1" });
+    await waitFor(() => expect(exchangeInput()?.value).toBe(""));
+  });
 });

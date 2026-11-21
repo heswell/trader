@@ -22,7 +22,7 @@ These are the source files of the design canvas, kept with the code as the spec.
 
 ## Where the build differs
 
-- **Also applied** (SetSwitch): until vuu-ui has controlled quick filter values (upstream U1), the grid reads the quick part of FilterBar's applied filter and carries values on hidden fields itself. Clearing a chip clears it from the grid's filter; the field's control keeps the value and applies it again on a set that shows it.
-- **Quick filters tab** (SetEditor): until vuu-ui's ColumnPicker takes extra tabs (upstream U2), the tab sits beside vuu's picker in the grid's own Columns panel, on vuu's `ItemPicker`.
+- **Also applied** (SetSwitch): built as designed on vuu-ui's controlled quick filter values (finos/vuu#2774). The grid holds the values, vuu applies the ones on hidden fields (`applyHiddenValues`), and clearing a chip clears the value everywhere. The chips sit under the filter bar, as vuu's FilterBar has no slot for them.
+- **Quick filters tab** (SetEditor): vuu-ui's ColumnPicker still takes no extra tabs, so the grid composes its Columns panel from vuu's `TabbedConfigPanel` (finos/vuu#2773): vuu's column picker, then vuu's `ContextPanelColumnsPicker` for the quick filter fields.
 - **Keys**: Alt+A adds every match (Ctrl+A keeps selecting the search text); Enter, not Space, adds or removes the highlighted instrument, as the search is a text field.
 - **Default sets**: Watchlist has exchange, sector and type as quick filters; Screening has sector, market cap, P/E and yield.
