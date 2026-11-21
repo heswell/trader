@@ -44,7 +44,7 @@ export type MarketMakerParams = {
   readonly cooldownSecs: number;
 };
 
-/** Phase 4 maker settings; the defaults leave the maker as before. */
+/** Stressed-maker settings; the defaults leave them off. */
 export const MM_STRESS_DEFAULTS = Object.freeze({
   fairHalfLifeSecs: 0,
   flowSensitivityBps: 0,

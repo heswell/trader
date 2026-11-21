@@ -1,4 +1,4 @@
-# Selection and instrument linking (P3.11)
+# Selection and instrument linking
 
 Reference: [InstrumentPicker](../api/trading-ui.md#instrumentpicker),
 [InstrumentContextProvider](../api/trading-ui.md#instrumentcontextprovider),
@@ -9,7 +9,7 @@ Reference: [InstrumentPicker](../api/trading-ui.md#instrumentpicker),
 [InstrumentLookupProvider](../api/trading-ui.md#instrumentlookupprovider),
 [useSelectedInstrument](../api/trading-ui.md#useselectedinstrument),
 [useComponentLinkGroup](../api/trading-ui.md#usecomponentlinkgroup). The design (bus, transports, persistence of
-the chosen group) is in [ui-guide §5](../ui-guide.md#5-instrument-linking-p311).
+the chosen group) is in [ui-guide §5](../ui-guide.md#5-instrument-linking).
 
 Showcase: `#linking-providers`, `#selectors`, `#panel-link-group`, `#trader-workspace` (everything linked).
 

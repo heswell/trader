@@ -29,7 +29,7 @@ Workarounds are noted. Resolved issues are struck through.
    directory awkward.~~ *Resolved: fixed in vuu-websocket#85; vuu-server 3.1.0 / vuu-portal 2.0.0 / service-utils 1.1.0.* Absolute and `~/` paths are accepted; `start:all` no longer writes conf copies
    next to the originals.
 
-## Found in Phase 1 (exchange simulator)
+## Found in the exchange simulator
 
 9. ~~**`ModuleFactory.addJoinTable` has no `ServiceFactory` parameter**, so a join table cannot have an RPC
    handler (or custom `ViewPortDef`).~~ *Resolved: fixed in vuu-websocket#86; vuu-server 3.2.0.*
@@ -63,13 +63,13 @@ Workarounds are noted. Resolved issues are struck through.
     replaced trader's cast in `InstrumentBook.modify`. The gateway's AMEND `REPLACED` report carries `priorityKept`,
     and the "amend loses priority" caveats are gone. Trade ids from `onTrade` are still per book, so the simulator
     still issues its own global `TR<n>` ids (by design, not an issue).
-14. ~~**The REST auth server now requires TLS** (`RestServer`: "REST HTTPS server requires SSL"), so the Phase 0
+14. ~~**The REST auth server now requires TLS** (`RestServer`: "REST HTTPS server requires SSL"), so the
     stand-alone config (`vuu.ssl=false`) no longer started.~~ *Resolved: fixed in vuu-websocket#88; vuu-server 3.3.0.*
     With `vuu.auth.mode="permissive"`, `vuu.ssl=false` serves REST as `http://` and the websocket as `ws://`. The
     stand-alone exchange-sim and OMS configs use it (no dev cert), and the server tests start them on ephemeral ports
     and log in at `http://localhost:<port>/api/authn`. The Keycloak (`start:all`) configs keep TLS.
 
-## Found in Phase 2 (OMS)
+## Found in the OMS
 
 15. ~~**No trading roles in the Keycloak realm.**~~ *Resolved in this repo (revised with the alpha.21 split).*
     The trading server has its own confidential Keycloak client, `trader-trading-server`, which owns the server
@@ -102,7 +102,7 @@ Workarounds are noted. Resolved issues are struck through.
     admin RPC forces a phase. By default no session is configured, so dev and e2e runs are always open.
     `OmsEngine.endOfDay()` still expires DAY orders on demand.
 
-## Found in Phase 3 wave 1 (UI foundation)
+## Found in the UI foundation
 
 20. ~~**`@heswell/vuu-data-engine-local` has import-time side effects.**~~ *Resolved: vuu-websocket#96; vuu-data-engine-local 3.0.0.* Importing it creates no
     modules or timers; `registerDemoModules(engine)` is explicit and `/legacy` keeps the old behaviour. Trader never
@@ -174,7 +174,7 @@ Workarounds are noted. Resolved issues are struck through.
     inherit mode with a non-local data provider, and otherwise relies on `onConnectionStatus`. A read-only status
     getter would help.
 
-## Found in Phase 3 consolidation (P3.11 instrument linking)
+## Found in instrument linking
 
 37. **`Table` `scrollToKey` is a stub in alpha.20**, so a grid can select and highlight a row chosen elsewhere but
     cannot scroll it into view. InstrumentGrid `followSelection` selects the row (`dataSource.select`) without
@@ -188,14 +188,14 @@ Workarounds are noted. Resolved issues are struck through.
 40. **vuu-layout keeps View state in a module-level `persistentState` map** (`setPersistentState` /
     `getPersistentState`), so `@vuu-ui/vuu-layout` must be an MF singleton, or a feature's saved state is not found.
     Restoring a saved layout also means walking the JSON and calling `setPersistentState` for each View before
-    mounting. *Phase 4:* sharing vuu-layout deadlocks MF startup (#43), so the portal features use portal state
+    mounting. In the portal, sharing vuu-layout deadlocks MF startup (#43), so the portal features use portal state
     instead (#50).
 41. **`LayoutJSON` is not exported from `@vuu-ui/vuu-layout`** (it lives in vuu-utils `json-types`). The showcase
     declares a local type.
 42. **`SelectRequest` is a union**, so `Omit<SelectRequest, "vpId">` (the `DataSource.select` argument) collapses to
     the shared members and cannot be built without a cast.
 
-## Found in Phase 4 (portal integration, `docs/portal-integration.md`)
+## Found in portal integration (`docs/portal-integration.md`)
 
 43. **Sharing `@vuu-ui/vuu-layout` as an MF singleton deadlocks startup.** Its shared chunk bundles
     vuu-data-react, which imports `@vuu-ui/vuu-layout` again, so the share never resolves and the host page stays
@@ -220,14 +220,14 @@ Workarounds are noted. Resolved issues are struck through.
     vuu-portal would make layouts follow the user.
 50. **A shared singleton library cannot see a remote's `View`s.** `@heswell/trading-ui` is bound to the host's
     vuu-layout (#43), so `useViewContext()` in a remote returns the host's default context. *Workaround:*
-    `useComponentLinkGroup` stores link groups in the module's portal state (`trading.linkGroup.<id>`). *Since
-    Phase 6 X1* the Trader workspace has no vuu-layout Views (its panels save their group in the workspace item's
+    `useComponentLinkGroup` stores link groups in the module's portal state (`trading.linkGroup.<id>`). The
+    Trader workspace has no vuu-layout Views (its panels save their group in the workspace item's
     state); the workaround remains for the nav pages.
 51. **The vuu-utils global `vuuConfig: Promise<VuuConfig>` lacks the auth fields** (`clientId`, `realm`, ...) that
     `PortalShell` needs, so hosts cast. Declaring another global clashes with it.
 52. **`@vuu-ui/vuu-icons` ships no type declarations.** *Workaround:* `apps/portal-host/src/vuu-icons.d.ts`.
-53. ~~**Restoring vuu-layout JSON needs the component registry, which is per bundle.**~~ *No longer applies
-    (Phase 6 X1):* the Trader workspace is a portal workspace (v2 `GridLayoutDocument` of `portal-module` items),
+53. ~~**Restoring vuu-layout JSON needs the component registry, which is per bundle.**~~ *No longer applies:*
+    the Trader workspace is a portal workspace (v2 `GridLayoutDocument` of `portal-module` items),
     which saves its arrangement. A remote still cannot restore a vuu-layout layout containing components it did not
     register.
 54. ~~**`vuu.auth.cors.allowedOrigin` takes a single origin**, so a host served from two origins (e.g. localhost and
@@ -237,7 +237,7 @@ Workarounds are noted. Resolved issues are struck through.
     from either origin.
 55. **`PersistedStateAPI` has no delete or clear.** *Workaround:* `save(key, null)`, and the whole document is
     read with `load()` to find keys by prefix.
-56. ~~**A parent module cannot reset its child modules' persisted state.**~~ *No longer applies (Phase 6 X1):*
+56. ~~**A parent module cannot reset its child modules' persisted state.**~~ *No longer applies:*
     the workspace's child modules (101, 102) and Reset layout are gone; the portal's Reset to default restores the
     whole workspace, including each panel's state.
 
@@ -442,7 +442,7 @@ and the `@vuu-ui/vuu-icons` main entry (#52) still lack types; `PersistedStateAP
     the declared schema as given would fix it. *Workaround:* `createTradingTestData` publishes the declared
     `getTradingSchemas()` schemas as the modules' `schemas` rather than each table's `schema`.
 
-## Found in Phase 5B (resilience: reconnect, resubscribe, stale data)
+## Found in resilience (reconnect, resubscribe, stale data)
 
 See [resilience.md](resilience.md) for the behaviour these work around.
 
@@ -510,7 +510,7 @@ See [resilience.md](resilience.md) for the behaviour these work around.
     *Workaround:* `useVuuConnectionStatuses` re-reads and re-subscribes whenever the registry state of an id
     changes.
 
-## Found in Phase 5A (performance)
+## Found in performance work
 
 90. **`TableHeader`'s `memo` is defeated on data updates.** (finos `@vuu-ui/vuu-table`, 4.0.0-alpha.21.) `Table`
     passes `TableHeader` callbacks from `useTable` whose identity changes as rows update: `onMoveColumn` (its
@@ -531,7 +531,7 @@ See [resilience.md](resilience.md) for the behaviour these work around.
     Conf keys for the cycle time and batch size would fix it. *Workaround:* none; the baselines in
     docs/performance.md include it.
 
-## Found in Phase 5C (persistence: order state survives a restart)
+## Found in persistence (order state survives a restart)
 
 See [persistence.md](persistence.md).
 
@@ -590,7 +590,7 @@ See [components/charts.md](components/charts.md). Bumping every `@vuu-ui/*` pack
      (`css/next/characteristics/actionable.css`) maps to `--vuu-color-coral`, so the user row and the rail status
      button turned bright coral, `rgb(243, 120, 128)`, instead of the subtle grey in the design.)
 
-## Found in Phase 6 X1 (workspaces)
+## Found in workspaces
 
 Found adopting @vuu-ui 4.0.0-alpha.27 portal workspaces with module-admin 2.2.0 / vuu-portal 2.2.5
 (`docs/portal-integration.md`, "Workspaces and saved state").
@@ -644,7 +644,7 @@ Found adopting @vuu-ui 4.0.0-alpha.27 portal workspaces with module-admin 2.2.0 
      `packages/trading-ui/src/instrument-context/workspaceItemState.ts` wraps it in try / catch (with a biome-ignore
      for `useHookAtTopLevel`).)
 
-## Found in Phase 6 X2 (Panels palette)
+## Found in the Panels palette
 
 Found adopting the @vuu-ui 4.0.0-alpha.28 Panels palette (`docs/portal-integration.md`, "Panels palette").
 
@@ -675,7 +675,7 @@ Found adopting the @vuu-ui 4.0.0-alpha.28 Panels palette (`docs/portal-integrati
      grid-layout drop target (pointer-over targets for the four edges and centre). *No workaround in the repo*; drag
      works with the ghost.)
 
-## Found in Phase 6 X3 (alpha.30)
+## Found in the alpha.30 upgrade
 
 Found moving to @vuu-ui 4.0.0-alpha.30 (`docs/portal-integration.md`, "Panels palette").
 

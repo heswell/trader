@@ -1,4 +1,4 @@
-# Market depth (P3.4) and price ladder (P3.5)
+# Market depth and price ladder
 
 Both components live in `@heswell/trading-ui`. They follow the selected instrument (`useSelectedInstrument()`) unless
 you pass an explicit `ric`. They read EXCHANGE `depth`, `instrumentPrices` and `trades`, plus OMS `parentOrders`,

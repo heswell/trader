@@ -1,4 +1,4 @@
-# Order notifications and connection state (P3.12)
+# Order notifications and connection state
 
 Reference: [TradingNotificationsProvider](../api/trading-ui.md#tradingnotificationsprovider),
 [useTradingNotifications](../api/trading-ui.md#usetradingnotifications),

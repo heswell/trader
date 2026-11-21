@@ -4,7 +4,7 @@ These are the source files of the design canvas, kept with the code as the spec.
 
 - Live canvas: https://claude.ai/artifact/4j7Zdx3DXQmqVEhJCP6tFa
 - Plan: https://claude.ai/artifact/Lzx9JPCmxXS11kMibkLysx
-- Built in stack #105 (phases 1–7). The code is now the source of truth; see the [instrument grid guide](../../components/instrument-grid.md#dialogs).
+- Built (stack #105). The code is now the source of truth; see the [instrument grid guide](../../components/instrument-grid.md#dialogs).
 
 | Board | Shows |
 | --- | --- |

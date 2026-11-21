@@ -1,4 +1,4 @@
-# OrderTicket (P3.6)
+# OrderTicket
 
 Reference: [OrderTicket](../api/trading-ui.md#orderticket), [OrderTicketDialog](../api/trading-ui.md#orderticketdialog),
 [OrderTicketPanel](../api/trading-ui.md#orderticketpanel),

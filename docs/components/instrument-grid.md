@@ -1,4 +1,4 @@
-# InstrumentGrid (P3.2), Sparkline (P3.3) and the grid cell renderers
+# InstrumentGrid, Sparkline and the grid cell renderers
 
 Reference (props, types, defaults): [InstrumentGrid](../api/trading-ui.md#instrumentgrid),
 [Sparkline](../api/trading-ui.md#sparkline), [SparklineCell](../api/trading-ui.md#sparklinecell),

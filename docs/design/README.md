@@ -30,7 +30,7 @@ boards are now history, the code is the source of truth), **Superseded**.
 
 | Design | Status | Canvas | Plan doc | Sources |
 | --- | --- | --- | --- | --- |
-| Instrument grid screening (fundamentals columns, column picker, column sets, number shorthand) | Approved (phase 3) | [canvas](https://claude.ai/artifact/5dRbmjsZ6jRji9Qy1YYSiS) | [plan](https://claude.ai/artifact/RjHPphHR6GfmN1QB6hZ4Uw) | [instrument-grid-screening](instrument-grid-screening/README.md) |
+| Instrument grid screening (fundamentals columns, column picker, column sets, number shorthand) | Built | [canvas](https://claude.ai/artifact/5dRbmjsZ6jRji9Qy1YYSiS) | [plan](https://claude.ai/artifact/RjHPphHR6GfmN1QB6hZ4Uw) | [instrument-grid-screening](instrument-grid-screening/README.md) |
 | Compact filter bar (vuu-ui FilterBar, used as-is by the grid) | Built upstream | [canvas](https://claude.ai/artifact/Lntwf5HRb97dvnzoTXv2gE) | | [compact-filter-bar](compact-filter-bar/README.md) |
 
 ## Order entry

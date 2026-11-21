@@ -199,7 +199,7 @@ export const isStopTriggered = (
 
 /**
  * Static order checks shared by the order ticket (pre-submit) and the OMS
- * (authoritative). Account / risk checks are OMS-only (Phase 2).
+ * (authoritative). Account / risk checks are OMS-only.
  */
 export const validateOrder = (
   order: OrderToValidate,
