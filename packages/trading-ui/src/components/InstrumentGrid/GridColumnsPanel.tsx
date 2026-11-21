@@ -1,63 +1,19 @@
+import { Text } from "@salt-ds/core";
+import { ContextPanelColumnsPicker } from "@vuu-ui/vuu-filters";
 import {
-  Button,
-  Tab,
-  TabBar,
-  TabList,
-  TabPanel,
-  Tabs,
-  TabTrigger,
-  Text,
-} from "@salt-ds/core";
-import {
+  ConfigPanelTab,
   type ColumnModel,
   ColumnPicker,
   type ColumnSetModel,
+  TabbedConfigPanel,
 } from "@vuu-ui/vuu-table-extras";
-import { type ItemDescriptor, ItemPicker } from "@vuu-ui/vuu-ui-controls";
+import type { ItemDescriptor } from "@vuu-ui/vuu-ui-controls";
 import { useEffect, useState } from "react";
 
 const toItems = (names: readonly string[], items: readonly ItemDescriptor[]) =>
   names
     .map((name) => items.find((item) => item.name === name))
     .filter((item): item is ItemDescriptor => item !== undefined);
-
-/** The quick filter fields, in order; holds its own selection (context panel content is not re-rendered). */
-const QuickFilterFieldsPicker = ({
-  allItems,
-  defaultSelected,
-  onChange,
-  resetColumns,
-}: {
-  allItems: ItemDescriptor[];
-  defaultSelected: ItemDescriptor[];
-  onChange: (columns: string[]) => void;
-  resetColumns: string[];
-}) => {
-  const [selected, setSelected] = useState(defaultSelected);
-  const change = (columns: string[]) => {
-    setSelected(toItems(columns, allItems));
-    onChange(columns);
-  };
-  return (
-    <div className={`${classBase}-quickFilters`}>
-      <ItemPicker
-        allItems={allItems}
-        itemTypeName="field"
-        onSelectedItemsChange={(items) => change(items.map(({ name }) => name))}
-        selectedItems={selected}
-      />
-      <div className={`${classBase}-footer`}>
-        <Button
-          appearance="transparent"
-          onClick={() => change(resetColumns)}
-          sentiment="accented"
-        >
-          Reset to default
-        </Button>
-      </div>
-    </div>
-  );
-};
 
 const classBase = "tradingGridColumnsPanel";
 
@@ -78,9 +34,8 @@ export interface GridColumnsPanelProps {
 
 /**
  * The grid's column picker in the context panel, with a second tab for the
- * quick filters of the column set in view (until vuu-ui's ColumnPicker
- * takes extra tabs, upstream U2). A field can be a quick filter without
- * being a column. Both tabs follow the active column set.
+ * quick filters of the column set in view. A field can be a quick filter
+ * without being a column. Both tabs follow the active column set.
  */
 export const GridColumnsPanel = ({
   columnModel,
@@ -91,7 +46,6 @@ export const GridColumnsPanel = ({
   onChangeQuickFilterColumns,
   quickFilterItems,
 }: GridColumnsPanelProps) => {
-  const [tab, setTab] = useState<string>(initialTab);
   const [setName, setSetName] = useState(columnSetModel.activeColumnSet?.name);
   useEffect(() => {
     const handler = () => setSetName(columnSetModel.activeColumnSet?.name);
@@ -101,45 +55,46 @@ export const GridColumnsPanel = ({
     };
   }, [columnSetModel]);
 
-  const selected = toItems(getQuickFilterColumns(), quickFilterItems);
-
   return (
-    <Tabs
+    <TabbedConfigPanel
       className={classBase}
-      onChange={(_e, value) => setTab(value)}
-      value={tab}
+      defaultValue={initialTab}
+      tabListLabel="Columns and quick filters"
     >
-      <TabBar divider inset>
-        <TabList aria-label="Columns and quick filters">
-          <Tab value="columns">
-            <TabTrigger>Columns</TabTrigger>
-          </Tab>
-          <Tab value="quickFilters">
-            <TabTrigger>Quick filters</TabTrigger>
-          </Tab>
-        </TabList>
-      </TabBar>
-      <TabPanel className={`${classBase}-panel`} value="columns">
+      <ConfigPanelTab
+        className={`${classBase}-panel`}
+        label="Columns"
+        value="columns"
+      >
         <ColumnPicker
           columnModel={columnModel}
           columnSetModel={columnSetModel}
         />
-      </TabPanel>
-      <TabPanel className={`${classBase}-panel`} value="quickFilters">
+      </ConfigPanelTab>
+      <ConfigPanelTab
+        className={`${classBase}-panel`}
+        label="Quick filters"
+        value="quickFilters"
+      >
         <Text className={`${classBase}-note`} styleAs="label">
           {setName
             ? `The quick filters of ${setName}: switching column sets switches them too. A field need not be a column.`
             : "The quick filters in view. A field need not be a column."}
         </Text>
-        <QuickFilterFieldsPicker
+        <ContextPanelColumnsPicker
           allItems={quickFilterItems}
-          defaultSelected={selected}
+          className={`${classBase}-quickFilters`}
+          defaultSelectedItems={toItems(
+            getQuickFilterColumns(),
+            quickFilterItems,
+          )}
+          itemTypeName="field"
           // remount on a change of set: the picker holds its own selection
           key={setName ?? ""}
-          onChange={onChangeQuickFilterColumns}
+          onChangeColumns={onChangeQuickFilterColumns}
           resetColumns={defaultQuickFilterColumns}
         />
-      </TabPanel>
-    </Tabs>
+      </ConfigPanelTab>
+    </TabbedConfigPanel>
   );
 };

@@ -1,15 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import type { Filter } from "@vuu-ui/vuu-filter-types";
+import type { QuickFilterValue } from "@vuu-ui/vuu-filters";
 import type { ColumnSetsState } from "@vuu-ui/vuu-table-extras";
 import {
-  alsoAppliedFilters,
-  andFilters,
+  alsoAppliedValues,
   parseColumnSetMeta,
   quickFilterChipLabel,
-  quickFilterClauses,
   quickFilterColumnsFor,
   reconcileColumnSetMeta,
-  updateQuickFilterValues,
 } from "../src/components/InstrumentGrid/columnSetMeta";
 
 const sets = (...names: string[]): ColumnSetsState => ({
@@ -21,26 +18,9 @@ const sets = (...names: string[]): ColumnSetsState => ({
   })),
 });
 
-const exchange: Filter = { column: "exchange", op: "=", value: "XLON" };
-const sector: Filter = {
-  column: "sector",
-  op: "in",
-  values: ["Energy", "Financials"],
-} as Filter;
-const search: Filter = {
-  op: "or",
-  filters: [
-    { column: "ric", op: "contains", value: "ba" },
-    { column: "description", op: "contains", value: "ba" },
-  ],
-};
-const pe: Filter = {
-  op: "and",
-  filters: [
-    { column: "pe", op: ">=", value: 5 },
-    { column: "pe", op: "<=", value: 12 },
-  ],
-};
+const exchange: QuickFilterValue = { op: "=", value: "XLON" };
+const sector: QuickFilterValue = { op: "=", value: "Energy" };
+const pe: QuickFilterValue = { op: "between-inclusive", value: ["5", "12"] };
 
 describe("column set meta", () => {
   test("parse is defensive", () => {
@@ -95,43 +75,13 @@ describe("column set meta", () => {
 });
 
 describe("quick filter values across column sets", () => {
-  test("clauses split by column, without the search", () => {
-    const combined: Filter = {
-      op: "and",
-      filters: [{ op: "and", filters: [exchange, sector, pe] }, search],
-    };
-    expect(quickFilterClauses(combined, ["ric", "description"])).toEqual({
-      exchange,
-      pe,
-      sector,
-    });
-    expect(quickFilterClauses(exchange, [])).toEqual({ exchange });
-    expect(quickFilterClauses(search, ["ric", "description"])).toEqual({});
-    expect(quickFilterClauses(undefined, [])).toEqual({});
-  });
-
-  test("values on fields out of view are kept and become Also applied", () => {
-    let values = updateQuickFilterValues({}, { exchange, sector }, [
-      "exchange",
-      "sector",
+  test("values on fields out of view become Also applied", () => {
+    const values = { exchange, pe, sector };
+    expect(alsoAppliedValues(values, ["sector", "pe"])).toEqual([
+      { column: "exchange", value: exchange },
     ]);
-    // switch to a set without exchange: its value stays
-    values = updateQuickFilterValues(values, { sector }, ["sector", "pe"]);
-    expect(values).toEqual({ exchange, sector });
-    expect(alsoAppliedFilters(values, ["sector", "pe"])).toEqual([
-      { column: "exchange", filter: exchange },
-    ]);
-    // a field in view with no clause was cleared
-    values = updateQuickFilterValues(values, {}, ["sector", "pe"]);
-    expect(values).toEqual({ exchange });
-  });
-
-  test("andFilters flattens and leaves a between whole", () => {
-    expect(andFilters(undefined, [])).toBeUndefined();
-    expect(andFilters(exchange, [])).toBe(exchange);
-    expect(
-      andFilters({ op: "and", filters: [exchange, sector] }, [pe]),
-    ).toEqual({ op: "and", filters: [exchange, sector, pe] });
+    expect(alsoAppliedValues(values, ["exchange", "sector", "pe"])).toEqual([]);
+    expect(alsoAppliedValues({}, [])).toEqual([]);
   });
 
   test("chip labels", () => {
@@ -143,11 +93,17 @@ describe("quick filter values across column sets", () => {
       "Exchange: XLON",
     );
     expect(quickFilterChipLabel("sector", sector, columns)).toBe(
-      "sector: Energy, Financials",
+      "sector: Energy",
     );
     expect(quickFilterChipLabel("pe", pe, columns)).toBe("pe: 5–12");
     expect(
-      quickFilterChipLabel("pe", { column: "pe", op: "<", value: 12 }, columns),
+      quickFilterChipLabel("pe", { op: "between", value: ["5", ""] }, columns),
+    ).toBe("pe: 5");
+    expect(
+      quickFilterChipLabel("pe", { op: "between", value: ["", "12"] }, columns),
     ).toBe("pe: < 12");
+    expect(quickFilterChipLabel("pe", { op: "<", value: 12 }, columns)).toBe(
+      "pe: < 12",
+    );
   });
 });

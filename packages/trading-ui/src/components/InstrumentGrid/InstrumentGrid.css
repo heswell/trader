@@ -312,17 +312,11 @@
   border-radius: 999px;
 }
 
-/* The Columns panel (context panel): Columns | Quick filters tabs. */
-.tradingGridColumnsPanel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-
+/* The Columns panel (context panel, vuu TabbedConfigPanel): Columns | Quick
+   filters tabs. A note sits above the quick filter fields picker, which
+   takes the rest of the tab. */
 .tradingGridColumnsPanel-panel {
   display: flex;
-  flex: 1;
   flex-direction: column;
   gap: var(--salt-spacing-100);
   min-height: 0;
@@ -331,24 +325,13 @@
 
 .tradingGridColumnsPanel-panel > .vuuColumnPicker,
 .tradingGridColumnsPanel-quickFilters {
-  display: flex;
   flex: 1;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.tradingGridColumnsPanel-quickFilters > .vuuItemPicker {
-  flex: 1;
+  height: auto;
   min-height: 0;
 }
 
 .tradingGridColumnsPanel-note {
   color: var(--salt-content-secondary-foreground);
-}
-
-.tradingGridColumnsPanel-footer {
-  display: flex;
-  justify-content: flex-end;
 }
 
 /* Column sets only in this scope: after a divider, with a pin. */

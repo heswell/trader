@@ -1,5 +1,5 @@
 import { Button } from "@salt-ds/core";
-import type { Filter } from "@vuu-ui/vuu-filter-types";
+import type { QuickFilterValue } from "@vuu-ui/vuu-filters";
 import type { ColumnDescriptor } from "@vuu-ui/vuu-table-types";
 import { quickFilterChipLabel } from "./columnSetMeta";
 
@@ -7,7 +7,8 @@ const classBase = "tradingInstrumentGrid";
 
 export interface AlsoAppliedProps {
   columns: readonly ColumnDescriptor[];
-  filters: readonly { column: string; filter: Filter }[];
+  /** The held quick filter values on fields not in view. */
+  values: readonly { column: string; value: QuickFilterValue }[];
   onClear: (column: string) => void;
 }
 
@@ -15,11 +16,7 @@ export interface AlsoAppliedProps {
  * Quick filter values on fields the column set in view doesn't show: they
  * still apply, as chips under the filter bar, each with a clear button.
  */
-export const AlsoApplied = ({
-  columns,
-  filters,
-  onClear,
-}: AlsoAppliedProps) => (
+export const AlsoApplied = ({ columns, onClear, values }: AlsoAppliedProps) => (
   <fieldset className={`${classBase}-alsoApplied`}>
     <legend
       className={`${classBase}-alsoAppliedLabel`}
@@ -27,8 +24,8 @@ export const AlsoApplied = ({
     >
       Also applied
     </legend>
-    {filters.map(({ column, filter }) => {
-      const label = quickFilterChipLabel(column, filter, columns);
+    {values.map(({ column, value }) => {
+      const label = quickFilterChipLabel(column, value, columns);
       return (
         <span className={`${classBase}-chip`} key={column}>
           <span className={`${classBase}-chipLabel`}>{label}</span>
