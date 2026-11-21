@@ -11,7 +11,7 @@ import {
 } from "@heswell/trading-schemas";
 import type { OrderEvent } from "../domain/orderState";
 import type { ChildOrder, ParentOrder } from "../engine/OmsEngine";
-import type { AlgoState } from "./params";
+import type { AlgoPhase, AlgoState } from "./params";
 import { planSlice, type SliceRequest } from "./planSlice";
 import { SLICE_STRATEGIES, type SliceStrategy } from "./strategies";
 
@@ -70,17 +70,26 @@ export class AlgoContainer {
     this.#slice(parent, this.#host.clock());
   }
 
-  /** Re-register running parents after a restore. */
+  /**
+   * Re-register running parents after a restore. A live parent whose phase
+   * is DONE was left behind by an amend that re-entered #windDown (fixed,
+   * but persisted state may still hold such orders): the amend had been
+   * applied, so it goes back to WORKING, and slicing resumes or the end time
+   * expires it.
+   */
   restore(parents: Iterable<ParentOrder>) {
     this.#running.clear();
     for (const parent of parents) {
-      if (
-        isAlgoParent(parent) &&
-        parent.algo.phase !== "DONE" &&
-        !isTerminalStatus(parent.state.status)
-      ) {
-        this.#running.set(parent.orderId, parent);
+      if (!isAlgoParent(parent) || isTerminalStatus(parent.state.status))
+        continue;
+      if (parent.algo.phase === "DONE") {
+        parent.algo.phase = "WORKING";
+        parent.algo.pendingAmend = undefined;
+        this.#host.log(
+          `${parent.orderId}: ${parent.state.status} algo was marked DONE, resumed as WORKING`,
+        );
       }
+      this.#running.set(parent.orderId, parent);
     }
   }
 
@@ -244,8 +253,8 @@ export class AlgoContainer {
       this.#running.delete(parent.orderId);
       return;
     }
-    const terminal = isTerminalStatus(parent.state.status);
-    if (algo.phase === "WORKING" && !terminal) return;
+    if (algo.phase === "WORKING" && !isTerminalStatus(parent.state.status))
+      return;
 
     const live = host.liveChildren(parent);
     for (const child of live) {
@@ -254,6 +263,14 @@ export class AlgoContainer {
       }
     }
     if (host.liveChildren(parent).length > 0) return;
+    // With a synchronous gateway the cancel reports arrive inside cancelChild
+    // and re-enter here (onChildEvent), which may already have finished the
+    // phase: an amend is back to WORKING, a cancel / expiry is DONE. Read the
+    // phase afresh (the checks above narrowed it).
+    const phase = algo.phase as AlgoPhase;
+    if (phase === "DONE") return;
+    const terminal = isTerminalStatus(parent.state.status);
+    if (phase === "WORKING" && !terminal) return;
 
     if (!terminal) {
       switch (algo.phase) {

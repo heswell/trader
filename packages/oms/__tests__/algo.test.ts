@@ -190,6 +190,36 @@ describe("algo orders in the OMS engine", () => {
     });
   });
 
+  test("amend with resting children keeps the algo working, so it can be cancelled", () => {
+    const { create, engine, run, children, ctx, status } = withBook();
+    const id = create({
+      quantity: 1_000,
+      price: 176,
+      strategy: AlgoStrategy.Twap,
+      durationMins: 10,
+    });
+    run(1_000);
+    // Passive children rest at the bid when the amend arrives: cancelling
+    // them reports back synchronously (no gateway latency).
+    expect(children(id).some((c) => c.state.status === OrdStatus.New)).toBe(
+      true,
+    );
+    expect(engine.amendOrder({ orderId: id, quantity: 2_000 }, ctx).ok).toBe(
+      true,
+    );
+    expect(status(id)).toMatchObject({
+      status: OrdStatus.Replaced,
+      quantity: 2_000,
+    });
+    expect(engine.getOrder(id)?.algo?.phase).toBe("WORKING");
+    expect(engine.runningAlgos.map((p) => p.orderId)).toContain(id);
+    const cancelled = engine.cancelOrder({ orderId: id }, ctx);
+    expect(cancelled).toMatchObject({ ok: true });
+    expect(status(id)?.status).toBe(OrdStatus.Cancelled);
+    run(MIN);
+    expect(engine.runningAlgos).toHaveLength(0);
+  });
+
   test("POV trades its share of the volume other traders do", () => {
     const { create, engine, run, rest, status } = withBook();
     const id = create({
@@ -236,6 +266,39 @@ describe("algo orders in the OMS engine", () => {
       status: OrdStatus.Filled,
       cumQty: 1_000,
     });
+  });
+
+  test("restart: a live algo persisted as DONE is resumed and can be cancelled", () => {
+    const t = withBook();
+    const id = t.create({
+      quantity: 1_000,
+      price: 176,
+      strategy: AlgoStrategy.Twap,
+      durationMins: 10,
+    });
+    t.run(3 * MIN);
+    const state = structuredClone(t.engine.exportState());
+    // As left by an amend that re-entered the wind-down (now fixed).
+    const stuck = state.parents.find((p) => p.orderId === id);
+    if (stuck?.algo) stuck.algo.phase = "DONE";
+    t.engine.dispose();
+    const log: string[] = [];
+    const engine = new OmsEngine({
+      gateway: t.sim.gateway,
+      accounts: SEED_ACCOUNTS,
+      clock: t.clock.now,
+      log: (m) => log.push(m),
+    });
+    engine.restoreState(state);
+    engine.reconcile(t.sim.gateway);
+    expect(engine.getOrder(id)?.algo?.phase).toBe("WORKING");
+    expect(engine.runningAlgos.map((p) => p.orderId)).toEqual([id]);
+    expect(log.some((m) => m.includes(`${id}: `))).toBe(true);
+    expect(engine.cancelOrder({ orderId: id }, t.ctx)).toMatchObject({
+      ok: true,
+    });
+    expect(engine.getOrder(id)?.state.status).toBe(OrdStatus.Cancelled);
+    expect(engine.runningAlgos).toHaveLength(0);
   });
 
   test("DMA orders are unchanged: one child, strategy DMA", () => {
