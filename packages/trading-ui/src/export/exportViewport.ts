@@ -196,6 +196,7 @@ export const exportViewportToCsv = async ({
     },
   });
   await rowSource.rows
+    .pipeThrough(abortable(signal))
     .pipeThrough(
       csvFormatter(columns, {
         sourceColumns: rowSource.columns,
@@ -208,7 +209,7 @@ export const exportViewportToCsv = async ({
     )
     .pipeThrough(new TextEncoderStream())
     .pipeThrough(countBytes)
-    .pipeTo(sink.writable, { signal });
+    .pipeTo(sink.writable);
   await sink.finish?.();
   return {
     rows,
@@ -218,6 +219,34 @@ export const exportViewportToCsv = async ({
     firstRowsMs,
     sink: sink.kind,
   };
+};
+
+/**
+ * Pass-through that errors the pipe when `signal` aborts: the pipe then
+ * cancels the source (releasing the server stream) and aborts the sink.
+ * Used instead of pipeTo's `signal` option, which some stream
+ * implementations reject for an AbortSignal they did not create.
+ */
+const abortable = <T>(signal?: AbortSignal) => {
+  let onAbort: (() => void) | undefined;
+  return new TransformStream<T, T>({
+    start(controller) {
+      if (!signal) return;
+      const abortError = () =>
+        signal.reason instanceof Error
+          ? signal.reason
+          : new DOMException("export cancelled", "AbortError");
+      if (signal.aborted) return controller.error(abortError());
+      onAbort = () => controller.error(abortError());
+      signal.addEventListener("abort", onAbort, { once: true });
+    },
+    transform(chunk, controller) {
+      controller.enqueue(chunk);
+    },
+    flush() {
+      if (onAbort) signal?.removeEventListener("abort", onAbort);
+    },
+  });
 };
 
 /** EXPORT_VIEWPORT, then the NDJSON body parsed into row arrays. */

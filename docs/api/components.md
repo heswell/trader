@@ -24,6 +24,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [ConnectionBanner](trading-ui.md#connectionbanner) | `components/ConnectionBanner` |  |  |  | `notifications-connection` | [guide](../components/notifications-and-connection.md) |
 | [ConnectionStatusIndicator](trading-ui.md#connectionstatusindicator) | `components/ConnectionStatusIndicator` |  |  |  | *host* | [guide](../components/notifications-and-connection.md) |
 | [DepthChartView](trading-ui.md#depthchartview) | `components/DepthChartView` | `depth`, `instrumentPrices`, `trades` |  | ChartFrame, LinkGroupSelector | `chart-workspace`, `depth-chart`, `trader-workspace` | [guide](../components/charts.md#depthchartview) |
+| [ExportCsvButton](trading-ui.md#exportcsvbutton) | `components/ExportCsvButton` |  |  | InstrumentLookup | `million-trades-export-csv`, `trades-export-csv` | [guide](../components/blotters.md#export-csv) |
 | [ExposureTreemap](trading-ui.md#exposuretreemap) | `components/ExposureTreemap` | `positionPrices` |  | ChartFrame | `exposure-treemap` | [guide](../components/charts.md#exposuretreemap) |
 | [FillProgressBar](trading-ui.md#fillprogressbar) | `components/FillProgressBar` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
 | [FillsBlotter](trading-ui.md#fillsblotter) | `components/FillsBlotter` | `fills` |  | ChannelRowMarkers, InstrumentLookup, LinkedInstrumentsFooter, StaleIndicator, TradingCellRenderers | `fills-blotter`, `trader-workspace` | [guide](../components/blotters.md) |
@@ -95,6 +96,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | `components/ConnectionBanner` | `tradingConnectionBanner` |  | `data-connection-state` |
 | `components/ConnectionStatusIndicator` | `tradingConnectionStatus` |  | `data-connection-state` |
 | `components/DepthChartView` | `tradingDepthChartView` |  | `data-link-group` |
+| `components/ExportCsvButton` | `tradingExportCsvButton` |  | `data-state`, `data-testid` |
 | `components/ExposureTreemap` | `tradingExposureTreemap` |  | `data-measure` |
 | `components/FillProgressBar` | `tradingFillProgressBar` | `--tradingFillProgressBar-colour`, `--tradingFillProgressBar-pct` | `data-pct`, `data-target-pct` |
 | `components/FillsBlotter` | `tradingFillsBlotter` |  | `data-testid` |

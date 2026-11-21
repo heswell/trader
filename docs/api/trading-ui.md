@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 666 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 672 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -20,6 +20,7 @@ Imports: `@heswell/trading-ui`. 666 exports. Types are shown as written in the s
 - **components/ConnectionBanner**: [ConnectionBanner](#connectionbanner), [ConnectionBannerProps](#connectionbannerprops)
 - **components/ConnectionStatusIndicator**: [CONNECTION_STATE_LABELS](#connection_state_labels), [ConnectionStatusIndicator](#connectionstatusindicator), [ConnectionStatusIndicatorProps](#connectionstatusindicatorprops)
 - **components/DepthChartView**: [DepthChartView](#depthchartview), [DepthChartViewProps](#depthchartviewprops)
+- **components/ExportCsvButton**: [ExportCsvButton](#exportcsvbutton), [ExportCsvButtonProps](#exportcsvbuttonprops), [exportStatusText](#exportstatustext), [useViewportExport](#useviewportexport), [UseViewportExportProps](#useviewportexportprops), [ViewportExportStatus](#viewportexportstatus)
 - **components/ExposureTreemap**: [ExposureMeasure](#exposuremeasure), [ExposureTreemap](#exposuretreemap), [ExposureTreemapProps](#exposuretreemapprops)
 - **components/FillProgressBar**: [FillProgressBar](#fillprogressbar), [FillProgressBarProps](#fillprogressbarprops)
 - **components/FillsBlotter**: [FillsBlotter](#fillsblotter), [FillsBlotterProps](#fillsblotterprops), [FillsGrouping](#fillsgrouping), [FillsLinkContext](#fillslinkcontext)
@@ -3208,6 +3209,101 @@ Also accepts the standard HTML attributes and `ref`.
 *interface* · [components/DepthChartView/DepthChartView.tsx](../../packages/trading-ui/src/components/DepthChartView/DepthChartView.tsx#L30)
 
 Props of [`DepthChartView`](#depthchartview).
+
+## components/ExportCsvButton
+
+### Components (components/ExportCsvButton)
+
+#### ExportCsvButton
+
+*component* · [components/ExportCsvButton/ExportCsvButton.tsx](../../packages/trading-ui/src/components/ExportCsvButton/ExportCsvButton.tsx#L88)
+
+Export CSV for a panel's Table: every row of its data source in the
+current filter and sort, formatted as the grid shows it (see
+useViewportExport). While it runs the button cancels it and shows
+progress; the result (rows, time; size and throughput on hover) stays
+for a few seconds.
+
+Props: `ExportCsvButtonProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `label?` | `string` | `"Export CSV"` | Button text. Default "Export CSV". |
+| `disabled?` | `boolean` | `false` | Disable the button (e.g. while disconnected). |
+| `table` | `TradingSchemaName` |  | The trading table the data source is on. (from `UseViewportExportProps`) |
+| `dataSource` | `DataSource` |  | The data source the panel's Table shows: its filter and sort are used. (from `UseViewportExportProps`) |
+| `tableConfig` | `TableConfig` |  | The Table's config: visible columns, their order, labels and formats. (from `UseViewportExportProps`) |
+| `fileName` | `string` |  | Suggested file name, e.g. "fills.csv". (from `UseViewportExportProps`) |
+| `textFormatters?` | `CellTextFormatters` |  | Text forms of the panel's own cell renderers, by renderer name. (from `UseViewportExportProps`) |
+| `baseUrl?` | `string` |  | Base for the export url if the server sends none (its REST url). (from `UseViewportExportProps`) |
+
+Also accepts the standard HTML attributes.
+
+### Hooks (components/ExportCsvButton)
+
+#### useViewportExport
+
+*hook* · [components/ExportCsvButton/useViewportExport.ts](../../packages/trading-ui/src/components/ExportCsvButton/useViewportExport.ts#L78)
+
+Export what a panel's Table shows (every row, not just the visible range)
+as CSV, formatted the way the grid formats it, in its current filter and
+sort. Streams to a file the user picks where the browser can
+(showSaveFilePicker), else downloads from memory.
+
+A grouped data source exports its leaf rows: the server snapshots flat
+viewports only, so the export opens a temporary ungrouped viewport with
+the same columns, filter and sort, and closes it when done.
+
+```ts
+useViewportExport({ table, dataSource, tableConfig, fileName, textFormatters, baseUrl, }: UseViewportExportProps): { status: ViewportExportStatus; exportCsv: () => Promise<void>; cancel: () => void | undefined; reset: () => void; }
+```
+
+### Functions (components/ExportCsvButton)
+
+#### exportStatusText
+
+*function* · [components/ExportCsvButton/ExportCsvButton.tsx](../../packages/trading-ui/src/components/ExportCsvButton/ExportCsvButton.tsx#L38)
+
+The status text next to the button, and its full form for the tooltip.
+
+```ts
+exportStatusText(status: ViewportExportStatus): { text: string; title?: string }
+```
+
+### Interfaces (components/ExportCsvButton)
+
+#### ExportCsvButtonProps
+
+*interface* · [components/ExportCsvButton/ExportCsvButton.tsx](../../packages/trading-ui/src/components/ExportCsvButton/ExportCsvButton.tsx#L72)
+
+Props of [`ExportCsvButton`](#exportcsvbutton).
+
+#### UseViewportExportProps
+
+*interface* · [components/ExportCsvButton/useViewportExport.ts](../../packages/trading-ui/src/components/ExportCsvButton/useViewportExport.ts#L27)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `table` | `TradingSchemaName` |  | The trading table the data source is on. |
+| `dataSource` | `DataSource` |  | The data source the panel's Table shows: its filter and sort are used. |
+| `tableConfig` | `TableConfig` |  | The Table's config: visible columns, their order, labels and formats. |
+| `fileName` | `string` |  | Suggested file name, e.g. "fills.csv". |
+| `textFormatters?` | `CellTextFormatters` |  | Text forms of the panel's own cell renderers, by renderer name. |
+| `baseUrl?` | `string` |  | Base for the export url if the server sends none (its REST url). |
+
+### Types (components/ExportCsvButton)
+
+#### ViewportExportStatus
+
+*type* · [components/ExportCsvButton/useViewportExport.ts](../../packages/trading-ui/src/components/ExportCsvButton/useViewportExport.ts#L20)
+
+```ts
+type ViewportExportStatus = | { state: "idle" }
+  | { state: "running"; rows: number; rowCount: number }
+  | { state: "done"; result: ExportResult }
+  | { state: "cancelled" }
+  | { state: "error"; message: string }
+```
 
 ## components/ExposureTreemap
 

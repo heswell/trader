@@ -1,0 +1,23 @@
+.tradingExportCsvButton {
+  align-items: center;
+  display: inline-flex;
+  gap: var(--salt-spacing-100);
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.tradingExportCsvButton-status {
+  color: var(--salt-content-secondary-foreground);
+  font-size: var(--salt-text-label-fontSize);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tradingExportCsvButton-status:empty {
+  display: none;
+}
+
+.tradingExportCsvButton[data-state="error"] .tradingExportCsvButton-status {
+  color: var(--salt-status-error-foreground-informative);
+}
