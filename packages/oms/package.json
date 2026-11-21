@@ -22,9 +22,9 @@
     "@heswell/trading-persistence": "workspace:*",
     "@heswell/trading-schemas": "workspace:*",
     "@heswell/vuu-server": "^4.6.0",
-    "@vuu-ui/vuu-data-types": "5.0.0-alpha.12",
-    "@vuu-ui/vuu-protocol-types": "5.0.0-alpha.12",
-    "@vuu-ui/vuu-utils": "5.0.0-alpha.12"
+    "@vuu-ui/vuu-data-types": "5.0.0-alpha.13",
+    "@vuu-ui/vuu-protocol-types": "5.0.0-alpha.13",
+    "@vuu-ui/vuu-utils": "5.0.0-alpha.13"
   },
   "devDependencies": {
     "@heswell/hft-limit-order-book": "2.0.0"
