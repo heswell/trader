@@ -192,6 +192,23 @@ modules:
     accessRole: "trading-access"
     navOrder: 230
     workspace: {"paletteGroup":"Market","defaultSize":{"cols":2,"rows":1}}
+  - id: 125
+    version: 1
+    parentModuleId: 0
+    name: "TradingOptionChain"
+    title: "Option chain"
+    description: "Calls and puts by strike and expiry for the linked underlying; trade the liquid strikes"
+    enabled: true
+    location: "/Market/Option chain"
+    path: "/market/option-chain"
+    mfComponent: "OptionChain"
+    mfScope: "tradingOptionChain"
+    mfUrl: "http://localhost:5110/option-chain"
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203v18%22%2F%3E%3Cpath%20d%3D%22M4%207h5M4%2012h5M4%2017h5M15%207h5M15%2012h5M15%2017h5%22%2F%3E%3C%2Fsvg%3E"
+    accessRole: "trading-access"
+    navOrder: 240
+    notificationTopics: ["marketdata"]
+    workspace: {"paletteGroup":"Market","defaultSize":{"cols":2,"rows":1}}
   - id: 116
     version: 1
     parentModuleId: 0
