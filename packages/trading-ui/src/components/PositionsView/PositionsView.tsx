@@ -31,6 +31,7 @@ import {
   InstrumentLookupProvider,
   useInstrumentLookup,
 } from "../InstrumentLookup";
+import { ExportCsvButton } from "../ExportCsvButton";
 import { PnlValue } from "../PnlValue";
 import {
   registerTradingCellRenderers,
@@ -374,6 +375,13 @@ const Inner = forwardRef<HTMLDivElement, PositionsViewProps>(
               <option value="underlying">Currency / underlying</option>
             </select>
           </label>
+          <span className={`${classBase}-spacer`} />
+          <ExportCsvButton
+            dataSource={dataSource}
+            fileName="positions.csv"
+            table="positionPrices"
+            tableConfig={tableConfig}
+          />
         </div>
         <div className={`${classBase}-table`}>
           <Table

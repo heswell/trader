@@ -1,4 +1,4 @@
-import { Button, ToggleButton, ToggleButtonGroup } from "@salt-ds/core";
+import { ToggleButton, ToggleButtonGroup } from "@salt-ds/core";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
 import { ContextMenuProvider } from "@vuu-ui/vuu-context-menu";
@@ -32,8 +32,8 @@ import {
   useLinkedRicFilter,
 } from "../LinkedInstrumentsFooter";
 import { useStaleData } from "../StaleIndicator/useStaleData";
-import { type CsvColumn, downloadCsv, rowsToCsv } from "../../utils/csv";
-import { formatTime } from "../../utils/time";
+import { tradingTextFormatters } from "../../export/tradingTextFormatters";
+import { ExportCsvButton } from "../ExportCsvButton";
 import {
   InstrumentLookupProvider,
   useInstrumentLookup,
@@ -63,20 +63,6 @@ const FILLS_GROUPINGS: readonly { id: FillsGrouping; label: string }[] = [
   { id: "ric", label: "RIC" },
   { id: "ric-side", label: "RIC / side" },
 ];
-
-const DownloadIcon = () => (
-  <svg
-    aria-hidden="true"
-    fill="none"
-    height={14}
-    stroke="currentColor"
-    strokeWidth={1.4}
-    viewBox="0 0 14 14"
-    width={14}
-  >
-    <path d="M7 2v7M4 6.5L7 9.5l3-3M2.5 12h9" />
-  </svg>
-);
 
 const COLUMNS = [
   "execId",
@@ -138,20 +124,6 @@ const tableConfig: TableConfig = {
   ],
 };
 
-const CSV_COLUMNS: CsvColumn[] = [
-  { name: "execId" },
-  { name: "orderId" },
-  { name: "account" },
-  { name: "ric" },
-  { name: "side" },
-  { name: "quantity" },
-  { name: "price" },
-  { name: "notional" },
-  { name: "currency" },
-  { name: "liquidity" },
-  { name: "timestamp", format: (v) => formatTime(v, { utc: true }) },
-];
-
 export interface FillsBlotterProps
   extends Omit<HTMLAttributes<HTMLDivElement>, "onSelect"> {
   /** Initial grouping. Default "none". */
@@ -162,11 +134,9 @@ export interface FillsBlotterProps
   onOrderSelect?: (orderId: string) => void;
   /** Order to highlight (e.g. the order selected in an OrderBlotter). */
   highlightOrderId?: string;
-  /** CSV file name. Default "fills.csv". */
+  /** Suggested CSV file name. Default "fills.csv". */
   csvFileName?: string;
 }
-
-const MAX_EXPORT_ROWS = 5_000;
 
 const ricFilter = (ric?: string) => (ric ? `ric = ${filterString(ric)}` : "");
 
@@ -228,15 +198,13 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
       filterSpec: filter,
       sort: { sortDefs: [{ column: "timestamp", sortType: "D" }] },
     });
-    // ungrouped copy of what the table shows, for CSV export
+    // ungrouped copy of the table's filter, for the fills count
     const mirror = useTradingDataSource("fills", {
       columns: COLUMNS,
       filterSpec: filter,
       sort: { sortDefs: [{ column: "timestamp", sortType: "D" }] },
     });
-    const { rows: records, size: rowCount } = useDataSourceRows(mirror, {
-      rowCount: MAX_EXPORT_ROWS,
-    });
+    const { size: rowCount } = useDataSourceRows(mirror, { rowCount: 1 });
 
     useEffect(() => {
       const f = { filter: andFilters(ricFilter(ric), ricFilter(filterRic)) };
@@ -275,9 +243,14 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
       [onOrderSelect, highlightOrderId],
     );
 
-    const exportCsv = useCallback(() => {
-      downloadCsv(csvFileName, rowsToCsv(CSV_COLUMNS, records));
-    }, [csvFileName, records]);
+    // group rows show a VWAP; leaf rows (what the export writes) a price
+    const textFormatters = useMemo(
+      () => ({
+        [VWAP_PRICE_RENDERER]:
+          tradingTextFormatters(lookup)[TradingRenderer.Price],
+      }),
+      [lookup],
+    );
 
     return (
       <div
@@ -307,15 +280,14 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
             ))}
           </ToggleButtonGroup>
           <span className={`${classBase}-spacer`} />
-          <Button
-            appearance="bordered"
-            disabled={records.length === 0}
-            onClick={exportCsv}
-            sentiment="neutral"
-          >
-            <DownloadIcon />
-            Export CSV ({records.length})
-          </Button>
+          <ExportCsvButton
+            dataSource={dataSource}
+            disabled={rowCount === 0}
+            fileName={csvFileName}
+            table="fills"
+            tableConfig={markers.tableConfig}
+            textFormatters={textFormatters}
+          />
         </div>
         <FillsLinkContext.Provider value={link}>
           <div className={`${classBase}-table`}>
@@ -347,8 +319,8 @@ const Inner = forwardRef<HTMLDivElement, FillsBlotterProps>(
 /**
  * Fills blotter on `fills` (the server already filters to the user's own
  * fills): grouping by ric / ric+side with summed quantity and notional and
- * a VWAP price on group rows, liquidity, order links and CSV export of the
- * current filter and sort (ungrouped, up to 5,000 rows).
+ * a VWAP price on group rows, liquidity, order links and Export CSV of every
+ * fill in the current filter and sort (ungrouped), as the table shows them.
  */
 export const FillsBlotter = forwardRef<HTMLDivElement, FillsBlotterProps>(
   function FillsBlotter(props, ref) {

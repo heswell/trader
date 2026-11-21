@@ -3387,12 +3387,12 @@ Props of [`FillProgressBar`](#fillprogressbar).
 
 #### FillsBlotter
 
-*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L353)
+*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L325)
 
 Fills blotter on `fills` (the server already filters to the user's own
 fills): grouping by ric / ric+side with summed quantity and notional and
-a VWAP price on group rows, liquidity, order links and CSV export of the
-current filter and sort (ungrouped, up to 5,000 rows).
+a VWAP price on group rows, liquidity, order links and Export CSV of every
+fill in the current filter and sort (ungrouped), as the table shows them.
 
 Props: `FillsBlotterProps`
 
@@ -3402,7 +3402,7 @@ Props: `FillsBlotterProps`
 | `ric?` | `string` |  | Restrict to one instrument. |
 | `onOrderSelect?` | `(orderId: string) => void` |  | Called when the order link of a fill is clicked. |
 | `highlightOrderId?` | `string` |  | Order to highlight (e.g. the order selected in an OrderBlotter). |
-| `csvFileName?` | `string` | `"fills.csv"` | CSV file name. Default "fills.csv". |
+| `csvFileName?` | `string` | `"fills.csv"` | Suggested CSV file name. Default "fills.csv". |
 
 Also accepts the standard HTML attributes and `ref`.
 
@@ -3410,7 +3410,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### FillsBlotterProps
 
-*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L155)
+*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L127)
 
 Props of [`FillsBlotter`](#fillsblotter).
 
@@ -4846,7 +4846,7 @@ An option as typed: `AAPL 200c`, `aapl.oq 200p jan`, `stech 4100c dec27`.
 
 #### OrderBlotter
 
-*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L755)
+*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L763)
 
 Order blotter on `parentOrders`: status badge, fill progress, tick-formatted
 avg price, filter tabs, per-row amend / cancel (enabled only for NEW,
@@ -4936,7 +4936,7 @@ const orderBlotterTableConfig: TableConfig
 
 #### OrderBlotterProps
 
-*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L110)
+*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L111)
 
 Props of [`OrderBlotter`](#orderblotter).
 
@@ -6041,7 +6041,7 @@ Props of [`PnlValue`](#pnlvalue).
 
 #### PositionsView
 
-*component* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L443)
+*component* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L451)
 
 Positions on `positionPrices` with ticking realised / unrealised / total
 P&L and Greeks (delta in shares and USD, gamma, vega in USD), grouping
@@ -6068,7 +6068,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### totalsByCurrency
 
-*function* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L238)
+*function* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L239)
 
 Sum position rows per currency (never across currencies).
 
@@ -6080,7 +6080,7 @@ totalsByCurrency(rows: readonly Record<string, unknown>[]): CurrencyTotals[]
 
 #### POSITIONS_GROUP_BY
 
-*const* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L58)
+*const* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L59)
 
 The positionPrices `groupBy` for each PositionsView grouping.
 
@@ -6092,7 +6092,7 @@ const POSITIONS_GROUP_BY: Record<PositionsGrouping, string[]>
 
 #### CurrencyTotals
 
-*interface* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L228)
+*interface* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L229)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -6105,7 +6105,7 @@ const POSITIONS_GROUP_BY: Record<PositionsGrouping, string[]>
 
 #### PositionsViewProps
 
-*interface* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L73)
+*interface* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L74)
 
 Props of [`PositionsView`](#positionsview).
 
@@ -6113,7 +6113,7 @@ Props of [`PositionsView`](#positionsview).
 
 #### PositionsGrouping
 
-*type* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L50)
+*type* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L51)
 
 `none`: one row per account|ric. Grouped modes always group by currency
 first so aggregated amounts are never summed across currencies.

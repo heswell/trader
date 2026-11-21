@@ -14,6 +14,11 @@
   display: flex;
   flex: 0 0 auto;
   gap: var(--salt-spacing-100);
+  white-space: nowrap;
+}
+
+.tradingPositionsView-spacer {
+  flex: 1 1 0;
 }
 
 .tradingPositionsView-table {

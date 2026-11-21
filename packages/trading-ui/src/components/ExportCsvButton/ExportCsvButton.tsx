@@ -138,6 +138,7 @@ export const ExportCsvButton = ({
       ) : (
         <Button
           appearance="bordered"
+          aria-label={label}
           disabled={disabled}
           onClick={() => void exportCsv()}
           sentiment="neutral"
@@ -148,7 +149,7 @@ export const ExportCsvButton = ({
           }
         >
           <DownloadIcon />
-          {label}
+          <span className={`${classBase}-label`}>{label}</span>
         </Button>
       )}
       <output

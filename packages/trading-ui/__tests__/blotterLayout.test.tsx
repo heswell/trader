@@ -71,13 +71,13 @@ describe("blotter layout", () => {
     expect(pressed("None")).toBe("true");
     fireEvent.click(screen.getByRole("radio", { name: "RIC / side" }));
     await waitFor(() => expect(pressed("RIC / side")).toBe("true"));
-    expect(
-      screen.getByRole("button", { name: /^Export CSV \(\d+\)$/ }),
-    ).toBeTruthy();
+    // every fill in the filter and sort, streamed: no row count on the button
+    expect(screen.getByRole("button", { name: /^Export CSV$/ })).toBeTruthy();
   });
 
   test("parent and child orders share a column SplitPane", () => {
     const { container } = render(<OrderBlotter />, { wrapper: Wrapper });
+    expect(screen.getByRole("button", { name: "Export CSV" })).toBeTruthy();
     const split = container.querySelector(".vuuSplitPane-column");
     expect(split).toBeTruthy();
     const panes = [...(split?.children ?? [])].map((el) => el.className);
