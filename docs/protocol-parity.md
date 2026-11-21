@@ -1,4 +1,4 @@
-# Vuu protocol parity matrix (P0.1)
+# Vuu protocol parity matrix
 
 Compares the Vuu WebSocket protocol used by the vuu-ui client with the TypeScript/Bun server in `heswell/vuu-websocket`. It also maps trading UI features to protocol requirements and recommends an order-entry pattern.
 
@@ -9,7 +9,7 @@ Compares the Vuu WebSocket protocol used by the vuu-ui client with the TypeScrip
 | `PT:` | `finos/vuu` `ui-portal-latest` @ `fb54f3431`: `vuu-ui/packages/vuu-protocol-types/index.d.ts` | Matches the published `@vuu-ui/*@4.0.0-alpha.20` that vuu-websocket depends on. The `heswell/vuu` checkout is stale (`0.11.2`, Jun 2025) and is ignored. |
 | `UI:` | same, `vuu-ui/packages/` | Client: `vuu-data-remote/src/server-proxy/server-proxy.ts` (`SP`), `vuu-data-remote/src/VuuDataSource.ts` (`VDS`) |
 | `VS:` | `heswell/vuu-websocket` `main` @ `b6e32b4`: `packages/vuu-server/src/` | Server. `CSA` = `core/CoreServerApiHandler.ts`, `VPC` = `viewport/ViewportContainer.ts`, `VP` = `viewport/Viewport.ts` |
-| `LE:` | same repo, `packages/vuu-data-engine-local/src/` | In-browser engine for showcase and tests (P3.1) |
+| `LE:` | same repo, `packages/vuu-data-engine-local/src/` | In-browser engine for showcase and tests |
 
 Status key: ✅ Supported · 🟡 Partial · ❌ Missing · 💤 Commented out · ➖ N/A (not used by client)
 
@@ -110,34 +110,34 @@ Menu RPCs are supported since vuu-server 3.3.0 (vuu-websocket#89, trader upstrea
 | Unknown or unsupported message type | ❌ | `CSA:143-146` throws inside the async `process`. `RequestProcessor` returns the promise without `await` (`net/RequestProcessor.ts:72-76`), so its `try/catch` never sees the error. `ViewServerHandler.handle` (`:48-57`) and `net/ws/BunWebSocketConnectionHandler.ts:20-26` await it, so the error ends as an unhandled rejection. No reply is sent, and the client's pending request hangs. Applies to `FREEZE_VP` and `UNFREEZE_VP` (the four menu RPCs reply since vuu-server 3.3.0). |
 | Exceptions in `CREATE_VP` (unknown table), `DESELECT_ROW` and `DESELECT_ALL` | ❌ | Same path; these handlers have no try/catch. |
 | RPC handler exceptions | ✅ | Caught and returned as `ERROR_RESULT` (`CSA:283-336`). An unknown `rpcName` throws in `DefaultRpcHandler.ts:30` and becomes "Failed to process request". |
-| Permission filtering on viewports | ✅ | `TableDef.permissionFunction` is applied at viewport create (`VPC:123-129`). Relevant for P2.7. |
+| Permission filtering on viewports | ✅ | `TableDef.permissionFunction` is applied at viewport create (`VPC:123-129`). Used for trading permissions. |
 
 ## 2. Trading UI features → protocol requirements
 
-B = blocker for the feature as specified in the plan. N = nice-to-have, or a workaround exists.
+B = blocker for the feature as specified. N = nice-to-have, or a workaround exists.
 
-| Plan item | Required protocol features | Status | Gaps |
+| Feature | Required protocol features | Status | Gaps |
 |---|---|---|---|
-| **P2.2** Order RPCs (`createOrder`, `amendOrder`, `cancelOrder`, `cancelAll`) | `RPC_REQUEST` (viewport context) → `RPC_RESPONSE` with an `ERROR_RESULT` reject reason | ✅ | N2: no `GLOBAL_CONTEXT`, so the ticket must own a viewport. N3: no notification `action` on RPC responses. |
-| **P2.7** Permissions | `permissionFunction` row filter | ✅ | – |
-| **P3.2** Instrument grid | CREATE/CHANGE_VP, range, sort, filter, groupBy + aggregations, typeahead, selection, **server context menu** (Buy, Sell, Open depth, Add to watchlist) | 🟡 | **B1**: menu RPCs (`VIEW_PORT_MENU_ROW_RPC` and `VIEW_PORT_MENUS_SELECT_RPC`) are not dispatched. Workaround: client-side menu items calling a direct RPC or a local action. N4: typeahead needs a `DefaultRpcHandler` service on the table. Watchlists: session tables ✅, or user settings. |
-| **P3.3** Sparkline | `TABLE_ROW` updates (client ring buffer) or a server string column | ✅ | – |
-| **P3.4** Market depth | Visual link instruments→depth on `ric` (or `CHANGE_VP` filter), sort, range | ✅ | Own-order markers need a join table. That is server-side work, not a protocol gap. |
-| **P3.5** Price ladder | Depth viewport (filter/link), range, high-rate `TABLE_ROW`; order actions through P2.2 RPCs | ✅ | Performance, not protocol. Cancel-at-level and drag-to-amend use direct RPCs. |
-| **P3.6** Order ticket | Direct RPC (see §3); typeahead / instrument viewport for the picker; `prices` viewport for the live header | ✅ (direct RPC) | The session-table / `SessionEditingForm` variant depends on **B1** for the menu → `OPEN_DIALOG_ACTION` entry point. |
-| **P3.7** Order blotter | Viewport + filter tabs (`CHANGE_VP`), selection (multi), cancel and amend RPCs, children via visual link or groupBy/tree, inline amend via edit session | 🟡 | **B2**: selection error paths hang, which matters for multi-select cancel. **B1** applies if cancel is a server menu (as `OrdersService` does today). Inline amend via `beginEditSession` works, but the client copies the whole table (`'all-rows'`, `UI:VDS:724`, a vuu-ui issue), and the OMS must override `applySessionSave` so amends go through the state machine instead of overwriting rows. N1: `FREEZE_VP` to pause the blotter. |
-| **P3.8** Fills blotter | groupBy RIC/side + Sum aggregation; CSV export is client-side | ✅ | N: no VWAP aggregation type. Expose `avgPx`/`notional` columns, or a server-side summary table. |
-| **P3.9** Time & sales | Viewport with link/filter on `ric`, sort by time desc, range | ✅ | N1: `FREEZE_VP` / `UNFREEZE_VP` (❌) for "pause tape". Workaround: client-side buffering. |
-| **P3.10** Positions | groupBy + Sum aggregations, ticking join with `prices` | ✅ | N: no grand-total row in the protocol. Use groupBy on a constant column or compute totals client-side. |
-| **P3.11** Cross-component linking | Visual links (one-way, selection driven), plus a client-side bus | ✅ | – |
-| **P3.12** Notifications | `RPC_RESPONSE` results; `NOTIFICATIONS` table module (`core/module/notifications/NotificationModule.ts`); `HB` and connection status | ✅ | **B2**: a request without a reply hangs instead of surfacing an error. N3: `SHOW_NOTIFICATION_ACTION` on RPC responses. |
+| Order RPCs (`createOrder`, `amendOrder`, `cancelOrder`, `cancelAll`) | `RPC_REQUEST` (viewport context) → `RPC_RESPONSE` with an `ERROR_RESULT` reject reason | ✅ | N2: no `GLOBAL_CONTEXT`, so the ticket must own a viewport. N3: no notification `action` on RPC responses. |
+| Permissions | `permissionFunction` row filter | ✅ | – |
+| Instrument grid | CREATE/CHANGE_VP, range, sort, filter, groupBy + aggregations, typeahead, selection, **server context menu** (Buy, Sell, Open depth, Add to watchlist) | 🟡 | **B1**: menu RPCs (`VIEW_PORT_MENU_ROW_RPC` and `VIEW_PORT_MENUS_SELECT_RPC`) are not dispatched. Workaround: client-side menu items calling a direct RPC or a local action. N4: typeahead needs a `DefaultRpcHandler` service on the table. Watchlists: session tables ✅, or user settings. |
+| Sparkline | `TABLE_ROW` updates (client ring buffer) or a server string column | ✅ | – |
+| Market depth | Visual link instruments→depth on `ric` (or `CHANGE_VP` filter), sort, range | ✅ | Own-order markers need a join table. That is server-side work, not a protocol gap. |
+| Price ladder | Depth viewport (filter/link), range, high-rate `TABLE_ROW`; order actions through the order RPCs | ✅ | Performance, not protocol. Cancel-at-level and drag-to-amend use direct RPCs. |
+| Order ticket | Direct RPC (see §3); typeahead / instrument viewport for the picker; `prices` viewport for the live header | ✅ (direct RPC) | The session-table / `SessionEditingForm` variant depends on **B1** for the menu → `OPEN_DIALOG_ACTION` entry point. |
+| Order blotter | Viewport + filter tabs (`CHANGE_VP`), selection (multi), cancel and amend RPCs, children via visual link or groupBy/tree, inline amend via edit session | 🟡 | **B2**: selection error paths hang, which matters for multi-select cancel. **B1** applies if cancel is a server menu (as `OrdersService` does today). Inline amend via `beginEditSession` works, but the client copies the whole table (`'all-rows'`, `UI:VDS:724`, a vuu-ui issue), and the OMS must override `applySessionSave` so amends go through the state machine instead of overwriting rows. N1: `FREEZE_VP` to pause the blotter. |
+| Fills blotter | groupBy RIC/side + Sum aggregation; CSV export is client-side | ✅ | N: no VWAP aggregation type. Expose `avgPx`/`notional` columns, or a server-side summary table. |
+| Time & sales | Viewport with link/filter on `ric`, sort by time desc, range | ✅ | N1: `FREEZE_VP` / `UNFREEZE_VP` (❌) for "pause tape". Workaround: client-side buffering. |
+| Positions | groupBy + Sum aggregations, ticking join with `prices` | ✅ | N: no grand-total row in the protocol. Use groupBy on a constant column or compute totals client-side. |
+| Cross-component linking | Visual links (one-way, selection driven), plus a client-side bus | ✅ | – |
+| Notifications | `RPC_RESPONSE` results; `NOTIFICATIONS` table module (`core/module/notifications/NotificationModule.ts`); `HB` and connection status | ✅ | **B2**: a request without a reply hangs instead of surfacing an error. N3: `SHOW_NOTIFICATION_ACTION` on RPC responses. |
 
 ### Blockers
 
 | ID | Blocker | Affects |
 |---|---|---|
-| ~~**B1**~~ | *Resolved: vuu-websocket#89; vuu-server 3.3.0 (see §1.7).* Menu RPCs: `VIEW_PORT_MENUS_SELECT_RPC` is commented out; `VIEW_PORT_MENU_TABLE_RPC`, `VIEW_PORT_MENU_ROW_RPC` and `VIEW_PORT_MENU_CELL_RPC` are unimplemented, with no handler function on those menu item types. The server advertises menus that cannot be invoked. | P3.2 context menu, P3.7 menu cancel, session-table order ticket |
-| **B2** | Unsupported or failing requests get no reply (unhandled rejection, missing `*_REJECT` replies), so client promises hang | P3.7 selection / multi-cancel, P3.12 error UX, any `FREEZE_VP` call |
+| ~~**B1**~~ | *Resolved: vuu-websocket#89; vuu-server 3.3.0 (see §1.7).* Menu RPCs: `VIEW_PORT_MENUS_SELECT_RPC` is commented out; `VIEW_PORT_MENU_TABLE_RPC`, `VIEW_PORT_MENU_ROW_RPC` and `VIEW_PORT_MENU_CELL_RPC` are unimplemented, with no handler function on those menu item types. The server advertises menus that cannot be invoked. | instrument grid context menu, order blotter menu cancel, session-table order ticket |
+| **B2** | Unsupported or failing requests get no reply (unhandled rejection, missing `*_REJECT` replies), so client promises hang | order blotter selection / multi-cancel, notification error UX, any `FREEZE_VP` call |
 
 ### Nice-to-haves
 

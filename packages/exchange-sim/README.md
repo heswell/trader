@@ -3,7 +3,7 @@
 A simulated exchange running inside a Vuu server. It keeps one limit order book per active instrument
 (`@heswell/hft-limit-order-book`). Market-maker and noise-taker bots trade against those books, and a
 GBM reference price drives them. The results are published to the `EXCHANGE` module tables defined in
-`@heswell/trading-schemas`. An in-process gateway lets the OMS (Phase 2) trade on the same books.
+`@heswell/trading-schemas`. An in-process gateway lets the OMS trade on the same books.
 
 ```
 src/

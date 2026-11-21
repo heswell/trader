@@ -605,7 +605,7 @@ validateAmend(amend: { quantity?: number; price?: number; stopPrice?: number }, 
 *function* · [domain/orderValidation.ts](../../packages/trading-schemas/src/domain/orderValidation.ts#L204)
 
 Static order checks shared by the order ticket (pre-submit) and the OMS
-(authoritative). Account / risk checks are OMS-only (Phase 2).
+(authoritative). Account / risk checks are OMS-only.
 
 ```ts
 validateOrder(order: OrderToValidate, instrument: InstrumentStatic, phase: TradingPhase = TradingPhase.Continuous): OrderReject | undefined
@@ -1016,7 +1016,7 @@ Conventions:
 - FILLED, CANCELLED, REJECTED and EXPIRED are terminal.
 
 This is only the transition table; the full reducer (quantities, exec
-reports) lives in the OMS (Phase 2).
+reports) lives in the OMS.
 
 ```ts
 const ORDER_STATUS_TRANSITIONS: Readonly< Record<OrdStatus, readonly OrdStatus[]> >

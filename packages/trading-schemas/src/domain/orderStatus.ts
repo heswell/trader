@@ -15,7 +15,7 @@ import { OrdStatus } from "./enums";
  * - FILLED, CANCELLED, REJECTED and EXPIRED are terminal.
  *
  * This is only the transition table; the full reducer (quantities, exec
- * reports) lives in the OMS (Phase 2).
+ * reports) lives in the OMS.
  */
 export const ORDER_STATUS_TRANSITIONS: Readonly<
   Record<OrdStatus, readonly OrdStatus[]>

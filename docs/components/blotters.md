@@ -1,4 +1,4 @@
-# Blotters, tape and positions (P3.7–P3.10)
+# Blotters, tape and positions
 
 Reference: [OrderBlotter](../api/trading-ui.md#orderblotter), [FillsBlotter](../api/trading-ui.md#fillsblotter),
 [TradeTape](../api/trading-ui.md#tradetape), [PositionsView](../api/trading-ui.md#positionsview).

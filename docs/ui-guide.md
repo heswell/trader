@@ -1,4 +1,4 @@
-# UI guide (Phase 3)
+# UI guide
 
 Conventions for every trading UI component. The goal is a **reusable** front end: the same components run in the
 showcase on local test data, against a standalone Vuu server, and as module-federation (MF) features inside
@@ -167,7 +167,7 @@ present.
 **Never import `@heswell/trading-test-data` from `packages/trading-ui/src` or from features.** It bundles both
 engines and is a devDependency of trading-ui, for tests only.
 
-## 5. Instrument linking (P3.11)
+## 5. Instrument linking
 
 Components follow and publish the selected instrument through **link groups** (channels), like the coloured link
 groups of Bloomberg / Eikon. They never talk to each other directly. Each component instance joins one group:
@@ -228,12 +228,12 @@ const { selectedInstrument, selectionSource, setSelectedInstrument, linkGroup } 
   positions) and saves the user's change per item as above. Ladder and Tape show their own instrument picker by
   default (`showInstrumentPicker`, default `true`), so a lone Ladder or Tape can choose an instrument; a workspace
   document that wants a follower sets `showInstrumentPicker: false` (the Trader Tape). See
-  [portal-integration.md](portal-integration.md#panels-palette-phase-6-x2-x3).
+  [portal-integration.md](portal-integration.md#panels-palette).
 
-**MF features (Phase 4).** In the `shared` block (now `apps/portal-build.base.json`, written by `features:sync`), add `@heswell/trading-ui`,
-`react`, `react-dom` and `@vuu-ui/vuu-layout` as **singletons**. trading-ui keeps the React context and the
-InstrumentLookup in one copy. vuu-layout keeps View state in a module-level map (`setPersistentState`), so every
-feature must use the host's copy for the saved group to be found. The bus itself still links features that end up
+**MF features.** The `shared` block (`apps/portal-build.base.json`, written by `features:sync`) has `@heswell/trading-ui`,
+`react` and `react-dom` as **singletons**. trading-ui keeps the React context and the InstrumentLookup in one copy.
+`@vuu-ui/vuu-layout` is not shared (it deadlocks MF startup), so features save their link group in portal state
+(see [portal-integration.md](portal-integration.md#mf-sharing)). The bus itself still links features that end up
 with their own copy, through `globalThis`, provided they use the same bus protocol version
 (`INSTRUMENT_LINK_BUS_VERSION`). The host calls `connectBroadcastChannel(getInstrumentLinkBus())` once if popouts
 should link. A feature that wants its own group by default wraps itself in `LinkGroupProvider`.
@@ -328,7 +328,7 @@ the roles and the run-all command.
    43), so View state from a remote is not visible to trading-ui (trader upstream issue 50) and components fall back to portal
    state (§5).
 
-## 11. Shared renderers and hooks (P3.7–P3.10)
+## 11. Shared renderers and hooks
 
 Grids that need status, side, progress, price, P&L, time or liquidity cells should use the registered renderers
 in `TradingRenderer` (`registerTradingCellRenderers()`; call it at module level because `sideEffects` only lists
@@ -337,7 +337,7 @@ rows (see §12, "Rows as objects"). See the [component guides](components/README
 and [upstream-issues.md](upstream-issues.md) (trader upstream issues 28–32) for the
 alpha.20/alpha.21 constraints behind the design choices.
 
-## 12. Order ticket, notifications and connection state (P3.6, P3.12)
+## 12. Order ticket, notifications and connection state
 
 - **Opening a ticket.** Any component can open the order ticket with
   `useOrderTicketLauncher().openOrderTicket({ ric, side, price, quantity })` (see the

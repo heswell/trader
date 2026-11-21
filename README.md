@@ -2,7 +2,7 @@
 
 Reusable trading front-end (instrument grids, market depth / price ladder, order ticket, order & trade blotters) built on [Vuu](https://github.com/finos/vuu) UI components and the `vuu-portal`, exercised by a simulated backend (exchange simulator + OMS) running on [vuu-websocket](https://github.com/heswell/vuu-websocket).
 
-Status: Phase 6 (workspaces). The trading UI runs in vuu-portal as role-gated module-federation features under a
+The trading UI runs in vuu-portal as role-gated module-federation features under a
 `PortalNav` (Workspaces: Trader, plus the user's own; Trading: Watchlist, Orders, Executions, Price ladder;
 Market: Market depth, Time & sales, Chart, Depth chart; Portfolio: Positions, P&L, Exposure, Execution quality; Oversight: Desk overview; Simulator: Overview, Bots, Instrument). The
 features connect to a standalone trading Vuu server (exchange simulator + OMS), separate from the portal's own Vuu
@@ -177,7 +177,7 @@ Run these with `bun run --filter <package> <script>`.
 
 ## Verified
 
-Each phase was verified end to end. The details are kept with the docs:
+Verified end to end, with the details kept in the docs:
 
 - the portal stack with real Keycloak login and token exchange, driven by headless Chrome
   ([portal-integration](docs/portal-integration.md#verified));

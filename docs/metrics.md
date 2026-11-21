@@ -11,7 +11,6 @@ with the same viewports, sorting and filtering as any other table.
 - [4. How it keeps the cost down](#4-how-it-keeps-the-cost-down)
 - [5. Adding a metric](#5-adding-a-metric)
 - [6. Overhead](#6-overhead)
-- [7. Roadmap](#7-roadmap)
 
 ## 1. Tables
 
@@ -195,7 +194,7 @@ event.
 
 Measured on 2026-11-06 and 2026-11-07 on macOS, 8 CPUs, Bun 1.3.14, on a shared machine (load average 3–6).
 
-### Phase 1: the tables
+### The tables
 
 `perf:ws --preset=heavy` (50 clients × 8 viewports, tick ×4, 200 instruments, local target), run alternately with
 `TRADER_METRICS_ENABLED=0` and `1`. There are no METRICS viewports in these runs; the perf stats file is on in both,
@@ -212,7 +211,7 @@ The two settings can't be told apart: the differences between them are smaller t
 the same setting. Event-loop lag p99 at this load is a single GC pause or two, which is why it jumps between
 34 and 124 ms whichever way metrics is set.
 
-### Phase 2: the timers
+### The timers
 
 **Cost per call** (a start/stop pair in a tight loop, less the empty loop, two rounds):
 
@@ -244,16 +243,3 @@ order:
 
 `sampled` matches `off` (its first run is the outlier of the set). `all` is about 2–3% lower in both rounds,
 which fits its per-call cost, so `sampled` is the default. `all` is useful for short diagnostic runs.
-
-## 7. Roadmap
-
-1. **Phase 1 (done).** Collector, histogram, process sampler, the three tables, and the existing counters.
-   `PerfStatsReporter` is ported to the collector.
-2. **Phase 2 (done).** Sampled timers on matching, step, flush, the gateway, OMS requests, risk checks and
-   execution reports; order lifecycle latencies; counters for rejects, dropped reports and ignored state errors.
-3. **Phase 3 (done).** The `metricsHistory` table and the Simulator › Metrics feature.
-4. **Phase 4: upstream (done).** vuu-server 4.5.0 reports per-session outbound counters (`getSessionStats()`),
-   the session count and send-cycle timings (`onSendCycle`) (vuu-websocket#114, trader upstream issue 91).
-   `vuuServerSource` publishes them as the `vuu` metrics above.
-5. **Per-session table (done).** `metricsSessions`: a row per client session with its queue depth and send
-   rates, shown in the Metrics feature's Sessions grid.

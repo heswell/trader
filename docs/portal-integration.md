@@ -300,7 +300,7 @@ shared entry; the sync fails otherwise:
 | `@vuu-ui/vuu-data-remote`, `@vuu-ui/vuu-notifications`, `@salt-ds/core` | one connection manager, one toast centre, one Salt theme context |
 | `@heswell/trading-ui` | one instrument link bus, launcher and notification lease per window |
 
-There are two deviations from the P3.11 plan:
+Two choices differ from the usual MF setup:
 
 - **`@vuu-ui/vuu-layout` is not shared.** As a shared singleton it deadlocks startup: its shared chunk bundles
   vuu-data-react, which imports `@vuu-ui/vuu-layout` again, and the host page stays blank (trader upstream issue 43). Each
@@ -388,7 +388,7 @@ Red follows the instruments grid, green follows the ladder's picker. Every panel
 - **Panel access.** A panel whose module the user is not sent (e.g. Ticket and Ladder for dave) shows the
   portal's "module not available" message.
 
-### Panels palette (Phase 6 X2, X3)
+### Panels palette
 
 The workspace header's **Add panel** (`AddPanelButton` from `@vuu-ui/core/portal`, passed as PortalShell
 `workspaces.headerActions`) opens the core `PanelsPalette` in the shell context panel. The host sets
@@ -557,7 +557,7 @@ on alpha.23 with a locally built module-admin; trader upstream issue 99, now res
 - **User menu:** identity, account and roles, Saved state…, the display modes and Log out (`nav-user-menu.png`,
   retaken on alpha.31 with the neutral hover).
 
-### Earlier phases
+### Portal stack and features (alpha.22)
 
 Verified with @vuu-ui 4.0.0-alpha.22, Keycloak 26.4.2 (real OIDC login and token exchange) and headless Chrome
 against `bun run start:all`, with the trading modules on the standalone trading server. The scripts are not in the
@@ -578,7 +578,7 @@ repo. Screenshots are in [docs/screenshots](screenshots).
   - Clicking a watchlist row drives depth and the ticket (a child remote) (`workspace-linked.png`).
   - Clicking a row in the standalone Watchlist feature, then opening the Ticket and Depth features from the nav,
     shows that instrument (`watchlist.png`, `depth.png`). Link state lives in the page, so a full reload clears it.
-- **Saved state** (verified in Phase 4 on alpha.20, not re-run): switching the workspace's Depth to green survives a
-  page reload, and Reset layout returns it to red.
+- **Saved state** (verified on alpha.20, not re-run since): switching the workspace's Depth to green survives a
+  page reload.
 - **Not verified:** `docker-compose.yml` (no Docker on the dev machine) and the `Procfile` under a process manager.
   `--prepare` was run.

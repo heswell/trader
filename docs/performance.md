@@ -1,6 +1,6 @@
 # Performance
 
-Phase 5 performance tooling lives in `packages/perf` (`@heswell/trading-perf`, private). It has three tools:
+Performance tooling lives in `packages/perf` (`@heswell/trading-perf`, private). It has three tools:
 
 | Script | What it measures | Needs | CI |
 | --- | --- | --- | --- |

@@ -1,4 +1,4 @@
-# Resilience: reconnect, resubscribe and stale data (Phase 5B)
+# Resilience: reconnect, resubscribe and stale data
 
 How the trader front-end behaves when a connection drops, a server restarts, a token expires or the server refuses
 a session, and the reusable pieces in `@heswell/trading-ui` that do it. Nothing here depends on server-side

@@ -400,7 +400,7 @@ periodically and on shutdown. `createTradingPersistence` (`@heswell/oms/persiste
   - IOC / FOK / unfilled market orders expire through exchange `EXPIRED` reports.
 - **Account limit editing.** The `accounts` table is read-only seed data. There is no RPC for it.
 
-## Notes for the UI (Phase 3)
+## Notes for the UI
 
 - **Ticket.**
   - Call `createOrder` from any OMS viewport, ideally with your own `clOrdId` for idempotency.
