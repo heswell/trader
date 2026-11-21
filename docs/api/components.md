@@ -24,9 +24,10 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [ConnectionBanner](trading-ui.md#connectionbanner) | `components/ConnectionBanner` |  |  |  | `notifications-connection` | [guide](../components/notifications-and-connection.md) |
 | [ConnectionStatusIndicator](trading-ui.md#connectionstatusindicator) | `components/ConnectionStatusIndicator` |  |  |  | *host* | [guide](../components/notifications-and-connection.md) |
 | [DepthChartView](trading-ui.md#depthchartview) | `components/DepthChartView` | `depth`, `instrumentPrices`, `trades` |  | ChartFrame, LinkGroupSelector | `chart-workspace`, `depth-chart`, `trader-workspace` | [guide](../components/charts.md#depthchartview) |
+| [ExportCsvButton](trading-ui.md#exportcsvbutton) | `components/ExportCsvButton` |  |  | InstrumentLookup | `million-trades-export-csv`, `trades-export-csv` | [guide](../components/blotters.md#export-csv) |
 | [ExposureTreemap](trading-ui.md#exposuretreemap) | `components/ExposureTreemap` | `positionPrices` |  | ChartFrame | `exposure-treemap` | [guide](../components/charts.md#exposuretreemap) |
 | [FillProgressBar](trading-ui.md#fillprogressbar) | `components/FillProgressBar` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
-| [FillsBlotter](trading-ui.md#fillsblotter) | `components/FillsBlotter` | `fills` |  | ChannelRowMarkers, InstrumentLookup, LinkedInstrumentsFooter, StaleIndicator, TradingCellRenderers | `fills-blotter`, `trader-workspace` | [guide](../components/blotters.md) |
+| [FillsBlotter](trading-ui.md#fillsblotter) | `components/FillsBlotter` | `fills` |  | ChannelRowMarkers, ExportCsvButton, InstrumentLookup, LinkedInstrumentsFooter, StaleIndicator, TradingCellRenderers | `fills-blotter`, `trader-workspace` | [guide](../components/blotters.md) |
 | [InstrumentContextProvider](trading-ui.md#instrumentcontextprovider) | `instrument-context` |  |  | InstrumentLookup | `linking-providers` | [guide](../components/selection-and-linking.md#how-linking-works) |
 | [InstrumentGrid](trading-ui.md#instrumentgrid) | `components/InstrumentGrid` | `instrumentPrices` |  | ChannelRowMarkers, InstrumentLookup, NamePrompt, OrderTicket, Sparkline, StaleIndicator, TradingCellRenderers, WatchlistDialog | `chart-workspace`, `depth-chart`, `hosting-feature-root`, `hosting-user-settings`, `instrument-grid`, `instrument-grid-200`, `instrument-grid-continuations`, `instrument-grid-futures`, `instrument-grid-options`, `instrument-grid-prices`, `market-depth-selected`, `price-chart`, `price-ladder-live`, `spread-chart`, `time-series-chart`, `trader-workspace` | [guide](../components/instrument-grid.md#instrumentgrid) |
 | [InstrumentLookupProvider](trading-ui.md#instrumentlookupprovider) | `components/InstrumentLookup` | `instruments` |  |  | `million-trades-export-csv`, `selectors`, `trades-export-csv` | [guide](../components/selection-and-linking.md) |
@@ -45,7 +46,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [MetricsTablesGrid](trading-ui.md#metricstablesgrid) | `components/ServerMetrics` | `metrics`, `metricsTables` |  | Sparkline, TradingCellRenderers | `server-metrics` | [guide](../components/simulator.md#server-metrics) |
 | [NamePrompt](trading-ui.md#nameprompt) | `components/NamePrompt` |  |  |  | `instrument-grid-dialogs` | [guide](../components/instrument-grid.md#dialogs) |
 | [OptionChain](trading-ui.md#optionchain) | `components/OptionChain` | `instrumentPrices`, `instruments`, `optionAnalytics` |  | LinkGroupSelector, OrderTicket | `option-chain-positions`, `option-chain-ticket` | [guide](../components/options.md#optionchain) |
-| [OrderBlotter](trading-ui.md#orderblotter) | `components/OrderBlotter` | `childOrders`, `parentOrders` | *edit session*, `amendOrder`, `cancelAll`, `cancelOrder` | ChannelRowMarkers, InstrumentLookup, LinkedInstrumentsFooter, OrderBookView, StaleIndicator, TradingCellRenderers | `order-blotter`, `order-book-view`, `trade-tape`, `trader-workspace` | [guide](../components/blotters.md) |
+| [OrderBlotter](trading-ui.md#orderblotter) | `components/OrderBlotter` | `childOrders`, `parentOrders` | *edit session*, `amendOrder`, `cancelAll`, `cancelOrder` | ChannelRowMarkers, ExportCsvButton, InstrumentLookup, LinkedInstrumentsFooter, OrderBookView, StaleIndicator, TradingCellRenderers | `order-blotter`, `order-book-view`, `trade-tape`, `trader-workspace` | [guide](../components/blotters.md) |
 | [OrderBookView](trading-ui.md#orderbookview) | `components/OrderBookView` | `bookOrders`, `childOrders`, `depth`, `instrumentPrices`, `parentOrders`, `trades` |  | PriceLadder | `order-book-view` | [guide](../components/blotters.md#order-book-panel) |
 | [OrderStatusBadge](trading-ui.md#orderstatusbadge) | `components/OrderStatusBadge` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
 | [OrderTicket](trading-ui.md#orderticket) | `components/OrderTicket` | `accounts`, `orderEntryPrices`, `parentOrders`, `positions` | `closeOrderEntry`, `openOrderEntry`, `sendOrder`, `updateOrderEntry` | FillProgressBar, InstrumentPicker, LinkGroupSelector, OptionChain, StaleIndicator | `hosting-connection-override`, `order-ticket-compact` | [guide](../components/order-ticket.md) |
@@ -56,7 +57,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [PhaseCell](trading-ui.md#phasecell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
 | [PnlHistoryChart](trading-ui.md#pnlhistorychart) | `components/PnlHistoryChart` | `accountPnlHistory` |  | AccountSelector, ChartFrame | `pnl-history-chart` | [guide](../components/charts.md#pnlhistorychart) |
 | [PnlValue](trading-ui.md#pnlvalue) | `components/PnlValue` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
-| [PositionsView](trading-ui.md#positionsview) | `components/PositionsView` | `positionPrices` |  | InstrumentLookup, LinkGroupSelector, PnlValue, StaleIndicator, TradingCellRenderers | `option-chain-positions`, `positions-view`, `trader-workspace` | [guide](../components/blotters.md) |
+| [PositionsView](trading-ui.md#positionsview) | `components/PositionsView` | `positionPrices` |  | ExportCsvButton, InstrumentLookup, LinkGroupSelector, PnlValue, StaleIndicator, TradingCellRenderers | `option-chain-positions`, `positions-view`, `trader-workspace` | [guide](../components/blotters.md) |
 | [PriceChart](trading-ui.md#pricechart) | `components/PriceChart` | `bars`, `depth`, `fills`, `instrumentPrices`, `trades` |  | ChartFrame, LinkGroupSelector | `channel-picker-workspace`, `chart-workspace`, `price-chart`, `trader-workspace` | [guide](../components/charts.md#pricechart) |
 | [PriceLadder](trading-ui.md#priceladder) | `components/PriceLadder` | `bookOrders`, `childOrders`, `depth`, `instrumentPrices`, `parentOrders`, `trades` | `amendOrder`, `cancelAll`, `cancelOrder`, `createOrder` | LinkGroupSelector, OrderTicket, StaleIndicator | `price-ladder-live`, `trader-workspace` | [guide](../components/market-depth-and-ladder.md) |
 | [PriceLadderView](trading-ui.md#priceladderview) | `components/PriceLadder` | `bookOrders`, `depth`, `instrumentPrices`, `parentOrders`, `trades` |  |  | `price-ladder-stress` | [guide](../components/market-depth-and-ladder.md) |
@@ -76,6 +77,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [SpreadChart](trading-ui.md#spreadchart) | `components/SpreadChart` | `bookSamples`, `depth`, `instrumentPrices`, `trades` |  | ChartFrame, LinkGroupSelector | `chart-workspace`, `depth-chart`, `spread-chart` | [guide](../components/charts.md#spreadchart) |
 | [StaleIndicator](trading-ui.md#staleindicator) | `components/StaleIndicator` |  |  |  | `hosting-connection-override`, `notifications-connection` | [guide](../components/notifications-and-connection.md) |
 | [TimeSeriesChart](trading-ui.md#timeserieschart) | `components/TimeSeriesChart` | `depth`, `instrumentPrices`, `timeSeriesBuckets`, `trades` | `closeTimeSeries`, `setTimeSeriesWindow` | ChartFrame, LinkGroupSelector | `time-series-chart` | [guide](../components/charts.md#timeserieschart) |
+| [TradesView](trading-ui.md#tradesview) | `components/TradesView` | `trades` |  | ExportCsvButton, InstrumentGrid, InstrumentLookup, LinkGroupSelector, StaleIndicator, TradingCellRenderers | `trades-view` | [guide](../components/blotters.md#trades) |
 | [TradeTape](trading-ui.md#tradetape) | `components/TradeTape` | `trades` |  | InstrumentLookup, LinkGroupSelector, StaleIndicator | `channel-picker-workspace`, `trade-tape`, `trader-workspace` | [guide](../components/blotters.md) |
 | [TradingConnectionStateOverride](trading-ui.md#tradingconnectionstateoverride) | `connection` |  |  |  | `hosting-connection-override` | [guide](../components/hosting.md#tradingconnectionstateoverride) |
 | [TradingDataProvider](trading-ui.md#tradingdataprovider) | `data` |  |  |  | *host* | [guide](../components/hosting.md#tradingdataprovider) |
@@ -95,6 +97,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | `components/ConnectionBanner` | `tradingConnectionBanner` |  | `data-connection-state` |
 | `components/ConnectionStatusIndicator` | `tradingConnectionStatus` |  | `data-connection-state` |
 | `components/DepthChartView` | `tradingDepthChartView` |  | `data-link-group` |
+| `components/ExportCsvButton` | `tradingExportCsvButton` |  | `data-state`, `data-testid` |
 | `components/ExposureTreemap` | `tradingExposureTreemap` |  | `data-measure` |
 | `components/FillProgressBar` | `tradingFillProgressBar` | `--tradingFillProgressBar-colour`, `--tradingFillProgressBar-pct` | `data-pct`, `data-target-pct` |
 | `components/FillsBlotter` | `tradingFillsBlotter` |  | `data-testid` |
@@ -125,6 +128,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | `components/StaleIndicator` | `tradingStaleIndicator` |  | `data-stale`, `data-stale-reason` |
 | `components/TimeSeriesChart` | `tradingTimeSeriesChart` |  | `data-link-group` |
 | `components/TradeTape` | `tradingTradeTape` | `--trading-buy` | `data-aggressor`, `data-large`, `data-link-group`, `data-testid` |
+| `components/TradesView` | `tradingTradesView` |  | `data-link-group`, `data-scope`, `data-testid` |
 | `components/TradingCellRenderers` |  |  | `data-liquidity`, `data-position`, `data-stop-trigger` |
 | `components/WatchlistDialog` | `tradingWatchlistDialog` |  | `data-index` |
 
@@ -167,5 +171,6 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | SpreadChart | `spread-chart` | [guide](../components/charts.md#spreadchart) |
 | Stack | `stack-instrument-prices` | [guide](../components/README.md) |
 | TimeSeriesChart | `time-series-chart` | [guide](../components/charts.md#timeserieschart) |
+| TradesView | `trades-view` | [guide](../components/blotters.md#trades) |
 | TradeTape | `trade-tape` | [guide](../components/blotters.md) |
 | Workspace | `trader-workspace` | [guide](../components/README.md) |

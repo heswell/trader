@@ -42,10 +42,10 @@ The two blotters show the workspace channels without following one:
 
 | Component | Props |
 | --- | --- |
-| `OrderBlotter` | `defaultTab` (`working` \| `filled` \| `closed` \| `all`), `showChildOrders` (default true), `onOrderSelect(orderId?, ric?)`, `onError(TradingRpcError)`, `notify` (default true: failed amend / cancel requests also go to `useTradingNotifications()` when a provider is mounted), `readOnly` (default false: hide the amend / cancel controls), `useEditSession` (amend through the server edit session instead of `amendOrder`: the dialog begins the session when it opens, Amend saves it, Close discards it, and an order that changed meanwhile is refused as stale). Tabs filter client side on `status`. Amend / cancel icons are enabled only for NEW, PARTIALLY_FILLED, REPLACED. Multi-select (ctrl / shift click) + **Cancel selected** sends `cancelOrder` per order; **Cancel all** asks first (a prompt with the count of the user's working orders, in every instrument, and a per-RIC list; focus starts on **Keep orders**), then sends `cancelAll`. Amend opens a dialog (quantity, price for priced orders, and stop price for a STOP / STOP_LIMIT that hasn't triggered; only a changed stop price is sent, as `stopPrice` in `amendOrder` or a `stopPrice` editCell in the edit session). Stop orders show their **Stop** price (blank for other types) and **Triggered**: "Waiting" until the stop triggers, then the trigger time (`triggeredAt`). Child orders of the selected order show in a pane below, in a `SplitPane` the user can drag (a vuu LinkedTableView / tree does not span tables, still the case in alpha.21). Rejected rows show `rejectReason: text` as a tooltip on the status. **Order book** (`showOrderBook`, default true) opens the selected order's book in the shell's context panel, or in a dialog outside a portal shell; the panel follows the selection (see [Order book panel](#order-book-panel)). |
-| `FillsBlotter` | `defaultGrouping` (`none` \| `ric` \| `ric-side`), `ric`, `onOrderSelect(orderId)` (order link), `highlightOrderId`, `csvFileName`. Group rows show summed quantity / notional and VWAP (`sum(notional) / sum(quantity)`, computed in the renderer – vuu has no VWAP aggregation). **Export CSV** writes the current filter and sort, ungrouped, up to 5,000 rows. |
+| `OrderBlotter` | `defaultTab` (`working` \| `filled` \| `closed` \| `all`), `showChildOrders` (default true), `onOrderSelect(orderId?, ric?)`, `onError(TradingRpcError)`, `notify` (default true: failed amend / cancel requests also go to `useTradingNotifications()` when a provider is mounted), `readOnly` (default false: hide the amend / cancel controls), `useEditSession` (amend through the server edit session instead of `amendOrder`: the dialog begins the session when it opens, Amend saves it, Close discards it, and an order that changed meanwhile is refused as stale). Tabs filter client side on `status`. Amend / cancel icons are enabled only for NEW, PARTIALLY_FILLED, REPLACED. Multi-select (ctrl / shift click) + **Cancel selected** sends `cancelOrder` per order; **Cancel all** asks first (a prompt with the count of the user's working orders, in every instrument, and a per-RIC list; focus starts on **Keep orders**), then sends `cancelAll`. Amend opens a dialog (quantity, price for priced orders, and stop price for a STOP / STOP_LIMIT that hasn't triggered; only a changed stop price is sent, as `stopPrice` in `amendOrder` or a `stopPrice` editCell in the edit session). Stop orders show their **Stop** price (blank for other types) and **Triggered**: "Waiting" until the stop triggers, then the trigger time (`triggeredAt`). Child orders of the selected order show in a pane below, in a `SplitPane` the user can drag (a vuu LinkedTableView / tree does not span tables, still the case in alpha.21). Rejected rows show `rejectReason: text` as a tooltip on the status. **Order book** (`showOrderBook`, default true) opens the selected order's book in the shell's context panel, or in a dialog outside a portal shell; the panel follows the selection (see [Order book panel](#order-book-panel)). **Export CSV** ([below](#export-csv)) writes every order in the current tab, linked-instrument filter and sort; in a narrow panel it drops to its icon. |
+| `FillsBlotter` | `defaultGrouping` (`none` \| `ric` \| `ric-side`), `ric`, `onOrderSelect(orderId)` (order link), `highlightOrderId`, `csvFileName`. Group rows show summed quantity / notional and VWAP (`sum(notional) / sum(quantity)`, computed in the renderer – vuu has no VWAP aggregation). **Export CSV** ([below](#export-csv)) writes every fill in the current filter and sort, ungrouped, as the table shows them (group rows' VWAP column as the fill price). |
 | `TradeTape` | `ric` (default: selected instrument), `maxRows` (100), `largeSizeThreshold` (absolute) or `largeSizePercentile` (90), `utc`. Newest first (`seq` descending), one render per animation frame, aggressor shown as ▲ Buy / ▼ Sell plus colour. |
-| `PositionsView` | `defaultGrouping` (`sector` (default) \| `none` \| `account` \| `ric` \| `underlying`, which puts a stock or index with its futures and options; groups are always by currency first), `account`, `showTotals`. Realised / unrealised / total P&L tick via `positionPrices`. `sector` and `exchange` come from instrument static (the OMS copies them onto `positions`). The totals table is **per currency** (never mixed; GBX is pence). Greeks: `delta` (shares equivalent), `deltaUsd`, `gamma`, `vegaUsd`, summed in groups ([options.md](options.md#greeks-in-positions)). |
+| `PositionsView` | `defaultGrouping` (`sector` (default) \| `none` \| `account` \| `ric` \| `underlying`, which puts a stock or index with its futures and options; groups are always by currency first), `account`, `showTotals`. Realised / unrealised / total P&L tick via `positionPrices`. `sector` and `exchange` come from instrument static (the OMS copies them onto `positions`). The totals table is **per currency** (never mixed; GBX is pence). Greeks: `delta` (shares equivalent), `deltaUsd`, `gamma`, `vegaUsd`, summed in groups ([options.md](options.md#greeks-in-positions)). **Export CSV** ([below](#export-csv)) writes every position in the current account filter and sort, ungrouped. |
 
 ```tsx
 const { canTrade } = useEntitlements(); // your app's role check
@@ -92,9 +92,53 @@ The blotter renders the panel content inside its own React tree (`SlotContextPan
 shell's panel), so the content sees the blotter's data providers and follows its selection without being
 reopened.
 
+## Trades
+
+`TradesView` (the **Trades** panel, Market › Trades) is every trade on the `trades` table in a vuu Table:
+newest first, sortable by any column, and scoped to **All instruments** or the linked instrument (a toggle
+labelled with its RIC). The footer counts the trades in scope; **Export CSV** writes all of them in the current
+scope and sort.
+
+Props: `defaultScope` (`all` \| `linked`), `linkGroup` / `defaultLinkGroup` / `onLinkGroupChange`,
+`showLinkGroupSelector`, `csvFileName`. Its table config is exported as `tradesViewTableConfig`.
+
+The table is a ring buffer of `exchangeSim.tradesCapacity` rows (50k by default). To demo export at size, start
+the trading server with `exchangeSim.tradesSeed=1000000` (`EXCHANGE_SIM_TRADES_SEED`, or
+`bun run dev:trading-server:1m`): it starts with a million historical trades and ticks on top.
+
+## Export CSV
+
+`ExportCsvButton` exports every row of a panel's Table (not just the rows on screen) in its current filter and
+sort, formatted the way the grid shows it. It streams, so it works at a million rows: see
+[viewport-export.md](../viewport-export.md) for the design and measurements.
+
+```tsx
+<ExportCsvButton
+  dataSource={dataSource}   // the Table's data source: its filter and sort
+  fileName="fills.csv"      // suggested name in the save dialog
+  table="fills"             // the trading table it is on
+  tableConfig={tableConfig} // the Table's config: visible columns, order, labels, formats
+  textFormatters={{ [MY_RENDERER]: (value, row) => "..." }} // the panel's own cell renderers
+/>
+```
+
+- **Columns.** The table config's visible columns, in order, headed by their labels. Each value goes through a text
+  formatter for its cell renderer (the trading renderers have them: `tradingTextFormatters`; pass
+  `textFormatters` for a panel's own), else vuu's value formatter, as the default cell renderer.
+- **Rows.** Remote: the server snapshots the viewport and streams it over HTTP (`EXPORT_VIEWPORT`). Local test
+  data: the in-browser engine's viewport is snapshot in the page.
+- **Grouped data sources** export their leaf rows: the button opens a temporary ungrouped viewport with the same
+  columns, filter and sort, and closes it when done.
+- **Destination.** Chromium on HTTPS or localhost: a file the user picks, written as rows arrive. Elsewhere: built in
+  memory, then downloaded.
+- **While it runs** the button turns into Cancel, with a percentage beside it. The result stays for a few
+  seconds: rows and time, with size, snapshot time and throughput on hover.
+
+`useViewportExport` is the same without the button: `{ status, exportCsv, cancel, reset }`.
+
 ## CSS hooks
 
-Class bases `tradingOrderBlotter`, `tradingFillsBlotter`, `tradingTradeTape`, `tradingPositionsView`,
+Class bases `tradingOrderBlotter`, `tradingFillsBlotter`, `tradingTradesView` (`data-scope`), `tradingExportCsvButton` (`-status`, with `data-state`), `tradingTradeTape`, `tradingPositionsView`,
 `tradingLinkedFooter` (chips: `-chip`, with `data-active` when pressed). Rows on a channel carry
 `tradingChannelRow tradingChannelRow-<channel id>`, which sets `--tradingChannelRow-color`. Useful
 attributes: `data-link-group` (TradeTape, PositionsView), `data-testid`, `data-connection-state` / `data-error` (OrderBlotter),

@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 666 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 676 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -20,6 +20,7 @@ Imports: `@heswell/trading-ui`. 666 exports. Types are shown as written in the s
 - **components/ConnectionBanner**: [ConnectionBanner](#connectionbanner), [ConnectionBannerProps](#connectionbannerprops)
 - **components/ConnectionStatusIndicator**: [CONNECTION_STATE_LABELS](#connection_state_labels), [ConnectionStatusIndicator](#connectionstatusindicator), [ConnectionStatusIndicatorProps](#connectionstatusindicatorprops)
 - **components/DepthChartView**: [DepthChartView](#depthchartview), [DepthChartViewProps](#depthchartviewprops)
+- **components/ExportCsvButton**: [ExportCsvButton](#exportcsvbutton), [ExportCsvButtonProps](#exportcsvbuttonprops), [exportStatusText](#exportstatustext), [useViewportExport](#useviewportexport), [UseViewportExportProps](#useviewportexportprops), [ViewportExportStatus](#viewportexportstatus)
 - **components/ExposureTreemap**: [ExposureMeasure](#exposuremeasure), [ExposureTreemap](#exposuretreemap), [ExposureTreemapProps](#exposuretreemapprops)
 - **components/FillProgressBar**: [FillProgressBar](#fillprogressbar), [FillProgressBarProps](#fillprogressbarprops)
 - **components/FillsBlotter**: [FillsBlotter](#fillsblotter), [FillsBlotterProps](#fillsblotterprops), [FillsGrouping](#fillsgrouping), [FillsLinkContext](#fillslinkcontext)
@@ -50,6 +51,7 @@ Imports: `@heswell/trading-ui`. 666 exports. Types are shown as written in the s
 - **components/SpreadChart**: [SpreadChart](#spreadchart), [SpreadChartProps](#spreadchartprops)
 - **components/StaleIndicator**: [STALE_DATA_CLASS](#stale_data_class), [StaleDataProps](#staledataprops), [StaleDataState](#staledatastate), [StaleIndicator](#staleindicator), [StaleIndicatorProps](#staleindicatorprops), [useStaleData](#usestaledata)
 - **components/TimeSeriesChart**: [BUCKET_COLUMNS](#bucket_columns), [BucketRow](#bucketrow), [bucketsToPoints](#bucketstopoints), [formatTimeSeriesStats](#formattimeseriesstats), [needsWindow](#needswindow), [OVERSCAN](#overscan), [planRange](#planrange), [planWindow](#planwindow), [SeriesPoints](#seriespoints), [TimeSeriesChart](#timeserieschart), [TimeSeriesChartProps](#timeserieschartprops), [TimeSeriesStats](#timeseriesstats), [ViewState](#viewstate), [WindowPlan](#windowplan)
+- **components/TradesView**: [TradesScope](#tradesscope), [TradesView](#tradesview), [TradesViewProps](#tradesviewprops), [tradesViewTableConfig](#tradesviewtableconfig)
 - **components/TradeTape**: [sizePercentile](#sizepercentile), [TradeTape](#tradetape), [TradeTapeProps](#tradetapeprops)
 - **components/TradingCellRenderers**: [registerTradingCellRenderers](#registertradingcellrenderers), [TradingRenderer](#tradingrenderer)
 - **components/WatchlistDialog**: [addRics](#addrics), [facetSummary](#facetsummary), [facetValueLabel](#facetvaluelabel), [INSTRUMENT_TYPE_OPTIONS](#instrument_type_options), [isNarrowed](#isnarrowed), [PICKER_FACETS](#picker_facets), [PICKER_ROW_LIMIT](#picker_row_limit), [PickerFacet](#pickerfacet), [PickerFacetValues](#pickerfacetvalues), [pickerFilter](#pickerfilter), [toggleRic](#toggleric), [WatchlistDialog](#watchlistdialog), [WatchlistDialogProps](#watchlistdialogprops)
@@ -3209,6 +3211,101 @@ Also accepts the standard HTML attributes and `ref`.
 
 Props of [`DepthChartView`](#depthchartview).
 
+## components/ExportCsvButton
+
+### Components (components/ExportCsvButton)
+
+#### ExportCsvButton
+
+*component* · [components/ExportCsvButton/ExportCsvButton.tsx](../../packages/trading-ui/src/components/ExportCsvButton/ExportCsvButton.tsx#L88)
+
+Export CSV for a panel's Table: every row of its data source in the
+current filter and sort, formatted as the grid shows it (see
+useViewportExport). While it runs the button cancels it and shows
+progress; the result (rows, time; size and throughput on hover) stays
+for a few seconds.
+
+Props: `ExportCsvButtonProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `label?` | `string` | `"Export CSV"` | Button text. Default "Export CSV". |
+| `disabled?` | `boolean` | `false` | Disable the button (e.g. while disconnected). |
+| `table` | `TradingSchemaName` |  | The trading table the data source is on. (from `UseViewportExportProps`) |
+| `dataSource` | `DataSource` |  | The data source the panel's Table shows: its filter and sort are used. (from `UseViewportExportProps`) |
+| `tableConfig` | `TableConfig` |  | The Table's config: visible columns, their order, labels and formats. (from `UseViewportExportProps`) |
+| `fileName` | `string` |  | Suggested file name, e.g. "fills.csv". (from `UseViewportExportProps`) |
+| `textFormatters?` | `CellTextFormatters` |  | Text forms of the panel's own cell renderers, by renderer name. (from `UseViewportExportProps`) |
+| `baseUrl?` | `string` |  | Base for the export url if the server sends none (its REST url). (from `UseViewportExportProps`) |
+
+Also accepts the standard HTML attributes.
+
+### Hooks (components/ExportCsvButton)
+
+#### useViewportExport
+
+*hook* · [components/ExportCsvButton/useViewportExport.ts](../../packages/trading-ui/src/components/ExportCsvButton/useViewportExport.ts#L78)
+
+Export what a panel's Table shows (every row, not just the visible range)
+as CSV, formatted the way the grid formats it, in its current filter and
+sort. Streams to a file the user picks where the browser can
+(showSaveFilePicker), else downloads from memory.
+
+A grouped data source exports its leaf rows: the server snapshots flat
+viewports only, so the export opens a temporary ungrouped viewport with
+the same columns, filter and sort, and closes it when done.
+
+```ts
+useViewportExport({ table, dataSource, tableConfig, fileName, textFormatters, baseUrl, }: UseViewportExportProps): { status: ViewportExportStatus; exportCsv: () => Promise<void>; cancel: () => void | undefined; reset: () => void; }
+```
+
+### Functions (components/ExportCsvButton)
+
+#### exportStatusText
+
+*function* · [components/ExportCsvButton/ExportCsvButton.tsx](../../packages/trading-ui/src/components/ExportCsvButton/ExportCsvButton.tsx#L38)
+
+The status text next to the button, and its full form for the tooltip.
+
+```ts
+exportStatusText(status: ViewportExportStatus): { text: string; title?: string }
+```
+
+### Interfaces (components/ExportCsvButton)
+
+#### ExportCsvButtonProps
+
+*interface* · [components/ExportCsvButton/ExportCsvButton.tsx](../../packages/trading-ui/src/components/ExportCsvButton/ExportCsvButton.tsx#L72)
+
+Props of [`ExportCsvButton`](#exportcsvbutton).
+
+#### UseViewportExportProps
+
+*interface* · [components/ExportCsvButton/useViewportExport.ts](../../packages/trading-ui/src/components/ExportCsvButton/useViewportExport.ts#L27)
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `table` | `TradingSchemaName` |  | The trading table the data source is on. |
+| `dataSource` | `DataSource` |  | The data source the panel's Table shows: its filter and sort are used. |
+| `tableConfig` | `TableConfig` |  | The Table's config: visible columns, their order, labels and formats. |
+| `fileName` | `string` |  | Suggested file name, e.g. "fills.csv". |
+| `textFormatters?` | `CellTextFormatters` |  | Text forms of the panel's own cell renderers, by renderer name. |
+| `baseUrl?` | `string` |  | Base for the export url if the server sends none (its REST url). |
+
+### Types (components/ExportCsvButton)
+
+#### ViewportExportStatus
+
+*type* · [components/ExportCsvButton/useViewportExport.ts](../../packages/trading-ui/src/components/ExportCsvButton/useViewportExport.ts#L20)
+
+```ts
+type ViewportExportStatus = | { state: "idle" }
+  | { state: "running"; rows: number; rowCount: number }
+  | { state: "done"; result: ExportResult }
+  | { state: "cancelled" }
+  | { state: "error"; message: string }
+```
+
 ## components/ExposureTreemap
 
 ### Components (components/ExposureTreemap)
@@ -3290,12 +3387,12 @@ Props of [`FillProgressBar`](#fillprogressbar).
 
 #### FillsBlotter
 
-*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L353)
+*component* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L325)
 
 Fills blotter on `fills` (the server already filters to the user's own
 fills): grouping by ric / ric+side with summed quantity and notional and
-a VWAP price on group rows, liquidity, order links and CSV export of the
-current filter and sort (ungrouped, up to 5,000 rows).
+a VWAP price on group rows, liquidity, order links and Export CSV of every
+fill in the current filter and sort (ungrouped), as the table shows them.
 
 Props: `FillsBlotterProps`
 
@@ -3305,7 +3402,7 @@ Props: `FillsBlotterProps`
 | `ric?` | `string` |  | Restrict to one instrument. |
 | `onOrderSelect?` | `(orderId: string) => void` |  | Called when the order link of a fill is clicked. |
 | `highlightOrderId?` | `string` |  | Order to highlight (e.g. the order selected in an OrderBlotter). |
-| `csvFileName?` | `string` | `"fills.csv"` | CSV file name. Default "fills.csv". |
+| `csvFileName?` | `string` | `"fills.csv"` | Suggested CSV file name. Default "fills.csv". |
 
 Also accepts the standard HTML attributes and `ref`.
 
@@ -3313,7 +3410,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### FillsBlotterProps
 
-*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L155)
+*interface* · [components/FillsBlotter/FillsBlotter.tsx](../../packages/trading-ui/src/components/FillsBlotter/FillsBlotter.tsx#L127)
 
 Props of [`FillsBlotter`](#fillsblotter).
 
@@ -4749,7 +4846,7 @@ An option as typed: `AAPL 200c`, `aapl.oq 200p jan`, `stech 4100c dec27`.
 
 #### OrderBlotter
 
-*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L755)
+*component* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L763)
 
 Order blotter on `parentOrders`: status badge, fill progress, tick-formatted
 avg price, filter tabs, per-row amend / cancel (enabled only for NEW,
@@ -4839,7 +4936,7 @@ const orderBlotterTableConfig: TableConfig
 
 #### OrderBlotterProps
 
-*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L110)
+*interface* · [components/OrderBlotter/OrderBlotter.tsx](../../packages/trading-ui/src/components/OrderBlotter/OrderBlotter.tsx#L111)
 
 Props of [`OrderBlotter`](#orderblotter).
 
@@ -5944,7 +6041,7 @@ Props of [`PnlValue`](#pnlvalue).
 
 #### PositionsView
 
-*component* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L443)
+*component* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L451)
 
 Positions on `positionPrices` with ticking realised / unrealised / total
 P&L and Greeks (delta in shares and USD, gamma, vega in USD), grouping
@@ -5971,7 +6068,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### totalsByCurrency
 
-*function* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L238)
+*function* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L239)
 
 Sum position rows per currency (never across currencies).
 
@@ -5983,7 +6080,7 @@ totalsByCurrency(rows: readonly Record<string, unknown>[]): CurrencyTotals[]
 
 #### POSITIONS_GROUP_BY
 
-*const* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L58)
+*const* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L59)
 
 The positionPrices `groupBy` for each PositionsView grouping.
 
@@ -5995,7 +6092,7 @@ const POSITIONS_GROUP_BY: Record<PositionsGrouping, string[]>
 
 #### CurrencyTotals
 
-*interface* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L228)
+*interface* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L229)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -6008,7 +6105,7 @@ const POSITIONS_GROUP_BY: Record<PositionsGrouping, string[]>
 
 #### PositionsViewProps
 
-*interface* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L73)
+*interface* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L74)
 
 Props of [`PositionsView`](#positionsview).
 
@@ -6016,7 +6113,7 @@ Props of [`PositionsView`](#positionsview).
 
 #### PositionsGrouping
 
-*type* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L50)
+*type* · [components/PositionsView/PositionsView.tsx](../../packages/trading-ui/src/components/PositionsView/PositionsView.tsx#L51)
 
 `none`: one row per account|ric. Grouped modes always group by currency
 first so aggregated amounts are never summed across currencies.
@@ -7508,6 +7605,62 @@ One field's points for echarts: [time, value | null].
 
 ```ts
 type SeriesPoints = [number, number | null][]
+```
+
+## components/TradesView
+
+### Components (components/TradesView)
+
+#### TradesView
+
+*component* · [components/TradesView/TradesView.tsx](../../packages/trading-ui/src/components/TradesView/TradesView.tsx#L212)
+
+Every trade on the `trades` table (time and sales across instruments,
+newest first), sortable by any column, or only the linked instrument's.
+Export CSV writes all of them in the current scope and sort, however
+many: the table can hold a million rows (exchangeSim.tradesSeed).
+
+Props: `TradesViewProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `defaultScope?` | `TradesScope` | `"all"` | Initial scope. Default "all". |
+| `showLinkGroupSelector?` | `boolean` | `false` | Show the panel link group selector in the toolbar. Default false. |
+| `csvFileName?` | `string` | `"trades.csv"` | Suggested CSV file name. Default "trades.csv". |
+| `linkGroup?` | `LinkGroupId` |  | Link group (channel) to join: e.g. "red", "green", or "unlinked". The initial group when the user can change it (`showLinkGroupSelector`); a later change of the prop is applied too. Default: the saved group, then `defaultLinkGroup`, then the inherited group. (from `LinkGroupProps`) |
+| `defaultLinkGroup?` | `LinkGroupId` |  | Group used when there is no `linkGroup` prop and nothing saved. (from `LinkGroupProps`) |
+| `onLinkGroupChange?` | `(linkGroup: LinkGroupId) => void` |  | The user picked another group in the selector. (from `LinkGroupProps`) |
+
+Also accepts the standard HTML attributes and `ref`.
+
+### Constants (components/TradesView)
+
+#### tradesViewTableConfig
+
+*const* · [components/TradesView/TradesView.tsx](../../packages/trading-ui/src/components/TradesView/TradesView.tsx#L55)
+
+```ts
+const tradesViewTableConfig: TableConfig
+```
+
+### Interfaces (components/TradesView)
+
+#### TradesViewProps
+
+*interface* · [components/TradesView/TradesView.tsx](../../packages/trading-ui/src/components/TradesView/TradesView.tsx#L89)
+
+Props of [`TradesView`](#tradesview).
+
+### Types (components/TradesView)
+
+#### TradesScope
+
+*type* · [components/TradesView/TradesView.tsx](../../packages/trading-ui/src/components/TradesView/TradesView.tsx#L38)
+
+All instruments, or only the linked instrument.
+
+```ts
+type TradesScope = "all" | "linked"
 ```
 
 ## components/TradeTape

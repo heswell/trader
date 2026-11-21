@@ -39,10 +39,11 @@
   padding-inline: var(--salt-spacing-250, calc(2.5 * var(--salt-spacing-100)));
 }
 
-/* Narrow panels: Order book drops to its icon, Cancel selected to "Cancel N".
-   The aria-labels keep the full text. */
+/* Narrow panels: Order book and Export CSV drop to their icons, Cancel
+   selected to "Cancel N". The aria-labels keep the full text. */
 @container (max-width: 700px) {
-  .tradingOrderBlotter-wideLabel {
+  .tradingOrderBlotter-wideLabel,
+  .tradingOrderBlotter-toolbar .tradingExportCsvButton-label {
     display: none;
   }
   .tradingOrderBlotter-narrowLabel {

@@ -103,7 +103,14 @@ describe("portal host", () => {
       ["Trading", ["Watchlist", "Orders", "Executions", "Price ladder"]],
       [
         "Market",
-        ["Market depth", "Time & sales", "Chart", "History", "Depth chart"],
+        [
+          "Market depth",
+          "Time & sales",
+          "Trades",
+          "Chart",
+          "History",
+          "Depth chart",
+        ],
       ],
       ["Portfolio", ["Positions", "P&L", "Exposure", "Execution quality"]],
       ["Oversight", ["Desk overview"]],
@@ -118,7 +125,7 @@ describe("portal host", () => {
     // navIconUrl renders as a CSS mask (url('…')), one per entry
     expect(
       nav.querySelectorAll('.vuuPortalNav-icon [data-icon="custom"]'),
-    ).toHaveLength(18);
+    ).toHaveLength(19);
 
     const brand = nav.querySelector(".vuuPortalNav-brand") as HTMLElement;
     const brandLink = brand.querySelector(".vuuPortalNav-brandLink");
@@ -224,6 +231,7 @@ describe("portal host", () => {
         rows: [
           "Market depth",
           "Time & sales",
+          "Trades",
           "Chart",
           "History",
           "Depth chart",

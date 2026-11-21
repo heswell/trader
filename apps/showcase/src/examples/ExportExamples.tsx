@@ -1,24 +1,16 @@
 import {
-  canStreamToFile,
-  type ExportColumn,
-  type ExportResult,
-  exportColumns,
-  exportViewportToCsv,
+  ExportCsvButton,
   InstrumentLookupProvider,
   isLocalEngineDataSource,
-  pickExportSink,
   registerTradingCellRenderers,
+  TradesView,
   TradingRenderer,
-  tradingTableSchema,
-  tradingTextFormatters,
-  useInstrumentLookup,
   useTradingDataSource,
 } from "@heswell/trading-ui";
-import { Button } from "@salt-ds/core";
 import type { DataSource, DataSourceFilter } from "@vuu-ui/vuu-data-types";
 import { Table } from "@vuu-ui/vuu-table";
 import type { TableConfig } from "@vuu-ui/vuu-table-types";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { remoteConnection } from "../useShowcaseDataMode";
 
 registerTradingCellRenderers();
@@ -74,34 +66,7 @@ const initialConfig: TableConfig = {
   ],
 };
 
-const serverDataTypes = Object.fromEntries(
-  tradingTableSchema("trades").columns.map((c) => [c.name, c.serverDataType]),
-);
-
-const exportSummary = ({
-  rows,
-  bytes,
-  ms,
-  snapshotMs,
-  firstRowsMs,
-  sink,
-}: ExportResult) =>
-  [
-    `${rows.toLocaleString()} rows, ${(bytes / 1e6).toFixed(1)} MB in ${(ms / 1000).toFixed(1)}s`,
-    `snapshot ${Math.round(snapshotMs)}ms`,
-    `first rows ${firstRowsMs === undefined ? "–" : `${Math.round(firstRowsMs)}ms`}`,
-    `${Math.round(rows / (ms / 1000)).toLocaleString()} rows/s`,
-    `${(bytes / 1e6 / (ms / 1000)).toFixed(1)} MB/s`,
-    sink === "file" ? "streamed to file" : "downloaded from memory",
-  ].join(" · ");
-
-type Status =
-  | { state: "idle" }
-  | { state: "running"; rows: number; rowCount: number }
-  | { state: "done"; text: string }
-  | { state: "error"; text: string };
-
-/** Filter box, Export CSV / Cancel and status over a trades table. */
+/** Filter box and ExportCsvButton over a trades table. */
 const ExportPanel = ({
   dataSource,
   info,
@@ -109,52 +74,12 @@ const ExportPanel = ({
   dataSource: DataSource;
   info?: ReactNode;
 }) => {
-  const lookup = useInstrumentLookup();
   const [config, setConfig] = useState(initialConfig);
   const [filter, setFilter] = useState("");
-  const [status, setStatus] = useState<Status>({ state: "idle" });
-  const abortRef = useRef<AbortController>(undefined);
-  const columns: ExportColumn[] = useMemo(
-    () =>
-      exportColumns(config.columns, {
-        textFormatters: tradingTextFormatters(lookup),
-        serverDataTypes,
-      }),
-    [config, lookup],
-  );
 
   const applyFilter = (text: string) => {
     setFilter(text);
     dataSource.filter = { filter: text } as DataSourceFilter;
-  };
-
-  const onExport = async () => {
-    const abort = new AbortController();
-    abortRef.current = abort;
-    try {
-      // the picker needs the click's user activation: before any other await
-      const sink = await pickExportSink(`trades-${Date.now()}.csv`);
-      setStatus({ state: "running", rows: 0, rowCount: 0 });
-      const result = await exportViewportToCsv({
-        dataSource,
-        columns,
-        sink,
-        baseUrl: remoteConnection().authUrl,
-        signal: abort.signal,
-        onProgress: ({ rows, rowCount }) =>
-          setStatus({ state: "running", rows, rowCount }),
-      });
-      setStatus({
-        state: "done",
-        text: exportSummary(result),
-      });
-    } catch (error) {
-      const text =
-        error instanceof DOMException && error.name === "AbortError"
-          ? "cancelled"
-          : String(error);
-      setStatus({ state: "error", text });
-    }
   };
 
   return (
@@ -176,22 +101,13 @@ const ExportPanel = ({
             value={filter}
           />
         </label>
-        {status.state === "running" ? (
-          <Button onClick={() => abortRef.current?.abort()}>Cancel</Button>
-        ) : (
-          <Button data-testid="export-csv" onClick={onExport}>
-            Export CSV
-          </Button>
-        )}
-        <output data-testid="export-status">
-          {status.state === "running"
-            ? `${status.rows.toLocaleString()} / ${status.rowCount.toLocaleString()} rows…`
-            : status.state === "idle"
-              ? canStreamToFile()
-                ? "streams to a file you pick"
-                : "no showSaveFilePicker: buffers in memory, then downloads"
-              : status.text}
-        </output>
+        <ExportCsvButton
+          baseUrl={remoteConnection().authUrl}
+          dataSource={dataSource}
+          fileName="trades.csv"
+          table="trades"
+          tableConfig={config}
+        />
       </div>
       {info}
       <div style={{ flex: 1, minHeight: 0 }}>
@@ -274,4 +190,12 @@ export const MillionTradesExportExample = () => (
   <InstrumentLookupProvider>
     <MillionTrades />
   </InstrumentLookupProvider>
+);
+
+/**
+ * The trader UI's Trades panel: every trade, sortable, scoped to all
+ * instruments or the linked one, with Export CSV in the toolbar.
+ */
+export const TradesViewExample = () => (
+  <TradesView showLinkGroupSelector style={{ height: "100%" }} />
 );

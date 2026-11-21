@@ -10,6 +10,7 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   ConnectionBanner: "docs/components/notifications-and-connection.md",
   ConnectionStatusIndicator: "docs/components/notifications-and-connection.md",
   DepthChartView: "docs/components/charts.md#depthchartview",
+  ExportCsvButton: "docs/components/blotters.md#export-csv",
   ExposureTreemap: "docs/components/charts.md#exposuretreemap",
   FillProgressBar: "docs/components/primitives.md",
   FillsBlotter: "docs/components/blotters.md",
@@ -73,6 +74,7 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   TimeSeriesChart: "docs/components/charts.md#timeserieschart",
   StaleIndicator: "docs/components/notifications-and-connection.md",
   TradeTape: "docs/components/blotters.md",
+  TradesView: "docs/components/blotters.md#trades",
   TradingConnectionStateOverride:
     "docs/components/hosting.md#tradingconnectionstateoverride",
   TradingDataProvider: "docs/components/hosting.md#tradingdataprovider",

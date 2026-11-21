@@ -1,0 +1,47 @@
+.tradingTradesView {
+  background: var(--salt-container-primary-background);
+  color: var(--salt-content-primary-foreground);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--salt-text-fontFamily);
+  gap: var(--salt-spacing-100);
+  height: 100%;
+  width: 100%;
+}
+
+.tradingTradesView-toolbar {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--salt-spacing-100);
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.tradingTradesView-toolbar > * {
+  flex-shrink: 0;
+}
+
+.tradingTradesView-spacer {
+  flex: 1 1 0;
+}
+
+/* Same toggle padding as the Orders status group and Fills Group by. */
+.tradingTradesView .tradingTradesView-toolbar
+  .tradingTradesView-scope.saltToggleButtonGroup
+  .saltToggleButton {
+  padding-inline: var(--salt-spacing-250, calc(2.5 * var(--salt-spacing-100)));
+}
+
+.tradingTradesView-table {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.tradingTradesView-footer {
+  color: var(--salt-content-secondary-foreground);
+  flex: 0 0 auto;
+  font-size: var(--salt-text-label-fontSize);
+  font-variant-numeric: tabular-nums;
+  padding-inline: var(--salt-spacing-100);
+}

@@ -249,4 +249,50 @@ describe("csv export streams", () => {
       isLocalEngineDataSource({ columns: [] } as unknown as DataSource),
     ).toBe(false);
   });
+
+  test("exportViewportToCsv: abort mid-export cancels the source and aborts the file", async () => {
+    const count = 50_000;
+    const dataSource = {
+      columns: ["ric", "price"],
+      size: count,
+      config: { groupBy: [] },
+      engine: { rowIndexAt: (pos: number) => pos },
+      dataTable: {
+        engineTable: {
+          rows: Array.from({ length: count }, (_, i) => [`k${i}`, "VOD.L", i]),
+          columnMap: { key: 0, ric: 1, price: 2 },
+        },
+      },
+    } as unknown as DataSource;
+    const abort = new AbortController();
+    let aborted: unknown;
+    let closed = false;
+    const run = exportViewportToCsv({
+      dataSource,
+      columns: exportColumns([{ name: "ric" }, { name: "price" }]),
+      sink: {
+        kind: "file",
+        writable: new WritableStream({
+          write: () => undefined,
+          close: () => {
+            closed = true;
+          },
+          abort: (reason) => {
+            aborted = reason;
+          },
+        }),
+      },
+      signal: abort.signal,
+      onProgress: ({ rows }) => {
+        if (rows >= 2_000) abort.abort();
+      },
+    });
+    const error = await run.then(
+      () => undefined,
+      (e: unknown) => e,
+    );
+    expect((error as DOMException)?.name).toBe("AbortError");
+    expect((aborted as DOMException)?.name).toBe("AbortError");
+    expect(closed).toBe(false);
+  });
 });

@@ -61,6 +61,7 @@ import {
   linkedInstruments,
   useLinkedRicFilter,
 } from "../LinkedInstrumentsFooter";
+import { ExportCsvButton } from "../ExportCsvButton";
 import { OrderBookView } from "../OrderBookView";
 import { useStaleData } from "../StaleIndicator/useStaleData";
 import { registerTradingCellRenderers } from "../TradingCellRenderers";
@@ -533,6 +534,13 @@ const OrderBlotterInner = forwardRef<HTMLDivElement, OrderBlotterInnerProps>(
             ))}
           </ToggleButtonGroup>
           <span className={`${classBase}-spacer`} />
+          <ExportCsvButton
+            dataSource={dataSource}
+            disabled={rowCount === 0}
+            fileName="orders.csv"
+            table="parentOrders"
+            tableConfig={markers.tableConfig}
+          />
           {showOrderBook ? (
             <Button
               appearance="bordered"

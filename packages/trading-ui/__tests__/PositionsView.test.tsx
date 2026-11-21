@@ -32,6 +32,8 @@ describe("PositionsView", () => {
       Array.from(select.options).map((o) => [o.value, o.textContent]),
     ).toContainEqual(["sector", "Currency / sector"]);
     expect(POSITIONS_GROUP_BY.sector).toEqual(["currency", "sector"]);
+    // grouped by default: Export CSV writes the ungrouped positions
+    expect(screen.getByRole("button", { name: "Export CSV" })).toBeTruthy();
   });
 
   test("every grouping groups by currency first", () => {
