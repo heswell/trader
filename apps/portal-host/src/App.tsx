@@ -53,7 +53,9 @@ export const EMPTY_WORKSPACE: WorkspaceEmptyContent = ({ openPalette }) => (
  * (panels in the `active` link group follow its channel); its actions hold
  * "Add panel", which opens the Panels palette (the modules with `workspace`
  * metadata) in the shell's context panel. Panels and palette rows dropped on
- * the workspace's outer edges dock across its full width or height.
+ * the workspace's outer edges dock across its full width or height. Panel
+ * headers offer Maximize / Restore: a maximized panel (the watchlist, say)
+ * fills the workspace until restored.
  */
 export const WORKSPACES: PortalWorkspacesOptions = {
   componentRenderers: registries.renderers,
@@ -61,6 +63,7 @@ export const WORKSPACES: PortalWorkspacesOptions = {
   emptyContent: EMPTY_WORKSPACE,
   headerActions: <AddPanelIconButton />,
   headerCenter: <WorkspaceChannelPicker />,
+  maximizable: true,
   palette: PALETTE,
   settingsCodecs: registries.settingsCodecs,
   systemWorkspaces: SYSTEM_WORKSPACES,
