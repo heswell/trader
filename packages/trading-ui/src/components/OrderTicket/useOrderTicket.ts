@@ -988,11 +988,24 @@ export const useOrderTicket = ({
     [],
   );
 
+  /**
+   * The link group's selection when a prefill named an instrument: the
+   * prefill wins over it. A ticket launched from a component on another
+   * group (a chain on the Active channel, a dialog on the default group)
+   * keeps the launched ric until the selection changes.
+   */
+  const selectedInstrumentRef = useRef(selectedInstrument);
+  selectedInstrumentRef.current = selectedInstrument;
+  const heldSelectionRef = useRef(
+    prefill?.ric ? selectedInstrument : undefined,
+  );
+
   // A new prefill replaces the draft.
   const prefillRef = useRef(prefill);
   useEffect(() => {
     if (prefillRef.current === prefill) return;
     prefillRef.current = prefill;
+    if (prefill?.ric) heldSelectionRef.current = selectedInstrumentRef.current;
     const current = draftRef.current;
     const next = draftFromPrefill(prefill, {
       ric: current.ric,
@@ -1012,10 +1025,12 @@ export const useOrderTicket = ({
     if (
       !followSelection ||
       !selectedInstrument ||
-      selectionSource === ORDER_TICKET_SELECTION_SOURCE
+      selectionSource === ORDER_TICKET_SELECTION_SOURCE ||
+      selectedInstrument === heldSelectionRef.current
     ) {
       return;
     }
+    heldSelectionRef.current = undefined;
     const current = draftRef.current;
     if (current.ric === selectedInstrument.ric) return;
     setDraft({

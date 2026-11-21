@@ -9,12 +9,15 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { useEffect } from "react";
 import {
   ConnectionBanner,
+  InstrumentContextProvider,
   type OrderTicketLauncher,
   OrderTicketLauncherProvider,
   OrderTicketPanel,
+  type SelectedInstrument,
   StaleIndicator,
   TradingDataProvider,
   useOrderTicketLauncher,
+  useSelectedInstrument,
 } from "../src";
 
 setCurrentUser({ name: "admin", authorizations: [] });
@@ -137,6 +140,66 @@ describe("OrderTicketLauncher", () => {
     act(() => launcher.openOrderTicket({ ric: "VOD.L", side: Side.Sell }));
     expect(form.getAttribute("data-side")).toBe(Side.Sell);
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
+let select: (instrument: SelectedInstrument, source?: string) => void;
+const Selector = () => {
+  const { setSelectedInstrument } = useSelectedInstrument();
+  useEffect(() => {
+    select = (instrument, source) => setSelectedInstrument(instrument, source);
+  }, [setSelectedInstrument]);
+  return null;
+};
+
+/** The ticket's instrument: its picker's text, or the ric line without one. */
+const ticketRic = () => {
+  const form = screen.getByRole("form");
+  const field = form.querySelector<HTMLInputElement>(
+    'input[data-order-ticket-field="instrument"]',
+  );
+  return (
+    field?.value || form.querySelector('[data-field="ric"]')?.textContent || ""
+  );
+};
+
+describe("a launched ticket keeps its instrument", () => {
+  // A chain on the Active channel launches into a dialog that follows the
+  // default group, which still holds another instrument.
+  test("over the link group's earlier selection; follows a later one", () => {
+    render(
+      <TradingDataProvider localServer={localServer} mode="local">
+        <InstrumentContextProvider initialInstrument={{ ric: "AAPL.OQ" }}>
+          <OrderTicketLauncherProvider>
+            <Grab />
+            <Selector />
+          </OrderTicketLauncherProvider>
+        </InstrumentContextProvider>
+      </TradingDataProvider>,
+    );
+    act(() => launcher.openOrderTicket({ ric: "VOD.L", side: Side.Buy }));
+    expect(ticketRic()).toContain("VOD.L");
+    act(() => select({ ric: "BP.L" }, "grid"));
+    expect(ticketRic()).toContain("BP.L");
+  });
+
+  test("on a docked panel too", () => {
+    render(
+      <TradingDataProvider localServer={localServer} mode="local">
+        <InstrumentContextProvider initialInstrument={{ ric: "AAPL.OQ" }}>
+          <OrderTicketLauncherProvider>
+            <Grab />
+            <Selector />
+            <OrderTicketPanel showInstrumentPicker={false} />
+          </OrderTicketLauncherProvider>
+        </InstrumentContextProvider>
+      </TradingDataProvider>,
+    );
+    expect(ticketRic()).toContain("AAPL.OQ");
+    act(() => launcher.openOrderTicket({ ric: "VOD.L", side: Side.Sell }));
+    expect(ticketRic()).toContain("VOD.L");
+    act(() => select({ ric: "BP.L" }, "grid"));
+    expect(ticketRic()).toContain("BP.L");
   });
 });
 
