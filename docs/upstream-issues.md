@@ -673,7 +673,8 @@ Found adopting the @vuu-ui 4.0.0-alpha.28 Panels palette (`docs/portal-integrati
      shaded for the target edge and the hint bar says "Drop on a panel edge to split, centre to tab", but there is no
      compass; `grep -ri compass` finds nothing in `@vuu-ui/grid-layout`. *Proposed:* a compass overlay in the
      grid-layout drop target (pointer-over targets for the four edges and centre). *No workaround in the repo*; drag
-     works with the ghost.)
+     works with the ghost.) *Note:* @vuu-ui 5.0 removed the compass again; drops are placed by pointer position
+     with an overlay, and the centre now replaces ([portal-integration.md](portal-integration.md#panels-palette)).
 
 ## Found in the alpha.30 upgrade
 
@@ -696,6 +697,7 @@ Found moving to @vuu-ui 4.0.0-alpha.30 (`docs/portal-integration.md`, "Panels pa
      fell back to edge geometry (`getPositionWithinBox`) and the drop split the panel instead of stacking. *Repro:*
      Workspaces › Trader › Add panel, drag Execution quality into the gap above the centre tile of the narrow Tape
      panel: `.vuuDropCompass[data-active-zone]` was `east`.)
+     *Note:* moot since @vuu-ui 5.0, which has no compass.
 
 ## Found in the portal-build 0.4.0 upgrade
 
