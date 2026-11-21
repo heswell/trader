@@ -45,7 +45,7 @@ boards are now history, the code is the source of truth), **Superseded**.
 | Design | Status | Canvas | Plan doc | Sources |
 | --- | --- | --- | --- | --- |
 | Order blotter depth panel | Built | [canvas](https://claude.ai/artifact/R6zWzirg6zec5uxBeTKEox) | | [order-blotter-depth](order-blotter-depth/README.md) |
-| Orders and fills redesign (SplitPane, Salt toolbar, Cancel all, display-only channel bookends) | Approved | [canvas](https://claude.ai/artifact/Y4FG4GNu38vsvRji4VvCap) | [plan](https://claude.ai/artifact/8E4Jhe3KQP4mxUZMu6GRgs) | [orders-fills](orders-fills/README.md) |
+| Orders and fills redesign (SplitPane, Salt toolbar, Cancel all, display-only channel bookends) | Built (stack #103) | [canvas](https://claude.ai/artifact/Y4FG4GNu38vsvRji4VvCap) | [plan](https://claude.ai/artifact/8E4Jhe3KQP4mxUZMu6GRgs) | [orders-fills](orders-fills/README.md) |
 
 ## Other trader plans (no canvas)
 
