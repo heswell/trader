@@ -204,15 +204,18 @@ export const TimeSeriesChart = forwardRef<HTMLDivElement, TimeSeriesChartProps>(
           {ric ? `${ric} ${fields.join(" / ")}` : "Time series"}
         </span>
         <span className={`${chartFrameClass}-spacer`} />
-        {SPANS.map(([label, span]) => (
-          <Button
-            key={label}
-            appearance="transparent"
-            onClick={() => controllerRef.current?.showLatest(span)}
-          >
-            {label}
-          </Button>
-        ))}
+        <span className={`${classBase}-spans`}>
+          {SPANS.map(([label, span]) => (
+            <Button
+              key={label}
+              appearance="transparent"
+              className={`${classBase}-span`}
+              onClick={() => controllerRef.current?.showLatest(span)}
+            >
+              {label}
+            </Button>
+          ))}
+        </span>
       </>
     );
 
@@ -230,7 +233,13 @@ export const TimeSeriesChart = forwardRef<HTMLDivElement, TimeSeriesChartProps>(
             className={cx(`${classBase}-stats`, {
               [`${classBase}-error`]: error,
             })}
-            style={{ position: "absolute", left: 8, top: 2, zIndex: 1 }}
+            style={{
+              position: "absolute",
+              left: 8,
+              right: 8,
+              top: 2,
+              zIndex: 1,
+            }}
           >
             {error ?? (stats ? formatTimeSeriesStats(stats) : "loading…")}
           </output>

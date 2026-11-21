@@ -132,9 +132,9 @@ Times use the OMS clock. The fields are part of the order snapshot and survive a
 
 `@heswell/trading-ui` has a component for most of these ([components/charts.md](components/charts.md)), on
 `@vuu-ui/vuu-chart`: `PriceChart` (candles, volume, VWAP, fills, interval selector), `DepthChartView`, `SpreadChart`
-(spread / imbalance), `PnlHistoryChart`, `ExposureTreemap` and `SlippageChart`. The portal has **Chart**,
-**Depth chart**, **P&L**, **Exposure** and **Execution quality** features; the Trader workspace stacks Chart / Depth / Depth chart in its middle
-column.
+(spread / imbalance), `PnlHistoryChart`, `ExposureTreemap`, `SlippageChart` and `TimeSeriesChart`. The portal has
+**Chart**, **History**, **Depth chart**, **P&L**, **Exposure** and **Execution quality** features; the Trader workspace
+stacks Chart / Depth / Depth chart / History in its middle column.
 
 `positions` (and so `positionPrices`) also carry `marketValueUsd` and `totalPnlUsd`: the OMS converts the
 instrument-currency values with the instrument's `usdPerPriceUnit` (GBX lines included) on every mark, so positions in
@@ -151,7 +151,7 @@ different currencies can be summed or compared.
 | `exchangeSim.bookSampleHistory` | 300 | Samples per ric |
 | `exchangeSim.timeSeriesIntervalMs` | 1000 | 0 disables the time-series store, its subscriptions and RPCs |
 | `exchangeSim.timeSeriesHistoryHours` | 43,830 (5 years) | Generated 1 s history per instrument (on demand per bucket beyond about 6 days) |
-| `exchangeSim.timeSeriesMaxRics` | 4 | Instruments holding generated history at once |
+| `exchangeSim.timeSeriesMaxRics` | 4 (8 in the trading server's `application.conf`) | Instruments holding generated history at once |
 | `oms.pnlHistoryIntervalMs` | 10000 | 0 disables P&L history |
 | `oms.pnlHistoryLength` | 180 | Samples per position / account |
 

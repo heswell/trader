@@ -228,6 +228,7 @@ renders, and `notificationTopics` are the trading server's notification topics t
 | 111 | Market › Market depth | `/market/depth` | TradingDepth | trading-view | 200 | marketdata | Market, 1×2 | MarketDepth (own orders for the chosen account) |
 | 117 | Market › Time & sales | `/market/time-and-sales` | TradingTape | trading-view | 210 | marketdata | Market, 1×2 | TradeTape |
 | 118 | Market › Chart | `/market/chart` | TradingChart | trading-view | 220 | | Market, 2×1 | PriceChart |
+| 134 | Market › History | `/market/history` | TradingHistory | trading-view | 225 | | Market, 2×1 | TimeSeriesChart (mid / mid + spread, stats) |
 | 119 | Market › Depth chart | `/market/depth-chart` | TradingDepthChart | trading-view | 230 | | Market, 2×1 | DepthChartView |
 | 116 | Portfolio › Positions | `/portfolio/positions` | TradingPositions | trading-view | 300 | `positions.dayPnl`; positions, risk | Portfolio, 2×1 | PositionsView |
 | 121 | Portfolio › P&L | `/portfolio/pnl` | TradingPnl | trading-view | 310 | | Portfolio, 2×1 | Account P&L history (PnlHistoryChart) |
@@ -366,7 +367,7 @@ naming a palette module and its props:
 | Column (7 : 5 : 5) | Top | Bottom |
 | --- | --- | --- |
 | Left | Instruments (Watchlist, red) | stack: Orders, Fills (red), Positions (green) |
-| Middle | Ticket (red) | stack: Chart, Depth, Depth chart (red) |
+| Middle | Ticket (red) | stack: Chart, Depth, Depth chart, History (red) |
 | Right | Ladder (green, with an instrument picker) | Tape (green, `showInstrumentPicker: false`) |
 
 Red follows the instruments grid, green follows the ladder's picker. Every panel has a link group selector.
@@ -418,8 +419,8 @@ pinned open.
     (one panel) or answer R at the click prompt (several panels);
   - **+** adds the panel beside the focused one (or into empty space), never prompting.
 - **Link groups of added panels.** A palette panel is the module's `portalModuleTemplate()` with no props, so it
-  joins the module's own default group: red for Watchlist, Orders, Executions, Order ticket, Market depth, Chart and
-  Depth chart; green for Price ladder, Time & sales and Positions. An added Order ticket therefore follows the
+  joins the module's own default group: red for Watchlist, Orders, Executions, Order ticket, Market depth, Chart,
+  Depth chart and History; green for Price ladder, Time & sales and Positions. An added Order ticket therefore follows the
   Instruments grid at once, and an added Time & sales follows the Ladder's picker. The user changes it with the
   panel's link group selector, which is saved per item as above. Following the focused panel's group was rejected:
   it makes the result depend on what happened to be focused, and a Ticket dropped next to the Ladder would follow

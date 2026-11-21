@@ -101,7 +101,10 @@ describe("portal host", () => {
     expect(sections).toEqual([
       ["Workspaces", ["Trader", "New workspace"]],
       ["Trading", ["Watchlist", "Orders", "Executions", "Price ladder"]],
-      ["Market", ["Market depth", "Time & sales", "Chart", "Depth chart"]],
+      [
+        "Market",
+        ["Market depth", "Time & sales", "Chart", "History", "Depth chart"],
+      ],
       ["Portfolio", ["Positions", "P&L", "Exposure", "Execution quality"]],
       ["Oversight", ["Desk overview"]],
       ["Simulator", ["Overview", "Bots", "Instrument", "Metrics"]],
@@ -115,7 +118,7 @@ describe("portal host", () => {
     // navIconUrl renders as a CSS mask (url('…')), one per entry
     expect(
       nav.querySelectorAll('.vuuPortalNav-icon [data-icon="custom"]'),
-    ).toHaveLength(17);
+    ).toHaveLength(18);
 
     const brand = nav.querySelector(".vuuPortalNav-brand") as HTMLElement;
     const brandLink = brand.querySelector(".vuuPortalNav-brandLink");
@@ -172,6 +175,7 @@ describe("portal host", () => {
       "Chart",
       "Depth",
       "Depth chart",
+      "History",
     ]);
   });
 
@@ -217,7 +221,13 @@ describe("portal host", () => {
       },
       {
         label: "Market",
-        rows: ["Market depth", "Time & sales", "Chart", "Depth chart"],
+        rows: [
+          "Market depth",
+          "Time & sales",
+          "Chart",
+          "History",
+          "Depth chart",
+        ],
       },
       {
         label: "Portfolio",

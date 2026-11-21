@@ -265,6 +265,23 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     workspace: { paletteGroup: MARKET, defaultSize: { cols: 2, rows: 1 } },
   },
   {
+    key: "history",
+    id: 134,
+    name: "TradingHistory",
+    mfScope: "tradingHistory",
+    expose: "./History",
+    source: "./src/features/History",
+    title: "History",
+    description:
+      "Five years of 1 s mid and spread for the linked instrument: 1h to 5y, zoom down to single seconds",
+    accessRole: view,
+    location: "/Market/History",
+    path: "/market/history",
+    navOrder: 225,
+    navIcon: "history",
+    workspace: { paletteGroup: MARKET, defaultSize: { cols: 2, rows: 1 } },
+  },
+  {
     key: "depth-chart",
     id: 119,
     name: "TradingDepthChart",

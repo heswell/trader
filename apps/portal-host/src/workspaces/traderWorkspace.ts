@@ -32,7 +32,7 @@ const right = { start: 3, span: 1 };
 
 /*
  * Link groups: the market panels (ticket, chart, depth, depth chart,
- * ladder, tape) are in the `active` group: they follow the channel picked
+ * history, ladder, tape) are in the `active` group: they follow the channel picked
  * in the workspace header's ChannelPicker, and its search sets their
  * instrument. The instruments grid is in no link group: its link column
  * (or Enter / 1-4 on a row) puts a row's instrument on a channel. Orders
@@ -106,6 +106,14 @@ const PANELS: readonly Panel[] = [
     row: { start: 2, span: 3 },
   },
   {
+    id: "trader-history",
+    props: FOLLOW_ACTIVE,
+    module: "TradingHistory",
+    title: "History",
+    column: middle,
+    row: { start: 2, span: 3 },
+  },
+  {
     id: "trader-ladder",
     module: "TradingLadder",
     title: "Ladder",
@@ -131,13 +139,18 @@ const STACKS = [
   },
   {
     id: "trader-market",
-    itemIds: ["trader-chart", "trader-depth", "trader-depth-chart"],
+    itemIds: [
+      "trader-chart",
+      "trader-depth",
+      "trader-depth-chart",
+      "trader-history",
+    ],
     selectedItemId: "trader-chart",
   },
 ];
 
 /** Date of the current default layout. */
-const UPDATED_AT = "2026-11-03T00:00:00.000Z";
+const UPDATED_AT = "2026-11-21T00:00:00.000Z";
 
 /**
  * The Trader system workspace: a v2 GridLayoutDocument of `portal-module`
@@ -150,7 +163,7 @@ export const TRADER_WORKSPACE: NamedWorkspaceDefinitionV1 = {
   id: TRADER_WORKSPACE_ID,
   name: "Trader",
   description:
-    "Instruments, blotters, ticket, charts, depth, ladder and tape; the market panels follow the header's channel picker",
+    "Instruments, blotters, ticket, charts, history, depth, ladder and tape; the market panels follow the header's channel picker",
   createdAt: UPDATED_AT,
   updatedAt: UPDATED_AT,
   snapshot: {

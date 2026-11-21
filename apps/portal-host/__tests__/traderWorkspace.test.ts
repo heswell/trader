@@ -52,7 +52,15 @@ describe("Trader system workspace", () => {
       ]),
     ).toEqual([
       [["trader-orders", "trader-fills", "trader-positions"], "trader-orders"],
-      [["trader-chart", "trader-depth", "trader-depth-chart"], "trader-chart"],
+      [
+        [
+          "trader-chart",
+          "trader-depth",
+          "trader-depth-chart",
+          "trader-history",
+        ],
+        "trader-chart",
+      ],
     ]);
     // Market panels follow the workspace's active channel (the header
     // ChannelPicker); the Ladder keeps a picker for when it is pinned.
@@ -66,7 +74,12 @@ describe("Trader system workspace", () => {
       moduleId: "TradingTape",
       props: { defaultLinkGroup: "active", showInstrumentPicker: false },
     });
-    for (const id of ["trader-ticket", "trader-chart", "trader-depth"]) {
+    for (const id of [
+      "trader-ticket",
+      "trader-chart",
+      "trader-depth",
+      "trader-history",
+    ]) {
       const panel = layout.components.find((c) => c.id === id);
       expect(
         (panel?.settings as { props?: Record<string, unknown> }).props
