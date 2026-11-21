@@ -5936,7 +5936,7 @@ type OrderDraftField = | "ric"
 
 #### OrderTicketState
 
-*type* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L1787)
+*type* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L1802)
 
 ```ts
 type OrderTicketState = ReturnType<typeof useOrderTicket>
