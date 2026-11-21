@@ -12,6 +12,7 @@ export type TradingNavIcon =
   | "ticket"
   | "depth"
   | "tape"
+  | "trades"
   | "chart"
   | "depth-chart"
   | "history"
@@ -37,6 +38,8 @@ const NAV_ICON_SHAPES: Readonly<Record<TradingNavIcon, string>> = {
   depth:
     '<path d="M3 20h18"/><path d="M3 17h3v-3h3v-3h3"/><path d="M21 17h-3v-4h-3v-3h-3"/>',
   tape: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  trades:
+    '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M10 4v16"/>',
   chart:
     '<path d="M7 3v3M7 16v5M17 4v4M17 15v4"/><rect x="5" y="6" width="4" height="10" rx="1"/><rect x="15" y="8" width="4" height="7" rx="1"/>',
   "depth-chart":

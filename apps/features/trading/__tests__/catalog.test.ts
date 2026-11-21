@@ -37,6 +37,7 @@ describe("trading catalog information architecture", () => {
       [112, "/Trading/Price ladder", "/trading/price-ladder", 130],
       [111, "/Market/Market depth", "/market/depth", 200],
       [117, "/Market/Time & sales", "/market/time-and-sales", 210],
+      [135, "/Market/Trades", "/market/trades", 215],
       [118, "/Market/Chart", "/market/chart", 220],
       [134, "/Market/History", "/market/history", 225],
       [119, "/Market/Depth chart", "/market/depth-chart", 230],

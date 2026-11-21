@@ -78,6 +78,7 @@ export * from "./components/OrderStatusBadge";
 export * from "./components/PnlValue";
 export * from "./components/PositionsView";
 export * from "./components/TradeTape";
+export * from "./components/TradesView";
 export * from "./components/TradingCellRenderers";
 export * from "./components/MarketDepth";
 export * from "./components/PriceLadder";

@@ -227,6 +227,7 @@ renders, and `notificationTopics` are the trading server's notification topics t
 | 124 | — (palette only) | — | TradingTicket | trading-execute | — | orders | Trading, 1×2 | OrderTicket (`showInstrumentPicker`) |
 | 111 | Market › Market depth | `/market/depth` | TradingDepth | trading-view | 200 | marketdata | Market, 1×2 | MarketDepth (own orders for the chosen account) |
 | 117 | Market › Time & sales | `/market/time-and-sales` | TradingTape | trading-view | 210 | marketdata | Market, 1×2 | TradeTape |
+| 135 | Market › Trades | `/market/trades` | TradingTrades | trading-view | 215 | marketdata | Market, 2×1 | TradesView (every trade, Export CSV) |
 | 118 | Market › Chart | `/market/chart` | TradingChart | trading-view | 220 | | Market, 2×1 | PriceChart |
 | 134 | Market › History | `/market/history` | TradingHistory | trading-view | 225 | | Market, 2×1 | TimeSeriesChart (mid / mid + spread, stats) |
 | 119 | Market › Depth chart | `/market/depth-chart` | TradingDepthChart | trading-view | 230 | | Market, 2×1 | DepthChartView |
@@ -398,8 +399,8 @@ the user can see where a panel will go while dragging. The palette closes after 
 pinned open.
 
 - **Modules tab:** every module the user is sent that has `workspace` metadata, grouped by `paletteGroup` (Trading:
-  Watchlist, Orders, Executions, Price ladder, Order ticket; Market: Market depth, Time & sales, Chart, Depth
-  chart; Portfolio: Positions, P&L, Exposure, Execution quality), with a search box. Desk overview has no
+  Watchlist, Orders, Executions, Price ladder, Order ticket; Market: Market depth, Time & sales, Trades, Chart,
+  Depth chart; Portfolio: Positions, P&L, Exposure, Execution quality), with a search box. Desk overview has no
   `workspace` metadata (it is a page, not a panel), so it is not offered.
 - **Recent tab:** the panels the user added last (portal saved state `workspace/recentPanels`, per browser).
 - **No Tables tab.** Raw tables are a portal-example dev tool: a `vuu-table` panel has no ticket actions, link

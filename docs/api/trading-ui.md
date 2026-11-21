@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 672 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 676 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -51,6 +51,7 @@ Imports: `@heswell/trading-ui`. 672 exports. Types are shown as written in the s
 - **components/SpreadChart**: [SpreadChart](#spreadchart), [SpreadChartProps](#spreadchartprops)
 - **components/StaleIndicator**: [STALE_DATA_CLASS](#stale_data_class), [StaleDataProps](#staledataprops), [StaleDataState](#staledatastate), [StaleIndicator](#staleindicator), [StaleIndicatorProps](#staleindicatorprops), [useStaleData](#usestaledata)
 - **components/TimeSeriesChart**: [BUCKET_COLUMNS](#bucket_columns), [BucketRow](#bucketrow), [bucketsToPoints](#bucketstopoints), [formatTimeSeriesStats](#formattimeseriesstats), [needsWindow](#needswindow), [OVERSCAN](#overscan), [planRange](#planrange), [planWindow](#planwindow), [SeriesPoints](#seriespoints), [TimeSeriesChart](#timeserieschart), [TimeSeriesChartProps](#timeserieschartprops), [TimeSeriesStats](#timeseriesstats), [ViewState](#viewstate), [WindowPlan](#windowplan)
+- **components/TradesView**: [TradesScope](#tradesscope), [TradesView](#tradesview), [TradesViewProps](#tradesviewprops), [tradesViewTableConfig](#tradesviewtableconfig)
 - **components/TradeTape**: [sizePercentile](#sizepercentile), [TradeTape](#tradetape), [TradeTapeProps](#tradetapeprops)
 - **components/TradingCellRenderers**: [registerTradingCellRenderers](#registertradingcellrenderers), [TradingRenderer](#tradingrenderer)
 - **components/WatchlistDialog**: [addRics](#addrics), [facetSummary](#facetsummary), [facetValueLabel](#facetvaluelabel), [INSTRUMENT_TYPE_OPTIONS](#instrument_type_options), [isNarrowed](#isnarrowed), [PICKER_FACETS](#picker_facets), [PICKER_ROW_LIMIT](#picker_row_limit), [PickerFacet](#pickerfacet), [PickerFacetValues](#pickerfacetvalues), [pickerFilter](#pickerfilter), [toggleRic](#toggleric), [WatchlistDialog](#watchlistdialog), [WatchlistDialogProps](#watchlistdialogprops)
@@ -7604,6 +7605,62 @@ One field's points for echarts: [time, value | null].
 
 ```ts
 type SeriesPoints = [number, number | null][]
+```
+
+## components/TradesView
+
+### Components (components/TradesView)
+
+#### TradesView
+
+*component* · [components/TradesView/TradesView.tsx](../../packages/trading-ui/src/components/TradesView/TradesView.tsx#L212)
+
+Every trade on the `trades` table (time and sales across instruments,
+newest first), sortable by any column, or only the linked instrument's.
+Export CSV writes all of them in the current scope and sort, however
+many: the table can hold a million rows (exchangeSim.tradesSeed).
+
+Props: `TradesViewProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `defaultScope?` | `TradesScope` | `"all"` | Initial scope. Default "all". |
+| `showLinkGroupSelector?` | `boolean` | `false` | Show the panel link group selector in the toolbar. Default false. |
+| `csvFileName?` | `string` | `"trades.csv"` | Suggested CSV file name. Default "trades.csv". |
+| `linkGroup?` | `LinkGroupId` |  | Link group (channel) to join: e.g. "red", "green", or "unlinked". The initial group when the user can change it (`showLinkGroupSelector`); a later change of the prop is applied too. Default: the saved group, then `defaultLinkGroup`, then the inherited group. (from `LinkGroupProps`) |
+| `defaultLinkGroup?` | `LinkGroupId` |  | Group used when there is no `linkGroup` prop and nothing saved. (from `LinkGroupProps`) |
+| `onLinkGroupChange?` | `(linkGroup: LinkGroupId) => void` |  | The user picked another group in the selector. (from `LinkGroupProps`) |
+
+Also accepts the standard HTML attributes and `ref`.
+
+### Constants (components/TradesView)
+
+#### tradesViewTableConfig
+
+*const* · [components/TradesView/TradesView.tsx](../../packages/trading-ui/src/components/TradesView/TradesView.tsx#L55)
+
+```ts
+const tradesViewTableConfig: TableConfig
+```
+
+### Interfaces (components/TradesView)
+
+#### TradesViewProps
+
+*interface* · [components/TradesView/TradesView.tsx](../../packages/trading-ui/src/components/TradesView/TradesView.tsx#L89)
+
+Props of [`TradesView`](#tradesview).
+
+### Types (components/TradesView)
+
+#### TradesScope
+
+*type* · [components/TradesView/TradesView.tsx](../../packages/trading-ui/src/components/TradesView/TradesView.tsx#L38)
+
+All instruments, or only the linked instrument.
+
+```ts
+type TradesScope = "all" | "linked"
 ```
 
 ## components/TradeTape

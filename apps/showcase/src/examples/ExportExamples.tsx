@@ -3,6 +3,7 @@ import {
   InstrumentLookupProvider,
   isLocalEngineDataSource,
   registerTradingCellRenderers,
+  TradesView,
   TradingRenderer,
   useTradingDataSource,
 } from "@heswell/trading-ui";
@@ -189,4 +190,12 @@ export const MillionTradesExportExample = () => (
   <InstrumentLookupProvider>
     <MillionTrades />
   </InstrumentLookupProvider>
+);
+
+/**
+ * The trader UI's Trades panel: every trade, sortable, scoped to all
+ * instruments or the linked one, with Export CSV in the toolbar.
+ */
+export const TradesViewExample = () => (
+  <TradesView showLinkGroupSelector style={{ height: "100%" }} />
 );

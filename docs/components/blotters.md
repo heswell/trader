@@ -92,6 +92,20 @@ The blotter renders the panel content inside its own React tree (`SlotContextPan
 shell's panel), so the content sees the blotter's data providers and follows its selection without being
 reopened.
 
+## Trades
+
+`TradesView` (the **Trades** panel, Market › Trades) is every trade on the `trades` table in a vuu Table:
+newest first, sortable by any column, and scoped to **All instruments** or the linked instrument (a toggle
+labelled with its RIC). The footer counts the trades in scope; **Export CSV** writes all of them in the current
+scope and sort.
+
+Props: `defaultScope` (`all` \| `linked`), `linkGroup` / `defaultLinkGroup` / `onLinkGroupChange`,
+`showLinkGroupSelector`, `csvFileName`. Its table config is exported as `tradesViewTableConfig`.
+
+The table is a ring buffer of `exchangeSim.tradesCapacity` rows (50k by default). To demo export at size, start
+the trading server with `exchangeSim.tradesSeed=1000000` (`EXCHANGE_SIM_TRADES_SEED`, or
+`bun run dev:trading-server:1m`): it starts with a million historical trades and ticks on top.
+
 ## Export CSV
 
 `ExportCsvButton` exports every row of a panel's Table (not just the rows on screen) in its current filter and
@@ -124,7 +138,7 @@ sort, formatted the way the grid shows it. It streams, so it works at a million 
 
 ## CSS hooks
 
-Class bases `tradingOrderBlotter`, `tradingFillsBlotter`, `tradingExportCsvButton` (`-status`, with `data-state`), `tradingTradeTape`, `tradingPositionsView`,
+Class bases `tradingOrderBlotter`, `tradingFillsBlotter`, `tradingTradesView` (`data-scope`), `tradingExportCsvButton` (`-status`, with `data-state`), `tradingTradeTape`, `tradingPositionsView`,
 `tradingLinkedFooter` (chips: `-chip`, with `data-active` when pressed). Rows on a channel carry
 `tradingChannelRow tradingChannelRow-<channel id>`, which sets `--tradingChannelRow-color`. Useful
 attributes: `data-link-group` (TradeTape, PositionsView), `data-testid`, `data-connection-state` / `data-error` (OrderBlotter),

@@ -74,6 +74,7 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   TimeSeriesChart: "docs/components/charts.md#timeserieschart",
   StaleIndicator: "docs/components/notifications-and-connection.md",
   TradeTape: "docs/components/blotters.md",
+  TradesView: "docs/components/blotters.md#trades",
   TradingConnectionStateOverride:
     "docs/components/hosting.md#tradingconnectionstateoverride",
   TradingDataProvider: "docs/components/hosting.md#tradingdataprovider",

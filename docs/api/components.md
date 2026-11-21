@@ -77,6 +77,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [SpreadChart](trading-ui.md#spreadchart) | `components/SpreadChart` | `bookSamples`, `depth`, `instrumentPrices`, `trades` |  | ChartFrame, LinkGroupSelector | `chart-workspace`, `depth-chart`, `spread-chart` | [guide](../components/charts.md#spreadchart) |
 | [StaleIndicator](trading-ui.md#staleindicator) | `components/StaleIndicator` |  |  |  | `hosting-connection-override`, `notifications-connection` | [guide](../components/notifications-and-connection.md) |
 | [TimeSeriesChart](trading-ui.md#timeserieschart) | `components/TimeSeriesChart` | `depth`, `instrumentPrices`, `timeSeriesBuckets`, `trades` | `closeTimeSeries`, `setTimeSeriesWindow` | ChartFrame, LinkGroupSelector | `time-series-chart` | [guide](../components/charts.md#timeserieschart) |
+| [TradesView](trading-ui.md#tradesview) | `components/TradesView` | `trades` |  | ExportCsvButton, InstrumentGrid, InstrumentLookup, LinkGroupSelector, StaleIndicator, TradingCellRenderers | `trades-view` | [guide](../components/blotters.md#trades) |
 | [TradeTape](trading-ui.md#tradetape) | `components/TradeTape` | `trades` |  | InstrumentLookup, LinkGroupSelector, StaleIndicator | `channel-picker-workspace`, `trade-tape`, `trader-workspace` | [guide](../components/blotters.md) |
 | [TradingConnectionStateOverride](trading-ui.md#tradingconnectionstateoverride) | `connection` |  |  |  | `hosting-connection-override` | [guide](../components/hosting.md#tradingconnectionstateoverride) |
 | [TradingDataProvider](trading-ui.md#tradingdataprovider) | `data` |  |  |  | *host* | [guide](../components/hosting.md#tradingdataprovider) |
@@ -127,6 +128,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | `components/StaleIndicator` | `tradingStaleIndicator` |  | `data-stale`, `data-stale-reason` |
 | `components/TimeSeriesChart` | `tradingTimeSeriesChart` |  | `data-link-group` |
 | `components/TradeTape` | `tradingTradeTape` | `--trading-buy` | `data-aggressor`, `data-large`, `data-link-group`, `data-testid` |
+| `components/TradesView` | `tradingTradesView` |  | `data-link-group`, `data-scope`, `data-testid` |
 | `components/TradingCellRenderers` |  |  | `data-liquidity`, `data-position`, `data-stop-trigger` |
 | `components/WatchlistDialog` | `tradingWatchlistDialog` |  | `data-index` |
 
@@ -169,5 +171,6 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | SpreadChart | `spread-chart` | [guide](../components/charts.md#spreadchart) |
 | Stack | `stack-instrument-prices` | [guide](../components/README.md) |
 | TimeSeriesChart | `time-series-chart` | [guide](../components/charts.md#timeserieschart) |
+| TradesView | `trades-view` | [guide](../components/blotters.md#trades) |
 | TradeTape | `trade-tape` | [guide](../components/blotters.md) |
 | Workspace | `trader-workspace` | [guide](../components/README.md) |

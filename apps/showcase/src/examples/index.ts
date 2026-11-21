@@ -48,6 +48,7 @@ import {
 import {
   MillionTradesExportExample,
   TradesExportExample,
+  TradesViewExample,
 } from "./ExportExamples";
 import { PriceLadderLive, PriceLadderStress } from "./PriceLadderExamples";
 import {
@@ -279,6 +280,12 @@ export const examples: ShowcaseExample[] = [
     group: "Export",
     title: "Export from a 1M-row remote trades table",
     Component: MillionTradesExportExample,
+  },
+  {
+    id: "trades-view",
+    group: "TradesView",
+    title: "Every trade, sortable, with Export CSV (the Trades panel)",
+    Component: TradesViewExample,
   },
   {
     id: "positions-view",
