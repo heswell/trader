@@ -110,6 +110,7 @@ describe("portal host", () => {
           "Chart",
           "History",
           "Depth chart",
+          "Option chain",
         ],
       ],
       ["Portfolio", ["Positions", "P&L", "Exposure", "Execution quality"]],
@@ -125,7 +126,7 @@ describe("portal host", () => {
     // navIconUrl renders as a CSS mask (url('…')), one per entry
     expect(
       nav.querySelectorAll('.vuuPortalNav-icon [data-icon="custom"]'),
-    ).toHaveLength(19);
+    ).toHaveLength(20);
 
     const brand = nav.querySelector(".vuuPortalNav-brand") as HTMLElement;
     const brandLink = brand.querySelector(".vuuPortalNav-brandLink");
@@ -235,6 +236,7 @@ describe("portal host", () => {
           "Chart",
           "History",
           "Depth chart",
+          "Option chain",
         ],
       },
       {

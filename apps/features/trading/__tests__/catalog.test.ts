@@ -41,6 +41,7 @@ describe("trading catalog information architecture", () => {
       [118, "/Market/Chart", "/market/chart", 220],
       [134, "/Market/History", "/market/history", 225],
       [119, "/Market/Depth chart", "/market/depth-chart", 230],
+      [125, "/Market/Option chain", "/market/option-chain", 240],
       [116, "/Portfolio/Positions", "/portfolio/positions", 300],
       [121, "/Portfolio/P&L", "/portfolio/pnl", 310],
       [122, "/Portfolio/Exposure", "/portfolio/exposure", 320],

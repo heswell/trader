@@ -16,6 +16,7 @@ export type TradingNavIcon =
   | "chart"
   | "depth-chart"
   | "history"
+  | "option-chain"
   | "positions"
   | "pnl"
   | "exposure"
@@ -46,6 +47,8 @@ const NAV_ICON_SHAPES: Readonly<Record<TradingNavIcon, string>> = {
     '<path d="M3 20h18"/><path d="M3 6c3 0 5 4 6 8l1 6"/><path d="M21 6c-3 0-5 4-6 8l-1 6"/>',
   history:
     '<path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3 3.5V8h4.5"/><path d="M12 7.5V12l3 2"/>',
+  "option-chain":
+    '<path d="M12 3v18"/><path d="M4 7h5M4 12h5M4 17h5M15 7h5M15 12h5M15 17h5"/>',
   positions:
     '<path d="M12 3l8 4.5-8 4.5-8-4.5z"/><path d="M4 12l8 4.5 8-4.5"/><path d="M4 16.5L12 21l8-4.5"/>',
   pnl: '<path d="M3 20h18"/><path d="M4 15l5-5 4 3 7-7"/><path d="M15 6h5v5"/>',

@@ -231,6 +231,7 @@ renders, and `notificationTopics` are the trading server's notification topics t
 | 118 | Market › Chart | `/market/chart` | TradingChart | trading-view | 220 | | Market, 2×1 | PriceChart |
 | 134 | Market › History | `/market/history` | TradingHistory | trading-view | 225 | | Market, 2×1 | TimeSeriesChart (mid / mid + spread, stats) |
 | 119 | Market › Depth chart | `/market/depth-chart` | TradingDepthChart | trading-view | 230 | | Market, 2×1 | DepthChartView |
+| 125 | Market › Option chain | `/market/option-chain` | TradingOptionChain | trading-view | 240 | marketdata | Market, 2×1 | OptionChain (Buy / Sell on liquid strikes with trading-execute) |
 | 116 | Portfolio › Positions | `/portfolio/positions` | TradingPositions | trading-view | 300 | `positions.dayPnl`; positions, risk | Portfolio, 2×1 | PositionsView |
 | 121 | Portfolio › P&L | `/portfolio/pnl` | TradingPnl | trading-view | 310 | | Portfolio, 2×1 | Account P&L history (PnlHistoryChart) |
 | 122 | Portfolio › Exposure | `/portfolio/exposure` | TradingExposure | trading-view | 320 | risk | Portfolio, 2×1 | ExposureTreemap |

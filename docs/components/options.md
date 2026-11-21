@@ -2,6 +2,9 @@
 
 API: [OptionChain](../api/trading-ui.md#optionchain), [useOptionChain](../api/trading-ui.md#useoptionchain).
 Showcase: `#option-chain-ticket`, `#option-chain-positions`, `#instrument-grid-options`.
+App: **Market › Option chain** (module 125, [portal integration](../portal-integration.md)), also in the Panels
+palette. The trading server lists options on AAPL.OQ and STECH (`exchangeSim.options` in
+`apps/portal-config/application.trading.conf`); set it to `""` for none.
 
 The exchange simulator lists a chain of European options on each underlying in `exchangeSim.options` (AAPL.OQ and the
 STECH index in local mode): monthly expiries, strikes around the price. Only the strikes nearest the money have an
