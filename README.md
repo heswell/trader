@@ -4,7 +4,7 @@ Reusable trading front-end (instrument grids, market depth / price ladder, order
 
 The trading UI runs in vuu-portal as role-gated module-federation features under a
 `PortalNav` (Workspaces: Trader, plus the user's own; Trading: Watchlist, Orders, Executions, Price ladder;
-Market: Market depth, Time & sales, Chart, Depth chart; Portfolio: Positions, P&L, Exposure, Execution quality; Oversight: Desk overview; Simulator: Overview, Bots, Instrument). The
+Market: Market depth, Time & sales, Chart, History, Depth chart; Portfolio: Positions, P&L, Exposure, Execution quality; Oversight: Desk overview; Simulator: Overview, Bots, Instrument). The
 features connect to a standalone trading Vuu server (exchange simulator + OMS), separate from the portal's own Vuu
 server, through @vuu-ui's per-module `config.json`. One command starts the whole stack. See
 [docs/portal-integration.md](docs/portal-integration.md).

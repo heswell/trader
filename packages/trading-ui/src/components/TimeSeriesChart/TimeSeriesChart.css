@@ -14,3 +14,20 @@
 .tradingTimeSeriesChart-error {
   color: var(--salt-status-error-foreground-informative);
 }
+
+/* Eight range buttons fit a narrow panel: compact buttons, the title gives way. */
+.tradingTimeSeriesChart .tradingChartFrame-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tradingTimeSeriesChart-spans {
+  display: flex;
+  flex: 0 0 auto;
+}
+
+.tradingTimeSeriesChart .saltButton.tradingTimeSeriesChart-span {
+  min-width: 0;
+  padding: 0 var(--salt-spacing-75);
+}

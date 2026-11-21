@@ -90,7 +90,7 @@ trader portal shows it in the workspace header; showcase: `#channel-picker-works
 
 ## Panel headers
 
-In a portal workspace, the Ticket, Chart, Ladder, Tape, Depth and Depth chart show their link group in the panel's
+In a portal workspace, the Ticket, Chart, History, Ladder, Tape, Depth and Depth chart show their link group in the panel's
 title bar, not in their body. Their selector is a `PanelLinkGroupSelector`: hosted in a `@vuu-ui/grid-layout`
 `GridLayoutItem` (`useGridLayoutItem()`), it renders a `LinkGroupMenuButton` into the item header through a
 `GridLayoutHeaderContribution` at `start`, or, in a stack, at `tab-start` (the start of the panel's own tab);

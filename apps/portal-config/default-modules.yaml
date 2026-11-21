@@ -143,6 +143,22 @@ modules:
     accessRole: "trading-access"
     navOrder: 220
     workspace: {"paletteGroup":"Market","defaultSize":{"cols":2,"rows":1}}
+  - id: 134
+    version: 1
+    parentModuleId: 0
+    name: "TradingHistory"
+    title: "History"
+    description: "Five years of 1 s mid and spread for the linked instrument: 1h to 5y, zoom down to single seconds"
+    enabled: true
+    location: "/Market/History"
+    path: "/market/history"
+    mfComponent: "History"
+    mfScope: "tradingHistory"
+    mfUrl: "http://localhost:5110/history"
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3.5%2012a8.5%208.5%200%201%200%202.5-6%22%2F%3E%3Cpath%20d%3D%22M3%203.5V8h4.5%22%2F%3E%3Cpath%20d%3D%22M12%207.5V12l3%202%22%2F%3E%3C%2Fsvg%3E"
+    accessRole: "trading-access"
+    navOrder: 225
+    workspace: {"paletteGroup":"Market","defaultSize":{"cols":2,"rows":1}}
   - id: 119
     version: 1
     parentModuleId: 0
