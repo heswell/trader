@@ -159,9 +159,7 @@ const ticketRic = () => {
     'input[data-order-ticket-field="instrument"]',
   );
   return (
-    field?.value ||
-    form.querySelector('[data-field="ric"]')?.textContent ||
-    ""
+    field?.value || form.querySelector('[data-field="ric"]')?.textContent || ""
   );
 };
 
