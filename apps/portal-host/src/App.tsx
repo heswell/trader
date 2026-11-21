@@ -52,10 +52,12 @@ export const EMPTY_WORKSPACE: WorkspaceEmptyContent = ({ openPalette }) => (
  * of `portal-module` items. The workspace header centres the channel picker
  * (panels in the `active` link group follow its channel); its actions hold
  * "Add panel", which opens the Panels palette (the modules with `workspace`
- * metadata) in the shell's context panel.
+ * metadata) in the shell's context panel. Panels and palette rows dropped on
+ * the workspace's outer edges dock across its full width or height.
  */
 export const WORKSPACES: PortalWorkspacesOptions = {
   componentRenderers: registries.renderers,
+  dockable: true,
   emptyContent: EMPTY_WORKSPACE,
   headerActions: <AddPanelIconButton />,
   headerCenter: <WorkspaceChannelPicker />,

@@ -421,12 +421,12 @@ pinned open.
       whose centre stacked.
     - **Header** (a panel's title bar or a stack's tab bar, tinted red): adds the new panel as a tab, making a
       stack if there wasn't one.
-    - **No workspace-edge docking.** `@vuu-ui/grid-layout` has dock zones (`GridDockZones`: drop on a strip
-      along the workspace's outer edge to dock a panel across its full width or height). They are behind the
-      `dockable` prop, which defaults to false, and core's `PortalWorkspace` renders `GridLayout` without it
-      and has no option to pass it (5.0.0-alpha.12, the latest published), so a palette panel can only split,
-      replace or stack. To make a full-height column, drop on a panel's edge while that column's side has
-      only one panel (e.g. Ladder on the east edge of Watchlist, then Orders on Watchlist's south edge).
+    - **Workspace edge** (a thin strip along the workspace's outer edge): docks the panel across the
+      workspace's full height (east, west) or width (north, south), at a quarter of the workspace. A panel already
+      in the workspace, dragged by its header, docks at its own size. The strip shows where the panel will go,
+      and Esc cancels. The host turns this on with `workspaces.dockable: true` (`WORKSPACES` in `App.tsx`,
+      @vuu-ui 5.0.0-alpha.13), which renders core's `GridLayout` with `GridDockZones`. Before alpha.13 the only
+      way to a full-height column was a panel edge while that column's side had one panel.
 
     Dragging never prompts. To stack, drop on a header; to replace, drop on the centre, click a module (one panel)
     or answer R at the click prompt (several panels);
