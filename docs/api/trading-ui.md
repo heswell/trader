@@ -4,13 +4,13 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 676 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 677 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
 - **data**: [applySelectionChange](#applyselectionchange), [ChartDataSourceOptions](#chartdatasourceoptions), [connectToVuuServer](#connecttovuuserver), [DataSourceRows](#datasourcerows), [DataSourceRowsConfig](#datasourcerowsconfig), [DataSourceRowsUpdate](#datasourcerowsupdate), [DEFAULT_RPC_TIMEOUT_MS](#default_rpc_timeout_ms), [disconnectedRpcError](#disconnectedrpcerror), [disconnectFromVuuServer](#disconnectfromvuuserver), [editOrdersInSession](#editordersinsession), [openOrderEditSession](#openordereditsession), [OrderEdits](#orderedits), [OrderEditSession](#ordereditsession), [rpcTimeoutError](#rpctimeouterror), [RpcTransportFailure](#rpctransportfailure), [sendTradingRpc](#sendtradingrpc), [StaleOrderEditError](#staleorderediterror), [subscribeTradingRows](#subscribetradingrows), [toTradingRow](#totradingrow), [tradingColumnNames](#tradingcolumnnames), [TradingDataMode](#tradingdatamode), [TradingDataModeContextValue](#tradingdatamodecontextvalue), [TradingDataProvider](#tradingdataprovider), [TradingDataProviderProps](#tradingdataproviderprops), [TradingDataSourceOptions](#tradingdatasourceoptions), [TradingRow](#tradingrow), [TradingRows](#tradingrows), [TradingRowsOptions](#tradingrowsoptions), [TradingRpcError](#tradingrpcerror), [TradingRpcOptions](#tradingrpcoptions), [tradingTableSchema](#tradingtableschema), [tradingVuuTable](#tradingvuutable), [useChartDataSource](#usechartdatasource), [useDataSourceRows](#usedatasourcerows), [UseDataSourceRowsOptions](#usedatasourcerowsoptions), [useHasDataProvider](#usehasdataprovider), [useTableSelectedKeys](#usetableselectedkeys), [useTradingDataMode](#usetradingdatamode), [useTradingDataSource](#usetradingdatasource), [useTradingRows](#usetradingrows), [VuuServerConnection](#vuuserverconnection), [whenSubscribed](#whensubscribed), [withRpcTimeout](#withrpctimeout)
 - **instrument-context**: [ACTIVE_CHANNEL_STATE_KEY](#active_channel_state_key), [ACTIVE_GROUP](#active_group), [ACTIVE_LINK_GROUP](#active_link_group), [bindInstrumentLinkStore](#bindinstrumentlinkstore), [BroadcastChannelLike](#broadcastchannellike), [channelOfRic](#channelofric), [clearChannel](#clearchannel), [ComponentLinkGroup](#componentlinkgroup), [connectBroadcastChannel](#connectbroadcastchannel), [ConnectBroadcastChannelOptions](#connectbroadcastchanneloptions), [createInstrumentLinkBus](#createinstrumentlinkbus), [CreateInstrumentLinkBusOptions](#createinstrumentlinkbusoptions), [DEFAULT_LINK_CHANNEL_NAME](#default_link_channel_name), [DEFAULT_LINK_GROUP](#default_link_group), [DEFAULT_LINK_GROUPS](#default_link_groups), [ensureInstrumentLinkPersistence](#ensureinstrumentlinkpersistence), [getInstrumentLinkBus](#getinstrumentlinkbus), [getInstrumentLinkStore](#getinstrumentlinkstore), [INSTRUMENT_LINK_BUS_VERSION](#instrument_link_bus_version), [INSTRUMENT_LINK_STATE_KEY](#instrument_link_state_key), [INSTRUMENT_LINK_STATE_TITLE](#instrument_link_state_title), [INSTRUMENT_LINK_STATE_VERSION](#instrument_link_state_version), [InstrumentContextProvider](#instrumentcontextprovider), [InstrumentContextProviderProps](#instrumentcontextproviderprops), [InstrumentContextValue](#instrumentcontextvalue), [InstrumentLinkBus](#instrumentlinkbus), [InstrumentLinkListener](#instrumentlinklistener), [InstrumentLinkPersistence](#instrumentlinkpersistence), [InstrumentLinkSelection](#instrumentlinkselection), [InstrumentLinkStateStore](#instrumentlinkstatestore), [InstrumentLinkTransport](#instrumentlinktransport), [InstrumentSelection](#instrumentselection), [isUnlinkedGroup](#isunlinkedgroup), [LINK_GROUP_PERSIST_PREFIX](#link_group_persist_prefix), [LINK_GROUP_STATE_KEY](#link_group_state_key), [LINK_SELECTIONS_KEY](#link_selections_key), [linkGroupDefinition](#linkgroupdefinition), [LinkGroupDefinition](#linkgroupdefinition-1), [LinkGroupId](#linkgroupid), [LinkGroupProps](#linkgroupprops), [LinkGroupProvider](#linkgroupprovider), [linkInstrument](#linkinstrument), [MAX_RECENT_RICS](#max_recent_rics), [readSavedSelections](#readsavedselections), [resetInstrumentLinkPersistence](#resetinstrumentlinkpersistence), [sameInstrument](#sameinstrument), [sanitizeSelectedInstrument](#sanitizeselectedinstrument), [SelectedInstrument](#selectedinstrument), [UNLINKED](#unlinked), [UNLINKED_GROUP](#unlinked_group), [useActiveChannelPersistence](#useactivechannelpersistence), [useComponentLinkGroup](#usecomponentlinkgroup), [UseComponentLinkGroupOptions](#usecomponentlinkgroupoptions), [useComponentSetting](#usecomponentsetting), [useInheritedLinkGroup](#useinheritedlinkgroup), [useInstrumentLinkBus](#useinstrumentlinkbus), [useInstrumentLinkPersistence](#useinstrumentlinkpersistence), [useOptionalWorkspaceChannel](#useoptionalworkspacechannel), [useSelectedInstrument](#useselectedinstrument), [UseSelectedInstrumentOptions](#useselectedinstrumentoptions), [useWorkspaceChannel](#useworkspacechannel), [useWorkspaceItemState](#useworkspaceitemstate), [WORKSPACE_ITEM_STATE_TYPE](#workspace_item_state_type), [WORKSPACE_ITEM_STATE_VERSION](#workspace_item_state_version), [WorkspaceChannelContextValue](#workspacechannelcontextvalue), [WorkspaceChannelProvider](#workspacechannelprovider), [WorkspaceChannelProviderProps](#workspacechannelproviderprops), [workspaceItemState](#workspaceitemstate), [WorkspaceItemState](#workspaceitemstate-1)
-- **hooks**: [actionableOrders](#actionableorders), [BookOrderRow](#bookorderrow), [BookQueueOptions](#bookqueueoptions), [BookQueueState](#bookqueuestate), [buildLadderQueues](#buildladderqueues), [DepthLevel](#depthlevel), [FlashDirection](#flashdirection), [FollowedInstrument](#followedinstrument), [InstrumentPrice](#instrumentprice), [LadderQueue](#ladderqueue), [LadderQueues](#ladderqueues), [LevelFlash](#levelflash), [levelKey](#levelkey), [MarketDepthState](#marketdepthstate), [OrderBookChildOrder](#orderbookchildorder), [OrderBookOptions](#orderbookoptions), [OrderBookParentOrder](#orderbookparentorder), [OrderBookState](#orderbookstate), [OWN_ORDER_STATUSES](#own_order_statuses), [OwnOrder](#ownorder), [OwnOrdersAtPrice](#ownordersatprice), [ownOrdersKey](#ownorderskey), [OwnWorkingOrders](#ownworkingorders), [OwnWorkingOrdersOptions](#ownworkingordersoptions), [priceKey](#pricekey), [QueueOrder](#queueorder), [QueuePosition](#queueposition), [restsAtLimit](#restsatlimit), [useBookQueue](#usebookqueue), [useFollowedInstrument](#usefollowedinstrument), [useInstrumentPrice](#useinstrumentprice), [useLevelFlash](#uselevelflash), [useMarketDepth](#usemarketdepth), [useOrderBook](#useorderbook), [useOwnExchangeOrderIds](#useownexchangeorderids), [useOwnWorkingOrders](#useownworkingorders), [useStableCallback](#usestablecallback), [useTradedVolume](#usetradedvolume)
+- **hooks**: [actionableOrders](#actionableorders), [BookOrderRow](#bookorderrow), [BookQueueOptions](#bookqueueoptions), [BookQueueState](#bookqueuestate), [buildLadderQueues](#buildladderqueues), [DepthLevel](#depthlevel), [FlashDirection](#flashdirection), [FollowedInstrument](#followedinstrument), [InstrumentPrice](#instrumentprice), [LadderQueue](#ladderqueue), [LadderQueues](#ladderqueues), [ladderQueuesOf](#ladderqueuesof), [LevelFlash](#levelflash), [levelKey](#levelkey), [MarketDepthState](#marketdepthstate), [OrderBookChildOrder](#orderbookchildorder), [OrderBookOptions](#orderbookoptions), [OrderBookParentOrder](#orderbookparentorder), [OrderBookState](#orderbookstate), [OWN_ORDER_STATUSES](#own_order_statuses), [OwnOrder](#ownorder), [OwnOrdersAtPrice](#ownordersatprice), [ownOrdersKey](#ownorderskey), [OwnWorkingOrders](#ownworkingorders), [OwnWorkingOrdersOptions](#ownworkingordersoptions), [priceKey](#pricekey), [QueueOrder](#queueorder), [QueuePosition](#queueposition), [restsAtLimit](#restsatlimit), [useBookQueue](#usebookqueue), [useFollowedInstrument](#usefollowedinstrument), [useInstrumentPrice](#useinstrumentprice), [useLevelFlash](#uselevelflash), [useMarketDepth](#usemarketdepth), [useOrderBook](#useorderbook), [useOwnExchangeOrderIds](#useownexchangeorderids), [useOwnWorkingOrders](#useownworkingorders), [useStableCallback](#usestablecallback), [useTradedVolume](#usetradedvolume)
 - **connection**: [combineConnectionState](#combineconnectionstate), [CONNECTION_STATE_SEVERITY](#connection_state_severity), [ConnectionAttemptClosedError](#connectionattemptclosederror), [ConnectionAttemptTimeoutError](#connectionattempttimeouterror), [connectionClientWithTimeout](#connectionclientwithtimeout), [ConnectionReconnectInfo](#connectionreconnectinfo), [connectionStateStore](#connectionstatestore), [createResilientConnectionRegistry](#createresilientconnectionregistry), [DEFAULT_LOGIN_TIMEOUT_MS](#default_login_timeout_ms), [DEFAULT_RECONNECT_POLICY](#default_reconnect_policy), [observeConnectionRegistry](#observeconnectionregistry), [observeDefaultConnectionRegistry](#observedefaultconnectionregistry), [reconnectDelay](#reconnectdelay), [ReconnectPolicy](#reconnectpolicy), [reconnectSchedule](#reconnectschedule), [ReconnectState](#reconnectstate), [ReconnectSupervisor](#reconnectsupervisor), [ReconnectSupervisorOptions](#reconnectsupervisoroptions), [ReconnectTimers](#reconnecttimers), [ResilientConnectionRegistryOptions](#resilientconnectionregistryoptions), [resolveReconnectPolicy](#resolvereconnectpolicy), [StaleIndicatorOptions](#staleindicatoroptions), [StaleIndicatorState](#staleindicatorstate), [StaleReason](#stalereason), [SupervisorSnapshot](#supervisorsnapshot), [SupervisorState](#supervisorstate), [toConnectionState](#toconnectionstate), [TradingConnectionState](#tradingconnectionstate), [TradingConnectionStateOverride](#tradingconnectionstateoverride), [TradingConnectionStatus](#tradingconnectionstatus), [useStaleIndicator](#usestaleindicator), [useTradingConnectionStatus](#usetradingconnectionstatus), [useVuuConnectionStatuses](#usevuuconnectionstatuses), [withConnectTimeout](#withconnecttimeout), [worstConnectionState](#worstconnectionstate)
 - **notifications**: [DEFAULT_DEDUPE_MS](#default_dedupe_ms), [DEFAULT_NOTIFICATION_KINDS](#default_notification_kinds), [DEFAULT_RATE_LIMIT](#default_rate_limit), [describeOrderEvent](#describeorderevent), [describeSuppressed](#describesuppressed), [FillEventTracker](#filleventtracker), [FillSound](#fillsound), [NotificationGate](#notificationgate), [NotificationGateOptions](#notificationgateoptions), [orderEventFromFill](#ordereventfromfill), [orderEventFromParentOrder](#ordereventfromparentorder), [orderEventKey](#ordereventkey), [orderEventKindForStatus](#ordereventkindforstatus), [OrderEventPriceFormat](#ordereventpriceformat), [OrderEventToast](#ordereventtoast), [ParentOrderEventTracker](#parentordereventtracker), [RateLimit](#ratelimit), [rpcRejectEvent](#rpcrejectevent), [ToastStatus](#toaststatus), [TRADING_ORDER_EVENT_KINDS](#trading_order_event_kinds), [TradingNotificationKinds](#tradingnotificationkinds), [TradingNotificationsContextValue](#tradingnotificationscontextvalue), [TradingNotificationSettings](#tradingnotificationsettings), [TradingNotificationsProvider](#tradingnotificationsprovider), [TradingNotificationsProviderProps](#tradingnotificationsproviderprops), [TradingNotificationToast](#tradingnotificationtoast), [TradingOrderEvent](#tradingorderevent), [TradingOrderEventKind](#tradingordereventkind), [useTradingNotifications](#usetradingnotifications)
 - **feature-root**: [ensureLinkBusBroadcast](#ensurelinkbusbroadcast), [notificationLease](#notificationlease), [TradingFeatureRoot](#tradingfeatureroot), [TradingFeatureRootProps](#tradingfeaturerootprops), [useInTradingFeatureRoot](#useintradingfeatureroot)
@@ -1435,10 +1435,11 @@ type LinkGroupId = string
 
 #### useBookQueue
 
-*hook* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L140)
+*hook* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L201)
 
 The order-by-order (L3) queue of every price level of one instrument,
-from EXCHANGE `bookOrders`, with the user's orders marked. The table is
+from EXCHANGE `bookOrders` (rebuilt with a `BookBuilder` from
+`@heswell/book-model`), with the user's orders marked. The table is
 empty when the server runs with `exchangeSim.bookOrders=0`.
 
 ```ts
@@ -1574,14 +1575,27 @@ actionableOrders(orders: readonly OwnOrder[] | undefined): OwnOrder[]
 
 #### buildLadderQueues
 
-*function* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L64)
+*function* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L162)
 
 Group `bookOrders` rows into per-level queues, front first. A level whose
 orders are unchanged keeps its object from `previous`, so memoized ladder
 rows only re-render where the queue moved.
 
 ```ts
-buildLadderQueues(rows: readonly BookOrderRow[], ownOrderIds: ReadonlySet<string> | undefined, previous?: LadderQueues): Map<string, LadderQueue>
+buildLadderQueues(rows: readonly BookOrderRow[], ownOrderIds: ReadonlySet<string> | undefined, previous?: LadderQueues): LadderQueues
+```
+
+#### ladderQueuesOf
+
+*function* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L116)
+
+The queues of every level of `book`, with the user's orders marked. A
+queue that is unchanged since `previous` keeps its object, and if every
+queue is unchanged `previous` itself is returned, so memoized ladder rows
+only re-render where the queue moved.
+
+```ts
+ladderQueuesOf(book: BookBuilder, ownOrderIds: ReadonlySet<string> | undefined, previous?: LadderQueues): LadderQueues
 ```
 
 #### levelKey
@@ -1642,7 +1656,7 @@ const OWN_ORDER_STATUSES: readonly OrdStatus[]
 
 #### BookOrderRow
 
-*interface* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L38)
+*interface* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L39)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1655,7 +1669,7 @@ const OWN_ORDER_STATUSES: readonly OrdStatus[]
 
 #### BookQueueOptions
 
-*interface* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L112)
+*interface* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L172)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1665,7 +1679,7 @@ const OWN_ORDER_STATUSES: readonly OrdStatus[]
 
 #### BookQueueState
 
-*interface* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L121)
+*interface* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L181)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1728,7 +1742,7 @@ Extends `SelectedInstrument`.
 
 #### LadderQueue
 
-*interface* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L22)
+*interface* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L23)
 
 The queue of resting orders at one side and price.
 
@@ -1884,7 +1898,7 @@ Own orders on one side at one price.
 
 #### QueueOrder
 
-*interface* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L9)
+*interface* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L10)
 
 One resting order in a price level's queue (EXCHANGE `bookOrders`).
 
@@ -1920,7 +1934,7 @@ type FlashDirection = "up" | "down" | "new"
 
 #### LadderQueues
 
-*type* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L36)
+*type* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L37)
 
 Queues keyed by `ownOrdersKey(side, price)`.
 

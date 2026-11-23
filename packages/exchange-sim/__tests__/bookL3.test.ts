@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { BookBuilder } from "@heswell/book-model";
 import { Side as BookSide } from "@heswell/hft-limit-order-book";
 import {
   BookEventType,
@@ -277,51 +278,26 @@ describe("bookOrders / bookEvents tables", () => {
 });
 
 describe("replaying bookEvents rebuilds the book", () => {
-  type Rebuilt = Map<string, { side: Side; price: number; size: number }>;
+  /** Levels and queue order, best first, as the engine reports them. */
+  const fromModel = (model: BookBuilder, side: Side) =>
+    model.levels(side).map((l) => ({
+      price: l.price,
+      size: l.total,
+      count: l.count,
+      ids: l.orders.map((o) => o.orderId),
+    }));
 
-  const apply = (book: Rebuilt, e: BookEvent) => {
-    const order = book.get(e.orderId);
-    const where = `${e.type} ${e.orderId} seq ${e.seq}`;
-    if (e.type === Add) {
-      expect({ where, exists: order !== undefined }).toEqual({
-        where,
-        exists: false,
-      });
-      expect(e.leaves).toBe(e.size);
-      book.set(e.orderId, { side: e.side, price: e.price, size: e.size });
-      return;
-    }
-    if (!order) throw Error(`${where}: unknown order`);
-    expect({ where, side: e.side, price: e.price }).toEqual({
-      where,
-      side: order.side,
-      price: order.price,
-    });
-    expect({ where, leaves: e.leaves }).toEqual({
-      where,
-      leaves: order.size - e.size,
-    });
-    if (e.type === Delete) expect(e.leaves).toBe(0);
-    if (e.type === Reduce) expect(e.leaves).toBeGreaterThan(0);
-    if (e.leaves === 0) book.delete(e.orderId);
-    else order.size = e.leaves;
+  const fromEngine = (book: InstrumentBook, side: Side) => {
+    const { bids, asks } = book.book.snapshot();
+    return (side === Side.Buy ? bids : asks).map((level) => ({
+      price: level.price,
+      size: level.orders.reduce((sum, o) => sum + o.size, 0),
+      count: level.orders.length,
+      ids: level.orders.map((o) => o.id),
+    }));
   };
 
-  const levels = (book: Rebuilt, side: Side) => {
-    const bySize = new Map<number, { size: number; count: number }>();
-    for (const o of book.values()) {
-      if (o.side !== side) continue;
-      const level = bySize.get(o.price) ?? { size: 0, count: 0 };
-      level.size += o.size;
-      level.count++;
-      bySize.set(o.price, level);
-    }
-    return [...bySize.entries()]
-      .sort(([a], [b]) => (side === Side.Buy ? b - a : a - b))
-      .map(([price, { size, count }]) => ({ price, size, count }));
-  };
-
-  test("matches depthDetailed after every step, with live bots", () => {
+  test("BookBuilder matches the engine after every step, with live bots", () => {
     const clock = new ManualClock();
     const sim = createExchangeSimulator({
       clock: clock.now,
@@ -329,19 +305,19 @@ describe("replaying bookEvents rebuilds the book", () => {
     });
     const tables = createFakeTables();
     sim.attachTables(tables);
-    const rebuilt = new Map<InstrumentBook, Rebuilt>();
-    const lastSeq = new Map<InstrumentBook, number>();
+    const models = new Map<InstrumentBook, BookBuilder>();
     const types = new Map<EventType, number>();
     for (const book of sim.books) {
-      rebuilt.set(book, new Map());
-      lastSeq.set(book, 0);
+      const model = new BookBuilder();
+      model.reset([], book.eventSeq);
+      models.set(book, model);
       const next = book.bookEvents;
       book.bookEvents = {
         onBookEvent(b, e) {
-          expect(e.seq).toBe((lastSeq.get(b) ?? 0) + 1);
-          lastSeq.set(b, e.seq);
           types.set(e.type, (types.get(e.type) ?? 0) + 1);
-          apply(rebuilt.get(b) as Rebuilt, e);
+          const where = `${e.type} ${e.orderId} seq ${e.seq}`;
+          const result = models.get(b)?.apply([e]);
+          expect({ where, result }).toEqual({ where, result: "ok" });
           next?.onBookEvent(b, e);
         },
         onBookReset(b) {
@@ -353,35 +329,59 @@ describe("replaying bookEvents rebuilds the book", () => {
       sim.step(clock.advance(20));
       if (step % 5 === 4) sim.flush();
       for (const book of sim.books) {
+        const model = models.get(book) as BookBuilder;
+        // L2 from the model = the engine's depth
         const [asks, bids] = book.book.depthDetailed();
-        const mine = rebuilt.get(book) as Rebuilt;
-        expect(levels(mine, Side.Buy)).toEqual(bids);
-        expect(levels(mine, Side.Sell)).toEqual(asks);
+        const l2 = (side: Side) =>
+          model.levels(side).map((l) => ({
+            price: l.price,
+            size: l.total,
+            count: l.count,
+          }));
+        expect(l2(Side.Buy)).toEqual(bids);
+        expect(l2(Side.Sell)).toEqual(asks);
+        // L3: the model's priority rule gives the engine's queue order
+        expect(fromModel(model, Side.Buy)).toEqual(fromEngine(book, Side.Buy));
+        expect(fromModel(model, Side.Sell)).toEqual(
+          fromEngine(book, Side.Sell),
+        );
+        expect(model.seq).toBe(book.eventSeq);
       }
     }
     // the flow exercised every event type except REDUCE (bots never amend down)
     for (const type of [Add, Execute, Delete]) {
       expect(types.get(type) ?? 0).toBeGreaterThan(100);
     }
-    // and the coalesced bookOrders table agrees with the book
+    // the coalesced bookOrders table agrees with the book
     sim.flush();
     const resting = sim.books.flatMap((b) => b.restingOrders());
     expect(tables.bookOrders.rowCount).toBe(resting.length);
     for (const o of resting) {
       expect(tables.bookOrders.get(o.id)?.size).toBe(o.size);
     }
-    // sorting by priority gives the book's queue order at every level
+    // and a model loaded from the bookOrders snapshot equals the one built
+    // from events: same levels, sizes and queue order
+    const rows = tables.bookOrders.all();
     for (const book of sim.books) {
-      const { bids, asks } = book.book.snapshot();
-      for (const level of [...bids, ...asks]) {
-        const ids = level.orders.map((o) => o.id);
-        const byPriority = [...ids].sort(
-          (a, b) =>
-            (tables.bookOrders.get(a)?.priority as number) -
-            (tables.bookOrders.get(b)?.priority as number),
-        );
-        expect(byPriority).toEqual(ids);
-      }
+      const snapshot = new BookBuilder();
+      snapshot.reset(
+        rows
+          .filter((r) => r.ric === book.ric)
+          .map((r) => ({
+            orderId: r.orderId as string,
+            side: r.side as Side,
+            price: r.price as number,
+            size: r.size as number,
+            entryTime: r.entryTime as number,
+            priority: r.priority as number,
+          })),
+        book.eventSeq,
+      );
+      const model = models.get(book) as BookBuilder;
+      expect(fromModel(snapshot, Side.Buy)).toEqual(fromModel(model, Side.Buy));
+      expect(fromModel(snapshot, Side.Sell)).toEqual(
+        fromModel(model, Side.Sell),
+      );
     }
   });
 });

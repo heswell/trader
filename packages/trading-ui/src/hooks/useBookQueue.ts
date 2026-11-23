@@ -1,4 +1,5 @@
-import { Side } from "@heswell/trading-schemas";
+import { BookBuilder, type BookOrder, type Level } from "@heswell/book-model";
+import { SIDES, Side } from "@heswell/trading-schemas";
 import { useMemo, useRef } from "react";
 import { useDataSourceRows } from "../data/useDataSourceRows";
 import { useTradingDataSource } from "../data/useTradingDataSource";
@@ -56,6 +57,103 @@ const sameOrders = (a: readonly QueueOrder[], b: readonly QueueOrder[]) => {
   return true;
 };
 
+/** The model level and own-order set each queue was built from. */
+const builtFrom = new WeakMap<
+  LadderQueue,
+  { level: Level; ownOrderIds: ReadonlySet<string> | undefined }
+>();
+
+const toQueue = (
+  level: Level,
+  ownOrderIds: ReadonlySet<string> | undefined,
+  old: LadderQueue | undefined,
+): LadderQueue => {
+  if (old) {
+    const from = builtFrom.get(old);
+    if (from?.level === level && from.ownOrderIds === ownOrderIds) return old;
+  }
+  const orders = level.orders.map<QueueOrder>((o) => ({
+    orderId: o.orderId,
+    size: o.size,
+    entryTime: o.entryTime,
+    priority: o.priority,
+    own: ownOrderIds?.has(o.orderId) ?? false,
+  }));
+  let queue: LadderQueue;
+  if (old && sameOrders(old.orders, orders)) {
+    queue = old;
+  } else {
+    let ownRank: number | undefined;
+    let ownAhead: number | undefined;
+    let ahead = 0;
+    for (let i = 0; i < orders.length; i++) {
+      if (orders[i].own) {
+        ownRank = i + 1;
+        ownAhead = ahead;
+        break;
+      }
+      ahead += orders[i].size;
+    }
+    queue = {
+      side: level.side,
+      price: level.price,
+      orders,
+      total: level.total,
+      ownRank,
+      ownAhead,
+    };
+  }
+  builtFrom.set(queue, { level, ownOrderIds });
+  return queue;
+};
+
+/**
+ * The queues of every level of `book`, with the user's orders marked. A
+ * queue that is unchanged since `previous` keeps its object, and if every
+ * queue is unchanged `previous` itself is returned, so memoized ladder rows
+ * only re-render where the queue moved.
+ */
+export const ladderQueuesOf = (
+  book: BookBuilder,
+  ownOrderIds: ReadonlySet<string> | undefined,
+  previous?: LadderQueues,
+): LadderQueues => {
+  const queues = new Map<string, LadderQueue>();
+  let reused = 0;
+  for (const side of SIDES) {
+    for (const level of book.levels(side)) {
+      const key = ownOrdersKey(side, level.price);
+      const old = previous?.get(key);
+      const queue = toQueue(level, ownOrderIds, old);
+      if (queue === old) reused++;
+      queues.set(key, queue);
+    }
+  }
+  return previous && reused === queues.size && previous.size === reused
+    ? previous
+    : queues;
+};
+
+const isBookSide = (side: unknown): side is Side =>
+  side === Side.Buy || side === Side.Sell;
+
+/** `bookOrders` rows of one side or the other as model orders. */
+const toBookOrders = (rows: readonly BookOrderRow[]): BookOrder[] => {
+  const orders: BookOrder[] = [];
+  for (const row of rows) {
+    if (!isBookSide(row.side)) continue;
+    orders.push({
+      orderId: row.orderId,
+      side: row.side,
+      price: row.price,
+      size: row.size,
+      entryTime: row.entryTime,
+      priority: row.priority,
+    });
+  }
+  return orders;
+};
+
 /**
  * Group `bookOrders` rows into per-level queues, front first. A level whose
  * orders are unchanged keeps its object from `previous`, so memoized ladder
@@ -65,48 +163,10 @@ export const buildLadderQueues = (
   rows: readonly BookOrderRow[],
   ownOrderIds: ReadonlySet<string> | undefined,
   previous?: LadderQueues,
-): Map<string, LadderQueue> => {
-  const byLevel = new Map<
-    string,
-    { side: Side; price: number; orders: QueueOrder[] }
-  >();
-  for (const row of rows) {
-    if (row.side !== Side.Buy && row.side !== Side.Sell) continue;
-    const key = ownOrdersKey(row.side, row.price);
-    let level = byLevel.get(key);
-    if (!level) {
-      level = { side: row.side, price: row.price, orders: [] };
-      byLevel.set(key, level);
-    }
-    level.orders.push({
-      orderId: row.orderId,
-      size: row.size,
-      entryTime: row.entryTime,
-      priority: row.priority,
-      own: ownOrderIds?.has(row.orderId) ?? false,
-    });
-  }
-  const queues = new Map<string, LadderQueue>();
-  for (const [key, { side, price, orders }] of byLevel) {
-    orders.sort((a, b) => a.priority - b.priority);
-    const old = previous?.get(key);
-    if (old && sameOrders(old.orders, orders)) {
-      queues.set(key, old);
-      continue;
-    }
-    let total = 0;
-    let ownRank: number | undefined;
-    let ownAhead: number | undefined;
-    for (let i = 0; i < orders.length; i++) {
-      if (ownRank === undefined && orders[i].own) {
-        ownRank = i + 1;
-        ownAhead = total;
-      }
-      total += orders[i].size;
-    }
-    queues.set(key, { side, price, orders, total, ownRank, ownAhead });
-  }
-  return queues;
+): LadderQueues => {
+  const book = new BookBuilder();
+  book.reset(toBookOrders(rows));
+  return ladderQueuesOf(book, ownOrderIds, previous);
 };
 
 export interface BookQueueOptions {
@@ -134,7 +194,8 @@ const EMPTY: LadderQueues = new Map();
 
 /**
  * The order-by-order (L3) queue of every price level of one instrument,
- * from EXCHANGE `bookOrders`, with the user's orders marked. The table is
+ * from EXCHANGE `bookOrders` (rebuilt with a `BookBuilder` from
+ * `@heswell/book-model`), with the user's orders marked. The table is
  * empty when the server runs with `exchangeSim.bookOrders=0`.
  */
 export const useBookQueue = (
@@ -158,22 +219,29 @@ export const useBookQueue = (
     filter: ric ? `ric = ${filterString(ric)}` : "",
     rowCount: maxOrders,
   });
+  const model = useRef<{ ric: string; book: BookBuilder } | undefined>(
+    undefined,
+  );
   const previous = useRef<LadderQueues>(EMPTY);
   return useMemo(() => {
-    if (!active) {
+    if (!active || !ric) {
+      model.current = undefined;
       previous.current = EMPTY;
       return { queues: EMPTY, orderCount: 0, truncated: false, loaded: false };
     }
+    if (model.current?.ric !== ric) {
+      model.current = { ric, book: new BookBuilder() };
+      previous.current = EMPTY;
+    }
+    const { book } = model.current;
     const mine = rows.filter((row) => row.ric === ric);
-    const queues = buildLadderQueues(
-      mine as unknown as BookOrderRow[],
-      ownOrderIds,
-      previous.current,
-    );
+    // snapshot-only feed: the diff keeps unchanged levels' objects
+    book.reset(toBookOrders(mine as unknown as BookOrderRow[]));
+    const queues = ladderQueuesOf(book, ownOrderIds, previous.current);
     previous.current = queues;
     return {
       queues,
-      orderCount: mine.length,
+      orderCount: book.orderCount,
       truncated: size > maxOrders,
       loaded,
     };

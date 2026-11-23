@@ -89,7 +89,9 @@ rests. An amend that loses priority (new price or larger size) is a `DELETE`, th
 crosses, then an `ADD` if it still rests. A rejected amend sends nothing. A restore replaces the book without events:
 `bookOrders` is rebuilt for that instrument, so a `bookEvents` consumer should re-read `bookOrders` after one.
 
-Replaying `bookEvents` in `seq` order reproduces `depth` exactly; `__tests__/bookL3.test.ts` checks this with live bots.
+Replaying `bookEvents` in `seq` order reproduces `depth` exactly, and the queue order at every level;
+`__tests__/bookL3.test.ts` checks this with live bots, using the shared book model
+([`@heswell/book-model`](../book-model/README.md)).
 `bookEvents` is unfiltered across instruments, so subscribe with a `ric` filter: one instrument sees about 90
 events/s at the default load, against about 18k/s for the whole market.
 
