@@ -47,7 +47,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [NamePrompt](trading-ui.md#nameprompt) | `components/NamePrompt` |  |  |  | `instrument-grid-dialogs` | [guide](../components/instrument-grid.md#dialogs) |
 | [OptionChain](trading-ui.md#optionchain) | `components/OptionChain` | `instrumentPrices`, `instruments`, `optionAnalytics` |  | LinkGroupSelector, OrderTicket | `option-chain-positions`, `option-chain-ticket` | [guide](../components/options.md#optionchain) |
 | [OrderBlotter](trading-ui.md#orderblotter) | `components/OrderBlotter` | `childOrders`, `parentOrders` | *edit session*, `amendOrder`, `cancelAll`, `cancelOrder` | ChannelRowMarkers, ExportCsvButton, InstrumentLookup, LinkedInstrumentsFooter, OrderBookView, StaleIndicator, TradingCellRenderers | `order-blotter`, `order-book-view`, `trade-tape`, `trader-workspace` | [guide](../components/blotters.md) |
-| [OrderBookView](trading-ui.md#orderbookview) | `components/OrderBookView` | `bookOrders`, `childOrders`, `depth`, `instrumentPrices`, `parentOrders`, `trades` |  | PriceLadder | `order-book-view` | [guide](../components/blotters.md#order-book-panel) |
+| [OrderBookView](trading-ui.md#orderbookview) | `components/OrderBookView` | `bookEvents`, `bookOrders`, `bookStatus`, `childOrders`, `depth`, `instrumentPrices`, `parentOrders`, `trades` |  | PriceLadder | `order-book-view` | [guide](../components/blotters.md#order-book-panel) |
 | [OrderStatusBadge](trading-ui.md#orderstatusbadge) | `components/OrderStatusBadge` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
 | [OrderTicket](trading-ui.md#orderticket) | `components/OrderTicket` | `accounts`, `orderEntryPrices`, `parentOrders`, `positions` | `closeOrderEntry`, `openOrderEntry`, `sendOrder`, `updateOrderEntry` | FillProgressBar, InstrumentPicker, LinkGroupSelector, OptionChain, StaleIndicator | `hosting-connection-override`, `order-ticket-compact` | [guide](../components/order-ticket.md) |
 | [OrderTicketDialog](trading-ui.md#orderticketdialog) | `components/OrderTicket` | `accounts`, `orderEntryPrices`, `parentOrders`, `positions` | `closeOrderEntry`, `openOrderEntry`, `sendOrder`, `updateOrderEntry` | FillProgressBar, InstrumentPicker, LinkGroupSelector, OptionChain, StaleIndicator | `order-ticket-dialog` | [guide](../components/order-ticket.md) |
@@ -59,8 +59,8 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [PnlValue](trading-ui.md#pnlvalue) | `components/PnlValue` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
 | [PositionsView](trading-ui.md#positionsview) | `components/PositionsView` | `positionPrices` |  | ExportCsvButton, InstrumentLookup, LinkGroupSelector, PnlValue, StaleIndicator, TradingCellRenderers | `option-chain-positions`, `positions-view`, `trader-workspace` | [guide](../components/blotters.md) |
 | [PriceChart](trading-ui.md#pricechart) | `components/PriceChart` | `bars`, `depth`, `fills`, `instrumentPrices`, `trades` |  | ChartFrame, LinkGroupSelector | `channel-picker-workspace`, `chart-workspace`, `price-chart`, `trader-workspace` | [guide](../components/charts.md#pricechart) |
-| [PriceLadder](trading-ui.md#priceladder) | `components/PriceLadder` | `bookOrders`, `childOrders`, `depth`, `instrumentPrices`, `parentOrders`, `trades` | `amendOrder`, `cancelAll`, `cancelOrder`, `createOrder` | LinkGroupSelector, OrderTicket, StaleIndicator | `price-ladder-live`, `trader-workspace` | [guide](../components/market-depth-and-ladder.md) |
-| [PriceLadderView](trading-ui.md#priceladderview) | `components/PriceLadder` | `bookOrders`, `depth`, `instrumentPrices`, `parentOrders`, `trades` |  |  | `price-ladder-stress` | [guide](../components/market-depth-and-ladder.md) |
+| [PriceLadder](trading-ui.md#priceladder) | `components/PriceLadder` | `bookEvents`, `bookOrders`, `bookStatus`, `childOrders`, `depth`, `instrumentPrices`, `parentOrders`, `trades` | `amendOrder`, `cancelAll`, `cancelOrder`, `createOrder` | LinkGroupSelector, OrderTicket, StaleIndicator | `price-ladder-live`, `trader-workspace` | [guide](../components/market-depth-and-ladder.md) |
+| [PriceLadderView](trading-ui.md#priceladderview) | `components/PriceLadder` | `bookEvents`, `bookOrders`, `bookStatus`, `depth`, `instrumentPrices`, `parentOrders`, `trades` |  |  | `price-ladder-stress` | [guide](../components/market-depth-and-ladder.md) |
 | [PriceMoveCell](trading-ui.md#pricemovecell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
 | [PutCallCell](trading-ui.md#putcallcell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
 | [QuantityCell](trading-ui.md#quantitycell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
@@ -136,7 +136,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 
 | Folder | Tables | RPCs |
 | --- | --- | --- |
-| `hooks` | `bookOrders`, `childOrders`, `depth`, `instrumentPrices`, `parentOrders`, `trades` |  |
+| `hooks` | `bookEvents`, `bookOrders`, `bookStatus`, `childOrders`, `depth`, `instrumentPrices`, `parentOrders`, `trades` |  |
 | `notifications` | `fills`, `parentOrders` |  |
 
 ## Showcase groups

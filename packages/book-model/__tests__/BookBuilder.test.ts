@@ -287,3 +287,70 @@ describe("BookBuilder RESET", () => {
     expect(book.apply([bad])).toBe("gap");
   });
 });
+
+describe("BookBuilder queue activity", () => {
+  test("counts fills and cancels ahead of a tracked order, not behind it", () => {
+    const book = loaded();
+    book.track("b3"); // third at 100: b1 (50), b2 (20) ahead
+    const changes: BookChange[] = [];
+    book.subscribe((c) => changes.push(c));
+    book.apply([
+      event(11, Execute, "b1", Side.Buy, 100, 20, 30), // filled ahead
+      event(12, Reduce, "b2", Side.Buy, 100, 5, 15), // cancelled ahead
+      event(13, Add, "b5", Side.Buy, 100, 40, 40), // joins behind
+      event(14, Delete, "b5", Side.Buy, 100, 40, 0), // behind: not counted
+      event(15, Delete, "b4", Side.Buy, 99.99, 5, 0), // other level
+      event(16, Execute, "b1", Side.Buy, 100, 30, 0),
+      event(17, Execute, "b2", Side.Buy, 100, 15, 0),
+      event(18, Execute, "b3", Side.Buy, 100, 4, 6), // the order itself
+    ]);
+    expect(book.activity("b3")).toEqual({
+      orderId: "b3",
+      since: 10,
+      filledAhead: 65,
+      cancelledAhead: 5,
+      filled: 4,
+      partial: false,
+    });
+    expect(changes[0].orderIds).toContain("b3");
+  });
+
+  test("an activity object is replaced only when it changes", () => {
+    const book = loaded();
+    book.track("b2");
+    const before = book.activity("b2");
+    book.apply([event(11, Delete, "s1", Side.Sell, 100.05, 30, 0)]);
+    expect(book.activity("b2")).toBe(before);
+    book.apply([event(12, Execute, "b1", Side.Buy, 100, 10, 40)]);
+    expect(book.activity("b2")).not.toBe(before);
+  });
+
+  test("a resync marks the counts partial; untrack forgets", () => {
+    const book = loaded();
+    book.track("b3");
+    book.reset(snapshot, 10); // same seq: nothing missed
+    expect(book.activity("b3")?.partial).toBe(false);
+    book.reset(snapshot, 25); // events 11..25 were not seen
+    expect(book.activity("b3")?.partial).toBe(true);
+    expect([...book.tracked()]).toEqual(["b3"]);
+    book.untrack("b3");
+    expect(book.activity("b3")).toBeUndefined();
+  });
+
+  test("an order can be tracked before it arrives", () => {
+    const book = loaded();
+    book.track("b5");
+    book.apply([
+      event(11, Add, "b5", Side.Buy, 100, 10, 10),
+      event(12, Execute, "b1", Side.Buy, 100, 50, 0),
+    ]);
+    expect(book.activity("b5")).toMatchObject({ since: 10, filledAhead: 50 });
+  });
+});
+
+test("orders tracked before the first load count from it, not partial", () => {
+  const book = new BookBuilder();
+  book.track("b3");
+  book.reset(snapshot, 10);
+  expect(book.activity("b3")).toMatchObject({ since: 10, partial: false });
+});

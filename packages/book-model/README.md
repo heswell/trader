@@ -9,6 +9,8 @@ exchange-sim replay test both use it.
 | --- | --- |
 | `BookBuilder` | Resting orders, the queue at each price and each order's place in it |
 | `queuePosition(level, orderId)` | 1-based rank and size ahead of an order in a level |
+| `BookFeed` | Keeps a `BookBuilder` in step with `bookOrders`, `bookStatus` and windows of `bookEvents`, as Vuu viewports deliver them |
+| `QueueActivity` | Fills and cancels ahead of a tracked order (`book.track(orderId)`, `book.activity(orderId)`) |
 | `BookOrder`, `BookEvent`, `Level`, `OrderPosition`, `BookChange`, `BookStatus` | Plain data types |
 
 ```ts
@@ -35,5 +37,31 @@ const unsubscribe = book.subscribe(({ levels, removed, orderIds }) => {});
 - **Snapshot-only feed.** A client that only subscribes to `bookOrders` calls `reset` with every update. The diff
   keeps unchanged levels, so it costs what the changes cost, plus one pass over the rows.
 
-The client event feed (buffering `bookEvents` from a Vuu viewport and resyncing on a gap or reset) is planned, not
-built: see the book model plan.
+## Following the tape: `BookFeed`
+
+```ts
+const feed = new BookFeed();
+feed.events(bookEventRows);        // any window of the tape: any order, overlaps are fine
+feed.snapshot(bookOrderRows, statusRow); // rows with their seq, and the instrument's bookStatus row
+feed.source;                       // "waiting" | "events" | "snapshot" (no events seen: the tape is off)
+feed.book.track(exchangeOrderId);  // then feed.book.activity(exchangeOrderId)
+```
+
+- Events are buffered by seq and applied once a snapshot is loaded.
+- A snapshot is used only when it is consistent with its marker: as many rows as `orders`, none newer than `seq`.
+  The rows and the marker come from separate viewports, so either can be ahead of the other.
+- On a gap or a `RESET`, the book waits for the next consistent snapshot and replays the buffer after its marker.
+- While live, a snapshot at the book's seq is compared with it; two mismatches in a row reload it. A snapshot ahead
+  of the book gets one snapshot's grace for its events to arrive, then is loaded (at once when the tape is off).
+- `stats` counts events applied, resyncs, gaps, resets and mismatches.
+
+`useBookQueue(ric, { events: true })` in `@heswell/trading-ui` drives a `BookFeed` from three viewports: `bookOrders`,
+`bookStatus` and the newest `eventWindow` (100) rows of `bookEvents`. `exchange-sim/__tests__/bookL3.test.ts`
+drives one with skewed rows and markers, small and dropped windows and a restore, and checks the result against the
+engine.
+
+## Queue activity
+
+`book.track(orderId)` counts, from the events applied after it, the size filled ahead of the order, the size
+cancelled, reduced or re-queued ahead of it, and its own fills. Nothing joins ahead of a resting order (unless it is itself re-queued), so these
+never exceed what was ahead of it. A resync from a snapshot sets `partial`: the counts are then lower bounds.

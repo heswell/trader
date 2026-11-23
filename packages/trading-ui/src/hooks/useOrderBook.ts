@@ -1,9 +1,14 @@
+import type { QueueActivity } from "@heswell/book-model";
 import type { OrdStatus, Side } from "@heswell/trading-schemas";
 import { useMemo } from "react";
 import { useDataSourceRows } from "../data/useDataSourceRows";
 import { useTradingDataSource } from "../data/useTradingDataSource";
 import { filterString } from "../utils/filters";
-import { type LadderQueue, useBookQueue } from "./useBookQueue";
+import {
+  type BookQueueSource,
+  type LadderQueue,
+  useBookQueue,
+} from "./useBookQueue";
 import {
   type InstrumentPrice,
   type MarketDepthState,
@@ -56,6 +61,11 @@ export interface OrderBookChildOrder {
   working: boolean;
   /** Its place in the L3 book, once bookOrders has it. */
   position?: QueuePosition;
+  /**
+   * Fills and cancels ahead of it in the queue since the view started
+   * following it (needs the server's `bookEvents` tape).
+   */
+  activity?: QueueActivity;
 }
 
 export interface OrderBookState {
@@ -78,12 +88,20 @@ export interface OrderBookState {
   l3Available: boolean;
   /** The instrument has more resting orders than were loaded. */
   l3Truncated: boolean;
+  /** `events` once the `bookEvents` tape keeps the L3 book up to date. */
+  l3Source: BookQueueSource;
   loaded: boolean;
 }
 
 export interface OrderBookOptions {
   /** L2 levels per side. Default 10. */
   levels?: number;
+  /**
+   * Follow the `bookEvents` tape for queue activity (fills and cancels
+   * ahead of each child order). Default true; it falls back to snapshots
+   * when the server's tape is off.
+   */
+  events?: boolean;
 }
 
 const PARENT_COLUMNS = [
@@ -149,7 +167,7 @@ const positionsOf = (
  */
 export const useOrderBook = (
   orderId: string | undefined,
-  { levels = 10 }: OrderBookOptions = {},
+  { levels = 10, events = true }: OrderBookOptions = {},
 ): OrderBookState => {
   const parentSource = useTradingDataSource("parentOrders", {
     columns: PARENT_COLUMNS,
@@ -229,7 +247,7 @@ export const useOrderBook = (
     () => (idKey ? new Set(idKey.split(",")) : NO_IDS),
     [idKey],
   );
-  const book = useBookQueue(ric, { ownOrderIds });
+  const book = useBookQueue(ric, { ownOrderIds, events });
 
   const children = useMemo(() => {
     const positions = positionsOf(book.queues, ownOrderIds);
@@ -254,9 +272,12 @@ export const useOrderBook = (
           position: exchangeOrderId
             ? positions.get(exchangeOrderId)
             : undefined,
+          activity: exchangeOrderId
+            ? book.activity.get(exchangeOrderId)
+            : undefined,
         };
       });
-  }, [childRows, orderId, book.queues, ownOrderIds]);
+  }, [childRows, orderId, book.queues, book.activity, ownOrderIds]);
 
   return {
     order,
@@ -267,6 +288,7 @@ export const useOrderBook = (
     ownOrderIds,
     l3Available: book.loaded && book.orderCount > 0,
     l3Truncated: book.truncated,
+    l3Source: book.source,
     loaded: parentLoaded,
   };
 };

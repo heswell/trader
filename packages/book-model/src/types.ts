@@ -77,6 +77,27 @@ export interface BookChange {
 }
 
 /**
+ * What happened in the queue ahead of one tracked order, from the events
+ * applied since tracking began. Replaced (never mutated) on each change.
+ */
+export interface QueueActivity {
+  readonly orderId: string;
+  /** Book seq when tracking began. */
+  readonly since: number;
+  /** Size traded by orders ahead of it. */
+  readonly filledAhead: number;
+  /** Size cancelled, reduced or re-queued (lost priority) by orders ahead of it. */
+  readonly cancelledAhead: number;
+  /** Size of the order itself that traded. */
+  readonly filled: number;
+  /**
+   * Events were missed while tracking (a resync from a snapshot): the counts
+   * are lower bounds.
+   */
+  readonly partial: boolean;
+}
+
+/**
  * - `empty`: never loaded.
  * - `live`: loaded, and every event applied so far was in sequence.
  * - `stale`: an event was missing or did not match the book, or a RESET

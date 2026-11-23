@@ -95,7 +95,7 @@ To follow one book from events, buffer its `bookEvents`, load its `bookOrders` r
 snapshot's seq and apply the buffered events after it. On a `RESET` (or a gap in `seq`), reload `bookOrders` and
 `bookStatus` and carry on from the new marker. `bookStatus` is written in the same flush as `bookOrders`, but Vuu
 delivers each table's viewport separately, so a client must not take a marker newer than the rows it holds.
-[`@heswell/book-model`](../book-model/README.md)'s `BookBuilder` does the replay and detects gaps and resets.
+[`@heswell/book-model`](../book-model/README.md)'s `BookFeed` does all of this, as Vuu viewports deliver the three tables.
 
 Replaying `bookEvents` in `seq` order reproduces `depth` exactly, and the queue order at every level;
 `__tests__/bookL3.test.ts` checks this with live bots, using the shared book model

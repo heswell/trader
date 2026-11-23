@@ -4,6 +4,14 @@ export {
   type BookListener,
   queuePosition,
 } from "./BookBuilder";
+export {
+  BookFeed,
+  type BookFeedOptions,
+  type BookFeedSource,
+  type BookFeedStats,
+  type SnapshotMarker,
+  type SnapshotOrder,
+} from "./BookFeed";
 export type {
   BookChange,
   BookEvent,
@@ -12,4 +20,5 @@ export type {
   Level,
   LevelKey,
   OrderPosition,
+  QueueActivity,
 } from "./types";

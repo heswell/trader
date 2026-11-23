@@ -1,3 +1,4 @@
+import type { QueueActivity } from "@heswell/book-model";
 import { Side } from "@heswell/trading-schemas";
 import { useComponentCssInjection } from "@salt-ds/styles";
 import { useWindow } from "@salt-ds/window";
@@ -366,9 +367,31 @@ const ChildChip = ({
         #{position.rank} of {position.queue.orders.length} ·{" "}
         {formatQuantity(position.ahead)} ahead
       </span>
+      {child.activity ? <QueueActivityText activity={child.activity} /> : null}
     </button>
   );
 };
+
+/** Fills and cancels ahead of an order since it was first followed. */
+export const queueActivityText = ({
+  filledAhead,
+  cancelledAhead,
+  partial,
+}: QueueActivity) =>
+  `${partial ? "≥ " : ""}${formatQuantity(filledAhead)} filled · ${formatQuantity(cancelledAhead)} cancelled ahead`;
+
+const QueueActivityText = ({ activity }: { activity: QueueActivity }) => (
+  <span
+    className={`${classBase}-secondary ${classBase}-activity`}
+    title={
+      activity.partial
+        ? "Since this view started following the order. Some book events were missed, so these are lower bounds."
+        : "Since this view started following the order, from the exchange's book events."
+    }
+  >
+    {queueActivityText(activity)}
+  </span>
+);
 
 const DepthLadder = ({
   depth,

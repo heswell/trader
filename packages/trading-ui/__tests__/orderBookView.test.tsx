@@ -298,3 +298,67 @@ describe("OrderBookView with a long-running algo order", () => {
     }
   }, 60_000);
 });
+
+describe("OrderBookView queue activity (local data, bookEvents on)", () => {
+  setCurrentUser({ name: "admin", authorizations: [] });
+  const testData = createTradingTestData({
+    seed: 21,
+    exchange: { activeInstruments: 5, bookEvents: 1 },
+    oms: { flowRate: 0 },
+    manualClock: true,
+  });
+  testData.advance(2_000);
+  const localServer = createTradingLocalServer(testData, "order-book-events");
+  const book = testData.sim.books[0];
+  afterAll(() => testData.dispose());
+
+  const Wrapper = ({ children }: { children: ReactNode }) => (
+    <TradingDataProvider mode="local" localServer={localServer}>
+      {children}
+    </TradingDataProvider>
+  );
+  const tick = () => act(() => testData.advance(100));
+
+  test("a working child shows fills and cancels ahead of it", async () => {
+    const result = testData.omsService.engine.createOrder(
+      {
+        account: "ACC-US-01",
+        ric: book.ric,
+        side: Side.Buy,
+        ordType: OrdType.Limit,
+        quantity: 300,
+        price: book.topOfBook().bid,
+        timeInForce: TimeInForce.Day,
+      },
+      { user: "admin" },
+    );
+    if (!result.ok) throw Error(`order rejected: ${result.reason}`);
+    // nothing joins ahead of a resting order: what leaves the queue ahead
+    // of it is bounded by what was there when it arrived
+    const levelSize = book.book
+      .snapshot()
+      .bids[0].orders.reduce((sum, o) => sum + o.size, 0);
+    const view = render(<OrderBookView orderId={result.value.orderId} />, {
+      wrapper: Wrapper,
+    });
+    const activity = () =>
+      view.container.querySelector(".tradingOrderBookView-activity")
+        ?.textContent ?? "";
+    await waitFor(() => {
+      tick();
+      expect(activity()).toMatch(/^[\d,]+ filled · [\d,]+ cancelled ahead$/);
+    });
+    // the bots trade and requote at the best bid: something happens ahead
+    await waitFor(
+      () => {
+        tick();
+        expect(activity()).not.toBe("0 filled · 0 cancelled ahead");
+      },
+      { timeout: 5_000 },
+    );
+    const [filled, cancelled] = (activity().match(/[\d,]+/g) ?? []).map((n) =>
+      Number(n.replaceAll(",", "")),
+    );
+    expect(filled + cancelled).toBeLessThanOrEqual(levelSize);
+  });
+});

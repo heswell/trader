@@ -7,6 +7,7 @@ import type {
   Level,
   LevelKey,
   OrderPosition,
+  QueueActivity,
 } from "./types";
 
 /** Mutable state behind one published `Level`. */
@@ -93,6 +94,8 @@ export class BookBuilder {
   #status: BookStatus = "empty";
   /** Highest priority in the book; the next ADD goes after it. */
   #lastPriority = 0;
+  /** Tracked orders (see `track`). */
+  readonly #activity = new Map<string, QueueActivity>();
 
   /** Seq of the last event applied, or of the snapshot. */
   get seq() {
@@ -114,6 +117,14 @@ export class BookBuilder {
    * their objects. Clears `stale`.
    */
   reset(orders: Iterable<BookOrder>, seq = 0) {
+    if (this.#status === "empty") {
+      // the first load: orders tracked before it start counting from here
+      for (const a of this.#activity.values())
+        this.#setActivity({ ...a, since: seq });
+    } else if (this.#status !== "live" || seq !== this.#seq) {
+      // events between the book's seq and the snapshot's were not seen
+      this.#markPartial();
+    }
     const next = new Map<string, BookOrder>();
     let lastPriority = 0;
     for (const o of orders) {
@@ -207,6 +218,37 @@ export class BookBuilder {
     return place && { order, level, ...place };
   }
 
+  /**
+   * Count what happens in the queue ahead of `orderId` (which need not be
+   * in the book yet) from now on: see `activity`. Changes to it are reported
+   * in `BookChange.orderIds`.
+   */
+  track(orderId: string) {
+    if (this.#activity.has(orderId)) return;
+    this.#activity.set(orderId, {
+      orderId,
+      since: this.#seq,
+      filledAhead: 0,
+      cancelledAhead: 0,
+      filled: 0,
+      partial: false,
+    });
+  }
+
+  untrack(orderId: string) {
+    this.#activity.delete(orderId);
+  }
+
+  /** Ids of the tracked orders. */
+  tracked(): IterableIterator<string> {
+    return this.#activity.keys();
+  }
+
+  /** What happened ahead of a tracked order, or undefined if not tracked. */
+  activity(orderId: string): QueueActivity | undefined {
+    return this.#activity.get(orderId);
+  }
+
   /** Hear every change; returns an unsubscribe function. */
   subscribe(listener: BookListener): () => void {
     this.#listeners.add(listener);
@@ -250,9 +292,46 @@ export class BookBuilder {
     ) {
       return false;
     }
+    if (this.#activity.size > 0) this.#countActivity(order, e);
     if (e.leaves === 0) this.#remove(order);
     else this.#replace(order, { ...order, size: e.leaves });
     return true;
+  }
+
+  /** `e` (an EXECUTE, REDUCE or DELETE of `order`) as seen by tracked orders. */
+  #countActivity(order: BookOrder, e: BookEvent) {
+    const executed = e.type === BookEventType.Execute;
+    for (const [id, a] of this.#activity) {
+      if (id === order.orderId) {
+        if (executed) this.#setActivity({ ...a, filled: a.filled + e.size });
+        continue;
+      }
+      const tracked = this.#orders.get(id);
+      if (
+        tracked === undefined ||
+        tracked.side !== order.side ||
+        tracked.price !== order.price ||
+        tracked.priority < order.priority
+      ) {
+        continue;
+      }
+      this.#setActivity(
+        executed
+          ? { ...a, filledAhead: a.filledAhead + e.size }
+          : { ...a, cancelledAhead: a.cancelledAhead + e.size },
+      );
+    }
+  }
+
+  #setActivity(activity: QueueActivity) {
+    this.#activity.set(activity.orderId, activity);
+    this.#changed.add(activity.orderId);
+  }
+
+  #markPartial() {
+    for (const a of this.#activity.values()) {
+      if (!a.partial) this.#setActivity({ ...a, partial: true });
+    }
   }
 
   #levelState(side: Side, price: number) {
@@ -300,7 +379,7 @@ export class BookBuilder {
   }
 
   #commit() {
-    if (this.#dirty.size === 0) return;
+    if (this.#dirty.size === 0 && this.#changed.size === 0) return;
     const levels: Level[] = [];
     const removed: LevelKey[] = [];
     for (const state of this.#dirty) {
@@ -329,7 +408,9 @@ export class BookBuilder {
     const orderIds = [...this.#changed];
     this.#dirty.clear();
     this.#changed.clear();
-    if (levels.length === 0 && removed.length === 0) return;
+    if (levels.length === 0 && removed.length === 0 && orderIds.length === 0) {
+      return;
+    }
     const change: BookChange = { levels, removed, orderIds };
     for (const listener of this.#listeners) listener(change);
   }

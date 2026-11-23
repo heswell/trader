@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { BookBuilder } from "@heswell/book-model";
+import { BookBuilder, BookFeed, type SnapshotOrder } from "@heswell/book-model";
 import { Side as BookSide } from "@heswell/hft-limit-order-book";
 import {
   BookEventType,
@@ -432,6 +432,93 @@ describe("replaying bookEvents rebuilds the book", () => {
       expect(fromModel(model, Side.Buy)).toEqual(fromEngine(book, Side.Buy));
       expect(fromModel(model, Side.Sell)).toEqual(fromEngine(book, Side.Sell));
     }
+  });
+
+  test("BookFeed stays in step through skewed viewports, small windows and a restore", () => {
+    const clock = new ManualClock();
+    const sim = createExchangeSimulator({
+      clock: clock.now,
+      config: {
+        activeInstruments: 3,
+        mmRate: 40,
+        takerRate: 30,
+        bookEvents: 1,
+        bookEventsCapacity: 1_000_000,
+      },
+    });
+    const tables = createFakeTables();
+    sim.attachTables(tables);
+    let seed = 42;
+    const random = () => {
+      seed = (seed * 1_103_515_245 + 12_345) % 2_147_483_648;
+      return seed / 2_147_483_648;
+    };
+    type View = {
+      rows: SnapshotOrder[];
+      marker: { seq: number; orders: number } | undefined;
+    };
+    const view = (ric: string): View => ({
+      rows: snapshotOf(tables, ric).map((o) => ({
+        ...o,
+        seq: tables.bookOrders.get(o.orderId)?.seq as number,
+      })),
+      marker: tables.bookStatus.get(ric) as View["marker"],
+    });
+    /** The newest `size` tape rows of `ric`, newest first, as a viewport shows them. */
+    const window = (ric: string, size: number) =>
+      tables.bookEvents
+        .all()
+        .filter((r) => r.ric === ric)
+        .sort((a, b) => (b.seq as number) - (a.seq as number))
+        .slice(0, size)
+        .map((r) => r as unknown as BookEvent);
+    const feeds = new Map<InstrumentBook, BookFeed>();
+    const previous = new Map<InstrumentBook, View>();
+    for (const book of sim.books) feeds.set(book, new BookFeed());
+    const deliver = (clean: boolean) => {
+      for (const book of sim.books) {
+        const feed = feeds.get(book) as BookFeed;
+        const now = view(book.ric);
+        const before = previous.get(book) ?? now;
+        previous.set(book, now);
+        if (clean || random() > 0.15) feed.events(window(book.ric, 40));
+        const r = clean ? 1 : random();
+        // rows and marker come from separate viewports: either can lag
+        if (r < 0.2) feed.snapshot(before.rows, now.marker);
+        else if (r < 0.4) feed.snapshot(now.rows, before.marker);
+        else feed.snapshot(now.rows, now.marker);
+      }
+    };
+    for (let step = 0; step < 600; step++) {
+      sim.step(clock.advance(20));
+      if (step === 300) restoreInPlace(sim.books[0]);
+      if (step % 3 === 2) {
+        sim.flush();
+        deliver(false);
+      }
+    }
+    for (let i = 0; i < 3; i++) {
+      sim.flush();
+      deliver(true);
+    }
+    let applied = 0;
+    let total = 0;
+    for (const book of sim.books) {
+      const feed = feeds.get(book) as BookFeed;
+      expect(feed.source).toBe("events");
+      expect(feed.book.seq).toBe(book.eventSeq);
+      expect(fromModel(feed.book, Side.Buy)).toEqual(
+        fromEngine(book, Side.Buy),
+      );
+      expect(fromModel(feed.book, Side.Sell)).toEqual(
+        fromEngine(book, Side.Sell),
+      );
+      applied += feed.stats.events;
+      total += book.eventSeq;
+    }
+    // the books were kept up to date by events, not by reloading snapshots
+    // (a resync, after a gap or the restore, skips the events it covers)
+    expect(applied / total).toBeGreaterThan(0.8);
   });
 
   test("BookBuilder matches the engine after every step, with live bots", () => {
