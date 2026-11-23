@@ -34,6 +34,8 @@ export interface ExchangeTables {
   bookOrders?: PublishTable;
   /** L3 event tape; omit (or disable in options) to skip. */
   bookEvents?: PublishTable;
+  /** L3 snapshot marker per instrument; written with bookOrders. */
+  bookStatus?: PublishTable;
   /** Sim-admin tables; all three or none (see SimAdminPublisher). */
   simBooks?: PublishTable;
   bots?: PublishTable;
@@ -85,6 +87,7 @@ export interface PublisherStats {
   sampleInserts: number;
   sampleEvictions: number;
   bookOrderUpdates: number;
+  bookStatusUpdates: number;
   bookEventInserts: number;
   bookEventEvictions: number;
 }
@@ -134,6 +137,7 @@ export class MarketDataPublisher {
     sampleInserts: 0,
     sampleEvictions: 0,
     bookOrderUpdates: 0,
+    bookStatusUpdates: 0,
     bookEventInserts: 0,
     bookEventEvictions: 0,
   };
@@ -589,6 +593,7 @@ export class MarketDataPublisher {
       s.sampleInserts +
       s.sampleEvictions +
       s.bookOrderUpdates +
+      s.bookStatusUpdates +
       s.bookEventInserts +
       s.bookEventEvictions
     );

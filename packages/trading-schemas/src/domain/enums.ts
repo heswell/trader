@@ -280,13 +280,16 @@ export const BOT_TYPES = values(BotType);
 /**
  * Type of an order-by-order (L3) book event in the EXCHANGE `bookEvents`
  * table. EXECUTE is reported against the resting (maker) order only; an
- * amend that loses time priority is a DELETE followed by an ADD.
+ * amend that loses time priority is a DELETE followed by an ADD. RESET: the
+ * whole book was replaced (a restore), with no events for its orders: re-read
+ * `bookOrders`.
  */
 export const BookEventType = Object.freeze({
   Add: "ADD",
   Execute: "EXECUTE",
   Reduce: "REDUCE",
   Delete: "DELETE",
+  Reset: "RESET",
 } as const);
 export type BookEventType = ValueOf<typeof BookEventType>;
 export const BOOK_EVENT_TYPES = values(BookEventType);

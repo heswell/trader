@@ -29,7 +29,14 @@ interface SideState {
 
 export type BookListener = (change: BookChange) => void;
 
-export type ApplyResult = "ok" | "gap";
+/**
+ * - `ok`: every event applied.
+ * - `gap`: an event was out of sequence or did not match the book.
+ * - `reset`: a RESET event: the exchange replaced the book.
+ *
+ * Anything but `ok` leaves the book `stale`: `reset` it from a snapshot.
+ */
+export type ApplyResult = "ok" | "gap" | "reset";
 
 const copyOrder = (o: BookOrder): BookOrder => ({
   orderId: o.orderId,
@@ -139,19 +146,26 @@ export class BookBuilder {
 
   /**
    * Apply events in seq order; events at or before `seq` are skipped. Stops
-   * at the first event that is out of sequence or does not match the book,
-   * marks the book `stale` and returns "gap": `reset` to resync. Listeners
-   * hear once per call. Returns "gap" without applying anything unless the
-   * book is `live`.
+   * at the first event that is out of sequence or does not match the book
+   * ("gap"), or at a RESET ("reset"), and marks the book `stale`: `reset`
+   * it from a snapshot at or after that seq. Listeners hear once per call.
+   * Returns "gap" without applying anything unless the book is `live`.
    */
   apply(events: readonly BookEvent[]): ApplyResult {
     if (this.#status !== "live") return "gap";
     let result: ApplyResult = "ok";
     for (const event of events) {
       if (event.seq <= this.#seq) continue;
-      if (event.seq !== this.#seq + 1 || !this.#applyOne(event)) {
-        this.#status = "stale";
+      if (event.seq !== this.#seq + 1) {
         result = "gap";
+      } else if (event.type === BookEventType.Reset) {
+        this.#seq = event.seq;
+        result = "reset";
+      } else if (!this.#applyOne(event)) {
+        result = "gap";
+      }
+      if (result !== "ok") {
+        this.#status = "stale";
         break;
       }
       this.#seq = event.seq;
@@ -205,10 +219,13 @@ export class BookBuilder {
 
   #applyOne(e: BookEvent): boolean {
     if (e.type === BookEventType.Add) {
-      if (this.#orders.has(e.orderId) || e.leaves !== e.size) return false;
+      const { side } = e;
+      if (side === "" || this.#orders.has(e.orderId) || e.leaves !== e.size) {
+        return false;
+      }
       this.#insert({
         orderId: e.orderId,
-        side: e.side,
+        side,
         price: e.price,
         size: e.size,
         entryTime: e.timestamp,

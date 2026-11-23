@@ -11,12 +11,31 @@ import { createExchangeSimulator } from "../src/engine/ExchangeSimulator";
 import type {
   BookEvent,
   BookEventSink,
+  FillSink,
   InstrumentBook,
 } from "../src/engine/InstrumentBook";
 import { ManualClock } from "../src/util/clock";
 import { createFakeTables } from "./fakeTables";
 
-const { Add, Execute, Reduce, Delete } = BookEventType;
+const { Add, Execute, Reduce, Delete, Reset } = BookEventType;
+
+/** Replace the book with its own resting orders, as a restore does. */
+const restoreInPlace = (book: InstrumentBook) =>
+  book.restore(book.restingOrders(), { onFill() {} } as FillSink);
+
+/** `bookOrders` rows of one instrument as book-model orders. */
+const snapshotOf = (tables: ReturnType<typeof createFakeTables>, ric: string) =>
+  tables.bookOrders
+    .all()
+    .filter((r) => r.ric === ric)
+    .map((r) => ({
+      orderId: r.orderId as string,
+      side: r.side as Side,
+      price: r.price as number,
+      size: r.size as number,
+      entryTime: r.entryTime as number,
+      priority: r.priority as number,
+    }));
 
 /** Records every event, then passes it on to the book's existing sink. */
 const record = (book: InstrumentBook) => {
@@ -26,9 +45,6 @@ const record = (book: InstrumentBook) => {
     onBookEvent(b, event) {
       events.push({ ...event });
       next?.onBookEvent(b, event);
-    },
-    onBookReset(b) {
-      next?.onBookReset(b);
     },
   };
   book.bookEvents = sink;
@@ -146,6 +162,16 @@ describe("InstrumentBook L3 events", () => {
     expect(shape(events)).toEqual([[Delete, a, Side.Buy, 100, 50, 0]]);
   });
 
+  test("a restore is a RESET with the next seq", () => {
+    const { events, limit, book } = quietSim();
+    limit(BookSide.BUY, 100, 50);
+    events.length = 0;
+    restoreInPlace(book);
+    expect(shape(events)).toEqual([[Reset, "", "", 0, 0, 0]]);
+    expect(events[0].seq).toBe(2);
+    expect(book.eventSeq).toBe(2);
+  });
+
   test("no events (and no extra work) without a sink", () => {
     const clock = new ManualClock();
     const sim = createExchangeSimulator({
@@ -204,9 +230,53 @@ describe("bookOrders / bookEvents tables", () => {
     sim.flush();
     expect(queue()).toEqual([b, c, a]);
     // a restore re-lists the book in queue order
-    sim.publisher?.l3?.onBookReset(book);
+    restoreInPlace(book);
     sim.flush();
     expect(queue()).toEqual([b, c, a]);
+  });
+
+  test("bookStatus marks the event seq each bookOrders flush reflects", () => {
+    const { sim, tables, book, limit } = quietSim();
+    limit(BookSide.BUY, 100, 50);
+    const b = limit(BookSide.SELL, 100.05, 20);
+    sim.flush();
+    expect(tables.bookStatus.get("AAPL.OQ")).toEqual({
+      ric: "AAPL.OQ",
+      seq: 2,
+      orders: 2,
+      resetSeq: 0,
+    });
+    tables.bookStatus.resetCounts();
+    sim.flush();
+    expect(tables.bookStatus.ops).toBe(0); // unchanged: not rewritten
+    book.cancel(b);
+    sim.flush();
+    expect(tables.bookStatus.get("AAPL.OQ")).toMatchObject({
+      seq: 3,
+      orders: 1,
+    });
+    expect(tables.bookStatus.updates).toBe(1);
+  });
+
+  test("a restore puts RESET on the tape and re-lists bookOrders at its seq", () => {
+    const { sim, tables, book, limit } = quietSim({ bookEvents: 1 });
+    const a = limit(BookSide.BUY, 100, 50);
+    sim.flush();
+    restoreInPlace(book);
+    sim.flush();
+    expect(tables.bookEvents.get(bookEventKey("AAPL.OQ", 2))).toMatchObject({
+      type: Reset,
+      orderId: "",
+      side: "",
+      size: 0,
+      leaves: 0,
+    });
+    expect(tables.bookOrders.get(a)?.seq).toBe(2);
+    expect(tables.bookStatus.get("AAPL.OQ")).toMatchObject({
+      seq: 2,
+      orders: 1,
+      resetSeq: 2,
+    });
   });
 
   test("an order added and removed between flushes never appears", () => {
@@ -297,6 +367,73 @@ describe("replaying bookEvents rebuilds the book", () => {
     }));
   };
 
+  test("bookOrders + the bookStatus marker + the tape after it = the engine, across a restore", () => {
+    const clock = new ManualClock();
+    const sim = createExchangeSimulator({
+      clock: clock.now,
+      config: {
+        activeInstruments: 3,
+        mmRate: 40,
+        takerRate: 30,
+        bookEvents: 1,
+        bookEventsCapacity: 1_000_000,
+      },
+    });
+    const tables = createFakeTables();
+    sim.attachTables(tables);
+    const run = (steps: number) => {
+      for (let step = 0; step < steps; step++) {
+        sim.step(clock.advance(20));
+        if (step % 5 === 4) sim.flush();
+      }
+      sim.flush();
+    };
+    const status = (ric: string) => {
+      const row = tables.bookStatus.get(ric);
+      if (!row) throw Error(`no bookStatus for ${ric}`);
+      return row as { seq: number; orders: number; resetSeq: number };
+    };
+    // load each book from a mid-session snapshot and its marker
+    run(100);
+    const models = new Map<InstrumentBook, BookBuilder>();
+    for (const book of sim.books) {
+      const snapshot = snapshotOf(tables, book.ric);
+      expect(snapshot).toHaveLength(status(book.ric).orders);
+      const model = new BookBuilder();
+      model.reset(snapshot, status(book.ric).seq);
+      models.set(book, model);
+    }
+    // more trading, with one book restored part way through
+    run(100);
+    const [restored] = sim.books;
+    restoreInPlace(restored);
+    const resetSeq = restored.eventSeq;
+    run(100);
+    expect(status(restored.ric).resetSeq).toBe(resetSeq);
+    // replay the tape after each marker
+    for (const book of sim.books) {
+      const model = models.get(book) as BookBuilder;
+      const tape = tables.bookEvents
+        .all()
+        .filter((r) => r.ric === book.ric)
+        .sort((a, b) => (a.seq as number) - (b.seq as number))
+        .map((r) => r as unknown as BookEvent);
+      const result = model.apply(tape);
+      if (book === restored) {
+        expect(result).toBe("reset");
+        expect(model.seq).toBe(resetSeq);
+        // resync: the latest snapshot, then whatever came after it
+        model.reset(snapshotOf(tables, book.ric), status(book.ric).seq);
+        expect(model.apply(tape)).toBe("ok");
+      } else {
+        expect(result).toBe("ok");
+      }
+      expect(model.seq).toBe(book.eventSeq);
+      expect(fromModel(model, Side.Buy)).toEqual(fromEngine(book, Side.Buy));
+      expect(fromModel(model, Side.Sell)).toEqual(fromEngine(book, Side.Sell));
+    }
+  });
+
   test("BookBuilder matches the engine after every step, with live bots", () => {
     const clock = new ManualClock();
     const sim = createExchangeSimulator({
@@ -319,9 +456,6 @@ describe("replaying bookEvents rebuilds the book", () => {
           const result = models.get(b)?.apply([e]);
           expect({ where, result }).toEqual({ where, result: "ok" });
           next?.onBookEvent(b, e);
-        },
-        onBookReset(b) {
-          next?.onBookReset(b);
         },
       };
     }

@@ -246,3 +246,44 @@ describe("BookBuilder events", () => {
     expect(book.apply([event(1, Add, "a", Side.Buy, 1, 1, 1)])).toBe("ok");
   });
 });
+
+describe("BookBuilder RESET", () => {
+  const reset = (seq: number): BookEvent => ({
+    seq,
+    type: BookEventType.Reset,
+    orderId: "",
+    side: "",
+    price: 0,
+    size: 0,
+    leaves: 0,
+    tradeId: "",
+    timestamp: 0,
+  });
+
+  test("a RESET applies the events before it, then marks the book stale", () => {
+    const book = loaded();
+    const result = book.apply([
+      event(11, Add, "b5", Side.Buy, 100, 1, 1),
+      reset(12),
+      event(13, Add, "b6", Side.Buy, 100, 1, 1),
+    ]);
+    expect(result).toBe("reset");
+    expect(book.status).toBe("stale");
+    expect(book.seq).toBe(12);
+    expect(book.order("b5")).toBeDefined();
+    expect(book.order("b6")).toBeUndefined();
+    // resync from the snapshot written at the RESET, then carry on
+    book.reset(snapshot, 12);
+    expect(book.apply([event(13, Add, "b6", Side.Buy, 100, 1, 1)])).toBe("ok");
+    expect(book.order("b5")).toBeUndefined();
+  });
+
+  test("an ADD without a side is a gap", () => {
+    const book = loaded();
+    const bad = {
+      ...event(11, Add, "x", Side.Buy, 100, 1, 1),
+      side: "" as const,
+    };
+    expect(book.apply([bad])).toBe("gap");
+  });
+});

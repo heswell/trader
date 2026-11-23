@@ -19,11 +19,13 @@ export interface BookEvent {
   /** Per-instrument event sequence: gap-free, starts at 1. */
   readonly seq: number;
   readonly type: BookEventType;
+  /** "" for RESET. */
   readonly orderId: string;
-  /** Side of the resting order. */
-  readonly side: Side;
+  /** Side of the resting order; "" for RESET. */
+  readonly side: Side | "";
+  /** 0 for RESET. */
   readonly price: number;
-  /** ADD: shown size. EXECUTE: traded size. REDUCE / DELETE: size removed. */
+  /** ADD: shown size. EXECUTE: traded size. REDUCE / DELETE: size removed. RESET: 0. */
   readonly size: number;
   /** Open size left after the event (0 = gone from the book). */
   readonly leaves: number;
@@ -77,6 +79,7 @@ export interface BookChange {
 /**
  * - `empty`: never loaded.
  * - `live`: loaded, and every event applied so far was in sequence.
- * - `stale`: an event was missing or did not match the book; `reset` to resync.
+ * - `stale`: an event was missing or did not match the book, or a RESET
+ *   replaced the book; `reset` to resync.
  */
 export type BookStatus = "empty" | "live" | "stale";

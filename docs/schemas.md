@@ -17,6 +17,7 @@ flowchart LR
     bookSamples -. link ric .-> prices
     bookOrders -. link ric .-> prices
     bookEvents -. link ric .-> prices
+    bookStatus -. link ric .-> prices
   end
   subgraph OMS [OMS module - oms]
     accounts
@@ -33,7 +34,7 @@ flowchart LR
 
 | Module | Tables | Joins |
 |---|---|---|
-| `EXCHANGE` | instruments, prices, depth (`ric\|side\|level`), trades, bars (`ric\|interval\|start`), bookSamples (`ric\|time`), bookOrders (`orderId`), bookEvents (`ric\|seq`) | instrumentPrices = instruments ⟕ prices |
+| `EXCHANGE` | instruments, prices, depth (`ric\|side\|level`), trades, bars (`ric\|interval\|start`), bookSamples (`ric\|time`), bookOrders (`orderId`), bookEvents (`ric\|seq`), bookStatus (`ric`) | instrumentPrices = instruments ⟕ prices |
 | `OMS` | accounts, parentOrders, childOrders, fills, positions (`account\|ric`), pnlHistory (`account\|ric\|time`), accountPnlHistory (`account\|time`) | positionPrices = positions ⟕ prices (cross-module) |
 | `METRICS` | metricsProcess, metrics (`component.name`), metricsTables (`MODULE.table`), metricsHistory (`metric\|time`); sim-admin only, see [metrics.md](metrics.md) | none |
 

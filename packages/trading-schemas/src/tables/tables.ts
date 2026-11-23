@@ -309,14 +309,14 @@ export const bookEvents = defineTable({
     {
       name: "side",
       dataType: "string",
-      description: "Side of the resting order.",
+      description: "Side of the resting order; empty for RESET.",
     },
     { name: "price", dataType: "double" },
     {
       name: "size",
       dataType: "long",
       description:
-        "ADD: shown size. EXECUTE: traded size. REDUCE / DELETE: size removed.",
+        "ADD: shown size. EXECUTE: traded size. REDUCE / DELETE: size removed. RESET: 0.",
     },
     {
       name: "leaves",
@@ -330,6 +330,38 @@ export const bookEvents = defineTable({
       description: "EXECUTE only: the trades table row.",
     },
     { name: "timestamp", dataType: "epochtimestamp" },
+  ],
+  links: [
+    { fromColumn: "ric", toTable: "prices", toColumn: "ric" },
+    { fromColumn: "ric", toTable: "instrumentPrices", toColumn: "ric" },
+  ],
+});
+
+export const bookStatus = defineTable({
+  module: EXCHANGE_MODULE,
+  name: "bookStatus",
+  keyField: "ric",
+  description:
+    "Order-by-order (L3) book state per instrument, written in the same flush as bookOrders: the snapshot marker for bookEvents consumers. Empty when exchangeSim.bookOrders is off.",
+  columns: [
+    { name: "ric", dataType: "string" },
+    {
+      name: "seq",
+      dataType: "long",
+      description:
+        "The book's last bookEvents seq when its bookOrders rows were written: replay events after it.",
+    },
+    {
+      name: "orders",
+      dataType: "long",
+      description: "Resting orders (bookOrders rows) for the instrument.",
+    },
+    {
+      name: "resetSeq",
+      dataType: "long",
+      description:
+        "Seq of the last RESET event (the book was replaced); 0 = none.",
+    },
   ],
   links: [
     { fromColumn: "ric", toTable: "prices", toColumn: "ric" },
@@ -1581,6 +1613,7 @@ export const exchangeTables = {
   bookSamples,
   bookOrders,
   bookEvents,
+  bookStatus,
   simBooks,
   bots,
   botParams,
@@ -1632,6 +1665,7 @@ export type TimeSeriesBucketRow = RowOf<typeof timeSeriesBuckets>;
 export type OptionAnalyticsRow = RowOf<typeof optionAnalytics>;
 export type BookOrderRow = RowOf<typeof bookOrders>;
 export type BookEventRow = RowOf<typeof bookEvents>;
+export type BookStatusRow = RowOf<typeof bookStatus>;
 export type SimBookRow = RowOf<typeof simBooks>;
 export type BotRow = RowOf<typeof bots>;
 export type BotParamRow = RowOf<typeof botParams>;

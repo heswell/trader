@@ -14,7 +14,7 @@ exchange-sim replay test both use it.
 ```ts
 const book = new BookBuilder();
 book.reset(bookOrderRows, snapshotSeq); // diffed: unchanged levels keep their objects
-book.apply(bookEventRows);              // "ok", or "gap": out of sequence or inconsistent, reset to resync
+book.apply(bookEventRows);              // "ok"; "gap" (out of sequence, inconsistent) or "reset" (RESET event): resync
 book.levels(Side.Buy, 10);              // best first
 book.order(orderId);                    // { order, level, rank, ahead }
 const unsubscribe = book.subscribe(({ levels, removed, orderIds }) => {});
@@ -27,10 +27,13 @@ const unsubscribe = book.subscribe(({ levels, removed, orderIds }) => {});
 - **Stable objects.** A `Level` object, and the array `levels()` returns, are replaced only when they change, so React
   memoisation can compare them by identity. `BookOrder` objects are never mutated.
 - **Sequence.** `apply` needs a `live` book. It skips events at or before `seq`, and stops at the first event that
-  is not `seq + 1` or does not match the book (unknown order, wrong price, sizes that don't add up). The book is
-  then `stale` until the next `reset`.
+  is not `seq + 1` or does not match the book (unknown order, wrong price, sizes that don't add up), returning
+  `"gap"`, or at a `RESET` (the exchange replaced the book), returning `"reset"`. The book is then `stale` until the
+  next `reset`.
+- **Snapshot marker.** `reset(rows, seq)` takes the `bookStatus.seq` of the instrument as the snapshot's seq, so
+  `apply` replays only the events after it.
 - **Snapshot-only feed.** A client that only subscribes to `bookOrders` calls `reset` with every update. The diff
   keeps unchanged levels, so it costs what the changes cost, plus one pass over the rows.
 
-The event feed (snapshot marker, RESET event, gap recovery from a Vuu viewport) is planned, not built: see the
-book model plan.
+The client event feed (buffering `bookEvents` from a Vuu viewport and resyncing on a gap or reset) is planned, not
+built: see the book model plan.

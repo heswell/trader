@@ -9,7 +9,7 @@ GBM reference price drives them. The results are published to the `EXCHANGE` mod
 src/
   reference/      instrument universe (336 listings, 9 venues, tick bands, lot sizes, ref prices)
   engine/         ExchangeSimulator, InstrumentBook, PriceModel, TradingSession, bots/ (Bot, OrderPort, BotLedger, MarketSignals, roster, MarketMaker, NoiseTaker)
-  publish/        MarketDataPublisher (prices / depth deltas / trades ring buffer), BookL3Publisher (bookOrders / bookEvents), TradeRingBuffer
+  publish/        MarketDataPublisher (prices / depth deltas / trades ring buffer), BookL3Publisher (bookOrders / bookEvents / bookStatus), TradeRingBuffer
   gateway/        SimExchangeGateway: in-process order entry + execution reports
   modules/exchange ExchangeModule (Vuu module) and ExchangeAdminService (admin RPCs)
   config.ts       knobs (application.conf `exchangeSim.*` / `EXCHANGE_SIM_*` env)
@@ -47,6 +47,7 @@ serverConfig.withModule(ExchangeModule(sim));   // starts ticking once its table
 | `trades` | `tradeId` | Time and sales across all instruments. It is a ring buffer of `tradesCapacity` (50k) rows; the oldest rows are deleted. `aggressorSide` is the taker side. |
 | `bookOrders` | `orderId` | Order-by-order (L3) book: one row per resting order (`ric`, `side`, `price`, open `size`, `entryTime`, `seq`, `priority`). Anonymous: no account or owner. Sort by side, price, then `priority`, for queue order (`entryTime` is in ms and can tie). `orderId` matches `childOrders.exchangeOrderId` for OMS orders. Writes are coalesced per flush. Off with `bookOrders=0`. |
 | `bookEvents` | `ric\|seq` | The L3 event tape (off by default, `bookEvents=1`). Ring buffer of `bookEventsCapacity` rows. See [L3 data](#l3-order-by-order-data). |
+| `bookStatus` | `ric` | One row per book, written after `bookOrders` in the same flush: `seq` (the last event seq the book's `bookOrders` rows reflect: the snapshot marker), `orders` (its `bookOrders` rows) and `resetSeq` (its last `RESET`, 0 = none). Rewritten only when one of them changes. Off with `bookOrders=0`. |
 | `instrumentPrices` | `ric` | A join of instruments and prices. |
 | `bars` | `ric\|interval\|start` | OHLCV candles per instrument and `barIntervals` interval (`1s`, `1m`, `5m`), built from trades. The current bar updates in place on each flush; `barHistory` closed bars are kept per series (oldest deleted). Intervals are exchange-clock (wall) time; intervals with no trades are gaps. `barBackfill` seeds synthetic history at startup. |
 | `timeSeriesBuckets` | `subId\|field\|bucket` | M4 buckets (first / min / max / last and their times) of each time-series subscription, opened and moved by `setTimeSeriesWindow`, closed by `closeTimeSeries` or after a 60 s lease. A client filters a viewport on its `subId`. See docs/timeseries-downsampling.md. |
@@ -83,11 +84,18 @@ its events with its own gap-free `seq`, starting at 1.
 | `EXECUTE` | A resting order trades; reported for the maker only, with `tradeId` | traded | what's left (0 = gone) |
 | `REDUCE` | Amended down at the same price (keeps time priority) | removed | what's left |
 | `DELETE` | Cancelled, expired, or an amend that loses priority | removed | 0 |
+| `RESET` | The book was replaced (a restore); no events for its orders | 0 | 0 |
 
 The incoming side of a trade (a market order, IOC, or the crossing part of a limit) gets no event, because it never
 rests. An amend that loses priority (new price or larger size) is a `DELETE`, then any `EXECUTE`s if the new price
-crosses, then an `ADD` if it still rests. A rejected amend sends nothing. A restore replaces the book without events:
-`bookOrders` is rebuilt for that instrument, so a `bookEvents` consumer should re-read `bookOrders` after one.
+crosses, then an `ADD` if it still rests. A rejected amend sends nothing. A restore replaces the book: it is one `RESET` event (empty
+`orderId` and `side`), and `bookOrders` is rebuilt for that instrument with every row's `seq` set to the `RESET`'s.
+
+To follow one book from events, buffer its `bookEvents`, load its `bookOrders` rows, take `bookStatus.seq` as the
+snapshot's seq and apply the buffered events after it. On a `RESET` (or a gap in `seq`), reload `bookOrders` and
+`bookStatus` and carry on from the new marker. `bookStatus` is written in the same flush as `bookOrders`, but Vuu
+delivers each table's viewport separately, so a client must not take a marker newer than the rows it holds.
+[`@heswell/book-model`](../book-model/README.md)'s `BookBuilder` does the replay and detects gaps and resets.
 
 Replaying `bookEvents` in `seq` order reproduces `depth` exactly, and the queue order at every level;
 `__tests__/bookL3.test.ts` checks this with live bots, using the shared book model

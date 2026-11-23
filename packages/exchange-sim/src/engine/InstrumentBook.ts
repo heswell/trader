@@ -75,11 +75,13 @@ export interface BookEvent {
   /** Per-book event sequence: gap-free, starts at 1. */
   seq: number;
   type: BookEventType;
+  /** "" for RESET. */
   orderId: string;
-  /** Side of the resting order. */
-  side: Side;
+  /** Side of the resting order; "" for RESET. */
+  side: Side | "";
+  /** 0 for RESET. */
   price: number;
-  /** ADD: shown size. EXECUTE: traded size. REDUCE / DELETE: size removed. */
+  /** ADD: shown size. EXECUTE: traded size. REDUCE / DELETE: size removed. RESET: 0. */
   size: number;
   /** Open size left after the event (0 = gone from the book). */
   leaves: number;
@@ -90,12 +92,11 @@ export interface BookEvent {
 
 /**
  * Receives the book's L3 events. The event object is reused: it is only
- * valid during the call.
+ * valid during the call. A RESET event means the whole book was replaced
+ * (`restore`): no events describe its orders.
  */
 export interface BookEventSink {
   onBookEvent(book: InstrumentBook, event: Readonly<BookEvent>): void;
-  /** The whole book was replaced (`restore`); no events describe the change. */
-  onBookReset(book: InstrumentBook): void;
 }
 
 /**
@@ -220,7 +221,7 @@ export class InstrumentBook {
     for (const order of orders) this.#sinks.set(order.id, sink);
     if (stats) Object.assign(this.stats, stats);
     this.dirty = true;
-    this.bookEvents?.onBookReset(this);
+    this.#emitReset();
   }
 
   /** Last L3 event seq (0 = none yet). */
@@ -345,6 +346,23 @@ export class InstrumentBook {
     event.size = size;
     event.leaves = leaves;
     event.tradeId = tradeId;
+    event.timestamp = this.clock();
+    sink.onBookEvent(this, event);
+  }
+
+  /** The book was replaced: one event, so followers see it in sequence. */
+  #emitReset() {
+    const sink = this.bookEvents;
+    if (!sink) return;
+    const event = this.#event;
+    event.seq = ++this.#eventSeq;
+    event.type = BookEventType.Reset;
+    event.orderId = "";
+    event.side = "";
+    event.price = 0;
+    event.size = 0;
+    event.leaves = 0;
+    event.tradeId = "";
     event.timestamp = this.clock();
     sink.onBookEvent(this, event);
   }
