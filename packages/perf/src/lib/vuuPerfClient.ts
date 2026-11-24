@@ -24,6 +24,51 @@ export interface ViewportSpec {
   timestampColumn?: string;
   /** Column holding a per-row sequence number, for coalescing (seq gaps). */
   seqColumn?: string;
+  /**
+   * Read an append-only tape forward, as `useBookQueue` does: the filter is
+   * `<filter> and seq > N`. N moves to the highest seq received (CHANGE_VP)
+   * once `advanceAt` new rows have arrived, or `advanceMs` after the last
+   * move if any have. Needs a `seq` column.
+   */
+  forward?: { advanceAt: number; advanceMs: number };
+}
+
+/** Forward-reading state of one viewport. */
+export class ForwardTape {
+  after = 0;
+  maxSeq = 0;
+  size = 0;
+  pending = false;
+  #advancedAt = performance.now();
+  advances = 0;
+  /** Seqs below `after`'s successor never received (skipped by an advance). */
+  missed = 0;
+  /** Rows received with a seq lower than one already received. */
+  outOfOrder = 0;
+  readonly #seen = new Set<number>();
+  constructor(readonly seqIdx: number) {}
+  row(data: unknown[]) {
+    const seq = data[this.seqIdx];
+    if (typeof seq !== "number" || seq <= this.after) return;
+    if (seq < this.maxSeq) this.outOfOrder++;
+    this.#seen.add(seq);
+    if (seq > this.maxSeq) this.maxSeq = seq;
+  }
+  /** The next `after`, or undefined if it is not time to advance. */
+  advance(advanceAt: number, advanceMs: number) {
+    if (this.pending || this.maxSeq <= this.after) return undefined;
+    const now = performance.now();
+    if (this.#seen.size < advanceAt && now - this.#advancedAt < advanceMs) {
+      return undefined;
+    }
+    this.#advancedAt = now;
+    this.missed += this.maxSeq - this.after - this.#seen.size;
+    this.#seen.clear();
+    this.after = this.maxSeq;
+    this.pending = true;
+    this.advances++;
+    return this.after;
+  }
 }
 
 /** Bounded uniform sample (reservoir) of a numeric stream. */
@@ -122,6 +167,7 @@ export class VuuPerfClient {
           else counters.sizeOnly++;
         }
       }
+      if (body.type === "TABLE_ROW") this.#advanceTapes(body.rows);
       for (const listener of this.#listeners) listener(body);
     });
   }
@@ -184,6 +230,49 @@ export class VuuPerfClient {
     return new VuuPerfClient(socket, await sessionId);
   }
 
+  readonly #tapes = new Map<string, ForwardTape>();
+  #specs = new Map<string, ViewportSpec>();
+
+  #advanceTapes(
+    rows: readonly {
+      viewPortId: string;
+      updateType: string;
+      vpSize: number;
+      data: unknown[];
+    }[],
+  ) {
+    const touched = new Set<string>();
+    for (const row of rows) {
+      const tape = this.#tapes.get(row.viewPortId);
+      if (!tape) continue;
+      touched.add(row.viewPortId);
+      tape.size = row.vpSize;
+      tape.pending = false;
+      if (row.updateType === "U") tape.row(row.data);
+    }
+    for (const id of touched) {
+      const tape = this.#tapes.get(id) as ForwardTape;
+      const spec = this.#specs.get(id) as ViewportSpec;
+      const forward = spec.forward ?? { advanceAt: 0, advanceMs: 0 };
+      const after = tape.advance(forward.advanceAt, forward.advanceMs);
+      if (after === undefined) continue;
+      this.send(spec.module, {
+        aggregations: [],
+        columns: spec.columns,
+        filterSpec: { filter: forwardFilter(spec, after) },
+        groupBy: [],
+        sort: { sortDefs: spec.sort ?? [] },
+        type: "CHANGE_VP",
+        viewPortId: id,
+      });
+    }
+  }
+
+  /** Forward-reading stats per viewport id. */
+  get tapes(): ReadonlyMap<string, ForwardTape> {
+    return this.#tapes;
+  }
+
   close() {
     this.socket.close();
   }
@@ -240,7 +329,9 @@ export class VuuPerfClient {
     this.send(module, {
       aggregations: [],
       columns: spec.columns,
-      filterSpec: { filter: spec.filter ?? "" },
+      filterSpec: {
+        filter: spec.forward ? forwardFilter(spec, 0) : (spec.filter ?? ""),
+      },
       groupBy: [],
       range: spec.range,
       sort: { sortDefs: spec.sort ?? [] },
@@ -252,6 +343,16 @@ export class VuuPerfClient {
       throw Error(`CREATE_VP ${table} rejected: ${JSON.stringify(response)}`);
     }
     this.viewports.set(response.viewPortId, new ViewportCounters(spec));
+    if (spec.forward) {
+      this.#specs.set(response.viewPortId, spec);
+      this.#tapes.set(
+        response.viewPortId,
+        new ForwardTape(spec.columns.indexOf("seq")),
+      );
+    }
     return response.viewPortId;
   }
 }
+
+const forwardFilter = (spec: ViewportSpec, after: number) =>
+  spec.filter ? `${spec.filter} and seq > ${after}` : `seq > ${after}`;

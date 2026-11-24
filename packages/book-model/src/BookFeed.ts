@@ -38,6 +38,13 @@ export type BookFeedSource = "waiting" | "events" | "snapshot";
 export interface BookFeedOptions {
   /** Events held while waiting for a snapshot (oldest dropped). Default 20,000. */
   maxBuffered?: number;
+  /**
+   * Snapshots ahead of the book allowed while its events are on their way
+   * (the book has not moved since the first of them); the next one is
+   * loaded. Covers a tape that arrives late, or a tape viewport being
+   * re-opened. Default 4.
+   */
+  behindGrace?: number;
 }
 
 /**
@@ -54,9 +61,10 @@ export interface BookFeedOptions {
  * - On a gap or a RESET the book is stale until the next consistent
  *   snapshot, then the buffer is replayed after its marker.
  * - While live, a snapshot at the book's seq is compared with the book, and
- *   loaded if two in a row differ from it; a snapshot ahead of the book with no events to
- *   catch up with is loaded on the next one (at once if no event was ever
- *   seen, i.e. the tape is off).
+ *   loaded if two in a row differ from it. Snapshots ahead of the book are
+ *   allowed `behindGrace` times while the book doesn't move, for its events
+ *   to arrive, then loaded (at once if no event was ever seen, i.e. the
+ *   tape is off).
  */
 export class BookFeed {
   readonly book = new BookBuilder();
@@ -71,13 +79,17 @@ export class BookFeed {
   readonly #maxBuffered: number;
   #eventsSeen = false;
   #loaded = false;
+  readonly #behindGrace: number;
   /** Book seq when a snapshot last found the book behind it. */
   #behindAt: number | undefined;
+  /** Snapshots that have found the book behind at `#behindAt`. */
+  #behindCount = 0;
   /** A snapshot at the book's seq did not match it (not yet acted on). */
   #mismatched = false;
 
-  constructor({ maxBuffered = 20_000 }: BookFeedOptions = {}) {
+  constructor({ maxBuffered = 20_000, behindGrace = 4 }: BookFeedOptions = {}) {
     this.#maxBuffered = maxBuffered;
+    this.#behindGrace = behindGrace;
   }
 
   get source(): BookFeedSource {
@@ -124,11 +136,14 @@ export class BookFeed {
         this.#mismatched = true;
       }
     } else if (marker.seq > book.seq) {
-      // ahead of the book: give the events one snapshot to catch up
-      if (!this.#eventsSeen || this.#behindAt === book.seq) {
-        this.#load(rows, marker);
-      } else {
+      // ahead of the book: give the events a few snapshots to catch up
+      if (this.#behindAt !== book.seq) {
         this.#behindAt = book.seq;
+        this.#behindCount = 0;
+      }
+      this.#behindCount++;
+      if (!this.#eventsSeen || this.#behindCount > this.#behindGrace) {
+        this.#load(rows, marker);
       }
     }
     // a marker behind the book is an old snapshot: nothing to learn

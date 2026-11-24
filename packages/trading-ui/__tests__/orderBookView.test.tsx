@@ -27,6 +27,7 @@ import {
   orderTypeLabel,
   restsAtLimit,
   TradingDataProvider,
+  useBookQueue,
   useOrderBook,
 } from "../src";
 
@@ -346,10 +347,14 @@ describe("OrderBookView queue activity (local data, bookEvents on)", () => {
     const activity = () =>
       view.container.querySelector(".tradingOrderBookView-activity")
         ?.textContent ?? "";
-    await waitFor(() => {
-      tick();
-      expect(activity()).toMatch(/^[\d,]+ filled · [\d,]+ cancelled ahead$/);
-    });
+    // the tape opens once the marker gives it a start seq
+    await waitFor(
+      () => {
+        tick();
+        expect(activity()).toMatch(/^[\d,]+ filled · [\d,]+ cancelled ahead$/);
+      },
+      { timeout: 5_000 },
+    );
     // the bots trade and requote at the best bid: something happens ahead
     await waitFor(
       () => {
@@ -362,6 +367,17 @@ describe("OrderBookView queue activity (local data, bookEvents on)", () => {
       Number(n.replaceAll(",", "")),
     );
     expect(filled + cancelled).toBeLessThanOrEqual(levelSize);
+    // the tape's start seq moves on every second (re-opening its viewport)
+    // without a resync, which would mark the counts "≥"
+    const until = Date.now() + 2_500;
+    while (
+      Date.now() < until &&
+      view.container.querySelector(`.tradingOrderBookView-activity`)
+    ) {
+      tick();
+      expect(activity()).not.toStartWith("≥");
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
   });
 
   test("the tape is read only while a child order rests", async () => {
@@ -397,5 +413,28 @@ describe("OrderBookView queue activity (local data, bookEvents on)", () => {
       expect(hook.result.current.ownOrderIds.size).toBe(0);
       expect(hook.result.current.l3Source).toBe("snapshot");
     });
+  });
+
+  test("a book larger than maxOrders is truncated by the marker's count", async () => {
+    const full = renderHook(() => useBookQueue(book.ric, { events: true }), {
+      wrapper: Wrapper,
+    });
+    const cut = renderHook(
+      () => useBookQueue(book.ric, { events: true, maxOrders: 5 }),
+      { wrapper: Wrapper },
+    );
+    await waitFor(() => {
+      tick();
+      const { orderCount, restingOrders, truncated } = full.result.current;
+      expect(restingOrders).toBeGreaterThan(5);
+      expect(orderCount).toBe(restingOrders);
+      expect(truncated).toBe(false);
+      expect(cut.result.current.restingOrders).toBe(restingOrders);
+    });
+    const { orderCount, truncated, source } = cut.result.current;
+    expect(truncated).toBe(true);
+    expect(orderCount).toBeLessThanOrEqual(5);
+    // a partial snapshot never matches its marker: no tape
+    expect(source).toBe("snapshot");
   });
 });
