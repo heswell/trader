@@ -109,6 +109,13 @@
         "@rsbuild/plugin-react": "2.1.1",
       },
     },
+    "packages/book-model": {
+      "name": "@heswell/book-model",
+      "version": "0.1.0",
+      "dependencies": {
+        "@heswell/trading-schemas": "workspace:*",
+      },
+    },
     "packages/exchange-sim": {
       "name": "@heswell/exchange-sim",
       "version": "0.1.0",
@@ -121,6 +128,9 @@
         "@vuu-ui/vuu-data-types": "5.0.0-alpha.14",
         "@vuu-ui/vuu-protocol-types": "5.0.0-alpha.14",
         "@vuu-ui/vuu-utils": "5.0.0-alpha.14",
+      },
+      "devDependencies": {
+        "@heswell/book-model": "workspace:*",
       },
     },
     "packages/metrics": {
@@ -201,6 +211,7 @@
       "name": "@heswell/trading-ui",
       "version": "0.1.0",
       "dependencies": {
+        "@heswell/book-model": "workspace:*",
         "@heswell/trading-schemas": "workspace:*",
         "@salt-ds/core": "1.67.0",
         "@salt-ds/styles": "0.2.1",
@@ -290,6 +301,8 @@
     "@floating-ui/utils": ["@floating-ui/utils@0.2.12", "", {}, "sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww=="],
 
     "@happy-dom/global-registrator": ["@happy-dom/global-registrator@20.14.5", "", { "dependencies": { "@types/node": ">=20.0.0", "happy-dom": "^20.14.5" } }, "sha512-B05ID9DhSwLs6mlm1fzlkAtTIvB3duCvjJjfr19LBrlTK7VZtRjDqoTRIVv13GuYuNdhByu8LSZgThwV3Rkj7g=="],
+
+    "@heswell/book-model": ["@heswell/book-model@workspace:packages/book-model"],
 
     "@heswell/exchange-sim": ["@heswell/exchange-sim@workspace:packages/exchange-sim"],
 

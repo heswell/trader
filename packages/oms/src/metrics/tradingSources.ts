@@ -60,6 +60,7 @@ export const exchangeMetricsSource = (sim: ExchangeSimulator): MetricSource => {
       tw("bars", p.barInserts + p.barUpdates + p.barEvictions);
       tw("bookSamples", p.sampleInserts + p.sampleEvictions);
       tw("bookOrders", p.bookOrderUpdates);
+      tw("bookStatus", p.bookStatusUpdates);
       tw("bookEvents", p.bookEventInserts + p.bookEventEvictions);
     },
   };

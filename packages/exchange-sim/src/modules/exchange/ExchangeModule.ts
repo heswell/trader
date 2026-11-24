@@ -35,6 +35,7 @@ const TABLE_NAMES: readonly TableName[] = [
   "bookSamples",
   "bookOrders",
   "bookEvents",
+  "bookStatus",
   "simBooks",
   "bots",
   "botParams",
@@ -127,7 +128,7 @@ class SimTableProvider extends Provider {
 
 /**
  * The EXCHANGE Vuu module: instruments, prices, depth, trades, bars,
- * bookSamples, bookOrders, bookEvents, the sim-admin tables (simBooks, bots,
+ * bookSamples, bookOrders, bookEvents, bookStatus, the sim-admin tables (simBooks, bots,
  * botParams, simSamples, botHistory, botFills; rows only for sim-admin users) and the instrumentPrices join,
  * all driven by `sim`. Every table (including the join) carries the admin
  * RPC service, which also requires sim-admin.
@@ -168,6 +169,7 @@ export const ExchangeModule = (
     .addTable(defs.bookSamples, provider("bookSamples"), serviceFactory)
     .addTable(defs.bookOrders, provider("bookOrders"), serviceFactory)
     .addTable(defs.bookEvents, provider("bookEvents"), serviceFactory)
+    .addTable(defs.bookStatus, provider("bookStatus"), serviceFactory)
     .addTable(defs.simBooks, provider("simBooks"), serviceFactory)
     .addTable(defs.bots, provider("bots"), serviceFactory)
     .addTable(defs.botParams, provider("botParams"), serviceFactory)

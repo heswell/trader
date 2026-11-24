@@ -108,7 +108,7 @@ not counted.
 The table writes in `metricsTables` come from the same sources:
 
 - **EXCHANGE:** the market data publisher counts writes to `prices`, `depth`, `trades`, `bars`, `bookSamples`,
-  `bookOrders` and `bookEvents`.
+  `bookOrders`, `bookStatus` and `bookEvents`.
 - **OMS:** `TableSink` counts writes to every OMS table.
 
 The sources are in [`packages/oms/src/metrics/tradingSources.ts`](../packages/oms/src/metrics/tradingSources.ts),

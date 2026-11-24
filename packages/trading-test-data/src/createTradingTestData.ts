@@ -89,6 +89,7 @@ export const EXCHANGE_TABLE_NAMES: readonly ExchangeTableName[] = [
   "bookSamples",
   "bookOrders",
   "bookEvents",
+  "bookStatus",
   "simBooks",
   "bots",
   "botParams",
@@ -300,6 +301,7 @@ export const createTradingTestData = ({
   const bookSamples = tableFor(exchangeTables.bookSamples);
   const bookOrders = tableFor(exchangeTables.bookOrders);
   const bookEvents = tableFor(exchangeTables.bookEvents);
+  const bookStatus = tableFor(exchangeTables.bookStatus);
   const simBooks = tableFor(exchangeTables.simBooks);
   const bots = tableFor(exchangeTables.bots);
   const botParams = tableFor(exchangeTables.botParams);
@@ -342,6 +344,7 @@ export const createTradingTestData = ({
     bookSamples: bookSamples.engineTable,
     bookOrders: bookOrders.engineTable,
     bookEvents: bookEvents.engineTable,
+    bookStatus: bookStatus.engineTable,
     simBooks: simBooks.engineTable,
     bots: bots.engineTable,
     botParams: botParams.engineTable,
@@ -427,6 +430,7 @@ export const createTradingTestData = ({
     bookSamples,
     bookOrders,
     bookEvents,
+    bookStatus,
     simBooks,
     bots,
     botParams,

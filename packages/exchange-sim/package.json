@@ -24,5 +24,8 @@
     "@vuu-ui/vuu-data-types": "5.0.0-alpha.14",
     "@vuu-ui/vuu-protocol-types": "5.0.0-alpha.14",
     "@vuu-ui/vuu-utils": "5.0.0-alpha.14"
+  },
+  "devDependencies": {
+    "@heswell/book-model": "workspace:*"
   }
 }

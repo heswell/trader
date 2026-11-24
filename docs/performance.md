@@ -29,6 +29,8 @@ bun run perf:ws --target=stack       # against a running `bun run start:all`
 | `--duration`, `--warmup` | 10, 3 / 30, 5 | Measured window and warm-up, in seconds |
 | `--tick` | 1 / 4 | Multiplier on the simulator bot rates (market maker 10/s, taker 8/s) |
 | `--mm-rate`, `--taker-rate`, `--publish-ms`, `--active` | from `--tick` | Override the simulator rates, the price publish throttle, and the number of active instruments (local target only) |
+| `--book-l3` | off | `snapshot` or `events`: with each ladder viewport, also open the L3 viewports an order book opens on its ric (`useBookQueue`): `bookOrders` (2,000 rows), plus for `events` `bookStatus` and a seq-desc `bookEvents` window. `events` turns the tape on (`EXCHANGE_SIM_BOOK_EVENTS=1`). |
+| `--event-window` | 100 | `bookEvents` rows per viewport with `--book-l3=events` (`useBookQueue`'s `eventWindow`) |
 | `--workers` | CPUs − 2 | Client worker threads (Bun workers, so the harness is not the bottleneck) |
 | `--assert` | off | Exit 1 on client errors or disconnects, no rows on a ticking table, or an e2e p95 over `--max-p95-ms` (default 1000) |
 
@@ -182,6 +184,47 @@ OMS_PNL_HISTORY_INTERVAL_MS=0`):
 
 To trim: lower `exchangeSim.barHistory`, drop `1s` from `barIntervals`, or set `barBackfill=0` (the window then
 fills only as trades arrive).
+
+## Book event tape
+
+The `bookEvents` tape (`exchangeSim.bookEvents`, [exchange-sim README](../packages/exchange-sim/README.md)) was
+measured on 2026-11-24 (macOS, 8 CPUs, load average about 1.8) to decide whether to turn it on by default. Each
+order book in event mode (`useOrderBook`, `useBookQueue({ events: true })`) opens three L3 viewports on its ric:
+`bookOrders`, `bookStatus` and a 100-row seq-desc `bookEvents` window. `--book-l3` adds the same viewports per
+ladder viewport.
+
+Writing the tape is cheap: the simulator bench (`--mode=max`, 200 books) needs 3–5% more wall time with it, although
+table updates go from 40k to 73k per simulated second. The harness runs, single runs for heavy (30 s):
+
+| | smoke, snapshot | smoke, events | heavy, snapshot | heavy, events | heavy, events, window 25 |
+| --- | --- | --- | --- | --- | --- |
+| order books (L3 viewport sets) | 4 | 4 | 120 | 120 | 120 |
+| server CPU (stats file) | 57.5% | 60.8% | 116% | 125% | 124% |
+| event-loop lag p99 | 5–31 ms | 7 ms | 56 ms | 82 ms | 88 ms |
+| server RSS max | 731–963 MB | 757–786 MB | 1,332 MB | 1,656 MB | 1,478 MB |
+| `bookEvents` rows/s per viewport | – | 895 | – | 345 | 92 |
+| prices rows/s delivered | ~7,950 | ~7,990 | 95,519 | 60,806 | 72,186 |
+| trades rows/s delivered | ~6,100 | ~6,140 | 33,906 | 24,212 | 27,449 |
+| ladder rows/s delivered | 244 | 240 | 8,987 | 5,539 | 6,936 |
+
+With no client on the tape (smoke, tape on vs off) server CPU went from 58% to about 60.5%.
+
+- **The window resends itself.** A ric has about 65 events/s at tick ×1, but its `bookEvents` viewport receives
+  about 900 rows/s. Each new event enters at the top of the seq-desc window and shifts every row, so each viewport
+  tick resends the whole window. Rows to the client scale with the window size, not the event rate.
+- **At heavy load the tape crowds out the rest.** The server is saturated, and with the tape on it delivers a
+  third fewer prices, trades and ladder rows, with higher lag and 300 MB more RSS.
+- **A smaller window doesn't fix the server.** At 25 rows the tape's client rows drop by three quarters, but CPU
+  and lag barely move. The cost is in the 120 viewports each filtering and sorting the shared tape (50,000 rows,
+  `bookEventsCapacity`) on every change, not in the wire.
+
+So the tape stays off by default. Before turning it on:
+- Open the event viewports only where they are used. Done: the queue activity they feed is shown only for the user's
+  own orders, so `useOrderBook` reads the tape only while a child order is working (and for 30 s after), not for every
+  open order book. The `--book-l3=events` runs above are the worst case: every ladder with a tape window.
+- Make each event viewport cheaper on the server: a smaller `bookEventsCapacity`, a per-ric table, or a tape the
+  client reads from its last seq instead of a sorted window.
+- Repeat the heavy runs: they were single runs.
 
 ## Charts
 

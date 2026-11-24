@@ -66,7 +66,9 @@ working in, read top down:
 1. **Order**: side, quantity, instrument, type (`Lmt 99.40`, `Stp 99.50`, `Stp 99.50 Lmt 99.40`, with "waiting" /
    "triggered" for stops) / strategy / TIF, and a bar of filled, resting and not yet sent.
    Below it, one chip per working child order that is in the book, with its queue position (`#4 of 9 · 6,300
-   ahead`).
+   ahead`). When the server publishes the `bookEvents` tape (`exchangeSim.bookEvents=1`), the chip also shows what
+   happened ahead of the order since the panel started following it (`1,200 filled · 3,400 cancelled ahead`; `≥`
+   when events were missed and the book was resynced).
 2. **Level 2**: the instrument's `depth` levels, asks above bids. A dot marks the levels holding the order, and
    each row ends in a strip of the L3 queue (one segment per resting order, the order's own in the
    `--trading-own-order` colour).
@@ -77,7 +79,10 @@ working in, read top down:
 It opens on the level of the best-placed working child order, else the best price on the order's side. Click a
 level or a child order chip to see that queue; a picked level stays put as the book moves until **Reset level**
 (beside the Level 2 heading) returns to the default level and `onLevelChange(undefined)` is called. Data comes from `useOrderBook(orderId)`: the parent order, its
-`childOrders`, `useMarketDepth` and `useBookQueue` with the working child orders' exchange ids. When
+`childOrders`, `useMarketDepth` and `useBookQueue` with the working child orders' exchange ids. `useBookQueue` is in
+event mode (the `bookEvents` tape) only while a child order is working, and for `eventLingerMs` (30 s) after the last
+one goes, because each tape viewport costs the server a filtered, sorted view of the whole tape
+([performance.md](../performance.md#book-event-tape)); `useOrderBook(orderId, { events: false })` turns it off. When
 `bookOrders` is empty but `depth` is not, the server has L3 off and the panel says so; when an instrument has
 more resting orders than `useBookQueue` loads (`truncated`), it says the queues may be incomplete.
 

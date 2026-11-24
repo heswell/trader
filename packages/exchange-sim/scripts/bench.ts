@@ -76,6 +76,7 @@ const tableUpdates = (publisher: MarketDataPublisher | undefined) => {
     s.tradeInserts +
     s.tradeEvictions +
     s.bookOrderUpdates +
+    s.bookStatusUpdates +
     s.bookEventInserts +
     s.bookEventEvictions
   );
