@@ -1500,7 +1500,7 @@ useMarketDepth(ric: string | undefined, { levels = 10 }: { levels?: number } = {
 
 #### useOrderBook
 
-*hook* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L168)
+*hook* · [hooks/useOrderBook.ts](../../packages/trading-ui/src/hooks/useOrderBook.ts#L195)
 
 One parent order with the book it is working in: its child orders, the
 instrument's L2 depth (EXCHANGE `depth`) and L3 queues (EXCHANGE
@@ -1508,7 +1508,7 @@ instrument's L2 depth (EXCHANGE `depth`) and L3 queues (EXCHANGE
 Subscribes only while `orderId` is set.
 
 ```ts
-useOrderBook(orderId: string | undefined, { levels = 10, events = true }: OrderBookOptions = {}): OrderBookState
+useOrderBook(orderId: string | undefined, { levels = 10, events = true, eventLingerMs = 30_000 }: OrderBookOptions = {}): OrderBookState
 ```
 
 #### useOwnExchangeOrderIds
@@ -1809,7 +1809,8 @@ A child (street) order of the parent order (OMS `childOrders`).
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
 | `levels?` | `number` |  | L2 levels per side. Default 10. |
-| `events?` | `boolean` |  | Follow the `bookEvents` tape for queue activity (fills and cancels ahead of each child order). Default true; it falls back to snapshots when the server's tape is off. |
+| `events?` | `boolean` |  | Follow the `bookEvents` tape for queue activity (fills and cancels ahead of each child order). Default true; it falls back to snapshots when the server's tape is off. The tape is read only while a child order rests on the book, and for `eventLingerMs` after the last one goes. |
+| `eventLingerMs?` | `number` |  | Keep reading the tape this long after the last working child order goes (ms), so an algo re-placing its slices doesn't resubscribe each time. Default 30,000. |
 
 #### OrderBookParentOrder
 

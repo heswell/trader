@@ -79,8 +79,10 @@ working in, read top down:
 It opens on the level of the best-placed working child order, else the best price on the order's side. Click a
 level or a child order chip to see that queue; a picked level stays put as the book moves until **Reset level**
 (beside the Level 2 heading) returns to the default level and `onLevelChange(undefined)` is called. Data comes from `useOrderBook(orderId)`: the parent order, its
-`childOrders`, `useMarketDepth` and `useBookQueue` (in event mode, unless `useOrderBook(orderId, { events: false })`)
-with the working child orders' exchange ids. When
+`childOrders`, `useMarketDepth` and `useBookQueue` with the working child orders' exchange ids. `useBookQueue` is in
+event mode (the `bookEvents` tape) only while a child order is working, and for `eventLingerMs` (30 s) after the last
+one goes, because each tape viewport costs the server a filtered, sorted view of the whole tape
+([performance.md](../performance.md#book-event-tape)); `useOrderBook(orderId, { events: false })` turns it off. When
 `bookOrders` is empty but `depth` is not, the server has L3 off and the panel says so; when an instrument has
 more resting orders than `useBookQueue` loads (`truncated`), it says the queues may be incomplete.
 

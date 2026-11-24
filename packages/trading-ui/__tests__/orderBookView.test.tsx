@@ -16,6 +16,7 @@ import {
   cleanup,
   fireEvent,
   render,
+  renderHook,
   screen,
   waitFor,
 } from "@testing-library/react";
@@ -26,6 +27,7 @@ import {
   orderTypeLabel,
   restsAtLimit,
   TradingDataProvider,
+  useOrderBook,
 } from "../src";
 
 afterEach(cleanup);
@@ -360,5 +362,40 @@ describe("OrderBookView queue activity (local data, bookEvents on)", () => {
       Number(n.replaceAll(",", "")),
     );
     expect(filled + cancelled).toBeLessThanOrEqual(levelSize);
+  });
+
+  test("the tape is read only while a child order rests", async () => {
+    const result = testData.omsService.engine.createOrder(
+      {
+        account: "ACC-US-01",
+        ric: book.ric,
+        side: Side.Buy,
+        ordType: OrdType.Limit,
+        quantity: 100,
+        price: book.topOfBook().bid,
+        timeInForce: TimeInForce.Day,
+      },
+      { user: "admin" },
+    );
+    if (!result.ok) throw Error(`order rejected: ${result.reason}`);
+    const { orderId } = result.value;
+    const hook = renderHook(() => useOrderBook(orderId, { eventLingerMs: 0 }), {
+      wrapper: Wrapper,
+    });
+    await waitFor(() => {
+      tick();
+      expect(hook.result.current.ownOrderIds.size).toBe(1);
+      expect(hook.result.current.l3Source).toBe("events");
+    });
+    const cancelled = testData.omsService.engine.cancelOrder(
+      { orderId },
+      { user: "admin" },
+    );
+    if (!cancelled.ok) throw Error(`cancel rejected: ${cancelled.reason}`);
+    await waitFor(() => {
+      tick();
+      expect(hook.result.current.ownOrderIds.size).toBe(0);
+      expect(hook.result.current.l3Source).toBe("snapshot");
+    });
   });
 });

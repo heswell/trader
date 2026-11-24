@@ -219,8 +219,9 @@ With no client on the tape (smoke, tape on vs off) server CPU went from 58% to a
   `bookEventsCapacity`) on every change, not in the wire.
 
 So the tape stays off by default. Before turning it on:
-- Open the event viewports only where they are used. The queue activity they feed is shown only for the user's own
-  orders, so `useOrderBook` could ask for events only while the user has orders resting at that ric.
+- Open the event viewports only where they are used. Done: the queue activity they feed is shown only for the user's
+  own orders, so `useOrderBook` reads the tape only while a child order is working (and for 30 s after), not for every
+  open order book. The `--book-l3=events` runs above are the worst case: every ladder with a tape window.
 - Make each event viewport cheaper on the server: a smaller `bookEventsCapacity`, a per-ric table, or a tape the
   client reads from its last seq instead of a sorted window.
 - Repeat the heavy runs: they were single runs.

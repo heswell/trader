@@ -1,6 +1,6 @@
 import type { QueueActivity } from "@heswell/book-model";
 import type { OrdStatus, Side } from "@heswell/trading-schemas";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDataSourceRows } from "../data/useDataSourceRows";
 import { useTradingDataSource } from "../data/useTradingDataSource";
 import { filterString } from "../utils/filters";
@@ -99,10 +99,37 @@ export interface OrderBookOptions {
   /**
    * Follow the `bookEvents` tape for queue activity (fills and cancels
    * ahead of each child order). Default true; it falls back to snapshots
-   * when the server's tape is off.
+   * when the server's tape is off. The tape is read only while a child
+   * order rests on the book, and for `eventLingerMs` after the last one
+   * goes.
    */
   events?: boolean;
+  /**
+   * Keep reading the tape this long after the last working child order
+   * goes (ms), so an algo re-placing its slices doesn't resubscribe each
+   * time. Default 30,000.
+   */
+  eventLingerMs?: number;
 }
+
+/**
+ * `on`, held for `lingerMs` after it turns off. Serving a `bookEvents`
+ * window costs the server a filtered, sorted viewport over the whole tape
+ * (docs/performance.md, "Book event tape"), so it is opened only while the
+ * activity it feeds can be shown.
+ */
+const useLingering = (on: boolean, lingerMs: number) => {
+  const [held, setHeld] = useState(on);
+  useEffect(() => {
+    if (on) {
+      setHeld(true);
+      return;
+    }
+    const timer = setTimeout(() => setHeld(false), lingerMs);
+    return () => clearTimeout(timer);
+  }, [on, lingerMs]);
+  return on || held;
+};
 
 const PARENT_COLUMNS = [
   "orderId",
@@ -167,7 +194,7 @@ const positionsOf = (
  */
 export const useOrderBook = (
   orderId: string | undefined,
-  { levels = 10, events = true }: OrderBookOptions = {},
+  { levels = 10, events = true, eventLingerMs = 30_000 }: OrderBookOptions = {},
 ): OrderBookState => {
   const parentSource = useTradingDataSource("parentOrders", {
     columns: PARENT_COLUMNS,
@@ -247,7 +274,11 @@ export const useOrderBook = (
     () => (idKey ? new Set(idKey.split(",")) : NO_IDS),
     [idKey],
   );
-  const book = useBookQueue(ric, { ownOrderIds, events });
+  const followTape = useLingering(
+    events && ownOrderIds.size > 0,
+    eventLingerMs,
+  );
+  const book = useBookQueue(ric, { ownOrderIds, events: followTape });
 
   const children = useMemo(() => {
     const positions = positionsOf(book.queues, ownOrderIds);
