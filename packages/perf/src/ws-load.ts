@@ -10,8 +10,8 @@
  *
  * --book-l3 adds, per ladder viewport, the L3 viewports an order book opens
  * on the same ric (useBookQueue): `bookOrders`, plus `bookStatus` and a
- * seq-desc `bookEvents` window for `events`, which also turns the
- * server's tape on (EXCHANGE_SIM_BOOK_EVENTS=1). --event-window sets the
+ * seq-desc `bookEvents` window for `events`. The server's tape is on by
+ * default; `snapshot` turns it off (EXCHANGE_SIM_BOOK_EVENTS=0). --event-window sets the
  * `bookEvents` rows (default 100, useBookQueue's `eventWindow`).
  * `forward` reads the tape forward instead: `seq > N` sorted ascending
  * (`--event-sort=asc|none`), moving N on once half the window (default
@@ -135,6 +135,8 @@ const simEnv: Record<string, string> = {
     ? { EXCHANGE_SIM_PUBLISH_INTERVAL_MS: args["publish-ms"] }
     : {}),
   ...(args.active ? { EXCHANGE_SIM_ACTIVE_INSTRUMENTS: args.active } : {}),
+  // the tape is on by default; `--book-l3=snapshot` turns it off as the baseline
+  ...(bookL3 === "snapshot" ? { EXCHANGE_SIM_BOOK_EVENTS: "0" } : {}),
   ...(tapeOn ? { EXCHANGE_SIM_BOOK_EVENTS: "1" } : {}),
 };
 

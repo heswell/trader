@@ -46,7 +46,7 @@ serverConfig.withModule(ExchangeModule(sim));   // starts ticking once its table
 | `depth` | `ric\|side\|level` | Top `depthLevels` (10) levels per side: price, size, cumSize, orderCount, seq. Updates are deltas; a level is touched only when its values change, and vanished levels are deleted. |
 | `trades` | `tradeId` | Time and sales across all instruments. It is a ring buffer of `tradesCapacity` (50k) rows; the oldest rows are deleted. `aggressorSide` is the taker side. |
 | `bookOrders` | `orderId` | Order-by-order (L3) book: one row per resting order (`ric`, `side`, `price`, open `size`, `entryTime`, `seq`, `priority`). Anonymous: no account or owner. Sort by side, price, then `priority`, for queue order (`entryTime` is in ms and can tie). `orderId` matches `childOrders.exchangeOrderId` for OMS orders. Writes are coalesced per flush. Off with `bookOrders=0`. |
-| `bookEvents` | `ric\|seq` | The L3 event tape (off by default, `bookEvents=1`). Ring buffer of `bookEventsCapacity` rows. See [L3 data](#l3-order-by-order-data). |
+| `bookEvents` | `ric\|seq` | The L3 event tape (on by default; `bookEvents=0` turns it off). Ring buffer of `bookEventsCapacity` rows. See [L3 data](#l3-order-by-order-data). |
 | `bookStatus` | `ric` | One row per book, written after `bookOrders` in the same flush: `seq` (the last event seq the book's `bookOrders` rows reflect: the snapshot marker), `orders` (its `bookOrders` rows) and `resetSeq` (its last `RESET`, 0 = none). Rewritten only when one of them changes. Off with `bookOrders=0`. |
 | `instrumentPrices` | `ric` | A join of instruments and prices. |
 | `bars` | `ric\|interval\|start` | OHLCV candles per instrument and `barIntervals` interval (`1s`, `1m`, `5m`), built from trades. The current bar updates in place on each flush; `barHistory` closed bars are kept per series (oldest deleted). Intervals are exchange-clock (wall) time; intervals with no trades are gaps. `barBackfill` seeds synthetic history at startup. |
@@ -297,7 +297,7 @@ Set `exchangeSim.<key>` in application.conf, or `EXCHANGE_SIM_<UPPER_SNAKE_KEY>`
 | `timeSeriesHistoryHours` | 43830 | Synthetic history (5 years) made on an instrument's first time-series subscription or query. Beyond about 6 days it is a HistoryTree, generated per bucket on demand down to single points; the last day or so is stored. |
 | `timeSeriesMaxRics` | 4 | Instruments holding generated history at once (least recently queried dropped). |
 | `bookOrders` | 1 | 1 = publish the L3 `bookOrders` table; 0 = off. |
-| `bookEvents` | 0 | 1 = publish every L3 event to the `bookEvents` tape; 0 = off. |
+| `bookEvents` | 1 | 1 = publish every L3 event to the `bookEvents` tape; 0 = off. |
 | `bookEventsCapacity` | 50000 | `bookEvents` rows kept across all instruments (oldest deleted). |
 | `priceBandPct` | 0.2 | Static band around refPrice (±20%). |
 | `timeScale` | 10 | Price-model time multiplier. |

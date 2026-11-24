@@ -183,8 +183,8 @@ export interface ExchangeSimConfig {
   /** 1 = publish the L3 `bookOrders` table (one row per resting order); 0 = off. */
   bookOrders: number;
   /**
-   * 1 = publish every L3 event to the `bookEvents` tape; 0 = off. Roughly
-   * doubles table updates at the default load.
+   * 1 = publish every L3 event to the `bookEvents` tape (default); 0 = off.
+   * Roughly doubles table updates at the default load.
    */
   bookEvents: number;
   /** `bookEvents` rows kept, across all instruments (oldest deleted). */
@@ -267,7 +267,7 @@ export const DEFAULT_CONFIG: Readonly<ExchangeSimConfig> = Object.freeze({
   timeSeriesHistoryHours: 43_830,
   timeSeriesMaxRics: 4,
   bookOrders: 1,
-  bookEvents: 0,
+  bookEvents: 1,
   bookEventsCapacity: 50_000,
   simPublishIntervalMs: 1_000,
   simSampleIntervalMs: 1_000,

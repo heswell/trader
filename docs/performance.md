@@ -29,7 +29,7 @@ bun run perf:ws --target=stack       # against a running `bun run start:all`
 | `--duration`, `--warmup` | 10, 3 / 30, 5 | Measured window and warm-up, in seconds |
 | `--tick` | 1 / 4 | Multiplier on the simulator bot rates (market maker 10/s, taker 8/s) |
 | `--mm-rate`, `--taker-rate`, `--publish-ms`, `--active` | from `--tick` | Override the simulator rates, the price publish throttle, and the number of active instruments (local target only) |
-| `--book-l3` | off | `snapshot`, `events` or `forward`: with each ladder viewport, also open the L3 viewports an order book opens on its ric (`useBookQueue`): `bookOrders` (2,000 rows), plus `bookStatus` and a `bookEvents` window for `events` (newest first, as before forward reading) and `forward` (`seq > N` ascending, as `useBookQueue` reads it now). Both turn the tape on (`EXCHANGE_SIM_BOOK_EVENTS=1`). |
+| `--book-l3` | off | `snapshot`, `events` or `forward`: with each ladder viewport, also open the L3 viewports an order book opens on its ric (`useBookQueue`): `bookOrders` (2,000 rows), plus `bookStatus` and a `bookEvents` window for `events` (newest first, as before forward reading) and `forward` (`seq > N` ascending, as `useBookQueue` reads it now). Both turn the tape on (`EXCHANGE_SIM_BOOK_EVENTS=1`, the default); `snapshot` turns it off. |
 | `--event-window` | 100 / 500 (`forward`) | `bookEvents` rows per viewport (`useBookQueue`'s `eventWindow`) |
 | `--advance-ms` | 1000 | `forward`: longest time before N moves on (it also moves once half the window has arrived) |
 | `--event-sort` | `asc` | `forward`: `none` drops the sort and relies on insertion order |
@@ -220,7 +220,7 @@ With no client on the tape (smoke, tape on vs off) server CPU went from 58% to a
   and lag barely move. The cost is in the 120 viewports each filtering and sorting the shared tape (50,000 rows,
   `bookEventsCapacity`) on every change, not in the wire.
 
-So the tape stays off by default. Before turning it on:
+So the tape stayed off by default until these were done:
 - Open the event viewports only where they are used. Done: the queue activity they feed is shown only for the user's
   own orders, so `useOrderBook` reads the tape only while a child order is working (and for 30 s after), not for every
   open order book. The `--book-l3=events` runs above are the worst case: every ladder with a tape window.
@@ -268,7 +268,9 @@ snapshots before reloading, so the events can arrive. `useBookQueue` counts acti
 the book.
 
 With the order book reading the tape only while a child order is working, what remains is about 0.12 points of server
-CPU per order book with a working order (tick ×1), and nothing extra on the wire.
+CPU per order book with a working order (tick ×1), and nothing extra on the wire. So `exchangeSim.bookEvents` is now on
+by default (2026-11-24). Writing it costs about 2.5 points of server CPU with no client on it, which every harness run
+now includes; `--book-l3=snapshot` turns it off for the snapshot-only baseline.
 
 ## Charts
 
