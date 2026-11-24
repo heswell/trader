@@ -3,7 +3,11 @@
  * load clients, each with its viewports, counts rows only between the
  * parent's "start" and "stop" messages, then reports per-client results.
  */
-import { type ViewportSpec, VuuPerfClient } from "./lib/vuuPerfClient";
+import {
+  type ForwardTape,
+  type ViewportSpec,
+  VuuPerfClient,
+} from "./lib/vuuPerfClient";
 
 export interface WorkerClientSpec {
   id: string;
@@ -25,6 +29,8 @@ export interface ViewportResult {
   seqGaps: number;
   seqUpdates: number;
   latency: number[];
+  /** Forward-read tapes: filter advances, seqs skipped, rows out of order. */
+  tape?: { advances: number; missed: number; outOfOrder: number };
 }
 
 export interface ClientResult {
@@ -86,7 +92,14 @@ process.on(
     } else if (message.type === "start") {
       startedAt = performance.now();
       cpuAtStart = process.cpuUsage();
-      for (const { client } of clients) client.counting = true;
+      for (const { client } of clients) {
+        client.counting = true;
+        for (const tape of client.tapes.values()) {
+          tape.advances = 0;
+          tape.missed = 0;
+          tape.outOfOrder = 0;
+        }
+      }
     } else if (message.type === "stop") {
       for (const { client } of clients) client.counting = false;
       const cpu = process.cpuUsage(cpuAtStart);
@@ -100,13 +113,14 @@ process.on(
           bytes: client.bytes,
           wireLatency: sample(client.wireLatency.values),
           closed: client.closed,
-          viewports: [...client.viewports.values()].map((counters) => ({
+          viewports: [...client.viewports.entries()].map(([id, counters]) => ({
             kind: counters.spec.kind,
             rows: counters.rows,
             sizeOnly: counters.sizeOnly,
             seqGaps: counters.seqGaps,
             seqUpdates: counters.seqUpdates,
             latency: sample(counters.latency.values),
+            ...tapeResult(client.tapes.get(id)),
           })),
         })),
       });
@@ -116,3 +130,14 @@ process.on(
     }
   },
 );
+
+const tapeResult = (tape: ForwardTape | undefined) =>
+  tape
+    ? {
+        tape: {
+          advances: tape.advances,
+          missed: tape.missed,
+          outOfOrder: tape.outOfOrder,
+        },
+      }
+    : {};

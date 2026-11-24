@@ -5,7 +5,7 @@
  *   bun run perf:ws [--preset=smoke|heavy] [--target=local|stack]
  *     [--clients=N] [--viewports=M] [--duration=s] [--warmup=s]
  *     [--tick=x] [--mm-rate=n] [--taker-rate=n] [--publish-ms=n]
- *     [--active=n] [--workers=n] [--assert] [--book-l3=snapshot|events]
+ *     [--active=n] [--workers=n] [--assert] [--book-l3=snapshot|events|forward]
  *     [--event-window=n]
  *
  * --book-l3 adds, per ladder viewport, the L3 viewports an order book opens
@@ -13,6 +13,9 @@
  * seq-desc `bookEvents` window for `events`, which also turns the
  * server's tape on (EXCHANGE_SIM_BOOK_EVENTS=1). --event-window sets the
  * `bookEvents` rows (default 100, useBookQueue's `eventWindow`).
+ * `forward` reads the tape forward instead: `seq > N` sorted ascending
+ * (`--event-sort=asc|none`), moving N on once half the window (default
+ * 500) has arrived or every --advance-ms (default 1000).
  *
  * See docs/performance.md. Writes perf-results/ws-load-<stamp>.{json,md}.
  */
@@ -109,12 +112,21 @@ const workersN = num(
 const assert = args.assert === "true";
 const p95Budget = num("max-p95-ms", 1_000);
 const bookL3 = args["book-l3"];
-if (bookL3 !== undefined && bookL3 !== "snapshot" && bookL3 !== "events") {
-  throw Error("--book-l3 must be snapshot or events");
+if (
+  bookL3 !== undefined &&
+  bookL3 !== "snapshot" &&
+  bookL3 !== "events" &&
+  bookL3 !== "forward"
+) {
+  throw Error("--book-l3 must be snapshot, events or forward");
 }
-const eventWindow = num("event-window", 100);
-const l3Kinds: Kind[] =
-  bookL3 === "events" ? [...L3_KINDS] : bookL3 ? ["bookOrders"] : [];
+const tapeOn = bookL3 === "events" || bookL3 === "forward";
+const eventSort = args["event-sort"] ?? "asc";
+if (eventSort !== "asc" && eventSort !== "none") {
+  throw Error("--event-sort must be asc or none");
+}
+const eventWindow = num("event-window", bookL3 === "forward" ? 500 : 100);
+const l3Kinds: Kind[] = tapeOn ? [...L3_KINDS] : bookL3 ? ["bookOrders"] : [];
 
 const simEnv: Record<string, string> = {
   EXCHANGE_SIM_MM_RATE: String(num("mm-rate", 10 * tick)),
@@ -123,7 +135,7 @@ const simEnv: Record<string, string> = {
     ? { EXCHANGE_SIM_PUBLISH_INTERVAL_MS: args["publish-ms"] }
     : {}),
   ...(args.active ? { EXCHANGE_SIM_ACTIVE_INSTRUMENTS: args.active } : {}),
-  ...(bookL3 === "events" ? { EXCHANGE_SIM_BOOK_EVENTS: "1" } : {}),
+  ...(tapeOn ? { EXCHANGE_SIM_BOOK_EVENTS: "1" } : {}),
 };
 
 const out = resultsPath(`ws-load-${presetName}`);
@@ -294,6 +306,18 @@ const viewportSpec = (
         range: { from: 0, to: 1 },
       };
     case "bookEvents":
+      if (bookL3 === "forward") {
+        return {
+          ...spec,
+          filter: `ric = "${rics[n % rics.length]}"`,
+          sort: eventSort === "asc" ? [{ column: "seq", sortType: "A" }] : [],
+          range: { from: 0, to: eventWindow },
+          forward: {
+            advanceAt: Math.max(1, Math.floor(eventWindow / 2)),
+            advanceMs: num("advance-ms", 1_000),
+          },
+        };
+      }
       return {
         ...spec,
         filter: `ric = "${rics[n % rics.length]}"`,
@@ -510,6 +534,8 @@ interface KindSummary {
   latencyMs?: Distribution;
   /** prices: book events skipped between consecutive updates of a ric. */
   seqGapPct?: number;
+  /** Forward-read tapes, per second over all viewports of the kind. */
+  tape?: { advancesPerSec: number; missed: number; outOfOrder: number };
 }
 
 function summarise(input: {
@@ -543,6 +569,20 @@ function summarise(input: {
         ? { latencyMs: roundDist(distribution(latency)) }
         : {}),
       ...(updates ? { seqGapPct: round((100 * gaps) / (gaps + updates)) } : {}),
+      ...(vps.some((v) => v.tape)
+        ? {
+            tape: {
+              advancesPerSec: round(
+                vps.reduce((t, v) => t + (v.tape?.advances ?? 0), 0) / secs,
+              ),
+              missed: vps.reduce((t, v) => t + (v.tape?.missed ?? 0), 0),
+              outOfOrder: vps.reduce(
+                (t, v) => t + (v.tape?.outOfOrder ?? 0),
+                0,
+              ),
+            },
+          }
+        : {}),
     };
   }
   const totalRows = input.clients.reduce(
@@ -558,7 +598,8 @@ function summarise(input: {
       clients: clientsN,
       viewportsPerClient: viewportsM,
       bookL3: bookL3 ?? "off",
-      eventWindow: bookL3 === "events" ? eventWindow : undefined,
+      eventWindow: tapeOn ? eventWindow : undefined,
+      eventSort: bookL3 === "forward" ? eventSort : undefined,
       durationSecs: duration,
       warmupSecs: warmup,
       tick,
@@ -665,6 +706,13 @@ function markdown(r: Report) {
     ),
     "",
   ];
+  for (const [kind, k] of Object.entries(r.clients.byKind)) {
+    if (!k.tape) continue;
+    lines.push(
+      `**${kind} read forward**: ${k.tape.advancesPerSec} filter advances/s, ${fmt(k.tape.missed)} seqs skipped, ${fmt(k.tape.outOfOrder)} rows out of order`,
+      "",
+    );
+  }
   if (r.server) {
     const s = r.server;
     lines.push(
