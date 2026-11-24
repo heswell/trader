@@ -1435,7 +1435,7 @@ type LinkGroupId = string
 
 #### useBookQueue
 
-*hook* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L339)
+*hook* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L349)
 
 The order-by-order (L3) queue of every price level of one instrument,
 from EXCHANGE `bookOrders` (rebuilt with `@heswell/book-model`), with the
@@ -1445,7 +1445,7 @@ happened ahead of the user's orders. The table is empty when the server
 runs with `exchangeSim.bookOrders=0`.
 
 ```ts
-useBookQueue(ric: string | undefined, { enabled = true, ownOrderIds, maxOrders = 2_000, events = false, eventWindow = 100, }: BookQueueOptions = {}): BookQueueState
+useBookQueue(ric: string | undefined, { enabled = true, ownOrderIds, maxOrders = 2_000, events = false, eventWindow = 500, eventAdvanceMs = 1_000, }: BookQueueOptions = {}): BookQueueState
 ```
 
 #### useFollowedInstrument
@@ -1679,11 +1679,12 @@ const OWN_ORDER_STATUSES: readonly OrdStatus[]
 | `ownOrderIds?` | `ReadonlySet<string>` |  | Exchange order ids of the user's orders (see useOwnExchangeOrderIds). |
 | `maxOrders?` | `number` |  | Rows to subscribe to. Default 2,000. |
 | `events?` | `boolean` |  | Follow the `bookEvents` tape too, so `activity` reports fills and cancels ahead of the user's orders. Falls back to snapshots when the server's tape is off, or when the book is `truncated` (a partial snapshot never matches its marker). Default false. |
-| `eventWindow?` | `number` |  | Newest `bookEvents` rows subscribed to in event mode. Default 100. |
+| `eventWindow?` | `number` |  | `bookEvents` rows subscribed to in event mode. The tape is read forward (`seq > N`, ascending), and N moves on once half the window has arrived, or every `eventAdvanceMs`. Default 500. |
+| `eventAdvanceMs?` | `number` |  | Longest time before the tape's start seq moves on (ms). It must stay well inside what the server's ring buffer holds (`bookEventsCapacity`, about 4 s at the default load). Default 1,000. |
 
 #### BookQueueState
 
-*interface* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L202)
+*interface* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L212)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1937,7 +1938,7 @@ Where one child order rests in the L3 book.
 
 #### BookQueueSource
 
-*type* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L200)
+*type* · [hooks/useBookQueue.ts](../../packages/trading-ui/src/hooks/useBookQueue.ts#L210)
 
 Where the queues come from: see `BookFeedSource` (`snapshot` without `events`).
 

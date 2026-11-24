@@ -101,7 +101,11 @@ Replaying `bookEvents` in `seq` order reproduces `depth` exactly, and the queue 
 `__tests__/bookL3.test.ts` checks this with live bots, using the shared book model
 ([`@heswell/book-model`](../book-model/README.md)).
 `bookEvents` is unfiltered across instruments, so subscribe with a `ric` filter: one instrument sees about 90
-events/s at the default load, against about 18k/s for the whole market.
+events/s at the default load, against about 18k/s for the whole market. Read it forward (`ric = X and seq > N`,
+seq ascending, moving N on as events arrive) rather than as a newest-first window: a seq-descending window shifts
+on every event, so each viewport tick resends all of it. Move N on within the ring's lifetime
+(`bookEventsCapacity` / events per second, about 4 s at the default load), or the ring's evictions at the top of
+the window shift it the same way ([performance.md](../../docs/performance.md#book-event-tape)).
 
 Publishing is coalesced. Every `publishIntervalMs`, each book that changed is written once: one prices
 row plus a depth delta. Trades since the last flush are then appended. A prices row is skipped when

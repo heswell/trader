@@ -29,8 +29,10 @@ bun run perf:ws --target=stack       # against a running `bun run start:all`
 | `--duration`, `--warmup` | 10, 3 / 30, 5 | Measured window and warm-up, in seconds |
 | `--tick` | 1 / 4 | Multiplier on the simulator bot rates (market maker 10/s, taker 8/s) |
 | `--mm-rate`, `--taker-rate`, `--publish-ms`, `--active` | from `--tick` | Override the simulator rates, the price publish throttle, and the number of active instruments (local target only) |
-| `--book-l3` | off | `snapshot` or `events`: with each ladder viewport, also open the L3 viewports an order book opens on its ric (`useBookQueue`): `bookOrders` (2,000 rows), plus for `events` `bookStatus` and a seq-desc `bookEvents` window. `events` turns the tape on (`EXCHANGE_SIM_BOOK_EVENTS=1`). |
-| `--event-window` | 100 | `bookEvents` rows per viewport with `--book-l3=events` (`useBookQueue`'s `eventWindow`) |
+| `--book-l3` | off | `snapshot`, `events` or `forward`: with each ladder viewport, also open the L3 viewports an order book opens on its ric (`useBookQueue`): `bookOrders` (2,000 rows), plus `bookStatus` and a `bookEvents` window for `events` (newest first, as before forward reading) and `forward` (`seq > N` ascending, as `useBookQueue` reads it now). Both turn the tape on (`EXCHANGE_SIM_BOOK_EVENTS=1`). |
+| `--event-window` | 100 / 500 (`forward`) | `bookEvents` rows per viewport (`useBookQueue`'s `eventWindow`) |
+| `--advance-ms` | 1000 | `forward`: longest time before N moves on (it also moves once half the window has arrived) |
+| `--event-sort` | `asc` | `forward`: `none` drops the sort and relies on insertion order |
 | `--workers` | CPUs − 2 | Client worker threads (Bun workers, so the harness is not the bottleneck) |
 | `--assert` | off | Exit 1 on client errors or disconnects, no rows on a ticking table, or an e2e p95 over `--max-p95-ms` (default 1000) |
 
@@ -223,8 +225,50 @@ So the tape stays off by default. Before turning it on:
   own orders, so `useOrderBook` reads the tape only while a child order is working (and for 30 s after), not for every
   open order book. The `--book-l3=events` runs above are the worst case: every ladder with a tape window.
 - Make each event viewport cheaper on the server: a smaller `bookEventsCapacity`, a per-ric table, or a tape the
-  client reads from its last seq instead of a sorted window.
+  client reads from its last seq instead of a sorted window. Reading forward is done; see below.
 - Repeat the heavy runs: they were single runs.
+
+### Reading the tape forward
+
+`useBookQueue` now reads the tape forward: `ric = X and seq > N`, seq ascending, up to 500 rows, with N starting at
+the marker's seq and moving to the highest seq received once half the window has arrived, or every second. Rows
+only ever join the end of the window, so none is sent twice. N has to move well within the ring's lifetime
+(`bookEventsCapacity` / tape rate, about 4 s at tick ×1, 1.4 s at ×4): the ring evicts each ric's oldest rows, and an
+eviction inside the window shifts it like a new row at the top of a newest-first one.
+
+Measured with `--book-l3=forward` on 2026-11-24, the heavy shape (50 × 8, 120 order books) at tick ×1, 25 s, each
+mode run twice alternately (load average 2–3):
+
+| tick ×1, 120 order books | snapshot | events (100, newest first) | forward (500, asc) | forward, 20k ring, 0.5 s |
+| --- | --- | --- | --- | --- |
+| server CPU (stats file) | 80.6% | 94.9% | 95.4% | 92.6% |
+| prices rows/s delivered | 73,450 | 65,570 | 74,200 | 74,215 |
+| prices e2e p95 | 76 ms | 137 ms | 72 ms | 72 ms |
+| `bookEvents` rows/s per viewport | – | 430 | 45 | 45 |
+| server RSS max | 1,024 MB | 1,343 MB | 1,318 MB | 1,194 MB |
+| filter moves / s (all viewports) | – | – | 75 | 147 |
+
+- **Forward reading removes the wire cost.** Each viewport receives about the ric's own event rate (45 rows/s, down
+  from 430), and prices throughput and latency are back to the snapshot-only baseline. Nothing was skipped and no
+  row arrived out of order.
+- **It doesn't reduce the server's CPU.** It stays about 15 points over snapshot-only, the same as the newest-first
+  window, and moving N less often (31 moves/s, `--advance-ms=2500`) changes nothing (96%). The cost is in keeping
+  120 filtered views over the shared tape current on every insert, which only a per-ric table or an indexed `ric`
+  filter in the viewport engine would cut.
+- **A smaller ring saves memory, not CPU** (about 120 MB at 20k rows), and with a 1.4 s lifetime some rows were
+  evicted inside the window. Not worth it.
+- **Unsorted is worse.** With `--event-sort=none` (heavy, tick ×4) rows arrived out of order and seqs were skipped,
+  so the sort stays.
+- At tick ×4 the server is saturated and the machine was busy (load average 4–5), so those runs were too noisy to
+  rank precisely: forward delivered 55–62k prices/s, against 48k for the newest-first window and 84k for
+  snapshot-only.
+
+On a re-opened tape viewport (each move of N re-subscribes), `BookFeed` holds the book for up to `behindGrace` (4)
+snapshots before reloading, so the events can arrive. `useBookQueue` counts activity from when the tape first drives
+the book.
+
+With the order book reading the tape only while a child order is working, what remains is about 0.12 points of server
+CPU per order book with a working order (tick ×1), and nothing extra on the wire.
 
 ## Charts
 

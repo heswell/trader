@@ -347,10 +347,14 @@ describe("OrderBookView queue activity (local data, bookEvents on)", () => {
     const activity = () =>
       view.container.querySelector(".tradingOrderBookView-activity")
         ?.textContent ?? "";
-    await waitFor(() => {
-      tick();
-      expect(activity()).toMatch(/^[\d,]+ filled · [\d,]+ cancelled ahead$/);
-    });
+    // the tape opens once the marker gives it a start seq
+    await waitFor(
+      () => {
+        tick();
+        expect(activity()).toMatch(/^[\d,]+ filled · [\d,]+ cancelled ahead$/);
+      },
+      { timeout: 5_000 },
+    );
     // the bots trade and requote at the best bid: something happens ahead
     await waitFor(
       () => {
@@ -363,6 +367,17 @@ describe("OrderBookView queue activity (local data, bookEvents on)", () => {
       Number(n.replaceAll(",", "")),
     );
     expect(filled + cancelled).toBeLessThanOrEqual(levelSize);
+    // the tape's start seq moves on every second (re-opening its viewport)
+    // without a resync, which would mark the counts "≥"
+    const until = Date.now() + 2_500;
+    while (
+      Date.now() < until &&
+      view.container.querySelector(`.tradingOrderBookView-activity`)
+    ) {
+      tick();
+      expect(activity()).not.toStartWith("≥");
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
   });
 
   test("the tape is read only while a child order rests", async () => {

@@ -153,8 +153,8 @@ describe("BookFeed", () => {
     expect(feed.book.orderCount).toBe(1);
   });
 
-  test("a snapshot ahead of the book gets one snapshot's grace for events", () => {
-    const feed = new BookFeed();
+  test("snapshots ahead of the book get behindGrace snapshots for events", () => {
+    const feed = new BookFeed({ behindGrace: 2 });
     feed.snapshot(rows, { seq: 3, orders: 2 });
     feed.events([tape[2]]); // old event: the tape is on
     const ahead = [
@@ -163,10 +163,27 @@ describe("BookFeed", () => {
       row("c", 99, 7, 3, 4),
     ];
     feed.snapshot(ahead, { seq: 4, orders: 3 });
+    feed.snapshot(ahead, { seq: 4, orders: 3 });
     expect(feed.book.seq).toBe(3); // waits: event 4 may be on its way
     feed.snapshot(ahead, { seq: 4, orders: 3 });
     expect(feed.book.seq).toBe(4);
     expect(feed.stats.resyncs).toBe(1);
+  });
+
+  test("events that arrive within the grace need no resync", () => {
+    const feed = new BookFeed();
+    feed.snapshot(rows, { seq: 3, orders: 2 });
+    feed.events([tape[2]]);
+    const ahead = [
+      row("a", 100, 10, 1, 1),
+      row("b", 100, 15, 2, 3),
+      row("c", 99, 7, 3, 4),
+    ];
+    for (let i = 0; i < 4; i++) feed.snapshot(ahead, { seq: 4, orders: 3 });
+    expect(feed.book.seq).toBe(3);
+    feed.events([tape[3]]); // the tape viewport is back
+    expect(feed.book.seq).toBe(4);
+    expect(feed.stats.resyncs).toBe(0);
   });
 
   test("the buffer keeps the newest events", () => {

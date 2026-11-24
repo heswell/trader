@@ -51,12 +51,15 @@ feed.book.track(exchangeOrderId);  // then feed.book.activity(exchangeOrderId)
 - A snapshot is used only when it is consistent with its marker: as many rows as `orders`, none newer than `seq`.
   The rows and the marker come from separate viewports, so either can be ahead of the other.
 - On a gap or a `RESET`, the book waits for the next consistent snapshot and replays the buffer after its marker.
-- While live, a snapshot at the book's seq is compared with it; two mismatches in a row reload it. A snapshot ahead
-  of the book gets one snapshot's grace for its events to arrive, then is loaded (at once when the tape is off).
+- While live, a snapshot at the book's seq is compared with it; two mismatches in a row reload it. Snapshots ahead
+  of a book that isn't moving get `behindGrace` (4) snapshots' grace for its events to arrive, then the next is
+  loaded (at once when the tape is off). The grace covers a late tape, or a tape viewport being re-opened.
 - `stats` counts events applied, resyncs, gaps, resets and mismatches.
 
 `useBookQueue(ric, { events: true })` in `@heswell/trading-ui` drives a `BookFeed` from three viewports: `bookOrders`,
-`bookStatus` and the newest `eventWindow` (100) rows of `bookEvents`. `exchange-sim/__tests__/bookL3.test.ts`
+`bookStatus` and `bookEvents`. It reads the tape forward: `ric = X and seq > N` sorted by seq ascending, starting
+from the marker's seq and moving N to the highest seq received once half the `eventWindow` (500) has arrived or
+every `eventAdvanceMs` (1 s). Rows only join the end of that window, so none is sent twice. `exchange-sim/__tests__/bookL3.test.ts`
 drives one with skewed rows and markers, small and dropped windows and a restore, and checks the result against the
 engine.
 

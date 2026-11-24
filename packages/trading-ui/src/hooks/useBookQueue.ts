@@ -9,7 +9,7 @@ import {
   type SnapshotOrder,
 } from "@heswell/book-model";
 import { SIDES, Side } from "@heswell/trading-schemas";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDataSourceRows } from "../data/useDataSourceRows";
 import { useTradingDataSource } from "../data/useTradingDataSource";
 import { filterString } from "../utils/filters";
@@ -192,8 +192,18 @@ export interface BookQueueOptions {
    * snapshot never matches its marker). Default false.
    */
   events?: boolean;
-  /** Newest `bookEvents` rows subscribed to in event mode. Default 100. */
+  /**
+   * `bookEvents` rows subscribed to in event mode. The tape is read
+   * forward (`seq > N`, ascending), and N moves on once half the window has
+   * arrived, or every `eventAdvanceMs`. Default 500.
+   */
   eventWindow?: number;
+  /**
+   * Longest time before the tape's start seq moves on (ms). It must stay
+   * well inside what the server's ring buffer holds (`bookEventsCapacity`,
+   * about 4 s at the default load). Default 1,000.
+   */
+  eventAdvanceMs?: number;
 }
 
 /** Where the queues come from: see `BookFeedSource` (`snapshot` without `events`). */
@@ -343,7 +353,8 @@ export const useBookQueue = (
     ownOrderIds,
     maxOrders = 2_000,
     events = false,
-    eventWindow = 100,
+    eventWindow = 500,
+    eventAdvanceMs = 1_000,
   }: BookQueueOptions = {},
 ): BookQueueState => {
   const dataSource = useTradingDataSource("bookOrders", {
@@ -352,9 +363,12 @@ export const useBookQueue = (
   const statusSource = useTradingDataSource("bookStatus", {
     columns: STATUS_COLUMNS,
   });
+  // read forward: rows only ever join the end of an ascending window, so
+  // nothing already sent is sent again (a newest-first window resends all
+  // of itself on every event; docs/performance.md, "Book event tape")
   const eventSource = useTradingDataSource("bookEvents", {
     columns: EVENT_COLUMNS,
-    sort: { sortDefs: [{ column: "seq", sortType: "D" }] },
+    sort: { sortDefs: [{ column: "seq", sortType: "A" }] },
   });
   const active = enabled && !!ric;
   const filter = ric ? `ric = ${filterString(ric)}` : "";
@@ -377,11 +391,45 @@ export const useBookQueue = (
   // a truncated snapshot never matches its marker, so the feed could never
   // go live: stay on snapshots and don't pay for the tape
   const followTape = events && !truncated;
+  // the tape is read from `after`: the marker's seq at first, then the
+  // highest seq received
+  const [after, setAfter] = useState<{ ric: string; seq: number }>();
+  const markerSeq = typeof status?.seq === "number" ? status.seq : undefined;
+  const start = after && after.ric === ric ? after.seq : undefined;
+  useEffect(() => {
+    if (ric && followTape && start === undefined && markerSeq !== undefined) {
+      setAfter({ ric, seq: markerSeq });
+    }
+  }, [ric, followTape, start, markerSeq]);
   const { rows: eventRows } = useDataSourceRows(eventSource, {
-    enabled: active && followTape,
-    filter,
+    enabled: active && followTape && start !== undefined,
+    filter: `${filter} and seq > ${start ?? 0}`,
     rowCount: eventWindow,
   });
+  const received = useRef(0);
+  received.current = start ?? 0;
+  for (const row of eventRows) {
+    const seq = row.seq as number;
+    if (row.ric === ric && seq > received.current) received.current = seq;
+  }
+  // move the start on once half the window has arrived, and on a timer, so
+  // rows are gone from the filter before the ring buffer evicts them (an
+  // eviction at the top of the window would shift, and resend, all of it)
+  const halfFull = eventRows.length >= eventWindow / 2;
+  useEffect(() => {
+    if (!ric || start === undefined) return;
+    const advance = () => {
+      if (received.current > start) {
+        setAfter({ ric, seq: received.current });
+      }
+    };
+    if (halfFull) {
+      advance();
+      return;
+    }
+    const timer = setTimeout(advance, eventAdvanceMs);
+    return () => clearTimeout(timer);
+  }, [ric, start, halfFull, eventAdvanceMs]);
   const model = useRef<Model | undefined>(undefined);
   const previous = useRef<LadderQueues>(EMPTY);
   const previousActivity = useRef(NO_ACTIVITY);
@@ -418,7 +466,6 @@ export const useBookQueue = (
     let source: BookQueueSource = "snapshot";
     let activity = NO_ACTIVITY;
     if (followTape) {
-      syncTracked(feed.book, ownOrderIds);
       const live = feed.book.status === "live";
       feed.events(tapeEvents(eventRows, ric, live ? feed.book.seq : 0));
       feed.snapshot(
@@ -429,6 +476,9 @@ export const useBookQueue = (
         },
       );
       source = feed.source;
+      // track from when the tape drives the book: before that, snapshots
+      // replace it and there is nothing to count
+      if (source === "events") syncTracked(feed.book, ownOrderIds);
       if (source === "waiting") {
         // until rows and marker agree, show the rows as they are
         fallback.reset(toBookOrders(mine));
