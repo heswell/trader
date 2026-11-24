@@ -5,7 +5,14 @@
  *   bun run perf:ws [--preset=smoke|heavy] [--target=local|stack]
  *     [--clients=N] [--viewports=M] [--duration=s] [--warmup=s]
  *     [--tick=x] [--mm-rate=n] [--taker-rate=n] [--publish-ms=n]
- *     [--active=n] [--workers=n] [--assert]
+ *     [--active=n] [--workers=n] [--assert] [--book-l3=snapshot|events]
+ *     [--event-window=n]
+ *
+ * --book-l3 adds, per ladder viewport, the L3 viewports an order book opens
+ * on the same ric (useBookQueue): `bookOrders`, plus `bookStatus` and a
+ * seq-desc `bookEvents` window for `events`, which also turns the
+ * server's tape on (EXCHANGE_SIM_BOOK_EVENTS=1). --event-window sets the
+ * `bookEvents` rows (default 100, useBookQueue's `eventWindow`).
  *
  * See docs/performance.md. Writes perf-results/ws-load-<stamp>.{json,md}.
  */
@@ -62,9 +69,14 @@ const KINDS = [
   "fills",
   "ladder",
 ] as const;
-type Kind = (typeof KINDS)[number];
+/** Opened per ladder viewport by --book-l3, not cycled. */
+const L3_KINDS = ["bookOrders", "bookStatus", "bookEvents"] as const;
+type Kind = (typeof KINDS)[number] | (typeof L3_KINDS)[number];
 
 const TABLES: Record<Kind, { module: string; table: string }> = {
+  bookOrders: { module: "EXCHANGE", table: "bookOrders" },
+  bookStatus: { module: "EXCHANGE", table: "bookStatus" },
+  bookEvents: { module: "EXCHANGE", table: "bookEvents" },
   instrumentPrices: { module: "EXCHANGE", table: "instrumentPrices" },
   prices: { module: "EXCHANGE", table: "prices" },
   ladder: { module: "EXCHANGE", table: "depth" },
@@ -96,6 +108,13 @@ const workersN = num(
 );
 const assert = args.assert === "true";
 const p95Budget = num("max-p95-ms", 1_000);
+const bookL3 = args["book-l3"];
+if (bookL3 !== undefined && bookL3 !== "snapshot" && bookL3 !== "events") {
+  throw Error("--book-l3 must be snapshot or events");
+}
+const eventWindow = num("event-window", 100);
+const l3Kinds: Kind[] =
+  bookL3 === "events" ? [...L3_KINDS] : bookL3 ? ["bookOrders"] : [];
 
 const simEnv: Record<string, string> = {
   EXCHANGE_SIM_MM_RATE: String(num("mm-rate", 10 * tick)),
@@ -104,6 +123,7 @@ const simEnv: Record<string, string> = {
     ? { EXCHANGE_SIM_PUBLISH_INTERVAL_MS: args["publish-ms"] }
     : {}),
   ...(args.active ? { EXCHANGE_SIM_ACTIVE_INSTRUMENTS: args.active } : {}),
+  ...(bookL3 === "events" ? { EXCHANGE_SIM_BOOK_EVENTS: "1" } : {}),
 };
 
 const out = resultsPath(`ws-load-${presetName}`);
@@ -205,7 +225,7 @@ async function probe(endpoint: Endpoint) {
     { insecure: endpoint.insecure },
   );
   const columns = {} as Record<Kind, string[]>;
-  for (const kind of new Set(KINDS)) {
+  for (const kind of new Set<Kind>([...KINDS, ...l3Kinds])) {
     const { module, table } = TABLES[kind];
     columns[kind] = await client.tableColumns(module, table);
   }
@@ -260,6 +280,25 @@ const viewportSpec = (
         ...spec,
         filter: `ric = "${rics[n % rics.length]}" and level < 10`,
         range: { from: 0, to: 40 },
+      };
+    case "bookOrders":
+      return {
+        ...spec,
+        filter: `ric = "${rics[n % rics.length]}"`,
+        range: { from: 0, to: 2_000 },
+      };
+    case "bookStatus":
+      return {
+        ...spec,
+        filter: `ric = "${rics[n % rics.length]}"`,
+        range: { from: 0, to: 1 },
+      };
+    case "bookEvents":
+      return {
+        ...spec,
+        filter: `ric = "${rics[n % rics.length]}"`,
+        sort: [{ column: "seq", sortType: "D" }],
+        range: { from: 0, to: eventWindow },
       };
     case "parentOrders":
     case "childOrders":
@@ -359,7 +398,7 @@ const psSampler = (pid: number | undefined) => {
 
 async function main() {
   console.log(
-    `ws-load ${presetName}: ${clientsN} clients x ${viewportsM} viewports, ${target}, ${duration}s (+${warmup}s warmup), tick x${tick}, ${workersN} workers`,
+    `ws-load ${presetName}: ${clientsN} clients x ${viewportsM} viewports${bookL3 ? ` + book L3 ${bookL3}` : ""}, ${target}, ${duration}s (+${warmup}s warmup), tick x${tick}, ${workersN} workers`,
   );
   const endpoint =
     target === "stack" ? await connectStack() : await startLocal();
@@ -375,14 +414,12 @@ async function main() {
     specs.push({
       id: `client-${i}`,
       token: await endpoint.token(i),
-      viewports: Array.from({ length: viewportsM }, (_, k) =>
-        viewportSpec(
-          KINDS[(i + k) % KINDS.length],
-          columns,
-          rics,
-          i * viewportsM + k,
-        ),
-      ),
+      viewports: Array.from({ length: viewportsM }, (_, k) => {
+        const kind = KINDS[(i + k) % KINDS.length];
+        const n = i * viewportsM + k;
+        const extra = kind === "ladder" ? l3Kinds : [];
+        return [kind, ...extra].map((kd) => viewportSpec(kd, columns, rics, n));
+      }).flat(),
     });
   }
 
@@ -520,6 +557,8 @@ function summarise(input: {
       target,
       clients: clientsN,
       viewportsPerClient: viewportsM,
+      bookL3: bookL3 ?? "off",
+      eventWindow: bookL3 === "events" ? eventWindow : undefined,
       durationSecs: duration,
       warmupSecs: warmup,
       tick,
@@ -592,7 +631,7 @@ type Report = ReturnType<typeof summarise>;
 function markdown(r: Report) {
   const c = r.config;
   const lines = [
-    `## WS load: ${c.preset} (${c.clients} clients x ${c.viewportsPerClient} viewports, ${c.target})`,
+    `## WS load: ${c.preset} (${c.clients} clients x ${c.viewportsPerClient} viewports, ${c.target}${c.bookL3 !== "off" ? `, book L3 ${c.bookL3}` : ""})`,
     "",
     `${c.date}, ${c.durationSecs}s window, tick x${c.tick} (${Object.entries(
       c.sim,
