@@ -209,8 +209,8 @@ describe("bookOrders / bookEvents tables", () => {
     expect(tables.bookOrders.deletes).toBe(1);
     expect(tables.bookOrders.get(a)?.size).toBe(30);
     expect(tables.bookOrders.get(b)).toBeUndefined();
-    // the bookEvents tape is off by default
-    expect(tables.bookEvents.rowCount).toBe(0);
+    // the bookEvents tape is on by default: 2 adds, 2 amends, a cancel
+    expect(tables.bookEvents.rowCount).toBe(5);
   });
 
   test("priority is queue order: kept by a REDUCE, reset by a lost-priority amend", () => {
@@ -299,7 +299,7 @@ describe("bookOrders / bookEvents tables", () => {
     expect(tables.bookOrders.get("early")?.size).toBe(5);
   });
 
-  test("bookOrders = 0 disables the table and the events", () => {
+  test("bookOrders = 0 and bookEvents = 0 disable the table and the events", () => {
     const clock = new ManualClock();
     const sim = createExchangeSimulator({
       clock: clock.now,
@@ -308,6 +308,7 @@ describe("bookOrders / bookEvents tables", () => {
         mmRate: 0,
         takerRate: 0,
         bookOrders: 0,
+        bookEvents: 0,
       },
     });
     const tables = createFakeTables();
