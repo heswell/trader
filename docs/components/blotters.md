@@ -84,7 +84,8 @@ event mode (the `bookEvents` tape) only while a child order is working, and for 
 one goes, because each tape viewport costs the server a filtered, sorted view of the whole tape
 ([performance.md](../performance.md#book-event-tape)); `useOrderBook(orderId, { events: false })` turns it off. When
 `bookOrders` is empty but `depth` is not, the server has L3 off and the panel says so; when an instrument has
-more resting orders than `useBookQueue` loads (`truncated`), it says the queues may be incomplete.
+more resting orders than `useBookQueue` loads (`truncated`, from the `bookStatus` order count), it says the queues may be
+incomplete, and the tape isn't read.
 
 In a vuu context panel, the panel widens to `min(480px, 90vw)` while it shows an order book (vuu's default is
 300px). Set `--tradingOrderBookView-panelWidth` (for example on `:root`) to choose another width.

@@ -186,9 +186,10 @@ export interface BookQueueOptions {
   /** Rows to subscribe to. Default 2,000. */
   maxOrders?: number;
   /**
-   * Follow the `bookEvents` tape too (with the `bookStatus` marker), so
-   * `activity` reports fills and cancels ahead of the user's orders. Falls
-   * back to snapshots when the server's tape is off. Default false.
+   * Follow the `bookEvents` tape too, so `activity` reports fills and
+   * cancels ahead of the user's orders. Falls back to snapshots when the
+   * server's tape is off, or when the book is `truncated` (a partial
+   * snapshot never matches its marker). Default false.
    */
   events?: boolean;
   /** Newest `bookEvents` rows subscribed to in event mode. Default 100. */
@@ -202,6 +203,11 @@ export interface BookQueueState {
   queues: LadderQueues;
   /** Resting orders received for the instrument. */
   orderCount: number;
+  /**
+   * Resting orders the instrument has: the `bookStatus` marker's `orders`,
+   * or the `bookOrders` viewport size until the marker arrives.
+   */
+  restingOrders: number;
   /**
    * The instrument has more resting orders than `maxOrders`: the rest were
    * not loaded, so queues may be incomplete.
@@ -357,13 +363,22 @@ export const useBookQueue = (
     filter,
     rowCount: maxOrders,
   });
+  // the marker's order count says whether the book fits in maxOrders, so
+  // it is read in either mode
   const { rows: statusRows } = useDataSourceRows(statusSource, {
-    enabled: active && events,
+    enabled: active,
     filter,
     rowCount: 1,
   });
+  const status = ric ? statusRows.find((row) => row.ric === ric) : undefined;
+  const restingOrders =
+    typeof status?.orders === "number" ? status.orders : size;
+  const truncated = restingOrders > maxOrders;
+  // a truncated snapshot never matches its marker, so the feed could never
+  // go live: stay on snapshots and don't pay for the tape
+  const followTape = events && !truncated;
   const { rows: eventRows } = useDataSourceRows(eventSource, {
-    enabled: active && events,
+    enabled: active && followTape,
     filter,
     rowCount: eventWindow,
   });
@@ -378,16 +393,17 @@ export const useBookQueue = (
       return {
         queues: EMPTY,
         orderCount: 0,
+        restingOrders: 0,
         truncated: false,
         loaded: false,
         activity: NO_ACTIVITY,
         source: "waiting",
       };
     }
-    if (model.current?.ric !== ric || model.current.events !== events) {
+    if (model.current?.ric !== ric || model.current.events !== followTape) {
       model.current = {
         ric,
-        events,
+        events: followTape,
         feed: new BookFeed(),
         fallback: new BookBuilder(),
       };
@@ -401,11 +417,10 @@ export const useBookQueue = (
     let book: BookBuilder = feed.book;
     let source: BookQueueSource = "snapshot";
     let activity = NO_ACTIVITY;
-    if (events) {
+    if (followTape) {
       syncTracked(feed.book, ownOrderIds);
       const live = feed.book.status === "live";
       feed.events(tapeEvents(eventRows, ric, live ? feed.book.seq : 0));
-      const status = statusRows.find((row) => row.ric === ric);
       feed.snapshot(
         toSnapshotOrders(mine),
         status && {
@@ -433,7 +448,8 @@ export const useBookQueue = (
     return {
       queues,
       orderCount: book.orderCount,
-      truncated: size > maxOrders,
+      restingOrders,
+      truncated,
       loaded,
       activity,
       source,
@@ -441,13 +457,13 @@ export const useBookQueue = (
   }, [
     active,
     rows,
-    size,
-    maxOrders,
     ric,
     ownOrderIds,
     loaded,
-    events,
-    statusRows,
+    followTape,
+    status,
+    restingOrders,
+    truncated,
     eventRows,
   ]);
 };

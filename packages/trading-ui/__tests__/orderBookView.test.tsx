@@ -27,6 +27,7 @@ import {
   orderTypeLabel,
   restsAtLimit,
   TradingDataProvider,
+  useBookQueue,
   useOrderBook,
 } from "../src";
 
@@ -397,5 +398,28 @@ describe("OrderBookView queue activity (local data, bookEvents on)", () => {
       expect(hook.result.current.ownOrderIds.size).toBe(0);
       expect(hook.result.current.l3Source).toBe("snapshot");
     });
+  });
+
+  test("a book larger than maxOrders is truncated by the marker's count", async () => {
+    const full = renderHook(() => useBookQueue(book.ric, { events: true }), {
+      wrapper: Wrapper,
+    });
+    const cut = renderHook(
+      () => useBookQueue(book.ric, { events: true, maxOrders: 5 }),
+      { wrapper: Wrapper },
+    );
+    await waitFor(() => {
+      tick();
+      const { orderCount, restingOrders, truncated } = full.result.current;
+      expect(restingOrders).toBeGreaterThan(5);
+      expect(orderCount).toBe(restingOrders);
+      expect(truncated).toBe(false);
+      expect(cut.result.current.restingOrders).toBe(restingOrders);
+    });
+    const { orderCount, truncated, source } = cut.result.current;
+    expect(truncated).toBe(true);
+    expect(orderCount).toBeLessThanOrEqual(5);
+    // a partial snapshot never matches its marker: no tape
+    expect(source).toBe("snapshot");
   });
 });
