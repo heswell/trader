@@ -1,26 +1,27 @@
 import {
-  contractMultiplierOf,
-  type InstrumentStatic,
-  InstrumentType,
   AlgoStrategy,
   type AmendOrderRequest,
-  type CancelAllRequest,
-  type CreateOrderRequest,
   canAmend,
   canCancel,
+  type CancelAllRequest,
+  contractMultiplierOf,
+  type CreateOrderRequest,
   ExecType,
+  type InstrumentStatic,
+  InstrumentType,
   isStopOrdType,
   isStopTriggered,
   isTerminalStatus,
   isWorkingStatus,
+  LimitMetric,
   Liquidity,
+  type OrderReject,
   OrdStatus,
   OrdType,
-  type OrderReject,
   positionKey,
   RejectReason,
-  Side,
   sessionClosedSince,
+  Side,
   TimeInForce,
   TradingPhase,
   UNSCHEDULED,
@@ -371,6 +372,8 @@ export class OmsEngine {
   #stops = new Map<string, ParentOrder>();
   /** Tape trades not yet checked against the waiting stops. */
   #stopTrades: MarketTrade[] = [];
+  /** Times of the orders created in the last second, by limit entity. */
+  #orderTimes = new Map<string, number[]>();
 
   constructor({
     gateway,
@@ -1035,10 +1038,19 @@ export class OmsEngine {
    * preview (OrderEntryService).
    */
   riskContext(account: string, ric: string) {
-    return this.#riskContext(account, ric);
+    return this.#riskContext(account, ric, undefined, true);
   }
 
-  #riskContext(account: string, ric: string, excludeOrderId?: string) {
+  /**
+   * excludeOrderId: the order being checked, so its own leaves are not also
+   * counted as working. newOrder: count the order rate (not for an amend).
+   */
+  #riskContext(
+    account: string,
+    ric: string,
+    excludeOrderId?: string,
+    newOrder = false,
+  ) {
     const top = this.#gateway.getTopOfBook(ric);
     const working = this.#workingQty(account, ric, excludeOrderId);
     const instrument = this.#gateway.getInstrument(ric);
@@ -1068,7 +1080,83 @@ export class OmsEngine {
         ric,
         instrument?.underlying || ric,
       ),
+      totals: this.#totals(account, ric, newOrder),
     };
+  }
+
+  /**
+   * Gross position notional and (for a new order) order rate of each entity
+   * from the account up to the firm that sets a limit on its own total.
+   */
+  #totals(account: string, ric: string, newOrder: boolean) {
+    const now = this.#clock();
+    return {
+      gross: this.limits
+        .ownUp(account, LimitMetric.GrossPositionNotional)
+        .map(({ entityId, limit }) => ({
+          entityId,
+          limit: limit.soft,
+          otherUsd: this.grossPositionUsd(entityId, { account, ric }),
+        })),
+      rate: newOrder
+        ? this.limits
+            .ownUp(account, LimitMetric.OrderRate)
+            .map(({ entityId, limit }) => ({
+              entityId,
+              limit: limit.soft,
+              count: this.recentOrders(entityId, now),
+            }))
+        : [],
+    };
+  }
+
+  /** Whether `account` is the limit entity or below it. */
+  #isUnder(account: string, entityId: string) {
+    return this.limits.ancestors(account).some((e) => e.entityId === entityId);
+  }
+
+  /**
+   * Sum of the absolute USD market value of the positions of a limit entity
+   * (an account, a desk or the firm), less one account's position in one RIC.
+   */
+  grossPositionUsd(
+    entityId: string,
+    except?: { account: string; ric: string },
+  ) {
+    let gross = 0;
+    const under = new Map<string, boolean>();
+    for (const position of this.positions.values()) {
+      if (position.account === except?.account && position.ric === except.ric) {
+        continue;
+      }
+      let isUnder = under.get(position.account);
+      if (isUnder === undefined) {
+        isUnder = this.#isUnder(position.account, entityId);
+        under.set(position.account, isUnder);
+      }
+      if (isUnder) gross += Math.abs(position.marketValueUsd ?? 0);
+    }
+    return gross;
+  }
+
+  /** Orders a limit entity created in the second up to `now`. */
+  recentOrders(entityId: string, now = this.#clock()) {
+    const times = this.#orderTimes.get(entityId);
+    if (!times) return 0;
+    while (times.length > 0 && times[0] <= now - 1_000) times.shift();
+    return times.length;
+  }
+
+  #countOrder(account: string, now: number) {
+    for (const { entityId } of this.limits.ancestors(account)) {
+      let times = this.#orderTimes.get(entityId);
+      if (!times) {
+        times = [];
+        this.#orderTimes.set(entityId, times);
+      }
+      times.push(now);
+      this.recentOrders(entityId, now);
+    }
   }
 
   /**
@@ -1199,12 +1287,13 @@ export class OmsEngine {
 
     const riskReject = this.#checkRisk(
       { ...request, timeInForce },
-      this.#riskContext(request.account, request.ric),
+      this.#riskContext(request.account, request.ric, parent.orderId, true),
     );
     if (riskReject) {
       this.#applyParent(parent, { type: "reject", ...riskReject });
       return fail(riskReject.reason, riskReject.text, parent.orderId);
     }
+    this.#countOrder(parent.account, now);
     this.#publishParent(parent);
 
     if (isAlgoParent(parent)) {

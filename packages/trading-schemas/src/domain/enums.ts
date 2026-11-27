@@ -240,6 +240,10 @@ export const RejectReason = Object.freeze({
   ExceedsMaxNotional: "EXCEEDS_MAX_NOTIONAL",
   /** Net delta on the underlying would exceed the account's maxDeltaUsd. */
   ExceedsMaxDelta: "EXCEEDS_MAX_DELTA",
+  /** Gross position notional of the account, its desk or the firm. */
+  ExceedsMaxGrossNotional: "EXCEEDS_MAX_GROSS_NOTIONAL",
+  /** Orders in the last second for the account, its desk or the firm. */
+  ExceedsOrderRate: "EXCEEDS_ORDER_RATE",
   PriceOutsideCollar: "PRICE_OUTSIDE_COLLAR",
   RestrictedInstrument: "RESTRICTED_INSTRUMENT",
   InstrumentHalted: "INSTRUMENT_HALTED",

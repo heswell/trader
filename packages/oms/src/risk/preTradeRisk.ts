@@ -58,6 +58,24 @@ export interface RiskContext {
    * LimitBook); absent = the account's own fields.
    */
   limits?: OrderLimits;
+  /**
+   * Limits on totals, one per entity (the account, its desk, the firm) that
+   * sets one: gross position notional and, for a new order, order rate.
+   */
+  totals?: TotalLimits;
+}
+
+/** A limit an entity sets on its own total. */
+export interface TotalLimit {
+  entityId: string;
+  limit: number;
+}
+
+export interface TotalLimits {
+  /** otherUsd: the entity's gross USD notional less this account and RIC. */
+  gross: (TotalLimit & { otherUsd: number })[];
+  /** count: the entity's orders in the last second. */
+  rate: (TotalLimit & { count: number })[];
 }
 
 /** Order fields the risk check reads (a validated createOrder / amend projection). */
@@ -204,10 +222,12 @@ export interface RiskBreach extends OrderReject {
 /**
  * The account limits and the collar an order breaks, in checkPreTradeRisk's
  * order: maxOrderQty, maxOrderNotional (the premium for an option), the
- * limit price collar (LIMIT only), maxPositionNotional, then maxDeltaUsd:
- * the account's net delta on the underlying (a stock, its futures and
- * options net), checked only when the order adds to it. The order ticket
- * shows them all; createOrder rejects on the first.
+ * limit price collar (LIMIT only), maxPositionNotional, gross position
+ * notional (of the account, its desk and the firm, each that sets one),
+ * maxDeltaUsd: the account's net delta on the underlying (a stock, its
+ * futures and options net), then order rate. Position, gross and delta are
+ * checked only when the order adds to them. The order ticket shows them
+ * all; createOrder rejects on the first.
  */
 export const riskLimitBreaches = (
   order: RiskOrder,
@@ -223,6 +243,7 @@ export const riskLimitBreaches = (
     | "deltaUsdPerUnit"
     | "underlyingDeltaUsd"
     | "limits"
+    | "totals"
   >,
 ): RiskBreach[] => {
   const breaches: RiskBreach[] = [];
@@ -274,6 +295,20 @@ export const riskLimitBreaches = (
       text: `projected position ${fmtUsd(positionUsd)} exceeds max ${fmtUsd(limits.maxPositionNotional)}`,
     });
   }
+  if (projected > Math.abs(ctx.positionQty)) {
+    // The first of the account, its desk and the firm whose total it breaks.
+    for (const { entityId, limit, otherUsd } of ctx.totals?.gross ?? []) {
+      const grossUsd = otherUsd + positionUsd;
+      if (grossUsd > limit) {
+        breaches.push({
+          code: EntryRiskCode.MaxGrossNotional,
+          reason: RejectReason.ExceedsMaxGrossNotional,
+          text: `gross position notional of ${entityId} ${fmtUsd(grossUsd)} exceeds max ${fmtUsd(limit)}`,
+        });
+        break;
+      }
+    }
+  }
   if (
     Number.isFinite(limits.maxDeltaUsd) &&
     ctx.deltaUsdPerUnit !== undefined
@@ -289,6 +324,16 @@ export const riskLimitBreaches = (
         reason: RejectReason.ExceedsMaxDelta,
         text: `net delta on ${instrument.underlying || instrument.ric} ${fmtUsd(delta)} exceeds max ${fmtUsd(limits.maxDeltaUsd)}`,
       });
+    }
+  }
+  for (const { entityId, limit, count } of ctx.totals?.rate ?? []) {
+    if (count + 1 > limit) {
+      breaches.push({
+        code: EntryRiskCode.OrderRate,
+        reason: RejectReason.ExceedsOrderRate,
+        text: `${entityId} has sent ${count} orders in the last second, max ${limit}`,
+      });
+      break;
     }
   }
   return breaches;
