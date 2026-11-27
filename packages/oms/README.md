@@ -37,7 +37,8 @@ const oms = createOms(sim.gateway, {
 ## Tables
 
 These are the `trading-schemas` OMS tables: `accounts`, `parentOrders`, `childOrders`, `fills`, `positions`, `pnlHistory`,
-`accountPnlHistory`, `clientBots`, `clientBotParams`, `limitEntities`, `limits`, `limitUtilisation`, plus the
+`accountPnlHistory`, `clientBots`, `clientBotParams`, `limitEntities`, `limits`, `limitUtilisation`, `limitBreaches`,
+`limitBreachEvents`, `limitRequests`, `killSwitches`, plus the
 `positionPrices` join (positions ⟕ EXCHANGE prices).
 EXCHANGE must be registered first.
 
@@ -75,7 +76,8 @@ EXCHANGE must be registered first.
   [Client bots](#client-bots)). Rows are for sim-admin users only (the exchange-sim `sim-admin` role, or no roles in
   `auto` mode), whatever accounts they can see.
 
-- `limitEntities` (`entityId`), `limits` (`limitKey`) and `limitUtilisation` (`limitKey`) are the trading limits. See
+- `limitEntities` (`entityId`), `limits` (`limitKey`), `limitUtilisation` (`limitKey`), `limitBreaches` (`breachId`),
+  `limitBreachEvents` (`eventId`), `limitRequests` (`requestId`) and `killSwitches` (`entityId`) are the trading limits. See
   [Limits](#limits). Rows are filtered by `entityId`: a user sees the entities of the accounts they can see and every
   entity above them (their desk and the Firm).
 
@@ -100,6 +102,30 @@ accounts (`src/limits/LimitBook.ts`). Metrics, scopes, periods and states are in
   (`OK`, `WARNING`, `SOFT_BREACH`, `HARD_BREACH`). Daily loss is minus the positions' total P&L since the OMS started:
   there is no daily reset yet. Daily loss is not checked pre-trade.
 - Limits are not persisted: they come back from the accounts and `oms.limits` on a restart.
+
+`LimitMonitor` (`src/limits/LimitMonitor.ts`) follows each utilisation update:
+
+- **Breaches.** A breach opens in `limitBreaches` when a limit reaches its warning level, and records its severity (the
+  highest state), the value at breach, the peak and the value now. It closes once acknowledged and back under the
+  level it opened at; a later crossing opens a new one. A breach not acknowledged within 5 minutes escalates to
+  `oms.limitsEscalateTo`. `limitBreachEvents` is each breach's timeline.
+- **Temporary increases.** `requestLimitIncrease` asks for a higher limit until `expiresAt` (by default keeping the
+  limit's hard margin). A supervisor other than the requester approves it; the limit is raised at once
+  (`limits.temporaryUntil`) and reverts at expiry.
+- **Kill switch.** `killSwitch` stops trading for the Firm, a desk or an account: pre-trade risk rejects new orders and
+  amends below it with `KILL_SWITCH`, algos stop slicing, and waiting stops do not trigger. Cancels still work, and
+  `cancelWorking` cancels the working orders. Positions stay open. Daily loss reaching its hard level turns it on for
+  that entity, as `system`. Only a supervisor turns trading back on (`releaseKillSwitch`).
+
+| RPC | Who |
+| --- | --- |
+| `acknowledgeBreach`, `escalateBreach`, `commentBreach` | Anyone who can see the entity |
+| `requestLimitIncrease`, `withdrawLimitRequest` | Anyone who can see the limit; withdraw is the requester's |
+| `approveLimitRequest`, `rejectLimitRequest` | A `trading-supervisor`, not the requester |
+| `killSwitch` | An account: `trading-execute` on it or a supervisor. A desk or the Firm: a supervisor |
+| `releaseKillSwitch` | A `trading-supervisor` |
+
+In `auto` mode the unrestricted dev user (no roles, owns no accounts) counts as a supervisor.
 
 ## Notifications
 
@@ -254,6 +280,7 @@ Risk checks run in this order, and the first failure wins. Each returns a `Rejec
 | --- | --- |
 | Unknown account | `UNKNOWN_ACCOUNT` |
 | Account disabled | `ACCOUNT_DISABLED` |
+| Kill switch on for the account, its desk or the Firm | `KILL_SWITCH` |
 | Unknown instrument | `UNKNOWN_INSTRUMENT` |
 | Restricted list (`oms.restrictedRics`) | `RESTRICTED_INSTRUMENT` |
 | `validateOrder`: phase `HALTED` / `CLOSED`, tick, lot, price/stop/TIF rules | `INSTRUMENT_HALTED` / `MARKET_CLOSED` / `INVALID_*` / `MISSING_*` / ... |
@@ -413,6 +440,7 @@ Set in `application.conf` as `oms.<key>`, or with the env var `OMS_<UPPER_SNAKE>
 | `clientAccounts` | 5 | Accounts of the Sim clients desk (`CLIENT-01…`). 0 = none. |
 | `clientBots` | `""` | Client bots started with the OMS, `persona:count` comma separated. |
 | `limits` | `""` | Limits on the Firm, desks or accounts, `ENTITY:METRIC[:RIC]=value` comma separated, e.g. `FIRM:DAILY_LOSS=3000000`. |
+| `limitsEscalateTo` | `"sam"` | Who unacknowledged breaches escalate to, and the default approver of a temporary increase. |
 
 ### Persistence
 

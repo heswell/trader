@@ -244,6 +244,8 @@ export const RejectReason = Object.freeze({
   ExceedsMaxGrossNotional: "EXCEEDS_MAX_GROSS_NOTIONAL",
   /** Orders in the last second for the account, its desk or the firm. */
   ExceedsOrderRate: "EXCEEDS_ORDER_RATE",
+  /** Trading is stopped for the account, its desk or the firm. */
+  KillSwitch: "KILL_SWITCH",
   PriceOutsideCollar: "PRICE_OUTSIDE_COLLAR",
   RestrictedInstrument: "RESTRICTED_INSTRUMENT",
   InstrumentHalted: "INSTRUMENT_HALTED",

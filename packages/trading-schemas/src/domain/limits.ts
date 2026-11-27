@@ -208,3 +208,58 @@ export const limitState = (
   if (used >= limit.warning) return LimitState.Warning;
   return LimitState.Ok;
 };
+
+/** Where a breach is in its life (limitBreaches.status). */
+export const BreachStatus = Object.freeze({
+  /** Not acknowledged yet. */
+  Open: "OPEN",
+  /** Acknowledged; still over the level it opened at. */
+  Acknowledged: "ACKNOWLEDGED",
+  /** Acknowledged and back under the level it opened at. */
+  Closed: "CLOSED",
+} as const);
+export type BreachStatus = ValueOf<typeof BreachStatus>;
+export const BREACH_STATUSES = values(BreachStatus);
+
+/** What happened to a breach (limitBreachEvents.kind). */
+export const BreachEventKind = Object.freeze({
+  /** Crossed a level: warning, the limit or the hard limit. */
+  Crossed: "CROSSED",
+  Acknowledged: "ACKNOWLEDGED",
+  Escalated: "ESCALATED",
+  Comment: "COMMENT",
+  KillSwitch: "KILL_SWITCH",
+  IncreaseRequested: "INCREASE_REQUESTED",
+  IncreaseApproved: "INCREASE_APPROVED",
+  IncreaseRejected: "INCREASE_REJECTED",
+  Closed: "CLOSED",
+} as const);
+export type BreachEventKind = ValueOf<typeof BreachEventKind>;
+
+/** A request for a temporary limit increase (limitRequests.status). */
+export const LimitRequestStatus = Object.freeze({
+  Pending: "PENDING",
+  /** Approved and in force until expiresAt. */
+  Approved: "APPROVED",
+  Rejected: "REJECTED",
+  Withdrawn: "WITHDRAWN",
+  /** Approved, and past expiresAt: the limit is back to its own value. */
+  Expired: "EXPIRED",
+} as const);
+export type LimitRequestStatus = ValueOf<typeof LimitRequestStatus>;
+export const LIMIT_REQUEST_STATUSES = values(LimitRequestStatus);
+
+/** The user name the OMS acts as (an automatic kill switch, escalation). */
+export const LIMITS_SYSTEM_USER = "system";
+
+/** An unacknowledged breach escalates after this long (ms). */
+export const BREACH_ESCALATE_MS = 5 * 60_000;
+
+/** The state ranks, lowest first, for comparing two states. */
+export const LIMIT_STATE_RANK: Readonly<Record<LimitState, number>> =
+  Object.freeze({
+    [LimitState.Ok]: 0,
+    [LimitState.Warning]: 1,
+    [LimitState.SoftBreach]: 2,
+    [LimitState.HardBreach]: 3,
+  });

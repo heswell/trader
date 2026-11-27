@@ -13,6 +13,8 @@ import {
   connectClientFlowToSim,
   exchangeMetricsSource,
   handleClientAdminRpc,
+  handleLimitsRpc,
+  type LimitsRpcName,
   handleOmsRpc,
   handleOrderEntryEditCell,
   handleOrderEntryRpc,
@@ -27,6 +29,7 @@ import {
 import { canAdminSim } from "@heswell/exchange-sim/engine";
 import {
   CLIENT_ADMIN_RPC_NAMES,
+  LIMITS_RPC_NAMES,
   EXCHANGE_ADMIN_RPC_NAMES,
   EXCHANGE_QUERY_RPC_NAMES,
   EXCHANGE_MODULE,
@@ -240,6 +243,19 @@ const isOrderEntryRpc = (name: string): name is OrderEntryRpcName =>
   (ORDER_ENTRY_RPC_NAMES as readonly string[]).includes(name);
 const isClientAdminRpc = (name: string): name is ClientAdminRpcName =>
   (CLIENT_ADMIN_RPC_NAMES as readonly string[]).includes(name);
+const isLimitsRpc = (name: string): name is LimitsRpcName =>
+  (LIMITS_RPC_NAMES as readonly string[]).includes(name);
+
+/** Limit tables: rows by entityId (as OmsModule's LIMIT_TABLES). */
+const LIMIT_TABLE_NAMES = [
+  "limitEntities",
+  "limits",
+  "limitUtilisation",
+  "limitBreaches",
+  "limitBreachEvents",
+  "limitRequests",
+  "killSwitches",
+] as const;
 
 const forEachTable = <T extends string, V>(
   names: readonly T[],
@@ -393,6 +409,8 @@ export const createTradingTestData = ({
       return handleOrderEntryRpc(omsService, rpcName, params, user);
     if (isClientAdminRpc(rpcName))
       return handleClientAdminRpc(omsService, rpcName, params, user);
+    if (isLimitsRpc(rpcName))
+      return handleLimitsRpc(omsService, rpcName, params, user);
     if (isExchangeRpc(rpcName))
       return handleExchangeAdminRpc(sim, rpcName, params, user.name);
     if (isTimeSeriesRpc(rpcName))
@@ -479,6 +497,7 @@ export const createTradingTestData = ({
   const omsServices: RpcService[] = [
     ...rpcServices(OMS_RPC_NAMES, () => oms),
     ...rpcServices(CLIENT_ADMIN_RPC_NAMES, () => oms),
+    ...rpcServices(LIMITS_RPC_NAMES, () => oms),
     ...rpcServices(ORDER_ENTRY_RPC_NAMES, () => oms),
     {
       // As OmsRpcHandler: orders are only entered with createOrder.
@@ -533,9 +552,7 @@ export const createTradingTestData = ({
       omsService.visibleLimitEntities(viewport.user),
     );
   const isLimitTable = (name: OmsLocalTableName) =>
-    name === "limitEntities" ||
-    name === "limits" ||
-    name === "limitUtilisation";
+    (LIMIT_TABLE_NAMES as readonly string[]).includes(name);
   const oms: TradingLocalModule<OmsLocalTableName> = new TradingLocalModule({
     name: OMS_MODULE,
     schemas: omsSchemas,

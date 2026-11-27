@@ -43,6 +43,8 @@ export interface LimitUtilisationRow {
   soft: number;
   hard: number;
   currency: string;
+  /** A temporary increase is in force until then; 0 = none. */
+  temporaryUntil: number;
   parentId: string;
   worst: string;
   used: number;
@@ -96,7 +98,10 @@ export const limitUtilisation = (
     positionsByAccount.get(account) ?? [];
 
   const rows: LimitUtilisationRow[] = [];
-  for (const limit of book.limits.values()) {
+  for (const { limitKey } of book.limits.values()) {
+    // a temporary increase in force replaces the limit
+    const limit = book.inForce(limitKey);
+    if (!limit) continue;
     const entity = book.entities.get(limit.entityId);
     if (!entity || !book.own(limit.entityId, limit.metric).includes(limit)) {
       continue;
@@ -177,6 +182,8 @@ export const limitUtilisation = (
       soft: limit.soft,
       hard: limit.hard,
       currency: limit.currency,
+      temporaryUntil:
+        book.temporary.get(limitKey) === limit ? limit.effectiveTo : 0,
       parentId: entity.parentId,
       worst,
       used,

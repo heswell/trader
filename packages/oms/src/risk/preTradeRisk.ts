@@ -63,6 +63,8 @@ export interface RiskContext {
    * sets one: gross position notional and, for a new order, order rate.
    */
   totals?: TotalLimits;
+  /** The entity (the account, its desk or the firm) whose kill switch is on. */
+  killedBy?: string;
 }
 
 /** A limit an entity sets on its own total. */
@@ -145,7 +147,7 @@ const fmtUsd = (n: number) => `${Math.round(n).toLocaleString("en-US")} USD`;
 
 /**
  * Pre-trade risk, evaluated in order (first failure wins):
- * account known / enabled, instrument known, restricted list, static order
+ * account known / enabled, kill switch off, instrument known, restricted list, static order
  * validation incl. trading phase (HALTED / CLOSED), stop not already
  * reached, maxOrderQty, maxOrderNotional, limit price collar (LIMIT only:
  * stops may legitimately sit far from the market; wider for options, see
@@ -171,6 +173,14 @@ export const checkPreTradeRisk = (
     return reject(
       RejectReason.AccountDisabled,
       `account ${account.account} is disabled`,
+    );
+  }
+  if (ctx.killedBy) {
+    return reject(
+      RejectReason.KillSwitch,
+      ctx.killedBy === account.account
+        ? `trading is stopped for ${account.account}`
+        : `trading is stopped for ${ctx.killedBy} (${account.account})`,
     );
   }
   if (!instrument) {

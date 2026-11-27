@@ -193,6 +193,10 @@ describe("OmsModule over the Vuu protocol", () => {
         "limitEntities",
         "limits",
         "limitUtilisation",
+        "limitBreaches",
+        "limitBreachEvents",
+        "limitRequests",
+        "killSwitches",
       ].sort(),
     );
     const vp = await sam.createViewport(OMS_MODULE, "accounts", [

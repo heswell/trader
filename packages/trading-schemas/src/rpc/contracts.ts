@@ -72,6 +72,15 @@ export const RpcName = Object.freeze({
   TimeSeries: "timeSeries",
   SetTimeSeriesWindow: "setTimeSeriesWindow",
   CloseTimeSeries: "closeTimeSeries",
+  AcknowledgeBreach: "acknowledgeBreach",
+  EscalateBreach: "escalateBreach",
+  CommentBreach: "commentBreach",
+  RequestLimitIncrease: "requestLimitIncrease",
+  ApproveLimitRequest: "approveLimitRequest",
+  RejectLimitRequest: "rejectLimitRequest",
+  WithdrawLimitRequest: "withdrawLimitRequest",
+  KillSwitch: "killSwitch",
+  ReleaseKillSwitch: "releaseKillSwitch",
 } as const);
 export type RpcName = (typeof RpcName)[keyof typeof RpcName];
 
@@ -124,6 +133,24 @@ export const CLIENT_ADMIN_RPC_NAMES = Object.freeze([
   RpcName.RemoveClientBot,
   RpcName.SubmitClientAlgo,
   RpcName.SetFlowParams,
+] as const);
+
+/**
+ * Limits (OMS): breaches, temporary increases and the kill switch. Anyone
+ * who can see the entity may acknowledge, escalate, comment or request;
+ * approving, rejecting and releasing need trading-supervisor (see the OMS
+ * README "Limits").
+ */
+export const LIMITS_RPC_NAMES = Object.freeze([
+  RpcName.AcknowledgeBreach,
+  RpcName.EscalateBreach,
+  RpcName.CommentBreach,
+  RpcName.RequestLimitIncrease,
+  RpcName.ApproveLimitRequest,
+  RpcName.RejectLimitRequest,
+  RpcName.WithdrawLimitRequest,
+  RpcName.KillSwitch,
+  RpcName.ReleaseKillSwitch,
 ] as const);
 
 const id = string({ maxLength: 64 });
@@ -492,6 +519,85 @@ export interface AdminRpcResponse {
   rics: string[];
 }
 
+// ---------------------------------------------------------------- limits
+
+const comment = string({ minLength: 0, maxLength: 500 });
+
+/** Acknowledge a breach (with an optional comment), or escalate it. */
+export const breachActionParams = object({
+  breachId: id,
+  comment: optional(comment),
+});
+export type BreachActionRequest = Infer<typeof breachActionParams>;
+
+export const commentBreachParams = object({
+  breachId: id,
+  comment: string({ minLength: 1, maxLength: 500 }),
+});
+export type CommentBreachRequest = Infer<typeof commentBreachParams>;
+
+export interface BreachActionResponse {
+  breachId: string;
+  status: string;
+}
+
+/**
+ * Ask for `limitKey` to be raised to `soft` (and `hard`, by default keeping
+ * the limit's hard margin) until `expiresAt` (epoch ms). The approver, a
+ * supervisor other than the requester, is `approver` or any supervisor.
+ */
+export const requestLimitIncreaseParams = object({
+  limitKey: string({ maxLength: 160 }),
+  soft: number({ greaterThan: 0 }),
+  hard: optional(number({ greaterThan: 0 })),
+  expiresAt: number({ greaterThan: 0 }),
+  reason: string({ minLength: 1, maxLength: 120 }),
+  detail: optional(comment),
+  breachId: optional(id),
+  approver: optional(id),
+});
+export type RequestLimitIncreaseRequest = Infer<
+  typeof requestLimitIncreaseParams
+>;
+
+export const limitRequestActionParams = object({
+  requestId: id,
+  comment: optional(comment),
+});
+export type LimitRequestActionRequest = Infer<typeof limitRequestActionParams>;
+
+export interface LimitRequestResponse {
+  requestId: string;
+  status: string;
+}
+
+/**
+ * Stop trading for an entity (the firm, a desk or an account): new orders
+ * and amends are rejected with KILL_SWITCH and algos stop slicing;
+ * `cancelWorking` also cancels its working orders. Positions stay open.
+ */
+export const killSwitchParams = object({
+  entityId: id,
+  reason: string({ minLength: 1, maxLength: 200 }),
+  cancelWorking: optional(boolean()),
+  breachId: optional(id),
+});
+export type KillSwitchRequest = Infer<typeof killSwitchParams>;
+
+/** Turn trading back on for an entity (trading-supervisor). */
+export const releaseKillSwitchParams = object({
+  entityId: id,
+  comment: optional(comment),
+});
+export type ReleaseKillSwitchRequest = Infer<typeof releaseKillSwitchParams>;
+
+export interface KillSwitchResponse {
+  entityId: string;
+  active: boolean;
+  /** Working orders cancelled. */
+  orderIds: string[];
+}
+
 // ---------------------------------------------------------------- time series
 
 /** Fields of the EXCHANGE time-series store (one value per second per ric). */
@@ -687,6 +793,15 @@ export interface RpcContracts {
     SetTimeSeriesWindowResponse,
   ];
   closeTimeSeries: [CloseTimeSeriesRequest, { subId: string }];
+  acknowledgeBreach: [BreachActionRequest, BreachActionResponse];
+  escalateBreach: [BreachActionRequest, BreachActionResponse];
+  commentBreach: [CommentBreachRequest, BreachActionResponse];
+  requestLimitIncrease: [RequestLimitIncreaseRequest, LimitRequestResponse];
+  approveLimitRequest: [LimitRequestActionRequest, LimitRequestResponse];
+  rejectLimitRequest: [LimitRequestActionRequest, LimitRequestResponse];
+  withdrawLimitRequest: [LimitRequestActionRequest, LimitRequestResponse];
+  killSwitch: [KillSwitchRequest, KillSwitchResponse];
+  releaseKillSwitch: [ReleaseKillSwitchRequest, KillSwitchResponse];
 }
 export type RpcRequestParams<N extends RpcName> = RpcContracts[N][0];
 export type RpcResponseData<N extends RpcName> = RpcContracts[N][1];
@@ -791,6 +906,15 @@ const validators = {
   timeSeries: timeSeriesParams,
   setTimeSeriesWindow: setTimeSeriesWindowParams,
   closeTimeSeries: closeTimeSeriesParams,
+  acknowledgeBreach: breachActionParams,
+  escalateBreach: breachActionParams,
+  commentBreach: commentBreachParams,
+  requestLimitIncrease: requestLimitIncreaseParams,
+  approveLimitRequest: limitRequestActionParams,
+  rejectLimitRequest: limitRequestActionParams,
+  withdrawLimitRequest: limitRequestActionParams,
+  killSwitch: killSwitchParams,
+  releaseKillSwitch: releaseKillSwitchParams,
 } as const;
 
 /**

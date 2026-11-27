@@ -51,6 +51,10 @@ export class TableSink implements OmsSink, PnlHistorySink {
     limitEntities: 0,
     limits: 0,
     limitUtilisation: 0,
+    limitBreaches: 0,
+    limitBreachEvents: 0,
+    limitRequests: 0,
+    killSwitches: 0,
   };
 
   attach(name: OmsTableName, table: OmsTable) {
@@ -111,6 +115,11 @@ export class TableSink implements OmsSink, PnlHistorySink {
   limit = (row: object) => this.#write("limits", { ...row });
   limitUtilisation = (row: object) =>
     this.#write("limitUtilisation", { ...row });
+  limitBreach = (row: object) => this.#write("limitBreaches", { ...row });
+  limitBreachEvent = (row: object) =>
+    this.#write("limitBreachEvents", { ...row });
+  limitRequest = (row: object) => this.#write("limitRequests", { ...row });
+  killSwitch = (row: object) => this.#write("killSwitches", { ...row });
   /** An orderEntry row (a full row to insert, or the changed columns). */
   orderEntry = (row: Record<string, unknown>) => this.#write("orderEntry", row);
 
