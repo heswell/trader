@@ -54,6 +54,11 @@ export interface OmsConfig {
    * `FIRM:DAILY_LOSS=3000000`; empty = none.
    */
   limits: string;
+  /**
+   * Who an unacknowledged breach escalates to (after 5 minutes, or on
+   * Escalate), and who approves a temporary increase by default.
+   */
+  limitsEscalateTo: string;
 }
 
 export const DEFAULT_OMS_CONFIG: Readonly<OmsConfig> = Object.freeze({
@@ -75,6 +80,7 @@ export const DEFAULT_OMS_CONFIG: Readonly<OmsConfig> = Object.freeze({
   clientAccounts: 5,
   clientBots: "",
   limits: "",
+  limitsEscalateTo: "sam",
 });
 
 export interface ConfigSource {

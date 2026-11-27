@@ -48,6 +48,10 @@ const TABLES: readonly OmsTableName[] = [
   "limitEntities",
   "limits",
   "limitUtilisation",
+  "limitBreaches",
+  "limitBreachEvents",
+  "limitRequests",
+  "killSwitches",
 ];
 
 /** Limit tables: rows by entityId, not account. */
@@ -55,6 +59,10 @@ const LIMIT_TABLES: readonly OmsTableName[] = [
   "limitEntities",
   "limits",
   "limitUtilisation",
+  "limitBreaches",
+  "limitBreachEvents",
+  "limitRequests",
+  "killSwitches",
 ];
 
 /** Simulator tables: rows for sim-admin users only (as the EXCHANGE bots). */
@@ -95,7 +103,8 @@ export const omsPermissionFunction =
   };
 
 /**
- * limitEntities, limits, limitUtilisation: the entities of the accounts the
+ * The limit tables (limitEntities, limits, limitUtilisation, limitBreaches,
+ * limitBreachEvents, limitRequests, killSwitches): the entities of the accounts the
  * user can see and every entity above them (their desk and the Firm).
  */
 export const limitsPermissionFunction =
@@ -118,7 +127,7 @@ export const clientBotsPermissionFunction =
 /**
  * The OMS Vuu module: accounts, parentOrders, childOrders, fills, positions,
  * pnlHistory, accountPnlHistory, clientBots, clientBotParams (sim-admin
- * only), limitEntities, limits, limitUtilisation and the positionPrices join, written by `oms`. Every table (and the join)
+ * only), the limit tables (see LIMIT_TABLES) and the positionPrices join, written by `oms`. Every table (and the join)
  * carries the OMS RPC service, so order RPCs work from any OMS viewport.
  */
 export const OmsModule = (

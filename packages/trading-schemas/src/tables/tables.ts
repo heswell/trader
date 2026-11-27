@@ -1351,6 +1351,12 @@ const limitColumns = [
     description: "Nothing can be overridden at or above it.",
   },
   { name: "currency", dataType: "string" },
+  {
+    name: "temporaryUntil",
+    dataType: "epochtimestamp",
+    description:
+      "An approved temporary increase is in force until then; 0 = none.",
+  },
 ] as const;
 
 /** Every limit, as set on its entity. */
@@ -1384,6 +1390,12 @@ export const limitUtilisation = defineTable({
       description: "The entity above, for a tree by entity.",
     },
     {
+      name: "desk",
+      dataType: "string",
+      description:
+        "The desk of a desk or account limit, FIRM for the Firm's: to group by desk, then entityId.",
+    },
+    {
       name: "worst",
       dataType: "string",
       description: "PER_RIC / UNDERLYING: the RIC or underlying used most.",
@@ -1397,6 +1409,148 @@ export const limitUtilisation = defineTable({
     },
     { name: "state", dataType: "string", description: "LimitState" },
     { name: "lastUpdate", dataType: "epochtimestamp" },
+  ],
+});
+
+/**
+ * Breaches: a limit's usage reaching its warning level or more. One row per
+ * breach, from crossing until it is acknowledged and back under the level it
+ * opened at; a later crossing opens a new one.
+ */
+export const limitBreaches = defineTable({
+  module: OMS_MODULE,
+  name: "limitBreaches",
+  keyField: "breachId",
+  description:
+    "Limit breaches today: opened on reaching warning or more, closed once acknowledged and back under that level.",
+  columns: [
+    { name: "breachId", dataType: "string" },
+    { name: "limitKey", dataType: "string" },
+    { name: "entityId", dataType: "string" },
+    { name: "entityType", dataType: "string", description: "LimitEntityType" },
+    { name: "parentId", dataType: "string" },
+    { name: "metric", dataType: "string", description: "LimitMetric" },
+    {
+      name: "ric",
+      dataType: "string",
+      description: "The limit's RIC, if any.",
+    },
+    {
+      name: "worst",
+      dataType: "string",
+      description: "The RIC, underlying or account used most at the peak.",
+    },
+    {
+      name: "severity",
+      dataType: "string",
+      description: "The highest LimitState reached.",
+    },
+    {
+      name: "state",
+      dataType: "string",
+      description: "LimitState now.",
+    },
+    { name: "status", dataType: "string", description: "BreachStatus" },
+    { name: "openedAt", dataType: "epochtimestamp" },
+    { name: "atBreach", dataType: "double", description: "used when opened" },
+    { name: "peak", dataType: "double" },
+    { name: "peakAt", dataType: "epochtimestamp" },
+    { name: "used", dataType: "double", description: "used now" },
+    { name: "warning", dataType: "double" },
+    { name: "soft", dataType: "double" },
+    { name: "hard", dataType: "double" },
+    { name: "utilisation", dataType: "double", description: "used / soft now" },
+    {
+      name: "peakUtilisation",
+      dataType: "double",
+      description: "peak / soft",
+    },
+    { name: "owner", dataType: "string", description: "Owner of the limit." },
+    { name: "acknowledgedBy", dataType: "string" },
+    { name: "acknowledgedAt", dataType: "epochtimestamp" },
+    { name: "escalatedTo", dataType: "string" },
+    { name: "escalatedAt", dataType: "epochtimestamp" },
+    { name: "closedAt", dataType: "epochtimestamp" },
+    { name: "lastUpdate", dataType: "epochtimestamp" },
+  ],
+});
+
+/** What happened to each breach, in order: the detail pane's timeline. */
+export const limitBreachEvents = defineTable({
+  module: OMS_MODULE,
+  name: "limitBreachEvents",
+  keyField: "eventId",
+  description:
+    "A breach's timeline: levels crossed, acknowledgement, escalation, comments, kill switch, increases.",
+  columns: [
+    { name: "eventId", dataType: "string" },
+    { name: "breachId", dataType: "string" },
+    { name: "entityId", dataType: "string" },
+    { name: "time", dataType: "epochtimestamp" },
+    { name: "kind", dataType: "string", description: "BreachEventKind" },
+    { name: "user", dataType: "string" },
+    { name: "value", dataType: "double", description: "used, when crossed" },
+    { name: "text", dataType: "string" },
+  ],
+});
+
+/** Requests for a temporary limit increase, pending and decided. */
+export const limitRequests = defineTable({
+  module: OMS_MODULE,
+  name: "limitRequests",
+  keyField: "requestId",
+  description:
+    "Requests for a temporary increase of one limit, approved by a supervisor; an approved increase reverts at expiresAt.",
+  columns: [
+    { name: "requestId", dataType: "string" },
+    { name: "limitKey", dataType: "string" },
+    { name: "entityId", dataType: "string" },
+    { name: "metric", dataType: "string", description: "LimitMetric" },
+    { name: "ric", dataType: "string" },
+    { name: "breachId", dataType: "string", description: "blank if none" },
+    { name: "currentSoft", dataType: "double" },
+    { name: "currentHard", dataType: "double" },
+    { name: "soft", dataType: "double", description: "The new limit." },
+    { name: "hard", dataType: "double", description: "The new hard limit." },
+    { name: "expiresAt", dataType: "epochtimestamp" },
+    { name: "reason", dataType: "string" },
+    { name: "detail", dataType: "string" },
+    { name: "requestedBy", dataType: "string" },
+    { name: "requestedAt", dataType: "epochtimestamp" },
+    {
+      name: "approver",
+      dataType: "string",
+      description: "Who is asked; blank = any supervisor.",
+    },
+    { name: "status", dataType: "string", description: "LimitRequestStatus" },
+    { name: "decidedBy", dataType: "string" },
+    { name: "decidedAt", dataType: "epochtimestamp" },
+    { name: "comment", dataType: "string" },
+  ],
+});
+
+/** Kill switches: trading stopped for the firm, a desk or an account. */
+export const killSwitches = defineTable({
+  module: OMS_MODULE,
+  name: "killSwitches",
+  keyField: "entityId",
+  description:
+    "Kill switches, one per entity: while active the OMS rejects new orders and amends below it, and algos stop slicing.",
+  columns: [
+    { name: "entityId", dataType: "string" },
+    { name: "entityType", dataType: "string", description: "LimitEntityType" },
+    { name: "active", dataType: "boolean" },
+    { name: "reason", dataType: "string" },
+    { name: "activatedBy", dataType: "string" },
+    { name: "activatedAt", dataType: "epochtimestamp" },
+    {
+      name: "cancelled",
+      dataType: "int",
+      description: "Working orders cancelled when it was turned on.",
+    },
+    { name: "breachId", dataType: "string", description: "blank if none" },
+    { name: "releasedBy", dataType: "string" },
+    { name: "releasedAt", dataType: "epochtimestamp" },
   ],
 });
 
@@ -1732,6 +1886,10 @@ export const omsTables = {
   limitEntities,
   limits,
   limitUtilisation,
+  limitBreaches,
+  limitBreachEvents,
+  limitRequests,
+  killSwitches,
 } as const;
 export const tradingTables = { ...exchangeTables, ...omsTables } as const;
 export const tradingJoins = {

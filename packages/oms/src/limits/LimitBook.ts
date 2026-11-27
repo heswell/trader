@@ -141,6 +141,13 @@ const isInForce = (limit: LimitDefinition, now: number) =>
 export class LimitBook {
   readonly entities = new Map<string, LimitEntity>();
   readonly limits = new Map<string, LimitDefinition>();
+  /**
+   * Approved temporary increases, by limitKey: while in force (before its
+   * effectiveTo) one replaces the limit of the same key.
+   */
+  readonly temporary = new Map<string, LimitDefinition>();
+  /** Entities whose kill switch is on: entityId -> reason. */
+  readonly killed = new Map<string, string>();
   /** limitKeys by entity and metric. */
   #byEntity = new Map<string, Map<LimitMetric, Set<string>>>();
   #clock: () => number;
@@ -164,6 +171,64 @@ export class LimitBook {
     if (old) this.#index(old).delete(old.limitKey);
     this.limits.set(limit.limitKey, limit);
     this.#index(limit).add(limit.limitKey);
+  }
+
+  /**
+   * Raise a limit until `until` (epoch ms): the limit of the same key with
+   * `soft` and `hard`, warning scaled with soft.
+   */
+  setTemporary(limitKey: string, soft: number, hard: number, until: number) {
+    const base = this.limits.get(limitKey);
+    if (!base) return undefined;
+    const temporary: LimitDefinition = {
+      ...base,
+      warning: base.soft > 0 ? (base.warning * soft) / base.soft : soft * 0.8,
+      soft,
+      hard,
+      effectiveTo: until,
+    };
+    this.temporary.set(limitKey, temporary);
+    return temporary;
+  }
+
+  clearTemporary(limitKey: string) {
+    return this.temporary.delete(limitKey);
+  }
+
+  /** The definition of a limit in force now: a temporary increase, else its own. */
+  inForce(limitKey: string): LimitDefinition | undefined {
+    const temporary = this.temporary.get(limitKey);
+    if (temporary && isInForce(temporary, this.#clock())) return temporary;
+    return this.limits.get(limitKey);
+  }
+
+  kill(entityId: string, reason: string) {
+    this.killed.set(entityId, reason);
+  }
+
+  release(entityId: string) {
+    return this.killed.delete(entityId);
+  }
+
+  /** The entity, or the nearest one above it, whose kill switch is on. */
+  killedBy(entityId: string): string | undefined {
+    if (this.killed.size === 0) return undefined;
+    return this.ancestors(entityId).find((e) => this.killed.has(e.entityId))
+      ?.entityId;
+  }
+
+  /** The accounts at or below an entity. */
+  accountsUnder(entityId: string): string[] {
+    const accounts: string[] = [];
+    for (const entity of this.entities.values()) {
+      if (
+        entity.entityType === LimitEntityType.Account &&
+        this.ancestors(entity.entityId).some((e) => e.entityId === entityId)
+      ) {
+        accounts.push(entity.entityId);
+      }
+    }
+    return accounts;
   }
 
   delete(limitKey: string) {
@@ -205,7 +270,11 @@ export class LimitBook {
     const now = this.#clock();
     const own: LimitDefinition[] = [];
     for (const key of keys) {
-      const limit = this.limits.get(key);
+      const temporary = this.temporary.get(key);
+      const limit =
+        temporary && isInForce(temporary, now)
+          ? temporary
+          : this.limits.get(key);
       if (limit && isInForce(limit, now)) own.push(limit);
     }
     return own;

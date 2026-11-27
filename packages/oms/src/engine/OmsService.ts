@@ -25,6 +25,7 @@ import {
   parseLimits,
   visibleEntities,
 } from "../limits/LimitBook";
+import { LimitMonitor } from "../limits/LimitMonitor";
 import { limitUtilisation } from "../limits/utilisation";
 import { TableSink } from "../modules/oms/TableSink";
 import { OrderEntryService } from "../entry/OrderEntryService";
@@ -76,11 +77,13 @@ export class OmsService {
   readonly logger: OmsLogger;
   /** Order ticket rows (the orderEntry table). */
   readonly orderEntry: OrderEntryService;
+  /** Breaches, temporary increases and kill switches. */
+  readonly limitMonitor: LimitMonitor;
   /** P&L history sampler; undefined when oms.pnlHistoryIntervalMs is 0. */
   readonly pnlHistory: PnlHistory | undefined;
   #timers: ReturnType<typeof setInterval>[] = [];
   #clock: () => number;
-  /** used|state of each limitUtilisation row last written, by limitKey. */
+  /** used|state|soft of each limitUtilisation row last written, by limitKey. */
   #utilisation = new Map<string, string>();
 
   constructor(gateway: OmsGateway, options: OmsServiceOptions = {}) {
@@ -122,9 +125,20 @@ export class OmsService {
     for (const entity of limits.entities.values()) {
       this.tables.limitEntity(entity);
     }
-    for (const limit of limits.limits.values()) {
-      const entityType = limits.entities.get(limit.entityId)?.entityType ?? "";
-      this.tables.limit({ ...limit, entityType });
+    this.limitMonitor = new LimitMonitor({
+      book: limits,
+      sink: this.tables,
+      clock: () => this.#clock(),
+      escalateTo: config.limitsEscalateTo,
+      cancelWorking: (accountIds, user) =>
+        accountIds.flatMap((account) => {
+          const result = this.engine.cancelAll({ account }, { user });
+          return result.ok ? result.value.orderIds : [];
+        }),
+    });
+    for (const limitKey of limits.limits.keys()) {
+      const row = this.limitMonitor.limitRow(limitKey);
+      if (row) this.tables.limit(row);
     }
     this.updateLimitUtilisation();
     this.orderEntry = new OrderEntryService({
@@ -189,12 +203,34 @@ export class OmsService {
     );
   }
 
+  /**
+   * Add or replace limits, as `oms.limits` (`ENTITY:METRIC[:RIC]=value`
+   * comma separated); entries for an unknown entity are skipped. Returns
+   * the limitKeys set. For demos and tests: limits are not editable yet.
+   */
+  addLimits(text: string) {
+    const book = this.engine.limits;
+    const keys: string[] = [];
+    for (const limit of parseLimits(text)) {
+      if (!book.entities.has(limit.entityId)) continue;
+      book.set(limit);
+      const row = this.limitMonitor.limitRow(limit.limitKey);
+      if (row) this.tables.limit(row);
+      keys.push(limit.limitKey);
+    }
+    this.updateLimitUtilisation();
+    return keys;
+  }
+
   /** The limit entities (and so limit rows) a user may see. */
   visibleLimitEntities(user: TradingUser) {
     return visibleEntities(this.engine.limits, this.accessFor(user));
   }
 
-  /** Recompute limitUtilisation; writes the rows whose usage or state changed. */
+  /**
+   * Recompute limitUtilisation (writing the rows whose usage or state
+   * changed), then follow breaches, increases and kill switches.
+   */
   updateLimitUtilisation(now = this.#clock()) {
     const engine = this.engine;
     const rows = limitUtilisation(
@@ -207,11 +243,12 @@ export class OmsService {
       now,
     );
     for (const row of rows) {
-      const seen = `${row.used}|${row.state}`;
+      const seen = `${row.used}|${row.state}|${row.soft}`;
       if (this.#utilisation.get(row.limitKey) === seen) continue;
       this.#utilisation.set(row.limitKey, seen);
       this.tables.limitUtilisation(row);
     }
+    this.limitMonitor.update(rows, now);
     return rows;
   }
 

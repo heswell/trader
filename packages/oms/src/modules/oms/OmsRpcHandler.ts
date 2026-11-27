@@ -13,6 +13,7 @@ import {
 } from "@heswell/vuu-server";
 import {
   CLIENT_ADMIN_RPC_NAMES,
+  LIMITS_RPC_NAMES,
   OMS_RPC_NAMES,
   ORDER_ENTRY_EDITABLE_COLUMNS,
   ORDER_ENTRY_RPC_NAMES,
@@ -28,6 +29,7 @@ import type { RpcResult } from "@vuu-ui/vuu-protocol-types";
 import type { OmsService } from "../../engine/OmsService";
 import type { TradingUser } from "../../permissions/access";
 import { handleClientAdminRpc } from "./clientAdminRpc";
+import { handleLimitsRpc } from "./limitsRpc";
 import { handleOrderEntryRpc } from "../../entry/orderEntryRpc";
 import { handleOmsRpc } from "./omsRpc";
 
@@ -83,6 +85,11 @@ export class OmsRpcHandler extends CreateSessionTableRpcHandler {
     for (const rpcName of ORDER_ENTRY_RPC_NAMES) {
       this.registerRpc(rpcName, ({ namedParams, ctx }) =>
         handleOrderEntryRpc(oms, rpcName, namedParams, ctx.user),
+      );
+    }
+    for (const rpcName of LIMITS_RPC_NAMES) {
+      this.registerRpc(rpcName, ({ namedParams, ctx }) =>
+        handleLimitsRpc(oms, rpcName, namedParams, ctx.user),
       );
     }
     for (const rpcName of CLIENT_ADMIN_RPC_NAMES) {

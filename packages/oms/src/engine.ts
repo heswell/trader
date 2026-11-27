@@ -79,6 +79,14 @@ export {
   type ClientAdminRpcName,
   handleClientAdminRpc,
 } from "./modules/oms/clientAdminRpc";
+export { handleLimitsRpc, type LimitsRpcName } from "./modules/oms/limitsRpc";
+export {
+  canSupervise,
+  type KillSwitch,
+  type LimitBreach,
+  LimitMonitor,
+  type LimitRequest,
+} from "./limits/LimitMonitor";
 export {
   type AccessScope,
   canSeeAccount,

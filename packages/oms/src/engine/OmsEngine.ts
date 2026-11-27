@@ -584,7 +584,9 @@ export class OmsEngine {
         if (
           parent.ric === trade.ric &&
           isWorkingStatus(parent.state.status) &&
-          isStopTriggered(parent.side, parent.stopPrice ?? 0, trade.price)
+          isStopTriggered(parent.side, parent.stopPrice ?? 0, trade.price) &&
+          // a kill switch holds stops: they trigger on a later trade
+          !this.limits.killedBy(parent.account)
         ) {
           this.#triggerStop(parent, trade.price);
         }
@@ -657,8 +659,12 @@ export class OmsEngine {
     else this.#childrenByParent.set(child.parentOrderId, [child]);
   }
 
-  /** New algo child (always LIMIT, at a price the slicer chose). */
+  /**
+   * New algo child (always LIMIT, at a price the slicer chose). Not sent
+   * while a kill switch is on for the account: the algo stops slicing.
+   */
   #sendChild(parent: ParentOrder, request: SliceRequest) {
+    if (this.limits.killedBy(parent.account)) return;
     const childOrderId = `${parent.orderId}-${(parent.childSeq ?? 0) + 1}`;
     parent.childSeq = (parent.childSeq ?? 0) + 1;
     const now = this.#clock();
@@ -1089,6 +1095,7 @@ export class OmsEngine {
         instrument?.underlying || ric,
       ),
       totals: this.#totals(account, ric, newOrder),
+      killedBy: this.limits.killedBy(account),
     };
   }
 
