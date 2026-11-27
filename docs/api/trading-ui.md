@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 679 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 709 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -27,6 +27,7 @@ Imports: `@heswell/trading-ui`. 679 exports. Types are shown as written in the s
 - **components/InstrumentGrid**: [addToWatchlist](#addtowatchlist), [buildInstrumentGridFilter](#buildinstrumentgridfilter), [cellUnchanged](#cellunchanged), [ChangeCell](#changecell), [COLUMN_SETS_SETTINGS_KEY](#column_sets_settings_key), [createWatchlist](#createwatchlist), [DEFAULT_INSTRUMENT_GRID_COLUMNS](#default_instrument_grid_columns), [DEFAULT_VIEW_SETTINGS](#default_view_settings), [defaultColumnSets](#defaultcolumnsets), [deleteWatchlist](#deletewatchlist), [EMPTY_WATCHLISTS](#empty_watchlists), [FILTERS_SETTINGS_KEY](#filters_settings_key), [GridChannelLinks](#gridchannellinks), [GridChannelLinksProvider](#gridchannellinksprovider), [gridSettingsKey](#gridsettingskey), [GridViewSettings](#gridviewsettings), [GROUPABLE_COLUMNS](#groupable_columns), [INSTRUMENT_GRID_LINK_SOURCE](#instrument_grid_link_source), [INSTRUMENT_TYPE_BADGES](#instrument_type_badges), [InstrumentAction](#instrumentaction), [InstrumentGrid](#instrumentgrid), [instrumentGridColumn](#instrumentgridcolumn), [InstrumentGridColumnOptions](#instrumentgridcolumnoptions), [instrumentGridColumns](#instrumentgridcolumns), [InstrumentGridFilterParts](#instrumentgridfilterparts), [InstrumentGridProps](#instrumentgridprops), [InstrumentRow](#instrumentrow), [InstrumentTypeCell](#instrumenttypecell), [isInLinkCell](#isinlinkcell), [LINK_COLUMN](#link_column), [linkColumnDescriptor](#linkcolumndescriptor), [OPTIONS_SET_COLUMNS](#options_set_columns), [parseColumnSets](#parsecolumnsets), [parseFilterState](#parsefilterstate), [parseViewSettings](#parseviewsettings), [parseWatchlists](#parsewatchlists), [PhaseCell](#phasecell), [phaseLabel](#phaselabel), [priceFormatOf](#priceformatof), [PriceMoveCell](#pricemovecell), [PutCallCell](#putcallcell), [QuantityCell](#quantitycell), [quickFilterExpression](#quickfilterexpression), [registerInstrumentGridRenderers](#registerinstrumentgridrenderers), [registerLinkCellRenderer](#registerlinkcellrenderer), [removeFromWatchlist](#removefromwatchlist), [renameWatchlist](#renamewatchlist), [rowRicOf](#rowricof), [SCREENING_COLUMNS](#screening_columns), [SCREENING_SET_COLUMNS](#screening_set_columns), [SPARKLINE_COLUMN](#sparkline_column), [StoredSetting](#storedsetting), [titleCaseColumnName](#titlecasecolumnname), [toInstrument](#toinstrument), [updateWatchlist](#updatewatchlist), [useGridChannelLinks](#usegridchannellinks), [useStoredSetting](#usestoredsetting), [useWatchlists](#usewatchlists), [UseWatchlistsResult](#usewatchlistsresult), [VIEW_SETTINGS_KEY](#view_settings_key), [Watchlist](#watchlist), [watchlistFilterExpression](#watchlistfilterexpression), [watchlistNameError](#watchlistnameerror), [WATCHLISTS_SETTINGS_KEY](#watchlists_settings_key), [WatchlistState](#watchliststate), [withSearchCasings](#withsearchcasings)
 - **components/InstrumentLookup**: [InstrumentLookup](#instrumentlookup), [InstrumentLookupProvider](#instrumentlookupprovider), [useInstrumentLookup](#useinstrumentlookup)
 - **components/InstrumentPicker**: [INSTRUMENT_PICKER_SOURCE](#instrument_picker_source), [InstrumentPicker](#instrumentpicker), [InstrumentPickerProps](#instrumentpickerprops), [instrumentSearchFilter](#instrumentsearchfilter), [toSelectedInstrument](#toselectedinstrument)
+- **components/Limits**: [BreachSeverityFilter](#breachseverityfilter), [BreachStatusFilter](#breachstatusfilter), [expiryTime](#expirytime), [familyFilter](#familyfilter), [formatLimitAmount](#formatlimitamount), [formatUtilisation](#formatutilisation), [IncreaseRequestDialog](#increaserequestdialog), [IncreaseRequestDialogProps](#increaserequestdialogprops), [IncreaseTarget](#increasetarget), [KillSwitchDialog](#killswitchdialog), [KillSwitchDialogProps](#killswitchdialogprops), [KillSwitchScope](#killswitchscope), [LIMIT_FAMILIES](#limit_families), [LIMIT_STATE_LABEL](#limit_state_label), [LimitBreaches](#limitbreaches), [LimitBreachesProps](#limitbreachesprops), [limitBreachesTableConfig](#limitbreachestableconfig), [LimitFamily](#limitfamily), [limitLabel](#limitlabel), [LimitMonitor](#limitmonitor), [LimitMonitorProps](#limitmonitorprops), [limitMonitorTableConfig](#limitmonitortableconfig), [limitRenderer](#limitrenderer), [LimitRenderer](#limitrenderer-1), [LimitShow](#limitshow), [LimitStateBadge](#limitstatebadge), [metricLabel](#metriclabel), [registerLimitRenderers](#registerlimitrenderers), [UtilisationBar](#utilisationbar), [UtilisationBarProps](#utilisationbarprops)
 - **components/LinkedInstrumentsFooter**: [LinkedInstrument](#linkedinstrument), [linkedInstruments](#linkedinstruments), [LinkedInstrumentsFooter](#linkedinstrumentsfooter), [LinkedInstrumentsFooterProps](#linkedinstrumentsfooterprops), [useLinkedRicFilter](#uselinkedricfilter)
 - **components/LinkGroupSelector**: [LinkGroupMenuButton](#linkgroupmenubutton), [LinkGroupSelector](#linkgroupselector), [LinkGroupSelectorProps](#linkgroupselectorprops), [LinkGroupSwatch](#linkgroupswatch), [PanelLinkGroupSelector](#panellinkgroupselector)
 - **components/MarketDepth**: [MarketDepth](#marketdepth), [MarketDepthLevelClick](#marketdepthlevelclick), [MarketDepthProps](#marketdepthprops)
@@ -4308,6 +4309,341 @@ const INSTRUMENT_PICKER_SOURCE: "InstrumentPicker"
 *interface* · [components/InstrumentPicker/InstrumentPicker.tsx](../../packages/trading-ui/src/components/InstrumentPicker/InstrumentPicker.tsx#L40)
 
 Props of [`InstrumentPicker`](#instrumentpicker).
+
+## components/Limits
+
+### Components (components/Limits)
+
+#### IncreaseRequestDialog
+
+*component* · [components/Limits/IncreaseRequestDialog.tsx](../../packages/trading-ui/src/components/Limits/IncreaseRequestDialog.tsx#L76)
+
+Request a temporary increase (the IncreaseRequest board): a new limit
+keeping the limit's hard margin, an expiry, a reason and detail, sent to
+a supervisor for approval.
+
+Props: `IncreaseRequestDialogProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `target` | `IncreaseTarget` |  |  |
+| `dataSource` | `DataSource` |  | Any OMS data source, subscribed, to send the RPC through. |
+| `connectionState?` | `TradingConnectionState` |  |  |
+| `approver?` | `string` |  | Shown as who will be asked. |
+| `onClose` | `() => void` |  |  |
+| `now?` | `() => Date` | `() => new Date()` | Clock, for the expiry choices (tests). |
+
+#### KillSwitchDialog
+
+*component* · [components/Limits/KillSwitchDialog.tsx](../../packages/trading-ui/src/components/Limits/KillSwitchDialog.tsx#L48)
+
+Stop trading (the KillSwitch board): pick the account, its desk or the
+Firm, whether to cancel working orders, and a reason. Positions stay
+open; only a supervisor can turn trading back on.
+
+Props: `KillSwitchDialogProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `dataSource` | `DataSource` |  | Any OMS data source, subscribed, to send the RPC through. |
+| `connectionState?` | `TradingConnectionState` |  |  |
+| `breachId?` | `string` |  | A breach this kill switch answers, recorded on its timeline. |
+| `defaultReason?` | `string` | `""` |  |
+| `onClose` | `() => void` |  |  |
+| `onDone?` | `(entityId: string) => void` |  | After the kill switch is on. |
+| `entities` | `{ entityId: string; entityType: string; label: string }[]` |  | The account, its desk and the Firm (any that apply), nearest first. (from `KillSwitchScope`) |
+| `workingOrders?` | `(entityId: string) => number` |  | Working orders of each entity, to say how many would be cancelled. (from `KillSwitchScope`) |
+
+#### LimitBreaches
+
+*component* · [components/Limits/LimitBreaches.tsx](../../packages/trading-ui/src/components/Limits/LimitBreaches.tsx#L169)
+
+The breaches blotter (the Breaches board): today's breaches by status
+and severity, and for the selected one its timeline with Comment,
+Acknowledge, Request increase, Escalate and Kill switch. Pending
+increase requests are listed for a supervisor to approve or reject.
+
+Props: `LimitBreachesProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `defaultStatus?` | `BreachStatusFilter` | `"open"` |  |
+| `defaultSeverity?` | `BreachSeverityFilter` | `"all"` |  |
+| `defaultBreachId?` | `string` |  | The breach shown in the detail pane at first (e.g. from a notification). |
+| `supervisor?` | `string` |  | Who supervises (the default approver), shown on Request increase. |
+
+Also accepts the standard HTML attributes and `ref`.
+
+#### LimitMonitor
+
+*component* · [components/Limits/LimitMonitor.tsx](../../packages/trading-ui/src/components/Limits/LimitMonitor.tsx#L170)
+
+The limit monitor (the Main board): every limit's live usage as a tree by
+desk and entity, with utilisation bars, Show and family toggles, state
+counts, active kill switches, and a contributors pane for the selected
+limit. Kill switch stops trading for the selected entity.
+
+Props: `LimitMonitorProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `defaultShow?` | `LimitShow` | `"all"` |  |
+| `defaultFamily?` | `LimitFamily` | `"all"` |  |
+| `showContributors?` | `boolean` | `true` | Show the contributors pane for the selected limit. Default true. |
+
+Also accepts the standard HTML attributes and `ref`.
+
+#### LimitStateBadge
+
+*component* · [components/Limits/LimitStateBadge.tsx](../../packages/trading-ui/src/components/Limits/LimitStateBadge.tsx#L5)
+
+A LimitState as a badge: OK plain, Warning outlined, Soft and Hard solid.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `state` | `string` |  |  |
+
+#### UtilisationBar
+
+*component* · [components/Limits/UtilisationBar.tsx](../../packages/trading-ui/src/components/Limits/UtilisationBar.tsx#L24)
+
+Utilisation as a bar with ticks at warning and the limit, and a dotted
+tick at hard; the percent is its accessible name.
+
+Props: `UtilisationBarProps`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `utilisation` | `number` |  | used / soft. |
+| `warningPct` | `number` |  | warning / soft and hard / soft, for the ticks. |
+| `hardPct` | `number` |  |  |
+| `state` | `string` |  | LimitState, for the colour. |
+
+### Functions (components/Limits)
+
+#### expiryTime
+
+*function* · [components/Limits/IncreaseRequestDialog.tsx](../../packages/trading-ui/src/components/Limits/IncreaseRequestDialog.tsx#L49)
+
+End of day (22:00 local), end of the week (Friday 22:00), or a date's 22:00.
+
+```ts
+expiryTime(expiry: Expiry, now: Date, date = ""): number
+```
+
+#### familyFilter
+
+*function* · [components/Limits/limitFormat.ts](../../packages/trading-ui/src/components/Limits/limitFormat.ts#L56)
+
+Vuu filter for the metrics of a family ("" = all).
+
+```ts
+familyFilter(family: LimitFamily): string
+```
+
+#### formatLimitAmount
+
+*function* · [components/Limits/limitFormat.ts](../../packages/trading-ui/src/components/Limits/limitFormat.ts#L8)
+
+Compact amount: 1.25m, 400k, 120.
+
+```ts
+formatLimitAmount(value: unknown): string
+```
+
+#### formatUtilisation
+
+*function* · [components/Limits/limitFormat.ts](../../packages/trading-ui/src/components/Limits/limitFormat.ts#L50)
+
+Percent of the limit: 0.912 -> "91%".
+
+```ts
+formatUtilisation(value: unknown): string
+```
+
+#### limitLabel
+
+*function* · [components/Limits/limitFormat.ts](../../packages/trading-ui/src/components/Limits/limitFormat.ts#L24)
+
+"Position notional · BARC.L" (the RIC of a carve-out, if any).
+
+```ts
+limitLabel(metric: unknown, ric?: unknown): string
+```
+
+#### limitRenderer
+
+*function* · [components/Limits/LimitRenderers.tsx](../../packages/trading-ui/src/components/Limits/LimitRenderers.tsx#L75)
+
+A column type using one of the LimitRenderer renderers.
+
+```ts
+limitRenderer(name: string): { name: "string"; renderer: { name: string; }; }
+```
+
+#### metricLabel
+
+*function* · [components/Limits/limitFormat.ts](../../packages/trading-ui/src/components/Limits/limitFormat.ts#L18)
+
+A metric's label, e.g. "Position notional"; the value itself if unknown.
+
+```ts
+metricLabel(metric: unknown): string
+```
+
+#### registerLimitRenderers
+
+*function* · [components/Limits/LimitRenderers.tsx](../../packages/trading-ui/src/components/Limits/LimitRenderers.tsx#L61)
+
+Registers the LimitRenderer cell renderers with vuu (once). LimitMonitor
+and LimitBreaches call it; call it yourself to use the renderers in
+another table.
+
+```ts
+registerLimitRenderers(): void
+```
+
+### Constants (components/Limits)
+
+#### LIMIT_FAMILIES
+
+*const* · [components/Limits/limitFormat.ts](../../packages/trading-ui/src/components/Limits/limitFormat.ts#L30)
+
+Monitor families: which metrics each Show family toggle keeps.
+
+```ts
+const LIMIT_FAMILIES: Readonly<{ readonly order: readonly ["ORDER_QTY", "ORDER_NOTIONAL", "ORDER_RATE"]; readonly position: readonly ["POSITION_NOTIONAL", "GROSS_POSITION_NOTIONAL"]; readonly risk: readonly ["NET_DELTA"]; readonly pnl: readonly ["DAILY_LOSS"]; }>
+```
+
+#### LIMIT_STATE_LABEL
+
+*const* · [components/Limits/limitFormat.ts](../../packages/trading-ui/src/components/Limits/limitFormat.ts#L42)
+
+```ts
+const LIMIT_STATE_LABEL: Readonly<Record<string, string>>
+```
+
+#### limitBreachesTableConfig
+
+*const* · [components/Limits/LimitBreaches.tsx](../../packages/trading-ui/src/components/Limits/LimitBreaches.tsx#L99)
+
+```ts
+const limitBreachesTableConfig: TableConfig
+```
+
+#### limitMonitorTableConfig
+
+*const* · [components/Limits/LimitMonitor.tsx](../../packages/trading-ui/src/components/Limits/LimitMonitor.tsx#L94)
+
+```ts
+const limitMonitorTableConfig: TableConfig
+```
+
+#### LimitRenderer
+
+*const* · [components/Limits/LimitRenderers.tsx](../../packages/trading-ui/src/components/Limits/LimitRenderers.tsx#L10)
+
+Cell renderers of the limit tables (registered by registerLimitRenderers).
+
+```ts
+const LimitRenderer: Readonly<{ readonly Utilisation: "trading.limit-utilisation"; readonly State: "trading.limit-state"; readonly Metric: "trading.limit-metric"; readonly Time: "trading.limit-time"; }>
+```
+
+### Interfaces (components/Limits)
+
+#### IncreaseRequestDialogProps
+
+*interface* · [components/Limits/IncreaseRequestDialog.tsx](../../packages/trading-ui/src/components/Limits/IncreaseRequestDialog.tsx#L34)
+
+Props of [`IncreaseRequestDialog`](#increaserequestdialog).
+
+#### IncreaseTarget
+
+*interface* · [components/Limits/IncreaseRequestDialog.tsx](../../packages/trading-ui/src/components/Limits/IncreaseRequestDialog.tsx#L23)
+
+The limit an increase is asked for (a limitUtilisation or limitBreaches row).
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `limitKey` | `string` |  |  |
+| `entityId` | `string` |  |  |
+| `metric` | `string` |  |  |
+| `ric` | `string` |  |  |
+| `used` | `number` |  |  |
+| `soft` | `number` |  |  |
+| `hard` | `number` |  |  |
+| `breachId?` | `string` |  |  |
+
+#### KillSwitchDialogProps
+
+*interface* · [components/Limits/KillSwitchDialog.tsx](../../packages/trading-ui/src/components/Limits/KillSwitchDialog.tsx#L25)
+
+Props of [`KillSwitchDialog`](#killswitchdialog).
+
+#### KillSwitchScope
+
+*interface* · [components/Limits/KillSwitchDialog.tsx](../../packages/trading-ui/src/components/Limits/KillSwitchDialog.tsx#L18)
+
+The entity a kill switch can be turned on for, and those above it.
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `entities` | `{ entityId: string; entityType: string; label: string }[]` |  | The account, its desk and the Firm (any that apply), nearest first. |
+| `workingOrders?` | `(entityId: string) => number` |  | Working orders of each entity, to say how many would be cancelled. |
+
+#### LimitBreachesProps
+
+*interface* · [components/Limits/LimitBreaches.tsx](../../packages/trading-ui/src/components/Limits/LimitBreaches.tsx#L154)
+
+Props of [`LimitBreaches`](#limitbreaches).
+
+#### LimitMonitorProps
+
+*interface* · [components/Limits/LimitMonitor.tsx](../../packages/trading-ui/src/components/Limits/LimitMonitor.tsx#L142)
+
+Props of [`LimitMonitor`](#limitmonitor).
+
+#### UtilisationBarProps
+
+*interface* · [components/Limits/UtilisationBar.tsx](../../packages/trading-ui/src/components/Limits/UtilisationBar.tsx#L10)
+
+Props of [`UtilisationBar`](#utilisationbar).
+
+### Types (components/Limits)
+
+#### BreachSeverityFilter
+
+*type* · [components/Limits/LimitBreaches.tsx](../../packages/trading-ui/src/components/Limits/LimitBreaches.tsx#L51)
+
+```ts
+type BreachSeverityFilter = "all" | "hard" | "soft" | "warning"
+```
+
+#### BreachStatusFilter
+
+*type* · [components/Limits/LimitBreaches.tsx](../../packages/trading-ui/src/components/Limits/LimitBreaches.tsx#L50)
+
+```ts
+type BreachStatusFilter = "open" | "acknowledged" | "closed" | "all"
+```
+
+#### LimitFamily
+
+*type* · [components/Limits/limitFormat.ts](../../packages/trading-ui/src/components/Limits/limitFormat.ts#L40)
+
+```ts
+type LimitFamily = keyof typeof LIMIT_FAMILIES | "all"
+```
+
+#### LimitShow
+
+*type* · [components/Limits/LimitMonitor.tsx](../../packages/trading-ui/src/components/Limits/LimitMonitor.tsx#L59)
+
+Rows the Show toggle keeps.
+
+```ts
+type LimitShow = "all" | "near" | "breached"
+```
 
 ## components/LinkedInstrumentsFooter
 

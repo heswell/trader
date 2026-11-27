@@ -28,11 +28,16 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [ExposureTreemap](trading-ui.md#exposuretreemap) | `components/ExposureTreemap` | `positionPrices` |  | ChartFrame | `exposure-treemap` | [guide](../components/charts.md#exposuretreemap) |
 | [FillProgressBar](trading-ui.md#fillprogressbar) | `components/FillProgressBar` |  |  |  | `primitives-status` | [guide](../components/primitives.md) |
 | [FillsBlotter](trading-ui.md#fillsblotter) | `components/FillsBlotter` | `fills` |  | ChannelRowMarkers, ExportCsvButton, InstrumentLookup, LinkedInstrumentsFooter, StaleIndicator, TradingCellRenderers | `fills-blotter`, `trader-workspace` | [guide](../components/blotters.md) |
+| [IncreaseRequestDialog](trading-ui.md#increaserequestdialog) | `components/Limits` |  | `requestLimitIncrease` |  | `limit-dialogs` | [guide](../components/limits.md) |
 | [InstrumentContextProvider](trading-ui.md#instrumentcontextprovider) | `instrument-context` |  |  | InstrumentLookup | `linking-providers` | [guide](../components/selection-and-linking.md#how-linking-works) |
 | [InstrumentGrid](trading-ui.md#instrumentgrid) | `components/InstrumentGrid` | `instrumentPrices` |  | ChannelRowMarkers, InstrumentLookup, NamePrompt, OrderTicket, Sparkline, StaleIndicator, TradingCellRenderers, WatchlistDialog | `chart-workspace`, `depth-chart`, `hosting-feature-root`, `hosting-user-settings`, `instrument-grid`, `instrument-grid-200`, `instrument-grid-continuations`, `instrument-grid-futures`, `instrument-grid-options`, `instrument-grid-prices`, `market-depth-selected`, `price-chart`, `price-ladder-live`, `spread-chart`, `time-series-chart`, `trader-workspace` | [guide](../components/instrument-grid.md#instrumentgrid) |
 | [InstrumentLookupProvider](trading-ui.md#instrumentlookupprovider) | `components/InstrumentLookup` | `instruments` |  |  | `million-trades-export-csv`, `selectors`, `trades-export-csv` | [guide](../components/selection-and-linking.md) |
 | [InstrumentPicker](trading-ui.md#instrumentpicker) | `components/InstrumentPicker` | `instruments` |  | LinkGroupSelector | `chart-workspace`, `depth-chart`, `linking-providers`, `market-depth-selected`, `panel-link-group`, `price-chart`, `price-ladder-live`, `selectors`, `spread-chart`, `time-series-chart`, `trader-workspace` | [guide](../components/selection-and-linking.md) |
 | [InstrumentTypeCell](trading-ui.md#instrumenttypecell) | `components/InstrumentGrid` |  |  | Sparkline | `primitives-cell-renderers` | [guide](../components/instrument-grid.md#cell-renderers) |
+| [KillSwitchDialog](trading-ui.md#killswitchdialog) | `components/Limits` |  | `killSwitch` |  | `limit-dialogs` | [guide](../components/limits.md) |
+| [LimitBreaches](trading-ui.md#limitbreaches) | `components/Limits` | `limitBreachEvents`, `limitBreaches`, `limitEntities`, `limitRequests` | `killSwitch`, `requestLimitIncrease` | StaleIndicator | `limit-breaches` | [guide](../components/limits.md) |
+| [LimitMonitor](trading-ui.md#limitmonitor) | `components/Limits` | `killSwitches`, `limitEntities`, `limitUtilisation`, `parentOrders`, `positions` | `killSwitch`, `releaseKillSwitch`, `requestLimitIncrease` | StaleIndicator, TradingCellRenderers | `limit-monitor` | [guide](../components/limits.md) |
+| [LimitStateBadge](trading-ui.md#limitstatebadge) | `components/Limits` |  |  |  | `limit-utilisation-bars` | [guide](../components/limits.md) |
 | [LinkedInstrumentsFooter](trading-ui.md#linkedinstrumentsfooter) | `components/LinkedInstrumentsFooter` |  |  | ChannelRowMarkers | `linked-instruments-footer` | [guide](../components/blotters.md#channels-in-the-orders-and-fills-blotters) |
 | [LinkGroupMenuButton](trading-ui.md#linkgroupmenubutton) | `components/LinkGroupSelector` |  |  |  | `panel-link-group` | [guide](../components/selection-and-linking.md) |
 | [LinkGroupProvider](trading-ui.md#linkgroupprovider) | `instrument-context` |  |  | InstrumentLookup | `linking-providers` | [guide](../components/selection-and-linking.md#how-linking-works) |
@@ -84,6 +89,7 @@ Roles are enforced by the OMS on every viewport and RPC; components only shape t
 | [TradingFeatureRoot](trading-ui.md#tradingfeatureroot) | `feature-root` |  |  | ConnectionBanner, OrderTicket | `hosting-feature-root` | [guide](../components/hosting.md#tradingfeatureroot) |
 | [TradingNotificationsProvider](trading-ui.md#tradingnotificationsprovider) | `notifications` | `fills`, `parentOrders` |  | InstrumentLookup | *host* | [guide](../components/notifications-and-connection.md) |
 | [UserSettingsProvider](trading-ui.md#usersettingsprovider) | `utils` |  |  |  | `hosting-user-settings` | [guide](../components/hosting.md#usersettingsprovider) |
+| [UtilisationBar](trading-ui.md#utilisationbar) | `components/Limits` |  |  |  | `limit-utilisation-bars` | [guide](../components/limits.md) |
 | [WatchlistDialog](trading-ui.md#watchlistdialog) | `components/WatchlistDialog` | `instruments` |  | InstrumentGrid | `instrument-grid-dialogs` | [guide](../components/instrument-grid.md#dialogs) |
 | [WorkspaceChannelProvider](trading-ui.md#workspacechannelprovider) | `instrument-context` |  |  |  | `channel-picker-fit`, `channel-picker-workspace` | [guide](../components/selection-and-linking.md#workspace-channel-picker) |
 
@@ -103,6 +109,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | `components/FillsBlotter` | `tradingFillsBlotter` |  | `data-testid` |
 | `components/InstrumentGrid` | `tradingGridColumnsPanel`, `tradingInstrumentCell`, `tradingInstrumentGrid`, `tradingInstrumentGridFooter`, `tradingInstrumentGridHeader`, `tradingLinkCell`, `tradingRowActions` | `--trading-buy`, `--trading-down`, `--trading-neutral`, `--trading-sell`, `--trading-up`, `--tradingRowActions-fade` | `data-direction`, `data-phase`, `data-put-call`, `data-ric`, `data-type` |
 | `components/InstrumentPicker` | `tradingInstrumentPicker` |  | `data-instrument-picker`, `data-link-group` |
+| `components/Limits` | `tradingLimits` | `--tradingLimits-hard`, `--tradingLimits-hard-row`, `--tradingLimits-ok`, `--tradingLimits-soft`, `--tradingLimits-soft-solid`, `--tradingLimits-solid-fg`, `--tradingLimits-tick`, `--tradingLimits-track`, `--tradingLimits-warning`, `--tradingLimits-warning-fg`, `--tradingUtilisationBar-colour` | `data-testid` |
 | `components/LinkGroupSelector` | `tradingLinkGroupSelector` | `--tradingLinkGroupSelector-haloSize`, `--tradingLinkGroupSelector-swatchSize` | `data-link-group` |
 | `components/LinkedInstrumentsFooter` | `tradingLinkedFooter` |  | `data-active` |
 | `components/MarketDepth` | `tradingMarketDepth` | `--tradingMarketDepth-ask-bar`, `--tradingMarketDepth-bid-bar`, `--tradingMarketDepth-flash`, `--tradingMarketDepth-own`, `--tradingMarketDepth-rowHeight` | `data-flash`, `data-inactive`, `data-level`, `data-link-group`, `data-own`, `data-phase` |
@@ -151,6 +158,7 @@ Class bases (elements are `<base>-<element>`), the CSS custom properties each fo
 | FillsBlotter | `fills-blotter` | [guide](../components/blotters.md) |
 | Hosting | `hosting-connection-override`, `hosting-feature-root`, `hosting-user-settings` | [guide](../components/hosting.md) |
 | InstrumentGrid | `instrument-grid`, `instrument-grid-200`, `instrument-grid-continuations`, `instrument-grid-dialogs`, `instrument-grid-futures`, `instrument-grid-options`, `instrument-grid-prices` | [guide](../components/instrument-grid.md#instrumentgrid) |
+| Limits | `limit-breaches`, `limit-dialogs`, `limit-monitor`, `limit-utilisation-bars` | [guide](../components/limits.md) |
 | LinkedInstrumentsFooter | `linked-instruments-footer` | [guide](../components/blotters.md#channels-in-the-orders-and-fills-blotters) |
 | Linking | `linking-providers` | [guide](../components/selection-and-linking.md) |
 | MarketDepth | `market-depth-selected` | [guide](../components/market-depth-and-ladder.md#marketdepth) |

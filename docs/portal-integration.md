@@ -21,7 +21,7 @@ flowchart LR
       T[Order ticket / Ladder]
       D[Depth]
       O[Orders / Executions / Positions / Time &amp; sales / Charts]
-      SV[Desk overview]
+      SV[Desk overview / Limits]
     end
     Host -- "loads mf-manifest.json,<br/>reads config.json<br/>(nav pages and workspace panels)" --> Remotes
     Bus(("instrument link bus<br/>+ BroadcastChannel"))
@@ -195,7 +195,7 @@ standard token exchange requires.
 
 | User (password `password`) | Server roles (`trader-trading-server`) | Sees |
 | --- | --- | --- |
-| alice, bob, carol, erin | trading-view, trading-execute | Every entry except Oversight (the Trader workspace with its ticket and ladder panels; Price ladder) |
+| alice, bob, carol, erin | trading-view, trading-execute | Every entry except Oversight › Desk overview (the Trader workspace with its ticket and ladder panels; Price ladder) |
 | dave | trading-view | As alice, but no Price ladder; the workspace's Ticket and Ladder panels say the module is not available, the Panels palette has no Order ticket or Price ladder, and the order blotter is read-only. |
 | sam | trading-view, trading-supervisor | As dave, plus Oversight › Desk overview (all accounts) |
 | admin | trading-view, trading-supervisor, sim-admin (plus `vuu-portal` module-admin-access, vuu-table-viewer-access) | As sam, plus Simulator › Overview, Bots, Instrument and Metrics, and portal module admin |
@@ -237,6 +237,7 @@ renders, and `notificationTopics` are the trading server's notification topics t
 | 122 | Portfolio › Exposure | `/portfolio/exposure` | TradingExposure | trading-view | 320 | risk | Portfolio, 2×1 | ExposureTreemap |
 | 123 | Portfolio › Execution quality | `/portfolio/execution-quality` | TradingExecutionQuality | trading-view | 330 | | Portfolio, 2×1 | SlippageChart |
 | 120 | Oversight › Desk overview | `/oversight/desk` | TradingSupervisor | trading-supervisor | 400 | risk, orders | — | All visible accounts' orders and positions |
+| 136 | Oversight › Limits | `/oversight/limits` | TradingLimits | trading-view | 410 | risk | Oversight, 2×1 | LimitMonitor and LimitBreaches behind a toggle (open-breach badge); increase requests, approval and the kill switch need trading-supervisor or the account's trading-execute |
 | 130 | Simulator › Overview | `/simulator/overview` | SimulatorOverview | sim-admin | 500 | | Simulator, 2×1 | SimBooksGrid above BotsGrid (by kind) |
 | 131 | Simulator › Bots | `/simulator/bots` | SimulatorBots | sim-admin | 510 | | Simulator, 2×1 | BotsGrid with BotDetail (stats, P&L history, parameters, fills) |
 | 132 | Simulator › Instrument | `/simulator/instrument` | SimulatorInstrument | sim-admin | 520 | | Simulator, 2×1 | SimInstrumentChart, the instrument's bots and BotFillsTape |
