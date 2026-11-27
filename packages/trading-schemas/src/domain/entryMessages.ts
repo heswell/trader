@@ -31,6 +31,10 @@ export const EntryRiskCode = Object.freeze({
   MaxPositionNotional: "maxPositionNotional",
   /** The account's net delta on the underlying (USD) over maxDeltaUsd. */
   MaxDelta: "maxDeltaUsd",
+  /** Gross position notional of the account, its desk or the firm. */
+  MaxGrossNotional: "maxGrossNotional",
+  /** Orders in the last second for the account, its desk or the firm. */
+  OrderRate: "orderRate",
   Collar: "collar",
   NoPrice: "noPrice",
 } as const);
@@ -147,6 +151,7 @@ const FIELD_FOR_REASON: Readonly<Record<string, string>> = Object.freeze({
   [EntryRiskCode.MaxOrderNotional]: "quantity",
   [EntryRiskCode.MaxPositionNotional]: "quantity",
   [EntryRiskCode.MaxDelta]: "quantity",
+  [EntryRiskCode.MaxGrossNotional]: "quantity",
   [EntryRiskCode.Collar]: "price",
 });
 

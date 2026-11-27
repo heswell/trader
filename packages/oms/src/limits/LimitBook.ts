@@ -231,6 +231,20 @@ export class LimitBook {
     return undefined;
   }
 
+  /**
+   * The limit each entity from this one up to the Firm sets for itself, for
+   * a metric checked against each entity's own total (gross position
+   * notional, order rate, daily loss).
+   */
+  ownUp(entityId: string, metric: LimitMetric): EffectiveLimit[] {
+    const limits: EffectiveLimit[] = [];
+    for (const entity of this.ancestors(entityId)) {
+      const limit = this.own(entity.entityId, metric).find((l) => l.ric === "");
+      if (limit) limits.push({ limit, entityId: entity.entityId });
+    }
+    return limits;
+  }
+
   /** The soft limit that applies, Infinity when there is none. */
   softLimit(entityId: string, metric: LimitMetric, ric = "") {
     return this.effective(entityId, metric, ric)?.limit.soft ?? Infinity;

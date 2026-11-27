@@ -5,8 +5,10 @@ import {
   LimitMetric,
   LimitScope,
   LimitState,
+  OrdType,
   limitState,
   RejectReason,
+  Side,
 } from "@heswell/trading-schemas";
 import {
   accountLimits,
@@ -18,7 +20,7 @@ import {
   orderLimitsOf,
 } from "../src/limits/LimitBook";
 import { SEED_ACCOUNTS, simClientAccounts } from "../src/reference/accounts";
-import { AAPL, setup, VOD } from "./fixture";
+import { AAPL, BookSide, setup, VOD } from "./fixture";
 
 const ACCOUNTS = [...SEED_ACCOUNTS, ...simClientAccounts(2)];
 
@@ -229,10 +231,112 @@ describe("OmsEngine checks orders against its LimitBook", () => {
     if (!vod.ok) expect(vod.text).toContain("projected position");
   });
 
+  test("a new order's own quantity is not also counted as working", () => {
+    const limits = limitBookFor(SEED_ACCOUNTS);
+    limits.set(
+      limitDefinition("ACC-US-01", LimitMetric.PositionNotional, 1_500_000, {
+        ric: AAPL,
+      }),
+    );
+    const { engine, order, ctx } = setup({ limits });
+    // About 1m USD at AAPL's reference price: once, not twice, so it fits.
+    const ref = engine.riskContext("ACC-US-01", AAPL).instrument?.refPrice ?? 0;
+    const quantity = Math.floor(1_000_000 / ref);
+    const result = engine.createOrder(
+      order({ ordType: OrdType.Market, price: undefined, quantity }),
+      ctx,
+    );
+    expect(result.ok ? "" : result.text).toBe("");
+  });
+
   test("riskContext carries the limits for the account and RIC", () => {
     const { engine } = setup();
     expect(engine.riskContext("ACC-US-02", AAPL).limits).toEqual(
       orderLimitsOf(SEED_ACCOUNTS[1]),
     );
+  });
+});
+
+describe("limits on totals: gross position notional and order rate", () => {
+  test("gross position notional is checked for the account, its desk and the firm", () => {
+    const limits = limitBookFor(SEED_ACCOUNTS);
+    // EQ-US: 150,000 USD gross across ACC-US-01 and ACC-US-02.
+    limits.set(
+      limitDefinition("EQ-US", LimitMetric.GrossPositionNotional, 150_000),
+    );
+    const { engine, order, rest, ctx } = setup({ limits });
+    // ACC-US-01 buys 400 AAPL at 170: valued at the reference price (about
+    // 350) before the fill, then a 68,000 USD position at 170.
+    rest(AAPL, BookSide.SELL, 170, 400);
+    expect(engine.createOrder(order({ quantity: 400 }), ctx).ok).toBe(true);
+    expect(engine.grossPositionUsd("EQ-US")).toBeCloseTo(68_000, -2);
+    expect(engine.grossPositionUsd("EQ-EU")).toBe(0);
+
+    // ACC-US-02 buying 500 (85,000 USD) takes EQ-US over 150,000.
+    const breach = engine.createOrder(
+      order({ account: "ACC-US-02", quantity: 500 }),
+      { user: "bob" },
+    );
+    expect(breach.ok).toBe(false);
+    if (!breach.ok) {
+      expect(breach.reason).toBe(RejectReason.ExceedsMaxGrossNotional);
+      expect(breach.text).toContain("gross position notional of EQ-US");
+    }
+    expect(
+      engine.createOrder(order({ account: "ACC-US-02", quantity: 400 }), {
+        user: "bob",
+      }).ok,
+    ).toBe(true);
+    // An EU account is not under EQ-US.
+    expect(
+      engine.createOrder(order({ account: "ACC-EU-01", quantity: 400 }), {
+        user: "carol",
+      }).ok,
+    ).toBe(true);
+    // Reducing a position is never blocked.
+    expect(
+      engine.createOrder(order({ side: Side.Sell, quantity: 100 }), ctx).ok,
+    ).toBe(true);
+  });
+
+  test("order rate counts new orders over a rolling second, per entity", () => {
+    const limits = limitBookFor(SEED_ACCOUNTS);
+    limits.set(limitDefinition("ACC-US-01", LimitMetric.OrderRate, 3));
+    limits.set(limitDefinition(FIRM_ENTITY_ID, LimitMetric.OrderRate, 5));
+    const { engine, order, ctx, clock } = setup({ limits });
+    for (let i = 0; i < 3; i++) {
+      expect(engine.createOrder(order(), ctx).ok).toBe(true);
+    }
+    const fourth = engine.createOrder(order(), ctx);
+    expect(fourth.ok).toBe(false);
+    if (!fourth.ok) {
+      expect(fourth.reason).toBe(RejectReason.ExceedsOrderRate);
+      expect(fourth.text).toContain("ACC-US-01 has sent 3 orders");
+    }
+    // Rejected orders don't count; the firm has 3 of its 5.
+    expect(engine.recentOrders(FIRM_ENTITY_ID)).toBe(3);
+    const bob = { user: "bob" };
+    expect(engine.createOrder(order({ account: "ACC-US-02" }), bob).ok).toBe(
+      true,
+    );
+    expect(engine.createOrder(order({ account: "ACC-US-02" }), bob).ok).toBe(
+      true,
+    );
+    const firm = engine.createOrder(order({ account: "ACC-US-02" }), bob);
+    expect(firm.ok).toBe(false);
+    if (!firm.ok) expect(firm.text).toContain("FIRM has sent 5 orders");
+
+    clock.advance(1_000);
+    expect(engine.recentOrders(FIRM_ENTITY_ID)).toBe(0);
+    expect(engine.createOrder(order(), ctx).ok).toBe(true);
+  });
+
+  test("an amend is not counted as an order", () => {
+    const limits = limitBookFor(SEED_ACCOUNTS);
+    limits.set(limitDefinition("ACC-US-01", LimitMetric.OrderRate, 1));
+    const { engine, create, ctx } = setup({ limits });
+    const id = create();
+    const amended = engine.amendOrder({ orderId: id, quantity: 200 }, ctx);
+    expect(amended.ok).toBe(true);
   });
 });
