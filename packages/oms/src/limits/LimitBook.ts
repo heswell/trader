@@ -1,0 +1,302 @@
+import {
+  FIRM_ENTITY_ID,
+  LIMIT_METRIC_INFO,
+  type LimitDefinition,
+  type LimitEntity,
+  LimitEntityType,
+  LimitMetric,
+  LimitRule,
+  LimitScope,
+} from "@heswell/trading-schemas";
+import type { Account } from "../reference/accounts";
+
+/**
+ * The entity tree from the accounts: the Firm, a desk for each account's
+ * desk, then the accounts, in the order they are first seen.
+ */
+export const limitEntities = (accounts: readonly Account[]): LimitEntity[] => {
+  const entities: LimitEntity[] = [
+    {
+      entityId: FIRM_ENTITY_ID,
+      entityType: LimitEntityType.Firm,
+      name: "Firm",
+      parentId: "",
+    },
+  ];
+  const desks = new Set<string>();
+  for (const { desk } of accounts) {
+    if (desks.has(desk)) continue;
+    desks.add(desk);
+    entities.push({
+      entityId: desk,
+      entityType: LimitEntityType.Desk,
+      name: desk,
+      parentId: FIRM_ENTITY_ID,
+    });
+  }
+  for (const { account, name, desk } of accounts) {
+    entities.push({
+      entityId: account,
+      entityType: LimitEntityType.Account,
+      name,
+      parentId: desk,
+    });
+  }
+  return entities;
+};
+
+/** The key of a limit: entity, metric and RIC (or underlying). */
+export const limitKey = (entityId: string, metric: LimitMetric, ric = "") =>
+  ric ? `${entityId}:${metric}:${ric}` : `${entityId}:${metric}`;
+
+/** Warning at 80% of the limit; hard at 100% per order, 110% otherwise. */
+export const limitDefinition = (
+  entityId: string,
+  metric: LimitMetric,
+  soft: number,
+  o: Partial<LimitDefinition> = {},
+): LimitDefinition => {
+  const { scope, period } = LIMIT_METRIC_INFO[metric];
+  const perOrder = scope === LimitScope.PerOrder;
+  return {
+    limitKey: limitKey(entityId, metric, o.ric),
+    entityId,
+    metric,
+    scope,
+    ric: "",
+    period,
+    warning: soft * 0.8,
+    soft,
+    hard: perOrder ? soft : soft * 1.1,
+    currency: "USD",
+    effectiveFrom: 0,
+    effectiveTo: 0,
+    owner: "",
+    active: true,
+    ...o,
+  };
+};
+
+/**
+ * Each account's limits from its own fields: maxOrderQty, maxOrderNotional,
+ * maxPositionNotional (per RIC) and maxDeltaUsd (per underlying, when set).
+ */
+export const accountLimits = (account: Account): LimitDefinition[] => {
+  const o = { owner: account.owner };
+  const limits = [
+    limitDefinition(
+      account.account,
+      LimitMetric.OrderQty,
+      account.maxOrderQty,
+      o,
+    ),
+    limitDefinition(
+      account.account,
+      LimitMetric.OrderNotional,
+      account.maxOrderNotional,
+      o,
+    ),
+    limitDefinition(
+      account.account,
+      LimitMetric.PositionNotional,
+      account.maxPositionNotional,
+      o,
+    ),
+  ];
+  if (account.maxDeltaUsd > 0) {
+    limits.push(
+      limitDefinition(
+        account.account,
+        LimitMetric.NetDelta,
+        account.maxDeltaUsd,
+        o,
+      ),
+    );
+  }
+  return limits;
+};
+
+/** The limit that applies, and the entity it is set on. */
+export interface EffectiveLimit {
+  limit: LimitDefinition;
+  /** The entity the limit is set on: the one asked for, or one above it. */
+  entityId: string;
+}
+
+const isInForce = (limit: LimitDefinition, now: number) =>
+  limit.active &&
+  (limit.effectiveFrom === 0 || limit.effectiveFrom <= now) &&
+  (limit.effectiveTo === 0 || now < limit.effectiveTo);
+
+/**
+ * The limits of an entity tree. A limit set on an entity applies to the
+ * entities below it that set none for the same metric: the nearest one up
+ * the tree applies. Within an entity, a limit for one RIC (or underlying)
+ * comes before the entity's limit for each RIC.
+ *
+ * Cap metrics are also checked at each entity above, against that entity's
+ * own usage (see `ancestors`); `capViolations` finds a value set above its
+ * parent's.
+ */
+export class LimitBook {
+  readonly entities = new Map<string, LimitEntity>();
+  readonly limits = new Map<string, LimitDefinition>();
+  /** limitKeys by entity and metric. */
+  #byEntity = new Map<string, Map<LimitMetric, Set<string>>>();
+  #clock: () => number;
+
+  constructor(
+    entities: Iterable<LimitEntity>,
+    limits: Iterable<LimitDefinition> = [],
+    clock: () => number = Date.now,
+  ) {
+    this.#clock = clock;
+    for (const entity of entities) this.addEntity(entity);
+    for (const limit of limits) this.set(limit);
+  }
+
+  addEntity(entity: LimitEntity) {
+    this.entities.set(entity.entityId, entity);
+  }
+
+  set(limit: LimitDefinition) {
+    const old = this.limits.get(limit.limitKey);
+    if (old) this.#index(old).delete(old.limitKey);
+    this.limits.set(limit.limitKey, limit);
+    this.#index(limit).add(limit.limitKey);
+  }
+
+  delete(limitKey: string) {
+    const old = this.limits.get(limitKey);
+    if (!old) return false;
+    this.#index(old).delete(limitKey);
+    return this.limits.delete(limitKey);
+  }
+
+  #index({ entityId, metric }: LimitDefinition) {
+    let metrics = this.#byEntity.get(entityId);
+    if (!metrics) {
+      metrics = new Map();
+      this.#byEntity.set(entityId, metrics);
+    }
+    let keys = metrics.get(metric);
+    if (!keys) {
+      keys = new Set();
+      metrics.set(metric, keys);
+    }
+    return keys;
+  }
+
+  /** The entity, then each one above it, up to the Firm. */
+  ancestors(entityId: string): LimitEntity[] {
+    const chain: LimitEntity[] = [];
+    let entity = this.entities.get(entityId);
+    while (entity && chain.length <= this.entities.size) {
+      chain.push(entity);
+      entity = entity.parentId ? this.entities.get(entity.parentId) : undefined;
+    }
+    return chain;
+  }
+
+  /** Limits set on the entity itself for a metric, in force now. */
+  own(entityId: string, metric: LimitMetric): LimitDefinition[] {
+    const keys = this.#byEntity.get(entityId)?.get(metric);
+    if (!keys) return [];
+    const now = this.#clock();
+    const own: LimitDefinition[] = [];
+    for (const key of keys) {
+      const limit = this.limits.get(key);
+      if (limit && isInForce(limit, now)) own.push(limit);
+    }
+    return own;
+  }
+
+  /**
+   * The limit that applies to an entity for a metric and, for PER_RIC and
+   * UNDERLYING metrics, a RIC or underlying. undefined = no limit.
+   */
+  effective(
+    entityId: string,
+    metric: LimitMetric,
+    ric = "",
+  ): EffectiveLimit | undefined {
+    for (const entity of this.ancestors(entityId)) {
+      const own = this.own(entity.entityId, metric);
+      if (own.length === 0) continue;
+      const limit =
+        (ric ? own.find((l) => l.ric === ric) : undefined) ??
+        own.find((l) => l.ric === "");
+      if (limit) return { limit, entityId: entity.entityId };
+    }
+    return undefined;
+  }
+
+  /** The soft limit that applies, Infinity when there is none. */
+  softLimit(entityId: string, metric: LimitMetric, ric = "") {
+    return this.effective(entityId, metric, ric)?.limit.soft ?? Infinity;
+  }
+
+  /**
+   * Limits on cap metrics set above the effective value of their entity's
+   * parent: each with the parent's limit it breaks.
+   */
+  capViolations(): { limit: LimitDefinition; parent: EffectiveLimit }[] {
+    const violations: { limit: LimitDefinition; parent: EffectiveLimit }[] = [];
+    for (const limit of this.limits.values()) {
+      if (LIMIT_METRIC_INFO[limit.metric].rule !== LimitRule.Cap) continue;
+      const parentId = this.entities.get(limit.entityId)?.parentId;
+      if (!parentId) continue;
+      const parent = this.effective(parentId, limit.metric, limit.ric);
+      if (parent && limit.soft > parent.limit.soft) {
+        violations.push({ limit, parent });
+      }
+    }
+    return violations;
+  }
+}
+
+/** The per-order and position limits pre-trade risk checks an order against. */
+export interface OrderLimits {
+  maxOrderQty: number;
+  maxOrderNotional: number;
+  maxPositionNotional: number;
+  /** Infinity = no delta limit. */
+  maxDeltaUsd: number;
+}
+
+/** An account's own fields as OrderLimits (no entity tree). */
+export const orderLimitsOf = (account: Account): OrderLimits => ({
+  maxOrderQty: account.maxOrderQty,
+  maxOrderNotional: account.maxOrderNotional,
+  maxPositionNotional: account.maxPositionNotional,
+  maxDeltaUsd: account.maxDeltaUsd > 0 ? account.maxDeltaUsd : Infinity,
+});
+
+/** The limits that apply to an order for `account` in `ric` (`underlying`). */
+export const orderLimits = (
+  book: LimitBook,
+  account: string,
+  ric: string,
+  underlying: string,
+): OrderLimits => ({
+  maxOrderQty: book.softLimit(account, LimitMetric.OrderQty),
+  maxOrderNotional: book.softLimit(account, LimitMetric.OrderNotional),
+  maxPositionNotional: book.softLimit(
+    account,
+    LimitMetric.PositionNotional,
+    ric,
+  ),
+  maxDeltaUsd: book.softLimit(account, LimitMetric.NetDelta, underlying),
+});
+
+/** A LimitBook for the accounts: their entity tree and their own limits. */
+export const limitBookFor = (
+  accounts: readonly Account[],
+  extra: Iterable<LimitDefinition> = [],
+  clock?: () => number,
+) =>
+  new LimitBook(
+    limitEntities(accounts),
+    [...accounts.flatMap(accountLimits), ...extra],
+    clock,
+  );
