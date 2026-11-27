@@ -114,7 +114,7 @@ describe("portal host", () => {
         ],
       ],
       ["Portfolio", ["Positions", "P&L", "Exposure", "Execution quality"]],
-      ["Oversight", ["Desk overview"]],
+      ["Oversight", ["Desk overview", "Limits"]],
       ["Simulator", ["Overview", "Bots", "Instrument", "Metrics"]],
     ]);
     expect(entry(nav, "Executions")?.getAttribute("href")).toBe(
@@ -126,7 +126,7 @@ describe("portal host", () => {
     // navIconUrl renders as a CSS mask (url('…')), one per entry
     expect(
       nav.querySelectorAll('.vuuPortalNav-icon [data-icon="custom"]'),
-    ).toHaveLength(20);
+    ).toHaveLength(21);
 
     const brand = nav.querySelector(".vuuPortalNav-brand") as HTMLElement;
     const brandLink = brand.querySelector(".vuuPortalNav-brandLink");
@@ -242,6 +242,10 @@ describe("portal host", () => {
       {
         label: "Portfolio",
         rows: ["Positions", "P&L", "Exposure", "Execution quality"],
+      },
+      {
+        label: "Oversight",
+        rows: ["Limits"],
       },
       {
         label: "Simulator",

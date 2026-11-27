@@ -98,6 +98,7 @@ export const TRADING_PALETTE_GROUP = {
   trading: "Trading",
   market: "Market",
   portfolio: "Portfolio",
+  oversight: "Oversight",
   simulator: "Simulator",
 } as const;
 
@@ -419,6 +420,27 @@ export const TRADING_FEATURES: readonly TradingFeature[] = [
     // Not in the Panels palette: a page-sized, desk-wide composite (two
     // blotters over every account) that follows no link group, so it gains
     // nothing beside instrument panels and is cramped as one.
+  },
+  {
+    key: "limits",
+    id: 136,
+    name: "TradingLimits",
+    mfScope: "tradingLimits",
+    expose: "./Limits",
+    source: "./src/features/Limits",
+    title: "Limits",
+    description:
+      "Limit monitor by desk and account, breaches, temporary increases and the kill switch",
+    accessRole: view,
+    location: "/Oversight/Limits",
+    path: "/oversight/limits",
+    navOrder: 410,
+    navIcon: "limits",
+    notificationTopics: ["risk"],
+    workspace: {
+      paletteGroup: TRADING_PALETTE_GROUP.oversight,
+      defaultSize: { cols: 2, rows: 1 },
+    },
   },
   {
     key: "simulator-overview",

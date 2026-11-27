@@ -1,0 +1,301 @@
+/* Limit monitor, breaches and their dialogs. Colours follow the Main,
+   MonitorDark and Breaches boards (docs/design/trading-limits). */
+.tradingLimits,
+.tradingLimitsDialog,
+.tradingUtilisationBar,
+.tradingLimitState {
+  --tradingLimits-ok: #7c93b3;
+  --tradingLimits-warning: #d9a520;
+  --tradingLimits-warning-fg: #7a5200;
+  --tradingLimits-soft: #e07a2e;
+  --tradingLimits-soft-solid: #c25a12;
+  --tradingLimits-hard: #c62828;
+  --tradingLimits-solid-fg: #ffffff;
+  --tradingLimits-track: #e3e7ec;
+  --tradingLimits-tick: #3a424d;
+  --tradingLimits-hard-row: #fdf1f0;
+}
+
+/* ------------------------------------------------ dialogs */
+
+/* Salt sizes a dialog by breakpoint (full width at xs); these are forms of a
+   fixed shape, so give them a fixed width */
+.saltDialog.tradingLimitsDialog {
+  max-width: calc(100% - 2 * var(--salt-spacing-300));
+  width: 520px;
+}
+
+.tradingLimitsDialog .saltDialogContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--salt-spacing-200);
+}
+
+.tradingLimitsDialog-row {
+  display: grid;
+  gap: var(--salt-spacing-200);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tradingLimitsDialog-error {
+  color: var(--salt-status-error-foreground-informative);
+}
+
+.tradingLimits {
+  background: var(--salt-container-primary-background);
+  color: var(--salt-content-primary-foreground);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--salt-text-fontFamily);
+  gap: var(--salt-spacing-100);
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+
+[data-mode="dark"] .tradingLimits,
+[data-mode="dark"] .tradingLimitsDialog,
+[data-mode="dark"] .tradingUtilisationBar,
+[data-mode="dark"] .tradingLimitState {
+  --tradingLimits-ok: #6e86a6;
+  --tradingLimits-warning: #d9a520;
+  --tradingLimits-warning-fg: #e8c063;
+  --tradingLimits-soft: #e8873f;
+  --tradingLimits-soft-solid: #f0904a;
+  --tradingLimits-hard: #e5534b;
+  --tradingLimits-solid-fg: #15171a;
+  --tradingLimits-track: #30353c;
+  --tradingLimits-tick: #c7ccd2;
+  --tradingLimits-hard-row: #2e1e1e;
+  /* vuu-theme's dark mode gives actionable-bold a white foreground on its
+     white background (solid neutral buttons, the group-by pills): dark text,
+     as Salt's dark theme has it */
+  --salt-actionable-bold-foreground: var(--tradingLimits-solid-fg);
+  --salt-actionable-bold-foreground-hover: var(--tradingLimits-solid-fg);
+  --salt-actionable-bold-foreground-active: var(--tradingLimits-solid-fg);
+  /* and rows select in light teal under white text: dark tones, as the
+     instrument grid does */
+  --vuuTableRow-background-selected: var(--salt-palette-accent-strongest);
+  --vuuTableRow-bookend-background-selected: var(
+    --salt-palette-accent-strongest
+  );
+  --vuuTableRow-background-highlighted: var(
+    --salt-container-secondary-background
+  );
+}
+
+.tradingLimits-toolbar {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--salt-spacing-100);
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.tradingLimits-toolbar > * {
+  flex-shrink: 0;
+}
+
+.tradingLimits-spacer {
+  flex: 1 1 0;
+}
+
+.tradingLimits-label {
+  color: var(--salt-content-secondary-foreground);
+  font-size: var(--salt-text-label-fontSize);
+  font-weight: var(--salt-text-label-fontWeight-strong);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.tradingLimits-split {
+  display: flex;
+  flex: 1 1 auto;
+  gap: var(--salt-spacing-100);
+  min-height: 0;
+}
+
+.tradingLimits-table {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+.tradingLimits-pane {
+  border-left: 1px solid var(--salt-separable-primary-borderColor);
+  display: flex;
+  flex: 0 0 360px;
+  flex-direction: column;
+  gap: var(--salt-spacing-100);
+  min-height: 0;
+  overflow: auto;
+  padding: var(--salt-spacing-100) var(--salt-spacing-200);
+}
+
+.tradingLimits-pane h3 {
+  font-size: var(--salt-text-h3-fontSize, 14px);
+  margin: 0;
+}
+
+.tradingLimits-muted {
+  color: var(--salt-content-secondary-foreground);
+}
+
+.tradingLimits-footer {
+  align-items: center;
+  color: var(--salt-content-secondary-foreground);
+  display: flex;
+  flex: 0 0 auto;
+  font-size: var(--salt-text-label-fontSize);
+  font-variant-numeric: tabular-nums;
+  gap: var(--salt-spacing-100);
+  padding-inline: var(--salt-spacing-100);
+}
+
+.tradingLimits-banner {
+  align-items: center;
+  background: var(--tradingLimits-hard-row);
+  border: 1px solid var(--tradingLimits-hard);
+  border-radius: 3px;
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--salt-spacing-100);
+  padding: var(--salt-spacing-50) var(--salt-spacing-100);
+}
+
+.tradingLimits-facts {
+  display: grid;
+  font-variant-numeric: tabular-nums;
+  gap: var(--salt-spacing-50) var(--salt-spacing-100);
+  grid-template-columns: auto 1fr;
+}
+
+.tradingLimits-facts dt {
+  color: var(--salt-content-secondary-foreground);
+}
+
+.tradingLimits-facts dd {
+  margin: 0;
+}
+
+.tradingLimits-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--salt-spacing-75, 6px);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tradingLimits-timeline li {
+  display: grid;
+  gap: 0 var(--salt-spacing-100);
+  grid-template-columns: 64px 1fr;
+}
+
+.tradingLimits-timeline time {
+  color: var(--salt-content-secondary-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.tradingLimits-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--salt-spacing-100);
+}
+
+.tradingLimits-chip {
+  align-items: center;
+  display: inline-flex;
+  gap: var(--salt-spacing-50);
+}
+
+/* ------------------------------------------------ state badge */
+
+.tradingLimitState {
+  border-radius: 3px;
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  padding: 0 6px;
+}
+
+.tradingLimitState-OK {
+  color: var(--salt-content-secondary-foreground);
+}
+
+.tradingLimitState-WARNING {
+  border: 1px solid var(--tradingLimits-warning);
+  color: var(--tradingLimits-warning-fg);
+}
+
+.tradingLimitState-SOFT_BREACH {
+  background: var(--tradingLimits-soft-solid);
+  color: var(--tradingLimits-solid-fg);
+}
+
+.tradingLimitState-HARD_BREACH {
+  background: var(--tradingLimits-hard);
+  color: var(--tradingLimits-solid-fg);
+}
+
+/* ------------------------------------------------ utilisation bar */
+
+.tradingUtilisationBar {
+  align-items: center;
+  display: flex;
+  gap: var(--salt-spacing-100);
+  height: 100%;
+  width: 100%;
+}
+
+.tradingUtilisationBar-track {
+  background: var(--tradingLimits-track);
+  border-radius: 4px;
+  flex: 1 1 auto;
+  height: 8px;
+  position: relative;
+}
+
+.tradingUtilisationBar-fill {
+  background: var(--tradingUtilisationBar-colour, var(--tradingLimits-ok));
+  border-radius: 4px;
+  bottom: 0;
+  left: 0;
+  position: absolute;
+  top: 0;
+}
+
+.tradingUtilisationBar-WARNING {
+  --tradingUtilisationBar-colour: var(--tradingLimits-warning);
+}
+
+.tradingUtilisationBar-SOFT_BREACH {
+  --tradingUtilisationBar-colour: var(--tradingLimits-soft);
+}
+
+.tradingUtilisationBar-HARD_BREACH {
+  --tradingUtilisationBar-colour: var(--tradingLimits-hard);
+}
+
+.tradingUtilisationBar-tick {
+  border-left: 2px solid var(--tradingLimits-tick);
+  bottom: -3px;
+  opacity: 0.85;
+  position: absolute;
+  top: -3px;
+}
+
+.tradingUtilisationBar-tick-hard {
+  border-left-style: dotted;
+  border-left-color: var(--tradingLimits-hard);
+}
+
+.tradingUtilisationBar-pct {
+  flex: 0 0 40px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: right;
+}

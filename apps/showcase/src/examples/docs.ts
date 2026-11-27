@@ -5,6 +5,12 @@
  */
 export const COMPONENT_GUIDES: Record<string, string> = {
   // components
+  IncreaseRequestDialog: "docs/components/limits.md",
+  KillSwitchDialog: "docs/components/limits.md",
+  LimitBreaches: "docs/components/limits.md",
+  LimitMonitor: "docs/components/limits.md",
+  LimitStateBadge: "docs/components/limits.md",
+  UtilisationBar: "docs/components/limits.md",
   AccountSelector: "docs/components/selection-and-linking.md#accounts",
   ChangeCell: "docs/components/instrument-grid.md#cell-renderers",
   ConnectionBanner: "docs/components/notifications-and-connection.md",
@@ -90,6 +96,7 @@ export const COMPONENT_GUIDES: Record<string, string> = {
   Charts: "docs/components/charts.md",
   Export: "docs/viewport-export.md",
   Hosting: "docs/components/hosting.md",
+  Limits: "docs/components/limits.md",
   Linking: "docs/components/selection-and-linking.md",
   Primitives: "docs/components/primitives.md",
   Selectors: "docs/components/selection-and-linking.md",
