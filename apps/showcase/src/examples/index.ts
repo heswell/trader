@@ -41,6 +41,10 @@ import {
 } from "./LinkingExamples";
 import { MarketDepthExamples } from "./MarketDepthExamples";
 import {
+  LimitBreachesExample,
+  LimitMonitorExample,
+} from "./LimitsExamples";
+import {
   OptionChainTicket,
   OptionInstrumentGrid,
   OptionPositions,
@@ -171,6 +175,22 @@ export const examples: ShowcaseExample[] = [
     description:
       "The grid's Salt dialogs on their own (no browser prompts). New column set: a name, checked against the sets there are (try prices); Enter creates. New watchlist: a name (Energy is taken), then search and filter instruments; Enter picks the highlighted row, Alt+A adds every match, Ctrl+Enter creates.",
     Component: InstrumentGridDialogs,
+  },
+  {
+    id: "limit-monitor",
+    group: "Limits",
+    title: "Limit monitor",
+    description:
+      "Every limit's live usage, grouped by desk then entity: utilisation bars with ticks at warning and the limit (dotted: hard), Show and family toggles, state counts. Select a limit for its contributors, Request increase or Kill switch. Local mode adds tight desk and firm limits so the background flow reaches them.",
+    Component: LimitMonitorExample,
+  },
+  {
+    id: "limit-breaches",
+    group: "Limits",
+    title: "Breaches",
+    description:
+      "Today's breaches by status and severity. Select one for its timeline; Comment, Acknowledge, Request increase, Escalate and Kill switch. Pending increase requests show above with Approve and Reject (the local user counts as a supervisor, but cannot approve their own request).",
+    Component: LimitBreachesExample,
   },
   {
     id: "side-label-variants",
