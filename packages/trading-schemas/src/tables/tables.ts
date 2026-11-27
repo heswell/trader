@@ -1554,6 +1554,56 @@ export const killSwitches = defineTable({
   ],
 });
 
+/** Orders sent over a limit (a soft breach) with a reason: one row per limit. */
+export const limitOverrides = defineTable({
+  module: OMS_MODULE,
+  name: "limitOverrides",
+  keyField: "overrideId",
+  description:
+    "Limits overridden by an order sent over its limit (soft breach) with a reason; one row per order and limit.",
+  columns: [
+    {
+      name: "overrideId",
+      dataType: "string",
+      description: "<orderId>:<limitKey>",
+    },
+    { name: "time", dataType: "epochtimestamp" },
+    { name: "user", dataType: "string" },
+    { name: "account", dataType: "string" },
+    { name: "ric", dataType: "string" },
+    { name: "side", dataType: "string", description: "Side" },
+    { name: "quantity", dataType: "long" },
+    { name: "orderId", dataType: "string" },
+    { name: "clOrdId", dataType: "string" },
+    { name: "limitKey", dataType: "string" },
+    {
+      name: "entityId",
+      dataType: "string",
+      description: "The entity whose limit: the account, its desk or the Firm.",
+    },
+    { name: "metric", dataType: "string", description: "LimitMetric" },
+    {
+      name: "before",
+      dataType: "double",
+      description: "Usage before the order.",
+    },
+    {
+      name: "after",
+      dataType: "double",
+      description: "Usage after the order.",
+    },
+    { name: "soft", dataType: "double" },
+    { name: "hard", dataType: "double" },
+    {
+      name: "utilisation",
+      dataType: "double",
+      description: "after / soft, as a percentage.",
+    },
+    { name: "reason", dataType: "string", description: "LimitOverrideReason" },
+    { name: "note", dataType: "string" },
+  ],
+});
+
 export const orderEntry = defineTable({
   module: OMS_MODULE,
   name: "orderEntry",
@@ -1621,6 +1671,12 @@ export const orderEntry = defineTable({
       name: "vuuMsg",
       dataType: "string",
       description: "Errors and warnings (encodeEntryMessages), '' when none.",
+    },
+    {
+      name: "limitCheck",
+      dataType: "string",
+      description:
+        "The limits the order is checked against, before and after (encodeLimitCheck), '' when none.",
     },
   ],
   links: [{ fromColumn: "account", toTable: "accounts", toColumn: "account" }],
@@ -1890,6 +1946,7 @@ export const omsTables = {
   limitBreachEvents,
   limitRequests,
   killSwitches,
+  limitOverrides,
 } as const;
 export const tradingTables = { ...exchangeTables, ...omsTables } as const;
 export const tradingJoins = {

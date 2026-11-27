@@ -338,22 +338,49 @@ export class LimitBook {
   }
 }
 
-/** The per-order and position limits pre-trade risk checks an order against. */
-export interface OrderLimits {
-  maxOrderQty: number;
-  maxOrderNotional: number;
-  maxPositionNotional: number;
-  /** Infinity = no delta limit. */
-  maxDeltaUsd: number;
+/** The thresholds of the limit that applies, and where it is set. */
+export interface LimitLevels {
+  limitKey: string;
+  /** The entity the limit is set on (the account or one above it). */
+  entityId: string;
+  warning: number;
+  soft: number;
+  hard: number;
 }
 
-/** An account's own fields as OrderLimits (no entity tree). */
-export const orderLimitsOf = (account: Account): OrderLimits => ({
-  maxOrderQty: account.maxOrderQty,
-  maxOrderNotional: account.maxOrderNotional,
-  maxPositionNotional: account.maxPositionNotional,
-  maxDeltaUsd: account.maxDeltaUsd > 0 ? account.maxDeltaUsd : Infinity,
+/**
+ * The per-order and position limits pre-trade risk checks an order against;
+ * a metric without a limit is absent.
+ */
+export interface OrderLimits {
+  orderQty?: LimitLevels;
+  orderNotional?: LimitLevels;
+  positionNotional?: LimitLevels;
+  netDelta?: LimitLevels;
+}
+
+const levelsOf = ({ limit, entityId }: EffectiveLimit): LimitLevels => ({
+  limitKey: limit.limitKey,
+  entityId,
+  warning: limit.warning,
+  soft: limit.soft,
+  hard: Math.max(limit.hard, limit.soft),
 });
+
+/** An account's own fields as OrderLimits (no entity tree). */
+export const orderLimitsOf = (account: Account): OrderLimits => {
+  const limits: OrderLimits = {};
+  for (const limit of accountLimits(account)) {
+    const levels = levelsOf({ limit, entityId: account.account });
+    if (limit.metric === LimitMetric.OrderQty) limits.orderQty = levels;
+    else if (limit.metric === LimitMetric.OrderNotional)
+      limits.orderNotional = levels;
+    else if (limit.metric === LimitMetric.PositionNotional)
+      limits.positionNotional = levels;
+    else if (limit.metric === LimitMetric.NetDelta) limits.netDelta = levels;
+  }
+  return limits;
+};
 
 /** The limits that apply to an order for `account` in `ric` (`underlying`). */
 export const orderLimits = (
@@ -361,16 +388,28 @@ export const orderLimits = (
   account: string,
   ric: string,
   underlying: string,
-): OrderLimits => ({
-  maxOrderQty: book.softLimit(account, LimitMetric.OrderQty),
-  maxOrderNotional: book.softLimit(account, LimitMetric.OrderNotional),
-  maxPositionNotional: book.softLimit(
-    account,
-    LimitMetric.PositionNotional,
-    ric,
-  ),
-  maxDeltaUsd: book.softLimit(account, LimitMetric.NetDelta, underlying),
-});
+): OrderLimits => {
+  const levels = (metric: LimitMetric, key = "") => {
+    const effective = book.effective(account, metric, key);
+    return effective ? levelsOf(effective) : undefined;
+  };
+  return {
+    orderQty: levels(LimitMetric.OrderQty),
+    orderNotional: levels(LimitMetric.OrderNotional),
+    positionNotional: levels(LimitMetric.PositionNotional, ric),
+    netDelta: levels(LimitMetric.NetDelta, underlying),
+  };
+};
+
+/**
+ * The limit each entity from the account up to the Firm sets on its own
+ * total for a metric, as LimitLevels.
+ */
+export const totalLimits = (
+  book: LimitBook,
+  account: string,
+  metric: LimitMetric,
+): LimitLevels[] => book.ownUp(account, metric).map(levelsOf);
 
 /** A LimitBook for the accounts: their entity tree and their own limits. */
 export const limitBookFor = (

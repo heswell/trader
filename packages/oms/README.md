@@ -90,7 +90,13 @@ accounts (`src/limits/LimitBook.ts`). Metrics, scopes, periods and states are in
 - Each account's own limits are seeded from its `maxOrderQty`, `maxOrderNotional`, `maxPositionNotional` (per RIC) and
   `maxDeltaUsd` (per underlying). More limits come from `oms.limits`.
 - A limit has `warning` (80% of the limit by default), `soft` (the limit) and `hard` (100% per order, 110% otherwise).
-  Pre-trade risk rejects above `soft`.
+  Pre-trade risk rejects at `hard`. Above `soft` (a soft breach) it rejects unless the order carries an
+  `overrideReason` (`LimitOverrideReason`; `OTHER` needs an `overrideNote`); each limit overridden is recorded in
+  `limitOverrides` (one row per order and limit, filtered by account). The collar and the order rate have no margin.
+- **The ticket's check.** `limitChecks` (`src/risk/preTradeRisk.ts`) lists every limit an order is checked against,
+  before and after, with its state and the largest quantity that stays under hard. The orderEntry row carries it in
+  `limitCheck` (`encodeLimitCheck`); a soft breach is a Review message (sendOrder needs `overrideReason`), a hard one
+  an error. `checkLimits` returns the same for any order, without placing it.
 - **Nearest applies** for order quantity, order notional, position notional and net delta: the nearest limit up the
   tree applies, and within an entity a limit for one RIC or underlying (a carve-out) comes before its limit for each.
 - **Totals** for gross position notional, order rate and daily loss: each of the account, its desk and the Firm that
@@ -124,6 +130,7 @@ accounts (`src/limits/LimitBook.ts`). Metrics, scopes, periods and states are in
 | `approveLimitRequest`, `rejectLimitRequest` | A `trading-supervisor`, not the requester |
 | `killSwitch` | An account: `trading-execute` on it or a supervisor. A desk or the Firm: a supervisor |
 | `releaseKillSwitch` | A `trading-supervisor` |
+| `checkLimits` | Anyone who can see the account |
 
 In `auto` mode the unrestricted dev user (no roles, owns no accounts) counts as a supervisor.
 

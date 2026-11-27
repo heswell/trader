@@ -84,8 +84,8 @@ describe("seeded account limits", () => {
     const limits = accountLimits({ ...SEED_ACCOUNTS[0], maxDeltaUsd: 0 });
     expect(limits.map((l) => l.metric)).not.toContain(LimitMetric.NetDelta);
     expect(
-      orderLimitsOf({ ...SEED_ACCOUNTS[0], maxDeltaUsd: 0 }).maxDeltaUsd,
-    ).toBe(Infinity);
+      orderLimitsOf({ ...SEED_ACCOUNTS[0], maxDeltaUsd: 0 }).netDelta,
+    ).toBeUndefined();
   });
 
   test("the book gives the same order limits as the account's own fields", () => {

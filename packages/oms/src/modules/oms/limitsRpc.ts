@@ -72,6 +72,13 @@ const invoke = (
         rpcSuccess(RpcName.KillSwitch, { entityId, active, orderIds }),
       );
     }
+    case RpcName.CheckLimits: {
+      const r = oms.checkLimits(
+        params as RpcRequestParams<"checkLimits">,
+        actor.access,
+      );
+      return result(r, (value) => rpcSuccess(RpcName.CheckLimits, value));
+    }
     case RpcName.ReleaseKillSwitch: {
       const p = params as RpcRequestParams<"releaseKillSwitch">;
       return result(monitor.release(p.entityId, actor, p.comment), (row) =>
@@ -86,8 +93,9 @@ const invoke = (
 };
 
 /**
- * Limits RPCs (breaches, temporary increases, kill switch): validated, then
- * applied by the OMS LimitMonitor, which checks what the user may see and do.
+ * Limits RPCs (breaches, temporary increases, kill switch, the pre-trade
+ * check): validated, then applied by the OMS LimitMonitor (checkLimits by
+ * the OmsService), which checks what the user may see and do.
  */
 export const handleLimitsRpc = (
   oms: OmsService,

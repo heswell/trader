@@ -8,6 +8,8 @@ import {
   EntryMessageLevel,
   EntryRiskCode,
   encodeEntryMessages,
+  encodeLimitCheck,
+  type LimitCheckLine,
   entryFieldForCode,
   isPricedOrdType,
   isStopOrdType,
@@ -40,6 +42,9 @@ import {
   type TradingUser,
 } from "../permissions/access";
 import {
+  type LimitCheck,
+  limitCheckLine,
+  limitChecks,
   referencePrice,
   type RiskInstrument,
   riskLimitBreaches,
@@ -74,6 +79,8 @@ interface Draft extends OrderEntryFields {
   /** The reject of the last sendOrder (cleared on the next edit). */
   rejects: EntryMessage[];
   vuuMsg: string;
+  /** encodeLimitCheck of the last check written. */
+  limitCheck: string;
 }
 
 export const EMPTY_ORDER_ENTRY: Readonly<OrderEntryFields> = Object.freeze({
@@ -125,6 +132,22 @@ const error = (field: string, code: string, text: string): EntryMessage => ({
   code,
   text: sentence(text),
 });
+
+const review = (field: string, code: string, text: string): EntryMessage => ({
+  level: EntryMessageLevel.Review,
+  field,
+  code,
+  text: sentence(text),
+});
+
+/** The risk codes of a limit, which a soft breach can be overridden on. */
+const LIMIT_CODES: ReadonlySet<string> = new Set([
+  EntryRiskCode.MaxOrderQty,
+  EntryRiskCode.MaxOrderNotional,
+  EntryRiskCode.MaxPositionNotional,
+  EntryRiskCode.MaxDelta,
+  EntryRiskCode.MaxGrossNotional,
+]);
 
 const info = (field: string, code: string, text: string): EntryMessage => ({
   level: EntryMessageLevel.Info,
@@ -240,6 +263,7 @@ export class OrderEntryService {
       notices: [],
       rejects: [],
       vuuMsg: "",
+      limitCheck: "",
     };
     this.#apply(draft, fields, { tifFallback: true });
     draft.notices = [];
@@ -326,18 +350,35 @@ export class OrderEntryService {
     const messages = this.messages(draft);
     const blocking = messages.find((m) => m.level === EntryMessageLevel.Error);
     if (blocking) {
-      this.#writeMessages(draft, messages);
+      this.#writeMessages(draft);
       return fail(rejectReasonOf(blocking.code), blocking.text);
     }
-    const review = messages.filter((m) => m.level === EntryMessageLevel.Review);
-    if (review.length > 0 && !request.confirmed) {
+    const toReview = messages.filter(
+      (m) => m.level === EntryMessageLevel.Review,
+    );
+    const overLimit = toReview.filter((m) => LIMIT_CODES.has(m.code));
+    if (overLimit.length > 0 && !request.overrideReason) {
       return fail(
         RejectReason.InvalidRequest,
-        `review needed: ${review.map((m) => m.text).join("; ")}`,
+        `override reason needed: ${overLimit.map((m) => m.text).join("; ")}`,
+      );
+    }
+    if (toReview.length > overLimit.length && !request.confirmed) {
+      return fail(
+        RejectReason.InvalidRequest,
+        `review needed: ${toReview.map((m) => m.text).join("; ")}`,
       );
     }
     const params = validateRpcParams("createOrder", {
       ...this.#orderParams(draft),
+      ...(overLimit.length > 0
+        ? {
+            overrideReason: request.overrideReason,
+            ...(request.overrideNote
+              ? { overrideNote: request.overrideNote }
+              : {}),
+          }
+        : {}),
       clOrdId:
         request.clOrdId ??
         `TKT-${this.#clock().toString(36)}-${(++clOrdIdSeq).toString(36)}`.toUpperCase(),
@@ -395,18 +436,29 @@ export class OrderEntryService {
         this.#drafts.delete(draft.entryId);
         this.#tables.deleteRow("orderEntry", draft.entryId);
       } else {
-        this.#writeMessages(draft, this.messages(draft));
+        this.#writeMessages(draft);
       }
     }
   }
 
   /**
    * Errors and notes for a row, in field order: what createOrder would
-   * reject, then the account limits and collar, then the OMS's notices and
-   * the last reject.
+   * reject, then the limits and the collar (a limit at its hard level, or
+   * the collar, is an error; one over the limit is a Review message, sent
+   * with an override reason), then the OMS's notices and the last reject.
    */
   messages(draft: Draft): EntryMessage[] {
+    return this.#evaluate(draft).messages;
+  }
+
+  /** The limits the row's order is checked against (see limitChecks). */
+  limitCheck(draft: Draft): LimitCheckLine[] {
+    return this.#evaluate(draft).limits;
+  }
+
+  #evaluate(draft: Draft): { messages: EntryMessage[]; limits: LimitCheck[] } {
     const messages: EntryMessage[] = [];
+    let limits: LimitCheck[] = [];
     const has = (field: string) => messages.some((m) => m.field === field);
     const instrument = draft.ric
       ? this.#gateway.getInstrument(draft.ric)
@@ -574,19 +626,26 @@ export class OrderEntryService {
         messages.push(error(entryFieldForCode(reason), reason, text));
       } else if (account?.enabled && !has("account")) {
         const ctx = this.#engine.riskContext(draft.account, draft.ric);
+        limits = limitChecks(order, account, instrument, ctx);
         for (const breach of riskLimitBreaches(
           order,
           account,
           instrument,
           ctx,
         )) {
+          const field = entryFieldForCode(breach.code);
           messages.push(
-            error(entryFieldForCode(breach.code), breach.code, breach.text),
+            breach.level === "hard"
+              ? error(field, breach.code, breach.text)
+              : review(field, breach.code, breach.text),
           );
         }
       }
     }
-    return [...messages, ...draft.notices, ...draft.rejects];
+    return {
+      messages: [...messages, ...draft.notices, ...draft.rejects],
+      limits,
+    };
   }
 
   // ---------------------------------------------------------------- private
@@ -785,7 +844,9 @@ export class OrderEntryService {
   }
 
   #writeAll(draft: Draft) {
-    draft.vuuMsg = encodeEntryMessages(this.messages(draft));
+    const { messages, limits } = this.#evaluate(draft);
+    draft.vuuMsg = encodeEntryMessages(messages);
+    draft.limitCheck = encodeLimitCheck(limits.map(limitCheckLine));
     const instrument = draft.ric
       ? this.#gateway.getInstrument(draft.ric)
       : undefined;
@@ -810,14 +871,20 @@ export class OrderEntryService {
       orderId: draft.orderId,
       lastUpdate: draft.lastUpdate,
       vuuMsg: draft.vuuMsg,
+      limitCheck: draft.limitCheck,
     });
   }
 
-  #writeMessages(draft: Draft, messages: EntryMessage[]) {
+  /** Write vuuMsg and limitCheck, if they changed. */
+  #writeMessages(draft: Draft) {
+    const { messages, limits } = this.#evaluate(draft);
     const vuuMsg = encodeEntryMessages(messages);
-    if (vuuMsg === draft.vuuMsg) return;
-    draft.vuuMsg = vuuMsg;
-    this.#write(draft, { vuuMsg });
+    const limitCheck = encodeLimitCheck(limits.map(limitCheckLine));
+    const changed: Record<string, unknown> = {};
+    if (vuuMsg !== draft.vuuMsg) changed.vuuMsg = draft.vuuMsg = vuuMsg;
+    if (limitCheck !== draft.limitCheck)
+      changed.limitCheck = draft.limitCheck = limitCheck;
+    if (Object.keys(changed).length > 0) this.#write(draft, changed);
   }
 
   #write(draft: Draft, values: Record<string, unknown>) {
