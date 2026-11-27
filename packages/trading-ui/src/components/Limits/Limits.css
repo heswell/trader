@@ -1,7 +1,9 @@
 /* Limit monitor, breaches and their dialogs. Colours follow the Main,
    MonitorDark and Breaches boards (docs/design/trading-limits). */
 .tradingLimits,
-.tradingLimitsDialog {
+.tradingLimitsDialog,
+.tradingUtilisationBar,
+.tradingLimitState {
   --tradingLimits-ok: #7c93b3;
   --tradingLimits-warning: #d9a520;
   --tradingLimits-warning-fg: #7a5200;
@@ -52,7 +54,9 @@
 }
 
 [data-mode="dark"] .tradingLimits,
-[data-mode="dark"] .tradingLimitsDialog {
+[data-mode="dark"] .tradingLimitsDialog,
+[data-mode="dark"] .tradingUtilisationBar,
+[data-mode="dark"] .tradingLimitState {
   --tradingLimits-ok: #6e86a6;
   --tradingLimits-warning: #d9a520;
   --tradingLimits-warning-fg: #e8c063;

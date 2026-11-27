@@ -9,6 +9,7 @@ import {
 } from "@salt-ds/core";
 import type { DataSource } from "@vuu-ui/vuu-data-types";
 import { Prompt } from "@vuu-ui/vuu-ui-controls";
+import { useLimitsCss } from "./useLimitsCss";
 import { type SyntheticEvent, useState } from "react";
 import { sendTradingRpc, TradingRpcError } from "../../data/tradingRpc";
 import type { TradingConnectionState } from "../../connection/useTradingConnectionStatus";
@@ -54,6 +55,7 @@ export const KillSwitchDialog = ({
   onDone,
   workingOrders,
 }: KillSwitchDialogProps) => {
+  useLimitsCss();
   const [entityId, setEntityId] = useState(entities[0]?.entityId ?? "");
   const [cancelWorking, setCancelWorking] = useState(true);
   const [reason, setReason] = useState(defaultReason);

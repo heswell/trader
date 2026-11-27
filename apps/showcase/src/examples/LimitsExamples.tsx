@@ -1,6 +1,16 @@
 import { getTradingTestData } from "@heswell/trading-test-data";
-import { LimitBreaches, LimitMonitor } from "@heswell/trading-ui";
-import { useEffect } from "react";
+import { LimitState } from "@heswell/trading-schemas";
+import {
+  IncreaseRequestDialog,
+  KillSwitchDialog,
+  LimitBreaches,
+  LimitMonitor,
+  LimitStateBadge,
+  UtilisationBar,
+  useTradingDataSource,
+} from "@heswell/trading-ui";
+import { Button } from "@salt-ds/core";
+import { useEffect, useState } from "react";
 
 const fill = { height: "100%", minHeight: 0, padding: 8 } as const;
 
@@ -45,6 +55,83 @@ export const LimitBreachesExample = () => {
   return (
     <div style={fill}>
       <LimitBreaches defaultStatus="all" />
+    </div>
+  );
+};
+
+const BARS = [
+  { utilisation: 0.42, state: LimitState.Ok },
+  { utilisation: 0.88, state: LimitState.Warning },
+  { utilisation: 1.04, state: LimitState.SoftBreach },
+  { utilisation: 1.22, state: LimitState.HardBreach },
+];
+
+export const UtilisationBarExamples = () => (
+  <div style={{ display: "grid", gap: 12, padding: 16, width: 320 }}>
+    {BARS.map(({ utilisation, state }) => (
+      <div
+        key={state}
+        style={{ alignItems: "center", display: "flex", gap: 12 }}
+      >
+        <div style={{ flex: 1 }}>
+          <UtilisationBar
+            hardPct={1.1}
+            state={state}
+            utilisation={utilisation}
+            warningPct={0.8}
+          />
+        </div>
+        <LimitStateBadge state={state} />
+      </div>
+    ))}
+  </div>
+);
+
+const DEMO_TARGET = {
+  limitKey: "ACC-US-01:ORDER_NOTIONAL",
+  entityId: "ACC-US-01",
+  metric: "ORDER_NOTIONAL",
+  ric: "",
+  used: 27_400,
+  soft: 30_000,
+  hard: 33_000,
+};
+
+const DEMO_CHAIN = [
+  { entityId: "ACC-US-01", entityType: "ACCOUNT", label: "ACC-US-01" },
+  { entityId: "EQ-US", entityType: "DESK", label: "EQ-US" },
+  { entityId: "FIRM", entityType: "FIRM", label: "Firm" },
+];
+
+/** The two dialogs on their own, on a demo limit (sending is real). */
+export const LimitDialogsExample = () => {
+  useDemoLimits();
+  const dataSource = useTradingDataSource("limitUtilisation");
+  const [open, setOpen] = useState<"increase" | "kill">();
+  return (
+    <div style={{ display: "flex", gap: 8, padding: 16 }}>
+      <Button appearance="bordered" onClick={() => setOpen("increase")}>
+        Request increase…
+      </Button>
+      <Button onClick={() => setOpen("kill")} sentiment="negative">
+        Kill switch…
+      </Button>
+      {open === "increase" ? (
+        <IncreaseRequestDialog
+          approver="sam"
+          dataSource={dataSource}
+          onClose={() => setOpen(undefined)}
+          target={DEMO_TARGET}
+        />
+      ) : null}
+      {open === "kill" ? (
+        <KillSwitchDialog
+          dataSource={dataSource}
+          entities={DEMO_CHAIN}
+          onClose={() => setOpen(undefined)}
+          workingOrders={(entityId) => (entityId === "FIRM" ? 12 : 3)}
+        />
+      ) : null}
     </div>
   );
 };

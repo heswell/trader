@@ -4,8 +4,6 @@ import {
   LimitState,
 } from "@heswell/trading-schemas";
 import { Button, ToggleButton, ToggleButtonGroup } from "@salt-ds/core";
-import { useComponentCssInjection } from "@salt-ds/styles";
-import { useWindow } from "@salt-ds/window";
 import { Table } from "@vuu-ui/vuu-table";
 import type {
   TableConfig,
@@ -50,7 +48,7 @@ import {
   limitLabel,
 } from "./limitFormat";
 
-import limitsCss from "./Limits.css";
+import { useLimitsCss } from "./useLimitsCss";
 
 registerTradingCellRenderers();
 registerLimitRenderers();
@@ -180,12 +178,7 @@ export const LimitMonitor = forwardRef<HTMLDivElement, LimitMonitorProps>(
     },
     ref,
   ) {
-    const targetWindow = useWindow();
-    useComponentCssInjection({
-      testId: "trading-limits",
-      css: limitsCss,
-      window: targetWindow,
-    });
+    useLimitsCss();
     const { connectionState, staleProps } = useStaleData();
     const [show, setShow] = useState<LimitShow>(defaultShow);
     const [family, setFamily] = useState<LimitFamily>(defaultFamily);

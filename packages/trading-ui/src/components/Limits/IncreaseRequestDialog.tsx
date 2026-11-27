@@ -9,6 +9,7 @@ import {
 } from "@salt-ds/core";
 import type { DataSource } from "@vuu-ui/vuu-data-types";
 import { Prompt } from "@vuu-ui/vuu-ui-controls";
+import { useLimitsCss } from "./useLimitsCss";
 import { type SyntheticEvent, useMemo, useState } from "react";
 import type { TradingConnectionState } from "../../connection/useTradingConnectionStatus";
 import { sendTradingRpc, TradingRpcError } from "../../data/tradingRpc";
@@ -80,6 +81,7 @@ export const IncreaseRequestDialog = ({
   onClose,
   target,
 }: IncreaseRequestDialogProps) => {
+  useLimitsCss();
   const [amount, setAmount] = useState(String(Math.round(target.soft * 1.25)));
   const [expiry, setExpiry] = useState<Expiry>("day");
   const [date, setDate] = useState("");

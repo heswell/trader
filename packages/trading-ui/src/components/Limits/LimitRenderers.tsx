@@ -53,6 +53,11 @@ const TimeCell = ({ column, dataRow }: TableCellRendererProps) => {
 
 let registered = false;
 
+/**
+ * Registers the LimitRenderer cell renderers with vuu (once). LimitMonitor
+ * and LimitBreaches call it; call it yourself to use the renderers in
+ * another table.
+ */
 export const registerLimitRenderers = () => {
   if (registered) return;
   registered = true;

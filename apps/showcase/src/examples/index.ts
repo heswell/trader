@@ -42,6 +42,8 @@ import {
 import { MarketDepthExamples } from "./MarketDepthExamples";
 import {
   LimitBreachesExample,
+  LimitDialogsExample,
+  UtilisationBarExamples,
   LimitMonitorExample,
 } from "./LimitsExamples";
 import {
@@ -191,6 +193,22 @@ export const examples: ShowcaseExample[] = [
     description:
       "Today's breaches by status and severity. Select one for its timeline; Comment, Acknowledge, Request increase, Escalate and Kill switch. Pending increase requests show above with Approve and Reject (the local user counts as a supervisor, but cannot approve their own request).",
     Component: LimitBreachesExample,
+  },
+  {
+    id: "limit-utilisation-bars",
+    group: "Limits",
+    title: "Utilisation bars",
+    description:
+      "UtilisationBar and LimitStateBadge in each state: ticks at warning (80%), the limit and (dotted) hard (110%), on a 125% scale.",
+    Component: UtilisationBarExamples,
+  },
+  {
+    id: "limit-dialogs",
+    group: "Limits",
+    title: "Dialogs",
+    description:
+      "IncreaseRequestDialog (new limit with k / m / b, the hard limit keeping its margin, expiry, reason) and KillSwitchDialog (scope over account, desk and firm, cancel working orders, reason) on a demo ACC-US-01 limit. Sending is real: the kill switch stops trading until released from the monitor.",
+    Component: LimitDialogsExample,
   },
   {
     id: "side-label-variants",

@@ -6,8 +6,6 @@ import {
   type RpcRequestParams,
 } from "@heswell/trading-schemas";
 import { Button, Input, ToggleButton, ToggleButtonGroup } from "@salt-ds/core";
-import { useComponentCssInjection } from "@salt-ds/styles";
-import { useWindow } from "@salt-ds/window";
 import { Table } from "@vuu-ui/vuu-table";
 import type {
   TableConfig,
@@ -43,7 +41,7 @@ import {
   limitLabel,
 } from "./limitFormat";
 
-import limitsCss from "./Limits.css";
+import { useLimitsCss } from "./useLimitsCss";
 
 registerLimitRenderers();
 
@@ -180,12 +178,7 @@ export const LimitBreaches = forwardRef<HTMLDivElement, LimitBreachesProps>(
     },
     ref,
   ) {
-    const targetWindow = useWindow();
-    useComponentCssInjection({
-      testId: "trading-limits",
-      css: limitsCss,
-      window: targetWindow,
-    });
+    useLimitsCss();
     const { connectionState, staleProps } = useStaleData();
     const [status, setStatus] = useState<BreachStatusFilter>(defaultStatus);
     const [severity, setSeverity] =

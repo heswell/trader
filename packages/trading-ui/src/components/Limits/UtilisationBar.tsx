@@ -1,4 +1,5 @@
 import { formatUtilisation } from "./limitFormat";
+import { useLimitsCss } from "./useLimitsCss";
 
 /** The bar runs to this multiple of the limit (room for the hard tick). */
 const SCALE = 1.25;
@@ -25,33 +26,36 @@ export const UtilisationBar = ({
   state,
   utilisation,
   warningPct,
-}: UtilisationBarProps) => (
-  <div
-    aria-label={`Utilisation ${formatUtilisation(utilisation)}`}
-    className={`tradingUtilisationBar tradingUtilisationBar-${state}`}
-    role="img"
-  >
-    <span className="tradingUtilisationBar-track">
-      <span
-        className="tradingUtilisationBar-fill"
-        style={{ width: pct(utilisation) }}
-      />
-      {warningPct > 0 ? (
+}: UtilisationBarProps) => {
+  useLimitsCss();
+  return (
+    <div
+      aria-label={`Utilisation ${formatUtilisation(utilisation)}`}
+      className={`tradingUtilisationBar tradingUtilisationBar-${state}`}
+      role="img"
+    >
+      <span className="tradingUtilisationBar-track">
         <span
-          className="tradingUtilisationBar-tick"
-          style={{ left: pct(warningPct) }}
+          className="tradingUtilisationBar-fill"
+          style={{ width: pct(utilisation) }}
         />
-      ) : null}
-      <span className="tradingUtilisationBar-tick" style={{ left: pct(1) }} />
-      {hardPct > 1 ? (
-        <span
-          className="tradingUtilisationBar-tick tradingUtilisationBar-tick-hard"
-          style={{ left: pct(hardPct) }}
-        />
-      ) : null}
-    </span>
-    <span className="tradingUtilisationBar-pct">
-      {formatUtilisation(utilisation)}
-    </span>
-  </div>
-);
+        {warningPct > 0 ? (
+          <span
+            className="tradingUtilisationBar-tick"
+            style={{ left: pct(warningPct) }}
+          />
+        ) : null}
+        <span className="tradingUtilisationBar-tick" style={{ left: pct(1) }} />
+        {hardPct > 1 ? (
+          <span
+            className="tradingUtilisationBar-tick tradingUtilisationBar-tick-hard"
+            style={{ left: pct(hardPct) }}
+          />
+        ) : null}
+      </span>
+      <span className="tradingUtilisationBar-pct">
+        {formatUtilisation(utilisation)}
+      </span>
+    </div>
+  );
+};
