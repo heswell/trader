@@ -85,6 +85,7 @@ const monitorFixture = () => {
       entityType: book.entities.get(limit.entityId)?.entityType ?? "",
       temporaryUntil: 0,
       parentId: book.entities.get(limit.entityId)?.parentId ?? "",
+      desk: "EQ-US",
       worst: "AAPL",
       used,
       headroom: limit.soft - used,

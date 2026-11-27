@@ -118,6 +118,13 @@ export const OMS_TABLE_NAMES: readonly OmsLocalTableName[] = [
   "clientBots",
   "clientBotParams",
   "orderEntry",
+  "limitEntities",
+  "limits",
+  "limitUtilisation",
+  "limitBreaches",
+  "limitBreachEvents",
+  "limitRequests",
+  "killSwitches",
   "positionPrices",
   "orderEntryPrices",
 ];

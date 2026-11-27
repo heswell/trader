@@ -46,6 +46,8 @@ export interface LimitUtilisationRow {
   /** A temporary increase is in force until then; 0 = none. */
   temporaryUntil: number;
   parentId: string;
+  /** The desk (FIRM for the Firm), to group by desk then entity. */
+  desk: string;
   worst: string;
   used: number;
   headroom: number;
@@ -185,6 +187,10 @@ export const limitUtilisation = (
       temporaryUntil:
         book.temporary.get(limitKey) === limit ? limit.effectiveTo : 0,
       parentId: entity.parentId,
+      desk:
+        entity.entityType === LimitEntityType.Account
+          ? entity.parentId
+          : entity.entityId,
       worst,
       used,
       headroom: limit.soft - used,

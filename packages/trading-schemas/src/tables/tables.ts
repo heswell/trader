@@ -1390,6 +1390,12 @@ export const limitUtilisation = defineTable({
       description: "The entity above, for a tree by entity.",
     },
     {
+      name: "desk",
+      dataType: "string",
+      description:
+        "The desk of a desk or account limit, FIRM for the Firm's: to group by desk, then entityId.",
+    },
+    {
       name: "worst",
       dataType: "string",
       description: "PER_RIC / UNDERLYING: the RIC or underlying used most.",

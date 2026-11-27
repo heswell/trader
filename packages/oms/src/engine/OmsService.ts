@@ -203,6 +203,25 @@ export class OmsService {
     );
   }
 
+  /**
+   * Add or replace limits, as `oms.limits` (`ENTITY:METRIC[:RIC]=value`
+   * comma separated); entries for an unknown entity are skipped. Returns
+   * the limitKeys set. For demos and tests: limits are not editable yet.
+   */
+  addLimits(text: string) {
+    const book = this.engine.limits;
+    const keys: string[] = [];
+    for (const limit of parseLimits(text)) {
+      if (!book.entities.has(limit.entityId)) continue;
+      book.set(limit);
+      const row = this.limitMonitor.limitRow(limit.limitKey);
+      if (row) this.tables.limit(row);
+      keys.push(limit.limitKey);
+    }
+    this.updateLimitUtilisation();
+    return keys;
+  }
+
   /** The limit entities (and so limit rows) a user may see. */
   visibleLimitEntities(user: TradingUser) {
     return visibleEntities(this.engine.limits, this.accessFor(user));
