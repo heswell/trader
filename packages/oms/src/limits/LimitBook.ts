@@ -314,3 +314,45 @@ export const limitBookFor = (
     [...accounts.flatMap(accountLimits), ...extra],
     clock,
   );
+
+/**
+ * Limits from config: comma separated `ENTITY:METRIC=soft`, or
+ * `ENTITY:METRIC:RIC=soft` for one RIC or underlying, e.g.
+ * `FIRM:DAILY_LOSS=3000000,ACC-EU-02:POSITION_NOTIONAL:BARC.L=3500000`.
+ * Warning and hard follow limitDefinition. Throws on a bad entry.
+ */
+export const parseLimits = (text: string): LimitDefinition[] =>
+  text
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const match = /^([^:=\s]+):([A-Z_]+)(?::([^=\s]+))?=([0-9.]+)$/.exec(
+        entry,
+      );
+      const metric = match?.[2] as LimitMetric | undefined;
+      if (!match || !metric || !(metric in LIMIT_METRIC_INFO)) {
+        throw Error(
+          `limits: "${entry}" is not ENTITY:METRIC[:RIC]=value with a metric of ${Object.keys(LIMIT_METRIC_INFO).join(", ")}`,
+        );
+      }
+      const soft = Number(match[4]);
+      if (!(soft > 0)) throw Error(`limits: "${entry}" needs a value above 0`);
+      return limitDefinition(match[1], metric, soft, { ric: match[3] ?? "" });
+    });
+
+/**
+ * The entities a user may see limits for: the accounts they can see and
+ * every entity above them; all of them when `all`.
+ */
+export const visibleEntities = (
+  book: LimitBook,
+  access: { all: boolean; accounts: ReadonlySet<string> },
+): Set<string> => {
+  if (access.all) return new Set(book.entities.keys());
+  const visible = new Set<string>();
+  for (const account of access.accounts) {
+    for (const { entityId } of book.ancestors(account)) visible.add(entityId);
+  }
+  return visible;
+};

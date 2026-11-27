@@ -48,6 +48,9 @@ export class TableSink implements OmsSink, PnlHistorySink {
     clientBots: 0,
     clientBotParams: 0,
     orderEntry: 0,
+    limitEntities: 0,
+    limits: 0,
+    limitUtilisation: 0,
   };
 
   attach(name: OmsTableName, table: OmsTable) {
@@ -104,6 +107,10 @@ export class TableSink implements OmsSink, PnlHistorySink {
 
   clientBot = (row: object) => this.#write("clientBots", { ...row });
   clientBotParam = (row: object) => this.#write("clientBotParams", { ...row });
+  limitEntity = (row: object) => this.#write("limitEntities", { ...row });
+  limit = (row: object) => this.#write("limits", { ...row });
+  limitUtilisation = (row: object) =>
+    this.#write("limitUtilisation", { ...row });
   /** An orderEntry row (a full row to insert, or the changed columns). */
   orderEntry = (row: Record<string, unknown>) => this.#write("orderEntry", row);
 

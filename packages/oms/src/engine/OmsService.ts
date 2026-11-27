@@ -20,6 +20,12 @@ import {
   SIM_CLIENTS_DESK,
   simClientAccounts,
 } from "../reference/accounts";
+import {
+  limitBookFor,
+  parseLimits,
+  visibleEntities,
+} from "../limits/LimitBook";
+import { limitUtilisation } from "../limits/utilisation";
 import { TableSink } from "../modules/oms/TableSink";
 import { OrderEntryService } from "../entry/OrderEntryService";
 import { DelayedGateway, type OmsGateway, type Scheduler } from "./gateway";
@@ -74,6 +80,8 @@ export class OmsService {
   readonly pnlHistory: PnlHistory | undefined;
   #timers: ReturnType<typeof setInterval>[] = [];
   #clock: () => number;
+  /** used|state of each limitUtilisation row last written, by limitKey. */
+  #utilisation = new Map<string, string>();
 
   constructor(gateway: OmsGateway, options: OmsServiceOptions = {}) {
     const config = validateOmsConfig({
@@ -95,9 +103,15 @@ export class OmsService {
       ...SEED_ACCOUNTS,
       ...simClientAccounts(config.clientAccounts),
     ];
+    const limits = limitBookFor(accounts, [], () => this.#clock());
+    for (const limit of parseLimits(config.limits)) {
+      if (limits.entities.has(limit.entityId)) limits.set(limit);
+      else this.logger.warn(`oms.limits: no entity ${limit.entityId}`);
+    }
     this.engine = new OmsEngine({
       gateway: this.gateway,
       accounts,
+      limits,
       clock: this.#clock,
       sink: this.tables,
       collarPct: config.collarPct,
@@ -105,6 +119,14 @@ export class OmsService {
       log: options.log ?? ((message) => this.logger.warn(message)),
       algoSliceMs: config.algoSliceMs,
     });
+    for (const entity of limits.entities.values()) {
+      this.tables.limitEntity(entity);
+    }
+    for (const limit of limits.limits.values()) {
+      const entityType = limits.entities.get(limit.entityId)?.entityType ?? "";
+      this.tables.limit({ ...limit, entityType });
+    }
+    this.updateLimitUtilisation();
     this.orderEntry = new OrderEntryService({
       engine: this.engine,
       gateway: this.gateway,
@@ -167,6 +189,32 @@ export class OmsService {
     );
   }
 
+  /** The limit entities (and so limit rows) a user may see. */
+  visibleLimitEntities(user: TradingUser) {
+    return visibleEntities(this.engine.limits, this.accessFor(user));
+  }
+
+  /** Recompute limitUtilisation; writes the rows whose usage or state changed. */
+  updateLimitUtilisation(now = this.#clock()) {
+    const engine = this.engine;
+    const rows = limitUtilisation(
+      engine.limits,
+      {
+        positions: engine.positions.values(),
+        orderPeak: (account) => engine.orderPeak(account, now),
+        recentOrders: (entityId) => engine.recentOrders(entityId, now),
+      },
+      now,
+    );
+    for (const row of rows) {
+      const seen = `${row.used}|${row.state}`;
+      if (this.#utilisation.get(row.limitKey) === seen) continue;
+      this.#utilisation.set(row.limitKey, seen);
+      this.tables.limitUtilisation(row);
+    }
+    return rows;
+  }
+
   get running() {
     return this.#timers.length > 0;
   }
@@ -177,6 +225,7 @@ export class OmsService {
    */
   mark(now = this.#clock()) {
     const changed = this.engine.markToMarket();
+    this.updateLimitUtilisation(now);
     const history = this.pnlHistory;
     if (history?.due(now)) history.sample(now, this.engine.positions.values());
     return changed;

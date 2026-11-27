@@ -1309,6 +1309,97 @@ export const positions = defineTable({
  * when ric is set, and keeps the draft's errors and warnings in vuuMsg
  * (encodeEntryMessages). Numeric draft fields are 0 when empty.
  */
+/** The entities limits attach to: the Firm, desks, accounts (a tree by parentId). */
+export const limitEntities = defineTable({
+  module: OMS_MODULE,
+  name: "limitEntities",
+  keyField: "entityId",
+  description: "The tree of entities limits attach to: Firm, desks, accounts.",
+  columns: [
+    { name: "entityId", dataType: "string" },
+    { name: "entityType", dataType: "string", description: "LimitEntityType" },
+    { name: "name", dataType: "string" },
+    {
+      name: "parentId",
+      dataType: "string",
+      description: "The entity above this one, blank for the Firm.",
+    },
+  ],
+});
+
+const limitColumns = [
+  { name: "limitKey", dataType: "string" },
+  { name: "entityId", dataType: "string" },
+  { name: "entityType", dataType: "string", description: "LimitEntityType" },
+  { name: "metric", dataType: "string", description: "LimitMetric" },
+  { name: "scope", dataType: "string", description: "LimitScope" },
+  {
+    name: "ric",
+    dataType: "string",
+    description: "PER_RIC / UNDERLYING: one RIC or underlying, blank for each.",
+  },
+  { name: "period", dataType: "string", description: "LimitPeriod" },
+  { name: "warning", dataType: "double" },
+  {
+    name: "soft",
+    dataType: "double",
+    description: "The limit; above it is a breach.",
+  },
+  {
+    name: "hard",
+    dataType: "double",
+    description: "Nothing can be overridden at or above it.",
+  },
+  { name: "currency", dataType: "string" },
+] as const;
+
+/** Every limit, as set on its entity. */
+export const limits = defineTable({
+  module: OMS_MODULE,
+  name: "limits",
+  keyField: "limitKey",
+  description:
+    "Trading limits, each set on an entity; the nearest one up the tree applies.",
+  columns: [
+    ...limitColumns,
+    { name: "effectiveFrom", dataType: "epochtimestamp" },
+    { name: "effectiveTo", dataType: "epochtimestamp" },
+    { name: "owner", dataType: "string" },
+    { name: "active", dataType: "boolean" },
+  ],
+});
+
+/** Live usage of each limit (one row per limit). */
+export const limitUtilisation = defineTable({
+  module: OMS_MODULE,
+  name: "limitUtilisation",
+  keyField: "limitKey",
+  description:
+    "How much of each limit is used: per order the largest order today, per RIC or underlying the worst one, otherwise the entity's total.",
+  columns: [
+    ...limitColumns,
+    {
+      name: "parentId",
+      dataType: "string",
+      description: "The entity above, for a tree by entity.",
+    },
+    {
+      name: "worst",
+      dataType: "string",
+      description: "PER_RIC / UNDERLYING: the RIC or underlying used most.",
+    },
+    { name: "used", dataType: "double" },
+    { name: "headroom", dataType: "double", description: "soft - used" },
+    {
+      name: "utilisation",
+      dataType: "double",
+      description: "used / soft, 1 = at the limit.",
+    },
+    { name: "state", dataType: "string", description: "LimitState" },
+    { name: "lastUpdate", dataType: "epochtimestamp" },
+  ],
+});
+
 export const orderEntry = defineTable({
   module: OMS_MODULE,
   name: "orderEntry",
@@ -1638,6 +1729,9 @@ export const omsTables = {
   clientBots,
   clientBotParams,
   orderEntry,
+  limitEntities,
+  limits,
+  limitUtilisation,
 } as const;
 export const tradingTables = { ...exchangeTables, ...omsTables } as const;
 export const tradingJoins = {

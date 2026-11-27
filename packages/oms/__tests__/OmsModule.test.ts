@@ -79,6 +79,7 @@ describe("OmsModule over the Vuu protocol", () => {
       markIntervalMs: 20,
       pnlHistoryIntervalMs: 40,
       permissionMode: "strict",
+      limits: "FIRM:DAILY_LOSS=3000000,EQ-US:GROSS_POSITION_NOTIONAL=20000000",
     },
     rics: () => sim.books.map((b) => b.ric),
     log: () => {},
@@ -189,6 +190,9 @@ describe("OmsModule over the Vuu protocol", () => {
         "clientBots",
         "clientBotParams",
         "orderEntry",
+        "limitEntities",
+        "limits",
+        "limitUtilisation",
       ].sort(),
     );
     const vp = await sam.createViewport(OMS_MODULE, "accounts", [
@@ -203,6 +207,48 @@ describe("OmsModule over the Vuu protocol", () => {
     );
     // 7 seeded trader accounts + the 5 Sim clients accounts
     expect(sam.rowsOf(vp)).toHaveLength(12);
+  });
+
+  test("limit tables: a trader sees their accounts, desk and the Firm", async () => {
+    const columns = ["limitKey", "entityId", "metric", "soft", "used", "state"];
+    const aliceLimits = await alice.createViewport(
+      OMS_MODULE,
+      "limitUtilisation",
+      columns,
+    );
+    const samLimits = await sam.createViewport(
+      OMS_MODULE,
+      "limitUtilisation",
+      columns,
+    );
+    await alice.row(aliceLimits, (r) => r.entityId === "FIRM");
+    await sam.row(samLimits, (r) => r.entityId === "ACC-EU-01");
+    const entities = (rows: Record<string, unknown>[]) =>
+      [...new Set(rows.map((r) => r.entityId))].sort();
+    expect(entities(alice.rowsOf(aliceLimits))).toEqual([
+      "ACC-US-01",
+      "EQ-US",
+      "FIRM",
+    ]);
+    expect(entities(sam.rowsOf(samLimits))).toContain("ACC-ASIA-03");
+    expect(
+      alice.rowsOf(aliceLimits).find((r) => r.entityId === "EQ-US"),
+    ).toMatchObject({
+      metric: "GROSS_POSITION_NOTIONAL",
+      soft: 20_000_000,
+      state: "OK",
+    });
+    const tree = await alice.createViewport(OMS_MODULE, "limitEntities", [
+      "entityId",
+      "parentId",
+    ]);
+    await alice.row(tree, (r) => r.entityId === "ACC-US-01");
+    expect(
+      alice
+        .rowsOf(tree)
+        .map((r) => r.entityId)
+        .sort(),
+    ).toEqual(["ACC-US-01", "EQ-US", "FIRM"]);
   });
 
   test("createOrder RPC -> exchange fill -> parentOrders, fills, positions rows", async () => {

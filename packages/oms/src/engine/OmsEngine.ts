@@ -25,6 +25,7 @@ import {
   TimeInForce,
   TradingPhase,
   UNSCHEDULED,
+  usdPerUnit,
   validateAmend,
 } from "@heswell/trading-schemas";
 import type { ExecutionReport, MarketTrade } from "@heswell/exchange-sim";
@@ -55,9 +56,11 @@ import {
 import { type AccessScope, canSeeAccount } from "../permissions/access";
 import { type LimitBook, limitBookFor, orderLimits } from "../limits/LimitBook";
 import type { Account } from "../reference/accounts";
+import type { OrderPeak } from "../limits/utilisation";
 import {
   checkPreTradeRisk,
   deltaUsdPerUnit,
+  expectedPrice,
   referencePrice,
 } from "../risk/preTradeRisk";
 import type { OmsGateway } from "./gateway";
@@ -281,6 +284,9 @@ const execSeqOf = (execId: string) => {
   return Number.isFinite(n) ? n : undefined;
 };
 
+/** Days since the epoch, UTC: when per-day order peaks reset. */
+const utcDay = (time: number) => Math.floor(time / 86_400_000);
+
 const childRecord = ({ lastRequestReject: _, ...child }: ChildOrder) =>
   child as ChildOrder;
 
@@ -374,6 +380,8 @@ export class OmsEngine {
   #stopTrades: MarketTrade[] = [];
   /** Times of the orders created in the last second, by limit entity. */
   #orderTimes = new Map<string, number[]>();
+  /** The largest order each account created today (UTC day number). */
+  #orderPeaks = new Map<string, OrderPeak & { day: number }>();
 
   constructor({
     gateway,
@@ -1147,7 +1155,21 @@ export class OmsEngine {
     return times.length;
   }
 
-  #countOrder(account: string, now: number) {
+  /** The largest order (quantity, USD notional) the account created today. */
+  orderPeak(account: string, now = this.#clock()): OrderPeak | undefined {
+    const peak = this.#orderPeaks.get(account);
+    return peak && peak.day === utcDay(now) ? peak : undefined;
+  }
+
+  #countOrder(account: string, now: number, qty: number, notionalUsd: number) {
+    const day = utcDay(now);
+    const peak = this.#orderPeaks.get(account);
+    if (!peak || peak.day !== day) {
+      this.#orderPeaks.set(account, { qty, notionalUsd, day });
+    } else {
+      peak.qty = Math.max(peak.qty, qty);
+      peak.notionalUsd = Math.max(peak.notionalUsd, notionalUsd);
+    }
     for (const { entityId } of this.limits.ancestors(account)) {
       let times = this.#orderTimes.get(entityId);
       if (!times) {
@@ -1293,7 +1315,16 @@ export class OmsEngine {
       this.#applyParent(parent, { type: "reject", ...riskReject });
       return fail(riskReject.reason, riskReject.text, parent.orderId);
     }
-    this.#countOrder(parent.account, now);
+    this.#countOrder(
+      parent.account,
+      now,
+      request.quantity,
+      instrument
+        ? request.quantity *
+            expectedPrice(request, instrument, top) *
+            usdPerUnit(instrument)
+        : 0,
+    );
     this.#publishParent(parent);
 
     if (isAlgoParent(parent)) {

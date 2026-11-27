@@ -18,7 +18,11 @@ import {
   limitEntities,
   orderLimits,
   orderLimitsOf,
+  parseLimits,
+  visibleEntities,
 } from "../src/limits/LimitBook";
+import { limitUtilisation } from "../src/limits/utilisation";
+import { createOms } from "../src/engine/OmsService";
 import { SEED_ACCOUNTS, simClientAccounts } from "../src/reference/accounts";
 import { AAPL, BookSide, setup, VOD } from "./fixture";
 
@@ -338,5 +342,134 @@ describe("limits on totals: gross position notional and order rate", () => {
     const id = create();
     const amended = engine.amendOrder({ orderId: id, quantity: 200 }, ctx);
     expect(amended.ok).toBe(true);
+  });
+});
+
+describe("limits from config", () => {
+  test("parseLimits reads ENTITY:METRIC[:RIC]=value", () => {
+    const limits = parseLimits(
+      " FIRM:DAILY_LOSS=3000000, ACC-EU-02:POSITION_NOTIONAL:BARC.L=3500000 ,",
+    );
+    expect(limits.map((l) => [l.limitKey, l.soft, l.ric])).toEqual([
+      [`FIRM:${LimitMetric.DailyLoss}`, 3_000_000, ""],
+      [`ACC-EU-02:${LimitMetric.PositionNotional}:BARC.L`, 3_500_000, "BARC.L"],
+    ]);
+    expect(parseLimits("")).toEqual([]);
+    expect(() => parseLimits("FIRM:NOPE=1")).toThrow("is not ENTITY:METRIC");
+    expect(() => parseLimits("FIRM:DAILY_LOSS")).toThrow();
+    expect(() => parseLimits("FIRM:DAILY_LOSS=0")).toThrow("above 0");
+  });
+
+  test("OmsService adds config limits to the accounts' own, and warns on an unknown entity", () => {
+    const warnings: string[] = [];
+    const { sim } = setup();
+    const oms = createOms(sim.gateway, {
+      config: {
+        flowRate: 0,
+        limits: "EQ-US:ORDER_QTY=1000,NOWHERE:DAILY_LOSS=1",
+      },
+      logger: { warn: (m) => warnings.push(String(m)), error: () => {} },
+    });
+    expect(oms.engine.limits.softLimit("ACC-US-02", LimitMetric.OrderQty)).toBe(
+      20_000,
+    );
+    expect(oms.engine.limits.limits.has(`EQ-US:${LimitMetric.OrderQty}`)).toBe(
+      true,
+    );
+    expect(warnings).toEqual(["oms.limits: no entity NOWHERE"]);
+    oms.dispose();
+  });
+});
+
+test("visibleEntities: the user's accounts and every entity above them", () => {
+  const book = limitBookFor(SEED_ACCOUNTS);
+  expect(
+    [
+      ...visibleEntities(book, {
+        all: false,
+        accounts: new Set(["ACC-US-01", "ACC-EU-02"]),
+      }),
+    ].sort(),
+  ).toEqual(["ACC-EU-02", "ACC-US-01", "EQ-EU", "EQ-US", FIRM_ENTITY_ID]);
+  expect(visibleEntities(book, { all: true, accounts: new Set() }).size).toBe(
+    book.entities.size,
+  );
+});
+
+describe("limitUtilisation", () => {
+  const usage = (limits = limitBookFor(SEED_ACCOUNTS)) => {
+    limits.set(
+      limitDefinition(
+        FIRM_ENTITY_ID,
+        LimitMetric.GrossPositionNotional,
+        1_000_000,
+      ),
+    );
+    limits.set(limitDefinition(FIRM_ENTITY_ID, LimitMetric.DailyLoss, 10_000));
+    limits.set(limitDefinition(FIRM_ENTITY_ID, LimitMetric.OrderRate, 100));
+    limits.set(limitDefinition("EQ-US", LimitMetric.OrderQty, 1_000));
+    const fixture = setup({ limits });
+    const { engine, rest, order, ctx, clock } = fixture;
+    rest(AAPL, BookSide.SELL, 170, 400);
+    expect(engine.createOrder(order({ quantity: 400 }), ctx).ok).toBe(true);
+    engine.markToMarket();
+    const rows = () =>
+      new Map(
+        limitUtilisation(
+          engine.limits,
+          {
+            positions: engine.positions.values(),
+            orderPeak: (account) => engine.orderPeak(account),
+            recentOrders: (entityId) => engine.recentOrders(entityId),
+          },
+          clock.now(),
+        ).map((row) => [row.limitKey, row]),
+      );
+    return { ...fixture, rows };
+  };
+
+  test("totals: gross, order rate and daily loss of the entity", () => {
+    const { rows } = usage();
+    const r = rows();
+    expect(r.get(`FIRM:${LimitMetric.GrossPositionNotional}`)).toMatchObject({
+      entityType: LimitEntityType.Firm,
+      used: 68_000,
+      headroom: 932_000,
+      utilisation: 0.068,
+      state: LimitState.Ok,
+    });
+    expect(r.get(`FIRM:${LimitMetric.OrderRate}`)?.used).toBe(1);
+    expect(r.get(`FIRM:${LimitMetric.DailyLoss}`)?.used).toBe(0);
+  });
+
+  test("per order: the largest order today of the accounts a limit applies to", () => {
+    const { rows } = usage();
+    const r = rows();
+    // ACC-US-01 sets its own order quantity (50,000): 400 of it.
+    expect(r.get(`ACC-US-01:${LimitMetric.OrderQty}`)).toMatchObject({
+      used: 400,
+      worst: "ACC-US-01",
+      parentId: "EQ-US",
+    });
+    expect(r.get(`ACC-US-01:${LimitMetric.OrderNotional}`)?.used).toBe(68_000);
+    // EQ-US's 1,000 applies to no account here (both set their own).
+    expect(r.get(`EQ-US:${LimitMetric.OrderQty}`)?.used).toBe(0);
+  });
+
+  test("per RIC: the worst RIC, named in worst", () => {
+    const { rows } = usage();
+    expect(
+      rows().get(`ACC-US-01:${LimitMetric.PositionNotional}`),
+    ).toMatchObject({ used: 68_000, worst: AAPL });
+  });
+
+  test("states follow warning, soft and hard", () => {
+    const limits = limitBookFor(SEED_ACCOUNTS);
+    limits.set(limitDefinition("ACC-US-01", LimitMetric.OrderQty, 450));
+    const { rows } = usage(limits);
+    expect(rows().get(`ACC-US-01:${LimitMetric.OrderQty}`)).toMatchObject({
+      used: 400,
+      state: LimitState.Warning,
+    });
   });
 });
