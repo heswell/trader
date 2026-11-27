@@ -22,11 +22,14 @@ export type TradingNavIcon =
   | "exposure"
   | "execution-quality"
   | "oversight"
+  | "limits"
   | "simulator"
   | "bots"
   | "metrics";
 
 const NAV_ICON_SHAPES: Readonly<Record<TradingNavIcon, string>> = {
+  limits:
+    '<path d="M4.5 18a8.5 8.5 0 1 1 15 0"/><path d="M12 13.5l4-5"/><circle cx="12" cy="14" r="1.2"/>',
   watchlist:
     '<path d="M4 6h9M4 12h9M4 18h9"/><path d="M16 9.5l2.5-2.5L21 9.5"/><path d="M16 14.5l2.5 2.5 2.5-2.5"/>',
   orders:

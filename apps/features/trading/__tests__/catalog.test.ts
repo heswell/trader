@@ -52,6 +52,7 @@ describe("trading catalog information architecture", () => {
         330,
       ],
       [120, "/Oversight/Desk overview", "/oversight/desk", 400],
+      [136, "/Oversight/Limits", "/oversight/limits", 410],
       [130, "/Simulator/Overview", "/simulator/overview", 500],
       [131, "/Simulator/Bots", "/simulator/bots", 510],
       [132, "/Simulator/Instrument", "/simulator/instrument", 520],

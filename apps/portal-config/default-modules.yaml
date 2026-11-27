@@ -292,6 +292,23 @@ modules:
     accessRole: "trading-supervisor-access"
     navOrder: 400
     notificationTopics: ["risk", "orders"]
+  - id: 136
+    version: 1
+    parentModuleId: 0
+    name: "TradingLimits"
+    title: "Limits"
+    description: "Limit monitor by desk and account, breaches, temporary increases and the kill switch"
+    enabled: true
+    location: "/Oversight/Limits"
+    path: "/oversight/limits"
+    mfComponent: "Limits"
+    mfScope: "tradingLimits"
+    mfUrl: "http://localhost:5110/limits"
+    navIconUrl: "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4.5%2018a8.5%208.5%200%201%201%2015%200%22%2F%3E%3Cpath%20d%3D%22M12%2013.5l4-5%22%2F%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2214%22%20r%3D%221.2%22%2F%3E%3C%2Fsvg%3E"
+    accessRole: "trading-access"
+    navOrder: 410
+    notificationTopics: ["risk"]
+    workspace: {"paletteGroup":"Oversight","defaultSize":{"cols":2,"rows":1}}
   - id: 130
     version: 1
     parentModuleId: 0
