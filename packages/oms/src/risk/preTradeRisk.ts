@@ -16,6 +16,7 @@ import {
   validateStopTrigger,
 } from "@heswell/trading-schemas";
 import type { OptionGreeksQuote } from "../engine/gateway";
+import { type OrderLimits, orderLimitsOf } from "../limits/LimitBook";
 import type { Account } from "../reference/accounts";
 
 /** Instrument data the risk check needs (exchange-sim InstrumentDef satisfies it). */
@@ -52,6 +53,11 @@ export interface RiskContext {
   underlyingDeltaUsd?: number;
   /** A quote-only option: the nearest liquid strike, to point the user at. */
   nearestLiquid?: string;
+  /**
+   * The limits that apply to this account and instrument (the engine's
+   * LimitBook); absent = the account's own fields.
+   */
+  limits?: OrderLimits;
 }
 
 /** Order fields the risk check reads (a validated createOrder / amend projection). */
@@ -216,23 +222,25 @@ export const riskLimitBreaches = (
     | "workingSellQty"
     | "deltaUsdPerUnit"
     | "underlyingDeltaUsd"
+    | "limits"
   >,
 ): RiskBreach[] => {
   const breaches: RiskBreach[] = [];
-  if (order.quantity > account.maxOrderQty) {
+  const limits = ctx.limits ?? orderLimitsOf(account);
+  if (order.quantity > limits.maxOrderQty) {
     breaches.push({
       code: EntryRiskCode.MaxOrderQty,
       reason: RejectReason.ExceedsMaxQuantity,
-      text: `quantity ${order.quantity} exceeds max ${account.maxOrderQty}`,
+      text: `quantity ${order.quantity} exceeds max ${limits.maxOrderQty}`,
     });
   }
   const px = expectedPrice(order, instrument, ctx.market);
   const notionalUsd = order.quantity * px * usdPerUnit(instrument);
-  if (notionalUsd > account.maxOrderNotional) {
+  if (notionalUsd > limits.maxOrderNotional) {
     breaches.push({
       code: EntryRiskCode.MaxOrderNotional,
       reason: RejectReason.ExceedsMaxNotional,
-      text: `order notional ${fmtUsd(notionalUsd)} exceeds max ${fmtUsd(account.maxOrderNotional)}`,
+      text: `order notional ${fmtUsd(notionalUsd)} exceeds max ${fmtUsd(limits.maxOrderNotional)}`,
     });
   }
   if (order.ordType === OrdType.Limit && order.price) {
@@ -258,25 +266,28 @@ export const riskLimitBreaches = (
     projected * referencePrice(instrument, ctx.market) * usdPerUnit(instrument);
   if (
     projected > Math.abs(ctx.positionQty) &&
-    positionUsd > account.maxPositionNotional
+    positionUsd > limits.maxPositionNotional
   ) {
     breaches.push({
       code: EntryRiskCode.MaxPositionNotional,
       reason: RejectReason.ExceedsMaxNotional,
-      text: `projected position ${fmtUsd(positionUsd)} exceeds max ${fmtUsd(account.maxPositionNotional)}`,
+      text: `projected position ${fmtUsd(positionUsd)} exceeds max ${fmtUsd(limits.maxPositionNotional)}`,
     });
   }
-  if (account.maxDeltaUsd > 0 && ctx.deltaUsdPerUnit !== undefined) {
+  if (
+    Number.isFinite(limits.maxDeltaUsd) &&
+    ctx.deltaUsdPerUnit !== undefined
+  ) {
     const current = ctx.underlyingDeltaUsd ?? 0;
     const delta = current + sign * order.quantity * ctx.deltaUsdPerUnit;
     if (
       Math.abs(delta) > Math.abs(current) &&
-      Math.abs(delta) > account.maxDeltaUsd
+      Math.abs(delta) > limits.maxDeltaUsd
     ) {
       breaches.push({
         code: EntryRiskCode.MaxDelta,
         reason: RejectReason.ExceedsMaxDelta,
-        text: `net delta on ${instrument.underlying || instrument.ric} ${fmtUsd(delta)} exceeds max ${fmtUsd(account.maxDeltaUsd)}`,
+        text: `net delta on ${instrument.underlying || instrument.ric} ${fmtUsd(delta)} exceeds max ${fmtUsd(limits.maxDeltaUsd)}`,
       });
     }
   }

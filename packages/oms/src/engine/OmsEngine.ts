@@ -52,6 +52,7 @@ import {
   positionGreeks,
 } from "../domain/positionMath";
 import { type AccessScope, canSeeAccount } from "../permissions/access";
+import { type LimitBook, limitBookFor, orderLimits } from "../limits/LimitBook";
 import type { Account } from "../reference/accounts";
 import {
   checkPreTradeRisk,
@@ -292,6 +293,11 @@ export interface OmsEngineOptions {
   log?: (message: string) => void;
   /** Algo timer interval: how often algo orders are re-sliced (ms). */
   algoSliceMs?: number;
+  /**
+   * The limits pre-trade risk checks orders against; default: the accounts'
+   * entity tree with each account's own limits.
+   */
+  limits?: LimitBook;
 }
 
 /**
@@ -306,6 +312,8 @@ export class OmsEngine {
   readonly fills: Fill[] = [];
   readonly positions = new Map<string, Position>();
   readonly restricted: Set<string>;
+  /** The limits pre-trade risk checks orders against. */
+  readonly limits: LimitBook;
   collarPct: number;
   /**
    * Hot-path timers (requests, risk, execution reports, order lifecycle),
@@ -373,6 +381,7 @@ export class OmsEngine {
     restrictedRics = [],
     log = (message) => console.warn(`[OMS] ${message}`),
     algoSliceMs = 250,
+    limits,
   }: OmsEngineOptions) {
     this.#gateway = gateway;
     this.#clock = clock;
@@ -413,6 +422,7 @@ export class OmsEngine {
     this.#log = log;
     this.collarPct = collarPct;
     this.restricted = new Set(restrictedRics);
+    this.limits = limits ?? limitBookFor(accounts, [], () => this.#clock());
     for (const account of accounts) {
       this.accounts.set(account.account, account);
       sink.account?.(account);
@@ -1052,6 +1062,12 @@ export class OmsEngine {
         instrument?.liquid === false
           ? this.#gateway.nearestLiquidOption?.(ric)
           : undefined,
+      limits: orderLimits(
+        this.limits,
+        account,
+        ric,
+        instrument?.underlying || ric,
+      ),
     };
   }
 

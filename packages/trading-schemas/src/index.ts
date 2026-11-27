@@ -7,6 +7,7 @@ export * from "./domain/optionMath";
 export * from "./domain/session";
 export * from "./domain/entryMessages";
 export * from "./domain/orderEntryRules";
+export * from "./domain/limits";
 export * from "./tables/tableDefinition";
 export * from "./tables/tables";
 export * from "./tables/metrics";
