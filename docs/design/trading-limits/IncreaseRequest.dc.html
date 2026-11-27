@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Request temporary increase</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3B5B8C}a:hover{color:#1E3A63}
+button,input,textarea{font:inherit;color:inherit}
+.k{--panel:#FFFFFF;--bar:#F6F7F9;--border:#D9DDE3;--track:#E3E7EC;--fg:#1F2329;--fg2:#4A525D;--fg3:#5B6470;--th:#3A424D;--field-border:#C3CAD3;--field-bg:#FFFFFF;--focus:#3B5B8C;--accent:#3B5B8C;--tg-on:#2B3440;--tg-on-fg:#FFFFFF;--ok-bar:#7C93B3;--hard-bar:#C62828;--hard-solid:#C62828;--buy:#1E7F45;
+  font-family:'Nunito Sans',system-ui,sans-serif;color:var(--fg);-webkit-font-smoothing:antialiased}
+.g-num{font-variant-numeric:tabular-nums}
+.scrim{position:absolute;inset:0;background:rgba(20,24,30,.42);display:flex;align-items:center;justify-content:center}
+.dlg{width:600px;background:var(--panel);border-radius:4px;box-shadow:0 12px 32px rgba(0,0,0,.25),0 2px 6px rgba(0,0,0,.12);border-top:3px solid var(--accent);overflow:hidden}
+.dlg-h{display:flex;align-items:flex-start;gap:10px;padding:18px 20px 10px;border-bottom:1px solid var(--border)}
+.dlg-h h2{margin:0 0 2px;font-size:16px;font-weight:800}
+.dlg-h p{margin:0;font-size:12px;color:var(--fg3)}
+.x{margin-left:auto}
+.ib{width:24px;height:24px;border:0;border-radius:3px;background:transparent;display:inline-flex;align-items:center;justify-content:center;color:var(--fg3)}
+.dlg-b{padding:16px 20px 4px;display:flex;flex-direction:column;gap:14px;font-size:13px}
+.ba{display:grid;grid-template-columns:64px 1fr 92px;gap:6px 10px;align-items:center;padding:10px 12px;background:var(--bar);border:1px solid var(--border);border-radius:4px;font-size:12px}
+.ba .l{font-weight:700;color:var(--fg3);text-transform:uppercase;font-size:11px;letter-spacing:.03em}
+.trk{position:relative;height:8px;border-radius:4px;background:var(--track)}
+.trk i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;display:block}
+.trk em{position:absolute;top:-3px;bottom:-3px;border-left:2px solid var(--th);opacity:.85}
+.trk em.th{border-left:2px dotted var(--hard-bar)}
+.ba b{font-weight:800;text-align:right}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.ff{display:flex;flex-direction:column;gap:5px}
+.ff>label,.ff>.l{font-size:11px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.03em}
+.in{height:30px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 10px;border:1px solid var(--field-border);border-radius:3px;background:var(--field-bg);font-size:13px;box-sizing:border-box}
+.in.focus{outline:2px solid var(--focus);outline-offset:-1px;border-color:var(--focus)}
+.in.ro{background:var(--bar);color:var(--fg2)}
+.in input{border:0;outline:0;background:transparent;width:100%;font-size:13px;font-weight:700}
+.hint{font-size:12px;color:var(--fg3)}
+.tg{display:inline-flex;border:1px solid var(--field-border);border-radius:3px;overflow:hidden;align-self:flex-start}
+.tg button{height:30px;padding:0 12px;border:0;border-right:1px solid var(--field-border);background:var(--field-bg);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--fg2)}
+.tg button:last-child{border-right:0}
+.tg button.on{background:var(--tg-on);color:var(--tg-on-fg)}
+textarea{width:100%;height:52px;box-sizing:border-box;border:1px solid var(--field-border);border-radius:3px;background:var(--field-bg);padding:6px 10px;font-size:13px;resize:none}
+.dlg-f{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:16px 20px 20px}
+.kbd{font-size:11px;color:var(--fg3);margin-right:auto}
+.btn{height:32px;padding:0 14px;border-radius:3px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;display:inline-flex;align-items:center;gap:6px;box-sizing:border-box}
+.btn.neu{border:1px solid var(--field-border);background:var(--field-bg);color:var(--fg)}
+.btn.pri{border:1px solid var(--tg-on);background:var(--tg-on);color:var(--tg-on-fg)}
+</style>
+</helmet>
+<div class="k" style="width:1280px;height:760px;position:relative;overflow:hidden;background:#EEF0F3">
+<dc-import name="Breaches" hint-size="1280px,760px"></dc-import>
+<div class="scrim">
+  <div class="dlg" role="dialog" aria-labelledby="ir-title">
+    <div class="dlg-h">
+      <div>
+        <h2 id="ir-title">Request temporary increase</h2>
+        <p>Daily loss · ACC-US-02 · bob · EQ-US</p>
+      </div>
+      <button class="ib x" type="button" aria-label="Close"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7"/></svg></button>
+    </div>
+    <div class="dlg-b">
+      <div class="ba g-num" aria-label="Utilisation before and after">
+        <span class="l">Now</span>
+        <span class="trk"><i style="width:89.6%;background:var(--hard-bar)"></i><em style="left:80%"></em><em class="th" style="left:88%"></em></span>
+        <b>112% of 1.00m</b>
+        <span class="l">After</span>
+        <span class="trk"><i style="width:71.7%;background:var(--ok-bar)"></i><em style="left:80%"></em><em class="th" style="left:88%"></em></span>
+        <b style="color:var(--buy)">90% of 1.25m</b>
+      </div>
+
+      <div class="row2">
+        <div class="ff">
+          <label for="ir-new">New limit (USD)</label>
+          <div class="in focus"><input id="ir-new" type="text" value="1.25m"></div>
+          <span class="hint g-num">1,250,000 · +25%</span>
+        </div>
+        <div class="ff">
+          <span class="l">Hard limit</span>
+          <div class="in ro g-num">1,375,000<span class="hint">110%</span></div>
+          <span class="hint">Keeps the limit's 110% hard margin</span>
+        </div>
+      </div>
+
+      <div class="ff">
+        <span class="l">Expires</span>
+        <div class="tg" role="group" aria-label="Expires"><button class="on" type="button" aria-pressed="true">End of day</button><button type="button">End of week</button><button type="button">On date…</button></div>
+        <span class="hint g-num">Reverts to 1.00m at 22:00 today (24 Nov)</span>
+      </div>
+
+      <div class="row2">
+        <div class="ff">
+          <label for="ir-reason">Reason</label>
+          <div class="in" id="ir-reason">Market move on open position<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 3.5l3 3 3-3"/></svg></div>
+        </div>
+        <div class="ff">
+          <label for="ir-appr">Approver</label>
+          <div class="in" id="ir-appr">sam · supervisor<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 3.5l3 3 3-3"/></svg></div>
+        </div>
+      </div>
+
+      <div class="ff">
+        <label for="ir-note">Detail</label>
+        <textarea id="ir-note">VOD.L gap down after results. Holding the position into tomorrow's close.</textarea>
+      </div>
+    </div>
+    <div class="dlg-f">
+      <span class="kbd">Ctrl+Enter sends · Esc cancels</span>
+      <button class="btn neu" type="button">Cancel</button>
+      <button class="btn pri" type="button">Send to sam</button>
+    </div>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":760}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

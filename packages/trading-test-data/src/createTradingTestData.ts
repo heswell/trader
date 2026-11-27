@@ -526,6 +526,16 @@ export const createTradingTestData = ({
     canAdminSim(viewport.user, omsService.permissionMode)
       ? AllowAllPermissionFilter
       : PermissionFilter(() => false);
+  // Limit tables: the user's accounts' entities and those above (as OmsModule).
+  const limitRows: PermissionFunction = (viewport) =>
+    PermissionFilter(
+      "entityId",
+      omsService.visibleLimitEntities(viewport.user),
+    );
+  const isLimitTable = (name: OmsLocalTableName) =>
+    name === "limitEntities" ||
+    name === "limits" ||
+    name === "limitUtilisation";
   const oms: TradingLocalModule<OmsLocalTableName> = new TradingLocalModule({
     name: OMS_MODULE,
     schemas: omsSchemas,
@@ -537,9 +547,11 @@ export const createTradingTestData = ({
     permissionFunctions: forEachTable(OMS_TABLE_NAMES, (name) =>
       name === "clientBots" || name === "clientBotParams"
         ? simAdminOnly
-        : isOrderEntryTable(name)
-          ? ownRows
-          : permission,
+        : isLimitTable(name)
+          ? limitRows
+          : isOrderEntryTable(name)
+            ? ownRows
+            : permission,
     ),
     onCreateDataSource,
     editHooks: {

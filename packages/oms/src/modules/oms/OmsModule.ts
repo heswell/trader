@@ -45,6 +45,16 @@ const TABLES: readonly OmsTableName[] = [
   "clientBots",
   "clientBotParams",
   "orderEntry",
+  "limitEntities",
+  "limits",
+  "limitUtilisation",
+];
+
+/** Limit tables: rows by entityId, not account. */
+const LIMIT_TABLES: readonly OmsTableName[] = [
+  "limitEntities",
+  "limits",
+  "limitUtilisation",
 ];
 
 /** Simulator tables: rows for sim-admin users only (as the EXCHANGE bots). */
@@ -84,6 +94,15 @@ export const omsPermissionFunction =
     return PermissionFilter("account", new Set(access.accounts));
   };
 
+/**
+ * limitEntities, limits, limitUtilisation: the entities of the accounts the
+ * user can see and every entity above them (their desk and the Firm).
+ */
+export const limitsPermissionFunction =
+  (oms: OmsService): PermissionFunction =>
+  (viewport) =>
+    PermissionFilter("entityId", oms.visibleLimitEntities(viewport.user));
+
 /** orderEntry (and its join): each user sees only their own ticket rows. */
 export const orderEntryPermissionFunction: PermissionFunction = (viewport) =>
   PermissionFilter("user", new Set([viewport.user.name]));
@@ -99,7 +118,7 @@ export const clientBotsPermissionFunction =
 /**
  * The OMS Vuu module: accounts, parentOrders, childOrders, fills, positions,
  * pnlHistory, accountPnlHistory, clientBots, clientBotParams (sim-admin
- * only) and the positionPrices join, written by `oms`. Every table (and the join)
+ * only), limitEntities, limits, limitUtilisation and the positionPrices join, written by `oms`. Every table (and the join)
  * carries the OMS RPC service, so order RPCs work from any OMS viewport.
  */
 export const OmsModule = (
@@ -135,6 +154,7 @@ export const OmsModule = (
 
   const permissionFunction = omsPermissionFunction(oms);
   const simAdminPermission = clientBotsPermissionFunction(oms);
+  const limitsPermission = limitsPermissionFunction(oms);
   const defs = createOmsTableDefs();
   const provider = (name: OmsTableName) => (table: ProviderTable) =>
     new OmsTableProvider(table, name, onLoad, onStop);
@@ -143,9 +163,11 @@ export const OmsModule = (
   for (const name of TABLES) {
     defs[name].permissionFunction = SIM_ADMIN_TABLES.includes(name)
       ? simAdminPermission
-      : name === "orderEntry"
-        ? orderEntryPermissionFunction
-        : permissionFunction;
+      : LIMIT_TABLES.includes(name)
+        ? limitsPermission
+        : name === "orderEntry"
+          ? orderEntryPermissionFunction
+          : permissionFunction;
     factory = factory.addTable(defs[name], provider(name), serviceFactory);
   }
   if (withJoin) {

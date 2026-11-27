@@ -1,3 +1,4 @@
+import { parseLimits } from "./limits/LimitBook";
 /**
  * OMS configuration. Every knob can be set in application.conf as
  * `oms.<key>` or with an `OMS_<KEY>` environment variable (UPPER_SNAKE_CASE of
@@ -47,6 +48,12 @@ export interface OmsConfig {
    * (pension, hedgeFund, quant, liquidation, informed); empty = none.
    */
   clientBots: string;
+  /**
+   * Limits set on the Firm, desks or accounts on top of each account's own,
+   * comma separated `ENTITY:METRIC[:RIC]=value` (see parseLimits), e.g.
+   * `FIRM:DAILY_LOSS=3000000`; empty = none.
+   */
+  limits: string;
 }
 
 export const DEFAULT_OMS_CONFIG: Readonly<OmsConfig> = Object.freeze({
@@ -67,6 +74,7 @@ export const DEFAULT_OMS_CONFIG: Readonly<OmsConfig> = Object.freeze({
   algoSliceMs: 250,
   clientAccounts: 5,
   clientBots: "",
+  limits: "",
 });
 
 export interface ConfigSource {
@@ -134,6 +142,7 @@ export const validateOmsConfig = (config: OmsConfig) => {
   if (!Number.isInteger(config.clientAccounts) || config.clientAccounts > 99) {
     throw Error("oms.clientAccounts must be an integer 0..99");
   }
+  parseLimits(config.limits);
   if (config.permissionMode !== "auto" && config.permissionMode !== "strict") {
     throw Error("oms.permissionMode must be 'auto' or 'strict'");
   }

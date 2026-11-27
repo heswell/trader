@@ -37,7 +37,8 @@ const oms = createOms(sim.gateway, {
 ## Tables
 
 These are the `trading-schemas` OMS tables: `accounts`, `parentOrders`, `childOrders`, `fills`, `positions`, `pnlHistory`,
-`accountPnlHistory`, `clientBots`, `clientBotParams`, plus the `positionPrices` join (positions ⟕ EXCHANGE prices).
+`accountPnlHistory`, `clientBots`, `clientBotParams`, `limitEntities`, `limits`, `limitUtilisation`, plus the
+`positionPrices` join (positions ⟕ EXCHANGE prices).
 EXCHANGE must be registered first.
 
 - `accounts` is seeded with 3 desks, 5 traders and 7 accounts, plus the Sim clients desk (`SIM-CLIENTS`, owner
@@ -73,6 +74,32 @@ EXCHANGE must be registered first.
 - `clientBots` (`botId`) and `clientBotParams` (`botId|name`) are the client bots and their parameters (see
   [Client bots](#client-bots)). Rows are for sim-admin users only (the exchange-sim `sim-admin` role, or no roles in
   `auto` mode), whatever accounts they can see.
+
+- `limitEntities` (`entityId`), `limits` (`limitKey`) and `limitUtilisation` (`limitKey`) are the trading limits. See
+  [Limits](#limits). Rows are filtered by `entityId`: a user sees the entities of the accounts they can see and every
+  entity above them (their desk and the Firm).
+
+## Limits
+
+Limits attach to a tree of entities built from the accounts: the Firm (`FIRM`), a desk for each `desk`, then the
+accounts (`src/limits/LimitBook.ts`). Metrics, scopes, periods and states are in `trading-schemas`
+(`domain/limits.ts`).
+
+- Each account's own limits are seeded from its `maxOrderQty`, `maxOrderNotional`, `maxPositionNotional` (per RIC) and
+  `maxDeltaUsd` (per underlying). More limits come from `oms.limits`.
+- A limit has `warning` (80% of the limit by default), `soft` (the limit) and `hard` (100% per order, 110% otherwise).
+  Pre-trade risk rejects above `soft`.
+- **Nearest applies** for order quantity, order notional, position notional and net delta: the nearest limit up the
+  tree applies, and within an entity a limit for one RIC or underlying (a carve-out) comes before its limit for each.
+- **Totals** for gross position notional, order rate and daily loss: each of the account, its desk and the Firm that
+  sets one is checked against the total of the accounts below it.
+- Gross position notional, net delta and daily loss are **cap** metrics: an entity's value should not be above its
+  parent's (`LimitBook.capViolations`). Nothing enforces it until limits can be edited.
+- `limitUtilisation` is recomputed on every mark: per order the largest order today, per RIC or underlying the worst
+  one (named in `worst`), otherwise the entity's total; with `headroom`, `utilisation` (1 = at the limit) and `state`
+  (`OK`, `WARNING`, `SOFT_BREACH`, `HARD_BREACH`). Daily loss is minus the positions' total P&L since the OMS started:
+  there is no daily reset yet. Daily loss is not checked pre-trade.
+- Limits are not persisted: they come back from the accounts and `oms.limits` on a restart.
 
 ## Notifications
 
@@ -235,7 +262,12 @@ Risk checks run in this order, and the first failure wins. Each returns a `Rejec
 | Order notional (USD) > `maxOrderNotional` | `EXCEEDS_MAX_NOTIONAL` |
 | LIMIT price outside ±`collarPct` of reference (last, else mid, else refPrice); for options at least 50% and 10 ticks (`collarWidth`) | `PRICE_OUTSIDE_COLLAR` |
 | Projected position notional > `maxPositionNotional` (only when the order increases exposure) | `EXCEEDS_MAX_NOTIONAL`. The text says "projected position". There is no dedicated code. |
+| Gross position notional (USD) of the account, its desk or the Firm > its limit (each that sets one; only when the order increases exposure) | `EXCEEDS_MAX_GROSS_NOTIONAL` |
 | Net delta (USD) on the underlying > `maxDeltaUsd` (only when the order adds to it): the `deltaUsd` of the account's positions in the stock or index, its futures and its options, plus the order's (an option's model delta × forward × multiplier) | `EXCEEDS_MAX_DELTA` |
+
+| Orders created in the last second by the account, its desk or the Firm ≥ its limit (new orders only, not amends) | `EXCEEDS_ORDER_RATE` |
+
+The order limits are the [limits](#limits) that apply to the account and RIC.
 
 A quote-only option (`liquid` false) is rejected by `validateOrder` (`RESTRICTED_INSTRUMENT`); the text names the
 nearest liquid strike of the same expiry and right (gateway `nearestLiquidOption`).
@@ -380,6 +412,7 @@ Set in `application.conf` as `oms.<key>`, or with the env var `OMS_<UPPER_SNAKE>
 | `algoSliceMs` | 250 | Algo timer: how often TWAP / VWAP / POV orders are re-sliced. |
 | `clientAccounts` | 5 | Accounts of the Sim clients desk (`CLIENT-01…`). 0 = none. |
 | `clientBots` | `""` | Client bots started with the OMS, `persona:count` comma separated. |
+| `limits` | `""` | Limits on the Firm, desks or accounts, `ENTITY:METRIC[:RIC]=value` comma separated, e.g. `FIRM:DAILY_LOSS=3000000`. |
 
 ### Persistence
 

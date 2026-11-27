@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Approve limit changes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3B5B8C}a:hover{color:#1E3A63}
+button,input,textarea{font:inherit;color:inherit}
+.k{--panel:#FFFFFF;--bar:#F6F7F9;--border:#D9DDE3;--rowline:#EEF0F3;--fg:#1F2329;--fg2:#4A525D;--fg3:#5B6470;--th:#3A424D;--field-border:#C3CAD3;--field-bg:#FFFFFF;--focus:#3B5B8C;--accent:#3B5B8C;--tg-on:#2B3440;--tg-on-fg:#FFFFFF;--neg:#B3261E;--neg-border:#D98A84;--buy:#1E7F45;--edit:#EAF1FB;--new:#EAF6EE;--warn:#7A5200;--warn-bg:#FFF3CC;--warn-border:#E3B341;
+  font-family:'Nunito Sans',system-ui,sans-serif;color:var(--fg);-webkit-font-smoothing:antialiased}
+.g-num{font-variant-numeric:tabular-nums}
+.scrim{position:absolute;inset:0;background:rgba(20,24,30,.42);display:flex;align-items:center;justify-content:center}
+.dlg{width:820px;background:var(--panel);border-radius:4px;box-shadow:0 12px 32px rgba(0,0,0,.25),0 2px 6px rgba(0,0,0,.12);border-top:3px solid var(--accent);overflow:hidden}
+.dlg-h{display:flex;align-items:flex-start;gap:10px;padding:18px 20px 12px}
+.dlg-h h2{margin:0 0 2px;font-size:16px;font-weight:800}
+.dlg-h p{margin:0;font-size:12px;color:var(--fg3)}
+.x{margin-left:auto}
+.ib{width:24px;height:24px;border:0;border-radius:3px;background:transparent;display:inline-flex;align-items:center;justify-content:center;color:var(--fg3)}
+.gh,.gr{display:grid;align-items:center;font-size:12px;grid-template-columns:36px 110px 170px 84px 120px 120px 1fr}
+.gh{height:28px;color:var(--th);font-weight:700;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bar)}
+.gr{min-height:34px;border-bottom:1px solid var(--rowline)}
+.gh>span,.gr>span{padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.r{text-align:right}
+.gr input{width:14px;height:14px;margin:0;accent-color:var(--tg-on)}
+.was{color:var(--fg3);text-decoration:line-through}
+.nw{font-weight:800}
+.dl{font-size:11px;font-weight:700}
+.up{color:var(--neg)}
+.dn{color:var(--buy)}
+.tag{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:9px;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--border);color:var(--fg3);margin-right:6px}
+.tag.new{border-color:var(--buy);color:var(--buy);background:var(--new)}
+.tag.del{border-color:var(--neg-border);color:var(--neg)}
+.tag.ed{border-color:var(--accent);color:var(--accent);background:var(--edit)}
+.imp{padding:12px 20px 0;display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--fg2)}
+.warnbox{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid var(--warn-border);background:var(--warn-bg);color:var(--warn);border-radius:3px}
+.cm{padding:12px 20px 0;display:flex;flex-direction:column;gap:5px}
+.cm label{font-size:11px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.03em}
+textarea{width:100%;height:44px;box-sizing:border-box;border:1px solid var(--field-border);border-radius:3px;background:var(--field-bg);padding:6px 10px;font-size:13px;resize:none}
+.dlg-f{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:16px 20px 20px}
+.kbd{font-size:11px;color:var(--fg3);margin-right:auto}
+.btn{height:32px;padding:0 14px;border-radius:3px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;display:inline-flex;align-items:center;gap:6px;box-sizing:border-box}
+.btn.neu{border:1px solid var(--field-border);background:var(--field-bg);color:var(--fg)}
+.btn.negb{border:1px solid var(--neg-border);background:var(--field-bg);color:var(--neg)}
+.btn.pri{border:1px solid var(--tg-on);background:var(--tg-on);color:var(--tg-on-fg)}
+</style>
+</helmet>
+<div class="k" style="width:1280px;height:760px;position:relative;overflow:hidden;background:#EEF0F3">
+<dc-import name="Setup" hint-size="1280px,760px"></dc-import>
+<div class="scrim">
+  <div class="dlg" role="dialog" aria-labelledby="ap-title">
+    <div class="dlg-h">
+      <div>
+        <h2 id="ap-title">Approve change set #12 (4 changes)</h2>
+        <p class="g-num">Change set #12 · saved by risk-admin at 14:40 · you are approving as sam (supervisor)</p><p style="margin-top:6px;color:var(--fg2)"><b>Reason:</b> Q4 rebalance. More room for US position, tighter EU delta warning, BARC.L carve-out, drop the ASIA-02 rate limit.</p>
+      </div>
+      <button class="ib x" type="button" aria-label="Close"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7"/></svg></button>
+    </div>
+    <div class="gh"><span><input type="checkbox" checked aria-label="Select all"></span><span>Entity</span><span>Limit</span><span>Field</span><span class="r">Was</span><span class="r">New</span><span>Effect now</span></div>
+    <div class="gr g-num"><span><input type="checkbox" checked aria-label="Approve change 1"></span><span>ACC-US-01</span><span><span class="tag ed">Edit</span>Position notional</span><span>Limit</span><span class="r was">10,000,000</span><span class="r nw">12,000,000 <span class="dl up">+20%</span></span><span>Utilisation 79% → 66%</span></div>
+    <div class="gr g-num"><span><input type="checkbox" checked aria-label="Approve change 2"></span><span>ACC-EU-02</span><span><span class="tag ed">Edit</span>Net delta</span><span>Warn at</span><span class="r was">80%</span><span class="r nw">75% <span class="dl dn">tighter</span></span><span>No change (63%)</span></div>
+    <div class="gr g-num"><span><input type="checkbox" checked aria-label="Approve change 3"></span><span>ACC-EU-02</span><span><span class="tag new">New</span>Position notional</span><span>BARC.L</span><span class="r was" style="text-decoration:none">–</span><span class="r nw">3,500,000</span><span>Replaces the per-RIC 3.00m: 104% → 89%</span></div>
+    <div class="gr g-num"><span><input type="checkbox" checked aria-label="Approve change 4"></span><span>ACC-ASIA-02</span><span><span class="tag del">Remove</span>Order rate</span><span>Limit</span><span class="r">20/s</span><span class="r was" style="text-decoration:none">–</span><span>Desk and firm order rate still apply</span></div>
+    <div class="imp">
+      <div class="warnbox"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true" style="flex:0 0 14px;margin-top:1px"><path d="M7 1.8l5.6 10H1.4z" stroke-linejoin="round"/><path d="M7 5.6v3M7 10.3v.1"/></svg><span>ACC-EU-02's new BARC.L limit clears an open soft breach. It is effective from 25 Nov, so today's breach stays open.</span></div>
+    </div>
+    <div class="cm">
+      <label for="ap-c">Comment</label>
+      <textarea id="ap-c" placeholder="Optional for approve, required for reject"></textarea>
+    </div>
+    <div class="dlg-f">
+      <span class="kbd">Space toggles a row · Ctrl+Enter approves</span>
+      <button class="btn negb" type="button">Reject selected</button>
+      <button class="btn pri" type="button">Approve 4</button>
+    </div>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":760}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

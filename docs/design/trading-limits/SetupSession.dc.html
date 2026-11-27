@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Limit setup, edit session</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,500;6..12,600;6..12,700;6..12,800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3B5B8C}a:hover{color:#1E3A63}
+button,input{font:inherit;color:inherit}
+.g-root{
+  --app:#EEF0F3;--panel:#FFFFFF;--bar:#F6F7F9;--hdr:#E4E7EB;--border:#D9DDE3;--rowline:#EEF0F3;
+  --fg:#1F2329;--fg2:#4A525D;--fg3:#5B6470;--th:#3A424D;--sel:#E8EEF6;
+  --field-border:#C3CAD3;--field-bg:#FFFFFF;--editable-border:#AEB6C1;--accent:#3B5B8C;--focus:#2F6FD6;--tg-on:#2B3440;--tg-on-fg:#FFFFFF;
+  --edited:#2F6FD6;--session:#EEF4FD;--neg:#B3261E;--buy:#1E7F45;
+  --warn:#7A5200;--warn-bg:#FFF3CC;--warn-border:#E3B341;--hard-solid:#C62828;--hard-fg:#FFFFFF;
+  font-family:'Nunito Sans',system-ui,sans-serif;color:var(--fg);background:var(--app);-webkit-font-smoothing:antialiased}
+.g-num{font-variant-numeric:tabular-nums}
+.p{background:var(--panel);border:1px solid var(--accent);box-shadow:0 0 0 1px var(--accent);display:flex;flex-direction:column;height:100%;box-sizing:border-box;overflow:hidden}
+.sh{height:32px;flex:0 0 32px;display:flex;align-items:stretch;background:var(--hdr);border-bottom:1px solid var(--border)}
+.tab{display:flex;align-items:center;gap:6px;padding:0 14px;font-size:12px;font-weight:600;color:var(--fg2);border:0;background:transparent;border-right:1px solid var(--border)}
+.tab.on{background:var(--panel);color:var(--fg);box-shadow:inset 0 2px 0 var(--accent);margin-bottom:-1px}
+.cnt{min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--hard-solid);color:var(--hard-fg);font-size:10px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box}
+.tb{height:40px;flex:0 0 40px;display:flex;align-items:center;gap:8px;padding:0 8px;border-bottom:1px solid var(--border);white-space:nowrap;box-sizing:border-box;background:var(--session)}
+.sp{flex:1}
+.tg{display:inline-flex;border:1px solid var(--field-border);border-radius:3px;overflow:hidden;flex:0 0 auto}
+.tg button{height:24px;padding:0 10px;border:0;border-right:1px solid var(--field-border);background:var(--field-bg);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--fg2)}
+.tg button:last-child{border-right:0}
+.tg button.on{background:var(--tg-on);color:var(--tg-on-fg)}
+
+.btn{height:26px;padding:0 10px;border-radius:3px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;display:inline-flex;align-items:center;gap:6px;box-sizing:border-box;flex:0 0 auto}
+.btn.neu{border:1px solid var(--field-border);background:var(--field-bg);color:var(--fg)}
+.btn.pri{border:1px solid var(--tg-on);background:var(--tg-on);color:var(--tg-on-fg)}
+.btn.pri[disabled]{opacity:.45}
+.btn.ghost{border:1px solid transparent;background:transparent;color:var(--fg2)}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--accent)}
+.badge i{width:8px;height:8px;border-radius:50%;background:var(--focus)}
+.badge .bad{color:var(--neg)}
+.info{font-size:12px;color:var(--neg);font-weight:600}
+.gh,.gr{display:grid;align-items:center;font-size:12px}
+.gh{height:28px;flex:0 0 28px;color:var(--th);font-weight:700;border-bottom:1px solid var(--border)}
+.gr{height:28px;flex:0 0 28px;border-bottom:1px solid var(--rowline)}
+.gh>span,.gr>span{padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;height:100%;display:flex;align-items:center;box-sizing:border-box}
+.gr>span.ec{padding:0 3px 0 6px}
+.r{justify-content:flex-end;text-align:right}
+.mut{color:var(--fg3)}
+.cols{grid-template-columns:116px 170px 120px 96px 66px 120px 66px 100px 44px 104px 96px 1fr}
+.gr.sel{background:var(--sel)}
+.gr.ro>span{color:var(--fg2)}
+/* vuu: a cell edited in this session gets a vertical bar on its left */
+.gr>span.e{box-shadow:inset 3px 0 0 var(--edited)}
+.gr.rm>span:not(.st){text-decoration:line-through;color:var(--fg3)}
+/* vuu InputCell (Salt Input), DropdownCell, ComboBox cell */
+.ic,.dd,.cbx{width:100%;height:20px;box-sizing:border-box;display:flex;align-items:center;gap:3px;padding:0 4px;border:1px solid var(--editable-border);border-radius:2px;background:var(--field-bg);font-weight:500;color:var(--fg)}
+.ic{justify-content:flex-end}
+.dd,.cbx{justify-content:space-between;padding-left:6px}
+.dd::after,.cbx::after{content:"";width:5px;height:5px;border-right:1.4px solid var(--fg3);border-bottom:1.4px solid var(--fg3);transform:rotate(45deg) translate(-1px,-1px);flex:0 0 5px}
+.ic.editing{border:2px dashed var(--focus);padding:0 3px;font-weight:700}
+.ic.editing::after{content:"";width:1px;height:12px;background:var(--fg);flex:0 0 1px}
+.ic.focus{border:2px solid var(--focus);padding:0 3px}
+.ic.err{outline:2px solid #C62828;outline-offset:-2px;border-color:transparent;justify-content:space-between}
+.ic.err::before{content:"!";width:12px;height:12px;border-radius:6px;background:#C62828;color:#FFFFFF;font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+.was{color:var(--fg3);text-decoration:line-through;font-weight:400;margin-right:6px}
+.was:empty{display:none}
+.tag{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:9px;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;box-sizing:border-box;border:1px solid var(--border);color:var(--fg3);background:var(--panel)}
+.tag.act{border:0;padding-left:0;font-weight:700;background:transparent}
+.tag.chg{border-color:var(--focus);color:var(--accent)}
+.tag.new{border-color:var(--buy);color:var(--buy)}
+.tag.rmv{border-color:#D98A84;color:var(--neg)}
+.tag.err{border-color:#D98A84;color:var(--neg)}
+.tag.pend{border-color:var(--warn-border);color:var(--warn);background:var(--warn-bg)}
+.tag.tmp{border-color:var(--fg3);color:var(--fg2)}
+.tag.kill{border:0;background:var(--hard-solid);color:var(--hard-fg)}
+.st small{margin-left:6px;color:var(--fg3);font-size:11px;font-weight:600}
+.st a{margin-left:6px;font-size:11px;font-weight:700}
+.tip{position:absolute;width:250px;background:var(--panel);border:1px solid var(--border);border-radius:4px;box-shadow:0 8px 24px rgba(0,0,0,.16);padding:8px 10px;font-size:12px;color:var(--fg2);z-index:2;line-height:1.45}
+.tip b{color:var(--fg)}
+.ft{height:30px;flex:0 0 30px;display:flex;align-items:center;gap:12px;padding:0 10px;font-size:12px;border-top:1px solid var(--border);background:var(--bar);color:var(--fg3);margin-top:auto}
+</style>
+</helmet>
+<div class="g-root" style="width:1280px;height:760px;padding:16px;box-sizing:border-box;position:relative">
+<div class="p">
+  <div class="sh">
+    <span class="tab">Limit monitor</span>
+    <span class="tab">Breaches <span class="cnt g-num">2</span></span>
+    <span class="tab on">Limit setup</span>
+  </div>
+  <div class="tb">
+    <span class="badge g-num"><i></i>Editing limits as risk-admin · 4 changes · <span class="bad">1 not valid</span></span>
+    <span class="sp"></span>
+    <span class="info">Fix or revert the invalid cell to save</span>
+    <div class="tg" role="group" aria-label="View">
+      <button type="button" aria-pressed="false">Tree</button>
+      <button class="on" type="button" aria-pressed="true">List</button>
+    </div>
+        <button class="btn neu" type="button"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 1v8M1 5h8"/></svg>Add limit</button>
+    <button class="btn ghost" type="button">Discard</button>
+    <button class="btn pri" type="button" disabled>Save for approval (4)</button>
+  </div>
+
+  <div class="gh cols"><span>Entity</span><span>Limit</span><span>Scope</span><span>Period</span><span class="r">Warn %</span><span class="r">Limit</span><span class="r">Hard %</span><span class="r">Hard at</span><span>Unit</span><span>Effective</span><span>Owner</span><span>Status</span></div>
+  <sc-for list="{{rows}}" as="r" hint-placeholder-count="14">
+    <div class="gr cols g-num {{r.cls}}">
+      <span class="{{r.eE}}">{{r.ent}}</span>
+      <span class="{{r.eE}}">{{r.metric}}</span>
+      <span class="{{r.eE}}">{{r.scope}}</span>
+      <sc-if value="{{r.ed}}" hint-placeholder-val="{{true}}">
+        <span class="ec {{r.eP}}"><span class="dd">{{r.period}}</span></span>
+        <span class="ec {{r.eW}}"><span class="ic {{r.wS}}">{{r.warn}}</span></span>
+        <span class="ec {{r.eL}}"><span class="ic {{r.lS}}">{{r.limit}}</span></span>
+        <span class="ec {{r.eH}}"><span class="ic {{r.hS}}">{{r.hard}}</span></span>
+      </sc-if>
+      <sc-if value="{{r.ro}}" hint-placeholder-val="{{false}}">
+        <span class="mut">{{r.period}}</span>
+        <span class="r">{{r.warn}}</span>
+        <span class="r"><span class="was">{{r.was}}</span>{{r.limit}}</span>
+        <span class="r">{{r.hard}}</span>
+      </sc-if>
+      <span class="r mut">{{r.hardAt}}</span>
+      <span class="mut">{{r.unit}}</span>
+      <span class="{{r.eE}}">{{r.eff}}</span>
+      <sc-if value="{{r.ed}}" hint-placeholder-val="{{true}}"><span class="ec {{r.eE}}"><span class="cbx">{{r.owner}}</span></span></sc-if>
+      <sc-if value="{{r.ro}}" hint-placeholder-val="{{false}}"><span>{{r.owner}}</span></sc-if>
+      <span class="st"><span class="tag {{r.tc}}">{{r.tag}}</span><small>{{r.note}}</small><sc-if value="{{r.act}}" hint-placeholder-val="{{false}}"><a href="#undo">{{r.act}}</a></sc-if></span>
+    </div>
+  </sc-for>
+
+  <div class="ft g-num">
+    <span>Enter or typing edits · Enter keeps · Esc reverts · Delete on a row marks it for removal · Leaving with changes asks to save or discard</span>
+  </div>
+</div>
+
+<div class="tip g-num" role="tooltip" style="left:585px;top:232px"><b>60,000</b> · was 50,000 (+20%).<br>Enter keeps it in this session. Nothing is sent until Save.</div>
+<div class="tip g-num" role="tooltip" style="left:505px;top:456px;width:230px;border-color:#D98A84"><b style="color:#B3261E">Warn % must be under 100</b><br>Fix it or press Esc to revert. Save is off until then.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":760}}'>
+class Component extends DCLogic {
+renderVals() {
+  const T = { act: 'Active', chg: 'Changed', new: 'New', rmv: 'Remove', err: 'Not valid', pend: 'Pending', tmp: 'Temporary', kill: 'Stopped' };
+  const r = (ent, metric, scope, period, warn, limit, hard, hardAt, unit, eff, owner, tc, o) => Object.assign({
+    ent, metric, scope, period, warn, limit, hard, hardAt, unit, eff, owner, tc, tag: T[tc],
+    note: '', act: '', was: '', wS: '', lS: '', hS: '', cls: '',
+    eE: '', eP: '', eW: '', eL: '', eH: '', ed: true, ro: false
+  }, o || {});
+  const ro = (o) => Object.assign({ ed: false, ro: true, cls: 'ro' }, o);
+  const all = { eE: 'e', eP: 'e', eW: 'e', eL: 'e', eH: 'e' };
+  const rows = [
+    r('Firm', 'Gross position notional', 'All', 'Intraday', '80', '60,000,000', '110', '66,000,000', 'USD', 'from 1 Nov', 'sam', 'act'),
+    r('Firm', 'Daily loss', 'All', 'Day', '80', '3,000,000', '120', '3,600,000', 'USD', 'from 1 Nov', 'sam', 'act'),
+    r('EQ-US', 'Gross position notional', 'All', 'Intraday', '80', '20,000,000', '110', '22,000,000', 'USD', 'from 1 Nov', 'sam', 'act'),
+    r('ACC-US-01', 'Order quantity', 'Per order', '–', '80', '60k', '100', '50,000', 'qty', 'from 1 Nov', 'alice', 'act', { lS: 'editing', cls: 'sel', note: 'editing' }),
+    r('ACC-US-01', 'Order notional', 'Per order', '–', '80', '2,000,000', '100', '2,000,000', 'USD', 'from 1 Nov', 'alice', 'act'),
+    r('ACC-US-01', 'Position notional', 'Per RIC', 'Intraday', '80', '12,000,000', '110', '13,200,000', 'USD', 'from 1 Nov', 'alice', 'chg', { eL: 'e', note: 'limit was 10,000,000' }),
+    r('ACC-US-02', 'Daily loss', 'All', 'Day', '80', '1,250,000', '110', '1,375,000', 'USD', 'today to 22:00', 'bob', 'tmp', ro({ was: '1,000,000', note: 'locked' })),
+    r('ACC-EU-01', 'Position notional', 'Per RIC', 'Overnight', '80', '6,000,000', '110', '6,600,000', 'USD', 'from 25 Nov', 'carol', 'pend', ro({ was: '5,000,000', note: 'set #11 · locked' })),
+    r('ACC-EU-02', 'Net delta', 'Underlying', 'Intraday', '75', '3,000,000', '110', '3,300,000', 'USD', 'from 1 Nov', 'dave', 'chg', { eW: 'e', note: 'warn was 80' }),
+    r('ACC-EU-02', 'Position notional', 'Per RIC · BARC.L', 'Intraday', '80', '3,500,000', '110', '3,850,000', 'USD', 'from 25 Nov', 'dave', 'new', Object.assign({ note: 'added' }, all)),
+    r('ACC-ASIA-02', 'Order rate', 'All', '1s rolling', '80', '20', '125', '25', '/s', 'from 1 Nov', 'erin', 'rmv', { cls: 'rm', act: 'Undo' }),
+    r('ACC-ASIA-03', 'Daily loss', 'All', 'Day', '120', '400,000', '110', '440,000', 'USD', 'from 1 Nov', 'erin', 'err', { wS: 'err', eW: 'e', note: 'not counted' }),
+    r('ACC-US-02', 'Kill switch', 'Account', '–', '–', 'Trading stopped', '–', '', '', 'since 14:12:30', 'sam', 'kill', ro({ note: 'not part of setup edits' })),
+    r('CLIENT-01…08', 'Position notional', 'Per RIC', 'Intraday', '80', '25,000,000', '110', '27,500,000', 'USD', 'from 1 Nov', 'simclient', 'act')
+  ];
+  return { rows };
+}
+}
+</script>
+</body>
+</html>
