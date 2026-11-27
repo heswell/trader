@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Limit setup tree</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,400;1,6..12,600&amp;display=swap">
+<style>
+body{margin:0}
+button,input{font:inherit;color:inherit}
+.g-root{
+  --app:#EEF0F3;--panel:#FFFFFF;--bar:#F6F7F9;--hdr:#E4E7EB;--border:#D9DDE3;--rowline:#EEF0F3;
+  --fg:#1F2329;--fg2:#4A525D;--fg3:#5B6470;--th:#3A424D;--sel:#E8EEF6;--grp:#F8F9FB;
+  --field-border:#C3CAD3;--field-bg:#FFFFFF;--accent:#3B5B8C;--focus:#2F6FD6;--tg-on:#2B3440;--tg-on-fg:#FFFFFF;
+  --neg:#B3261E;--buy:#1E7F45;--new:#EAF6EE;
+  --warn:#7A5200;--warn-bg:#FFF3CC;--warn-border:#E3B341;--hard-solid:#C62828;--hard-fg:#FFFFFF;
+  font-family:'Nunito Sans',system-ui,sans-serif;color:var(--fg);background:var(--app);-webkit-font-smoothing:antialiased}
+.g-num{font-variant-numeric:tabular-nums}
+.p{background:var(--panel);border:1px solid var(--border);display:flex;flex-direction:column;height:100%;box-sizing:border-box;overflow:hidden}
+.sh{height:32px;flex:0 0 32px;display:flex;align-items:stretch;background:var(--hdr);border-bottom:1px solid var(--border);box-sizing:border-box}
+.tab{display:flex;align-items:center;gap:6px;padding:0 14px;font-size:12px;font-weight:600;color:var(--fg2);border:0;background:transparent;border-right:1px solid var(--border)}
+.tab.on{background:var(--panel);color:var(--fg);box-shadow:inset 0 2px 0 var(--accent);margin-bottom:-1px}
+.cnt{min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--hard-solid);color:var(--hard-fg);font-size:10px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box}
+.tb{height:40px;flex:0 0 40px;display:flex;align-items:center;gap:8px;padding:0 8px;border-bottom:1px solid var(--border);white-space:nowrap;box-sizing:border-box}
+.sp{flex:1}
+.tg{display:inline-flex;border:1px solid var(--field-border);border-radius:3px;overflow:hidden;flex:0 0 auto}
+.tg button{height:24px;padding:0 10px;border:0;border-right:1px solid var(--field-border);background:var(--field-bg);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--fg2);display:inline-flex;align-items:center;gap:6px}
+.tg button:last-child{border-right:0}
+.tg button.on{background:var(--tg-on);color:var(--tg-on-fg)}
+.tg small{font-size:10px;opacity:.8}
+.btn{height:26px;padding:0 10px;border-radius:3px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;display:inline-flex;align-items:center;gap:6px;box-sizing:border-box;flex:0 0 auto}
+.btn.neu{border:1px solid var(--field-border);background:var(--field-bg);color:var(--fg)}
+.btn.pri{border:1px solid var(--tg-on);background:var(--tg-on);color:var(--tg-on-fg)}
+.info{font-size:12px;color:var(--fg3)}
+.gh,.gr{display:grid;align-items:center;font-size:12px;box-sizing:border-box;grid-template-columns:232px 80px repeat(7,110px) 1fr}
+.gh{height:40px;flex:0 0 40px;color:var(--th);font-weight:700;border-bottom:1px solid var(--border)}
+.gh>span{flex-direction:column;align-items:flex-start;justify-content:center;gap:1px}
+.gh>span.r{align-items:flex-end}
+.gh small{font-size:10px;font-weight:600;color:var(--fg3)}
+.gh small.cap{color:var(--accent)}
+.gr{height:28px;flex:0 0 28px;border-bottom:1px solid var(--rowline)}
+.gh>span,.gr>span{padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;height:100%;display:flex;align-items:center;box-sizing:border-box}
+.gr.d0,.gr.d1{background:var(--grp)}
+.gr.d0 .tree b,.gr.d1 .tree b{font-weight:800}
+.r{justify-content:flex-end;text-align:right}
+.mut{color:var(--fg3)}
+.tree{gap:4px}
+.tree b{font-weight:600}
+.tree i{font-style:normal;color:var(--fg3);margin-left:4px;overflow:hidden;text-overflow:ellipsis}
+.chev{flex:0 0 14px;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;color:var(--fg3)}
+.chev.open svg{transform:rotate(90deg)}
+.chev.none{visibility:hidden}
+/* value states */
+.gr>span.inh{font-style:italic;color:var(--fg3)}
+.gr>span.na{color:#B4BBC4}
+.gr>span.pd{box-shadow:inset 3px 0 0 var(--warn-border);background:var(--warn-bg);font-weight:700}
+.gr>span.rmv .v{font-style:italic;color:var(--fg3);font-weight:400}
+.gr>span.tm::before{content:"";width:9px;height:9px;border:1.4px solid var(--fg2);border-radius:50%;margin-right:5px;flex:0 0 auto;box-sizing:border-box;background:linear-gradient(var(--fg2),var(--fg2)) 3.2px 1.2px/1.2px 3.6px no-repeat}
+.gr>span.cell-sel{outline:2px solid var(--focus);outline-offset:-2px}
+.gr.nw>span:first-child{background:var(--new)}
+.gr.off>span{color:var(--fg3)}
+.was{color:var(--fg3);text-decoration:line-through;font-weight:400;margin-right:6px}
+.was:empty{display:none}
+.tag{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:9px;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;box-sizing:border-box;border:1px solid var(--border);color:var(--fg3);background:var(--panel)}
+.tag:empty{display:none}
+.tag.pend{border-color:var(--warn-border);color:var(--warn);background:var(--warn-bg)}
+.tag.kill{border:0;background:var(--hard-solid);color:var(--hard-fg)}
+.tag.off{border-color:var(--fg3);color:var(--fg2)}
+.st small{margin-left:6px;color:var(--fg3);font-size:11px;font-weight:600}
+.ft{height:30px;flex:0 0 30px;display:flex;align-items:center;gap:10px;padding:0 10px;font-size:12px;border-top:1px solid var(--border);background:var(--bar);color:var(--fg3);margin-top:auto}
+.pop{position:absolute;width:318px;background:var(--panel);border:1px solid var(--border);border-radius:4px;box-shadow:0 8px 24px rgba(0,0,0,.16);font-size:12px;color:var(--fg2);z-index:2;line-height:1.5}
+.pop h4{margin:0;padding:9px 12px 7px;font-size:12px;font-weight:800;color:var(--fg);border-bottom:1px solid var(--rowline);display:flex;gap:8px;align-items:center}
+.pop dl{display:grid;grid-template-columns:96px 1fr;gap:3px 10px;margin:0;padding:8px 12px}
+.pop dt{color:var(--fg3)}
+.pop dd{margin:0;color:var(--fg)}
+.pop .pf{padding:7px 12px 9px;border-top:1px solid var(--rowline);font-size:11px;color:var(--fg3)}
+</style>
+</helmet>
+<div class="g-root" style="width:1280px;height:760px;padding:16px;box-sizing:border-box;position:relative">
+<div class="p">
+  <div class="sh">
+    <button class="tab" type="button">Limit monitor</button>
+    <button class="tab" type="button">Breaches <span class="cnt g-num">2</span></button>
+    <button class="tab on" type="button">Limit setup</button>
+  </div>
+  <div class="tb">
+    <div class="tg" role="group" aria-label="View">
+      <button class="on" type="button" aria-pressed="true">Tree</button>
+      <button type="button" aria-pressed="false">List</button>
+    </div>
+    <div class="tg" role="group" aria-label="Show">
+      <button class="on" type="button" aria-pressed="true">All</button>
+      <button type="button" aria-pressed="false">Pending <small class="g-num">5</small></button>
+      <button type="button" aria-pressed="false">Temporary <small class="g-num">1</small></button>
+      <button type="button" aria-pressed="false">Kill switches <small class="g-num">1</small></button>
+    </div>
+    <span class="sp"></span>
+    <span class="info">Read-only. A value set on a desk applies to the accounts below it that set none.</span>
+    <button class="btn neu" type="button">Review changes (4)</button>
+    <button class="btn pri" type="button"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M8 1.8l2.2 2.2L4.2 10H2V7.8z"/></svg>Edit limits</button>
+  </div>
+
+  <div class="gh"><span>Entity</span><span>Type</span>
+    <span class="r">Order qty<small>per order</small></span>
+    <span class="r">Order notional<small>per order</small></span>
+    <span class="r">Position notional<small>per RIC</small></span>
+    <span class="r">Gross position<small class="cap">cap · intraday</small></span>
+    <span class="r">Net delta<small class="cap">cap · underlying</small></span>
+    <span class="r">Daily loss<small class="cap">cap · day</small></span>
+    <span class="r">Order rate<small>1s rolling</small></span>
+    <span>Status</span></div>
+  <sc-for list="{{rows}}" as="r" hint-placeholder-count="13">
+    <div class="gr g-num {{r.cls}}">
+      <span class="tree" style="padding-left:{{r.ind}}px"><span class="chev {{r.chev}}"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2.5 1l3 3-3 3"/></svg></span><b>{{r.id}}</b><i>{{r.name}}</i></span>
+      <span class="mut">{{r.type}}</span>
+      <span class="r {{r.k0}}"><span class="was">{{r.w0}}</span><span class="v">{{r.v0}}</span></span>
+      <span class="r {{r.k1}}"><span class="was">{{r.w1}}</span><span class="v">{{r.v1}}</span></span>
+      <span class="r {{r.k2}}"><span class="was">{{r.w2}}</span><span class="v">{{r.v2}}</span></span>
+      <span class="r {{r.k3}}"><span class="was">{{r.w3}}</span><span class="v">{{r.v3}}</span></span>
+      <span class="r {{r.k4}}"><span class="was">{{r.w4}}</span><span class="v">{{r.v4}}</span></span>
+      <span class="r {{r.k5}}"><span class="was">{{r.w5}}</span><span class="v">{{r.v5}}</span></span>
+      <span class="r {{r.k6}}"><span class="was">{{r.w6}}</span><span class="v">{{r.v6}}</span></span>
+      <span class="st"><span class="tag {{r.tc}}">{{r.tag}}</span><small>{{r.note}}</small></span>
+    </div>
+  </sc-for>
+
+  <div class="ft g-num">
+    <span>5 changes waiting for approval in 2 change sets. Cells in a change set are locked until it is approved, rejected or withdrawn.</span>
+    <span class="sp"></span>
+    <span>Signed in as sam (supervisor)</span>
+  </div>
+</div>
+<div class="pop g-num" role="dialog" aria-label="Limit details" style="left:549px;top:217px">
+  <h4>ACC-US-01 · Position notional<span class="tag pend">Pending</span></h4>
+  <dl>
+    <dt>Limit</dt><dd><b>12,000,000</b> USD <span class="mut">was 10,000,000</span></dd>
+    <dt>Scope</dt><dd>Per RIC · intraday</dd>
+    <dt>Warn · hard</dt><dd>80% · 110% (hard at 13,200,000)</dd>
+    <dt>Rule</dt><dd>Override: replaces Firm's 15,000,000</dd>
+    <dt>Change set</dt><dd>#12 · risk-admin 14:40 · takes effect on approval</dd>
+    <dt>Owner</dt><dd>alice</dd>
+  </dl>
+  <div class="pf">Space opens details for the selected cell · List view shows every field as a column</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":760}}'>
+class Component extends DCLogic {
+renderVals() {
+  // cell codes: "v" own · "i:v" inherited · "p:v:was" pending · "t:v:was" temporary · "rm:v:was" pending removal (v inherited) · "" not applicable
+  const cell = (s) => {
+    if (s === '') return { k: 'na', v: '–', w: '' };
+    const [c, v, w] = s.split('|');
+    if (v === undefined) return { k: '', v: c, w: '' };
+    const k = { i: 'inh', p: 'pd', t: 'tm', rm: 'pd rmv' }[c];
+    return { k, v, w: w || '' };
+  };
+  const row = (depth, chev, id, name, type, cells, o) => {
+    const r = Object.assign({ ind: 6 + depth * 18, chev, id, name, type, cls: 'd' + depth, tag: '', tc: '', note: '' }, o || {});
+    cells.forEach((s, n) => { const c = cell(s); r['k' + n] = c.k; r['v' + n] = c.v; r['w' + n] = c.w; });
+    return r;
+  };
+  const rows = [
+    row(0, 'open', 'Firm', '', 'Firm', ['500,000', '10,000,000', '15,000,000', '60,000,000', '40,000,000', '3,000,000', '300']),
+    row(1, 'open', 'EQ-US', 'US equities', 'Desk', ['i|500,000', 'i|10,000,000', 'i|15,000,000', '20,000,000', '12,000,000', '1,500,000', '100']),
+    row(2, 'none', 'ACC-US-01', 'US Flow', 'Account', ['50,000', '2,000,000', 'p|12,000,000|10,000,000', 'i|20,000,000', '10,000,000', 'i|1,500,000', 'i|100'], { tag: 'Pending', tc: 'pend', note: 'set #12', cls: 'd2' }),
+    row(2, 'none', 'ACC-US-02', 'US Prop', 'Account', ['20,000', '1,000,000', '5,000,000', 'i|20,000,000', '5,000,000', 't|1,250,000', 'i|100'], { tag: 'Stopped', tc: 'kill', note: 'by sam 14:12 · loss temp to 22:00', cls: 'd2' }),
+    row(1, 'open', 'EQ-EU', 'EU equities', 'Desk', ['i|500,000', 'i|10,000,000', 'i|15,000,000', '20,000,000', '12,000,000', '1,000,000', '100']),
+    row(2, 'none', 'ACC-EU-01', 'EU Flow', 'Account', ['100,000', '2,000,000', 'p|6,000,000|5,000,000', 'i|20,000,000', '10,000,000', 'i|1,000,000', 'i|100'], { tag: 'Pending', tc: 'pend', note: 'set #11', cls: 'd2' }),
+    row(2, 'open', 'ACC-EU-02', 'EU Prop', 'Account', ['50,000', '750,000', '3,000,000', 'i|20,000,000', 'p|3,000,000', 'i|1,000,000', 'i|100'], { tag: 'Pending', tc: 'pend', note: 'set #12 · delta warn 80→75%', cls: 'd2' }),
+    row(3, 'none', 'BARC.L', 'Barclays', 'RIC', ['', '', 'p|3,500,000', '', '', '', ''], { tag: 'Pending new', tc: 'pend', note: 'set #12', cls: 'd3 nw' }),
+    row(1, 'open', 'EQ-ASIA', 'Asia equities', 'Desk', ['i|500,000', 'i|10,000,000', 'i|15,000,000', '15,000,000', '8,000,000', '1,000,000', '100']),
+    row(2, 'none', 'ACC-ASIA-01', 'Asia Flow', 'Account', ['200,000', '1,500,000', '8,000,000', 'i|15,000,000', 'i|8,000,000', 'i|1,000,000', 'i|100'], { cls: 'd2' }),
+    row(2, 'none', 'ACC-ASIA-02', 'Asia Prop', 'Account', ['100,000', '500,000', '2,000,000', 'i|15,000,000', 'i|8,000,000', 'i|1,000,000', 'rm|100|20'], { tag: 'Pending', tc: 'pend', note: 'set #12 · rate removed', cls: 'd2' }),
+    row(2, 'none', 'ACC-ASIA-03', 'Asia Legacy', 'Account', ['10,000', '100,000', '500,000', 'i|15,000,000', 'i|8,000,000', '400,000', 'i|100'], { tag: 'Disabled', tc: 'off', cls: 'd2 off' }),
+    row(1, '', 'SIM-CLIENTS', '8 accounts', 'Desk', ['i|500,000', 'i|10,000,000', '25,000,000', '30,000,000', 'i|40,000,000', 'i|3,000,000', 'i|300'])
+  ];
+  rows[2].k2 += ' cell-sel';
+  return { rows };
+}
+}
+</script>
+</body>
+</html>

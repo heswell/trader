@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Save limit changes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap">
+<style>
+body{margin:0}
+button,input,textarea{font:inherit;color:inherit}
+.k{--panel:#FFFFFF;--bar:#F6F7F9;--border:#D9DDE3;--rowline:#EEF0F3;--fg:#1F2329;--fg2:#4A525D;--fg3:#5B6470;--th:#3A424D;--field-border:#C3CAD3;--field-bg:#FFFFFF;--accent:#3B5B8C;--focus:#2F6FD6;--tg-on:#2B3440;--tg-on-fg:#FFFFFF;--neg:#B3261E;--neg-border:#D98A84;--buy:#1E7F45;
+  font-family:'Nunito Sans',system-ui,sans-serif;color:var(--fg);-webkit-font-smoothing:antialiased}
+.g-num{font-variant-numeric:tabular-nums}
+.scrim{position:absolute;inset:0;background:rgba(20,24,30,.42);display:flex;align-items:center;justify-content:center}
+.dlg{width:760px;background:var(--panel);border-radius:4px;box-shadow:0 12px 32px rgba(0,0,0,.25),0 2px 6px rgba(0,0,0,.12);border-top:3px solid var(--accent);overflow:hidden}
+.dlg-h{display:flex;align-items:flex-start;gap:10px;padding:18px 20px 12px}
+.dlg-h h2{margin:0 0 2px;font-size:16px;font-weight:800}
+.dlg-h p{margin:0;font-size:12px;color:var(--fg3)}
+.x{margin-left:auto;width:24px;height:24px;border:0;border-radius:3px;background:transparent;display:inline-flex;align-items:center;justify-content:center;color:var(--fg3)}
+.gh,.gr{display:grid;align-items:center;font-size:12px;grid-template-columns:110px 190px 90px 120px 1fr}
+.gh{height:28px;color:var(--th);font-weight:700;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bar)}
+.gr{height:30px;border-bottom:1px solid var(--rowline)}
+.gh>span,.gr>span{padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.r{text-align:right}
+.was{color:var(--fg3);text-decoration:line-through;margin-right:6px}
+.nw{font-weight:800}
+.tag{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:9px;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--focus);color:var(--accent);margin-right:6px}
+.tag.new{border-color:var(--buy);color:var(--buy)}
+.tag.del{border-color:var(--neg-border);color:var(--neg)}
+.body{padding:14px 20px 0;display:flex;flex-direction:column;gap:12px}
+.ff{display:flex;flex-direction:column;gap:5px}
+.ff label{font-size:11px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.03em}
+.ff label b{color:var(--neg)}
+.row2{display:flex;gap:16px}
+.row2 .ff{flex:1}
+.in{height:30px;box-sizing:border-box;border:1px solid var(--field-border);border-radius:3px;background:var(--field-bg);padding:0 10px;font-size:13px;display:flex;align-items:center;justify-content:space-between}
+textarea{width:100%;height:52px;box-sizing:border-box;border:2px solid var(--focus);border-radius:3px;background:var(--field-bg);padding:5px 9px;font-size:13px;resize:none}
+.hint{font-size:11px;color:var(--fg3)}
+.dlg-f{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:16px 20px 20px}
+.kbd{font-size:11px;color:var(--fg3);margin-right:auto}
+.btn{height:32px;padding:0 14px;border-radius:3px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;display:inline-flex;align-items:center;gap:6px;box-sizing:border-box}
+.btn.neu{border:1px solid var(--field-border);background:var(--field-bg);color:var(--fg)}
+.btn.pri{border:1px solid var(--tg-on);background:var(--tg-on);color:var(--tg-on-fg)}
+</style>
+</helmet>
+<div class="k" style="width:1280px;height:760px;position:relative;overflow:hidden;background:#EEF0F3">
+<dc-import name="SetupSession" hint-size="1280px,760px"></dc-import>
+<div class="scrim">
+  <div class="dlg" role="dialog" aria-labelledby="sv-title">
+    <div class="dlg-h">
+      <div>
+        <h2 id="sv-title">Save 4 changes for approval</h2>
+        <p>They go to a supervisor as one change set and apply together once approved. You can't approve your own set.</p>
+      </div>
+      <button class="x" type="button" aria-label="Close"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7"/></svg></button>
+    </div>
+    <div class="gh"><span>Entity</span><span>Limit</span><span>Field</span><span class="r">Change</span><span>Effective</span></div>
+    <div class="gr g-num"><span>ACC-US-01</span><span><span class="tag">Edit</span>Position notional</span><span>Limit</span><span class="r"><span class="was">10,000,000</span><span class="nw">12,000,000</span></span><span>On approval</span></div>
+    <div class="gr g-num"><span>ACC-EU-02</span><span><span class="tag">Edit</span>Net delta</span><span>Warn %</span><span class="r"><span class="was">80</span><span class="nw">75</span></span><span>On approval</span></div>
+    <div class="gr g-num"><span>ACC-EU-02</span><span><span class="tag new">New</span>Position notional</span><span>BARC.L</span><span class="r nw">3,500,000</span><span>From 25 Nov</span></div>
+    <div class="gr g-num"><span>ACC-ASIA-02</span><span><span class="tag del">Remove</span>Order rate</span><span>Limit</span><span class="r"><span class="was">20/s</span></span><span>On approval</span></div>
+    <div class="body">
+      <div class="ff">
+        <label for="sv-r">Reason <b>*</b></label>
+        <textarea id="sv-r">Q4 rebalance. More room for US position, tighter EU delta warning, BARC.L carve-out, drop the ASIA-02 rate limit.</textarea>
+      </div>
+      <div class="row2">
+        <div class="ff">
+          <label for="sv-a">Approver</label>
+          <div class="in" id="sv-a"><span>Any supervisor of EQ-US, EQ-EU, EQ-ASIA</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 3.5l3 3 3-3"/></svg></div>
+        </div>
+        <div class="ff">
+          <label>After saving</label>
+          <span class="hint" style="line-height:30px">The rows lock as Pending in set #12. Withdraw the set to edit them again.</span>
+        </div>
+      </div>
+    </div>
+    <div class="dlg-f">
+      <span class="kbd">Ctrl+Enter saves · Esc goes back to editing</span>
+      <button class="btn neu" type="button">Back to editing</button>
+      <button class="btn pri" type="button">Save for approval</button>
+    </div>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":760}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

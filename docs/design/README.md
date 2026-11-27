@@ -47,6 +47,12 @@ boards are now history, the code is the source of truth), **Superseded**.
 | Order blotter depth panel | Built | [canvas](https://claude.ai/artifact/R6zWzirg6zec5uxBeTKEox) | | [order-blotter-depth](order-blotter-depth/README.md) |
 | Orders and fills redesign (SplitPane, Salt toolbar, Cancel all, display-only channel bookends) | Built (stack #103) | [canvas](https://claude.ai/artifact/Y4FG4GNu38vsvRji4VvCap) | [plan](https://claude.ai/artifact/8E4Jhe3KQP4mxUZMu6GRgs) | [orders-fills](orders-fills/README.md) |
 
+## Risk and limits
+
+| Design | Status | Canvas | Plan doc | Sources |
+| --- | --- | --- | --- | --- |
+| Trading limits (monitor tree grid, breaches, temporary increase, setup as a tree or list, edit sessions saved as change sets for maker-checker, templates, kill switch, ticket pre-trade check) | Awaiting feedback | [canvas](https://claude.ai/artifact/FmWSutmPWFBF6JJyMrb9FZ) | [plan](https://claude.ai/artifact/1yrcHpQS3sbVXfq6juqQxU) | [trading-limits](trading-limits/README.md) |
+
 ## Other trader plans (no canvas)
 
 [Futures support](https://claude.ai/artifact/HEZguaQG68ZTyAqPPvHDWb) ·

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kill switch prompt</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3B5B8C}a:hover{color:#1E3A63}
+button,input{font:inherit;color:inherit}
+.k{--panel:#FFFFFF;--bar:#F6F7F9;--border:#D9DDE3;--fg:#1F2329;--fg2:#4A525D;--fg3:#5B6470;--field-border:#C3CAD3;--field-bg:#FFFFFF;--focus:#3B5B8C;--tg-on:#2B3440;--tg-on-fg:#FFFFFF;--neg-solid:#C62828;--accent:#3B5B8C;
+  font-family:'Nunito Sans',system-ui,sans-serif;color:var(--fg);-webkit-font-smoothing:antialiased}
+.g-num{font-variant-numeric:tabular-nums}
+.scrim{position:absolute;inset:0;background:rgba(20,24,30,.42);display:flex;align-items:center;justify-content:center}
+.dlg{width:520px;background:var(--panel);border-radius:4px;box-shadow:0 12px 32px rgba(0,0,0,.25),0 2px 6px rgba(0,0,0,.12);border-top:3px solid var(--neg-solid);overflow:hidden}
+.dlg-h{display:flex;align-items:center;gap:10px;padding:18px 20px 4px}
+.dlg-h h2{margin:0;font-size:16px;font-weight:800}
+.x{margin-left:auto}
+.ib{width:24px;height:24px;border:0;border-radius:3px;background:transparent;display:inline-flex;align-items:center;justify-content:center;color:var(--fg3)}
+.dlg-b{padding:6px 20px 0 50px;font-size:13px;line-height:1.5;color:var(--fg2);display:flex;flex-direction:column;gap:14px}
+.dlg-b p{margin:0}
+.ff{display:flex;flex-direction:column;gap:5px}
+.ff>label,.ff>.l{font-size:11px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.03em}
+.tg{display:inline-flex;border:1px solid var(--field-border);border-radius:3px;overflow:hidden;align-self:flex-start}
+.tg button{height:28px;padding:0 12px;border:0;border-right:1px solid var(--field-border);background:var(--field-bg);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--fg2)}
+.tg button:last-child{border-right:0}
+.tg button.on{background:var(--tg-on);color:var(--tg-on-fg)}
+.cb{display:flex;align-items:center;justify-content:space-between;height:30px;padding:0 10px;border:1px solid var(--field-border);border-radius:3px;background:var(--field-bg);font-size:13px;color:var(--fg)}
+.cb span{color:var(--fg3)}
+.chk{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--fg)}
+.chk input{margin:2px 0 0;width:14px;height:14px;accent-color:var(--tg-on)}
+.chk small{display:block;color:var(--fg3);font-size:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--bar);border:1px solid var(--border);color:var(--fg2)}
+.note{font-size:12px;color:var(--fg3);display:flex;gap:6px;align-items:flex-start}
+.dlg-f{display:flex;justify-content:flex-end;gap:8px;padding:18px 20px 20px}
+.btn{height:32px;padding:0 14px;border-radius:3px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;display:inline-flex;align-items:center;gap:6px;box-sizing:border-box}
+.btn.neu{border:1px solid var(--field-border);background:var(--field-bg);color:var(--fg)}
+.btn.negs{border:1px solid var(--neg-solid);background:var(--neg-solid);color:#FFFFFF}
+.focus{outline:2px solid var(--focus);outline-offset:2px}
+.kbd{font-size:11px;color:var(--fg3);margin-right:auto;align-self:center}
+</style>
+</helmet>
+<div class="k" style="width:1280px;height:720px;position:relative;overflow:hidden;background:#EEF0F3">
+<dc-import name="Main" hint-size="1280px,820px"></dc-import>
+<div class="scrim">
+  <div class="dlg" role="alertdialog" aria-labelledby="ks-title" aria-describedby="ks-body">
+    <div class="dlg-h">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#C62828" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 2.5v6.5"/><path d="M5.6 5.2a6.5 6.5 0 1 0 8.8 0"/></svg>
+      <h2 id="ks-title">Stop trading</h2>
+      <button class="ib x" type="button" aria-label="Close"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7"/></svg></button>
+    </div>
+    <div class="dlg-b" id="ks-body">
+      <div class="ff">
+        <span class="l">Scope</span>
+        <div class="tg" role="group" aria-label="Scope"><button type="button">Trader</button><button class="on" type="button" aria-pressed="true">Account</button><button type="button">Desk</button><button type="button">Firm</button></div>
+      </div>
+      <div class="ff">
+        <label for="ks-acc">Account</label>
+        <div class="cb" id="ks-acc"><b style="font-weight:600">ACC-US-02 · US Prop · bob</b><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 3.5l3 3 3-3"/></svg></div>
+      </div>
+      <label class="chk"><input type="checkbox" checked><span>Block new orders<small>The OMS rejects orders and amends for this account with KILL_SWITCH.</small></span></label>
+      <label class="chk"><input type="checkbox" checked><span>Cancel 4 working orders<small>Algo orders stop slicing.</small></span></label>
+      <div class="chips g-num"><span class="chip">VOD.L ×2</span><span class="chip">AAL.L</span><span class="chip">BP.L</span></div>
+      <div class="ff">
+        <label for="ks-reason">Reason</label>
+        <div class="cb" id="ks-reason">Daily loss hard breach (1.12m of 1.00m)<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 3.5l3 3 3-3"/></svg></div>
+      </div>
+      <p class="note"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true" style="flex:0 0 14px;margin-top:2px"><circle cx="7" cy="7" r="5.5"/><path d="M7 6.2v3.6M7 4.2v.1"/></svg>Positions stay open. Only a supervisor can turn trading back on, from Limit setup.</p>
+    </div>
+    <div class="dlg-f">
+      <span class="kbd">Esc keeps trading</span>
+      <button class="btn neu focus" type="button">Keep trading</button>
+      <button class="btn negs" type="button">Stop ACC-US-02</button>
+    </div>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

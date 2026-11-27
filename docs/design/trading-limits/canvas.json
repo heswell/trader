@@ -1,0 +1,167 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-24T10:00:00Z"
+  },
+  "title": "Trading limits",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 820,
+      "title": "Limit monitor \u00b7 tree grid by desk and account, contributors split, light"
+    },
+    "MonitorDark.dc.html": {
+      "x": 1360,
+      "y": 0,
+      "w": 1280,
+      "h": 820,
+      "title": "Limit monitor \u00b7 dark"
+    },
+    "KillSwitch.dc.html": {
+      "x": 0,
+      "y": 940,
+      "w": 1280,
+      "h": 720,
+      "title": "Kill switch \u00b7 stop trading for a scope (Prompt)"
+    },
+    "Breaches.dc.html": {
+      "x": 0,
+      "y": 2080,
+      "w": 1280,
+      "h": 760,
+      "title": "Breaches \u00b7 blotter with detail pane"
+    },
+    "IncreaseRequest.dc.html": {
+      "x": 1360,
+      "y": 2080,
+      "w": 1280,
+      "h": 760,
+      "title": "Request temporary increase \u00b7 dialog"
+    },
+    "Setup.dc.html": {
+      "x": 0,
+      "y": 4140,
+      "w": 1280,
+      "h": 760,
+      "title": "Limit setup \u00b7 List view, read-only, with pending change sets"
+    },
+    "SetupSession.dc.html": {
+      "x": 1360,
+      "y": 4140,
+      "w": 1280,
+      "h": 760,
+      "title": "Limit setup \u00b7 List view, edit session: bar marks edited cells, Save for approval"
+    },
+    "Approve.dc.html": {
+      "x": 0,
+      "y": 5900,
+      "w": 1280,
+      "h": 760,
+      "title": "Limit setup \u00b7 checker approves change set #12"
+    },
+    "AddLimit.dc.html": {
+      "x": 1360,
+      "y": 5020,
+      "w": 1280,
+      "h": 760,
+      "title": "Limit setup \u00b7 Add limit dialog, adds a row to the session"
+    },
+    "Ticket.dc.html": {
+      "x": 0,
+      "y": 7960,
+      "w": 1280,
+      "h": 700,
+      "title": "Order ticket \u00b7 pre-trade limit check: warning, soft breach override, hard block"
+    },
+    "SaveSession.dc.html": {
+      "x": 0,
+      "y": 5020,
+      "w": 1280,
+      "h": 760,
+      "title": "Limit setup \u00b7 Save for approval dialog (one change set, reason)"
+    },
+    "Templates.dc.html": {
+      "x": 1360,
+      "y": 5900,
+      "w": 1280,
+      "h": 760,
+      "title": "Limit setup \u00b7 templates: edit, see which accounts differ, import and export CSV"
+    },
+    "ApplyTemplate.dc.html": {
+      "x": 0,
+      "y": 6780,
+      "w": 1280,
+      "h": 760,
+      "title": "Limit setup \u00b7 apply a template to accounts, preview, add to the edit session"
+    },
+    "SetupTree.dc.html": {
+      "x": 0,
+      "y": 3260,
+      "w": 1280,
+      "h": 760,
+      "title": "Limit setup \u00b7 Tree view, read-only: Firm \u2192 desk \u2192 account \u2192 RIC, limits as columns, inherited values in italics"
+    },
+    "SetupTreeSession.dc.html": {
+      "x": 1360,
+      "y": 3260,
+      "w": 1280,
+      "h": 760,
+      "title": "Limit setup \u00b7 Tree view, edit session: set on a desk, accounts that set their own keep it, cap breach blocks Save"
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "MonitorDark.dc.html",
+    "KillSwitch.dc.html",
+    "Breaches.dc.html",
+    "IncreaseRequest.dc.html",
+    "SetupTree.dc.html",
+    "SetupTreeSession.dc.html",
+    "Setup.dc.html",
+    "SetupSession.dc.html",
+    "SaveSession.dc.html",
+    "AddLimit.dc.html",
+    "Approve.dc.html",
+    "Templates.dc.html",
+    "ApplyTemplate.dc.html",
+    "Ticket.dc.html"
+  ],
+  "notes": {
+    "monitor": {
+      "x": 0,
+      "y": -300,
+      "text": "Monitor: live utilisation by desk and account",
+      "kind": "title1",
+      "maxW": 2640
+    },
+    "breaches": {
+      "x": 0,
+      "y": 1780,
+      "text": "Breaches: acknowledge, request an increase, escalate",
+      "kind": "title1",
+      "maxW": 2640
+    },
+    "setup": {
+      "x": 0,
+      "y": 2960,
+      "text": "Setup: tree or list, edit sessions saved as change sets for maker-checker",
+      "kind": "title1",
+      "maxW": 2640
+    },
+    "ticket": {
+      "x": 0,
+      "y": 7660,
+      "text": "Order ticket: pre-trade limit check",
+      "kind": "title1",
+      "maxW": 2640
+    }
+  },
+  "designSystems": []
+}

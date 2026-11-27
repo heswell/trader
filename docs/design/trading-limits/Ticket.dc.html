@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Order ticket limit check</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3B5B8C}a:hover{color:#1E3A63}
+button,input,textarea{font:inherit;color:inherit}
+.g-root{
+  --app:#EEF0F3;--panel:#FFFFFF;--bar:#F6F7F9;--hdr:#E4E7EB;--border:#D9DDE3;--rowline:#EEF0F3;--track:#E3E7EC;
+  --fg:#1F2329;--fg2:#4A525D;--fg3:#5B6470;--th:#3A424D;--hl:#DCE6F3;
+  --field-border:#C3CAD3;--field-bg:#FFFFFF;--accent:#3B5B8C;--focus:#3B5B8C;--tg-on:#2B3440;--tg-on-fg:#FFFFFF;
+  --buy:#1E7F45;--buy-solid:#1E7F45;--sell:#B3261E;
+  --ok-bar:#7C93B3;--warn:#7A5200;--warn-bar:#D9A520;--warn-bg:#FFF3CC;--warn-border:#E3B341;
+  --soft:#9A3F0C;--soft-bar:#E07A2E;--soft-solid:#C25A12;--soft-bg:#FDEBDD;--hard:#B3261E;--hard-bar:#C62828;--hard-bg:#FDECEA;
+  font-family:'Nunito Sans',system-ui,sans-serif;color:var(--fg);background:var(--app);-webkit-font-smoothing:antialiased}
+.g-num{font-variant-numeric:tabular-nums}
+.cols3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;height:100%}
+.colw{display:flex;flex-direction:column;gap:10px;min-width:0}
+.cap{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--fg3);display:flex;gap:8px;align-items:center}
+.cap .pill{font-size:10px}
+.t{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:4px;display:flex;flex-direction:column;overflow:hidden}
+.th{height:32px;flex:0 0 32px;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--hdr);border-bottom:1px solid var(--border);font-size:12px;font-weight:700}
+.tb{padding:12px 14px;display:flex;flex-direction:column;gap:10px;font-size:13px}
+.ins{display:flex;align-items:baseline;gap:8px}
+.ins b{font-size:15px;font-weight:800}
+.ins span{font-size:12px;color:var(--fg3)}
+.rw{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ff{display:flex;flex-direction:column;gap:4px}
+.ff>span{font-size:11px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.03em}
+.in{height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;border:1px solid var(--field-border);border-radius:3px;background:var(--field-bg);font-weight:700;box-sizing:border-box}
+.in.focus{outline:2px solid var(--focus);outline-offset:-1px}
+.tg{display:inline-flex;border:1px solid var(--field-border);border-radius:3px;overflow:hidden}
+.tg button{height:26px;padding:0 12px;border:0;border-right:1px solid var(--field-border);background:var(--field-bg);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--fg2)}
+.tg button:last-child{border-right:0}
+.tg button.on{background:var(--tg-on);color:var(--tg-on-fg)}
+.lc{margin:0 14px;border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.lc.warn{border-color:var(--warn-border)}
+.lc.soft{border-color:var(--soft-bar)}
+.lc.hard{border-color:var(--hard-bar)}
+.lch{display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;background:var(--bar);color:var(--fg3)}
+.lc.warn .lch{background:var(--warn-bg);color:var(--warn)}
+.lc.soft .lch{background:var(--soft-bg);color:var(--soft)}
+.lc.hard .lch{background:var(--hard-bg);color:var(--hard)}
+.li{display:grid;grid-template-columns:1fr 118px;gap:4px 10px;padding:7px 10px;border-top:1px solid var(--rowline);font-size:12px;align-items:center}
+.li .nm{color:var(--fg2)}
+.li .v{text-align:right;font-weight:700}
+.trk{grid-column:1 / -1;position:relative;height:6px;border-radius:3px;background:var(--track)}
+.trk i{position:absolute;top:0;bottom:0;display:block}
+.trk i.now{left:0;border-radius:3px 0 0 3px;background:var(--ok-bar)}
+.trk i.add{opacity:.95;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.45) 0 3px,transparent 3px 6px)}
+.add.ok{background-color:var(--ok-bar)}.add.warn{background-color:var(--warn-bar)}.add.soft{background-color:var(--soft-bar)}.add.hard{background-color:var(--hard-bar)}
+.trk em{position:absolute;top:-3px;bottom:-3px;border-left:1px solid var(--th);opacity:.55}
+.trk em.t100{border-left-width:2px;opacity:.9}
+.trk em.th{border-left:2px dotted var(--hard-bar);opacity:1}
+.ov{padding:10px 14px 0;display:flex;flex-direction:column;gap:6px;font-size:12px}
+.ov .q{font-size:11px;font-weight:700;color:var(--fg3);text-transform:uppercase;letter-spacing:.03em}
+.opt{display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:3px}
+.opt.hl{background:var(--hl);font-weight:700}
+.opt kbd{font-family:inherit;font-size:10px;font-weight:800;min-width:16px;height:16px;border:1px solid var(--field-border);border-radius:3px;display:inline-flex;align-items:center;justify-content:center;color:var(--fg3);background:var(--panel)}
+.ov textarea{height:36px;border:1px solid var(--field-border);border-radius:3px;padding:5px 8px;font-size:12px;resize:none;background:var(--field-bg)}
+.msg{padding:8px 14px 0;font-size:12px;color:var(--fg2);line-height:1.45}
+.msg b{color:var(--fg)}
+.lnk{color:var(--accent);text-decoration:underline;background:transparent;border:0;padding:0;font-size:12px;font-weight:700;cursor:pointer}
+.tf{margin-top:auto;display:flex;align-items:center;gap:8px;padding:12px 14px;border-top:1px solid var(--border)}
+.tf .k{font-size:11px;color:var(--fg3);margin-right:auto}
+.btn{height:34px;padding:0 14px;border-radius:3px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;display:inline-flex;align-items:center;gap:6px;box-sizing:border-box}
+.btn.neu{border:1px solid var(--field-border);background:var(--field-bg);color:var(--fg)}
+.btn.buy{border:1px solid var(--buy-solid);background:var(--buy-solid);color:#FFFFFF}
+.btn.soft{border:1px solid var(--soft-solid);background:var(--soft-solid);color:#FFFFFF}
+.btn.dis{border:1px solid var(--border);background:var(--bar);color:var(--fg3)}
+.pill{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;box-sizing:border-box}
+.pill.warn{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-border)}
+.pill.soft{background:var(--soft-solid);color:#FFFFFF}
+.pill.hard{background:var(--hard-bar);color:#FFFFFF}
+</style>
+</helmet>
+<div class="g-root" style="width:1280px;height:700px;padding:24px 32px;box-sizing:border-box">
+<div class="cols3 g-num">
+
+  <!-- 1 warning -->
+  <section class="colw" aria-label="Warning">
+    <div class="cap">1 · Crosses warning <span class="pill warn">Warning</span></div>
+    <div class="t">
+      <div class="th">Ticket · ACC-EU-01</div>
+      <div class="tb">
+        <div class="ins"><b>BARC.L</b><span>Bid 228.70 · Ask 228.80</span></div>
+        <div class="tg"><button class="on" type="button">Buy</button><button type="button">Sell</button></div>
+        <div class="rw">
+          <label class="ff"><span>Quantity</span><span class="in focus">95,000</span></label>
+          <label class="ff"><span>Limit price</span><span class="in">228.80</span></label>
+        </div>
+      </div>
+      <div class="lc warn">
+        <div class="lch">Limits after this order</div>
+        <div class="li"><span class="nm">Position notional · BARC.L</span><span class="v">79% → 82%</span><span class="trk"><i class="now" style="width:63.2%"></i><i class="add warn" style="left:63.2%;width:2.4%"></i><em style="left:64%"></em><em class="t100" style="left:80%"></em><em class="th" style="left:88%"></em></span></div>
+        <div class="li"><span class="nm">Order quantity</span><span class="v">95,000 · 95%</span><span class="trk"><i class="now add warn" style="width:76%"></i><em style="left:64%"></em><em class="t100" style="left:80%"></em></span></div>
+        <div class="li"><span class="nm">Order notional</span><span class="v">0.28m · 14%</span></div>
+      </div>
+      <div class="msg">Warnings don't stop the order and need no extra step. They show on the monitor for carol and the desk head.</div>
+      <div class="tf"><span class="k">F9 sends</span><button class="btn neu" type="button">Reset</button><button class="btn buy" type="button">Buy 95,000 BARC.L 228.80</button></div>
+    </div>
+  </section>
+
+  <!-- 2 soft breach -->
+  <section class="colw" aria-label="Soft breach">
+    <div class="cap">2 · Soft breach: override step <span class="pill soft">Soft</span></div>
+    <div class="t">
+      <div class="th">Ticket · ACC-EU-02 · Override</div>
+      <div class="tb">
+        <div class="ins"><b>Buy 40,000 BARC.L 228.80</b></div>
+      </div>
+      <div class="lc soft">
+        <div class="lch">Exceeds limit</div>
+        <div class="li"><span class="nm">Position notional · BARC.L</span><span class="v">99% → 103%</span><span class="trk"><i class="now" style="width:79.2%"></i><i class="add soft" style="left:79.2%;width:3.2%"></i><em style="left:64%"></em><em class="t100" style="left:80%"></em><em class="th" style="left:88%"></em></span></div>
+        <div class="li"><span class="nm">Room to hard limit after</span><span class="v">72,000 shares</span></div>
+      </div>
+      <div class="ov">
+        <span class="q">Reason (required)</span>
+        <div class="opt hl"><kbd>1</kbd>Client facilitation</div>
+        <div class="opt"><kbd>2</kbd>Hedging another position</div>
+        <div class="opt"><kbd>3</kbd>Reducing tomorrow</div>
+        <div class="opt"><kbd>4</kbd>Other</div>
+        <label class="ov" style="padding:2px 0 0"><span class="q">Note</span><textarea placeholder="Optional"></textarea></label>
+      </div>
+      <div class="tf"><span class="k">1–4 picks · Enter sends · Esc back</span><button class="btn neu" type="button">Back</button><button class="btn soft" type="button">Override and send</button></div>
+    </div>
+  </section>
+
+  <!-- 3 hard -->
+  <section class="colw" aria-label="Hard breach">
+    <div class="cap">3 · Over hard limit: blocked <span class="pill hard">Hard</span></div>
+    <div class="t">
+      <div class="th">Ticket · ACC-US-01</div>
+      <div class="tb">
+        <div class="ins"><b>AAL.L</b><span>Bid 438.40 · Ask 438.50</span></div>
+        <div class="tg"><button class="on" type="button">Buy</button><button type="button">Sell</button></div>
+        <div class="rw">
+          <label class="ff"><span>Quantity</span><span class="in focus">50,000</span></label>
+          <label class="ff"><span>Limit price</span><span class="in">438.50</span></label>
+        </div>
+      </div>
+      <div class="lc hard">
+        <div class="lch">Over hard limit</div>
+        <div class="li"><span class="nm">Position notional · AAL.L</span><span class="v">108% → 111%</span><span class="trk"><i class="now" style="width:86.4%"></i><i class="add hard" style="left:86.4%;width:2.4%"></i><em style="left:64%"></em><em class="t100" style="left:80%"></em><em class="th" style="left:88%"></em></span></div>
+      </div>
+      <div class="msg">The hard limit is 110% (11.0m), and the OMS would reject this order. <b>You can buy up to 35,000.</b><br><button class="lnk" type="button">Use 35,000 (Alt+M)</button> · <button class="lnk" type="button">Request increase…</button></div>
+      <div class="tf"><span class="k">Selling is still allowed</span><button class="btn neu" type="button">Reset</button><button class="btn dis" type="button" disabled>Blocked by limit</button></div>
+    </div>
+  </section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":700}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

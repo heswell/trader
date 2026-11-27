@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Limit setup tree session</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,400;1,6..12,600&amp;display=swap">
+<style>
+body{margin:0}
+button,input{font:inherit;color:inherit}
+.g-root{
+  --app:#EEF0F3;--panel:#FFFFFF;--bar:#F6F7F9;--hdr:#E4E7EB;--border:#D9DDE3;--rowline:#EEF0F3;
+  --fg:#1F2329;--fg2:#4A525D;--fg3:#5B6470;--th:#3A424D;--sel:#E8EEF6;--grp:#F8F9FB;
+  --field-border:#C3CAD3;--editable-border:#AEB6C1;--edited:#2F6FD6;--session:#EEF4FD;--field-bg:#FFFFFF;--accent:#3B5B8C;--focus:#2F6FD6;--tg-on:#2B3440;--tg-on-fg:#FFFFFF;
+  --neg:#B3261E;--buy:#1E7F45;--new:#EAF6EE;
+  --warn:#7A5200;--warn-bg:#FFF3CC;--warn-border:#E3B341;--hard-solid:#C62828;--hard-fg:#FFFFFF;
+  font-family:'Nunito Sans',system-ui,sans-serif;color:var(--fg);background:var(--app);-webkit-font-smoothing:antialiased}
+.g-num{font-variant-numeric:tabular-nums}
+.p{background:var(--panel);border:1px solid var(--border);display:flex;flex-direction:column;height:100%;box-sizing:border-box;overflow:hidden}
+.sh{height:32px;flex:0 0 32px;display:flex;align-items:stretch;background:var(--hdr);border-bottom:1px solid var(--border);box-sizing:border-box}
+.tab{display:flex;align-items:center;gap:6px;padding:0 14px;font-size:12px;font-weight:600;color:var(--fg2);border:0;background:transparent;border-right:1px solid var(--border)}
+.tab.on{background:var(--panel);color:var(--fg);box-shadow:inset 0 2px 0 var(--accent);margin-bottom:-1px}
+.cnt{min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--hard-solid);color:var(--hard-fg);font-size:10px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box}
+.tb{height:40px;flex:0 0 40px;display:flex;align-items:center;gap:8px;padding:0 8px;border-bottom:1px solid var(--border);white-space:nowrap;box-sizing:border-box}
+.sp{flex:1}
+.tg{display:inline-flex;border:1px solid var(--field-border);border-radius:3px;overflow:hidden;flex:0 0 auto}
+.tg button{height:24px;padding:0 10px;border:0;border-right:1px solid var(--field-border);background:var(--field-bg);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--fg2);display:inline-flex;align-items:center;gap:6px}
+.tg button:last-child{border-right:0}
+.tg button.on{background:var(--tg-on);color:var(--tg-on-fg)}
+.tg small{font-size:10px;opacity:.8}
+.btn{height:26px;padding:0 10px;border-radius:3px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;display:inline-flex;align-items:center;gap:6px;box-sizing:border-box;flex:0 0 auto}
+.btn.neu{border:1px solid var(--field-border);background:var(--field-bg);color:var(--fg)}
+.btn.pri{border:1px solid var(--tg-on);background:var(--tg-on);color:var(--tg-on-fg)}
+.info{font-size:12px;color:var(--fg3)}
+.gh,.gr{display:grid;align-items:center;font-size:12px;box-sizing:border-box;grid-template-columns:232px 80px repeat(7,110px) 1fr}
+.gh{height:40px;flex:0 0 40px;color:var(--th);font-weight:700;border-bottom:1px solid var(--border)}
+.gh>span{flex-direction:column;align-items:flex-start;justify-content:center;gap:1px}
+.gh>span.r{align-items:flex-end}
+.gh small{font-size:10px;font-weight:600;color:var(--fg3)}
+.gh small.cap{color:var(--accent)}
+.gr{height:28px;flex:0 0 28px;border-bottom:1px solid var(--rowline)}
+.gh>span,.gr>span{padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;height:100%;display:flex;align-items:center;box-sizing:border-box}
+.gr.d0,.gr.d1{background:var(--grp)}
+.gr.d0 .tree b,.gr.d1 .tree b{font-weight:800}
+.r{justify-content:flex-end;text-align:right}
+.mut{color:var(--fg3)}
+.tree{gap:4px}
+.tree b{font-weight:600}
+.tree i{font-style:normal;color:var(--fg3);margin-left:4px;overflow:hidden;text-overflow:ellipsis}
+.chev{flex:0 0 14px;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;color:var(--fg3)}
+.chev.open svg{transform:rotate(90deg)}
+.chev.none{visibility:hidden}
+/* value states */
+.gr>span.inh{font-style:italic;color:var(--fg3)}
+.gr>span.na{color:#B4BBC4}
+.gr>span.pd{box-shadow:inset 3px 0 0 var(--warn-border);background:var(--warn-bg);font-weight:700}
+.gr>span.rmv .v{font-style:italic;color:var(--fg3);font-weight:400}
+.gr>span.tm::before{content:"";width:9px;height:9px;border:1.4px solid var(--fg2);border-radius:50%;margin-right:5px;flex:0 0 auto;box-sizing:border-box;background:linear-gradient(var(--fg2),var(--fg2)) 3.2px 1.2px/1.2px 3.6px no-repeat}
+.gr>span.cell-sel{outline:2px solid var(--focus);outline-offset:-2px}
+.gr.nw>span:first-child{background:var(--new)}
+.gr.off>span{color:var(--fg3)}
+.was{color:var(--fg3);text-decoration:line-through;font-weight:400;margin-right:6px}
+.was:empty{display:none}
+.tag{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:9px;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;box-sizing:border-box;border:1px solid var(--border);color:var(--fg3);background:var(--panel)}
+.tag:empty{display:none}
+.tag.pend{border-color:var(--warn-border);color:var(--warn);background:var(--warn-bg)}
+.tag.kill{border:0;background:var(--hard-solid);color:var(--hard-fg)}
+.tag.off{border-color:var(--fg3);color:var(--fg2)}
+.st small{margin-left:6px;color:var(--fg3);font-size:11px;font-weight:600}
+.ft{height:30px;flex:0 0 30px;display:flex;align-items:center;gap:10px;padding:0 10px;font-size:12px;border-top:1px solid var(--border);background:var(--bar);color:var(--fg3);margin-top:auto}
+.pop{position:absolute;width:318px;background:var(--panel);border:1px solid var(--border);border-radius:4px;box-shadow:0 8px 24px rgba(0,0,0,.16);font-size:12px;color:var(--fg2);z-index:2;line-height:1.5}
+.pop h4{margin:0;padding:9px 12px 7px;font-size:12px;font-weight:800;color:var(--fg);border-bottom:1px solid var(--rowline);display:flex;gap:8px;align-items:center}
+.pop dl{display:grid;grid-template-columns:96px 1fr;gap:3px 10px;margin:0;padding:8px 12px}
+.pop dt{color:var(--fg3)}
+.pop dd{margin:0;color:var(--fg)}
+.pop .pf{padding:7px 12px 9px;border-top:1px solid var(--rowline);font-size:11px;color:var(--fg3)}
+.p{border:1px solid var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.tb{background:var(--session)}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--accent)}
+.badge i{width:8px;height:8px;border-radius:50%;background:var(--focus)}
+.badge .bad{color:var(--neg)}
+.info{color:var(--neg);font-weight:600}
+.btn.pri[disabled]{opacity:.45}
+.btn.ghost{border:1px solid transparent;background:transparent;color:var(--fg2)}
+/* vuu InputCell: 1px editable border; inherited values italic inside it */
+.gr>span.ec{padding:0 3px 0 6px}
+.ic{width:100%;height:20px;box-sizing:border-box;display:flex;align-items:center;justify-content:flex-end;gap:3px;padding:0 4px;border:1px solid var(--editable-border);border-radius:2px;background:var(--field-bg);font-weight:500;color:var(--fg)}
+.ic.inh{font-style:italic;color:var(--fg3);font-weight:400}
+.ic.editing{border:2px dashed var(--focus);padding:0 3px;font-weight:700;font-style:normal;color:var(--fg)}
+.ic.editing::after{content:"";width:1px;height:12px;background:var(--fg);flex:0 0 1px}
+.ic.err{outline:2px solid #C62828;outline-offset:-2px;border-color:transparent;justify-content:space-between}
+.ic.err::before{content:"!";width:12px;height:12px;border-radius:6px;background:#C62828;color:#FFFFFF;font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+/* vuu: a cell edited in this session gets a vertical bar on its left */
+.gr>span.e{box-shadow:inset 3px 0 0 var(--edited)}
+.gr>span.lk{color:var(--fg2);font-weight:700}
+.gr>span.lk::before,.gr>span.tm::before{margin-right:5px}
+.gr>span.lk::before{content:"";width:8px;height:7px;border:1.4px solid var(--warn);border-radius:1px;box-sizing:border-box;flex:0 0 auto;box-shadow:0 -3px 0 -1px var(--warn-bg),0 -4px 0 -0.5px var(--warn)}
+.msg{color:var(--fg3);font-size:11px;font-weight:600}
+.msg.bad{color:var(--neg);font-weight:700}
+.msg a:empty{display:none}
+.msg a{margin-left:6px;font-weight:700;color:var(--accent)}
+.pop{width:336px}
+.pop p{margin:0;padding:9px 12px 4px}
+.pop ul{margin:0;padding:2px 12px 6px 28px}
+.pop .act{display:flex;gap:8px;padding:6px 12px 10px;align-items:center}
+.pop .act .k{margin-left:auto;font-size:11px;color:var(--fg3)}
+</style>
+</helmet>
+<div class="g-root" style="width:1280px;height:760px;padding:16px;box-sizing:border-box;position:relative">
+<div class="p">
+  <div class="sh">
+    <button class="tab" type="button">Limit monitor</button>
+    <button class="tab" type="button">Breaches <span class="cnt g-num">2</span></button>
+    <button class="tab on" type="button">Limit setup</button>
+  </div>
+  <div class="tb">
+    <span class="badge g-num"><i></i>Editing limits as risk-admin · 4 changes · <span class="bad">1 not valid</span></span>
+    <span class="sp"></span>
+    <span class="info">Fix or revert the invalid cell to save</span>
+    <div class="tg" role="group" aria-label="View">
+      <button class="on" type="button" aria-pressed="true">Tree</button>
+      <button type="button" aria-pressed="false">List</button>
+    </div>
+    <button class="btn neu" type="button"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 1v8M1 5h8"/></svg>Add RIC carve-out</button>
+    <button class="btn ghost" type="button">Discard</button>
+    <button class="btn pri" type="button" disabled>Save for approval (4)</button>
+  </div>
+
+  <div class="gh"><span>Entity</span><span>Type</span>
+    <span class="r">Order qty<small>per order</small></span>
+    <span class="r">Order notional<small>per order</small></span>
+    <span class="r">Position notional<small>per RIC</small></span>
+    <span class="r">Gross position<small class="cap">cap · intraday</small></span>
+    <span class="r">Net delta<small class="cap">cap · underlying</small></span>
+    <span class="r">Daily loss<small class="cap">cap · day</small></span>
+    <span class="r">Order rate<small>1s rolling</small></span>
+    <span>Message</span></div>
+  <sc-for list="{{rows}}" as="r" hint-placeholder-count="13">
+    <div class="gr g-num {{r.cls}}">
+      <span class="tree" style="padding-left:{{r.ind}}px"><span class="chev {{r.chev}}"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2.5 1l3 3-3 3"/></svg></span><b>{{r.id}}</b><i>{{r.name}}</i></span>
+      <span class="mut">{{r.type}}</span>
+      <span class="r {{r.o0}}"><span class="{{r.k0}}">{{r.v0}}</span></span>
+      <span class="r {{r.o1}}"><span class="{{r.k1}}">{{r.v1}}</span></span>
+      <span class="r {{r.o2}}"><span class="{{r.k2}}">{{r.v2}}</span></span>
+      <span class="r {{r.o3}}"><span class="{{r.k3}}">{{r.v3}}</span></span>
+      <span class="r {{r.o4}}"><span class="{{r.k4}}">{{r.v4}}</span></span>
+      <span class="r {{r.o5}}"><span class="{{r.k5}}">{{r.v5}}</span></span>
+      <span class="r {{r.o6}}"><span class="{{r.k6}}">{{r.v6}}</span></span>
+      <span class="msg {{r.mc}}">{{r.msg}}<a>{{r.link}}</a></span>
+    </div>
+  </sc-for>
+
+  <div class="ft g-num">
+    <span>Enter or typing edits · Enter keeps · Esc reverts · Delete clears a value so it inherits · Drag or Shift+click selects a block, type and Enter sets them all · Ctrl+Z undoes · Shift+←/→ collapses and expands</span>
+  </div>
+</div>
+<div class="pop g-num" role="dialog" aria-label="Accounts below set their own" style="left:329px;top:189px">
+  <h4>EQ-US · Order qty 40,000</h4>
+  <p>Accounts that set none will now inherit <b>40,000</b> (they had Firm's 500,000). Two accounts below set their own and keep it:</p>
+  <ul><li>ACC-US-01 · 50,000, above the new desk value</li><li>ACC-US-02 · 20,000</li></ul>
+  <div class="act"><button class="btn pri" type="button">Keep theirs</button><button class="btn neu" type="button">Reset both to 40,000</button><span class="k">Enter · Esc</span></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":760}}'>
+class Component extends DCLogic {
+renderVals() {
+  // own value "v" · inherited "i|v" · edited "e|v" · edited, cleared so it inherits "ei|v" · editing "ed|text" · invalid "x|v" · locked "l|v" · temporary read-only "t|v" · n/a ""
+  const cell = (s, ro) => {
+    if (s === '') return { o: 'na', k: '', v: '–' };
+    const [c, v] = s.split('|');
+    if (v === undefined) return ro ? { o: '', k: '', v: c } : { o: 'ec', k: 'ic', v: c };
+    return {
+      i: ro ? { o: 'inh', k: '', v } : { o: 'ec', k: 'ic inh', v },
+      e: { o: 'ec e', k: 'ic', v },
+      ei: { o: 'ec e', k: 'ic inh', v },
+      ed: { o: 'ec e', k: 'ic editing', v },
+      x: { o: 'ec e', k: 'ic err', v },
+      l: { o: 'lk', k: '', v },
+      t: { o: 'tm', k: '', v }
+    }[c];
+  };
+  const row = (depth, chev, id, name, type, cells, o) => {
+    const r = Object.assign({ ind: 6 + depth * 18, chev, id, name, type, cls: 'd' + depth, msg: '', mc: '', link: '', ro: false }, o || {});
+    cells.forEach((s, n) => { const c = cell(s, r.ro); r['o' + n] = c.o; r['k' + n] = c.k; r['v' + n] = c.v; });
+    return r;
+  };
+  const rows = [
+    row(0, 'open', 'Firm', '', 'Firm', ['500,000', '10,000,000', '15,000,000', '60,000,000', '40,000,000', '3,000,000', '300']),
+    row(1, 'open', 'EQ-US', 'US equities', 'Desk', ['ed|40k', 'i|10,000,000', 'i|15,000,000', '20,000,000', '12,000,000', '1,500,000', '100']),
+    row(2, 'none', 'ACC-US-01', 'US Flow', 'Account', ['50,000', '2,000,000', 'e|12,000,000', 'i|20,000,000', '10,000,000', 'i|1,500,000', 'i|100'], { msg: 'Position notional was 10,000,000', cls: 'd2' }),
+    row(2, 'none', 'ACC-US-02', 'US Prop', 'Account', ['20,000', '1,000,000', '5,000,000', 'i|20,000,000', '5,000,000', 't|1,250,000', 'i|100'], { msg: 'Daily loss is a temporary increase to 22:00, read-only', cls: 'd2' }),
+    row(1, 'open', 'EQ-EU', 'EU equities', 'Desk', ['i|500,000', 'i|10,000,000', 'i|15,000,000', '20,000,000', '12,000,000', '1,000,000', '100']),
+    row(2, 'none', 'ACC-EU-01', 'EU Flow', 'Account', ['100,000', '2,000,000', 'l|6,000,000', 'i|20,000,000', '10,000,000', 'i|1,000,000', 'i|100'], { msg: 'Position notional is locked in set #11', cls: 'd2' }),
+    row(2, 'open', 'ACC-EU-02', 'EU Prop', 'Account', ['50,000', '750,000', '3,000,000', 'i|20,000,000', 'e|3,000,000', 'i|1,000,000', 'i|100'], { msg: 'Net delta warn 80% → 75%', cls: 'd2' }),
+    row(3, 'none', 'BARC.L', 'Barclays', 'RIC', ['', '', 'e|3,500,000', '', '', '', ''], { msg: 'New carve-out, overrides 3,000,000', cls: 'd3 nw', link: 'Remove' }),
+    row(1, 'open', 'EQ-ASIA', 'Asia equities', 'Desk', ['i|500,000', 'i|10,000,000', 'i|15,000,000', '15,000,000', '8,000,000', '1,000,000', '100']),
+    row(2, 'none', 'ACC-ASIA-01', 'Asia Flow', 'Account', ['200,000', '1,500,000', '8,000,000', 'i|15,000,000', 'i|8,000,000', 'i|1,000,000', 'i|100'], { cls: 'd2' }),
+    row(2, 'none', 'ACC-ASIA-02', 'Asia Prop', 'Account', ['100,000', '500,000', '2,000,000', 'i|15,000,000', 'i|8,000,000', 'i|1,000,000', 'ei|100'], { msg: 'Order rate 20 cleared, inherits 100', cls: 'd2', link: 'Undo' }),
+    row(2, 'none', 'ACC-ASIA-03', 'Asia Legacy', 'Account', ['10,000', '100,000', '500,000', 'i|15,000,000', 'i|8,000,000', 'x|1,200,000', 'i|100'], { msg: 'Daily loss is above the EQ-ASIA cap of 1,000,000', mc: 'bad', cls: 'd2' }),
+    row(1, '', 'SIM-CLIENTS', '8 accounts', 'Desk', ['i|500,000', 'i|10,000,000', '25,000,000', '30,000,000', 'i|40,000,000', 'i|3,000,000', 'i|300'])
+  ];
+  return { rows };
+}
+}
+</script>
+</body>
+</html>
