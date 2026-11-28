@@ -52,6 +52,7 @@ const TABLES: readonly OmsTableName[] = [
   "limitBreachEvents",
   "limitRequests",
   "killSwitches",
+  "limitOverrides",
 ];
 
 /** Limit tables: rows by entityId, not account. */

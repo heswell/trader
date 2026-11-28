@@ -1,5 +1,11 @@
 import { Random } from "@heswell/exchange-sim/engine";
 import {
+  type CheckLimitsRequest,
+  type CheckLimitsResponse,
+  limitCheckState,
+  RejectReason,
+} from "@heswell/trading-schemas";
+import {
   DEFAULT_OMS_CONFIG,
   type OmsConfig,
   splitList,
@@ -10,6 +16,7 @@ import { ClientFlow, parseClientBots } from "../flow/ClientFlow";
 import { publishClientBots } from "../flow/clientBotRows";
 import {
   type AccessScope,
+  canSeeAccount,
   type PermissionMode,
   resolveAccess,
   type TradingUser,
@@ -32,6 +39,8 @@ import { OrderEntryService } from "../entry/OrderEntryService";
 import { DelayedGateway, type OmsGateway, type Scheduler } from "./gateway";
 import { OmsEngine } from "./OmsEngine";
 import { PnlHistory } from "./PnlHistory";
+import type { OmsResult } from "./OmsEngine";
+import { limitCheckLine, limitChecks } from "../risk/preTradeRisk";
 
 /** How often order ticket rows' messages are rebuilt (ms). */
 export const ORDER_ENTRY_REFRESH_MS = 500;
@@ -220,6 +229,38 @@ export class OmsService {
     }
     this.updateLimitUtilisation();
     return keys;
+  }
+
+  /**
+   * The pre-trade limit check of an order, without placing it (the
+   * checkLimits RPC): for an account the user can see (access undefined =
+   * unrestricted).
+   */
+  checkLimits(
+    request: CheckLimitsRequest,
+    access?: AccessScope,
+  ): OmsResult<CheckLimitsResponse> {
+    const fail = (reason: RejectReason, text: string) =>
+      ({ ok: false, reason, text }) as const;
+    const engine = this.engine;
+    const account = engine.accounts.get(request.account);
+    if (!account || (access && !canSeeAccount(access, request.account))) {
+      return fail(
+        RejectReason.UnknownAccount,
+        `account ${request.account} is not available`,
+      );
+    }
+    const ctx = engine.riskContext(request.account, request.ric);
+    if (!ctx.instrument) {
+      return fail(
+        RejectReason.UnknownInstrument,
+        `unknown instrument ${request.ric}`,
+      );
+    }
+    const lines = limitChecks(request, account, ctx.instrument, ctx).map(
+      limitCheckLine,
+    );
+    return { ok: true, value: { state: limitCheckState(lines), lines } };
   }
 
   /** The limit entities (and so limit rows) a user may see. */

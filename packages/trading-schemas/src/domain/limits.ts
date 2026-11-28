@@ -263,3 +263,99 @@ export const LIMIT_STATE_RANK: Readonly<Record<LimitState, number>> =
     [LimitState.SoftBreach]: 2,
     [LimitState.HardBreach]: 3,
   });
+
+/** Why a trader sends an order over a limit (soft breach) anyway. */
+export const LimitOverrideReason = Object.freeze({
+  ClientFacilitation: "CLIENT_FACILITATION",
+  Hedging: "HEDGING",
+  ReducingTomorrow: "REDUCING_TOMORROW",
+  /** Needs a note. */
+  Other: "OTHER",
+} as const);
+export type LimitOverrideReason = ValueOf<typeof LimitOverrideReason>;
+export const LIMIT_OVERRIDE_REASONS = values(LimitOverrideReason);
+
+export const LIMIT_OVERRIDE_REASON_LABEL: Readonly<
+  Record<LimitOverrideReason, string>
+> = Object.freeze({
+  [LimitOverrideReason.ClientFacilitation]: "Client facilitation",
+  [LimitOverrideReason.Hedging]: "Hedging another position",
+  [LimitOverrideReason.ReducingTomorrow]: "Reducing tomorrow",
+  [LimitOverrideReason.Other]: "Other",
+});
+
+/**
+ * One limit as an order would leave it: the pre-trade limit check the
+ * ticket shows (checkLimits, and the orderEntry limitCheck column). Values
+ * are in the metric's unit; utilisation is against `soft` (the limit).
+ */
+export interface LimitCheckLine {
+  limitKey: string;
+  /** The entity the limit applies to: the account, its desk or the Firm. */
+  entityId: string;
+  metric: LimitMetric;
+  /** PER_RIC / UNDERLYING: the RIC or underlying measured. */
+  ric: string;
+  /** Usage now and after the order. */
+  before: number;
+  after: number;
+  warning: number;
+  soft: number;
+  hard: number;
+  /** The state after the order. */
+  state: LimitState;
+  /**
+   * The order breaks this limit: it adds to the usage and leaves it over
+   * the limit (soft) or at the hard limit. An order that reduces a position
+   * breaks nothing, whatever the state.
+   */
+  breach: boolean;
+  /**
+   * The largest quantity this order could have and stay under the hard
+   * limit; absent when this limit sets no bound on it.
+   */
+  maxQty?: number;
+}
+
+/**
+ * The state of a check: the worst breach, else WARNING when any limit is at
+ * warning or over (an order that reduces never breaches), else OK.
+ */
+export const limitCheckState = (lines: readonly LimitCheckLine[]) => {
+  let worst: LimitState = LimitState.Ok;
+  for (const line of lines) {
+    const state = line.breach
+      ? line.state
+      : LIMIT_STATE_RANK[line.state] >= LIMIT_STATE_RANK[LimitState.Warning]
+        ? LimitState.Warning
+        : LimitState.Ok;
+    if (LIMIT_STATE_RANK[state] > LIMIT_STATE_RANK[worst]) worst = state;
+  }
+  return worst;
+};
+
+/** The orderEntry limitCheck value for a check ('' when there is none). */
+export const encodeLimitCheck = (lines: readonly LimitCheckLine[]) =>
+  lines.length === 0 ? "" : JSON.stringify(lines);
+
+/** The lines of a limitCheck value; [] for '' or a value that isn't one. */
+export const decodeLimitCheck = (
+  value: string | null | undefined,
+): LimitCheckLine[] => {
+  if (!value) return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed)
+      ? parsed.filter(
+          (l): l is LimitCheckLine =>
+            !!l &&
+            typeof l.limitKey === "string" &&
+            typeof l.after === "number" &&
+            typeof l.soft === "number" &&
+            typeof l.state === "string",
+        )
+      : [];
+  } catch {
+    return [];
+  }
+};

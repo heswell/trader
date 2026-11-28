@@ -54,13 +54,19 @@ import {
   positionGreeks,
 } from "../domain/positionMath";
 import { type AccessScope, canSeeAccount } from "../permissions/access";
-import { type LimitBook, limitBookFor, orderLimits } from "../limits/LimitBook";
+import {
+  type LimitBook,
+  limitBookFor,
+  orderLimits,
+  totalLimits,
+} from "../limits/LimitBook";
 import type { Account } from "../reference/accounts";
 import type { OrderPeak } from "../limits/utilisation";
 import {
-  checkPreTradeRisk,
   deltaUsdPerUnit,
   expectedPrice,
+  type LimitCheck,
+  preTradeRisk,
   referencePrice,
 } from "../risk/preTradeRisk";
 import type { OmsGateway } from "./gateway";
@@ -219,6 +225,30 @@ export interface OmsSink {
   childOrder?(row: Record<string, unknown>): void;
   fill?(row: Fill): void;
   position?(row: Position): void;
+  limitOverride?(row: LimitOverrideRow): void;
+}
+
+/** A row of the limitOverrides table: one limit an order was sent over. */
+export interface LimitOverrideRow {
+  overrideId: string;
+  time: number;
+  user: string;
+  account: string;
+  ric: string;
+  side: string;
+  quantity: number;
+  orderId: string;
+  clOrdId: string;
+  limitKey: string;
+  entityId: string;
+  metric: string;
+  before: number;
+  after: number;
+  soft: number;
+  hard: number;
+  utilisation: number;
+  reason: string;
+  note: string;
 }
 
 /** Who is making a request. access undefined = unrestricted (internal flow, tests). */
@@ -425,6 +455,7 @@ export class OmsEngine {
         sink.fill?.(row);
         for (const o of observers) o.fill?.(row);
       },
+      limitOverride: (row) => sink.limitOverride?.(row),
       position: (row) => {
         sink.position?.(row);
         for (const o of observers) o.position?.(row);
@@ -1106,21 +1137,21 @@ export class OmsEngine {
   #totals(account: string, ric: string, newOrder: boolean) {
     const now = this.#clock();
     return {
-      gross: this.limits
-        .ownUp(account, LimitMetric.GrossPositionNotional)
-        .map(({ entityId, limit }) => ({
-          entityId,
-          limit: limit.soft,
-          otherUsd: this.grossPositionUsd(entityId, { account, ric }),
-        })),
+      gross: totalLimits(
+        this.limits,
+        account,
+        LimitMetric.GrossPositionNotional,
+      ).map((levels) => ({
+        ...levels,
+        otherUsd: this.grossPositionUsd(levels.entityId, { account, ric }),
+      })),
       rate: newOrder
-        ? this.limits
-            .ownUp(account, LimitMetric.OrderRate)
-            .map(({ entityId, limit }) => ({
-              entityId,
-              limit: limit.soft,
-              count: this.recentOrders(entityId, now),
-            }))
+        ? totalLimits(this.limits, account, LimitMetric.OrderRate).map(
+            (levels) => ({
+              ...levels,
+              count: this.recentOrders(levels.entityId, now),
+            }),
+          )
         : [],
     };
   }
@@ -1225,13 +1256,45 @@ export class OmsEngine {
     counts.set(reason, (counts.get(reason) ?? 0) + 1);
   }
 
-  /** checkPreTradeRisk, timed. */
-  #checkRisk(...args: Parameters<typeof checkPreTradeRisk>) {
+  /** preTradeRisk, timed. */
+  #checkRisk(...args: Parameters<typeof preTradeRisk>) {
     const timer = this.#timing.risk;
     const t0 = timer.start();
-    const reject = checkPreTradeRisk(...args);
+    const result = preTradeRisk(...args);
     timer.stop(t0);
-    return reject;
+    return result;
+  }
+
+  /** Record the limits an order was sent over (limitOverrides). */
+  #recordOverrides(
+    parent: ParentOrder,
+    request: CreateOrderRequest,
+    user: string,
+    overridden: readonly LimitCheck[],
+  ) {
+    for (const check of overridden) {
+      this.#sink.limitOverride?.({
+        overrideId: `${parent.orderId}:${check.limitKey}`,
+        time: parent.created,
+        user,
+        account: parent.account,
+        ric: parent.ric,
+        side: parent.side,
+        quantity: request.quantity,
+        orderId: parent.orderId,
+        clOrdId: parent.clOrdId ?? "",
+        limitKey: check.limitKey,
+        entityId: check.entityId,
+        metric: check.metric,
+        before: check.before,
+        after: check.after,
+        soft: check.soft,
+        hard: check.hard,
+        utilisation: check.soft > 0 ? (check.after / check.soft) * 100 : 0,
+        reason: request.overrideReason ?? "",
+        note: request.overrideNote ?? "",
+      });
+    }
   }
 
   #createOrder(
@@ -1314,14 +1377,18 @@ export class OmsEngine {
     };
     this.parents.set(parent.orderId, parent);
 
-    const riskReject = this.#checkRisk(
+    const risk = this.#checkRisk(
       { ...request, timeInForce },
       this.#riskContext(request.account, request.ric, parent.orderId, true),
+      request.overrideReason
+        ? { reason: request.overrideReason, note: request.overrideNote }
+        : undefined,
     );
-    if (riskReject) {
-      this.#applyParent(parent, { type: "reject", ...riskReject });
-      return fail(riskReject.reason, riskReject.text, parent.orderId);
+    if (risk.reject) {
+      this.#applyParent(parent, { type: "reject", ...risk.reject });
+      return fail(risk.reject.reason, risk.reject.text, parent.orderId);
     }
+    this.#recordOverrides(parent, request, ctx.user, risk.overridden);
     this.#countOrder(
       parent.account,
       now,
@@ -1553,7 +1620,7 @@ export class OmsEngine {
           stopPrice: waitingStop ? stopPrice : undefined,
         },
         this.#riskContext(parent.account, parent.ric, parent.orderId),
-      );
+      ).reject;
     if (invalid) return fail(invalid.reason, invalid.text, parent.orderId);
 
     if (waitingStop) {

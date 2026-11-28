@@ -125,6 +125,7 @@ export const OMS_TABLE_NAMES: readonly OmsLocalTableName[] = [
   "limitBreachEvents",
   "limitRequests",
   "killSwitches",
+  "limitOverrides",
   "positionPrices",
   "orderEntryPrices",
 ];
