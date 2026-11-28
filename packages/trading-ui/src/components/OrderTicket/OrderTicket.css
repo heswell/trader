@@ -1172,3 +1172,323 @@
 .tradingOrderTicket-compact .tradingOrderTicket-formError {
   margin: 0 6px 6px;
 }
+
+/* ── Limit check (Ticket board in docs/design/trading-limits) ── */
+.tradingOrderTicket {
+  --tradingOrderTicket-limit-ok: #7c93b3;
+  --tradingOrderTicket-limit-warn: #d9a520;
+  --tradingOrderTicket-limit-warn-fg: #7a5200;
+  --tradingOrderTicket-limit-warn-bg: #fff3cc;
+  --tradingOrderTicket-limit-warn-border: #e3b341;
+  --tradingOrderTicket-limit-soft: #e07a2e;
+  --tradingOrderTicket-limit-soft-fg: #9a3f0c;
+  --tradingOrderTicket-limit-soft-bg: #fdebdd;
+  --tradingOrderTicket-limit-hard: #c62828;
+  --tradingOrderTicket-limit-hard-fg: #b3261e;
+  --tradingOrderTicket-limit-hard-bg: #fdecea;
+  --tradingOrderTicket-limit-track: #e3e7ec;
+  --tradingOrderTicket-limit-tick: #3a424d;
+  --tradingOrderTicket-limit-highlight: var(
+    --salt-selectable-background-selected,
+    #dce6f3
+  );
+}
+
+[data-mode="dark"] .tradingOrderTicket {
+  --tradingOrderTicket-limit-ok: #6e86a6;
+  --tradingOrderTicket-limit-warn-fg: #e8c063;
+  --tradingOrderTicket-limit-warn-bg: #3a3120;
+  --tradingOrderTicket-limit-warn-border: #8a6d1f;
+  --tradingOrderTicket-limit-soft: #e8873f;
+  --tradingOrderTicket-limit-soft-fg: #f0a46a;
+  --tradingOrderTicket-limit-soft-bg: #3a2618;
+  --tradingOrderTicket-limit-hard: #e5534b;
+  --tradingOrderTicket-limit-hard-fg: #f28b84;
+  --tradingOrderTicket-limit-hard-bg: #3a1e1e;
+  --tradingOrderTicket-limit-track: #30353c;
+  --tradingOrderTicket-limit-tick: #c7ccd2;
+  --tradingOrderTicket-limit-highlight: #2c3a4d;
+}
+
+.tradingOrderTicket-limits {
+  border: 1px solid var(--tradingOrderTicket-rule);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.tradingOrderTicket-limits[data-state="WARNING"] {
+  border-color: var(--tradingOrderTicket-limit-warn-border);
+}
+
+.tradingOrderTicket-limits[data-state="SOFT_BREACH"] {
+  border-color: var(--tradingOrderTicket-limit-soft);
+}
+
+.tradingOrderTicket-limits[data-state="HARD_BREACH"] {
+  border-color: var(--tradingOrderTicket-limit-hard);
+}
+
+.tradingOrderTicket-limitsHead {
+  align-items: center;
+  background: var(--tradingOrderTicket-field);
+  color: var(--tradingOrderTicket-muted);
+  display: flex;
+  font-size: 11px;
+  font-weight: 800;
+  gap: 8px;
+  letter-spacing: 0.04em;
+  padding: 5px 10px;
+  text-transform: uppercase;
+}
+
+.tradingOrderTicket-limits[data-state="WARNING"]
+  .tradingOrderTicket-limitsHead {
+  background: var(--tradingOrderTicket-limit-warn-bg);
+  color: var(--tradingOrderTicket-limit-warn-fg);
+}
+
+.tradingOrderTicket-limits[data-state="SOFT_BREACH"]
+  .tradingOrderTicket-limitsHead {
+  background: var(--tradingOrderTicket-limit-soft-bg);
+  color: var(--tradingOrderTicket-limit-soft-fg);
+}
+
+.tradingOrderTicket-limits[data-state="HARD_BREACH"]
+  .tradingOrderTicket-limitsHead {
+  background: var(--tradingOrderTicket-limit-hard-bg);
+  color: var(--tradingOrderTicket-limit-hard-fg);
+}
+
+.tradingOrderTicket-limitPill {
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-size: 10px;
+  line-height: 14px;
+  margin-left: auto;
+  padding: 0 5px;
+}
+
+.tradingOrderTicket-review h3 .tradingOrderTicket-limitPill {
+  color: var(--tradingOrderTicket-limit-soft-fg);
+  margin-left: 6px;
+  vertical-align: 2px;
+}
+
+.tradingOrderTicket-limitLines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tradingOrderTicket-limitLine {
+  align-items: center;
+  border-top: 1px solid var(--tradingOrderTicket-rule);
+  display: grid;
+  font-size: 12px;
+  gap: 4px 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 6px 10px;
+}
+
+.tradingOrderTicket-limitName {
+  color: var(--tradingOrderTicket-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tradingOrderTicket-limitValue {
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tradingOrderTicket-limitTrack {
+  background: var(--tradingOrderTicket-limit-track);
+  border-radius: 3px;
+  grid-column: 1 / -1;
+  height: 6px;
+  position: relative;
+}
+
+.tradingOrderTicket-limitTrack i {
+  bottom: 0;
+  display: block;
+  position: absolute;
+  top: 0;
+}
+
+.tradingOrderTicket-limitNow {
+  background: var(--tradingOrderTicket-limit-ok);
+  border-radius: 3px 0 0 3px;
+  left: 0;
+}
+
+.tradingOrderTicket-limitAdd {
+  background-color: var(--tradingOrderTicket-limit-ok);
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgb(255 255 255 / 45%) 0 3px,
+    transparent 3px 6px
+  );
+}
+
+.tradingOrderTicket-limitAdd-WARNING {
+  background-color: var(--tradingOrderTicket-limit-warn);
+}
+
+.tradingOrderTicket-limitAdd-SOFT_BREACH {
+  background-color: var(--tradingOrderTicket-limit-soft);
+}
+
+.tradingOrderTicket-limitAdd-HARD_BREACH {
+  background-color: var(--tradingOrderTicket-limit-hard);
+}
+
+.tradingOrderTicket-limitTrack em {
+  border-left: 1px solid var(--tradingOrderTicket-limit-tick);
+  bottom: -3px;
+  opacity: 0.55;
+  position: absolute;
+  top: -3px;
+}
+
+.tradingOrderTicket-limitTrack em.tradingOrderTicket-limitTick-soft {
+  border-left-width: 2px;
+  opacity: 0.9;
+}
+
+.tradingOrderTicket-limitTrack em.tradingOrderTicket-limitTick-hard {
+  border-left: 2px dotted var(--tradingOrderTicket-limit-hard);
+  opacity: 1;
+}
+
+.tradingOrderTicket-limitsMsg,
+.tradingOrderTicket-limitsNote {
+  color: var(--tradingOrderTicket-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 0;
+  padding: 6px 10px 0;
+}
+
+.tradingOrderTicket-limitsMsg b {
+  color: var(--tradingOrderTicket-fg);
+}
+
+.tradingOrderTicket-limitsMsg:last-child,
+.tradingOrderTicket-limitsNote {
+  padding-bottom: 8px;
+}
+
+.tradingOrderTicket-limitsActions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 10px 8px;
+}
+
+.tradingOrderTicket-limitsActions + .tradingOrderTicket-limitsNote {
+  padding-top: 0;
+}
+
+.tradingOrderTicket-limitsActions kbd,
+.tradingOrderTicket-overrideReason kbd {
+  border: 1px solid var(--tradingOrderTicket-line);
+  border-radius: 3px;
+  color: var(--tradingOrderTicket-muted);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 14px;
+  min-width: 16px;
+  padding: 0 3px;
+  text-align: center;
+}
+
+/* ── Override step (a soft breach) ── */
+.tradingOrderTicket-overrideOrder {
+  font-weight: 700;
+  margin: 0;
+}
+
+.tradingOrderTicket-overrideRoom {
+  display: flex;
+  font-size: 12px;
+  justify-content: space-between;
+}
+
+.tradingOrderTicket-overrideRoom span,
+.tradingOrderTicket-overrideLabel {
+  color: var(--tradingOrderTicket-muted);
+}
+
+.tradingOrderTicket-overrideLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.tradingOrderTicket-overrideReasons {
+  display: grid;
+  gap: 2px;
+}
+
+.tradingOrderTicket-overrideReason {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: 12px;
+  gap: 8px;
+  height: 26px;
+  padding: 0 8px;
+  text-align: left;
+}
+
+.tradingOrderTicket-overrideReason:hover {
+  background: var(--tradingOrderTicket-field);
+}
+
+.tradingOrderTicket-overrideReason[aria-checked="true"] {
+  background: var(--tradingOrderTicket-limit-highlight);
+  font-weight: 700;
+}
+
+.tradingOrderTicket-overrideReason:focus-visible {
+  outline: 2px solid var(--tradingOrderTicket-accent);
+  outline-offset: -2px;
+}
+
+.tradingOrderTicket-overrideNote {
+  display: grid;
+  gap: 4px;
+}
+
+.tradingOrderTicket-overrideNote textarea {
+  background: var(--tradingOrderTicket-field);
+  border: 1px solid var(--tradingOrderTicket-line);
+  border-radius: 3px;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 8px;
+  resize: none;
+}
+
+.tradingOrderTicket-overrideNote textarea:focus {
+  outline: 2px solid var(--tradingOrderTicket-accent);
+  outline-offset: -1px;
+}
+
+.tradingOrderTicket-overrideHint {
+  color: var(--tradingOrderTicket-muted);
+  font-size: 11px;
+  margin: 0;
+}

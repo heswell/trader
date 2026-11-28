@@ -163,11 +163,23 @@ From top to bottom:
   tradeable: the ticket shows "STECH is an index: trade its futures" on the instrument. Neither is a continuation:
   "AZNc1 is a continuation: trade AZNZ6".
   - An indicative USD equivalent is shown.
-  - Warnings for the account's `maxOrderQty` and `maxOrderNotional` (USD), and for the ±`collarPct` collar.
+  - Warnings for the account's `maxOrderQty` and `maxOrderNotional` (USD) until the OMS's limit check arrives, and
+    for the ±`collarPct` collar.
   - Warnings are advisory: the OMS is authoritative.
-- **Review.** An order with any of those warnings (`reviewReasons`) goes through a Review step: the send button
-  reads "Review …", and sending opens a summary of the order with the reasons. Enter (or Confirm) sends; Esc (or
-  Back) returns to the ticket.
+- **Limit check.** The OMS checks the draft against every limit that applies (the row's `limitCheck` column, see
+  [Trading limits](limits.md#order-ticket)). From a warning, a card shows the limits nearest their levels, before →
+  after this order, on a bar with ticks at warning, the limit and (dotted) hard.
+  - **Warning:** shown only; no extra step.
+  - **Soft breach** (over the limit): the send button reads "Review …" and sending opens the override step in
+    place of Review: the limits exceeded, the room left under the hard limit, a reason (`1`–`4`: client
+    facilitation, hedging another position, reducing tomorrow, other) and a note (needed for Other). Enter sends
+    with the reason (`sendOrder` `overrideReason`); Esc goes back. The OMS records each override.
+  - **Hard breach:** the send button reads "Blocked by limit". The card gives the hard limit, the largest quantity
+    that fits (Use N, `Alt/⌥+U`), Request increase… (`IncreaseRequestDialog`) and, when the position can be
+    reduced, that the other side is still allowed.
+- **Review.** An order with a Review message from the OMS goes through a Review step: the send button reads
+  "Review …", and sending opens a summary of the order with the reasons. Enter (or Confirm) sends; Esc (or Back)
+  returns to the ticket.
 - **Submit.**
   - Uses `sendTradingRpc("createOrder")` with the ticket's own `clOrdId`. The ticket follows its own
     `parentOrders` row (filter `clOrdId = …`), so it shows pending → ack → partial or complete fill.
@@ -188,13 +200,15 @@ From top to bottom:
 | `Alt/⌥+P` / `Alt/⌥+Shift+P` | Stop / Stop limit (P for stoP: S is Sell). |
 | `Alt/⌥+T` | Next valid TIF. |
 | `Alt/⌥+E` | Go to the strategy picker. |
+| `Alt/⌥+U` | Over a hard limit: use the largest quantity that fits. |
 | `B` / `S` | Buy / Sell, in the quantity field and on buttons (not in price, which takes `b` shorthand, or the instrument field). |
 | `Enter` | Accept the field (resolving shorthand) and move to the next one. In the instrument field, fill from an order line. |
 | `↑` / `↓` in price | ± one tick at the current price band. `Shift` = 10 ticks. An empty price starts from the touch. |
 | `↑` / `↓` in stop price | The same; an empty stop starts one tick beyond the market (above it for a buy, below for a sell). |
 | `↑` / `↓` in quantity | ± one lot. `Shift` = 10 lots. |
 | `↑` / `↓` in a parameter | ± 5 minutes or 1%. `Shift` = ×10. |
-| `F9`, `Ctrl/⌘+Enter` | Send (or open Review). In Review, `Enter` confirms. |
+| `F9`, `Ctrl/⌘+Enter` | Send (or open Review / the override step). In Review, `Enter` confirms. |
+| `1`–`4` (override step) | Pick the override reason; `Enter` sends with it, `Shift+Enter` is a new line in the note. |
 | `Esc` | Close Review; otherwise reset a dirty form; otherwise `onClose`. Ignored while a list is open. |
 
 ## Known gaps

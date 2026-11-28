@@ -6,6 +6,8 @@ import {
   PutCall,
   isPricedOrdType,
   isStopOrdType,
+  type LimitCheckLine,
+  LimitState,
   OrdStatus,
   OrdType,
   Side,
@@ -50,6 +52,11 @@ import {
   formatQuantity,
 } from "../../utils/formatting";
 import { FillProgressBar } from "../FillProgressBar";
+import { IncreaseRequestDialog } from "../Limits/IncreaseRequestDialog";
+import {
+  OrderTicketLimitCheck,
+  OrderTicketOverride,
+} from "./OrderTicketLimits";
 import { formatExpiry } from "../OptionChain/optionChainModel";
 import { InstrumentPicker } from "../InstrumentPicker";
 import { PanelLinkGroupSelector } from "../LinkGroupSelector";
@@ -1011,8 +1018,18 @@ const SubmissionStatus = ({ ticket }: { ticket: OrderTicketState }) => {
   );
 };
 
+/** Warnings the OMS's limit check replaces, once it has one. */
+const LIMIT_WARNINGS: ReadonlySet<string> = new Set([
+  "maxOrderQty",
+  "maxOrderNotional",
+]);
+
 const Summary = ({ ticket }: { ticket: OrderTicketState }) => {
-  const { risk } = ticket;
+  const { risk, limits } = ticket;
+  const warnings =
+    limits.length > 0
+      ? risk.warnings.filter((w) => !LIMIT_WARNINGS.has(w.code))
+      : risk.warnings;
   return (
     <div className={`${classBase}-preview`}>
       <div className={`${classBase}-summaryRow`}>
@@ -1031,9 +1048,9 @@ const Summary = ({ ticket }: { ticket: OrderTicketState }) => {
           ) : null}
         </span>
       </div>
-      {risk.warnings.length > 0 ? (
+      {warnings.length > 0 ? (
         <ul aria-label="Risk warnings" className={`${classBase}-warnings`}>
-          {risk.warnings.map((w) => (
+          {warnings.map((w) => (
             <li data-warning={w.code} key={w.code}>
               {w.text}
             </li>
@@ -1078,6 +1095,15 @@ const submitText = (ticket: OrderTicketState) => {
   ].join(" · ");
   return { main, detail };
 };
+
+/** Review, or the override step for an order over a limit. */
+const ReviewStep = ({ ticket }: { ticket: OrderTicketState }) =>
+  ticket.limitState === LimitState.SoftBreach &&
+  ticket.limits.some((l) => l.breach) ? (
+    <OrderTicketOverride summary={submitText(ticket).main} ticket={ticket} />
+  ) : (
+    <Review ticket={ticket} />
+  );
 
 const Review = ({ ticket }: { ticket: OrderTicketState }) => {
   const { draft, risk, instrument, review, submit, closeReview } = ticket;
@@ -1188,7 +1214,11 @@ const Review = ({ ticket }: { ticket: OrderTicketState }) => {
  * - Price `b` / `a` / `m` / `b+2`; quantity `10k` / `$250k`.
  * - The instrument field takes a whole order line (`b 5k vod.l b twap 45m`,
  *   `s 200 vod.l stop 99.5 lmt 99.4`).
- * Orders over a limit or outside the collar go through Review first.
+ * The OMS checks the order against the limits as it is typed: from a
+ * warning the ticket shows the limits nearest their levels; an order over a
+ * limit (a soft breach) goes through an override step with a reason (1-4,
+ * Enter sends); one over a hard limit is blocked, with the largest quantity
+ * that fits (Alt+U) and Request increase….
  */
 export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
   function OrderTicket(
@@ -1337,6 +1367,8 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
 
     const { main, detail } = submitText(ticket);
     const needsReview = review.length > 0;
+    const overHard = ticket.limitState === LimitState.HardBreach;
+    const [increase, setIncrease] = useState<LimitCheckLine>();
 
     const linkGroupSelector = showLinkGroupSelector ? (
       <PanelLinkGroupSelector onChange={setLinkGroup} value={linkGroup} />
@@ -1397,7 +1429,7 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
         data-order-ticket-field="submit"
         data-review={needsReview ? "" : undefined}
         data-side={draft.side}
-        disabled={blockedReason !== undefined}
+        disabled={blockedReason !== undefined || overHard}
         loading={pending}
         onClick={() => void submit()}
         sentiment={draft.side === Side.Buy ? "positive" : "negative"}
@@ -1406,9 +1438,11 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
         <span className={`${classBase}-submitMain`}>
           {blockedReason
             ? "Can't send while disconnected"
-            : needsReview
-              ? `Review ${main.charAt(0).toLowerCase()}${main.slice(1)}`
-              : main}
+            : overHard
+              ? "Blocked by limit"
+              : needsReview
+                ? `Review ${main.charAt(0).toLowerCase()}${main.slice(1)}`
+                : main}
         </span>
         {compact ? null : (
           <span className={`${classBase}-submitDetail`}>{detail}</span>
@@ -1534,6 +1568,10 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
             </div>
             <div className={`${classBase}-footer`}>
               <Summary ticket={ticket} />
+              <OrderTicketLimitCheck
+                onRequestIncrease={setIncrease}
+                ticket={ticket}
+              />
               {statusAndErrors}
               {submitButton}
               <div className={`${classBase}-actions`}>
@@ -1557,8 +1595,32 @@ export const OrderTicket = forwardRef<HTMLDivElement, OrderTicketProps>(
             </div>
           </>
         )}
-        {compact ? statusAndErrors : null}
-        {reviewing ? <Review ticket={ticket} /> : null}
+        {compact ? (
+          <>
+            <OrderTicketLimitCheck
+              onRequestIncrease={setIncrease}
+              ticket={ticket}
+            />
+            {statusAndErrors}
+          </>
+        ) : null}
+        {reviewing ? <ReviewStep ticket={ticket} /> : null}
+        {increase ? (
+          <IncreaseRequestDialog
+            connectionState={connectionState}
+            dataSource={ticket.dataSource}
+            onClose={() => setIncrease(undefined)}
+            target={{
+              limitKey: increase.limitKey,
+              entityId: increase.entityId,
+              metric: increase.metric,
+              ric: increase.ric,
+              used: increase.before,
+              soft: increase.soft,
+              hard: increase.hard,
+            }}
+          />
+        ) : null}
       </div>
     );
   },

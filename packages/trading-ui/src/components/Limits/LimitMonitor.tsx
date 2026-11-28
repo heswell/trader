@@ -1,5 +1,7 @@
 import {
+  LIMIT_OVERRIDE_REASON_LABEL,
   LimitEntityType,
+  type LimitOverrideReason,
   LimitScope,
   LimitState,
 } from "@heswell/trading-schemas";
@@ -480,9 +482,89 @@ const ricOf = (limit: SelectedLimit) =>
     ? limit.worst
     : "");
 
+const timeOf = (ms: unknown) =>
+  typeof ms === "number" && ms > 0
+    ? new Date(ms).toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
+
+/**
+ * Orders sent over the selected limit with a reason (limitOverrides): the
+ * accounts it covers, its metric (and RIC), latest first.
+ */
+const Overrides = ({
+  accounts,
+  limit,
+  ric,
+}: {
+  accounts: string[];
+  limit: SelectedLimit;
+  ric: string;
+}) => {
+  const filter = andFilters(
+    listFilter("account", accounts),
+    `metric = ${filterString(limit.metric)}`,
+    ric && limit.scope === LimitScope.PerRic
+      ? `ric = ${filterString(ric)}`
+      : "",
+  );
+  const { rows } = useTradingRows("limitOverrides", {
+    columns: [
+      "overrideId",
+      "time",
+      "user",
+      "account",
+      "ric",
+      "side",
+      "quantity",
+      "utilisation",
+      "reason",
+      "note",
+    ],
+    filter,
+    sort: { sortDefs: [{ column: "time", sortType: "D" }] },
+    rowCount: 20,
+  });
+  return (
+    <>
+      <span className={`${classBase}-label`}>Overrides</span>
+      {rows.length === 0 ? (
+        <p className={`${classBase}-muted`}>No orders sent over this limit.</p>
+      ) : (
+        <ul className={`${classBase}-overrides`}>
+          {rows.map((row) => (
+            <li key={String(row.overrideId)}>
+              <time>{timeOf(row.time)}</time>
+              <span>
+                <b>
+                  {String(row.side) === "BUY" ? "Buy" : "Sell"}{" "}
+                  {Number(row.quantity).toLocaleString("en-GB")}{" "}
+                  {String(row.ric)}
+                </b>{" "}
+                · {String(row.account)} · {String(row.user)} ·{" "}
+                {Math.round(Number(row.utilisation))}%
+                <br />
+                <span className={`${classBase}-muted`}>
+                  {LIMIT_OVERRIDE_REASON_LABEL[
+                    row.reason as LimitOverrideReason
+                  ] ?? String(row.reason)}
+                  {row.note ? ` · ${String(row.note)}` : ""}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
+};
+
 /**
  * What uses the selected limit: the positions and working orders of the
- * accounts it covers (in its RIC or underlying, for one that is per RIC).
+ * accounts it covers (in its RIC or underlying, for one that is per RIC),
+ * and the orders sent over it with an override.
  */
 const Contributors = ({
   accounts,
@@ -555,6 +637,7 @@ const Contributors = ({
           <div style={{ height: 160 }}>
             <Table config={orderColumns} dataSource={orders} />
           </div>
+          <Overrides accounts={accounts} limit={limit} ric={ric} />
         </>
       ) : (
         <p className={`${classBase}-muted`}>

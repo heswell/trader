@@ -1,11 +1,12 @@
 import { getTradingTestData } from "@heswell/trading-test-data";
-import { LimitState } from "@heswell/trading-schemas";
+import { LimitState, OrdType, Side } from "@heswell/trading-schemas";
 import {
   IncreaseRequestDialog,
   KillSwitchDialog,
   LimitBreaches,
   LimitMonitor,
   LimitStateBadge,
+  OrderTicket,
   UtilisationBar,
   useTradingDataSource,
 } from "@heswell/trading-ui";
@@ -132,6 +133,36 @@ export const LimitDialogsExample = () => {
           workingOrders={(entityId) => (entityId === "FIRM" ? 12 : 3)}
         />
       ) : null}
+    </div>
+  );
+};
+
+/** ACC-US-02's position limit, low enough to reach from the ticket. */
+const TICKET_LIMIT = "ACC-US-02:POSITION_NOTIONAL=600000";
+
+const TICKET_PREFILL = {
+  ric: "AAPL.OQ",
+  account: "ACC-US-02",
+  side: Side.Buy,
+  ordType: OrdType.Limit,
+} as const;
+
+/**
+ * The order ticket's limit check on ACC-US-02 (position limit 600k USD,
+ * hard 660k): a quantity worth 80% of it warns, over 600k needs an override
+ * reason, over 660k is blocked.
+ */
+export const LimitTicketExample = () => {
+  useEffect(() => {
+    try {
+      getTradingTestData().omsService.addLimits(TICKET_LIMIT);
+    } catch {
+      // remote mode: no local data
+    }
+  }, []);
+  return (
+    <div style={{ padding: 16, width: 380 }}>
+      <OrderTicket prefill={TICKET_PREFILL} rememberAccount={false} />
     </div>
   );
 };
