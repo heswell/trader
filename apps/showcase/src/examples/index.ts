@@ -43,6 +43,7 @@ import { MarketDepthExamples } from "./MarketDepthExamples";
 import {
   LimitBreachesExample,
   LimitDialogsExample,
+  LimitTicketExample,
   UtilisationBarExamples,
   LimitMonitorExample,
 } from "./LimitsExamples";
@@ -209,6 +210,14 @@ export const examples: ShowcaseExample[] = [
     description:
       "IncreaseRequestDialog (new limit with k / m / b, the hard limit keeping its margin, expiry, reason) and KillSwitchDialog (scope over account, desk and firm, cancel working orders, reason) on a demo ACC-US-01 limit. Sending is real: the kill switch stops trading until released from the monitor.",
     Component: LimitDialogsExample,
+  },
+  {
+    id: "limit-ticket",
+    group: "Limits",
+    title: "Ticket limit check",
+    description:
+      "The order ticket's pre-trade limit check on ACC-US-02 (position limit 600k USD, hard 660k, AAPL.OQ): about 80% of the limit warns, over 600k opens the override step (reason 1-4, Enter sends), over 660k is blocked with Use max (Alt+U) and Request increase….",
+    Component: LimitTicketExample,
   },
   {
     id: "side-label-variants",

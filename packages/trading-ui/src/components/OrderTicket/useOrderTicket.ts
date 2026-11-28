@@ -3,12 +3,18 @@ import {
   AlgoStrategy,
   algoStrategyDefinition,
   decodeEntryMessages,
+  decodeLimitCheck,
   EntryMessageLevel,
+  EntryRiskCode,
   entryReviewMessages,
   hasEntryErrors,
   InstrumentType,
   isPricedOrdType,
   isStopOrdType,
+  type LimitCheckLine,
+  limitCheckState,
+  LimitOverrideReason,
+  LimitState,
   OrdStatus,
   OrdType,
   type RpcRequestParams,
@@ -275,8 +281,42 @@ const ENTRY_COLUMNS = [
     "orderId",
     "lastUpdate",
     "vuuMsg",
+    "limitCheck",
   ]),
 ];
+
+/** Risk codes of a limit: shown in the limit check, not under a field. */
+const LIMIT_CODES: ReadonlySet<string> = new Set([
+  EntryRiskCode.MaxOrderQty,
+  EntryRiskCode.MaxOrderNotional,
+  EntryRiskCode.MaxPositionNotional,
+  EntryRiskCode.MaxDelta,
+  EntryRiskCode.MaxGrossNotional,
+  EntryRiskCode.OrderRate,
+]);
+
+/** Messages about a limit the order is over (a soft breach), to override. */
+const overLimitMessages = (messages: ReturnType<typeof decodeEntryMessages>) =>
+  entryReviewMessages(messages).filter(({ code }) => LIMIT_CODES.has(code));
+
+/** The override reasons, in the order the override step lists them (1-4). */
+export const OVERRIDE_REASONS: readonly LimitOverrideReason[] = [
+  LimitOverrideReason.ClientFacilitation,
+  LimitOverrideReason.Hedging,
+  LimitOverrideReason.ReducingTomorrow,
+  LimitOverrideReason.Other,
+];
+
+/** Why an order over a limit is sent anyway (the override step). */
+export interface OrderTicketOverride {
+  reason?: LimitOverrideReason;
+  note: string;
+}
+
+/** An override can be sent: a reason, and a note for OTHER. */
+export const isOverrideComplete = (override: OrderTicketOverride) =>
+  !!override.reason &&
+  (override.reason !== LimitOverrideReason.Other || !!override.note.trim());
 
 const NO_ENTRY_FILTER = 'entryId = "-"';
 const NO_ORDER_FILTER = 'clOrdId = "-"';
@@ -750,6 +790,35 @@ export const useOrderTicket = ({
 
   const vuuMsg = row?.vuuMsg as string | undefined;
   const messages = useMemo(() => decodeEntryMessages(vuuMsg), [vuuMsg]);
+  const limitCheckValue = row?.limitCheck as string | undefined;
+  /** The limits the order is checked against, before and after. */
+  const limits = useMemo(
+    (): LimitCheckLine[] => decodeLimitCheck(limitCheckValue),
+    [limitCheckValue],
+  );
+  const limitState = useMemo(() => limitCheckState(limits), [limits]);
+  /**
+   * The largest quantity under every hard limit (lot rounded), when the
+   * order is over one.
+   */
+  const maxQuantity = useMemo(() => {
+    if (limitState !== LimitState.HardBreach) return undefined;
+    let max = Number.POSITIVE_INFINITY;
+    for (const line of limits) {
+      if (line.maxQty !== undefined) max = Math.min(max, line.maxQty);
+    }
+    if (!Number.isFinite(max)) return undefined;
+    const lot = Number(row?.lotSize) || 1;
+    return Math.floor(max / lot) * lot;
+  }, [limits, limitState, row?.lotSize]);
+  const [override, setOverrideState] = useState<OrderTicketOverride>({
+    note: "",
+  });
+  const overrideRef = useRef(override);
+  const setOverride = useCallback((change: Partial<OrderTicketOverride>) => {
+    overrideRef.current = { ...overrideRef.current, ...change };
+    setOverrideState(overrideRef.current);
+  }, []);
 
   /** Values committed before the row was opened. */
   const pendingRef = useRef<EntryValues>({});
@@ -1223,11 +1292,12 @@ export const useOrderTicket = ({
         return touchedNow;
       });
       setReviewing(false);
+      setOverride({ reason: undefined, note: "" });
       setSubmission((current) =>
         current.state === "rejected" ? { state: "idle" } : current,
       );
     },
-    [commitFields, rememberAccount, setDraft],
+    [commitFields, rememberAccount, setDraft, setOverride],
   );
 
   /** Change the draft as typed: text fields are committed when left. */
@@ -1469,7 +1539,8 @@ export const useOrderTicket = ({
     setTifNotice(undefined);
     setTypeNotice(undefined);
     setReviewing(false);
-  }, [baseline, commitFields, setDraft, setLocalErrors]);
+    setOverride({ reason: undefined, note: "" });
+  }, [baseline, commitFields, setDraft, setLocalErrors, setOverride]);
 
   const dirty =
     submission.state !== "idle" ||
@@ -1478,7 +1549,13 @@ export const useOrderTicket = ({
     );
 
   const submit = useCallback(
-    async ({ confirmed = false } = {}) => {
+    async ({
+      confirmed = false,
+      override: overrideNow,
+    }: {
+      confirmed?: boolean;
+      override?: OrderTicketOverride;
+    } = {}) => {
       if (submission.state === "pending") return;
       setSubmitAttempted(true);
       // Blocked while the connection is down (also F9 / Ctrl+Enter).
@@ -1498,7 +1575,11 @@ export const useOrderTicket = ({
         current.vuuMsg as string | undefined,
       );
       if (hasEntryErrors(rowMessages)) return;
-      if (entryReviewMessages(rowMessages).length > 0 && !confirmed) {
+      const overLimit = overLimitMessages(rowMessages).length > 0;
+      if (
+        (entryReviewMessages(rowMessages).length > 0 && !confirmed) ||
+        (overLimit && !(overrideNow && isOverrideComplete(overrideNow)))
+      ) {
         setReviewing(true);
         return;
       }
@@ -1529,7 +1610,19 @@ export const useOrderTicket = ({
         const result = await sendTradingRpc(
           entryDataSource,
           "sendOrder",
-          { entryId: id, confirmed, clOrdId: sentClOrdId },
+          {
+            entryId: id,
+            confirmed,
+            clOrdId: sentClOrdId,
+            ...(overLimit && overrideNow?.reason
+              ? {
+                  overrideReason: overrideNow.reason,
+                  ...(overrideNow.note.trim()
+                    ? { overrideNote: overrideNow.note.trim() }
+                    : {}),
+                }
+              : {}),
+          },
           { connectionState },
         );
         setSubmission({
@@ -1542,6 +1635,7 @@ export const useOrderTicket = ({
         // and strategy, and clears the size.
         editingRef.current.delete("quantity");
         setDraft({ ...draftRef.current, quantity: "" });
+        setOverride({ reason: undefined, note: "" });
         setTouched({});
         setSubmitAttempted(false);
         const kind = orderEventKindForStatus(result.status) ?? "ack";
@@ -1577,9 +1671,15 @@ export const useOrderTicket = ({
       ordersDataSource,
       rememberAccount,
       setDraft,
+      setOverride,
       submission.state,
     ],
   );
+
+  const applyMaxQuantity = useCallback(() => {
+    if (maxQuantity === undefined) return;
+    apply({ quantity: String(maxQuantity) }, true);
+  }, [apply, maxQuantity]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLElement>) => {
@@ -1615,9 +1715,23 @@ export const useOrderTicket = ({
         return;
       }
       if (reviewing) {
-        if (key === "Enter" && !target.closest?.("[data-review-back]")) {
+        const inNote = target.tagName === "TEXTAREA";
+        // 1-4 pick the override reason (not while typing the note)
+        if (!inNote && /^[1-9]$/.test(key)) {
+          const reason = OVERRIDE_REASONS[Number(key) - 1];
+          if (reason) {
+            event.preventDefault();
+            setOverride({ reason });
+          }
+          return;
+        }
+        if (
+          key === "Enter" &&
+          !event.shiftKey &&
+          !target.closest?.("[data-review-back]")
+        ) {
           event.preventDefault();
-          void submit({ confirmed: true });
+          void submit({ confirmed: true, override: overrideRef.current });
         }
         return;
       }
@@ -1640,6 +1754,9 @@ export const useOrderTicket = ({
           event.preventDefault();
           return;
         }
+        // U: use the largest quantity under the hard limits
+        if (code === "KeyU" && maxQuantity !== undefined)
+          return act(() => applyMaxQuantity());
         if (code === "KeyB") return act(() => update({ side: "BUY" }));
         if (code === "KeyS") return act(() => update({ side: "SELL" }));
         if (code === "KeyL")
@@ -1730,10 +1847,13 @@ export const useOrderTicket = ({
       reset,
       resolveShorthand,
       reviewing,
+      maxQuantity,
       setAlgoParam,
+      setOverride,
       stepOption,
       submit,
       update,
+      applyMaxQuantity,
     ],
   );
 
@@ -1786,6 +1906,19 @@ export const useOrderTicket = ({
     entryId,
     /** Everything the OMS says about the row (vuuMsg). */
     messages,
+    /** The limits the order is checked against, before and after. */
+    limits,
+    /** OK, WARNING, SOFT_BREACH (override to send) or HARD_BREACH. */
+    limitState,
+    /** Over a hard limit: the largest quantity under them all. */
+    maxQuantity,
+    /** Set the quantity to maxQuantity (Alt+U). */
+    applyMaxQuantity,
+    /** The override step's reason and note (an order over a limit). */
+    override,
+    setOverride,
+    /** The ticket's OMS data source (to send other OMS RPCs through). */
+    dataSource: entryDataSource,
     errors: visibleErrors,
     risk,
     submission,

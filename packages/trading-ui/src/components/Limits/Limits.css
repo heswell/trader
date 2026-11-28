@@ -199,6 +199,26 @@
   font-variant-numeric: tabular-nums;
 }
 
+.tradingLimits-overrides {
+  display: flex;
+  flex-direction: column;
+  gap: var(--salt-spacing-75, 6px);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tradingLimits-overrides li {
+  display: grid;
+  gap: 0 var(--salt-spacing-100);
+  grid-template-columns: 44px 1fr;
+}
+
+.tradingLimits-overrides time {
+  color: var(--salt-content-secondary-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
 .tradingLimits-actions {
   display: flex;
   flex-wrap: wrap;

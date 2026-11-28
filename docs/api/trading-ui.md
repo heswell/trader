@@ -4,7 +4,7 @@
 
 Every export of `@heswell/trading-ui`: React components, hooks, providers, data access, instrument linking, connection state, notifications and utilities. Guides: [components](../components/README.md), [catalogue](components.md), [UI guide](../ui-guide.md), [getting started](../getting-started.md).
 
-Imports: `@heswell/trading-ui`. 709 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
+Imports: `@heswell/trading-ui`. 712 exports. Types are shown as written in the source; defaults come from `@default` tags or the component's destructuring defaults.
 
 ## Contents
 
@@ -36,7 +36,7 @@ Imports: `@heswell/trading-ui`. 709 exports. Types are shown as written in the s
 - **components/OrderBlotter**: [CHILD_ORDER_COLUMNS](#child_order_columns), [childOrdersTableConfig](#childorderstableconfig), [ORDER_BLOTTER_COLUMNS](#order_blotter_columns), [ORDER_BLOTTER_TABS](#order_blotter_tabs), [OrderBlotter](#orderblotter), [OrderBlotterContext](#orderblottercontext), [OrderBlotterProps](#orderblotterprops), [OrderBlotterTab](#orderblottertab), [orderBlotterTabFilter](#orderblottertabfilter), [orderBlotterTableConfig](#orderblottertableconfig), [OrderRowActions](#orderrowactions)
 - **components/OrderBookView**: [BookLevelRef](#booklevelref), [OrderBookView](#orderbookview), [OrderBookViewProps](#orderbookviewprops), [orderTypeLabel](#ordertypelabel), [queueActivityText](#queueactivitytext)
 - **components/OrderStatusBadge**: [OrderStatusBadge](#orderstatusbadge), [OrderStatusBadgeProps](#orderstatusbadgeprops)
-- **components/OrderTicket**: [algoParamField](#algoparamfield), [AlgoParamKey](#algoparamkey), [connectionBlockedReason](#connectionblockedreason), [DEFAULT_COLLAR_PCT](#default_collar_pct), [defaultLimitPrice](#defaultlimitprice), [defaultStopPrice](#defaultstopprice), [describePriceShorthand](#describepriceshorthand), [draftFromPrefill](#draftfromprefill), [DraftValidation](#draftvalidation), [EMPTY_DRAFT](#empty_draft), [fieldForRejectReason](#fieldforrejectreason), [filterStrategies](#filterstrategies), [focusTicketField](#focusticketfield), [formatPriceInput](#formatpriceinput), [INDICATIVE_USD_PER_PRICE_UNIT](#indicative_usd_per_price_unit), [isOrderLine](#isorderline), [isPriceShorthand](#ispriceshorthand), [isValueInput](#isvalueinput), [LAST_ACCOUNT_STORAGE_KEY](#last_account_storage_key), [marketValuationPrice](#marketvaluationprice), [newClOrdId](#newclordid), [nudgePrice](#nudgeprice), [nudgeQuantity](#nudgequantity), [nudgeStopPrice](#nudgestopprice), [ORDER_TICKET_ORD_TYPES](#order_ticket_ord_types), [ORDER_TICKET_SELECTION_SOURCE](#order_ticket_selection_source), [ORDER_TICKET_STRATEGIES](#order_ticket_strategies), [OrderDraft](#orderdraft), [OrderDraftErrors](#orderdrafterrors), [OrderDraftField](#orderdraftfield), [OrderLine](#orderline), [OrderTicket](#orderticket), [OrderTicketAccount](#orderticketaccount), [OrderTicketDialog](#orderticketdialog), [OrderTicketDialogProps](#orderticketdialogprops), [OrderTicketInstrument](#orderticketinstrument), [OrderTicketLauncher](#orderticketlauncher), [OrderTicketLauncherProvider](#orderticketlauncherprovider), [OrderTicketLauncherProviderProps](#orderticketlauncherproviderprops), [OrderTicketPanel](#orderticketpanel), [OrderTicketPanelProps](#orderticketpanelprops), [OrderTicketPrefill](#orderticketprefill), [OrderTicketProps](#orderticketprops), [OrderTicketReviewReason](#orderticketreviewreason), [OrderTicketState](#orderticketstate), [OrderTicketSubmission](#orderticketsubmission), [OrderTicketTarget](#ordertickettarget), [OrderTicketTypeNotice](#ordertickettypenotice), [OrderTicketVariant](#orderticketvariant), [parseAlgoParam](#parsealgoparam), [parseDurationInput](#parsedurationinput), [parseOrderLine](#parseorderline), [parsePercentInput](#parsepercentinput), [parsePrice](#parseprice), [parseQuantity](#parsequantity), [parseTimeInput](#parsetimeinput), [previewRisk](#previewrisk), [referencePrice](#referenceprice), [resolvePriceInput](#resolvepriceinput), [resolveQuantityInput](#resolvequantityinput), [reviewReasons](#reviewreasons), [RiskPreview](#riskpreview), [RiskPreviewOptions](#riskpreviewoptions), [RiskWarning](#riskwarning), [scheduleOf](#scheduleof), [scheduleSummary](#schedulesummary), [useOrderTicket](#useorderticket), [useOrderTicketLauncher](#useorderticketlauncher), [UseOrderTicketProps](#useorderticketprops), [useOrderTicketTarget](#useordertickettarget), [validateDraft](#validatedraft), [withKnockOns](#withknockons)
+- **components/OrderTicket**: [algoParamField](#algoparamfield), [AlgoParamKey](#algoparamkey), [connectionBlockedReason](#connectionblockedreason), [DEFAULT_COLLAR_PCT](#default_collar_pct), [defaultLimitPrice](#defaultlimitprice), [defaultStopPrice](#defaultstopprice), [describePriceShorthand](#describepriceshorthand), [draftFromPrefill](#draftfromprefill), [DraftValidation](#draftvalidation), [EMPTY_DRAFT](#empty_draft), [fieldForRejectReason](#fieldforrejectreason), [filterStrategies](#filterstrategies), [focusTicketField](#focusticketfield), [formatPriceInput](#formatpriceinput), [INDICATIVE_USD_PER_PRICE_UNIT](#indicative_usd_per_price_unit), [isOrderLine](#isorderline), [isOverrideComplete](#isoverridecomplete), [isPriceShorthand](#ispriceshorthand), [isValueInput](#isvalueinput), [LAST_ACCOUNT_STORAGE_KEY](#last_account_storage_key), [marketValuationPrice](#marketvaluationprice), [newClOrdId](#newclordid), [nudgePrice](#nudgeprice), [nudgeQuantity](#nudgequantity), [nudgeStopPrice](#nudgestopprice), [ORDER_TICKET_ORD_TYPES](#order_ticket_ord_types), [ORDER_TICKET_SELECTION_SOURCE](#order_ticket_selection_source), [ORDER_TICKET_STRATEGIES](#order_ticket_strategies), [OrderDraft](#orderdraft), [OrderDraftErrors](#orderdrafterrors), [OrderDraftField](#orderdraftfield), [OrderLine](#orderline), [OrderTicket](#orderticket), [OrderTicketAccount](#orderticketaccount), [OrderTicketDialog](#orderticketdialog), [OrderTicketDialogProps](#orderticketdialogprops), [OrderTicketInstrument](#orderticketinstrument), [OrderTicketLauncher](#orderticketlauncher), [OrderTicketLauncherProvider](#orderticketlauncherprovider), [OrderTicketLauncherProviderProps](#orderticketlauncherproviderprops), [OrderTicketOverride](#orderticketoverride), [OrderTicketPanel](#orderticketpanel), [OrderTicketPanelProps](#orderticketpanelprops), [OrderTicketPrefill](#orderticketprefill), [OrderTicketProps](#orderticketprops), [OrderTicketReviewReason](#orderticketreviewreason), [OrderTicketState](#orderticketstate), [OrderTicketSubmission](#orderticketsubmission), [OrderTicketTarget](#ordertickettarget), [OrderTicketTypeNotice](#ordertickettypenotice), [OrderTicketVariant](#orderticketvariant), [OVERRIDE_REASONS](#override_reasons), [parseAlgoParam](#parsealgoparam), [parseDurationInput](#parsedurationinput), [parseOrderLine](#parseorderline), [parsePercentInput](#parsepercentinput), [parsePrice](#parseprice), [parseQuantity](#parsequantity), [parseTimeInput](#parsetimeinput), [previewRisk](#previewrisk), [referencePrice](#referenceprice), [resolvePriceInput](#resolvepriceinput), [resolveQuantityInput](#resolvequantityinput), [reviewReasons](#reviewreasons), [RiskPreview](#riskpreview), [RiskPreviewOptions](#riskpreviewoptions), [RiskWarning](#riskwarning), [scheduleOf](#scheduleof), [scheduleSummary](#schedulesummary), [useOrderTicket](#useorderticket), [useOrderTicketLauncher](#useorderticketlauncher), [UseOrderTicketProps](#useorderticketprops), [useOrderTicketTarget](#useordertickettarget), [validateDraft](#validatedraft), [withKnockOns](#withknockons)
 - **components/PnlHistoryChart**: [PnlHistoryChart](#pnlhistorychart), [PnlHistoryChartProps](#pnlhistorychartprops)
 - **components/PnlValue**: [PnlValue](#pnlvalue), [PnlValueProps](#pnlvalueprops)
 - **components/PositionsView**: [CurrencyTotals](#currencytotals), [POSITIONS_GROUP_BY](#positions_group_by), [PositionsGrouping](#positionsgrouping), [PositionsView](#positionsview), [PositionsViewProps](#positionsviewprops), [totalsByCurrency](#totalsbycurrency)
@@ -4376,7 +4376,7 @@ Also accepts the standard HTML attributes and `ref`.
 
 #### LimitMonitor
 
-*component* · [components/Limits/LimitMonitor.tsx](../../packages/trading-ui/src/components/Limits/LimitMonitor.tsx#L170)
+*component* · [components/Limits/LimitMonitor.tsx](../../packages/trading-ui/src/components/Limits/LimitMonitor.tsx#L172)
 
 The limit monitor (the Main board): every limit's live usage as a tree by
 desk and entity, with utilisation bars, Show and family toggles, state
@@ -4533,7 +4533,7 @@ const limitBreachesTableConfig: TableConfig
 
 #### limitMonitorTableConfig
 
-*const* · [components/Limits/LimitMonitor.tsx](../../packages/trading-ui/src/components/Limits/LimitMonitor.tsx#L94)
+*const* · [components/Limits/LimitMonitor.tsx](../../packages/trading-ui/src/components/Limits/LimitMonitor.tsx#L96)
 
 ```ts
 const limitMonitorTableConfig: TableConfig
@@ -4599,7 +4599,7 @@ Props of [`LimitBreaches`](#limitbreaches).
 
 #### LimitMonitorProps
 
-*interface* · [components/Limits/LimitMonitor.tsx](../../packages/trading-ui/src/components/Limits/LimitMonitor.tsx#L142)
+*interface* · [components/Limits/LimitMonitor.tsx](../../packages/trading-ui/src/components/Limits/LimitMonitor.tsx#L144)
 
 Props of [`LimitMonitor`](#limitmonitor).
 
@@ -4637,7 +4637,7 @@ type LimitFamily = keyof typeof LIMIT_FAMILIES | "all"
 
 #### LimitShow
 
-*type* · [components/Limits/LimitMonitor.tsx](../../packages/trading-ui/src/components/Limits/LimitMonitor.tsx#L59)
+*type* · [components/Limits/LimitMonitor.tsx](../../packages/trading-ui/src/components/Limits/LimitMonitor.tsx#L61)
 
 Rows the Show toggle keeps.
 
@@ -5435,7 +5435,7 @@ Props of [`OrderStatusBadge`](#orderstatusbadge).
 
 #### OrderTicket
 
-*component* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L1193)
+*component* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L1223)
 
 Order entry. The side buttons carry the quote (Sell on the bid, Buy on
 the ask). Instrument, side, quantity and price stay in place; the
@@ -5449,7 +5449,11 @@ sit below them. Keyboard first:
 - Price `b` / `a` / `m` / `b+2`; quantity `10k` / `$250k`.
 - The instrument field takes a whole order line (`b 5k vod.l b twap 45m`,
   `s 200 vod.l stop 99.5 lmt 99.4`).
-Orders over a limit or outside the collar go through Review first.
+The OMS checks the order against the limits as it is typed: from a
+warning the ticket shows the limits nearest their levels; an order over a
+limit (a soft breach) goes through an override step with a reason (1-4,
+Enter sends); one over a hard limit is blocked, with the largest quantity
+that fits (Alt+U) and Request increase….
 
 Props: `OrderTicketProps`
 
@@ -5567,7 +5571,7 @@ Also accepts the standard HTML attributes.
 
 #### useOrderTicket
 
-*hook* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L650)
+*hook* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L690)
 
 State and behaviour of the order ticket (one core used by every layout
 variant). Exposed for custom ticket layouts.
@@ -5580,7 +5584,7 @@ row and reports errors, warnings and notices in its vuuMsg column
 (decodeEntryMessages); sendOrder turns it into an order.
 
 ```ts
-useOrderTicket({ prefill, followSelection = true, linkGroup, publishSelection = true, onOrderEvent, onClose, notify: notifyEnabled = true, rememberAccount = true, clOrdIdPrefix, usdPerPriceUnit, collarPct, }: UseOrderTicketProps = {}): { draft: OrderDraft; update: (change: Partial<OrderDraft>) => void; commit: (field: OrderDraftField) => void; selectInstrument: (selected: SelectedInstrument) => void; ... 26 more ...; handleKeyDown: (event: KeyboardEvent<...>) => void; }
+useOrderTicket({ prefill, followSelection = true, linkGroup, publishSelection = true, onOrderEvent, onClose, notify: notifyEnabled = true, rememberAccount = true, clOrdIdPrefix, usdPerPriceUnit, collarPct, }: UseOrderTicketProps = {}): { draft: OrderDraft; update: (change: Partial<OrderDraft>) => void; commit: (field: OrderDraftField) => void; selectInstrument: (selected: SelectedInstrument) => void; ... 33 more ...; handleKeyDown: (event: KeyboardEvent<...>) => void; }
 ```
 
 #### useOrderTicketLauncher
@@ -5608,7 +5612,7 @@ useOrderTicketTarget(enabled = true): OrderTicketPrefill | undefined
 
 #### algoParamField
 
-*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L584)
+*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L624)
 
 `data-order-ticket-field` of a strategy parameter input.
 
@@ -5618,7 +5622,7 @@ algoParamField(key: AlgoParamKey): string
 
 #### connectionBlockedReason
 
-*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L564)
+*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L604)
 
 Why orders cannot be sent in this connection state, else undefined.
 
@@ -5659,7 +5663,7 @@ describePriceShorthand(text: string): string | undefined
 
 #### draftFromPrefill
 
-*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L305)
+*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L345)
 
 A draft from a prefill (anything unset takes the empty draft's value).
 
@@ -5690,7 +5694,7 @@ filterStrategies(query = ""): readonly AlgoStrategyDefinition[]
 
 #### focusTicketField
 
-*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L603)
+*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L643)
 
 Focus a ticket field and select its text, as Tab does, so typing
 replaces the value rather than appending to it.
@@ -5717,6 +5721,16 @@ Whether text in the instrument field is an order line, not a search.
 
 ```ts
 isOrderLine(text: string): boolean
+```
+
+#### isOverrideComplete
+
+*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L317)
+
+An override can be sent: a reason, and a note for OTHER.
+
+```ts
+isOverrideComplete(override: OrderTicketOverride): boolean
 ```
 
 #### isPriceShorthand
@@ -5990,7 +6004,7 @@ validateDraft(draft: OrderDraft, instrument: OrderTicketInstrument | undefined, 
 
 #### withKnockOns
 
-*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L490)
+*function* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L530)
 
 A change with the knock-on rules the OMS applies to the row (shared from
 trading-schemas), applied here too so the next key works on the result:
@@ -6037,7 +6051,7 @@ const INDICATIVE_USD_PER_PRICE_UNIT: Readonly<Record<string, number>>
 
 #### LAST_ACCOUNT_STORAGE_KEY
 
-*const* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L167)
+*const* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L173)
 
 ```ts
 const LAST_ACCOUNT_STORAGE_KEY: "trading.orderTicket.lastAccount"
@@ -6045,10 +6059,20 @@ const LAST_ACCOUNT_STORAGE_KEY: "trading.orderTicket.lastAccount"
 
 #### ORDER_TICKET_SELECTION_SOURCE
 
-*const* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L166)
+*const* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L172)
 
 ```ts
 const ORDER_TICKET_SELECTION_SOURCE: "orderTicket"
+```
+
+#### OVERRIDE_REASONS
+
+*const* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L303)
+
+The override reasons, in the order the override step lists them (1-4).
+
+```ts
+const OVERRIDE_REASONS: readonly LimitOverrideReason[]
 ```
 
 ### Interfaces (components/OrderTicket)
@@ -6170,6 +6194,17 @@ it loads.
 
 Props of [`OrderTicketLauncherProvider`](#orderticketlauncherprovider).
 
+#### OrderTicketOverride
+
+*interface* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L311)
+
+Why an order over a limit is sent anyway (the override step).
+
+| Member | Type | Default | Description |
+| --- | --- | --- | --- |
+| `reason?` | `LimitOverrideReason` |  |  |
+| `note` | `string` |  |  |
+
 #### OrderTicketPanelProps
 
 *interface* · [components/OrderTicket/OrderTicketLauncher.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicketLauncher.tsx#L160)
@@ -6178,7 +6213,7 @@ Props of [`OrderTicketPanel`](#orderticketpanel).
 
 #### OrderTicketPrefill
 
-*interface* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L95)
+*interface* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L101)
 
 Values to open a ticket with (from a grid Buy/Sell action, a ladder click,
 a position row ...). Anything omitted keeps its default.
@@ -6198,13 +6233,13 @@ a position row ...). Anything omitted keeps its default.
 
 #### OrderTicketProps
 
-*interface* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L86)
+*interface* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L93)
 
 Props of [`OrderTicket`](#orderticket).
 
 #### OrderTicketReviewReason
 
-*interface* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L126)
+*interface* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L132)
 
 A reason the order goes through Review before it is sent.
 
@@ -6215,7 +6250,7 @@ A reason the order goes through Review before it is sent.
 
 #### OrderTicketTypeNotice
 
-*interface* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L120)
+*interface* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L126)
 
 Why the ticket just changed the order type or strategy for you: stops are
 DMA only, so picking one of them resets the other (`field` is the one
@@ -6261,7 +6296,7 @@ that was changed).
 
 #### UseOrderTicketProps
 
-*interface* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L143)
+*interface* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L149)
 
 Extends `RiskPreviewOptions`.
 
@@ -6318,7 +6353,7 @@ type OrderDraftField = | "ric"
 
 #### OrderTicketState
 
-*type* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L1802)
+*type* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L1935)
 
 ```ts
 type OrderTicketState = ReturnType<typeof useOrderTicket>
@@ -6326,7 +6361,7 @@ type OrderTicketState = ReturnType<typeof useOrderTicket>
 
 #### OrderTicketSubmission
 
-*type* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L131)
+*type* · [components/OrderTicket/useOrderTicket.ts](../../packages/trading-ui/src/components/OrderTicket/useOrderTicket.ts#L137)
 
 ```ts
 type OrderTicketSubmission = | { state: "idle" }
@@ -6351,7 +6386,7 @@ type OrderTicketTarget = (prefill: OrderTicketPrefill) => void
 
 #### OrderTicketVariant
 
-*type* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L84)
+*type* · [components/OrderTicket/OrderTicket.tsx](../../packages/trading-ui/src/components/OrderTicket/OrderTicket.tsx#L91)
 
 ```ts
 type OrderTicketVariant = "panel" | "compact"

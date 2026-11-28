@@ -22,7 +22,7 @@ Imports: `@heswell/trading-test-data`, `@heswell/trading-test-data/react`. 20 ex
 
 #### createTradingTestData
 
-*function* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L279)
+*function* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L280)
 
 Create the EXCHANGE and OMS engine-local modules, backed by the real
 
@@ -42,7 +42,7 @@ const EXCHANGE_TABLE_NAMES: readonly ExchangeTableName[]
 
 #### LOCAL_EXCHANGE_DEFAULTS
 
-*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L145)
+*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L146)
 
 Browser defaults: lighter than the server (50 instruments, 200 bars per
 series) so the showcase stays responsive; everything else is the server
@@ -54,7 +54,7 @@ const LOCAL_EXCHANGE_DEFAULTS: Partial<ExchangeSimConfig>
 
 #### METRICS_TABLE_NAMES
 
-*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L132)
+*const* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L133)
 
 ```ts
 const METRICS_TABLE_NAMES: readonly MetricsTableName[]
@@ -72,7 +72,7 @@ const OMS_TABLE_NAMES: readonly OmsLocalTableName[]
 
 #### TradingTestData
 
-*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L181)
+*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L182)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -94,7 +94,7 @@ const OMS_TABLE_NAMES: readonly OmsLocalTableName[]
 
 #### TradingTestDataOptions
 
-*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L158)
+*interface* · [createTradingTestData.ts](../../packages/trading-test-data/src/createTradingTestData.ts#L159)
 
 | Member | Type | Default | Description |
 | --- | --- | --- | --- |
